@@ -1,30 +1,66 @@
 @import "tailwindcss";
 
+/* ---------- Brand Tokens (Perazzi) ---------- */
 :root {
   color-scheme: light;
-  --surface-canvas: #f8f3ea;
-  --surface-card: #fffdfa;
-  --surface-elevated: #fef9f4;
-  --ink-primary: #1b120b;
-  --ink-muted: #645247;
-  --focus-ring: #0d62ff;
-  --focus-ring-inner: #fffdfa;
+
+  /* Brand core */
+  --perazzi-red: #DB1022;
+  --perazzi-black: #1F1F1F;
+  --perazzi-white: #FFFFFF;
+
+  /* Light surfaces */
+  --surface-canvas: var(--perazzi-white);
+  --surface-card: #F7F7F7;
+  --surface-elevated: #F2F2F2;
+
+  /* Light ink */
+  --ink-primary: #1F1F1F;
+  --ink-muted: #6C6C6C;
+
+  /* UI basics */
+  --border-color: #E6E6E6;
+  --focus-ring: var(--perazzi-red);
+  --focus-ring-inner: var(--perazzi-white);
+
+  /* Legibility on imagery */
+  --scrim-strong: rgba(31, 31, 31, 0.66);
+  --scrim-soft: rgba(31, 31, 31, 0.4);
 }
 
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --surface-canvas: #0F0F10;
+  --surface-card: #141415;
+  --surface-elevated: #1A1A1B;
+
+  --ink-primary: #F5F5F5;
+  --ink-muted: #B9B9B9;
+
+  --border-color: #2A2A2B;
+  --focus-ring: var(--perazzi-red);
+  --focus-ring-inner: #0F0F10;
+
+  --scrim-strong: rgba(0, 0, 0, 0.66);
+  --scrim-soft: rgba(0, 0, 0, 0.4);
+}
+
+/* Tailwind theme bindings (inline) */
 @theme inline {
   --font-sans: var(--font-geist-sans), "Inter", "Segoe UI", system-ui, sans-serif;
-  --font-serif: "Playfair Display", "Georgia", serif;
+  --font-serif: "Playfair Display", Georgia, serif;
   --font-mono: var(--font-geist-mono), "IBM Plex Mono", ui-monospace, monospace;
 
-  --color-perazzi-red: #DB1022;
-  --color-perazzi-white: #fffdfa;
-  --color-perazzi-black: #1F1F1F;
+  --color-perazzi-red: var(--perazzi-red);
+  --color-perazzi-black: var(--perazzi-black);
+  --color-perazzi-white: var(--perazzi-white);
 
   --color-canvas: var(--surface-canvas);
   --color-card: var(--surface-card);
   --color-ink: var(--ink-primary);
   --color-ink-muted: var(--ink-muted);
-  --color-border: #e2d7ce;
+  --color-border: var(--border-color);
   --color-focus: var(--focus-ring);
 
   --spacing-3xs: 0.25rem;
@@ -38,25 +74,25 @@
   --spacing-3xl: 4rem;
 }
 
-*,
-*::before,
-*::after {
+/* Base */
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: var(--font-sans);
-  background-color: var(--color-canvas);
+  background: var(--color-canvas);
   color: var(--color-ink);
+  font-family: var(--font-sans);
   line-height: 1.6;
   text-rendering: optimizeLegibility;
 }
 
+/* Focus ring (Perazzi red) */
 .focus-ring {
   outline: none;
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  transition: box-shadow 0.15s ease;
 }
 
 .focus-ring:focus-visible {
@@ -67,17 +103,18 @@ body {
 
 [data-theme="dark"] .focus-ring:focus-visible {
   box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.05),
+    0 0 0 2px rgba(255, 255, 255, 0.06),
     0 0 0 4px var(--focus-ring);
 }
 
+/* Skip link (brand red) */
 .skip-link {
   position: fixed;
   top: 1rem;
   left: 1rem;
   padding: 0.5rem 1rem;
   background: var(--color-perazzi-red);
-  color: #fff;
+  color: var(--perazzi-white);
   border-radius: 999px;
   font-weight: 600;
   transform: translateY(-200%);
@@ -90,10 +127,43 @@ body {
   transform: translateY(0);
 }
 
+/* Selection */
 ::selection {
-  background: color-mix(in srgb, var(--color-perazzi-red) 35%, #fff);
-  color: var(--color-perazzi-white);
+  background: color-mix(in srgb, var(--color-perazzi-red) 45%, var(--color-canvas));
+  color: var(--perazzi-white);
 }
+
+/* Scrims for legible text-on-image */
+.scrim-strong {
+  background: linear-gradient(to top, var(--scrim-strong), transparent);
+}
+
+.scrim-soft {
+  background: linear-gradient(to top, var(--scrim-soft), transparent);
+}
+
+/* CTA baseline class */
+.btn--primary {
+  background: var(--color-perazzi-red);
+  color: var(--perazzi-white);
+}
+
+.btn--primary:hover {
+  filter: brightness(0.92);
+}
+
+.btn--primary:active {
+  filter: brightness(0.88);
+}
+
+/* Semantic utility helpers */
+.bg-canvas { background-color: var(--color-canvas); }
+.bg-card { background-color: var(--color-card); }
+.bg-elevated { background-color: var(--surface-elevated); }
+.text-ink { color: var(--color-ink); }
+.text-ink-muted { color: var(--color-ink-muted); }
+.border-subtle { border-color: var(--border-color); }
+.border-border { border-color: var(--border-color); }
 
 @keyframes accordion-down {
   from {

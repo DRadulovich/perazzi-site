@@ -3,6 +3,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { getTranslations } from "next-intl/server";
 import { SkipToContent } from "@/components/skip-to-content";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 type SiteShellProps = {
   children: ReactNode;
@@ -14,7 +15,7 @@ export async function SiteShell({ children }: SiteShellProps) {
   return (
     <div className="flex min-h-screen flex-col bg-canvas text-ink">
       <SkipToContent />
-      <header className="border-b border-border bg-white/80 px-4 py-6 backdrop-blur-sm sm:px-8">
+      <header className="border-b border-subtle bg-card px-4 py-6 shadow-sm sm:px-8">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.4em] text-ink-muted">
@@ -34,6 +35,7 @@ export async function SiteShell({ children }: SiteShellProps) {
               <span>{t("nav.routesScaffold")}</span>
             </nav>
             <LocaleSwitcher />
+            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -43,7 +45,7 @@ export async function SiteShell({ children }: SiteShellProps) {
       >
         <div className="mx-auto flex max-w-5xl flex-col gap-12">{children}</div>
       </main>
-      <footer className="border-t border-border bg-white/80 px-4 py-8 text-sm text-ink-muted sm:px-8">
+      <footer className="border-t border-subtle bg-card px-4 py-8 text-sm text-ink-muted sm:px-8">
         <div className="mx-auto max-w-6xl">
           Placeholder footer · Service, legal, and contact hooks will live here.
         </div>
