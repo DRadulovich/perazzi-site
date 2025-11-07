@@ -42,6 +42,7 @@ export default function BespokeBuildPage() {
       <AssuranceBlock assurance={assurance} />
       <CTASection
         dataAnalyticsId="FinalCTASeen"
+        analyticsPrefix="FinalCTAClicked"
         text={footerCta.text}
         primary={{ label: footerCta.ctaLabel, href: footerCta.href }}
         secondary={{ label: "Request a Visit", href: "/experience/visit" }}

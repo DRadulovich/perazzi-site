@@ -1,0 +1,44 @@
+"use client";
+
+import { useState } from "react";
+import type { TagRef } from "@/types/journal";
+
+type TagChipsProps = {
+  tags: TagRef[];
+  onChange?: (selected: string[]) => void;
+};
+
+export function TagChips({ tags, onChange }: TagChipsProps) {
+  const [selected, setSelected] = useState<string[]>([]);
+
+  if (!tags.length) return null;
+
+  const toggle = (id: string) => {
+    setSelected((prev) => {
+      const next = prev.includes(id) ? prev.filter((tag) => tag !== id) : [...prev, id];
+      onChange?.(next);
+      console.log(`CategoryTabClick:${id}`);
+      return next;
+    });
+  };
+
+  return (
+    <section aria-label="Explore by topic" className="flex flex-wrap gap-2">
+      {tags.map((tag) => (
+        <button
+          key={tag.id}
+          type="button"
+          aria-pressed={selected.includes(tag.id)}
+          className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] focus-ring ${
+            selected.includes(tag.id)
+              ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
+              : "border-border bg-card text-ink"
+          }`}
+          onClick={() => toggle(tag.id)}
+        >
+          {tag.label}
+        </button>
+      ))}
+    </section>
+  );
+}

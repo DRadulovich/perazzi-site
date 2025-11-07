@@ -1,0 +1,80 @@
+"use client";
+
+import { useMemo } from "react";
+import type { PortableBlock } from "@/types/journal";
+
+type PortableTextChild = {
+  text?: string;
+};
+
+type PortableBodyProps = {
+  blocks: PortableBlock[];
+};
+
+export function PortableBody({ blocks }: PortableBodyProps) {
+  const headingEntries = useMemo(() => getHeadingEntries(blocks), [blocks]);
+  const headingMap = new Map<number, string>();
+  headingEntries.forEach((entry) => headingMap.set(entry.index, entry.id));
+
+  return (
+    <div className="flex flex-col gap-6 lg:flex-row">
+      {headingEntries.length ? (
+        <nav aria-label="On this page" className="lg:w-64">
+          <a href="#article-content" className="text-xs text-perazzi-red focus-ring">
+            Skip to article
+          </a>
+          <ul className="mt-4 space-y-2 text-sm text-ink">
+            {headingEntries.map((heading) => (
+              <li key={heading.id}>
+                <a
+                  href={`#${heading.id}`}
+                  className="text-ink focus-ring"
+                  onClick={() => console.log(`TOCJump:${heading.text}`)}
+                >
+                  {heading.text}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ) : null}
+      <article id="article-content" className="prose prose-lg max-w-none text-ink">
+        {blocks.map((block, index) => renderBlock(block, headingMap.get(index) ?? `para-${index}`))}
+      </article>
+    </div>
+  );
+}
+
+function getHeadingEntries(blocks: PortableBlock[]) {
+  const entries: { id: string; text: string; index: number }[] = [];
+  blocks.forEach((block, index) => {
+    if (block._type === "block" && (block.style === "h2" || block.style === "h3")) {
+      entries.push({ id: `heading-${index}`, text: getText(block), index });
+    }
+  });
+  return entries;
+}
+
+function renderBlock(block: PortableBlock, id: string) {
+  if (block._type === "block") {
+    const style = block.style ?? "normal";
+    const text = getText(block);
+    if (style === "h2" || style === "h3") {
+      const Tag = style as "h2" | "h3";
+      return (
+        <Tag key={id} id={id}>
+          {text}
+        </Tag>
+      );
+    }
+    return <p key={id}>{text}</p>;
+  }
+  return null;
+}
+
+function getText(block: PortableBlock) {
+  if (!("children" in block) || !Array.isArray(block.children)) return "";
+  return (block.children as PortableTextChild[])
+    .map((child) => child.text ?? "")
+    .join(" ");
+}

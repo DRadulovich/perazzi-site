@@ -1,0 +1,109 @@
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import { journalArticles } from "@/content/journal";
+import { ArticleHero } from "@/components/journal/ArticleHero";
+import { PortableBody } from "@/components/journal/PortableBody";
+import { MetaBar } from "@/components/journal/MetaBar";
+import { AuthorBox } from "@/components/journal/AuthorBox";
+import { RelatedList } from "@/components/shotguns/RelatedList";
+import { NewsletterSignup } from "@/components/journal/NewsletterSignup";
+import { stripHtml } from "@/utils/text";
+
+type ArticlePageProps = {
+  params: { slug: string };
+};
+
+export function generateStaticParams() {
+  return Object.keys(journalArticles).map((slug) => ({ slug }));
+}
+
+export function generateMetadata({ params }: ArticlePageProps): Metadata {
+  const data = journalArticles[params.slug];
+  if (!data) return {};
+  const { article } = data;
+  const description = article.dekHtml ? stripHtml(article.dekHtml) : "Perazzi Journal story";
+  const url = `https://perazzi.example/journal/${article.slug}`;
+  return {
+    title: article.title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      url,
+      title: article.title,
+      description,
+      images: [{ url: article.hero.url }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: article.title,
+      description,
+      images: [article.hero.url],
+    },
+  };
+}
+
+export default function ArticlePage({ params }: ArticlePageProps) {
+  const data = journalArticles[params.slug];
+  if (!data) {
+    notFound();
+  }
+
+  const { article, author, related } = data;
+  const jsonLd = getArticleJsonLd(article, author?.name ?? article.authorRef.name);
+  const breadcrumbs = getBreadcrumbJsonLd(article);
+
+  return (
+    <div className="space-y-10">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }} />
+      <ArticleHero article={article} />
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_260px]">
+        <PortableBody blocks={article.bodyPortableText} />
+        <MetaBar article={article} />
+      </div>
+      <AuthorBox author={author} />
+      <RelatedList items={related} />
+      <NewsletterSignup />
+    </div>
+  );
+}
+
+function getArticleJsonLd(article, authorName: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: article.title,
+    image: [article.hero.url],
+    datePublished: article.dateISO,
+    dateModified: article.dateISO,
+    author: {
+      "@type": "Person",
+      name: authorName,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Perazzi",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://res.cloudinary.com/pwebsite/image/upload/v1720000000/perazzi/logo.png",
+      },
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `https://perazzi.example/journal/${article.slug}`,
+    },
+  };
+}
+
+function getBreadcrumbJsonLd(article) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://perazzi.example" },
+      { "@type": "ListItem", position: 2, name: "Journal", item: "https://perazzi.example/journal" },
+      { "@type": "ListItem", position: 3, name: article.title, item: `https://perazzi.example/journal/${article.slug}` },
+    ],
+  };
+}

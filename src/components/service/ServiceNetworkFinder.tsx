@@ -181,6 +181,7 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
           <a
             href="/service/request"
             className="inline-flex items-center gap-2 text-sm font-semibold text-perazzi-red focus-ring"
+            onClick={() => console.log("[analytics] FinderResultClick:request")}
           >
             Request service
             <span aria-hidden="true">→</span>

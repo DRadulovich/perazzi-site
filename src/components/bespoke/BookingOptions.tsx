@@ -42,7 +42,7 @@ function BookingOptionCard({ option }: BookingOptionCardProps) {
           variant="secondary"
           size="lg"
           onClick={() => {
-            console.log(`[analytics] BookingOptionClicked:${option.id}`);
+            console.log(`[analytics] BookingClicked:${option.id}`);
           }}
         >
           <a href={option.href}>Begin Your Fitting</a>
@@ -113,10 +113,17 @@ function WhatToExpectCollapsible({
   );
 }
 
+const scheduler = {
+  title: "Perazzi Bespoke Scheduler",
+  src: "https://calendly.com/perazzi/bespoke-fitting",
+  fallback: "https://calendly.com/perazzi/bespoke-fitting",
+};
+
 export function BookingOptions({ booking }: BookingOptionsProps) {
   const analyticsRef = useAnalyticsObserver("BookingOptionsSeen");
   const isDesktop = useMediaQuery("(min-width: 1024px)") ?? false;
   const prefersReducedMotion = useReducedMotion();
+  const [showScheduler, setShowScheduler] = useState(false);
 
   return (
     <section
@@ -159,6 +166,40 @@ export function BookingOptions({ booking }: BookingOptionsProps) {
           ))}
         </div>
       </aside>
+      <div className="space-y-3 rounded-3xl border border-border/70 bg-card/60 p-6 shadow-sm">
+        <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-ink-muted">
+          Schedule with the concierge
+        </h3>
+        {showScheduler ? (
+          <iframe
+            src={scheduler.src}
+            title={scheduler.title}
+            className="h-[480px] w-full rounded-2xl border border-border"
+            loading="lazy"
+          />
+        ) : (
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setShowScheduler(true);
+              console.log("[analytics] BookingSchedulerOpen");
+            }}
+          >
+            Load scheduler
+          </Button>
+        )}
+        <p className="text-xs text-ink-muted">
+          Prefer email?{" "}
+          <a
+            href={scheduler.fallback}
+            target="_blank"
+            rel="noreferrer"
+            className="font-semibold text-perazzi-red focus-ring"
+          >
+            Open the request form<span className="sr-only"> (opens in a new tab)</span>
+          </a>
+        </p>
+      </div>
       {booking.note ? (
         <p className="text-xs text-ink-muted">{booking.note}</p>
       ) : null}
