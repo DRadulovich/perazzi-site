@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { logAnalytics } from "@/lib/analytics";
 import type { FittingStage } from "@/types/build";
 
 type BuildStepItemProps = {
@@ -18,7 +19,7 @@ export function BuildStepItem({ step, index, onCtaClick }: BuildStepItemProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const handleCta = () => {
-    console.log(`[analytics] BuildStepCTA:${step.id}`);
+    logAnalytics(`BuildStepCTA:${step.id}`);
     onCtaClick?.(step.id);
   };
 

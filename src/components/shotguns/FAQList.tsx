@@ -1,8 +1,3 @@
-"use client";
-
-import Script from "next/script";
-import { useMemo } from "react";
-
 type FAQItem = {
   q: string;
   a: string;
@@ -19,8 +14,8 @@ export function FAQList({
   schemaName = "Perazzi Shotguns FAQ",
   scriptId = "shotguns-faq-schema",
 }: FAQListProps) {
-  const schema = useMemo(
-    () => ({
+  const schema = JSON.stringify(
+    {
       "@context": "https://schema.org",
       "@type": "FAQPage",
       mainEntity: items.map((item) => ({
@@ -31,8 +26,9 @@ export function FAQList({
           text: item.a,
         },
       })),
-    }),
-    [items],
+    },
+    null,
+    2,
   );
 
   if (items.length === 0) {
@@ -55,11 +51,10 @@ export function FAQList({
           </div>
         ))}
       </dl>
-      <Script
+      <script
         id={scriptId}
         type="application/ld+json"
-        strategy="afterInteractive"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        dangerouslySetInnerHTML={{ __html: schema }}
       />
     </section>
   );

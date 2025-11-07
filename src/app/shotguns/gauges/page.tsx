@@ -18,6 +18,8 @@ export default function GaugesPage() {
       <GaugeHero
         title={gaugesHero.title}
         subheading={gaugesHero.subheading}
+        background={gaugesHero.background}
+        dataAnalyticsId="GaugeHeroSeen"
       />
       <GaugeCardGrid gauges={gauges} />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
@@ -33,6 +35,8 @@ export default function GaugesPage() {
         text="Bring your preferred gauge to the atelier and we\u2019ll balance frame, barrels, and rib geometry to your rhythm."
         primary={{ label: "Begin Your Fitting", href: "/experience/fitting" }}
         secondary={{ label: "Request a Visit", href: "/experience/visit" }}
+        dataAnalyticsId="GaugesFinalCTA"
+        analyticsPrefix="GaugesCTA"
       />
     </div>
   );

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import type { ChampionEvergreen } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 type ChampionsGalleryProps = {
@@ -132,7 +133,7 @@ function ChampionCard({ champion }: ChampionCardProps) {
         onOpenChange={(next) => {
           setOpen(next);
           if (next) {
-            console.log(`[analytics] ChampionProfileOpen:${champion.id}`);
+            logAnalytics(`ChampionProfileOpen:${champion.id}`);
           }
         }}
       >

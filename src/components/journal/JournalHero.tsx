@@ -13,7 +13,7 @@ type JournalHeroProps = {
 };
 
 export function JournalHero({ hero, breadcrumbs }: JournalHeroProps) {
-  const analyticsRef = useAnalyticsObserver("JournalHeroSeen");
+  const analyticsRef = useAnalyticsObserver("HeroSeen:journal");
   const containerRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
   const ratio = hero.background.aspectRatio ?? 16 / 9;
@@ -38,7 +38,7 @@ export function JournalHero({ hero, breadcrumbs }: JournalHeroProps) {
   return (
     <motion.section
       ref={setRefs}
-      data-analytics-id="JournalHeroSeen"
+      data-analytics-id="HeroSeen:journal"
       className="relative isolate overflow-hidden rounded-3xl bg-perazzi-black text-white"
       initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
       animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}

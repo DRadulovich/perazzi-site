@@ -5,6 +5,7 @@ import Image from "next/image";
 import type { ServiceLocation, ServiceLocationType } from "@/types/service";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { logAnalytics } from "@/lib/analytics";
 
 type ServiceNetworkFinderProps = {
   locations: ServiceLocation[];
@@ -26,7 +27,7 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search.toLowerCase());
-      console.log("[analytics] FinderFilterChange");
+      logAnalytics("FinderFilterChange");
     }, 200);
     return () => clearTimeout(timer);
   }, [search]);
@@ -71,7 +72,7 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
             value={filter}
             onChange={(event) => {
               setFilter(event.target.value as ServiceLocationType | "All");
-              console.log("[analytics] FinderFilterChange");
+              logAnalytics("FinderFilterChange");
             }}
           >
             {types.map((type) => (
@@ -92,7 +93,7 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
           />
         </label>
       </form>
-      <p className="text-xs text-ink-muted" aria-live="polite">
+      <p className="text-xs text-ink-muted" aria-live="polite" role="status">
         {filteredLocations.length} locations available.
       </p>
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
@@ -128,7 +129,7 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
                       rel="noreferrer"
                       className="block text-perazzi-red focus-ring"
                       onClick={() =>
-                        console.log(`[analytics] FinderResultClick:${location.id}`)
+                        logAnalytics(`FinderResultClick:${location.id}`)
                       }
                     >
                       Website<span className="sr-only"> (opens in a new tab)</span>
@@ -160,7 +161,7 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
             ) : (
               <Image
                 src={staticMap.url}
-                alt={staticMap.alt}
+                alt="Static map preview for the Perazzi service network; use the Open map button for an interactive view."
                 fill
                 sizes="(min-width: 1024px) 560px, 100vw"
                 className="object-cover"
@@ -172,16 +173,26 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
               variant="secondary"
               onClick={() => {
                 setMapOpen(true);
-                console.log("[analytics] FinderMapOpen");
+                logAnalytics("FinderMapOpen");
               }}
             >
               Load interactive map
             </Button>
           ) : null}
           <a
+            href="https://maps.google.com/?q=Perazzi+service+network"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-perazzi-red focus-ring"
+          >
+            Open in Maps
+            <span aria-hidden="true">→</span>
+            <span className="sr-only"> (opens in a new tab)</span>
+          </a>
+          <a
             href="/service/request"
             className="inline-flex items-center gap-2 text-sm font-semibold text-perazzi-red focus-ring"
-            onClick={() => console.log("[analytics] FinderResultClick:request")}
+            onClick={() => logAnalytics("FinderResultClick:request")}
           >
             Request service
             <span aria-hidden="true">→</span>

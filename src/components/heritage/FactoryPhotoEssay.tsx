@@ -5,6 +5,7 @@ import { useCallback, useMemo, useState } from "react";
 import Image from "next/image";
 import type { FactoryEssayItem } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { logAnalytics } from "@/lib/analytics";
 
 type FactoryPhotoEssayProps = {
   items: FactoryEssayItem[];
@@ -20,7 +21,7 @@ export function FactoryPhotoEssay({ items, introHtml }: FactoryPhotoEssayProps) 
       setOpenIndex(index);
       const item = items[index];
       if (item) {
-        console.log(`[analytics] FactoryLightboxOpen:${item.image.id}`);
+        logAnalytics(`FactoryLightboxOpen:${item.image.id}`);
       }
     },
     [items],
@@ -35,7 +36,7 @@ export function FactoryPhotoEssay({ items, introHtml }: FactoryPhotoEssayProps) 
         const nextIndex = (prev + direction + items.length) % items.length;
         const item = items[nextIndex];
         if (item) {
-          console.log(`[analytics] FactoryLightboxOpen:${item.image.id}`);
+          logAnalytics(`FactoryLightboxOpen:${item.image.id}`);
         }
         return nextIndex;
       });

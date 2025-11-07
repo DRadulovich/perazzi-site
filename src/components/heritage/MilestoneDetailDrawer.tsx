@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { useState } from "react";
 import Image from "next/image";
 import type { HeritageEvent } from "@/types/heritage";
+import { logAnalytics } from "@/lib/analytics";
 
 type MilestoneDetailDrawerProps = {
   event: HeritageEvent;
@@ -23,7 +24,7 @@ export function MilestoneDetailDrawer({
       onOpenChange={(next) => {
         setOpen(next);
         if (next) {
-          console.log(`[analytics] TimelineLearnMore:${event.id}`);
+          logAnalytics(`TimelineLearnMore:${event.id}`);
         }
       }}
     >

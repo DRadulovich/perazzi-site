@@ -3,9 +3,11 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useId, useState } from "react";
 import Image from "next/image";
+import { useReducedMotion } from "framer-motion";
 import type { OralHistory } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
+import { logAnalytics } from "@/lib/analytics";
 
 type OralHistoriesProps = {
   histories: OralHistory[];
@@ -51,10 +53,11 @@ function OralHistoryCard({ history }: OralHistoryCardProps) {
   });
   const [open, setOpen] = useState(false);
   const contentId = useId();
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     if (open) {
-      console.log(`[analytics] OralHistoryTranscript:${history.id}`);
+      logAnalytics(`OralHistoryTranscript:${history.id}`);
     }
   }, [open, history.id]);
 
@@ -94,7 +97,7 @@ function OralHistoryCard({ history }: OralHistoryCardProps) {
           className="w-full"
           aria-label={`Audio interview: ${history.title}`}
           onPlay={() =>
-            console.log(`[analytics] OralHistoryAudioPlay:${history.id}`)
+            logAnalytics(`OralHistoryAudioPlay:${history.id}`)
           }
         >
           <source src={history.audioSrc} type="audio/mpeg" />
@@ -111,14 +114,23 @@ function OralHistoryCard({ history }: OralHistoryCardProps) {
             {open ? "Hide transcript" : "Read transcript"}
             <span
               aria-hidden="true"
-              className={cn("text-sm transition-transform", open ? "rotate-45" : "rotate-0")}
+              className={cn(
+                "text-sm",
+                prefersReducedMotion ? "transition-none" : "transition-transform",
+                open ? "rotate-45" : "rotate-0",
+              )}
             >
               +
             </span>
           </Collapsible.Trigger>
           <Collapsible.Content
             id={contentId}
-            className="mt-4 overflow-hidden rounded-2xl border border-border/60 bg-card/70 p-4 text-sm text-ink-muted"
+            className={cn(
+              "mt-4 overflow-hidden rounded-2xl border border-border/60 bg-card/70 p-4 text-sm text-ink-muted",
+              prefersReducedMotion
+                ? "transition-none"
+                : "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
+            )}
           >
             <div
               dangerouslySetInnerHTML={{ __html: history.transcriptHtml }}

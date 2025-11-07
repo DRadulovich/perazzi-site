@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ArticleRef } from "@/types/journal";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { logAnalytics } from "@/lib/analytics";
 
 type FeaturedStoryCardProps = {
   article: ArticleRef;
@@ -24,7 +25,7 @@ export function FeaturedStoryCard({ article, hero, summary }: FeaturedStoryCardP
         href={`/journal/${article.slug}`}
         className="group flex h-full flex-col focus-ring"
         data-analytics-id="FeaturedStoryClick"
-        onClick={() => console.log(`FeaturedStoryClick:${article.slug}`)}
+        onClick={() => logAnalytics(`FeaturedStoryClick:${article.slug}`)}
       >
         <figure className="space-y-3">
           <div

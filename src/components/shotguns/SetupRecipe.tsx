@@ -1,9 +1,10 @@
- "use client";
+"use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import type { DisciplineSummary } from "@/types/catalog";
+import { logAnalytics } from "@/lib/analytics";
 
 type SetupRecipeProps = DisciplineSummary["recipe"] & {
   defaultExpanded?: boolean;
@@ -28,7 +29,7 @@ export function SetupRecipe({
         open={resolvedOpen}
         onOpenChange={(next) => {
           setManualOpen(next);
-          console.log("[analytics] SetupRecipeToggle", next ? "open" : "closed");
+          logAnalytics(`SetupRecipeToggle:${next ? "open" : "closed"}`);
         }}
       >
         <div className="flex flex-wrap items-center justify-between gap-4">

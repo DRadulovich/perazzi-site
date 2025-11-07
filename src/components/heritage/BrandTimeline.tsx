@@ -5,6 +5,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import NextImage from "next/image";
 import { useReducedMotion } from "framer-motion";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { logAnalytics } from "@/lib/analytics";
 import type { HeritageEvent } from "@/types/heritage";
 import { MilestoneDetailDrawer } from "./MilestoneDetailDrawer";
 
@@ -30,7 +31,7 @@ export function BrandTimeline({ events, skipTargetId }: BrandTimelineProps) {
     if (!activeEvent) return;
     if (!visitedRef.current.has(activeEvent.id)) {
       visitedRef.current.add(activeEvent.id);
-      console.log(`[analytics] TimelineEventViewed:${activeEvent.id}`);
+      logAnalytics(`TimelineEventViewed:${activeEvent.id}`);
     }
     if (typeof window !== "undefined") {
       const next = safeEvents[activeIndex + 1];
@@ -143,17 +144,17 @@ export function BrandTimeline({ events, skipTargetId }: BrandTimelineProps) {
     return null;
   }
 
+  const targetId = skipTargetId ?? "heritage-after-timeline";
+
   return (
     <>
-      {skipTargetId ? (
-        <a
-          href={`#${skipTargetId}`}
-          className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
-        >
-          Skip timeline
-          <span aria-hidden="true">→</span>
-        </a>
-      ) : null}
+      <a
+        href={`#${targetId}`}
+        className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
+      >
+        Skip timeline
+        <span aria-hidden="true">→</span>
+      </a>
       <section
         ref={analyticsRef}
         data-analytics-id="HeritageTimelineSeen"
@@ -269,6 +270,12 @@ export function BrandTimeline({ events, skipTargetId }: BrandTimelineProps) {
           </ol>
         </noscript>
       </section>
+      <div
+        id={targetId}
+        tabIndex={-1}
+        className="sr-only"
+        aria-hidden="true"
+      />
     </>
   );
 }

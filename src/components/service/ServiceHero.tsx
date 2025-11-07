@@ -15,7 +15,7 @@ type ServiceHeroProps = {
 };
 
 export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {
-  const analyticsRef = useAnalyticsObserver("ServiceHeroSeen");
+  const analyticsRef = useAnalyticsObserver("HeroSeen:service");
   const containerRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
   const ratio = hero.background.aspectRatio ?? 16 / 9;
@@ -40,7 +40,7 @@ export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {
   return (
     <motion.section
       ref={setRefs}
-      data-analytics-id="ServiceHeroSeen"
+      data-analytics-id="HeroSeen:service"
       className="relative isolate overflow-hidden rounded-3xl bg-perazzi-black text-white"
       initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
       animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}

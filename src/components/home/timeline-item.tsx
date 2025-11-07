@@ -8,15 +8,17 @@ type TimelineItemProps = {
   stage: FittingStage;
   active?: boolean;
   layout?: "pinned" | "stacked";
+  animationsEnabled?: boolean;
 };
 
 export function TimelineItem({
   stage,
   active = false,
   layout = "stacked",
+  animationsEnabled = true,
 }: TimelineItemProps) {
   const ratio = stage.media.aspectRatio ?? 4 / 3;
-  const Wrapper = layout === "pinned" ? motion.article : "article";
+  const Wrapper = layout === "pinned" && animationsEnabled ? motion.article : "article";
 
   const content = (
     <>
@@ -45,20 +47,27 @@ export function TimelineItem({
   );
 
   if (layout === "pinned") {
+    if (animationsEnabled) {
+      return (
+        <Wrapper
+          key={stage.id}
+          className="absolute inset-0 rounded-3xl bg-card/80 p-6 shadow-xl"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{
+            opacity: active ? 1 : 0,
+            y: active ? 0 : 30,
+            pointerEvents: active ? "auto" : "none",
+          }}
+          transition={{ duration: 0.6, ease: [0.33, 1, 0.68, 1] }}
+        >
+          {content}
+        </Wrapper>
+      );
+    }
     return (
-      <Wrapper
-        key={stage.id}
-        className="absolute inset-0 rounded-3xl bg-card/80 p-6 shadow-xl"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{
-          opacity: active ? 1 : 0,
-          y: active ? 0 : 30,
-          pointerEvents: active ? "auto" : "none",
-        }}
-        transition={{ duration: 0.6, ease: [0.33, 1, 0.68, 1] }}
-      >
+      <article className="absolute inset-0 rounded-3xl bg-card/80 p-6 shadow-xl">
         {content}
-      </Wrapper>
+      </article>
     );
   }
 

@@ -18,6 +18,15 @@ export function GaugeCard({ gauge }: GaugeCardProps) {
           {gauge.description}
         </h2>
       </header>
+      <p className="mt-3 text-sm text-ink-muted">
+        {gauge.handlingNotes}
+      </p>
+      <div className="mt-4 space-y-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+        <span>Typical disciplines</span>
+        <p className="text-sm normal-case tracking-normal text-ink">
+          {gauge.typicalDisciplines.join(" • ")}
+        </p>
+      </div>
       <div className="mt-4 space-y-2 text-sm text-ink-muted">
         <strong className="block text-xs uppercase tracking-[0.3em] text-ink-muted">
           Common barrels

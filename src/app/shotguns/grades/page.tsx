@@ -1,40 +1,22 @@
-import { shotgunsData } from "@/content/shotguns";
+import { grades } from "@/content/shotguns";
+import {
+  gradesHero,
+  engravingProvenanceHtml,
+  gradesProcessNote,
+} from "@/content/shotguns/grades-content";
 import { GradesHero } from "@/components/shotguns/GradesHero";
 import { EngravingGallery } from "@/components/shotguns/EngravingGallery";
 import { WoodCarousel } from "@/components/shotguns/WoodCarousel";
 import { ProvenanceNote } from "@/components/shotguns/ProvenanceNote";
 import { OptionsGrid } from "@/components/shotguns/OptionsGrid";
-import { FAQList } from "@/components/shotguns/FAQList";
+import { ProcessNote } from "@/components/shotguns/ProcessNote";
 import { CTASection } from "@/components/shotguns/CTASection";
 
 export default function GradesPage() {
-  const { grades } = shotgunsData;
-  const primaryGrade = grades[0];
-  const heroBackground = primaryGrade.gallery[0] ?? {
-    id: "grades-fallback",
-    kind: "image" as const,
-    url: "https://res.cloudinary.com/pwebsite/image/upload/v1720400000/shotguns/grades/sc2_lockplate.jpg",
-    alt: "Perazzi engraving detail",
-    aspectRatio: 16 / 9,
-  };
-
-  const faqItems = grades.flatMap((grade) =>
-    (grade.options ?? []).map((option) => ({
-      q: `${grade.name}: ${option.title}`,
-      a: option.description,
-    })),
-  );
-  const engravingProvenanceHtml =
-    "<p>Perazzi offers classic house patterns rooted in Italian tradition and collaborates with master engravers for singular commissions. Each surface is a canvas for restraint or flourish—guided by the same reverence for artistry and permanence.</p>";
-
   return (
     <div className="space-y-16">
       <GradesHero
-        hero={{
-          title: "Engraving grades & bespoke provenance",
-          subheading: "From SC2 heritage scroll through SCO masterpieces, commissions evolve with your story.",
-          background: heroBackground,
-        }}
+        hero={gradesHero}
       />
 
       <ProvenanceNote html={engravingProvenanceHtml} />
@@ -54,15 +36,17 @@ export default function GradesPage() {
       ))}
 
       <WoodCarousel grades={grades} />
-      <FAQList
-        items={faqItems}
-        schemaName="Perazzi grade options FAQ"
-        scriptId="shotguns-grades-faq"
+      <ProcessNote
+        title={gradesProcessNote.title}
+        html={gradesProcessNote.html}
+        dataAnalyticsId="GradesProcessNote"
       />
       <CTASection
         text="Begin your fitting to commission engraving, wood selection, and finishing details that reflect your legacy."
         primary={{ label: "Begin Your Fitting", href: "/experience/fitting" }}
         secondary={{ label: "Request a Visit", href: "/experience/visit" }}
+        dataAnalyticsId="GradesFinalCTA"
+        analyticsPrefix="GradesCTA"
       />
     </div>
   );

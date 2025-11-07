@@ -2,6 +2,8 @@
 
 import { useMemo } from "react";
 import type { PortableBlock } from "@/types/journal";
+import { logAnalytics } from "@/lib/analytics";
+import { PortableGallery } from "./PortableGallery";
 
 type PortableTextChild = {
   text?: string;
@@ -23,13 +25,16 @@ export function PortableBody({ blocks }: PortableBodyProps) {
           <a href="#article-content" className="text-xs text-perazzi-red focus-ring">
             Skip to article
           </a>
+          <a href="#article-content" className="mt-2 block text-xs text-perazzi-red focus-ring">
+            Skip ToC
+          </a>
           <ul className="mt-4 space-y-2 text-sm text-ink">
             {headingEntries.map((heading) => (
               <li key={heading.id}>
                 <a
                   href={`#${heading.id}`}
                   className="text-ink focus-ring"
-                  onClick={() => console.log(`TOCJump:${heading.text}`)}
+                  onClick={() => logAnalytics(`TOCJump:${heading.text}`)}
                 >
                   {heading.text}
                 </a>
@@ -68,6 +73,9 @@ function renderBlock(block: PortableBlock, id: string) {
       );
     }
     return <p key={id}>{text}</p>;
+  }
+  if (block._type === "portableGallery" && Array.isArray(block.items)) {
+    return <PortableGallery key={id} items={block.items} />;
   }
   return null;
 }

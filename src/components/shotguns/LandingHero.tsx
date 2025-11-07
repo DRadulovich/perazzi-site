@@ -13,7 +13,7 @@ export function LandingHero({ hero }: LandingHeroProps) {
         subheading: hero.subheading,
         background: hero.background,
       }}
-      analyticsId="ShotgunsLandingHero"
+      analyticsId="HeroSeen:shotguns-landing"
     />
   );
 }

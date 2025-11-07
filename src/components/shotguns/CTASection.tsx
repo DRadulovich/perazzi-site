@@ -1,8 +1,9 @@
- "use client";
+"use client";
 
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { motion, useReducedMotion } from "framer-motion";
+import { logAnalytics } from "@/lib/analytics";
 
 type CTASectionProps = {
   text: string;
@@ -22,11 +23,10 @@ export function CTASection({
   const analyticsRef = useAnalyticsObserver(dataAnalyticsId);
   const prefersReducedMotion = useReducedMotion();
 
-  const logClick = (type: "primary" | "secondary", label: string) => {
+  const logClick = (type: "primary" | "secondary") => {
+    logAnalytics(`FinalCTAClicked:${type}`);
     if (analyticsPrefix) {
-      console.log(`[analytics] ${analyticsPrefix}:${type}`);
-    } else {
-      console.log(`[analytics] CTA:${type}:${label}`);
+      logAnalytics(`${analyticsPrefix}:${type}`);
     }
   };
 
@@ -57,7 +57,7 @@ export function CTASection({
             variant="primary"
             size="lg"
             className="bg-white text-perazzi-black hover:bg-white/90 focus-visible:bg-white"
-            onClick={() => logClick("primary", primary.label)}
+            onClick={() => logClick("primary")}
           >
             <a href={primary.href}>{primary.label}</a>
           </Button>
@@ -66,7 +66,7 @@ export function CTASection({
               asChild
               variant="secondary"
               size="lg"
-              onClick={() => logClick("secondary", secondary.label)}
+              onClick={() => logClick("secondary")}
             >
               <a href={secondary.href}>{secondary.label}</a>
             </Button>

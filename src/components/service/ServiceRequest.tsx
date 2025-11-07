@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { logAnalytics } from "@/lib/analytics";
 
 type RequestProps = {
   title: string;
@@ -54,7 +55,7 @@ export function ServiceRequest({
             }
             setError("");
             setOpen(true);
-            console.log(`[analytics] ${analyticsOpenId}`);
+            logAnalytics(analyticsOpenId);
           }}
         >
           <label className="flex flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">

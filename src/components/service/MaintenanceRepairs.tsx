@@ -4,6 +4,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import type { GuideDownload, ServiceOverview } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { logAnalytics } from "@/lib/analytics";
 
 type MaintenanceRepairsProps = {
   overview: ServiceOverview;
@@ -39,7 +40,7 @@ export function MaintenanceRepairs({ overview, guide }: MaintenanceRepairsProps)
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 text-sm font-semibold text-perazzi-red focus-ring"
-          onClick={() => console.log(`[analytics] GuideDownload:${guide.id}`)}
+          onClick={() => logAnalytics(`GuideDownload:${guide.id}`)}
         >
           Download {guide.title}
           {guide.fileSize ? (

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { JournalLandingData } from "@/types/journal";
 import { stripHtml } from "@/utils/text";
+import { logAnalytics } from "@/lib/analytics";
 
 type HubProps = {
   category: keyof JournalLandingData["hubs"];
@@ -39,7 +40,7 @@ export function CategoryHub({ category, data }: HubProps) {
         <Link
           href={data.viewAllHref}
           className="text-sm font-semibold text-perazzi-red focus-ring"
-          onClick={() => console.log(`CategoryTabClick:${category}`)}
+          onClick={() => logAnalytics(`CategoryTabClick:${category}`)}
         >
           View all →
         </Link>
@@ -50,7 +51,7 @@ export function CategoryHub({ category, data }: HubProps) {
             <Link
               href={`/journal/${item.slug}`}
               className="flex h-full flex-col focus-ring"
-              onClick={() => console.log(`FeaturedStoryClick:${item.slug}`)}
+              onClick={() => logAnalytics(`FeaturedStoryClick:${item.slug}`)}
             >
               <div className="relative" style={{ aspectRatio: item.hero.aspectRatio ?? 16 / 9 }}>
                 <Image
@@ -81,7 +82,7 @@ export function CategoryHub({ category, data }: HubProps) {
           className="text-sm font-semibold text-perazzi-red focus-ring"
           onClick={() => {
             setVisibleCount((prev) => Math.min(prev + 2, data.items.length));
-            console.log(`CategoryTabClick:${category}-load-more`);
+            logAnalytics(`CategoryTabClick:${category}-load-more`);
           }}
         >
           Load more

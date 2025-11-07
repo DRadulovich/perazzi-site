@@ -5,6 +5,7 @@ import type { DemoProgramData } from "@/types/experience";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
+import { logAnalytics } from "@/lib/analytics";
 
 type DemoProgramProps = {
   demo: DemoProgramData;
@@ -97,7 +98,7 @@ export function DemoProgram({ demo }: DemoProgramProps) {
                   rel="noreferrer"
                   className="mt-2 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
                   onClick={() =>
-                    console.log(`[analytics] DemoEventOpen:${event.id}`)
+                    logAnalytics(`DemoEventOpen:${event.id}`)
                   }
                 >
                   Event details
@@ -121,7 +122,7 @@ export function DemoProgram({ demo }: DemoProgramProps) {
         <Button
           asChild
           size="lg"
-          onClick={() => console.log("[analytics] DemoRequestClick")}
+          onClick={() => logAnalytics("DemoRequestClick")}
         >
           <a href={demo.requestCta.href}>{demo.requestCta.label}</a>
         </Button>

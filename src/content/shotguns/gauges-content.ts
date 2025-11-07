@@ -1,7 +1,16 @@
+const gaugesHeroBackground = {
+  id: "gauges-hero",
+  kind: "image" as const,
+  url: "https://res.cloudinary.com/pwebsite/image/upload/v1720455000/shotguns/gauges/perazzi-gauge-hero.jpg",
+  alt: "Perazzi barrels and frames laid out on a walnut bench highlighting gauge differences",
+  aspectRatio: 16 / 9,
+};
+
 export const gaugesHero = {
   title: "Gauges & balance",
   subheading:
     "Gauge, frame mass, and barrel contour shape how a Perazzi moves, recovers, and settles after the shot.",
+  background: gaugesHeroBackground,
 };
 
 export const gaugesEditorialHtml = `<p>Perazzi tunes the voice of each gauge through fitting and barrel contouring. Twelve gauge frames carry authority for bunker and demanding sporting layouts—calm momentum with the ballast to stay on plane. Twenty and twenty-eight gauge sets favor agility, letting the gun spark into motion for skeet crosses or mixed presentations. Even the .410 can be balanced to your touch, training rhythm and precision.</p>`;

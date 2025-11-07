@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import type { PickerItem } from "@/types/experience";
+import { logAnalytics } from "@/lib/analytics";
 
 type ExperiencePickerProps = {
   items: PickerItem[];
@@ -63,7 +64,7 @@ function ExperiencePickerCard({
         href={item.href}
         className="group flex h-full flex-col overflow-hidden rounded-3xl border border-border/70 bg-card text-left shadow-sm focus-ring"
         data-analytics-id={`PickerCardClick:${item.id}`}
-        onClick={() => console.log(`[analytics] PickerCardClick:${item.id}`)}
+        onClick={() => logAnalytics(`PickerCardClick:${item.id}`)}
       >
         <div className="relative" style={{ aspectRatio: ratio }}>
           <Image

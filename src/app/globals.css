@@ -16,9 +16,9 @@
   --font-serif: "Playfair Display", "Georgia", serif;
   --font-mono: var(--font-geist-mono), "IBM Plex Mono", ui-monospace, monospace;
 
-  --color-perazzi-red: #9c1f2b;
+  --color-perazzi-red: #DB1022;
   --color-perazzi-white: #fffdfa;
-  --color-perazzi-black: #120d0a;
+  --color-perazzi-black: #1F1F1F;
 
   --color-canvas: var(--surface-canvas);
   --color-card: var(--surface-card);

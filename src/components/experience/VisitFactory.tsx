@@ -7,6 +7,7 @@ import type { VisitFactoryData } from "@/types/experience";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
+import { logAnalytics } from "@/lib/analytics";
 
 type VisitFactoryProps = {
   visit: VisitFactoryData;
@@ -16,6 +17,11 @@ export function VisitFactory({ visit }: VisitFactoryProps) {
   const analyticsRef = useAnalyticsObserver("VisitFactorySeen");
   const [mapOpen, setMapOpen] = useState(false);
   const [expectOpen, setExpectOpen] = useState(false);
+  const mapPanelId = "visit-map-panel";
+  const mapNoteId = "visit-map-note";
+  const mapHref =
+    visit.location.mapLinkHref ??
+    `https://maps.google.com/?q=${encodeURIComponent(visit.location.name)}`;
 
   return (
     <section
@@ -59,17 +65,22 @@ export function VisitFactory({ visit }: VisitFactoryProps) {
             />
           ) : null}
           <div className="space-y-3 pt-4">
+            <p id={mapNoteId} className="sr-only">
+              Selecting Open map loads an interactive map you can pan and zoom.
+            </p>
             <div
+              id={mapPanelId}
               className="relative overflow-hidden rounded-2xl border border-border/60 bg-neutral-200"
               style={{ aspectRatio: visit.location.staticMap.aspectRatio ?? 4 / 3 }}
+              aria-live="polite"
             >
               {mapOpen && visit.location.mapEmbedSrc ? (
                 <iframe
-                  id="visit-map-embed"
                   src={visit.location.mapEmbedSrc}
-                  title={`${visit.location.name} map`}
+                  title={`Map to ${visit.location.name}`}
                   className="h-full w-full"
                   loading="lazy"
+                  aria-describedby={mapNoteId}
                 />
               ) : (
                 <Image
@@ -85,22 +96,24 @@ export function VisitFactory({ visit }: VisitFactoryProps) {
               <Button
                 variant="secondary"
                 size="sm"
-                aria-controls="visit-map-embed"
+                aria-controls={mapPanelId}
+                aria-describedby={mapNoteId}
+                aria-expanded={mapOpen}
                 onClick={() => {
                   setMapOpen(true);
-                  console.log("[analytics] VisitMapOpen");
+                  logAnalytics("VisitMapOpen");
                 }}
               >
-                Load interactive map
+                Open map
               </Button>
             ) : null}
             <a
-              href="https://maps.google.com/?q=Perazzi+Botticino"
+              href={mapHref}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="text-sm font-semibold text-perazzi-red focus-ring"
             >
-              Open in Google Maps
+              Open in Maps
               <span className="sr-only"> (opens in a new tab)</span>
             </a>
           </div>
@@ -137,7 +150,7 @@ export function VisitFactory({ visit }: VisitFactoryProps) {
           <Button
             asChild
             size="lg"
-            onClick={() => console.log("[analytics] VisitCtaClick")}
+            onClick={() => logAnalytics("VisitCtaClick")}
           >
             <a href={visit.cta.href}>{visit.cta.label}</a>
           </Button>

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import type { Article } from "@/types/journal";
+import { logAnalytics } from "@/lib/analytics";
 
 type MetaBarProps = {
   article: Article;
@@ -16,8 +17,8 @@ export function MetaBar({ article }: MetaBarProps) {
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
-    console.log(`ArticleImpression:${article.slug}`);
-    console.log(`ArticleReadStart:${article.slug}`);
+    logAnalytics(`ArticleImpression:${article.slug}`);
+    logAnalytics(`ArticleReadStart:${article.slug}`);
   }, [article.slug]);
 
   useEffect(() => {
@@ -34,7 +35,7 @@ export function MetaBar({ article }: MetaBarProps) {
       DEPTH_LEVELS.forEach((level) => {
         if (pct >= level && !reported.current.has(level)) {
           reported.current.add(level);
-          console.log(`ArticleReadDepth:${level}`);
+          logAnalytics(`ArticleReadDepth:${level}`);
         }
       });
     };
@@ -66,7 +67,7 @@ export function MetaBar({ article }: MetaBarProps) {
         className="text-perazzi-red focus-ring"
         onClick={() => {
           navigator.clipboard?.writeText(window.location.href);
-          console.log(`CategoryTabClick:share-${article.slug}`);
+          logAnalytics(`CategoryTabClick:share-${article.slug}`);
         }}
       >
         Copy link

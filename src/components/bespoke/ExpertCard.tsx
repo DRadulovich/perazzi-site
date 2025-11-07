@@ -4,6 +4,7 @@ import Image from "next/image";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useState } from "react";
 import type { Expert } from "@/types/build";
+import { logAnalytics } from "@/lib/analytics";
 
 type ExpertCardProps = {
   expert: Expert;
@@ -57,7 +58,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         <Dialog.Root open={open} onOpenChange={setOpen}>
           <Dialog.Trigger
             className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink focus-ring"
-            onClick={() => console.log(`[analytics] ExpertBio:${expert.id}`)}
+            onClick={() => logAnalytics(`ExpertBio:${expert.id}`)}
           >
             Full bio
           </Dialog.Trigger>

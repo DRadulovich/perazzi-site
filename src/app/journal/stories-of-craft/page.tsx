@@ -1,13 +1,19 @@
 import { journalCategories } from "@/content/journal";
-import { CategoryHeader } from "@/components/journal/CategoryHeader";
-import { CategoryView } from "@/components/journal/CategoryView";
+import { CategoryPageLayout } from "@/components/journal/CategoryPageLayout";
 
-export default function StoriesOfCraftPage() {
-  const data = journalCategories.craft;
+type StoriesOfCraftPageProps = {
+  searchParams?: Record<string, string | string[] | undefined>;
+};
+
+export default function StoriesOfCraftPage({
+  searchParams,
+}: StoriesOfCraftPageProps) {
   return (
-    <div className="space-y-10">
-      <CategoryHeader header={data.header} />
-      <CategoryView data={data} categoryKey="craft" />
-    </div>
+    <CategoryPageLayout
+      data={journalCategories.craft}
+      categoryKey="craft"
+      basePath="/journal/stories-of-craft"
+      searchParams={searchParams}
+    />
   );
 }

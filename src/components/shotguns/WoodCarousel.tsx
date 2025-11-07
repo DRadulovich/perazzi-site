@@ -1,8 +1,9 @@
- "use client";
+"use client";
 
 import Image from "next/image";
 import { useRef } from "react";
 import type { GradeSeries } from "@/types/catalog";
+import { logAnalytics } from "@/lib/analytics";
 
 type WoodCarouselProps = {
   grades: GradeSeries[];
@@ -15,7 +16,7 @@ export function WoodCarousel({ grades }: WoodCarouselProps) {
     const node = railRef.current;
     if (!node) return;
     const amount = direction === "next" ? node.clientWidth : -node.clientWidth;
-    console.log("[analytics] WoodCarousel", direction);
+    logAnalytics(`WoodCarousel:${direction}`);
     node.scrollBy({ left: amount, behavior: "smooth" });
   };
 

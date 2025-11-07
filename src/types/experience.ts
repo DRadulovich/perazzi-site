@@ -20,6 +20,7 @@ export interface LocationBlock {
   addressHtml: string;
   mapEmbedSrc?: string;
   staticMap: FactoryAsset;
+  mapLinkHref?: string;
   hoursHtml?: string;
   notesHtml?: string;
 }

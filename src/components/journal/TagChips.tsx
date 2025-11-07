@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { TagRef } from "@/types/journal";
+import { logAnalytics } from "@/lib/analytics";
 
 type TagChipsProps = {
   tags: TagRef[];
@@ -17,7 +18,7 @@ export function TagChips({ tags, onChange }: TagChipsProps) {
     setSelected((prev) => {
       const next = prev.includes(id) ? prev.filter((tag) => tag !== id) : [...prev, id];
       onChange?.(next);
-      console.log(`CategoryTabClick:${id}`);
+      logAnalytics(`CategoryTabClick:${id}`);
       return next;
     });
   };

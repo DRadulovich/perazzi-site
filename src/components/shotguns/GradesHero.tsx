@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import type { GradeSeries } from "@/types/catalog";
+import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 type GradesHeroProps = {
   hero: {
@@ -11,9 +14,14 @@ type GradesHeroProps = {
 
 export function GradesHero({ hero }: GradesHeroProps) {
   const ratio = hero.background.aspectRatio ?? 16 / 9;
+  const heroRef = useAnalyticsObserver("HeroSeen:shotguns-grades");
 
   return (
-    <section className="relative overflow-hidden rounded-3xl bg-perazzi-black text-white">
+    <section
+      ref={heroRef}
+      data-analytics-id="HeroSeen:shotguns-grades"
+      className="relative overflow-hidden rounded-3xl bg-perazzi-black text-white"
+    >
       <div
         className="relative"
         style={{ aspectRatio: ratio }}

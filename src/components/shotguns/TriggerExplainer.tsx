@@ -1,10 +1,11 @@
- "use client";
+"use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import Image from "next/image";
 import { useState } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import type { ShotgunsLandingData } from "@/types/catalog";
+import { logAnalytics } from "@/lib/analytics";
 
 type TriggerExplainerProps = {
   explainer: ShotgunsLandingData["triggerExplainer"];
@@ -25,7 +26,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
         open={resolvedOpen}
         onOpenChange={(next) => {
           setManualOpen(next);
-          console.log("[analytics] TriggerExplainerToggle", next ? "open" : "closed");
+          logAnalytics(`TriggerExplainerToggle:${next ? "open" : "closed"}`);
         }}
         className="space-y-4"
       >
@@ -82,7 +83,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                 data-analytics-id={`TriggerExplainerLink:${link.href}`}
                 className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-perazzi-red focus-ring"
                 onClick={() =>
-                  console.log("[analytics] TriggerExplainerLink", link.href)
+                  logAnalytics(`TriggerExplainerLink:${link.href}`)
                 }
               >
                 {link.label}

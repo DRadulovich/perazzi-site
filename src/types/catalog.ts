@@ -57,7 +57,9 @@ export interface GaugeInfo {
   id: string;
   label: string;
   description: string;
+  handlingNotes: string;
   commonBarrels: string[];
+  typicalDisciplines: string[];
   faq?: GaugeFAQItem[];
 }
 

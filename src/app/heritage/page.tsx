@@ -28,7 +28,7 @@ export default function HeritagePage() {
           { label: "Heritage", href: "/heritage" },
         ]}
       />
-      <BrandTimeline events={timeline} skipTargetId="heritage-champions" />
+      <BrandTimeline events={timeline} skipTargetId="heritage-after-timeline" />
       <section
         id="heritage-champions"
         tabIndex={-1}

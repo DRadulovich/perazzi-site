@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { FAQItem } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
+import { logAnalytics } from "@/lib/analytics";
 
 type FAQListProps = {
   items: FAQItem[];
@@ -46,7 +47,7 @@ function FAQItemCard({ item, index }: { item: FAQItem; index: number }) {
 
   useEffect(() => {
     if (open) {
-      console.log(`[analytics] FAQViewed:${index}`);
+      logAnalytics(`FAQViewed:${index}`);
     }
   }, [open, index]);
 

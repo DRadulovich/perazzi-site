@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { FittingStage } from "@/types/build";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { logAnalytics } from "@/lib/analytics";
 import { BuildStepItem } from "./BuildStepItem";
 
 type BuildStepsScrollerProps = {
@@ -63,7 +64,7 @@ export function BuildStepsScroller({
   useEffect(() => {
     const current = mappedSteps[activeStep];
     if (current) {
-      console.log(`[analytics] BuildStepActive:${current.id}`);
+      logAnalytics(`BuildStepActive:${current.id}`);
       onStepView?.(current.id);
       const next = mappedSteps[activeStep + 1];
       if (next && next.media.kind === "image") {

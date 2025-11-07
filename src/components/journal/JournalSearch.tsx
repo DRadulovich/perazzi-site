@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { logAnalytics } from "@/lib/analytics";
 
 export function JournalSearch() {
   const [term, setTerm] = useState("");
   useEffect(() => {
     if (!term) return;
     const preview = setTimeout(() => {
-      console.log("SearchPreview", term);
+      logAnalytics("SearchPreview");
     }, 300);
     return () => clearTimeout(preview);
   }, [term]);
@@ -18,7 +19,7 @@ export function JournalSearch() {
       className="flex flex-col gap-2 rounded-3xl border border-border/70 bg-card/70 p-4 sm:flex-row sm:items-end"
       onSubmit={(event) => {
         event.preventDefault();
-        console.log("SearchSubmitted", term);
+        logAnalytics("SearchSubmitted");
       }}
     >
       <label className="flex w-full flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">

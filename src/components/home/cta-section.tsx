@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import type { HomeData } from "@/types/content";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { logAnalytics } from "@/lib/analytics";
 
 type CTASectionProps = {
   finale: HomeData["finale"];
@@ -40,9 +41,7 @@ export function CTASection({ finale }: CTASectionProps) {
             variant="primary"
             size="lg"
             className="bg-white text-perazzi-black hover:bg-white/90 focus-visible:bg-white"
-            onClick={() => {
-              console.log("[analytics] CTA:primary");
-            }}
+            onClick={() => logAnalytics("FinalCTAClicked:primary")}
           >
             <a href={finale.ctaPrimary.href}>{finale.ctaPrimary.label}</a>
           </Button>
@@ -51,9 +50,7 @@ export function CTASection({ finale }: CTASectionProps) {
               asChild
               variant="secondary"
               size="lg"
-              onClick={() => {
-                console.log("[analytics] CTA:secondary");
-              }}
+              onClick={() => logAnalytics("FinalCTAClicked:secondary")}
             >
               <a href={finale.ctaSecondary.href}>{finale.ctaSecondary.label}</a>
             </Button>

@@ -1,13 +1,17 @@
 import { journalCategories } from "@/content/journal";
-import { CategoryHeader } from "@/components/journal/CategoryHeader";
-import { CategoryView } from "@/components/journal/CategoryView";
+import { CategoryPageLayout } from "@/components/journal/CategoryPageLayout";
 
-export default function JournalNewsPage() {
-  const data = journalCategories.news;
+type NewsPageProps = {
+  searchParams?: Record<string, string | string[] | undefined>;
+};
+
+export default function JournalNewsPage({ searchParams }: NewsPageProps) {
   return (
-    <div className="space-y-10">
-      <CategoryHeader header={data.header} />
-      <CategoryView data={data} categoryKey="news" />
-    </div>
+    <CategoryPageLayout
+      data={journalCategories.news}
+      categoryKey="news"
+      basePath="/journal/news"
+      searchParams={searchParams}
+    />
   );
 }

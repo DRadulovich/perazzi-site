@@ -5,6 +5,7 @@ import { useCallback, useMemo, useState } from "react";
 import Image from "next/image";
 import type { FactoryAsset } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { logAnalytics } from "@/lib/analytics";
 
 type MosaicGalleryProps = {
   assets: FactoryAsset[];
@@ -21,7 +22,7 @@ export function MosaicGallery({ assets }: MosaicGalleryProps) {
       setOpenIndex(index);
       const asset = assets[index];
       if (asset) {
-        console.log(`[analytics] MosaicLightboxOpen:${asset.id}`);
+        logAnalytics(`MosaicLightboxOpen:${asset.id}`);
       }
     },
     [assets],
@@ -36,7 +37,7 @@ export function MosaicGallery({ assets }: MosaicGalleryProps) {
         const nextIndex = (prev + direction + assets.length) % assets.length;
         const asset = assets[nextIndex];
         if (asset) {
-          console.log(`[analytics] MosaicLightboxOpen:${asset.id}`);
+          logAnalytics(`MosaicLightboxOpen:${asset.id}`);
         }
         return nextIndex;
       });

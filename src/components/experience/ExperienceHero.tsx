@@ -18,7 +18,7 @@ type ExperienceHeroProps = {
 };
 
 export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
-  const analyticsRef = useAnalyticsObserver("ExperienceHeroSeen");
+  const analyticsRef = useAnalyticsObserver("HeroSeen:experience");
   const containerRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
   const ratio = hero.background.aspectRatio ?? 16 / 9;
@@ -48,7 +48,7 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
   return (
     <motion.section
       ref={setRefs}
-      data-analytics-id="ExperienceHeroSeen"
+      data-analytics-id="HeroSeen:experience"
       className="relative isolate overflow-hidden rounded-3xl bg-perazzi-black text-white"
       initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
       animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}

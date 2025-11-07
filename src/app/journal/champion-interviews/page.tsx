@@ -1,13 +1,19 @@
 import { journalCategories } from "@/content/journal";
-import { CategoryHeader } from "@/components/journal/CategoryHeader";
-import { CategoryView } from "@/components/journal/CategoryView";
+import { CategoryPageLayout } from "@/components/journal/CategoryPageLayout";
 
-export default function ChampionInterviewsPage() {
-  const data = journalCategories.interviews;
+type ChampionInterviewsPageProps = {
+  searchParams?: Record<string, string | string[] | undefined>;
+};
+
+export default function ChampionInterviewsPage({
+  searchParams,
+}: ChampionInterviewsPageProps) {
   return (
-    <div className="space-y-10">
-      <CategoryHeader header={data.header} />
-      <CategoryView data={data} categoryKey="interviews" />
-    </div>
+    <CategoryPageLayout
+      data={journalCategories.interviews}
+      categoryKey="interviews"
+      basePath="/journal/champion-interviews"
+      searchParams={searchParams}
+    />
   );
 }

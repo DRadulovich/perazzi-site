@@ -1,9 +1,10 @@
- "use client";
+"use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
 import Image from "next/image";
 import { useState } from "react";
 import type { GradeSeries } from "@/types/catalog";
+import { logAnalytics } from "@/lib/analytics";
 
 type EngravingGalleryProps = {
   gallery: GradeSeries["gallery"];
@@ -22,14 +23,14 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
     if (openIndex === null) return;
     const nextIndex =
       (openIndex - 1 + gallery.length) % gallery.length;
-    console.log("[analytics] EngravingLightbox:prev");
+    logAnalytics("EngravingLightbox:prev");
     setOpenIndex(nextIndex);
   };
 
   const showNext = () => {
     if (openIndex === null) return;
     const nextIndex = (openIndex + 1) % gallery.length;
-    console.log("[analytics] EngravingLightbox:next");
+    logAnalytics("EngravingLightbox:next");
     setOpenIndex(nextIndex);
   };
 
@@ -53,7 +54,7 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
               type="button"
               onClick={() => {
                 setOpenIndex(index);
-                console.log("[analytics] EngravingLightbox:open", asset.id);
+                logAnalytics(`EngravingLightbox:open:${asset.id}`);
               }}
               className="text-left"
             >
@@ -86,7 +87,7 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
         open={openIndex !== null}
         onOpenChange={(open) => {
           if (!open) {
-            console.log("[analytics] EngravingLightbox:close");
+            logAnalytics("EngravingLightbox:close");
             setOpenIndex(null);
           }
         }}

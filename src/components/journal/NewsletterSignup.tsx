@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { logAnalytics } from "@/lib/analytics";
 
 export function NewsletterSignup() {
   const [email, setEmail] = useState("");
@@ -21,7 +22,7 @@ export function NewsletterSignup() {
           className="flex flex-col gap-3 sm:flex-row"
           onSubmit={(event) => {
             event.preventDefault();
-            console.log("SubscribeSubmit", email);
+            logAnalytics("SubscribeSubmit");
             setSubmitted(true);
           }}
         >

@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import type { ShotgunsSeriesEntry } from "@/types/catalog";
+import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 type SeriesHeroProps = {
   hero: ShotgunsSeriesEntry["hero"];
@@ -8,10 +11,13 @@ type SeriesHeroProps = {
 
 export function SeriesHero({ hero, analyticsId }: SeriesHeroProps) {
   const ratio = hero.media.aspectRatio ?? 16 / 9;
+  const heroId = analyticsId ?? "HeroSeen:shotguns-series";
+  const heroRef = useAnalyticsObserver(heroId);
 
   return (
     <section
-      data-analytics-id={analyticsId}
+      ref={heroRef}
+      data-analytics-id={heroId}
       className="rounded-3xl bg-perazzi-black text-white"
       aria-labelledby="series-hero-heading"
     >

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { logAnalytics } from "@/lib/analytics";
 
 type RelatedArticle = {
   id: string;
@@ -32,6 +33,7 @@ export function RelatedList({ items }: RelatedListProps) {
               href={item.slug.startsWith("/") ? item.slug : `/${item.slug}`}
               className="font-semibold text-perazzi-red focus-ring"
               prefetch
+              onClick={() => logAnalytics(`RelatedClick:${item.slug}`)}
             >
               {item.title}
             </Link>

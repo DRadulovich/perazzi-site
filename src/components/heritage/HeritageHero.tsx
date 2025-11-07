@@ -18,7 +18,7 @@ type HeritageHeroProps = {
 };
 
 export function HeritageHero({ hero, breadcrumbs }: HeritageHeroProps) {
-  const analyticsRef = useAnalyticsObserver("HeritageHeroSeen");
+  const analyticsRef = useAnalyticsObserver("HeroSeen:heritage");
   const containerRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
   const ratio = hero.background.aspectRatio ?? 16 / 9;
@@ -47,7 +47,7 @@ export function HeritageHero({ hero, breadcrumbs }: HeritageHeroProps) {
   return (
     <motion.section
       ref={setRefs}
-      data-analytics-id="HeritageHeroSeen"
+      data-analytics-id="HeroSeen:heritage"
       className="relative isolate overflow-hidden rounded-3xl bg-perazzi-black text-white"
       initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
       animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
+import { logAnalytics } from "@/lib/analytics";
 import type { BuildPageData, BookingOption, WhatToExpectItem } from "@/types/build";
 
 type BookingOptionsProps = {
@@ -42,7 +43,7 @@ function BookingOptionCard({ option }: BookingOptionCardProps) {
           variant="secondary"
           size="lg"
           onClick={() => {
-            console.log(`[analytics] BookingClicked:${option.id}`);
+            logAnalytics(`BookingClicked:${option.id}`);
           }}
         >
           <a href={option.href}>Begin Your Fitting</a>
@@ -74,8 +75,8 @@ function WhatToExpectCollapsible({
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        console.log(
-          `[analytics] WhatToExpectToggle:${item.id}:${next ? "open" : "close"}`,
+        logAnalytics(
+          `WhatToExpectToggle:${item.id}:${next ? "open" : "close"}`,
         );
       }}
     >
@@ -182,7 +183,7 @@ export function BookingOptions({ booking }: BookingOptionsProps) {
             variant="secondary"
             onClick={() => {
               setShowScheduler(true);
-              console.log("[analytics] BookingSchedulerOpen");
+              logAnalytics("BookingSchedulerOpen");
             }}
           >
             Load scheduler

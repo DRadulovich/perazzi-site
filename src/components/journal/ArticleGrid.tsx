@@ -1,29 +1,77 @@
 "use client";
 
+import { useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useRouter } from "next/navigation";
 import type { JournalCategoryData } from "@/types/journal";
+import type { JournalFilterState } from "@/lib/journal/filters";
+import { logAnalytics } from "@/lib/analytics";
 
 type ArticleGridProps = {
   items: JournalCategoryData["items"];
-  pagination: JournalCategoryData["pagination"];
-  onPageChange?: (page: number) => void;
+  pagination: { page: number; pageCount: number };
+  totalItems: number;
+  basePath: string;
+  filters: JournalFilterState;
+  categoryKey: string;
+  pageStart: number;
+  pageEnd: number;
 };
 
-export function ArticleGrid({ items, pagination, onPageChange }: ArticleGridProps) {
-  const pages = useMemo(() => Array.from({ length: pagination.pageCount }, (_, i) => i + 1), [pagination.pageCount]);
+const buildQuery = (filters: JournalFilterState, page: number) => {
+  const params = new URLSearchParams();
+  if (filters.sort !== "latest") params.set("sort", filters.sort);
+  if (filters.tag) params.set("tag", filters.tag);
+  if (filters.author) params.set("author", filters.author);
+  if (page > 1) params.set("page", String(page));
+  const query = params.toString();
+  return query ? `?${query}` : "";
+};
+
+export function ArticleGrid({
+  items,
+  pagination,
+  totalItems,
+  basePath,
+  filters,
+  categoryKey,
+  pageStart,
+  pageEnd,
+}: ArticleGridProps) {
+  const router = useRouter();
+  const pages = useMemo(
+    () => Array.from({ length: pagination.pageCount }, (_, i) => i + 1),
+    [pagination.pageCount],
+  );
+
+  useEffect(() => {
+    if (pagination.page < pagination.pageCount) {
+      const nextQuery = buildQuery(filters, pagination.page + 1);
+      router.prefetch(`${basePath}${nextQuery}`);
+    }
+  }, [router, basePath, filters, pagination.page, pagination.pageCount]);
+
+  const handlePageChange = (page: number) => {
+    const query = buildQuery(filters, page);
+    router.push(`${basePath}${query}`, { scroll: false });
+    logAnalytics(`CategoryTabClick:${categoryKey}-page-${page}`);
+  };
 
   return (
-    <div className="space-y-6" aria-live="polite">
-      <p className="text-xs text-ink-muted">Showing {items.length} stories</p>
+    <div className="space-y-6">
+      <div aria-live="polite" className="text-xs text-ink-muted">
+        {totalItems === 0
+          ? "No stories match the current filters."
+          : `Showing ${pageStart}-${pageEnd} of ${totalItems} stories`}
+      </div>
       <div className="grid gap-6 md:grid-cols-2">
         {items.map((item) => (
           <article key={item.slug} className="rounded-3xl border border-border/70 bg-card">
             <Link
               href={`/journal/${item.slug}`}
               className="flex h-full flex-col focus-ring"
-              onClick={() => console.log(`ArticleImpression:${item.slug}`)}
+              onClick={() => logAnalytics(`ArticleImpression:${item.slug}`)}
             >
               <div className="relative" style={{ aspectRatio: item.hero.aspectRatio ?? 16 / 9 }}>
                 <Image
@@ -51,20 +99,23 @@ export function ArticleGrid({ items, pagination, onPageChange }: ArticleGridProp
           </article>
         ))}
       </div>
-      <nav aria-label="Pagination" className="flex flex-wrap gap-2">
-        {pages.map((page) => (
-          <button
-            key={page}
-            type="button"
-            className={`rounded-full border px-3 py-1 text-sm focus-ring ${
-              page === pagination.page ? "border-perazzi-red text-perazzi-red" : "border-border text-ink"
-            }`}
-            onClick={() => onPageChange?.(page)}
-          >
-            {page}
-          </button>
-        ))}
-      </nav>
+      {pagination.pageCount > 1 ? (
+        <nav aria-label="Pagination" className="flex flex-wrap gap-2">
+          {pages.map((page) => (
+            <button
+              key={page}
+              type="button"
+              className={`rounded-full border px-3 py-1 text-sm focus-ring ${
+                page === pagination.page ? "border-perazzi-red text-perazzi-red" : "border-border text-ink"
+              }`}
+              aria-current={page === pagination.page ? "page" : undefined}
+              onClick={() => handlePageChange(page)}
+            >
+              {page}
+            </button>
+          ))}
+        </nav>
+      ) : null}
     </div>
   );
 }

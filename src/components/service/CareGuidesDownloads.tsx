@@ -2,6 +2,7 @@
 
 import type { GuideDownload } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { logAnalytics } from "@/lib/analytics";
 
 type CareGuidesDownloadsProps = {
   guides: GuideDownload[];
@@ -43,7 +44,7 @@ export function CareGuidesDownloads({ guides }: CareGuidesDownloadsProps) {
               target="_blank"
               rel="noopener noreferrer"
               className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-perazzi-red focus-ring"
-              onClick={() => console.log(`[analytics] GuideDownload:${guide.id}`)}
+              onClick={() => logAnalytics(`GuideDownload:${guide.id}`)}
             >
               Download
               {guide.fileSize ? (

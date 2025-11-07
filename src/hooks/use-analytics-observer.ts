@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { logAnalytics } from "@/lib/analytics";
 
 export function useAnalyticsObserver(
   analyticsId: string,
@@ -19,7 +20,7 @@ export function useAnalyticsObserver(
       entries.forEach((entry) => {
         if (!hasLogged && entry.isIntersecting) {
           hasLogged = true;
-          console.log(`[analytics] ${analyticsId}`);
+          logAnalytics(analyticsId);
           observer.disconnect();
         }
       });

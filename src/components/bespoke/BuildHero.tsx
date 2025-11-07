@@ -10,7 +10,7 @@ type BuildHeroProps = {
 };
 
 export function BuildHero({ hero }: BuildHeroProps) {
-  const containerRef = useAnalyticsObserver("BuildHeroSeen");
+  const containerRef = useAnalyticsObserver("HeroSeen:bespoke");
   const prefersReducedMotion = useReducedMotion();
   const ratio = hero.media.aspectRatio ?? 16 / 9;
   const { scrollYProgress } = useScroll({
@@ -30,7 +30,7 @@ export function BuildHero({ hero }: BuildHeroProps) {
   return (
     <section
       ref={containerRef}
-      data-analytics-id="BuildHeroSeen"
+      data-analytics-id="HeroSeen:bespoke"
       className="relative isolate overflow-hidden rounded-3xl bg-perazzi-black text-white"
     >
       <motion.div
