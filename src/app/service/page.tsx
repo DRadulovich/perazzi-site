@@ -33,8 +33,29 @@ export default function ServicePage() {
     finalCta,
   } = serviceData;
 
+  const faqSchema = faq.length
+    ? {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: faq.map((item) => ({
+          "@type": "Question",
+          name: item.q,
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: item.aHtml,
+          },
+        })),
+      }
+    : null;
+
   return (
     <div className="space-y-16">
+      {faqSchema ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        />
+      ) : null}
       <ServiceHero
         hero={hero}
         breadcrumbs={[
@@ -44,7 +65,7 @@ export default function ServicePage() {
       />
       <ServiceOverview overview={overview} />
       <ServiceNetworkFinder locations={locations} />
-      <MaintenanceRepairs overview={overview} />
+      <MaintenanceRepairs overview={overview} guide={maintenanceGuides[0]} />
       <PartsEditorial parts={partsEditorial} />
       <IntegrityAdvisory />
       <ServiceRequest

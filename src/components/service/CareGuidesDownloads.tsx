@@ -40,11 +40,16 @@ export function CareGuidesDownloads({ guides }: CareGuidesDownloadsProps) {
             />
             <a
               href={guide.fileUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-perazzi-red focus-ring"
               onClick={() => console.log(`[analytics] GuideDownload:${guide.id}`)}
             >
               Download
-              {guide.fileSize ? <span className="text-xs text-ink-muted">({guide.fileSize})</span> : null}
+              {guide.fileSize ? (
+                <span className="text-xs text-ink-muted">({guide.fileSize})</span>
+              ) : null}
+              <span className="sr-only"> (opens in a new tab)</span>
             </a>
           </li>
         ))}

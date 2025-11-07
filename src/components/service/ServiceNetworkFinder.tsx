@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import type { ServiceLocation, ServiceLocationType } from "@/types/service";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -9,15 +10,35 @@ type ServiceNetworkFinderProps = {
   locations: ServiceLocation[];
 };
 
+const staticMap = {
+  url: "https://res.cloudinary.com/pwebsite/image/fetch/f_auto,q_auto/https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
+  alt: "Abstract map placeholder",
+  aspectRatio: 4 / 3,
+};
+
 export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
   const analyticsRef = useAnalyticsObserver("ServiceNetworkSeen");
   const [filter, setFilter] = useState<ServiceLocationType | "All">("All");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [mapOpen, setMapOpen] = useState(false);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search.toLowerCase());
+      console.log("[analytics] FinderFilterChange");
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const filteredLocations = useMemo(() => {
-    if (filter === "All") return locations;
-    return locations.filter((location) => location.type === filter);
-  }, [locations, filter]);
+    return locations.filter((location) => {
+      const matchesType = filter === "All" || location.type === filter;
+      const haystack = `${location.name} ${location.addressHtml}`.toLowerCase();
+      const matchesSearch = !debouncedSearch || haystack.includes(debouncedSearch);
+      return matchesType && matchesSearch;
+    });
+  }, [locations, filter, debouncedSearch]);
 
   const types: (ServiceLocationType | "All")[] = ["All", "Factory", "Service Center", "Specialist"];
 
@@ -42,22 +63,38 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
           Authorized locations worldwide
         </h2>
       </div>
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Filter service locations">
-        {types.map((type) => (
-          <Button
-            key={type}
-            type="button"
-            variant={filter === type ? "primary" : "secondary"}
-            size="sm"
-            onClick={() => {
-              setFilter(type);
-              console.log("[analytics] FinderFilterChange", type);
+      <form role="search" className="flex flex-col gap-3 md:flex-row md:items-end">
+        <label className="flex w-full flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">
+          Location type
+          <select
+            className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 text-sm text-ink focus-ring"
+            value={filter}
+            onChange={(event) => {
+              setFilter(event.target.value as ServiceLocationType | "All");
+              console.log("[analytics] FinderFilterChange");
             }}
           >
-            {type}
-          </Button>
-        ))}
-      </div>
+            {types.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex w-full flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">
+          Search by city or name
+          <input
+            type="search"
+            className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 text-sm text-ink focus-ring"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="e.g. London, Botticino"
+          />
+        </label>
+      </form>
+      <p className="text-xs text-ink-muted" aria-live="polite">
+        {filteredLocations.length} locations available.
+      </p>
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <ul role="list" className="space-y-4">
           {filteredLocations.map((location) => (
@@ -109,18 +146,25 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
           ))}
         </ul>
         <div className="space-y-3">
-          <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-neutral-200" style={{ aspectRatio: 4 / 3 }}>
+          <div
+            className="relative overflow-hidden rounded-2xl border border-border/70 bg-neutral-200"
+            style={{ aspectRatio: staticMap.aspectRatio }}
+          >
             {mapOpen ? (
               <iframe
                 src={defaultMapSrc}
-                title="Perazzi service network map"
+                title="Map of authorized service network"
                 className="h-full w-full"
                 loading="lazy"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center text-sm text-ink-muted">
-                Map loads on request
-              </div>
+              <Image
+                src={staticMap.url}
+                alt={staticMap.alt}
+                fill
+                sizes="(min-width: 1024px) 560px, 100vw"
+                className="object-cover"
+              />
             )}
           </div>
           {!mapOpen ? (
@@ -131,9 +175,16 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
                 console.log("[analytics] FinderMapOpen");
               }}
             >
-              Load map
+              Load interactive map
             </Button>
           ) : null}
+          <a
+            href="/service/request"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-perazzi-red focus-ring"
+          >
+            Request service
+            <span aria-hidden="true">→</span>
+          </a>
         </div>
       </div>
     </section>

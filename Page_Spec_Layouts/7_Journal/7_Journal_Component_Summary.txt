@@ -1,0 +1,83 @@
+
+# Journal – Component Prop Contracts (Condensed)
+
+Common
+- `FactoryAsset { id:string; kind:"image"|"video"; url:string; alt:string; captionHtml?:string; aspectRatio?:number }`
+- `ArticleRef { id:string; title:string; slug:string }`
+- `TagRef { id:string; label:string; slug:string }`
+
+JournalHero (reuse `HeroBanner`)
+- `title: string`
+- `subheading?: string`
+- `background: FactoryAsset` // LCP
+
+FeaturedStoryCard (new)
+- `article: { title:string; dekHtml?:string; author:string; dateISO:string; readingTimeMins:number; hero:FactoryAsset; category:string; slug:string }`
+
+CategoryHub (new)
+- `title: string`
+- `subtitleHtml?: string`
+- `items: Array<{ title:string; excerptHtml?:string; author:string; dateISO:string; readingTimeMins:number; hero:FactoryAsset; tags?:TagRef[]; slug:string }>`
+- `viewAllHref: string`
+
+TagChips / TopicCloud (new)
+- `tags: Array<{ id:string; label:string; slug:string; count?:number }>`
+- `selected?: string[]`
+- `onToggle?(slug:string): void`
+
+JournalSearch (new)
+- `onSubmit?(query:string): void`
+- `placeholder?: string`
+- `defaultQuery?: string`
+
+CategoryHeader (new)
+- `title: string`
+- `subtitleHtml?: string`
+- `featured?: ArticleRef`
+
+ArticleFilters (new)
+- `sort: "newest"|"oldest"|"longest"|"shortest"`
+- `tags?: string[]`
+- `authors?: string[]`
+- `onChange?(state:{ sort:string; tags:string[]; authors:string[] }): void`
+
+ArticleGrid (new)
+- `items: Array<{ title:string; excerptHtml?:string; author:string; dateISO:string; readingTimeMins:number; hero:FactoryAsset; tags?:TagRef[]; slug:string }>`
+- `pagination: { page:number; pageCount:number }`
+- `onLoadMore?(): void` // optional
+
+ArticleHero (new)
+- `title: string`
+- `dekHtml?: string`
+- `hero: FactoryAsset`
+- `author: string`
+- `dateISO: string`
+- `readingTimeMins: number`
+- `category: string`
+- `tags?: TagRef[]`
+
+MetaBar (new)
+- `author: string`
+- `dateISO: string`
+- `readingTimeMins: number`
+- `onCopyLink?(): void`
+- `showProgress?: boolean`
+
+PortableBody (new)
+- `blocks: any[]` // Portable Text blocks
+- `showToc?: boolean`
+
+PullQuote / Callout / Gallery (new)
+- `PullQuote: { text:string; cite?:string }`
+- `Callout: { html:string }`
+- `Gallery: { items: FactoryAsset[] }`
+
+AuthorBox (new)
+- `author: { name:string; bioHtml?:string; headshot?:FactoryAsset; links?:Array<{ label:string; href:string }> }`
+
+RelatedList (reuse)
+- `items: Array<ArticleRef>`
+
+NewsletterSignup (new)
+- `onSubmit?(email:string): Promise<void>`
+- `privacyHref?: string`

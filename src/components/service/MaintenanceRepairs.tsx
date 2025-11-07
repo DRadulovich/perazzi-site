@@ -2,14 +2,15 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
-import type { ServiceOverview } from "@/types/service";
+import type { GuideDownload, ServiceOverview } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 type MaintenanceRepairsProps = {
   overview: ServiceOverview;
+  guide?: GuideDownload;
 };
 
-export function MaintenanceRepairs({ overview }: MaintenanceRepairsProps) {
+export function MaintenanceRepairs({ overview, guide }: MaintenanceRepairsProps) {
   const analyticsRef = useAnalyticsObserver("MaintenanceRepairsSeen");
   const [open, setOpen] = useState(false);
 
@@ -32,6 +33,21 @@ export function MaintenanceRepairs({ overview }: MaintenanceRepairsProps) {
         className="prose prose-sm max-w-none text-ink-muted"
         dangerouslySetInnerHTML={{ __html: overview.checksHtml }}
       />
+      {guide ? (
+        <a
+          href={guide.fileUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-perazzi-red focus-ring"
+          onClick={() => console.log(`[analytics] GuideDownload:${guide.id}`)}
+        >
+          Download {guide.title}
+          {guide.fileSize ? (
+            <span className="text-xs text-ink-muted">({guide.fileSize})</span>
+          ) : null}
+          <span className="sr-only"> (opens in a new tab)</span>
+        </a>
+      ) : null}
       <Collapsible.Root open={open} onOpenChange={setOpen}>
         <Collapsible.Trigger
           className="flex w-full items-center justify-between rounded-2xl border border-border px-4 py-3 text-left text-sm font-semibold text-ink focus-ring"

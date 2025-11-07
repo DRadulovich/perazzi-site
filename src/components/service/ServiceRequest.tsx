@@ -23,6 +23,8 @@ export function ServiceRequest({
 }: RequestProps) {
   const analyticsRef = useAnalyticsObserver(`${analyticsOpenId}Seen`);
   const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
 
   return (
     <section
@@ -42,15 +44,40 @@ export function ServiceRequest({
           loading="lazy"
         />
       ) : (
-        <Button
-          variant="primary"
-          onClick={() => {
+        <form
+          className="space-y-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!email || !email.includes("@")) {
+              setError("Enter a valid email so we can reply.");
+              return;
+            }
+            setError("");
             setOpen(true);
             console.log(`[analytics] ${analyticsOpenId}`);
           }}
         >
-          {buttonLabel}
-        </Button>
+          <label className="flex flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">
+            Contact email
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 text-sm text-ink focus-ring"
+              required
+            />
+          </label>
+          <Button type="submit" variant="primary">
+            {buttonLabel}
+          </Button>
+          <p
+            className="text-xs text-perazzi-red"
+            role="status"
+            aria-live="polite"
+          >
+            {error}
+          </p>
+        </form>
       )}
       <p className="text-xs text-ink-muted">
         Prefer email?{" "}
