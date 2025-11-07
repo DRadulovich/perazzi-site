@@ -1,0 +1,17 @@
+files["3_Bespoke_Component_Inventory.txt"] = textwrap.dedent("""\
+# Bespoke Build – Mini Component Inventory
+
+- `BuildHero` (new) — Eyebrow / Title / Intro / Background media (LCP)
+- `JourneyOverview` (new) — Editorial step summary + anchor links
+- `BuildStepsScroller` (new) — Pinned media (desktop), stacked on mobile
+- `BuildStepItem` (new) — Step content + media + optional CTA
+- `ExpertCard` (new) — Name / Role / Headshot / Bio / Quote (+ optional Dialog)
+- `BookingOptions` (new) — Option cards + CTAs; optional scheduler embed
+- `AssuranceBlock` (new) — editorial reassurance
+- `CTASection` (reuse)
+
+# Key Entity Feeds
+- `BuildHero`, `FittingStage[]`, `Expert[]`, `BookingOption[]`
+- Optional: `Service/Location` refs (Factory Tour, Fitting Service), `Article[]`
+- `FactoryAsset` for all imagery/video
+""")

@@ -1,0 +1,65 @@
+"use client";
+
+import { motion, useReducedMotion } from "framer-motion";
+import type { HomeData } from "@/types/content";
+import { Button } from "@/components/ui/button";
+import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+
+type CTASectionProps = {
+  finale: HomeData["finale"];
+};
+
+export function CTASection({ finale }: CTASectionProps) {
+  const analyticsRef = useAnalyticsObserver("FinalCTASeen");
+  const prefersReducedMotion = useReducedMotion();
+
+  return (
+    <motion.section
+      ref={analyticsRef}
+      data-analytics-id="FinalCTASeen"
+      className="rounded-3xl bg-perazzi-black px-6 py-10 text-white sm:px-10"
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 30 }}
+      whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.6 }}
+      transition={{ duration: 0.6, ease: [0.33, 1, 0.68, 1] }}
+      aria-labelledby="final-cta-heading"
+    >
+      <div className="space-y-6">
+        <h2
+          id="final-cta-heading"
+          className="text-2xl font-semibold tracking-tight text-white"
+        >
+          Join the legacy
+        </h2>
+        <p className="max-w-2xl text-lg leading-relaxed text-white/80">
+          {finale.text}
+        </p>
+        <div className="flex flex-wrap gap-4">
+          <Button
+            asChild
+            variant="primary"
+            size="lg"
+            className="bg-white text-perazzi-black hover:bg-white/90 focus-visible:bg-white"
+            onClick={() => {
+              console.log("[analytics] CTA:primary");
+            }}
+          >
+            <a href={finale.ctaPrimary.href}>{finale.ctaPrimary.label}</a>
+          </Button>
+          {finale.ctaSecondary ? (
+            <Button
+              asChild
+              variant="secondary"
+              size="lg"
+              onClick={() => {
+                console.log("[analytics] CTA:secondary");
+              }}
+            >
+              <a href={finale.ctaSecondary.href}>{finale.ctaSecondary.label}</a>
+            </Button>
+          ) : null}
+        </div>
+      </div>
+    </motion.section>
+  );
+}

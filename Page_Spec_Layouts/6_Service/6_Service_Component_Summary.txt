@@ -1,0 +1,48 @@
+# Service & Parts – Component Prop Contracts (Condensed)
+
+Common
+- `FactoryAsset { id:string; kind:"image"|"video"; url:string; alt:string; captionHtml?:string; aspectRatio?:number }`
+
+ServiceHero (reuse `HeroBanner`)
+- `title: string`
+- `subheading?: string`
+- `background: FactoryAsset` // LCP
+
+ServiceOverview (new)
+- `introHtml: string`
+- `checksHtml: string`
+
+ServiceNetworkFinder (new)
+- `filters: { region?: string; query?: string }`
+- `results: Array<{ id:string; name:string; type:"Factory"|"Service Center"|"Specialist"; addressHtml:string; phone?:string; email?:string; website?:string; notesHtml?:string }>`
+- `onFilterChange?(filters:{ region?:string; query?:string }): void`
+
+MaintenanceRepairs (new)
+- `sections: Array<{ id:string; title:string; html:string }>`
+- `checklistHtml?: string`
+- `pdf?: { url:string; size?:string }`
+
+PartsEditorial (new)
+- `items: Array<{ name:string; purpose:string; fitment:"factory"|"authorized"|"user"; notesHtml?:string }>`
+
+IntegrityAdvisory (new)
+- `items: Array<{ id:string; title:string; html:string }>`
+
+ServiceRequest (new)
+- `actionHref?: string` // or embed url
+- `embed?: { provider:string; url:string }` // on-demand iframe embed
+- `locations?: Array<{ id:string; name:string }>`
+
+PartsRequest (new)
+- same as ServiceRequest (fields tuned for parts)
+
+CareGuidesDownloads (new)
+- `guides: Array<{ id:string; title:string; summaryHtml:string; fileUrl:string; fileSize?:string }>`
+
+FAQList (new/reuse)
+- `items: Array<{ q:string; aHtml:string }>`
+
+CTASection (reuse)
+- `primary: { label:string; href:string }`
+- `secondary?: { label:string; href:string }`
+- `text?: string`

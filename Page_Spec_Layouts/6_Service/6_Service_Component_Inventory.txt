@@ -1,0 +1,22 @@
+# Service & Parts – Mini Component Inventory
+
+By Page Section
+- `ServiceHero` (reuse `HeroBanner`)
+- `ServiceOverview` (new) — editorial overview + core checks
+- `ServiceNetworkFinder` (new) — filter + list (+ optional map embed)
+- `MaintenanceRepairs` (new) — routine care + shipping checklist (collapsibles)
+- `PartsEditorial` (new) — genuine parts & upgrades (editorial list)
+- `IntegrityAdvisory` (new) — authenticity/grey market/fitment guidance
+- `ServiceRequest` (new) — request flow (or embedded form)
+- `PartsRequest` (new) — parts/advice request flow
+- `CareGuidesDownloads` (new) — accessible download list
+- `FAQList` (new/reuse) — Q/A + optional JSON‑LD
+- `CTASection` (reuse) — primary: Request Service; secondary: Request Parts Advice
+
+By Component Type
+- **Hero:** `ServiceHero`
+- **Editorial:** `ServiceOverview`, `IntegrityAdvisory`
+- **Finders/Lists:** `ServiceNetworkFinder`, `CareGuidesDownloads`
+- **Guidance:** `MaintenanceRepairs`, `PartsEditorial`, `FAQList`
+- **Forms:** `ServiceRequest`, `PartsRequest`
+- **CTA:** `CTASection`

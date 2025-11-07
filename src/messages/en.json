@@ -1,0 +1,17 @@
+{
+  "Header": {
+    "tagline": "Editorial prototype",
+    "brand": "Perazzi",
+    "nav": {
+      "ariaLabel": "Primary site navigation",
+      "layoutShell": "Layout shell",
+      "routesScaffold": "Routes scaffold"
+    }
+  },
+  "LocaleSwitcher": {
+    "label": "Locale",
+    "options": {
+      "en": "English"
+    }
+  }
+}

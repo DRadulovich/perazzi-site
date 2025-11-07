@@ -1,0 +1,46 @@
+files["3_Bespoke_Component_Summary.txt"] = textwrap.dedent("""\
+# Bespoke Build – Component Prop Contracts (Condensed)
+
+> Use these exact names. Align with `src/types/content.ts` and `src/types/build.ts`. Reserve `aspectRatio` on all media to prevent CLS.
+
+## Types
+- `FactoryAsset { id: string; kind: "image"|"video"; url: string; alt: string; caption?: string; aspectRatio?: number }`
+- `BuildHero { eyebrow: string; title: string; introHtml: string; media: FactoryAsset }`
+- `FittingStage { id: string; title: string; bodyHtml: string; media: FactoryAsset; captionHtml?: string; ctaLabel?: string; ctaHref?: string }`
+- `Expert { id: string; name: string; role: string; bioShort: string; headshot: FactoryAsset; quote?: string; profileHref?: string }`
+- `BookingOption { id: string; title: string; durationMins: number; descriptionHtml: string; href: string }`
+
+## BuildHero (new)
+- `eyebrow`, `title`, `introHtml`, `media: FactoryAsset`  
+- LCP; preconnect/preload; `alt` handling; `aria-hidden` for decorative layers
+
+## JourneyOverview (new)
+- `introHtml: string`  
+- `steps: Array<{ id: string; label: string; href: string }>`  
+- `disclaimerHtml?: string`
+
+## BuildStepsScroller (new)
+- `steps: FittingStage[]`  
+- `initialStepId?: string`  
+- `onStepView?(id: string): void`  
+- `onStepCta?(id: string): void`  
+- `pinnedBreakpoint?: "lg" | "xl"`  
+- `reduceMotion?: boolean`
+
+## BuildStepItem (new)
+- `step: FittingStage`
+
+## ExpertCard (new)
+- `expert: Expert`  
+- `onOpenProfile?(): void`
+
+## BookingOptions (new)
+- `options: BookingOption[]`  
+- `primaryCtaLabel?: string` // default “Begin Your Fitting”  
+- `secondaryCta?: { label: string; href: string }`
+
+## AssuranceBlock (new)
+- `html: string`  
+- `quote?: { author?: string; text: string }`  
+- `media?: FactoryAsset`
+""")

@@ -1,0 +1,42 @@
+files["5_Experience_Component_Summary.txt"] = textwrap.dedent("""\
+# Experience Perazzi – Component Prop Contracts (Condensed)
+
+Common
+- `FactoryAsset { id:string; kind:"image"|"video"; url:string; alt:string; captionHtml?:string; aspectRatio?:number }`
+
+ExperienceHero (reuse `HeroBanner`)
+- `title: string`
+- `subheading?: string`
+- `background: FactoryAsset` // LCP
+
+ExperiencePicker (new)
+- `items: Array<{ id:string; title:string; summary:string; media:FactoryAsset; ctaLabel:string; href:string }>`
+
+VisitFactory (new composite)
+- `introHtml: string`
+- `location: { name:string; addressHtml:string; mapEmbedSrc?:string; staticMap:FactoryAsset; hoursHtml?:string; notesHtml?:string }`
+- `whatToExpectHtml?: string`
+- `cta: { label:string; href:string }`
+
+BookingOptions (reuse with copy deltas)
+- `options: Array<{ id:string; title:string; durationMins:number; descriptionHtml:string; href:string }>`
+- `embed?: { provider:"acuity"|string; url:string }` // optional on-demand scheduler
+- `onOpenEmbed?(): void`
+
+DemoProgram (new)
+- `introHtml: string`
+- `events?: Array<{ id:string; date:string; clubName:string; cityState:string; href?:string }>`
+- `requestCta: { label:string; href:string }`
+- `whatToExpectHtml?: string`
+
+MosaicGallery (new)
+- `items: FactoryAsset[]`
+
+FAQList (new/reuse)
+- `items: Array<{ q:string; aHtml:string }>`
+
+CTASection (reuse)
+- `primary: { label:string; href:string }`
+- `secondary?: { label:string; href:string }`
+- `text?: string`
+"""])

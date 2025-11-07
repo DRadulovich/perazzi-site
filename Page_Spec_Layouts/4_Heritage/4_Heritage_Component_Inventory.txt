@@ -1,0 +1,22 @@
+files["4_Heritage_Component_Inventory.txt"] = textwrap.dedent("""\
+# Heritage & History – Mini Component Inventory
+
+By Page Section
+- `HeritageHero` (reuse `HeroBanner`, historic media)
+- `BrandTimeline` (new) — markers + content panel; list fallback
+- `MilestoneDetailDrawer` (new, optional) — deep context on events
+- `ChampionsGallery` (new) — evergreen cards; optional filters; profile dialog
+- `FactoryPhotoEssay` (new) — grid + Radix Dialog lightbox
+- `OralHistories` (new, optional) — audio + transcript
+- `RelatedList` (reuse) — longform articles
+- `CTASection` (reuse) — primary: Request a Visit; secondary: Begin Your Fitting
+
+By Component Type
+- **Hero:** `HeritageHero`
+- **Timeline:** `BrandTimeline`, `MilestoneDetailDrawer`
+- **People:** `ChampionsGallery` (+ `MarqueeFeature` reuse as needed)
+- **Galleries:** `FactoryPhotoEssay` (lightbox)
+- **Audio/Text:** `OralHistories` (audio + transcript)
+- **Lists:** `RelatedList`
+- **CTA:** `CTASection`
+"""])

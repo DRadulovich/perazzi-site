@@ -1,0 +1,1 @@
+export const factoryIntroHtml = `<p>Perazzi Botticino is a living archive: proof tunnel echo, walnut vaults, engraving bay, and the quiet benches where triggers are tuned. The essay below lets you step through each station before you visit.</p>`;
