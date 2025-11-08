@@ -41,7 +41,7 @@ export function VisitFactory({ visit }: VisitFactoryProps) {
           See the factory in person
         </h2>
         <div
-          className="prose prose-sm max-w-3xl text-ink-muted"
+          className="prose prose-base max-w-none text-ink-muted md:prose-lg md:max-w-3xl lg:max-w-4xl"
           dangerouslySetInnerHTML={{ __html: visit.introHtml }}
         />
       </div>

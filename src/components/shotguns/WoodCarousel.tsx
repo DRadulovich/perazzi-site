@@ -64,7 +64,7 @@ export function WoodCarousel({ grades }: WoodCarouselProps) {
             <div
               key={grade.id}
               data-analytics-id={`WoodCarousel:${grade.id}`}
-              className="flex min-w-[260px] flex-col rounded-3xl border border-border/70 bg-card p-4 shadow-sm"
+              className="flex min-w-[260px] flex-col rounded-3xl border border-border/70 bg-card p-4 shadow-sm md:min-w-[320px] md:p-6 lg:min-w-0 lg:p-8"
             >
               <div
                 className="relative overflow-hidden rounded-xl bg-neutral-200"

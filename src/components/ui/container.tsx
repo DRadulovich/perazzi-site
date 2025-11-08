@@ -8,10 +8,10 @@ type ContainerProps = HTMLAttributes<HTMLDivElement> & {
 };
 
 const sizeClasses: Record<NonNullable<ContainerProps["size"]>, string> = {
-  sm: "max-w-3xl",
-  md: "max-w-4xl",
-  lg: "max-w-5xl",
-  xl: "max-w-6xl",
+  sm: "max-w-4xl",
+  md: "max-w-5xl",
+  lg: "max-w-6xl",
+  xl: "max-w-7xl",
 };
 
 export const Container = forwardRef<HTMLDivElement, ContainerProps>(

@@ -17,7 +17,7 @@ export async function SiteShell({ children }: SiteShellProps) {
     <div className="flex min-h-screen flex-col bg-canvas text-ink">
       <SkipToContent />
       <header className="border-b border-subtle bg-card px-4 py-6 shadow-sm sm:px-8">
-        <div className="mx-auto flex max-w-6xl flex-col gap-6">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-[0.4em] text-ink-muted">
@@ -49,7 +49,7 @@ export async function SiteShell({ children }: SiteShellProps) {
         id="site-content"
         className="flex-1 px-4 py-12 sm:px-8 lg:px-12"
       >
-        <div className="mx-auto flex max-w-5xl flex-col gap-12">{children}</div>
+        <div className="mx-auto flex max-w-7xl flex-col gap-12">{children}</div>
       </main>
       <footer className="border-t border-subtle bg-card px-4 py-8 text-sm text-ink-muted sm:px-8">
         <div className="mx-auto max-w-6xl">

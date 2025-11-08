@@ -10,11 +10,13 @@ export function AuthorBox({ author }: AuthorBoxProps) {
   return (
     <section className="flex flex-col gap-4 rounded-3xl border border-border/70 bg-card/70 p-6 sm:flex-row">
       {author.headshot ? (
-        <div className="relative h-24 w-24 flex-none" style={{ aspectRatio: author.headshot.aspectRatio ?? 1 }}>
+        <div className="h-24 w-24 flex-none">
           <Image
             src={author.headshot.url}
             alt={author.headshot.alt}
-            fill
+            width={96}
+            height={96}
+            sizes="96px"
             className="rounded-full object-cover"
           />
         </div>

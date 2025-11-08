@@ -25,7 +25,7 @@ export function ServiceOverview({ overview }: ServiceOverviewProps) {
           Factory-level care, wherever you are
         </h2>
         <div
-          className="prose prose-sm max-w-none text-ink-muted"
+          className="prose prose-base max-w-none text-ink-muted md:prose-lg"
           dangerouslySetInnerHTML={{ __html: overview.introHtml }}
         />
       </div>
@@ -34,7 +34,7 @@ export function ServiceOverview({ overview }: ServiceOverviewProps) {
           Standard checks
         </h3>
         <div
-          className="prose prose-sm max-w-none text-ink"
+          className="prose prose-base max-w-none text-ink md:prose-lg"
           dangerouslySetInnerHTML={{ __html: overview.checksHtml }}
         />
       </div>

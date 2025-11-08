@@ -63,7 +63,7 @@ export function BuildHero({ hero }: BuildHeroProps) {
           {hero.title}
         </h1>
         <div
-          className="prose prose-sm prose-invert mx-auto mt-6 max-w-2xl text-white/80"
+          className="prose prose-base prose-invert mx-auto mt-6 max-w-none text-white/80 md:prose-lg md:max-w-3xl lg:max-w-4xl"
           dangerouslySetInnerHTML={{ __html: hero.introHtml }}
         />
       </motion.div>

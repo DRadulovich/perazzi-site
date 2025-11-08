@@ -33,7 +33,7 @@ function BookingOptionCard({ option }: BookingOptionCardProps) {
           {option.durationMins} minutes
         </p>
         <div
-          className="prose prose-sm max-w-none text-ink-muted"
+          className="prose prose-base max-w-none text-ink-muted md:prose-lg"
           dangerouslySetInnerHTML={{ __html: option.descriptionHtml }}
         />
       </div>
@@ -81,7 +81,7 @@ function WhatToExpectCollapsible({
       }}
     >
       <Collapsible.Trigger
-        className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card px-4 py-3 text-left text-sm font-semibold text-ink focus-ring"
+        className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card px-4 py-3 text-left text-sm font-semibold text-ink focus-ring md:px-6 md:py-4 md:text-base lg:px-7 lg:py-5"
         aria-controls={contentId}
         aria-expanded={open}
       >
@@ -99,14 +99,14 @@ function WhatToExpectCollapsible({
       <Collapsible.Content
         id={contentId}
         className={cn(
-          "overflow-hidden px-4 pt-3 text-sm text-ink-muted",
+          "overflow-hidden px-4 pt-3 text-sm text-ink-muted md:px-6 md:pt-4 md:text-base lg:px-7 lg:pt-5",
           reducedMotion
             ? "transition-none"
             : "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
         )}
       >
         <div
-          className="prose prose-sm max-w-none pb-4"
+          className="prose prose-base max-w-none pb-4 text-ink-muted md:prose-lg lg:pb-5"
           dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
         />
       </Collapsible.Content>
@@ -151,12 +151,12 @@ export function BookingOptions({ booking }: BookingOptionsProps) {
       </div>
       <aside
         aria-label="What to expect during your fitting"
-        className="space-y-3 rounded-3xl border border-border/70 bg-card/60 p-6 shadow-sm"
+        className="space-y-3 rounded-3xl border border-border/70 bg-card/60 p-6 shadow-sm md:space-y-4 md:p-8 lg:space-y-5 lg:p-10"
       >
         <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-ink-muted">
           What to expect
         </h3>
-        <div className="space-y-3">
+        <div className="space-y-3 md:space-y-4 lg:space-y-5">
           {booking.whatToExpect.map((item) => (
             <WhatToExpectCollapsible
               key={item.id}
@@ -167,7 +167,7 @@ export function BookingOptions({ booking }: BookingOptionsProps) {
           ))}
         </div>
       </aside>
-      <div className="space-y-3 rounded-3xl border border-border/70 bg-card/60 p-6 shadow-sm">
+      <div className="space-y-3 rounded-3xl border border-border/70 bg-card/60 p-6 shadow-sm md:space-y-4 md:p-8 lg:space-y-5 lg:p-10">
         <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-ink-muted">
           Schedule with the concierge
         </h3>

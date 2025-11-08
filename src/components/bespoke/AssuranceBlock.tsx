@@ -17,7 +17,7 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
       <div className="space-y-6">
         <div
           id="assurance-heading"
-          className="prose prose-sm max-w-none text-ink"
+          className="prose prose-base max-w-none text-ink md:prose-lg"
           dangerouslySetInnerHTML={{ __html: html }}
         />
         {quote ? (

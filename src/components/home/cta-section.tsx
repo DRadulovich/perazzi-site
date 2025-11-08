@@ -32,7 +32,7 @@ export function CTASection({ finale }: CTASectionProps) {
         >
           Join the legacy
         </h2>
-        <p className="max-w-2xl text-lg leading-relaxed text-white/80">
+        <p className="max-w-none text-lg leading-relaxed text-white/80 md:max-w-3xl lg:max-w-4xl">
           {finale.text}
         </p>
         <div className="flex flex-wrap gap-4">

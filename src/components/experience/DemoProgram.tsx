@@ -38,12 +38,12 @@ export function DemoProgram({ demo }: DemoProgramProps) {
           Meet us on the road
         </h2>
         <div
-          className="prose prose-sm max-w-3xl text-ink-muted"
+          className="prose prose-base max-w-none text-ink-muted md:prose-lg md:max-w-3xl lg:max-w-4xl"
           dangerouslySetInnerHTML={{ __html: demo.introHtml }}
         />
       </div>
       {events.length ? (
-        <div className="flex flex-wrap gap-2" aria-label="Filter by city" role="group">
+        <div className="flex flex-wrap gap-2 md:gap-3 lg:gap-4" aria-label="Filter by city" role="group">
           <button
             type="button"
             className={cn(
@@ -80,7 +80,7 @@ export function DemoProgram({ demo }: DemoProgramProps) {
           filteredEvents.map((event) => (
             <article
               key={event.id}
-              className="rounded-2xl border border-border/70 bg-card/70 p-4"
+              className="rounded-2xl border border-border/70 bg-card/70 p-4 md:p-6 lg:p-8"
             >
               <p className="text-xs uppercase tracking-[0.3em] text-ink-muted">
                 {new Date(event.date).toLocaleDateString(undefined, {
@@ -116,7 +116,7 @@ export function DemoProgram({ demo }: DemoProgramProps) {
       </div>
       <div className="space-y-2">
         <div
-          className="rounded-2xl border border-border/60 bg-card/60 p-4 text-sm text-ink-muted"
+          className="rounded-2xl border border-border/60 bg-card/60 p-4 text-sm text-ink-muted md:p-6 lg:p-7"
           dangerouslySetInnerHTML={{ __html: demo.whatToExpectHtml ?? "" }}
         />
         <Button

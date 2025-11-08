@@ -71,7 +71,7 @@ export function DisciplineRail({
         role="region"
         aria-live="polite"
         aria-label="Discipline overview cards"
-        className="flex gap-4 overflow-x-auto scroll-px-6 pb-2 lg:grid lg:grid-cols-3 lg:gap-6 lg:overflow-visible"
+        className="flex gap-4 overflow-x-auto scroll-px-6 pb-2 md:grid md:grid-cols-2 md:gap-6 md:overflow-visible lg:grid-cols-3"
         tabIndex={0}
       >
         {disciplines.map((discipline, index) => (
@@ -111,7 +111,7 @@ function DisciplineCard({
       ref={cardRef}
       href={`/shotguns/disciplines/${discipline.id}`}
       data-analytics-id={`DisciplineChip:${discipline.id}`}
-      className="flex min-w-[260px] flex-col rounded-2xl border border-border/60 bg-card p-4 text-left shadow-sm focus-ring"
+      className="flex min-w-[260px] flex-col rounded-2xl border border-border/60 bg-card p-4 text-left shadow-sm focus-ring md:min-w-0 md:p-5 lg:p-6"
       aria-label={`Slide ${index + 1} of ${total}: ${discipline.name}`}
       onClick={() =>
         logAnalytics(`shotguns_discipline_card_click:${discipline.id}`)

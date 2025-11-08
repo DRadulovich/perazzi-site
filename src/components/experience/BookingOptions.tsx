@@ -42,7 +42,7 @@ export function BookingOptions({ options, scheduler }: BookingOptionsProps) {
           Choose the session that fits your journey
         </h2>
       </div>
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:gap-8 lg:gap-10 md:grid-cols-2 xl:grid-cols-3">
         {options.map((option) => (
           <article
             key={option.id}
@@ -54,7 +54,7 @@ export function BookingOptions({ options, scheduler }: BookingOptionsProps) {
                 {option.durationMins} minutes
               </p>
               <div
-                className="prose prose-sm max-w-none text-ink-muted"
+                className="prose prose-base max-w-none text-ink-muted md:prose-lg"
                 dangerouslySetInnerHTML={{ __html: option.descriptionHtml }}
               />
             </div>

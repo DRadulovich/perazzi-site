@@ -92,7 +92,7 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
         >
           Three rituals that define a bespoke Perazzi build
         </h2>
-        <p className="max-w-2xl text-base text-ink-muted">
+        <p className="max-w-none text-base text-ink-muted md:max-w-3xl lg:max-w-4xl">
           Scroll through each stage to see how measurement, tunnel testing, and
           finishing combine into a legacy piece. A skip link is provided for assistive tech.
         </p>
