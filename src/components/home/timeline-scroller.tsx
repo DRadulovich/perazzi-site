@@ -33,7 +33,7 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
     if (!enablePinned) return;
     const nextIndex = Math.min(
       stages.length - 1,
-      Math.max(0, Math.round(latest * (stages.length - 1))),
+      Math.max(0, Math.floor(latest * stages.length)),
     );
     setActiveStage(nextIndex);
   });
@@ -102,7 +102,7 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
       <a
         href={`#${skipTargetId}`}
         onClick={focusSkipTarget}
-        className="inline-flex items-center rounded-full border border-border px-4 py-2 text-sm font-medium text-ink focus-ring"
+        className="inline-flex items-center rounded-lg border border-border px-4 py-2 text-sm font-medium text-ink focus-ring"
       >
         Skip timeline
       </a>
@@ -117,9 +117,9 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
             className="relative hidden lg:block"
             style={{ height: `${stages.length * 120}vh` }}
           >
-            <div className="sticky top-24 z-0 h-[80vh] rounded-3xl bg-card/30 p-6">
-              <div className="grid h-full grid-cols-[220px_minmax(0,1fr)_minmax(0,1.05fr)] gap-6">
-                <div className="space-y-4 text-sm text-ink-muted">
+            <div className="sticky top-16 z-0 min-h-[80vh] rounded-2xl bg-card/30 p-8">
+              <div className="space-y-4">
+                <div className="flex gap-3">
                   {stages.map((stage, index) => (
                     <TimelineControlButton
                       key={`control-${stage.id}`}
@@ -130,25 +130,27 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
                     />
                   ))}
                 </div>
-                <div className="relative h-full overflow-hidden rounded-3xl bg-card/80 shadow-xl">
-                  {stages.map((stage, index) => (
-                    <PinnedStageText
-                      key={`text-${stage.id}`}
-                      stage={stage}
-                      active={activeStage === index}
-                      animationsEnabled={animationsEnabled}
-                    />
-                  ))}
-                </div>
-                <div className="relative h-full overflow-hidden rounded-3xl bg-card/80 shadow-xl">
-                  {stages.map((stage, index) => (
-                    <PinnedStageMedia
-                      key={`media-${stage.id}`}
-                      stage={stage}
-                      active={activeStage === index}
-                      animationsEnabled={animationsEnabled}
-                    />
-                  ))}
+                <div className="grid h-[calc(80vh-5rem)] grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-8">
+                  <div className="relative overflow-hidden rounded-xl bg-card/80 shadow-xl">
+                    {stages.map((stage, index) => (
+                      <PinnedStageText
+                        key={`text-${stage.id}`}
+                        stage={stage}
+                        active={activeStage === index}
+                        animationsEnabled={animationsEnabled}
+                      />
+                    ))}
+                  </div>
+                  <div className="relative overflow-hidden rounded-xl bg-card/80 shadow-xl">
+                    {stages.map((stage, index) => (
+                      <PinnedStageMedia
+                        key={`media-${stage.id}`}
+                        stage={stage}
+                        active={activeStage === index}
+                        animationsEnabled={animationsEnabled}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -176,10 +178,10 @@ function TimelineControlButton({
   animationsEnabled,
 }: ControlButtonProps) {
   const baseClass =
-    "w-full rounded-full border px-4 py-2 text-left focus-ring " +
+    "flex min-w-[160px] flex-1 items-center justify-center rounded-lg border-b-4 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] focus-ring " +
     (active
-      ? "border-perazzi-red text-perazzi-red"
-      : "border-border text-ink-muted hover:text-ink");
+      ? "border-b-perazzi-red bg-perazzi-red/25 text-white"
+      : "border-b-border text-ink-muted hover:text-ink");
 
   if (!animationsEnabled) {
     return (
@@ -245,12 +247,12 @@ function PinnedStageText({ stage, active, animationsEnabled }: PinnedStageProps)
 }
 
 function PinnedStageMedia({ stage, active, animationsEnabled }: PinnedStageProps) {
-  const sizes = "(min-width: 1600px) 520px, (min-width: 1280px) 400px, 100vw";
+  const sizes = "(min-width: 1600px) 860px, (min-width: 1280px) 760px, 100vw";
   const Wrapper = animationsEnabled ? motion.div : "div";
 
   const media = (
     <div className="flex h-full flex-col">
-      <div className="relative h-full min-h-[360px] overflow-hidden rounded-3xl bg-neutral-200">
+      <div className="relative h-full min-h-[360px] overflow-hidden rounded-xl bg-neutral-200">
         <Image
           src={stage.media.url}
           alt={stage.media.alt}

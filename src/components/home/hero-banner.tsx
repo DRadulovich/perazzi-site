@@ -84,7 +84,9 @@ export function HeroBanner({ hero, analyticsId }: HeroBannerProps) {
             {heroHeading}
           </h1>
           {hero.background.caption ? (
-            <p className="mt-6 max-w-xl text-sm text-white/75">{hero.background.caption}</p>
+            <p className="mt-6 w-full max-w-xl text-balance text-sm leading-relaxed text-white/75">
+              {hero.background.caption}
+            </p>
           ) : null}
         </div>
       </div>

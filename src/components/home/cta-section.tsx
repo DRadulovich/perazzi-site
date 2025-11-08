@@ -18,7 +18,7 @@ export function CTASection({ finale }: CTASectionProps) {
     <motion.section
       ref={analyticsRef}
       data-analytics-id="FinalCTASeen"
-      className="rounded-3xl bg-perazzi-black px-6 py-10 text-white sm:px-10"
+      className="rounded-2xl bg-perazzi-black px-6 py-10 text-white sm:px-10"
       initial={prefersReducedMotion ? false : { opacity: 0, y: 30 }}
       whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.6 }}

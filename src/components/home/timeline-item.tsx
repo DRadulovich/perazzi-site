@@ -23,7 +23,7 @@ export function TimelineItem({
   const content = (
     <>
       <div
-        className="relative w-full overflow-hidden rounded-xl bg-neutral-200"
+        className="relative w-full overflow-hidden rounded-lg bg-neutral-200"
         style={{ aspectRatio: ratio }}
       >
         <Image
@@ -51,7 +51,7 @@ export function TimelineItem({
       return (
         <Wrapper
           key={stage.id}
-          className="absolute inset-0 rounded-3xl bg-card/80 p-6 shadow-xl"
+          className="absolute inset-0 rounded-2xl bg-card/80 p-6 shadow-xl"
           initial={{ opacity: 0, y: 30 }}
           animate={{
             opacity: active ? 1 : 0,
@@ -65,7 +65,7 @@ export function TimelineItem({
       );
     }
     return (
-      <article className="absolute inset-0 rounded-3xl bg-card/80 p-6 shadow-xl">
+      <article className="absolute inset-0 rounded-2xl bg-card/80 p-6 shadow-xl">
         {content}
       </article>
     );

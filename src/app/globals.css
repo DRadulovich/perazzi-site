@@ -51,6 +51,17 @@
   --font-sans: var(--font-geist-sans), "Inter", "Segoe UI", system-ui, sans-serif;
   --font-serif: "Playfair Display", Georgia, serif;
   --font-mono: var(--font-geist-mono), "IBM Plex Mono", ui-monospace, monospace;
+  --container-xs: 20rem;
+  --container-sm: 24rem;
+  --container-md: 28rem;
+  --container-lg: 32rem;
+  --container-xl: 36rem;
+  --container-2xl: 42rem;
+  --container-3xl: 48rem;
+  --container-4xl: 56rem;
+  --container-5xl: 64rem;
+  --container-6xl: 72rem;
+  --container-7xl: 80rem;
 
   --color-perazzi-red: var(--perazzi-red);
   --color-perazzi-black: var(--perazzi-black);
@@ -72,6 +83,19 @@
   --spacing-xl: 2rem;
   --spacing-2xl: 3rem;
   --spacing-3xl: 4rem;
+}
+
+@layer utilities {
+  .max-w-sm { max-width: 24rem; }
+  .max-w-md { max-width: 28rem; }
+  .max-w-lg { max-width: 32rem; }
+  .max-w-xl { max-width: 36rem; }
+  .max-w-2xl { max-width: 42rem; }
+  .max-w-3xl { max-width: 48rem; }
+  .max-w-4xl { max-width: 56rem; }
+  .max-w-5xl { max-width: 64rem; }
+  .max-w-6xl { max-width: 72rem; }
+  .max-w-7xl { max-width: 80rem; }
 }
 
 /* Base */
@@ -194,3 +218,8 @@ body {
 .animate-accordion-up {
   animation: accordion-up 0.25s ease-out;
 }
+
+/* Radius adjustments for sharper theme */
+.rounded-3xl { border-radius: 1rem !important; } /* previously 1.5rem */
+.rounded-2xl { border-radius: 0.75rem !important; } /* previously 1rem */
+.rounded-xl { border-radius: 0.5rem !important; } /* previously 0.75rem */
