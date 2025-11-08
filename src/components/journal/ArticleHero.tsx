@@ -30,7 +30,7 @@ export function ArticleHero({ article }: ArticleHeroProps) {
           alt={article.hero.alt}
           fill
           priority
-          sizes="(min-width: 1024px) 900px, 100vw"
+          sizes="(min-width: 1280px) 960px, (min-width: 1024px) 70vw, 100vw"
           className="rounded-3xl object-cover"
         />
       </div>

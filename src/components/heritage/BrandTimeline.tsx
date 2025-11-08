@@ -103,7 +103,7 @@ export function BrandTimeline({ events, skipTargetId }: BrandTimelineProps) {
               src={event.media.url}
               alt={event.media.alt}
               fill
-              sizes="(min-width: 1024px) 600px, 100vw"
+              sizes="(min-width: 1280px) 960px, (min-width: 1024px) 66vw, 100vw"
               className="object-cover"
             />
           </div>

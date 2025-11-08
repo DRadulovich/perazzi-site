@@ -34,7 +34,7 @@ export function PlatformCard({ platform, priority = false }: PlatformCardProps) 
           src={platform.hero.url}
           alt={platform.hero.alt}
           fill
-          sizes="(min-width: 1024px) 360px, 100vw"
+          sizes="(min-width: 1280px) 384px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
           className="object-cover"
           priority={priority}
           loading={priority ? "eager" : "lazy"}

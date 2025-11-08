@@ -27,7 +27,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
           src={expert.headshot.url}
           alt={expert.headshot.alt}
           fill
-          sizes="(min-width: 1024px) 260px, 100vw"
+          sizes="(min-width: 1280px) 320px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
           className="object-cover"
           loading="lazy"
         />

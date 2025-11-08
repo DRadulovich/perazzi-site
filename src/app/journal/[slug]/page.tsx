@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { journalArticles } from "@/content/journal";
 import { ArticleHero } from "@/components/journal/ArticleHero";
@@ -46,7 +45,18 @@ export function generateMetadata({ params }: ArticlePageProps): Metadata {
 export default function ArticlePage({ params }: ArticlePageProps) {
   const data = journalArticles[params.slug];
   if (!data) {
-    notFound();
+    return (
+      <div className="space-y-6 rounded-3xl border border-border/70 bg-card/70 p-6 text-ink shadow-sm sm:p-8">
+        <h1 className="text-3xl font-semibold">Article coming soon</h1>
+        <p className="text-base text-ink-muted">
+          We&apos;re shaping this story now. Check back shortly or explore other Journal features.
+        </p>
+        <a href="/journal" className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring">
+          Return to Journal
+          <span aria-hidden="true">→</span>
+        </a>
+      </div>
+    );
   }
 
   const { article, author, related } = data;

@@ -71,7 +71,7 @@ function ExperiencePickerCard({
             src={item.media.url}
             alt={item.media.alt}
             fill
-            sizes="(min-width: 1024px) 320px, 100vw"
+            sizes="(min-width: 1280px) 384px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
           />

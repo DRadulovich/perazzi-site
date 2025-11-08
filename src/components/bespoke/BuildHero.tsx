@@ -37,14 +37,14 @@ export function BuildHero({ hero }: BuildHeroProps) {
         className="relative w-full"
         style={mediaStyle}
       >
-        <Image
-          src={hero.media.url}
-          alt={hero.media.alt}
-          fill
-          priority
-          sizes="(min-width: 1024px) 1100px, 100vw"
-          className="object-cover"
-        />
+          <Image
+            src={hero.media.url}
+            alt={hero.media.alt}
+            fill
+            priority
+            sizes="(min-width: 1536px) 1200px, (min-width: 1280px) 1100px, (min-width: 1024px) 80vw, 100vw"
+            className="object-cover"
+          />
         <div
           className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"
           aria-hidden="true"

@@ -60,7 +60,7 @@ export function HeroBanner({ hero, analyticsId }: HeroBannerProps) {
             alt={hero.background.alt}
             fill
             priority
-            sizes="(min-width: 1024px) 1100px, 100vw"
+            sizes="(min-width: 1536px) 1200px, (min-width: 1280px) 1100px, (min-width: 1024px) 80vw, 100vw"
             className="object-cover"
             onLoad={() => setMediaLoaded(true)}
           />

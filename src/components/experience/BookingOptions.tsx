@@ -46,7 +46,7 @@ export function BookingOptions({ options, scheduler }: BookingOptionsProps) {
         {options.map((option) => (
           <article
             key={option.id}
-            className="flex h-full flex-col rounded-3xl border border-border/70 bg-card p-6 shadow-sm"
+            className="flex h-full flex-col rounded-3xl border border-border/70 bg-card p-6 shadow-sm md:p-7 lg:p-8"
           >
             <div className="space-y-2">
               <h3 className="text-lg font-semibold text-ink">{option.title}</h3>
@@ -74,7 +74,7 @@ export function BookingOptions({ options, scheduler }: BookingOptionsProps) {
         ))}
       </div>
       {scheduler ? (
-        <div className="space-y-4 rounded-3xl border border-border/70 bg-card/70 p-6">
+        <div className="space-y-4 rounded-3xl border border-border/70 bg-card/70 p-6 md:p-8 lg:p-10">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h3 className="text-lg font-semibold text-ink">
               Schedule with concierge
@@ -106,7 +106,7 @@ export function BookingOptions({ options, scheduler }: BookingOptionsProps) {
           </p>
           <div
             id={schedulerPanelId}
-            className="rounded-2xl border border-border/70 bg-card/60 p-3"
+            className="rounded-2xl border border-border/70 bg-card/60 p-3 md:p-4 lg:p-5"
             aria-live="polite"
           >
             {schedulerLoaded ? (

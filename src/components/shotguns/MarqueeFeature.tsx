@@ -43,7 +43,7 @@ export function MarqueeFeature({ champion, fallbackText }: MarqueeFeatureProps) 
           src={champion.image.url}
           alt={champion.image.alt}
           fill
-          sizes="(min-width: 1024px) 440px, 100vw"
+          sizes="(min-width: 1280px) 384px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
           className="object-cover"
           loading="lazy"
         />

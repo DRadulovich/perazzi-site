@@ -29,7 +29,7 @@ export function ServiceOverview({ overview }: ServiceOverviewProps) {
           dangerouslySetInnerHTML={{ __html: overview.introHtml }}
         />
       </div>
-      <div className="rounded-2xl border border-border/70 bg-card/70 p-5">
+      <div className="rounded-2xl border border-border/70 bg-card/70 p-5 md:p-6 lg:p-8">
         <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-ink-muted">
           Standard checks
         </h3>

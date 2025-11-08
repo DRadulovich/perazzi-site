@@ -75,7 +75,7 @@ export function BuildStepItem({ step, index, onCtaClick }: BuildStepItemProps) {
               src={step.media.url}
               alt={step.media.alt}
               fill
-              sizes="(min-width: 1024px) 640px, 100vw"
+              sizes="(min-width: 1280px) 720px, (min-width: 1024px) 60vw, 100vw"
               className="object-cover"
               loading={index === 0 ? "eager" : "lazy"}
             />

@@ -42,7 +42,7 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
                 src={media.url}
                 alt={media.alt}
                 fill
-                sizes="(min-width: 1024px) 480px, 100vw"
+                sizes="(min-width: 1280px) 480px, (min-width: 1024px) 45vw, 100vw"
                 className="object-cover"
               />
             ) : (
