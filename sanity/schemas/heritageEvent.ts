@@ -20,15 +20,9 @@ export const heritageEvent = defineType({
       type: "blockContent",
     }),
     defineField({
-      name: "image",
-      type: "image",
-      options: { hotspot: true },
-      fields: [
-        defineField({
-          name: "alt",
-          type: "string",
-        }),
-      ],
+      name: "media",
+      title: "Primary Media",
+      type: "imageWithMeta",
     }),
     defineField({
       name: "champions",

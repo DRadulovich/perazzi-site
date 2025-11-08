@@ -16,20 +16,21 @@ export const grade = defineType({
       rows: 3,
     }),
     defineField({
-      name: "gallery",
+      name: "hero",
+      title: "Hero Image",
+      type: "imageWithMeta",
+    }),
+    defineField({
+      name: "engravingGallery",
+      title: "Engraving Gallery",
       type: "array",
-      of: [
-        {
-          type: "image",
-          options: { hotspot: true },
-          fields: [
-            defineField({
-              name: "alt",
-              type: "string",
-            }),
-          ],
-        },
-      ],
+      of: [{ type: "imageWithMeta" }],
+    }),
+    defineField({
+      name: "woodImages",
+      title: "Wood Images",
+      type: "array",
+      of: [{ type: "imageWithMeta" }],
     }),
   ],
 });

@@ -1,4 +1,3 @@
-import { shotgunsData } from "@/content/shotguns";
 import { LandingHero } from "@/components/shotguns/LandingHero";
 import { PlatformGrid } from "@/components/shotguns/PlatformGrid";
 import { TriggerExplainer } from "@/components/shotguns/TriggerExplainer";
@@ -6,9 +5,10 @@ import { DisciplineRail } from "@/components/shotguns/DisciplineRail";
 import { PrimerBlock } from "@/components/shotguns/PrimerBlock";
 import { TeaserBlock } from "@/components/shotguns/TeaserBlock";
 import { CTASection } from "@/components/shotguns/CTASection";
+import { getShotgunsSectionData } from "@/lib/shotguns-data";
 
-export default function ShotgunsLandingPage() {
-  const { landing } = shotgunsData;
+export default async function ShotgunsLandingPage() {
+  const { landing } = await getShotgunsSectionData();
 
   return (
     <div className="space-y-16">

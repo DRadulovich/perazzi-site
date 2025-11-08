@@ -5,15 +5,18 @@ import {
   MarqueeFeature,
   TimelineScroller,
 } from "@/components/home";
-import { champion, finale, hero, stages } from "@/content/home";
+import { finale } from "@/content/home";
+import { getHome } from "@/sanity/queries/home";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const homeData = await getHome();
+
   return (
     <SiteShell>
       <div className="space-y-16">
-        <HeroBanner hero={hero} />
-        <TimelineScroller stages={stages} />
-        <MarqueeFeature champion={champion} />
+        <HeroBanner hero={homeData.hero} />
+        <TimelineScroller stages={homeData.stages} />
+        <MarqueeFeature champion={homeData.champion} />
         <CTASection finale={finale} />
       </div>
     </SiteShell>

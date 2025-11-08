@@ -26,26 +26,48 @@ export const platform = defineType({
       rows: 3,
     }),
     defineField({
-      name: "heroImage",
-      type: "image",
-      options: { hotspot: true },
-      fields: [
-        defineField({
-          name: "alt",
-          type: "string",
-          title: "Alt text",
-        }),
-        defineField({
-          name: "caption",
-          type: "string",
-          title: "Caption",
-        }),
-      ],
+      name: "hero",
+      title: "Hero",
+      type: "imageWithMeta",
     }),
     defineField({
       name: "highlights",
+      title: "Highlights",
       type: "array",
-      of: [{ type: "string" }],
+      of: [
+        {
+          type: "object",
+          fields: [
+            defineField({
+              name: "title",
+              type: "string",
+              validation: (rule) => rule.required(),
+            }),
+            defineField({
+              name: "body",
+              type: "text",
+            }),
+            defineField({
+              name: "media",
+              type: "imageWithMeta",
+            }),
+          ],
+          preview: {
+            select: { title: "title", media: "media.asset" },
+          },
+        },
+      ],
+    }),
+    defineField({
+      name: "champion",
+      title: "Champion Spotlight",
+      type: "object",
+      fields: [
+        defineField({ name: "name", type: "string" }),
+        defineField({ name: "title", type: "string" }),
+        defineField({ name: "quote", type: "text" }),
+        defineField({ name: "image", type: "imageWithMeta" }),
+      ],
     }),
     defineField({
       name: "disciplines",

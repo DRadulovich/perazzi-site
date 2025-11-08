@@ -22,16 +22,14 @@ export const discipline = defineType({
       title: "Overview",
     }),
     defineField({
-      name: "image",
-      type: "image",
-      options: { hotspot: true },
-      fields: [
-        defineField({
-          name: "alt",
-          type: "string",
-          title: "Alt text",
-        }),
-      ],
+      name: "hero",
+      title: "Hero Image",
+      type: "imageWithMeta",
+    }),
+    defineField({
+      name: "championImage",
+      title: "Champion Image",
+      type: "imageWithMeta",
     }),
     defineField({
       name: "recommendedPlatforms",

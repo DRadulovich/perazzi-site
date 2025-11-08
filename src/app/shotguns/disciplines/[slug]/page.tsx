@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { shotgunsData } from "@/content/shotguns";
 import { DisciplineHero } from "@/components/shotguns/DisciplineHero";
 import { OverviewBlock } from "@/components/shotguns/OverviewBlock";
 import { PlatformGrid } from "@/components/shotguns/PlatformGrid";
@@ -7,22 +6,25 @@ import { SetupRecipe } from "@/components/shotguns/SetupRecipe";
 import { MarqueeFeature } from "@/components/shotguns/MarqueeFeature";
 import { RelatedList } from "@/components/shotguns/RelatedList";
 import { CTASection } from "@/components/shotguns/CTASection";
+import { getShotgunsSectionData } from "@/lib/shotguns-data";
 
 type DisciplinePageProps = {
   params: { slug: string };
 };
 
-export function generateStaticParams() {
-  return Object.keys(shotgunsData.disciplines).map((slug) => ({ slug }));
+export async function generateStaticParams() {
+  const data = await getShotgunsSectionData();
+  return Object.keys(data.disciplines).map((slug) => ({ slug }));
 }
 
-export default function DisciplinePage({ params }: DisciplinePageProps) {
-  const discipline = shotgunsData.disciplines[params.slug];
+export default async function DisciplinePage({ params }: DisciplinePageProps) {
+  const data = await getShotgunsSectionData();
+  const discipline = data.disciplines[params.slug];
   if (!discipline) {
     notFound();
   }
 
-  const platforms = shotgunsData.landing.platforms.filter((platform) =>
+  const platforms = data.landing.platforms.filter((platform) =>
     discipline.recommendedPlatforms.includes(platform.id),
   );
 

@@ -1,4 +1,3 @@
-import { grades } from "@/content/shotguns";
 import {
   gradesHero,
   engravingProvenanceHtml,
@@ -11,8 +10,11 @@ import { ProvenanceNote } from "@/components/shotguns/ProvenanceNote";
 import { OptionsGrid } from "@/components/shotguns/OptionsGrid";
 import { ProcessNote } from "@/components/shotguns/ProcessNote";
 import { CTASection } from "@/components/shotguns/CTASection";
+import { getShotgunsSectionData } from "@/lib/shotguns-data";
 
-export default function GradesPage() {
+export default async function GradesPage() {
+  const { grades } = await getShotgunsSectionData();
+
   return (
     <div className="space-y-16">
       <GradesHero

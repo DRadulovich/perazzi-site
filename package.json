@@ -14,6 +14,9 @@
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@sanity/client": "^7.12.1",
+    "@sanity/icons": "^3.7.4",
+    "@sanity/image-url": "^1.2.0",
+    "@sanity/vision": "^4.14.2",
     "@vercel/analytics": "^1.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -21,9 +24,11 @@
     "groq": "^4.13.0",
     "next": "16.0.1",
     "next-intl": "^4.4.0",
-    "next-sanity": "^11.6.5",
+    "next-sanity": "11",
     "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "sanity": "^4.14.2",
+    "styled-components": "^6.1.19"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
