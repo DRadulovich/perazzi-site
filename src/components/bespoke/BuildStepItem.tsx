@@ -11,12 +11,19 @@ type BuildStepItemProps = {
   step: FittingStage;
   index: number;
   onCtaClick?: (id: string) => void;
+  layout?: "stacked" | "pinned";
 };
 
-export function BuildStepItem({ step, index, onCtaClick }: BuildStepItemProps) {
+export function BuildStepItem({
+  step,
+  index,
+  onCtaClick,
+  layout = "stacked",
+}: BuildStepItemProps) {
   const ratio = step.media.aspectRatio ?? 4 / 3;
   const analyticsRef = useAnalyticsObserver(`BuildStepVisible:${step.id}`);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const isPinned = layout === "pinned";
 
   const handleCta = () => {
     logAnalytics(`BuildStepCTA:${step.id}`);
@@ -46,68 +53,112 @@ export function BuildStepItem({ step, index, onCtaClick }: BuildStepItemProps) {
     };
   }, [step.media.kind]);
 
+  const media = (
+    <div
+      className={`relative overflow-hidden rounded-2xl bg-neutral-200 ${
+        isPinned ? "flex-1 h-full min-h-0 w-full" : ""
+      }`}
+      style={isPinned ? undefined : { aspectRatio: ratio }}
+    >
+      {step.media.kind === "video" ? (
+        <video
+          ref={videoRef}
+          src={step.media.url}
+          poster={step.media.caption}
+          controls
+          playsInline
+          className="h-full w-full object-cover"
+        >
+          Sorry, your browser does not support embedded videos.
+        </video>
+      ) : (
+        <Image
+          src={step.media.url}
+          alt={step.media.alt}
+          fill
+          sizes={
+            layout === "pinned"
+              ? "(min-width: 1280px) 640px, (min-width: 1024px) 60vw, 100vw"
+              : "(min-width: 1280px) 720px, (min-width: 1024px) 60vw, 100vw"
+          }
+          className="object-cover"
+          loading={index === 0 ? "eager" : "lazy"}
+        />
+      )}
+    </div>
+  );
+
+  const caption = step.captionHtml ? (
+    <figcaption
+      className="rounded-xl border border-border/60 bg-card/60 p-4 text-xs text-ink-muted"
+      dangerouslySetInnerHTML={{ __html: step.captionHtml }}
+    />
+  ) : null;
+
+  const header = (
+    <header className="space-y-1">
+      <span className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+        Step {index + 1}
+      </span>
+      <h3 className="text-xl font-semibold text-ink">{step.title}</h3>
+    </header>
+  );
+
+  const description = (
+    <div
+      className="prose prose-sm max-w-none text-ink-muted"
+      dangerouslySetInnerHTML={{ __html: step.bodyHtml }}
+    />
+  );
+
+  const cta =
+    step.ctaHref && step.ctaLabel ? (
+      <Button
+        asChild
+        variant="secondary"
+        size="lg"
+        onClick={handleCta}
+        className={isPinned ? "mt-auto self-start" : undefined}
+      >
+        <a href={step.ctaHref}>{step.ctaLabel}</a>
+      </Button>
+    ) : null;
+
   return (
     <article
       id={`step-${step.id}`}
       ref={analyticsRef}
       data-analytics-id={`BuildStepVisible:${step.id}`}
-      className="space-y-4 rounded-3xl border border-border/70 bg-card p-6 shadow-sm"
+      className={
+        isPinned
+          ? "grid h-full min-h-0 grid-rows-[minmax(0,1fr)_minmax(0,3fr)] gap-6 rounded-3xl bg-card/80 p-6 shadow-xl"
+          : "space-y-4 rounded-3xl border border-border/70 bg-card p-6 shadow-sm"
+      }
       aria-label={`Step ${index + 1}: ${step.title}`}
     >
-      <figure className="space-y-3">
-        <div
-          className="relative overflow-hidden rounded-2xl bg-neutral-200"
-          style={{ aspectRatio: ratio }}
-        >
-          {step.media.kind === "video" ? (
-            <video
-              ref={videoRef}
-              src={step.media.url}
-              poster={step.media.caption}
-              controls
-              playsInline
-              className="h-full w-full object-cover"
-            >
-              Sorry, your browser does not support embedded videos.
-            </video>
-          ) : (
-            <Image
-              src={step.media.url}
-              alt={step.media.alt}
-              fill
-              sizes="(min-width: 1280px) 720px, (min-width: 1024px) 60vw, 100vw"
-              className="object-cover"
-              loading={index === 0 ? "eager" : "lazy"}
-            />
-          )}
-        </div>
-        {step.captionHtml ? (
-          <figcaption
-            className="rounded-xl border border-border/60 bg-card/60 p-4 text-xs text-ink-muted"
-            dangerouslySetInnerHTML={{ __html: step.captionHtml }}
-          />
-        ) : null}
-      </figure>
-      <header className="space-y-1">
-        <span className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
-          Step {index + 1}
-        </span>
-        <h3 className="text-xl font-semibold text-ink">{step.title}</h3>
-      </header>
-      <div
-        className="prose prose-sm max-w-none text-ink-muted"
-        dangerouslySetInnerHTML={{ __html: step.bodyHtml }}
-      />
-      {step.ctaHref && step.ctaLabel ? (
-        <Button
-          asChild
-          variant="secondary"
-          size="lg"
-          onClick={handleCta}
-        >
-          <a href={step.ctaHref}>{step.ctaLabel}</a>
-        </Button>
-      ) : null}
+      {isPinned ? (
+        <>
+          <div className="flex min-h-0 flex-col gap-4">
+            {header}
+            {description}
+            {cta}
+          </div>
+          <figure className="flex min-h-0 flex-col gap-4">
+            {media}
+            {caption}
+          </figure>
+        </>
+      ) : (
+        <>
+          <figure className="space-y-3">
+            {media}
+            {caption}
+          </figure>
+          {header}
+          {description}
+          {cta}
+        </>
+      )}
     </article>
   );
 }

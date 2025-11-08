@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useMotionValueEvent, useReducedMotion, useScroll } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { FittingStage } from "@/types/build";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -49,17 +49,23 @@ export function BuildStepsScroller({
 
   const mappedSteps = useMemo(() => steps, [steps]);
 
-  const progress = useTransform(scrollYProgress, [0, 1], [0, mappedSteps.length - 1]);
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const segmentSize = mappedSteps.length ? 1 / mappedSteps.length : 1;
+  useMotionValueEvent(scrollYProgress, "change", (value) => {
+    if (!pinnedEnabled || !mappedSteps.length) return;
+    const nextIndex = Math.min(
+      mappedSteps.length - 1,
+      Math.max(0, Math.floor(value / segmentSize)),
+    );
+    if (nextIndex !== currentIndex) {
+      setCurrentIndex(nextIndex);
+    }
+  });
   useEffect(() => {
-    const unsubscribe = progress.on("change", (value) => {
-      if (!pinnedEnabled) return;
-      const index = Math.round(value);
-      if (index !== activeStep) {
-        setActiveStep(index);
-      }
-    });
-    return () => unsubscribe();
-  }, [progress, pinnedEnabled, activeStep]);
+    if (currentIndex !== activeStep) {
+      setActiveStep(currentIndex);
+    }
+  }, [currentIndex, activeStep]);
 
   useEffect(() => {
     const current = mappedSteps[activeStep];
@@ -102,7 +108,10 @@ export function BuildStepsScroller({
           className="relative"
           style={{ height: `${mappedSteps.length * 120}vh` }}
         >
-          <div className="sticky top-24 flex h-[70vh] flex-col gap-6 rounded-3xl bg-card/60 p-6 shadow-lg backdrop-blur">
+          <div
+            className="sticky top-16 flex flex-col gap-8 rounded-3xl bg-card/60 p-8 shadow-lg backdrop-blur lg:top-24"
+            style={{ height: "calc(100vh - 3rem)", minHeight: "640px" }}
+          >
             <div
               className="flex justify-center gap-2"
               role="tablist"
@@ -149,6 +158,7 @@ export function BuildStepsScroller({
                     step={step}
                     index={index}
                     onCtaClick={onStepCta}
+                    layout="pinned"
                   />
                 </motion.div>
               ))}
@@ -163,6 +173,7 @@ export function BuildStepsScroller({
               step={step}
               index={index}
               onCtaClick={onStepCta}
+              layout="stacked"
             />
           ))}
         </div>
