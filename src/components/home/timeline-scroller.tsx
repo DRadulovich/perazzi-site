@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion, useMotionValueEvent, useReducedMotion, useScroll } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FittingStage } from "@/types/content";
@@ -116,28 +117,39 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
             className="relative hidden lg:block"
             style={{ height: `${stages.length * 120}vh` }}
           >
-            <div className="sticky top-24 z-0 flex h-[80vh] items-stretch gap-8 rounded-3xl bg-card/30 p-6">
-              <div className="relative flex-1">
-                {stages.map((stage, index) => (
-                  <TimelineItem
-                    key={stage.id}
-                    stage={stage}
-                    layout="pinned"
-                    active={activeStage === index}
-                    animationsEnabled={animationsEnabled}
-                  />
-                ))}
-              </div>
-              <div className="w-64 space-y-4 text-sm text-ink-muted">
-                {stages.map((stage, index) => (
-                  <TimelineControlButton
-                    key={`control-${stage.id}`}
-                    label={stage.title}
-                    active={activeStage === index}
-                    onSelect={() => setActiveStage(index)}
-                    animationsEnabled={animationsEnabled}
-                  />
-                ))}
+            <div className="sticky top-24 z-0 h-[80vh] rounded-3xl bg-card/30 p-6">
+              <div className="grid h-full grid-cols-[220px_minmax(0,1fr)_minmax(0,1.05fr)] gap-6">
+                <div className="space-y-4 text-sm text-ink-muted">
+                  {stages.map((stage, index) => (
+                    <TimelineControlButton
+                      key={`control-${stage.id}`}
+                      label={stage.title}
+                      active={activeStage === index}
+                      onSelect={() => setActiveStage(index)}
+                      animationsEnabled={animationsEnabled}
+                    />
+                  ))}
+                </div>
+                <div className="relative h-full overflow-hidden rounded-3xl bg-card/80 shadow-xl">
+                  {stages.map((stage, index) => (
+                    <PinnedStageText
+                      key={`text-${stage.id}`}
+                      stage={stage}
+                      active={activeStage === index}
+                      animationsEnabled={animationsEnabled}
+                    />
+                  ))}
+                </div>
+                <div className="relative h-full overflow-hidden rounded-3xl bg-card/80 shadow-xl">
+                  {stages.map((stage, index) => (
+                    <PinnedStageMedia
+                      key={`media-${stage.id}`}
+                      stage={stage}
+                      active={activeStage === index}
+                      animationsEnabled={animationsEnabled}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -188,5 +200,85 @@ function TimelineControlButton({
     >
       {label}
     </motion.button>
+  );
+}
+
+type PinnedStageProps = {
+  stage: FittingStage;
+  active: boolean;
+  animationsEnabled: boolean;
+};
+
+function PinnedStageText({ stage, active, animationsEnabled }: PinnedStageProps) {
+  const Wrapper = animationsEnabled ? motion.article : "article";
+  const content = (
+    <div className="flex h-full flex-col">
+      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+        Stage {stage.order}
+      </p>
+      <h3 className="mt-2 text-2xl font-semibold text-ink">{stage.title}</h3>
+      <p className="mt-4 text-base leading-relaxed text-ink-muted">{stage.body}</p>
+      {stage.media.caption ? (
+        <p className="mt-auto pt-6 text-xs text-ink-muted">{stage.media.caption}</p>
+      ) : null}
+    </div>
+  );
+
+  if (!animationsEnabled) {
+    return <article className="absolute inset-0 p-6">{content}</article>;
+  }
+
+  return (
+    <Wrapper
+      className="absolute inset-0 p-6"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{
+        opacity: active ? 1 : 0,
+        y: active ? 0 : 30,
+        pointerEvents: active ? "auto" : "none",
+      }}
+      transition={{ duration: 0.6, ease: [0.33, 1, 0.68, 1] }}
+    >
+      {content}
+    </Wrapper>
+  );
+}
+
+function PinnedStageMedia({ stage, active, animationsEnabled }: PinnedStageProps) {
+  const sizes = "(min-width: 1600px) 520px, (min-width: 1280px) 400px, 100vw";
+  const Wrapper = animationsEnabled ? motion.div : "div";
+
+  const media = (
+    <div className="flex h-full flex-col">
+      <div className="relative h-full min-h-[360px] overflow-hidden rounded-3xl bg-neutral-200">
+        <Image
+          src={stage.media.url}
+          alt={stage.media.alt}
+          fill
+          sizes={sizes}
+          className="object-cover"
+          priority={stage.order === 1}
+        />
+      </div>
+    </div>
+  );
+
+  if (!animationsEnabled) {
+    return <div className="absolute inset-0 p-4">{media}</div>;
+  }
+
+  return (
+    <Wrapper
+      className="absolute inset-0 p-4"
+      initial={{ opacity: 0, y: 30 }}
+      animate={{
+        opacity: active ? 1 : 0,
+        y: active ? 0 : 30,
+        pointerEvents: active ? "auto" : "none",
+      }}
+      transition={{ duration: 0.6, ease: [0.33, 1, 0.68, 1] }}
+    >
+      {media}
+    </Wrapper>
   );
 }
