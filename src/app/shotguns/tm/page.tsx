@@ -3,7 +3,7 @@ import { AtAGlanceStrip } from "@/components/shotguns/AtAGlanceStrip";
 import { SeriesStory } from "@/components/shotguns/SeriesStory";
 import { EngHighlightsGrid } from "@/components/shotguns/EngHighlightsGrid";
 import { DisciplineMap } from "@/components/shotguns/DisciplineMap";
-import { MarqueeFeature } from "@/components/shotguns/MarqueeFeature";
+import { MarqueeFeature } from "@/components/shotguns/MarqueeFeature"; // Shotguns-specific variant
 import { RelatedList } from "@/components/shotguns/RelatedList";
 import { CTASection } from "@/components/shotguns/CTASection";
 import { getShotgunsSectionData } from "@/lib/shotguns-data";

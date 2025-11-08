@@ -72,6 +72,33 @@ export const homeSingleton = defineType({
         defineField({name: 'credit', title: 'Attribution (optional)', type: 'string'}),
       ],
     }),
+
+    defineField({
+      name: 'finale',
+      title: 'Final CTA',
+      type: 'object',
+      fields: [
+        defineField({name: 'text', title: 'Body', type: 'text', rows: 3}),
+        defineField({
+          name: 'ctaPrimary',
+          title: 'Primary CTA',
+          type: 'object',
+          fields: [
+            defineField({name: 'label', type: 'string'}),
+            defineField({name: 'href', type: 'url'}),
+          ],
+        }),
+        defineField({
+          name: 'ctaSecondary',
+          title: 'Secondary CTA',
+          type: 'object',
+          fields: [
+            defineField({name: 'label', type: 'string'}),
+            defineField({name: 'href', type: 'url'}),
+          ],
+        }),
+      ],
+    }),
   ],
   preview: {
     prepare() {

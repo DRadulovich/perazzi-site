@@ -1,4 +1,3 @@
-import { serviceData } from "@/content/service";
 import { ServiceHero } from "@/components/service/ServiceHero";
 import { ServiceOverview } from "@/components/service/ServiceOverview";
 import { ServiceNetworkFinder } from "@/components/service/ServiceNetworkFinder";
@@ -10,6 +9,7 @@ import { PartsRequest } from "@/components/service/PartsRequest";
 import { CareGuidesDownloads } from "@/components/service/CareGuidesDownloads";
 import { FAQList } from "@/components/service/FAQList";
 import { CTASection } from "@/components/shotguns/CTASection";
+import { getServicePageData } from "@/lib/service-data";
 
 const SERVICE_REQUEST_EMBED = {
   title: "Service request",
@@ -22,16 +22,9 @@ const PARTS_REQUEST_EMBED = {
   fallback: "/service/parts-request",
 };
 
-export default function ServicePage() {
-  const {
-    hero,
-    overview,
-    locations,
-    maintenanceGuides,
-    partsEditorial,
-    faq,
-    finalCta,
-  } = serviceData;
+export default async function ServicePage() {
+  const { hero, overview, locations, maintenanceGuides, partsEditorial, faq, finalCta } =
+    await getServicePageData();
 
   const faqSchema = faq.length
     ? {

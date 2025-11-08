@@ -1,4 +1,3 @@
-import { heritageData } from "@/content/heritage";
 import { HeritageHero } from "@/components/heritage/HeritageHero";
 import { BrandTimeline } from "@/components/heritage/BrandTimeline";
 import { ChampionsGallery } from "@/components/heritage/ChampionsGallery";
@@ -6,8 +5,9 @@ import { FactoryPhotoEssay } from "@/components/heritage/FactoryPhotoEssay";
 import { OralHistories } from "@/components/heritage/OralHistories";
 import { RelatedList } from "@/components/shotguns/RelatedList";
 import { CTASection } from "@/components/shotguns/CTASection";
+import { getHeritagePageData } from "@/lib/heritage-data";
 
-export default function HeritagePage() {
+export default async function HeritagePage() {
   const {
     hero,
     timeline,
@@ -17,7 +17,7 @@ export default function HeritagePage() {
     oralHistories,
     related,
     finalCta,
-  } = heritageData;
+  } = await getHeritagePageData();
 
   return (
     <div className="space-y-16">

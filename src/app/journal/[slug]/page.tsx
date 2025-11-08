@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { journalArticles } from "@/content/journal";
 import { ArticleHero } from "@/components/journal/ArticleHero";
 import { PortableBody } from "@/components/journal/PortableBody";
 import { MetaBar } from "@/components/journal/MetaBar";
@@ -7,17 +6,22 @@ import { AuthorBox } from "@/components/journal/AuthorBox";
 import { RelatedList } from "@/components/shotguns/RelatedList";
 import { NewsletterSignup } from "@/components/journal/NewsletterSignup";
 import { stripHtml } from "@/utils/text";
+import {
+  getJournalArticleData,
+  getJournalArticleSlugs,
+} from "@/lib/journal-data";
 
 type ArticlePageProps = {
   params: { slug: string };
 };
 
-export function generateStaticParams() {
-  return Object.keys(journalArticles).map((slug) => ({ slug }));
+export async function generateStaticParams() {
+  const slugs = await getJournalArticleSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
-export function generateMetadata({ params }: ArticlePageProps): Metadata {
-  const data = journalArticles[params.slug];
+export async function generateMetadata({ params }: ArticlePageProps): Promise<Metadata> {
+  const data = await getJournalArticleData(params.slug);
   if (!data) return {};
   const { article } = data;
   const description = article.dekHtml ? stripHtml(article.dekHtml) : "Perazzi Journal story";
@@ -42,8 +46,8 @@ export function generateMetadata({ params }: ArticlePageProps): Metadata {
   };
 }
 
-export default function ArticlePage({ params }: ArticlePageProps) {
-  const data = journalArticles[params.slug];
+export default async function ArticlePage({ params }: ArticlePageProps) {
+  const data = await getJournalArticleData(params.slug);
   if (!data) {
     return (
       <div className="space-y-6 rounded-3xl border border-border/70 bg-card/70 p-6 text-ink shadow-sm sm:p-8">

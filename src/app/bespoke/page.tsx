@@ -2,13 +2,13 @@ import { BuildHero } from "@/components/bespoke/BuildHero";
 import { JourneyOverview } from "@/components/bespoke/JourneyOverview";
 import { BuildStepsScroller } from "@/components/bespoke/BuildStepsScroller";
 import { ExpertCard } from "@/components/bespoke/ExpertCard";
-import { BookingOptions } from "@/components/bespoke/BookingOptions";
+import { BookingOptions } from "@/components/bespoke/BookingOptions"; // Bespoke-specific variant
 import { AssuranceBlock } from "@/components/bespoke/AssuranceBlock";
 import { CTASection } from "@/components/shotguns/CTASection";
-import { buildData } from "@/content/build";
+import { getBespokePageData } from "@/lib/bespoke-data";
 
-export default function BespokeBuildPage() {
-  const { hero, journey, steps, experts, booking, assurance, footerCta } = buildData;
+export default async function BespokeBuildPage() {
+  const { hero, journey, steps, experts, booking, assurance, footerCta } = await getBespokePageData();
 
   return (
     <div className="space-y-16" id="bespoke-top">

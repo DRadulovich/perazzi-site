@@ -1,7 +1,12 @@
 import "server-only";
 
 import { groq } from "next-sanity";
-import { hero as fallbackHero, stages as fallbackStages, champion as fallbackChampion } from "@/content/home";
+import {
+  hero as fallbackHero,
+  stages as fallbackStages,
+  champion as fallbackChampion,
+  finale as fallbackFinale,
+} from "@/content/home";
 import type { Champion, FittingStage, HomeData } from "@/types/content";
 import { sanityClient } from "../../../sanity/client";
 import { imageFields, imageWithMetaFields, mapImageResult, type SanityImageResult } from "./utils";
@@ -43,6 +48,17 @@ const homeQuery = groq`
       image{
         ${imageWithMetaFields}
       }
+    },
+    finale{
+      text,
+      ctaPrimary{
+        label,
+        href
+      },
+      ctaSecondary{
+        label,
+        href
+      }
     }
   }
 `;
@@ -76,16 +92,22 @@ type HomeSanityResponse = {
     credit?: string;
     image?: SanityImageResult;
   } | null;
+  finale?: {
+    text?: string;
+    ctaPrimary?: { label?: string; href?: string };
+    ctaSecondary?: { label?: string; href?: string };
+  } | null;
 };
 
-export async function getHome(): Promise<Pick<HomeData, "hero" | "stages" | "champion">> {
+export async function getHome(): Promise<HomeData> {
   const data = await sanityClient.fetch<HomeSanityResponse | null>(homeQuery).catch(() => null);
 
   const hero = mapHero(data?.hero) ?? fallbackHero;
   const stages = mapStages(data?.timelineStages) ?? fallbackStages;
   const champion = mapChampion(data?.featuredChampion, data?.marqueeInline) ?? fallbackChampion;
+  const finale = mapFinale(data?.finale) ?? fallbackFinale;
 
-  return { hero, stages, champion };
+  return { hero, stages, champion, finale };
 }
 
 function mapHero(input?: HomeSanityResponse["hero"] | null): HomeData["hero"] | undefined {
@@ -116,6 +138,23 @@ function mapStages(stages?: HomeSanityResponse["timelineStages"] | null): HomeDa
     .filter((stage): stage is FittingStage => Boolean(stage));
 
   return mapped.length ? mapped : undefined;
+}
+
+function mapFinale(input?: HomeSanityResponse["finale"] | null): HomeData["finale"] | undefined {
+  if (!input?.text || !input.ctaPrimary?.href || !input.ctaPrimary?.label) return undefined;
+  return {
+    text: input.text,
+    ctaPrimary: {
+      label: input.ctaPrimary.label,
+      href: input.ctaPrimary.href,
+    },
+    ctaSecondary: input.ctaSecondary?.href && input.ctaSecondary?.label
+      ? {
+          label: input.ctaSecondary.label,
+          href: input.ctaSecondary.href,
+        }
+      : undefined,
+  };
 }
 
 function mapChampion(

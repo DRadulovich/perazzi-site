@@ -1,15 +1,16 @@
 import Script from "next/script";
-import { experienceData } from "@/content/experience";
-import { ExperienceHero } from "@/components/experience/ExperienceHero";
 import { ExperiencePicker } from "@/components/experience/ExperiencePicker";
 import { VisitFactory } from "@/components/experience/VisitFactory";
-import { BookingOptions } from "@/components/experience/BookingOptions";
+import { BookingOptions } from "@/components/experience/BookingOptions"; // Experience-specific variant
 import { DemoProgram } from "@/components/experience/DemoProgram";
 import { MosaicGallery } from "@/components/experience/MosaicGallery";
 import { FAQList } from "@/components/experience/FAQList";
+import { ExperienceHero } from "@/components/experience/ExperienceHero";
 import { CTASection } from "@/components/shotguns/CTASection";
+import { getExperiencePageData } from "@/lib/experience-data";
+import type { FAQItem } from "@/types/experience";
 
-export default function ExperiencePage() {
+export default async function ExperiencePage() {
   const {
     hero,
     picker,
@@ -20,13 +21,13 @@ export default function ExperiencePage() {
     faq,
     finalCta,
     bookingScheduler,
-  } = experienceData;
+  } = await getExperiencePageData();
 
-  const faqJsonLd = FAQ_SCHEMA(faq);
+  const faqJsonLd = faq.length ? FAQ_SCHEMA(faq) : null;
 
   return (
     <div className="space-y-16">
-      {faq.length ? (
+      {faqJsonLd ? (
         <Script
           id="experience-faq-schema"
           type="application/ld+json"
@@ -59,7 +60,7 @@ export default function ExperiencePage() {
   );
 }
 
-function FAQ_SCHEMA(faq: typeof experienceData.faq) {
+function FAQ_SCHEMA(faq: FAQItem[]) {
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
