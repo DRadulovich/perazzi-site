@@ -45,6 +45,11 @@ export const getBespokePageData = cache(async (): Promise<BuildPageData> => {
     }
     if (cms?.steps?.length) {
       data.steps = mergeSteps(data.steps, cms.steps);
+      data.journey.steps = data.steps.map((step) => ({
+        id: `journey-${step.id}`,
+        label: step.title,
+        href: `#step-${step.id}`,
+      }));
     }
     if (cms?.experts?.length) {
       data.experts = cms.experts.map((expert, index) => {

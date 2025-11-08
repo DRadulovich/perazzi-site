@@ -68,6 +68,23 @@ export function BuildStepsScroller({
   }, [currentIndex, activeStep]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const syncFromHash = () => {
+      if (!pinnedEnabled || !mappedSteps.length) return;
+      const hash = window.location.hash.replace("#", "");
+      if (!hash.startsWith("step-")) return;
+      const targetIndex = mappedSteps.findIndex((step) => `step-${step.id}` === hash);
+      if (targetIndex >= 0) {
+        setCurrentIndex(targetIndex);
+        setActiveStep(targetIndex);
+      }
+    };
+    syncFromHash();
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
+  }, [mappedSteps, pinnedEnabled]);
+
+  useEffect(() => {
     const current = mappedSteps[activeStep];
     if (current) {
       logAnalytics(`BuildStepActive:${current.id}`);

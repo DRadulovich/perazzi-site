@@ -11,7 +11,7 @@ export default async function BespokeBuildPage() {
   const { hero, journey, steps, experts, booking, assurance, footerCta } = await getBespokePageData();
 
   return (
-    <div className="space-y-16" id="bespoke-top">
+    <div className="space-y-16 px-2 sm:px-4 lg:px-6" id="bespoke-top">
       <BuildHero hero={hero} />
       <JourneyOverview journey={journey} />
       <BuildStepsScroller steps={steps} skipTargetId="bespoke-experts" />
