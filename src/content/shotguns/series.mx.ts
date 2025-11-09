@@ -21,7 +21,7 @@ const asset = (
 
 const heroMedia = asset(
   "mx-series-hero",
-  "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b",
+  "https://cdn.sanity.io/images/m42h56wl/production/baf4ec8a3538ef874c09b2583fb26a5600874dcc-1200x790.jpg",
   "MX shotguns lined along a velvet bench in Botticino",
   5 / 4,
 );
@@ -32,7 +32,7 @@ const highlights = [
     body: "Each MX drop-out unit is tuned and serialized to the frame. Competitive shooters carry a second unit in case springs need refreshing mid-event.",
     media: asset(
       "mx-highlight-trigger-detail",
-      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1",
+      "https://cdn.sanity.io/images/m42h56wl/production/baf4ec8a3538ef874c09b2583fb26a5600874dcc-1200x790.jpg",
       "Close view of engraved drop-out trigger housing",
       4 / 3,
     ),
@@ -42,7 +42,7 @@ const highlights = [
     body: "MX stocks are carved for a relaxed recoil line, helping bunker shooters stay poised through doubles.",
     media: asset(
       "mx-highlight-stock",
-      "https://images.unsplash.com/photo-1517354153771-d19fbb86ba97",
+      "https://cdn.sanity.io/images/m42h56wl/production/baf4ec8a3538ef874c09b2583fb26a5600874dcc-1200x790.jpg",
       "MX stock profile showing cast and pitch adjustments",
       4 / 3,
     ),
@@ -52,7 +52,7 @@ const highlights = [
     body: "Dual locking lugs and hand-lapped shoulders keep the action closing with velvet smoothness long after the thousandth round.",
     media: asset(
       "mx-highlight-locking",
-      "https://images.unsplash.com/photo-1520031441871-593c0bd66090",
+      "https://cdn.sanity.io/images/m42h56wl/production/baf4ec8a3538ef874c09b2583fb26a5600874dcc-1200x790.jpg",
       "Close view of Perazzi locking lugs being inspected under lamp light",
       4 / 3,
     ),
@@ -76,7 +76,7 @@ export const series: ShotgunsSeriesEntry = {
     ],
   },
   storyHtml:
-    "<p>The MX story begins in 1968 when Ennio Mattarelli captured Olympic trap gold with a Perazzi drop-out trigger prototype. Every receiver and barrel set is still hand-mated in Botticino, allowing the trigger unit to release cleanly for maintenance without sacrificing lock-up precision.</p><p>Modern MX frames continue to balance speed and serviceability—favoring shooters who travel the ISSF or bunker circuits and need a calm, repeatable sight picture through 125 targets.</p>",
+    "<p>The MX Lineage — from prototype to platform<p><p>There are inventions. And then there are continuities: a single idea so well conceived that it becomes, over time, grammar. The MX series is Perazzi’s grammar — a language of locking shoulders and perfect closure, of a trigger that can be removed and a balance that reads like a posture. It begins in the heat of the 1960s and, through incremental devotion, becomes the scaffolding for everything Perazzi builds.<p><p>The seed: Mattarelli, Mexico, and the MX8<p>The Perazzi story begins with Daniele Perazzi’s early experiments in Brescia and a defining early victory: Ennio Mattarelli’s Olympic gold in 1964, which proved that Daniele’s prototypes belonged on the world stage. From those lessons came the MX8 — the archetypal Perazzi over/under, born for the Mexico City cycle and thereafter the canonical competition action. The MX8’s low-profile, Boss-derived locking geometry and removable trigger rewrote expectations for serviceability, modularity, and feel. That single action would become, quietly and inexorably, the company’s standard reference.<p><p>Maturation through collaboration: the 1970s–1990s<p>Once the MX8 existed, Perazzi did what artisans do best: refine with partners. Through the 1970s and 1980s Perazzi worked with champions and importers, adapting the basic MX action into variants for skeet, trap, and American markets. The MX family expanded numerically — MX3, MX5, MX10 and on — not as a reinvention each time but as disciplined permutations: different ribs, rib heights, barrel profiles, and trigger configurations for distinct disciplines. For the U.S. trap market, single-barrel “TM” variants and specially tuned top-singles emerged alongside O/Us so Perazzi could speak the language of each shooting culture while keeping the underlying grammar constant.<p><p>The MX12, MX2000 and the language of options<p>The 1990s and early 2000s sharpened the MX vocabulary. Some shooters wanted the simplicity of a fixed-trigger platform; Perazzi obliged with MX12-style variants and fixed-trigger siblings like the MX2000S — mechanically close kin to the MX8 but simplified in the trigger group. At the same time Perazzi introduced the MX2000 family, which felt like the MX8’s modern cousin: the same action logic, updated ergonomics, and added adjustability (multi-notch ribs, stock options, and barrel choices) designed for the busy, tournament-heavy shooter. These evolutions made the MX family both broad and familiar: a Perazzi in the 1990s still felt like a Perazzi — only more tuned to its task.<p><p>Continuity as innovation: small changes, big results<p>What defines the MX story is not radical turnover but quiet improvement. Perazzi’s approach has been iterative: adjustable combs, alternate rib geometry, coil-spring versus leaf-spring options, and nuanced barrel profiling. Each change respects the MX8’s heart — the drop-out trigger option, the Boss-like locking surfaces, the exacting hand-fit — while tuning weight, sight picture, and recoil impulse to contemporary demands. That modularity meant shooters could move across disciplines with familiar ergonomics, and it allowed Perazzi to offer a “bespoke-by-default” experience without needless reinvention.<p><p>Champions, proof, and cultural cement<p>A tool becomes legendary when it is carried into the world by people who themselves belong to legend. Across decades the MX line — in its MX8, MX2000, MX12, HT and related forms — became the companion of dozens of champions. From Olympic golds to world titles and a run of medal-haul summers, Perazzi shotguns proved their method under the most exacting lights. That competitive pedigree is part of the MX platform’s DNA: it isn’t merely engineered for precision; it has been proven by it.<p><p>Why the MX endures<p>There are three practical reasons the MX platform persists: (1) mechanical excellence — a robust action geometry that can be hand-fit to the tightest tolerances; (2) modularity — removable triggers, scalable frames for smaller gauges, and interchangeable barrels and ribs; and (3) cultural continuity — shooters learn on one Perazzi and carry that intuition forward, generation to generation. Business-wise it’s also efficient: evolve the platform, don’t invent a new one every decade. The result is a family of guns that can be scaled, personalized, and trusted to age gracefully.<p><p>The present: MX spirit in a modern world<p>Today, whether a shooter mounts an MX8 tuned for Olympic trap, a compact MX sporting build, or a High Tech that cushions recoil for long tournament sessions, the experience traces back to the same original idea: an over/under where geometry, feel, and human intent meet. The MX series is not a single story but a lineage: an unbroken habit of craftsmanship that prefers evolution to spectacle. It is proof that the right architecture—built with restraint and cared for with devotion—becomes timeless.</p>",
   highlights,
   disciplineMap: [
     {
@@ -102,7 +102,7 @@ export const series: ShotgunsSeriesEntry = {
       "The MX lets me travel with confidence—service the trigger between rotations, then step back on the line with the same feel.",
     image: asset(
       "mx-champion",
-      "https://images.unsplash.com/photo-1529688530647-93a450b72156",
+      "https://cdn.sanity.io/images/m42h56wl/production/baf4ec8a3538ef874c09b2583fb26a5600874dcc-1200x790.jpg",
       "Silvana Rossi resting her MX after a world cup final",
       3 / 4,
     ),
