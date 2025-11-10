@@ -3,6 +3,8 @@ import { landing } from "./landing";
 import { series as mxSeries } from "./series.mx";
 import { series as htSeries } from "./series.ht";
 import { series as tmSeries } from "./series.tm";
+import { series as dcSeries } from "./series.dc";
+import { series as shoSeries } from "./series.sho";
 import { disciplines } from "./disciplines";
 import { gauges } from "./gauges";
 import { grades } from "./grades";
@@ -13,6 +15,8 @@ export const shotgunsData: ShotgunsSectionData = {
     mx: mxSeries,
     ht: htSeries,
     tm: tmSeries,
+    dc: dcSeries,
+    sho: shoSeries,
   },
   disciplines,
   gauges,

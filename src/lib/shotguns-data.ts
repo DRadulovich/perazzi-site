@@ -2,7 +2,7 @@ import { cache } from "react";
 
 import { shotgunsData } from "@/content/shotguns";
 import { portableTextToHtml } from "@/lib/portable-text";
-import type { ShotgunsSectionData, Platform, GradeSeries } from "@/types/catalog";
+import type { ShotgunsSectionData, Platform, GradeSeries, ShotgunsSeriesEntry, DisciplineSummary } from "@/types/catalog";
 import {
   getDisciplines,
   getGrades,
@@ -34,6 +34,7 @@ export const getShotgunsSectionData = cache(async (): Promise<ShotgunsSectionDat
 
     applyLanding(cloned, landing);
     applyPlatforms(cloned, platforms);
+    syncSeriesWithPlatforms(cloned);
     applyDisciplines(cloned, disciplines);
     applyGrades(cloned, grades);
   } catch (error) {
@@ -107,48 +108,202 @@ function applyPlatforms(target: ShotgunsSectionData, platforms?: ShotgunsPlatfor
     return;
   }
 
-  const platformMap = new Map(
-    platforms
-      .map((platform) => {
-        const key = platform.slug ?? platform.id;
-        return key ? [key, platform] : null;
-      })
-      .filter(Boolean) as Array<[string, ShotgunsPlatformPayload]>,
-  );
-
-  target.landing.platforms = target.landing.platforms.map((platform) =>
-    mergePlatform(platform, platformMap.get(platform.slug) ?? platformMap.get(platform.id)),
-  );
+  target.landing.platforms = platforms
+    .map(mapPlatformFromCms)
+    .filter((platform): platform is Platform => Boolean(platform));
 }
 
-function mergePlatform(platform: Platform, cms?: ShotgunsPlatformPayload): Platform {
-  if (!cms) return platform;
-  const merged: Platform = { ...platform };
+const cleanSlug = (value?: string | null) => {
+  if (!value) return undefined;
+  return value
+    .toLowerCase()
+    .replace(/^platform-/, "")
+    .replace(/-platform$/, "")
+    .replace(/[^a-z0-9-]/g, "");
+};
 
-  if (cms.hero) {
-    merged.hero = cms.hero;
-  }
+function mapPlatformFromCms(platform: ShotgunsPlatformPayload): Platform | undefined {
+  const slug = cleanSlug(platform.slug) ?? cleanSlug(platform.name) ?? platform.id?.toLowerCase();
+  if (!slug || !platform.hero) return undefined;
 
-  if (cms.highlights?.length) {
-    const fallbackHighlights = merged.highlights ?? [];
-    merged.highlights = cms.highlights.map((highlight, index) => ({
-      title: highlight.title ?? fallbackHighlights[index]?.title ?? `Highlight ${index + 1}`,
-      body: highlight.body ?? fallbackHighlights[index]?.body ?? "",
-      media: highlight.media ?? fallbackHighlights[index]?.media ?? merged.hero,
-    }));
-  }
+  const typicalDisciplines =
+    platform.disciplines?.map((item) => item.name).filter(Boolean) ??
+    platform.disciplines?.map((item) => item.id) ??
+    [];
+  const disciplineRefs = platform.disciplines?.map((item) => ({
+    id: item.id,
+    name: item.name,
+  }));
 
-  if (cms.champion?.image) {
-    merged.champion = {
-      ...merged.champion,
-      name: cms.champion.name ?? merged.champion?.name ?? "Perazzi Champion",
-      title: cms.champion.title ?? merged.champion?.title ?? "",
-      quote: cms.champion.quote ?? merged.champion?.quote ?? "",
-      image: cms.champion.image,
+  const fixedCounterpart = platform.fixedCounterpart?.name
+    ? {
+        id: platform.fixedCounterpart.id ?? cleanSlug(platform.fixedCounterpart.slug) ?? platform.fixedCounterpart.name ?? "",
+        slug: cleanSlug(platform.fixedCounterpart.slug) ?? platform.fixedCounterpart.slug ?? "",
+        name: platform.fixedCounterpart.name ?? "",
+      }
+    : undefined;
+
+  const detachableCounterpart = platform.detachableCounterpart?.name
+    ? {
+        id: platform.detachableCounterpart.id ?? cleanSlug(platform.detachableCounterpart.slug) ?? platform.detachableCounterpart.name ?? "",
+        slug: cleanSlug(platform.detachableCounterpart.slug) ?? platform.detachableCounterpart.slug ?? "",
+        name: platform.detachableCounterpart.name ?? "",
+      }
+    : undefined;
+
+  const champion = platform.champion
+    ? {
+        name: platform.champion.name ?? undefined,
+        title: platform.champion.title ?? undefined,
+        quote: platform.champion.quote ?? undefined,
+        image: platform.champion.image ?? undefined,
+        resume: platform.champion.resume,
+      }
+    : undefined;
+
+  return {
+    id: platform.id,
+    slug,
+    name: platform.name ?? slug.toUpperCase(),
+    kind: slug.toUpperCase() as Platform["kind"],
+    tagline: platform.snippetText ?? platform.lineage ?? "",
+    lineageHtml: platform.lineage,
+    hero: platform.hero,
+    hallmark: platform.champion?.quote ?? platform.champion?.title ?? "",
+    weightDistribution: undefined,
+    typicalDisciplines,
+    disciplineRefs,
+    fixedCounterpart: fixedCounterpart?.slug || fixedCounterpart?.name ? fixedCounterpart : undefined,
+    detachableCounterpart: detachableCounterpart?.slug || detachableCounterpart?.name ? detachableCounterpart : undefined,
+    champion,
+    highlights:
+      platform.highlights
+        ?.map((highlight, index) => ({
+          title: highlight.title ?? `Highlight ${index + 1}`,
+          body: highlight.body ?? "",
+          media: highlight.media ?? platform.hero,
+        }))
+        .filter((highlight) => Boolean(highlight.media)) ?? [],
+  };
+}
+
+function syncSeriesWithPlatforms(target: ShotgunsSectionData) {
+  const disciplineLookup = new Map<string, DisciplineSummary>();
+  Object.values(target.disciplines).forEach((disc) => {
+    disciplineLookup.set(disc.id, disc);
+    disciplineLookup.set(disc.name.toLowerCase(), disc);
+  });
+
+  target.landing.platforms.forEach((platform) => {
+    const slug = platform.slug;
+    if (!slug) return;
+
+    if (!target.series[slug]) {
+      target.series[slug] = createSeriesFromPlatform(platform);
+    }
+
+    const entry = target.series[slug];
+    entry.hero = {
+      title: `${platform.name} Platform`,
+      subheading: platform.tagline ?? entry.hero.subheading,
+      media: platform.hero,
     };
-  }
 
-  return merged;
+    const triggerSummary = [
+      platform.detachableCounterpart?.name ? `Detachable: ${platform.detachableCounterpart.name}` : null,
+      platform.fixedCounterpart?.name ? `Fixed: ${platform.fixedCounterpart.name}` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
+    entry.atAGlance = {
+      ...entry.atAGlance,
+      triggerType: triggerSummary || entry.atAGlance.triggerType || "Perazzi trigger",
+      typicalDisciplines: platform.typicalDisciplines?.length
+        ? platform.typicalDisciplines
+        : entry.atAGlance.typicalDisciplines,
+      weightDistribution: platform.weightDistribution ?? entry.atAGlance.weightDistribution,
+      links: [{ label: `Explore ${platform.name}`, href: `/shotguns/${platform.slug}` }],
+    };
+
+    if (platform.lineageHtml) {
+      const trimmed = platform.lineageHtml.trim();
+      entry.storyHtml = trimmed.startsWith("<")
+        ? trimmed
+        : trimmed
+            .split(/\n+/)
+            .map((paragraph) => paragraph.trim())
+            .filter(Boolean)
+            .map((paragraph) => `<p>${paragraph}</p>`)
+            .join("");
+    }
+
+    if (platform.highlights?.length) {
+      entry.highlights = platform.highlights;
+    }
+
+    if (platform.champion) {
+      entry.champion = {
+        ...entry.champion,
+        id: entry.champion?.id ?? platform.champion.name ?? slug,
+        name: platform.champion.name ?? entry.champion?.name ?? "",
+        title: platform.champion.title ?? entry.champion?.title ?? "",
+        quote: platform.champion.quote ?? entry.champion?.quote ?? "",
+        image: platform.champion.image ?? entry.champion?.image ?? platform.hero,
+        href: entry.champion?.href,
+        fallbackText: entry.champion?.fallbackText,
+      };
+    }
+
+    const disciplineMap =
+      platform.disciplineRefs?.map((ref) => {
+        const lookupKey = ref.id ?? ref.name?.toLowerCase() ?? "";
+        const discipline = lookupKey ? disciplineLookup.get(lookupKey) : undefined;
+        const label = discipline?.name ?? ref.name ?? "Discipline";
+        const disciplineId = discipline?.id ?? ref.id ?? label.toLowerCase();
+        return {
+          disciplineId,
+          label,
+          href: discipline ? `/shotguns/disciplines/${discipline.id}` : "/shotguns/disciplines",
+          rationale: discipline?.overviewHtml
+            ? discipline.overviewHtml.replace(/<[^>]+>/g, "").slice(0, 140).concat("…")
+            : `Optimized for ${label}.`,
+        };
+      }) ?? [];
+
+    if (disciplineMap.length) {
+      entry.disciplineMap = disciplineMap;
+    }
+  });
+}
+
+function createSeriesFromPlatform(platform: Platform): ShotgunsSeriesEntry {
+  return {
+    hero: {
+      title: platform.name,
+      subheading: platform.tagline,
+      media: platform.hero,
+    },
+    atAGlance: {
+      triggerType: "Custom trigger",
+      weightDistribution: platform.weightDistribution ?? "",
+      typicalDisciplines: platform.typicalDisciplines,
+      links: [{ label: `Explore ${platform.name}`, href: `/shotguns/${platform.slug}` }],
+    },
+    storyHtml: `<p>${platform.tagline ?? platform.name}.</p>`,
+    highlights: platform.highlights,
+    disciplineMap: [],
+    champion: platform.champion
+      ? {
+          id: platform.champion.name ?? platform.slug,
+          name: platform.champion.name ?? "",
+          title: platform.champion.title ?? "",
+          quote: platform.champion.quote ?? "",
+          image: platform.champion.image ?? platform.hero,
+        }
+      : undefined,
+    relatedArticles: [],
+  };
 }
 
 function applyDisciplines(

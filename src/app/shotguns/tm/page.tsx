@@ -7,10 +7,12 @@ import { MarqueeFeature } from "@/components/shotguns/MarqueeFeature"; // Shotgu
 import { RelatedList } from "@/components/shotguns/RelatedList";
 import { CTASection } from "@/components/shotguns/CTASection";
 import { getShotgunsSectionData } from "@/lib/shotguns-data";
+import { platformToSeriesEntry } from "@/lib/platform-series";
 
 export default async function TMSeriesPage() {
-  const { series, disciplines } = await getShotgunsSectionData();
-  const tmSeries = series.tm;
+  const { series, disciplines, landing } = await getShotgunsSectionData();
+  const platform = landing.platforms.find((entry) => entry.slug === "tm");
+  const tmSeries = platform ? platformToSeriesEntry(platform, series.tm, disciplines) : series.tm;
 
   return (
     <div className="space-y-16">

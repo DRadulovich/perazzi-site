@@ -70,6 +70,39 @@ export const platform = defineType({
       ],
     }),
     defineField({
+      name: "snippet",
+      title: "Snippet",
+      type: "object",
+      fields: [
+        defineField({
+          name: "text",
+          title: "Snippet Text",
+          type: "text",
+          rows: 4,
+        }),
+      ],
+    }),
+    defineField({
+      name: "fixedCounterpart",
+      title: "Fixed-Trigger Counterpart",
+      type: "object",
+      fields: [
+        defineField({ name: "id", type: "string", title: "Identifier (optional)" }),
+        defineField({ name: "name", type: "string", title: "Name" }),
+        defineField({ name: "slug", type: "string", title: "Slug / Link" }),
+      ],
+    }),
+    defineField({
+      name: "detachableCounterpart",
+      title: "Detachable Counterpart",
+      type: "object",
+      fields: [
+        defineField({ name: "id", type: "string", title: "Identifier (optional)" }),
+        defineField({ name: "name", type: "string", title: "Name" }),
+        defineField({ name: "slug", type: "string", title: "Slug / Link" }),
+      ],
+    }),
+    defineField({
       name: "disciplines",
       type: "array",
       of: [{ type: "reference", to: [{ type: "discipline" }] }],

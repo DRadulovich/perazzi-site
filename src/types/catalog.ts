@@ -19,10 +19,27 @@ export interface Platform {
   hallmark: string;
   weightDistribution?: string;
   typicalDisciplines: string[];
+  disciplineRefs?: Array<{ id: string; name?: string }>;
   fixedCounterpart?: {
     id: string;
     slug: string;
     name: string;
+  };
+  detachableCounterpart?: {
+    id: string;
+    slug: string;
+    name: string;
+  };
+  champion?: {
+    name?: string;
+    title?: string;
+    quote?: string;
+    image?: FactoryAsset;
+    resume?: {
+      winOne?: string;
+      winTwo?: string;
+      winThree?: string;
+    };
   };
   highlights: PlatformHighlight[];
 }

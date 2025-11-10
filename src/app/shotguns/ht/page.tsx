@@ -7,10 +7,12 @@ import { MarqueeFeature } from "@/components/shotguns/MarqueeFeature"; // Shotgu
 import { RelatedList } from "@/components/shotguns/RelatedList";
 import { CTASection } from "@/components/shotguns/CTASection";
 import { getShotgunsSectionData } from "@/lib/shotguns-data";
+import { platformToSeriesEntry } from "@/lib/platform-series";
 
 export default async function HighTechSeriesPage() {
-  const { series, disciplines } = await getShotgunsSectionData();
-  const htSeries = series.ht;
+  const { series, disciplines, landing } = await getShotgunsSectionData();
+  const platform = landing.platforms.find((entry) => entry.slug === "ht");
+  const htSeries = platform ? platformToSeriesEntry(platform, series.ht, disciplines) : series.ht;
 
   return (
     <div className="space-y-16">

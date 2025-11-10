@@ -52,7 +52,20 @@ type PlatformResponse = {
     quote?: string;
     image?: SanityImageResult;
   };
-  disciplines?: Array<{ _ref?: string }>;
+  snippet?: {
+    text?: string;
+  };
+  disciplines?: Array<{ _id?: string; name?: string }>;
+  fixedCounterpart?: {
+    id?: string;
+    name?: string;
+    slug?: string;
+  };
+  detachableCounterpart?: {
+    id?: string;
+    name?: string;
+    slug?: string;
+  };
 };
 
 type DisciplineResponse = {
@@ -104,6 +117,7 @@ export interface ShotgunsPlatformPayload {
   slug?: string;
   lineage?: string;
   hero?: FactoryAsset;
+  snippetText?: string;
   highlights?: Array<{
     title?: string;
     body?: string;
@@ -115,7 +129,17 @@ export interface ShotgunsPlatformPayload {
     quote?: string;
     image?: FactoryAsset;
   };
-  disciplineIds?: string[];
+  disciplines?: Array<{ id: string; name?: string }>;
+  fixedCounterpart?: {
+    id?: string;
+    name?: string;
+    slug?: string;
+  };
+  detachableCounterpart?: {
+    id?: string;
+    name?: string;
+    slug?: string;
+  };
 }
 
 export interface ShotgunsDisciplinePayload {
@@ -194,9 +218,30 @@ const platformsQuery = groq`
       quote,
       image{
         ${imageWithMetaFields}
+      },
+      resume{
+        winOne,
+        winTwo,
+        winThree
       }
     },
-    disciplines
+    snippet{
+      text
+    },
+    disciplines[]->{
+      _id,
+      name
+    },
+    fixedCounterpart{
+      id,
+      name,
+      slug
+    },
+    detachableCounterpart{
+      id,
+      name,
+      slug
+    }
   }
 `;
 
@@ -282,6 +327,7 @@ export async function getPlatforms(): Promise<ShotgunsPlatformPayload[]> {
       slug: platform.slug?.current ?? undefined,
       lineage: platform.lineage ?? undefined,
       hero: mapImageResult(platform.hero ?? null),
+      snippetText: platform.snippet?.text ?? undefined,
       highlights: platform.highlights?.map((highlight) => ({
         title: highlight.title ?? undefined,
         body: highlight.body ?? undefined,
@@ -293,9 +339,37 @@ export async function getPlatforms(): Promise<ShotgunsPlatformPayload[]> {
             title: platform.champion.title ?? undefined,
             quote: platform.champion.quote ?? undefined,
             image: mapImageResult(platform.champion.image ?? null),
+            resume: {
+              winOne: platform.champion.resume?.winOne ?? undefined,
+              winTwo: platform.champion.resume?.winTwo ?? undefined,
+              winThree: platform.champion.resume?.winThree ?? undefined,
+            },
           }
         : undefined,
-      disciplineIds: platform.disciplines?.map((ref) => ref._ref).filter(Boolean) as string[] | undefined,
+      disciplines: platform.disciplines
+        ?.map((ref) =>
+          ref?._id
+            ? {
+                id: ref._id as string,
+                name: ref.name ?? undefined,
+              }
+            : null,
+        )
+        .filter(Boolean) as Array<{ id: string; name?: string }> | undefined,
+      fixedCounterpart: platform.fixedCounterpart
+        ? {
+            id: platform.fixedCounterpart.id ?? undefined,
+            name: platform.fixedCounterpart.name ?? undefined,
+            slug: platform.fixedCounterpart.slug ?? undefined,
+          }
+        : undefined,
+      detachableCounterpart: platform.detachableCounterpart
+        ? {
+            id: platform.detachableCounterpart.id ?? undefined,
+            name: platform.detachableCounterpart.name ?? undefined,
+            slug: platform.detachableCounterpart.slug ?? undefined,
+          }
+        : undefined,
     }));
 }
 

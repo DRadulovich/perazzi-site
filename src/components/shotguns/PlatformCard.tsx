@@ -13,7 +13,6 @@ type PlatformCardProps = {
 
 export function PlatformCard({ platform, priority = false }: PlatformCardProps) {
   const ratio = platform.hero.aspectRatio ?? 4 / 3;
-  const lineageHtml = platform.lineageHtml;
   const analyticsRef = useAnalyticsObserver(
     `shotguns_platform_card_impression:${platform.id}`,
   );
@@ -48,14 +47,6 @@ export function PlatformCard({ platform, priority = false }: PlatformCardProps) 
         <p className="text-sm text-ink-muted">{platform.tagline}</p>
       </header>
 
-      {lineageHtml ? (
-        <div
-          className="prose prose-sm mt-3 max-w-none text-ink-muted"
-          dangerouslySetInnerHTML={{ __html: lineageHtml }}
-        />
-      ) : null}
-
-      <p className="mt-3 text-sm text-ink-muted">{platform.hallmark}</p>
       {platform.weightDistribution ? (
         <p className="mt-2 text-xs uppercase tracking-[0.3em] text-ink-muted">
           {platform.weightDistribution}
@@ -84,11 +75,58 @@ export function PlatformCard({ platform, priority = false }: PlatformCardProps) 
           <span className="font-semibold">{platform.fixedCounterpart.name}</span>
         </p>
       ) : null}
+      {platform.detachableCounterpart ? (
+        <p className="mt-1 text-xs text-ink-muted">
+          Detachable counterpart:{" "}
+          <span className="font-semibold">{platform.detachableCounterpart.name}</span>
+        </p>
+      ) : null}
 
-      <span className="mt-6 inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-perazzi-red">
-        Explore the {platform.name} lineage
-        <span aria-hidden="true">→</span>
-      </span>
+      {platform.hallmark || platform.champion ? (
+        <div className="mt-6 flex gap-3">
+          <span className="w-1 self-stretch rounded-full bg-perazzi-red/80" />
+          <div className="flex flex-col gap-4">
+            {platform.hallmark ? (
+              <p className="text-sm italic text-ink-muted">{platform.hallmark}</p>
+            ) : null}
+            {platform.champion?.name || platform.champion?.image || platform.champion?.resume?.winOne ? (
+              <div className="flex items-center gap-3">
+                {platform.champion?.image ? (
+                  <div className="relative h-12 w-12 overflow-hidden rounded-full">
+                    <Image
+                      src={platform.champion.image.url}
+                      alt={platform.champion.image.alt ?? `${platform.champion.name ?? "Perazzi champion"}`}
+                      fill
+                      sizes="48px"
+                      className="object-cover"
+                    />
+                  </div>
+                ) : null}
+                <div>
+                  {platform.champion?.name ? (
+                    <p className="text-sm font-semibold text-ink">{platform.champion.name}</p>
+                  ) : null}
+                  {platform.champion?.title ? (
+                    <p className="text-xs text-ink-muted">{platform.champion.title}</p>
+                  ) : null}
+                  {platform.champion?.resume?.winOne ? (
+                    <p className="mt-1 text-xs text-ink-muted">
+                      Win highlight: <span className="font-medium">{platform.champion.resume.winOne}</span>
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="mt-auto pt-6">
+        <span className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-perazzi-red">
+          Explore the {platform.name} lineage
+          <span aria-hidden="true">→</span>
+        </span>
+      </div>
     </Link>
   );
 }

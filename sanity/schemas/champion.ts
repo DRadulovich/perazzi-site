@@ -38,6 +38,29 @@ export const champion = defineType({
       ],
     }),
     defineField({
+      name: "bio",
+      title: "Bio",
+      type: "object",
+      fields: [
+        defineField({
+          name: "text",
+          title: "Bio text",
+          type: "text",
+          rows: 4,
+        }),
+      ],
+    }),
+    defineField({
+      name: "resume",
+      title: "Resume",
+      type: "object",
+      fields: [
+        defineField({ name: "winOne", title: "Win #1", type: "string" }),
+        defineField({ name: "winTwo", title: "Win #2", type: "string" }),
+        defineField({ name: "winThree", title: "Win #3", type: "string" }),
+      ],
+    }),
+    defineField({
       name: "disciplines",
       type: "array",
       of: [{ type: "reference", to: [{ type: "discipline" }] }],
