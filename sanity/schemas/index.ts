@@ -18,6 +18,7 @@ import { serviceHome } from "./documents/serviceHome";
 import { journalLanding } from "./documents/journalLanding";
 import { author } from "./documents/author";
 import { models } from "./documents/models";
+import { engravings } from "./documents/engravings";
 
 export const schemaTypes = [
   // Objects first so they’re available to documents
@@ -45,4 +46,5 @@ export const schemaTypes = [
   journalLanding,
   author,
   models,
+  engravings,
 ];

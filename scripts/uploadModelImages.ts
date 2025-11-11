@@ -8,8 +8,19 @@ const client = getCliClient({
 
 async function run() {
   const docs = await client.fetch<
-    Array<{ _id: string; s_image_local_path?: { asset?: { _upload?: { path?: string } } } }>
-  >(`*[_type == "models" && defined(s_image_local_path.asset._upload.path)]{
+    Array<{
+      _id: string;
+      s_image_local_path?: {
+        alt?: string;
+        decorative?: boolean;
+        asset?: {
+          _upload?: { path?: string };
+          _ref?: string;
+          asset?: { _ref?: string };
+        };
+      };
+    }>
+  >(`*[_type == "models" && !defined(s_image_local_path.asset.asset._ref)]{
     _id,
     s_image_local_path
   }`);
@@ -20,35 +31,56 @@ async function run() {
   }
 
   for (const doc of docs) {
-    const localPath = doc.s_image_local_path?.asset?._upload?.path;
-    if (!localPath) {
-      console.warn(`Skipping ${doc._id}: no local path.`);
-      continue;
+    const current = doc.s_image_local_path;
+    const uploadPath = current?.asset?._upload?.path;
+    const legacyRef = current?.asset?._ref;
+    const alt = current?.alt || `${doc._id} image`;
+    const decorative = current?.decorative ?? false;
+
+    let assetId = current?.asset?.asset?._ref;
+
+    if (!assetId && uploadPath) {
+      const absolutePath = path.resolve(uploadPath);
+      if (!fs.existsSync(absolutePath)) {
+        console.warn(`Skipping ${doc._id}: file not found at ${absolutePath}`);
+        continue;
+      }
+      console.log(`Uploading ${absolutePath} for ${doc._id}...`);
+      const stream = fs.createReadStream(absolutePath);
+      const asset = await client.assets.upload("image", stream, {
+        filename: path.basename(uploadPath),
+      });
+      assetId = asset._id;
     }
 
-    const absolutePath = path.resolve(localPath);
-    if (!fs.existsSync(absolutePath)) {
-      console.warn(`Skipping ${doc._id}: file not found at ${absolutePath}`);
-      continue;
+    if (!assetId && legacyRef) {
+      assetId = legacyRef;
     }
 
-    console.log(`Uploading ${absolutePath} for ${doc._id}...`);
-    const stream = fs.createReadStream(absolutePath);
-    const asset = await client.assets.upload("image", stream, {
-      filename: path.basename(localPath),
-    });
+    if (!assetId) {
+      console.warn(`Skipping ${doc._id}: no asset reference available.`);
+      continue;
+    }
 
     await client
       .patch(doc._id)
       .set({
-        "s_image_local_path.asset": {
-          _type: "reference",
-          _ref: asset._id,
+        s_image_local_path: {
+          _type: "imageWithMeta",
+          alt,
+          decorative,
+          asset: {
+            _type: "image",
+            asset: {
+              _type: "reference",
+              _ref: assetId,
+            },
+          },
         },
       })
       .commit();
 
-    console.log(`Updated ${doc._id} with asset ${asset._id}`);
+    console.log(`Updated ${doc._id} with asset ${assetId}`);
   }
 }
 

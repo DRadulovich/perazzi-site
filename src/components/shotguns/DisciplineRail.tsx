@@ -111,63 +111,81 @@ function DisciplineCard({
       ref={cardRef}
       href={`/shotguns/disciplines/${discipline.id}`}
       data-analytics-id={`DisciplineChip:${discipline.id}`}
-      className="flex min-w-[260px] flex-col rounded-2xl border border-border/60 bg-card p-4 text-left shadow-sm focus-ring md:min-w-0 md:p-5 lg:p-6"
+      className="flex min-w-[260px] flex-col rounded-2xl border border-border/60 bg-card text-left shadow-sm focus-ring md:min-w-0"
       aria-label={`Slide ${index + 1} of ${total}: ${discipline.name}`}
       onClick={() =>
         logAnalytics(`shotguns_discipline_card_click:${discipline.id}`)
       }
     >
-      <span className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
-        {discipline.name}
-      </span>
-      <div
-        className="prose prose-sm mt-3 max-w-none text-ink"
-        dangerouslySetInnerHTML={{ __html: discipline.overviewHtml }}
-      />
-      {discipline.champion?.image ? (
-        <div className="mt-3 flex items-center gap-3">
-          <figure className="relative h-12 w-12 overflow-hidden rounded-full border border-border/60 bg-neutral-200">
-            <Image
-              src={discipline.champion.image.url}
-              alt={discipline.champion.image.alt}
-              fill
-              sizes="48px"
-              className="object-cover"
-            />
-          </figure>
-          <div className="text-xs uppercase tracking-[0.3em] text-ink-muted">
-            {discipline.champion.name}
-            <span className="block text-[0.6rem] tracking-[0.25em] text-ink-muted/80">
-              {discipline.champion.title}
-            </span>
+      <div className="card-media relative aspect-[32/9] w-full bg-neutral-900">
+        {discipline.hero ? (
+          <Image
+            src={discipline.hero.url}
+            alt={discipline.hero.alt}
+            fill
+            className="object-cover object-center"
+            sizes="(min-width: 1024px) 33vw, 100vw"
+          />
+        ) : null}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 flex flex-col items-center justify-end p-4 text-white">
+          <p className="text-sm font-semibold uppercase tracking-[0.35em] text-white">
+            {discipline.name}
+          </p>
+        </div>
+      </div>
+      <div className="space-y-3 p-4 md:p-5 lg:p-6">
+        <div
+          className="prose prose-sm italic max-w-none text-ink-muted"
+          dangerouslySetInnerHTML={{ __html: discipline.overviewHtml }}
+        />
+        {discipline.recommendedPlatforms?.length ? (
+          <div className="space-y-1">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+              Recommended platforms
+            </h3>
+            <ul className="flex flex-wrap gap-2">
+              {discipline.recommendedPlatforms.map((platformId) => (
+                <li
+                  key={platformId}
+                  className="rounded-full bg-ink/5 px-3 py-1 text-xs uppercase tracking-[0.25em] text-ink"
+                >
+                  {platformName(platformId)}
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
-      ) : null}
-      {discipline.recommendedPlatforms?.length ? (
-        <div className="mt-3 space-y-1">
-          <h3 className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
-            Recommended platforms
-          </h3>
-          <ul className="flex flex-wrap gap-2">
-            {discipline.recommendedPlatforms.map((platformId) => (
-              <li
-                key={platformId}
-                className="rounded-full bg-ink/5 px-3 py-1 text-xs uppercase tracking-[0.25em] text-ink"
-              >
-                {platformName(platformId)}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-      {discipline.champion ? (
-        <blockquote className="mt-4 border-l-2 border-perazzi-red/40 pl-3 text-sm italic text-ink">
-          “{discipline.champion.quote}”
-          <cite className="mt-2 block text-xs not-italic uppercase tracking-[0.3em] text-ink-muted">
-            {discipline.champion.name} · {discipline.champion.title}
-          </cite>
-        </blockquote>
-      ) : null}
+        ) : null}
+        {discipline.popularModels?.length ? (
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+              Most Popular Models
+            </h3>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {discipline.popularModels.map((model) => (
+                <figure
+                  key={model.id}
+                  className="relative aspect-[4/3] overflow-hidden rounded-xl bg-neutral-900"
+                >
+                  {model.hero ? (
+                    <Image
+                      src={model.hero.url}
+                      alt={model.hero.alt}
+                      fill
+                      className="object-cover"
+                      sizes="200px"
+                    />
+                  ) : null}
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+                  <figcaption className="absolute inset-x-0 bottom-0 p-2 text-xs font-semibold uppercase tracking-[0.3em] text-white">
+                    {model.name || "Untitled"}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
     </a>
   );
 }

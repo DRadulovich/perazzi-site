@@ -36,5 +36,12 @@ export const discipline = defineType({
       type: "array",
       of: [{ type: "reference", to: [{ type: "platform" }] }],
     }),
+    defineField({
+      name: "popularModels",
+      title: "Most Popular Models",
+      type: "array",
+      of: [{ type: "reference", to: [{ type: "models" }] }],
+      description: "Select one or more models that best represent this discipline.",
+    }),
   ],
 });

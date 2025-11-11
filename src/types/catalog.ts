@@ -49,6 +49,7 @@ export interface DisciplineSummary {
   name: string;
   overviewHtml: string;
   recommendedPlatforms: string[];
+  popularModels?: Array<{ id: string; name?: string; hero?: FactoryAsset }>;
   recipe: {
     poiRange: string;
     barrelLengths: string;
@@ -111,7 +112,7 @@ export interface ShotgunsLandingData {
   disciplines: Array<
     Pick<
       DisciplineSummary,
-      "id" | "name" | "overviewHtml" | "recommendedPlatforms" | "champion"
+      "id" | "name" | "overviewHtml" | "recommendedPlatforms" | "popularModels" | "champion" | "hero"
     >
   >;
   gaugesTeaser: { href: string; copy: string; bullets: string[] };

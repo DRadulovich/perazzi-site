@@ -21,7 +21,8 @@ const modelsQuery = groq`*[_type == "models"] | order(s_model_name asc) {
     s_gauge_id_5->name
   ]),
   "grade": s_grade_id->name,
-  "image": s_image_local_path,
+  "image": s_image_local_path.asset,
+  "imageAlt": coalesce(s_image_local_path.alt, s_model_name),
   "triggerType1": coalesce(s_trigger_type_id_1, ""),
   "triggerType2": coalesce(s_trigger_type_id_2, ""),
   "triggerSpring1": coalesce(s_trigger_spring_id_1, ""),
@@ -43,6 +44,7 @@ type ModelQueryResult = {
   gaugeNames?: string[];
   grade?: string;
   image?: SanityImageSource | null;
+  imageAlt?: string;
   triggerType1?: string;
   triggerType2?: string;
   triggerSpring1?: string;
@@ -72,7 +74,7 @@ export default async function ModelSearchPage() {
     gaugeNames: (model.gaugeNames as string[]) || [],
     grade: model.grade || "",
     image: model.image || null,
-    imageAlt: model.image?.alt || model.name || "Perazzi model",
+    imageAlt: model.imageAlt || model.name || "Perazzi model",
     triggerTypes: [model.triggerType1, model.triggerType2].filter(Boolean),
     triggerSprings: [model.triggerSpring1, model.triggerSpring2].filter(Boolean),
     ribTypes: [model.ribType1, model.ribType2].filter(Boolean),

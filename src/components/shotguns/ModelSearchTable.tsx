@@ -6,7 +6,7 @@ import { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 
-import { urlFor } from "@/sanity/lib/image";
+import { getSanityImageUrl } from "@/lib/sanityImage";
 
 type SpecList = string[] | undefined;
 
@@ -53,15 +53,19 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
   const [lastFocusedId, setLastFocusedId] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement | null>(null);
   const [heroLoaded, setHeroLoaded] = useState(false);
+  const closeModal = useCallback(() => {
+    setSelectedModel(null);
+    setHeroLoaded(false);
+  }, []);
 
   useEffect(() => {
     if (!selectedModel) return;
     const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setSelectedModel(null);
+      if (event.key === "Escape") closeModal();
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [selectedModel]);
+  }, [selectedModel, closeModal]);
 
   useEffect(() => {
     if (!selectedModel) return;
@@ -252,6 +256,9 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
         () => null,
       )
     : displayModels;
+  const modalImageUrl = selectedModel
+    ? getSanityImageUrl(selectedModel.image, { width: 3200, quality: 95 })
+    : null;
 
   return (
     <section className="mt-10 space-y-8">
@@ -309,63 +316,68 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
           if (!model) {
             return <CardSkeleton key={`skeleton-${index}`} />;
           }
+          const cardImageUrl = getSanityImageUrl(model.image, { width: 2400, quality: 90 });
           return (
-          <article
-            key={model._id}
-            className={CARD_SHELL_CLASS}
-            onMouseMove={handleCardMouseMove}
-            onMouseLeave={handleCardMouseLeave}
-          >
-            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-t-3xl bg-white">
-              {model.image ? (
-                <Image
-                  src={urlFor(model.image).width(2400).quality(90).url()}
-                  alt={model.imageAlt || model.name}
-                  fill
-                  sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
-                  className="object-contain bg-white transition-transform duration-500"
-                  style={{ transform: "translate3d(var(--parallax-x,0px), var(--parallax-y,0px), 0)" }}
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center bg-neutral-900 text-neutral-600">
-                  No Image Available
+            <article
+              key={model._id}
+              className={CARD_SHELL_CLASS}
+              onMouseMove={handleCardMouseMove}
+              onMouseLeave={handleCardMouseLeave}
+            >
+              <div className="card-media relative aspect-[16/10] w-full bg-white">
+                {cardImageUrl ? (
+                  <Image
+                    src={cardImageUrl}
+                    alt={model.imageAlt || model.name}
+                    fill
+                    sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
+                    className="object-contain bg-white transition-transform duration-500"
+                    style={{
+                      transform: "translate3d(var(--parallax-x,0px), var(--parallax-y,0px), 0)",
+                    }}
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center bg-neutral-900 text-neutral-600">
+                    No Image Available
+                  </div>
+                )}
+                <div className="absolute bottom-0 left-0 right-0 p-6 text-black">
+                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+                    {model.use}
+                  </p>
+                  <h3 className="text-2xl font-semibold leading-tight">
+                    {highlightText(model.name, query)}
+                  </h3>
+                  <p className="text-sm text-neutral-600">
+                    {highlightText((model.gaugeNames || []).join(", ") || "", query)}
+                  </p>
                 </div>
-              )}
-            <div className="absolute bottom-0 left-0 right-0 p-6 text-black">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
-                {model.use}
-              </p>
-              <h3 className="text-2xl font-semibold leading-tight">
-                {highlightText(model.name, query)}
-              </h3>
-              <p className="text-sm text-neutral-600">{highlightText(model.version ?? "", query)}</p>
-            </div>
-            </div>
+              </div>
 
-            <div className={SPEC_PANEL_CLASS}>
-              <Spec label="Platform" value={model.platform} />
-              <Spec label="Gauge" value={(model.gaugeNames || []).join(", ") || undefined} />
-              <Spec label="Trigger" value={(model.triggerTypes || []).join(", ") || undefined} />
-              <Spec label="Springs" value={(model.triggerSprings || []).join(", ") || undefined} />
-              <Spec label="Rib" value={(model.ribTypes || []).join(", ") || undefined} />
-              <Spec label="Rib Style" value={(model.ribStyles || []).join(", ") || undefined} />
-              <Spec label="Grade" value={model.grade} />
-            </div>
-            <div className="border-t border-white/5 bg-black/50 px-6 py-4 text-right">
-              <button
-                ref={(node) => {
-                  detailButtonRefs.current[model._id] = node;
-                }}
-                onClick={() => {
-                  setSelectedModel(model);
-                  setLastFocusedId(model._id);
-                }}
-                className="rounded-full border border-white/30 px-5 py-2 text-sm font-semibold uppercase tracking-widest text-white transition hover:border-white hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-perazzi-red"
-              >
-                View details
-              </button>
-            </div>
-          </article>
+              <div className={SPEC_PANEL_CLASS}>
+                <Spec label="Platform" value={model.platform} />
+                <Spec label="Trigger" value={(model.triggerTypes || []).join(", ") || undefined} />
+                <Spec label="Springs" value={(model.triggerSprings || []).join(", ") || undefined} />
+                <Spec label="Rib" value={(model.ribTypes || []).join(", ") || undefined} />
+                <Spec label="Rib Style" value={(model.ribStyles || []).join(", ") || undefined} />
+                <Spec label="Grade" value={model.grade} />
+              </div>
+              <div className="border-t border-white/5 bg-black/50 px-6 py-4 text-right">
+                <button
+                  ref={(node) => {
+                    detailButtonRefs.current[model._id] = node;
+                  }}
+                  onClick={() => {
+                    setHeroLoaded(false);
+                    setSelectedModel(model);
+                    setLastFocusedId(model._id);
+                  }}
+                  className="rounded-full border border-white/30 px-5 py-2 text-sm font-semibold uppercase tracking-widest text-white transition hover:border-white hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-perazzi-red"
+                >
+                  View details
+                </button>
+              </div>
+            </article>
           );
         })}
         {!showSkeletons && filteredModels.length === 0 && (
@@ -383,26 +395,26 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 sm:p-4 md:p-6 backdrop-blur"
           role="dialog"
           aria-modal="true"
-          onClick={() => setSelectedModel(null)}
+          onClick={closeModal}
         >
           <div
             ref={modalRef}
-            className="relative w-full max-w-6xl overflow-hidden rounded-[32px] border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]"
+            className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]"
             onClick={(event) => event.stopPropagation()}
           >
             <button
               type="button"
-              className="absolute right-4 top-4 z-10 rounded-full border border-white/30 px-4 py-1 text-xs uppercase tracking-widest text-white/80 hover:border-white hover:text-white sm:right-5 sm:top-5 sm:text-sm"
-              onClick={() => setSelectedModel(null)}
+              className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 py-1 text-xs uppercase tracking-widest text-black transition hover:border-black hover:bg-white sm:right-5 sm:top-5 sm:text-sm"
+              onClick={closeModal}
             >
               Close
             </button>
 
-            <div className="grid gap-6 p-4 sm:p-6 lg:grid-cols-[3fr,2fr]">
+            <div className="grid flex-1 gap-6 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[3fr,2fr]">
               <div className="relative aspect-[16/10] w-full overflow-hidden rounded-3xl bg-white">
-                {selectedModel.image ? (
+                {modalImageUrl ? (
                   <Image
-                    src={urlFor(selectedModel.image).width(3200).quality(95).url()}
+                    src={modalImageUrl}
                     alt={selectedModel.imageAlt || selectedModel.name}
                     fill
                     sizes="(min-width: 1024px) 80vw, 100vw"
@@ -427,7 +439,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                 </div>
               </div>
 
-              <div className={DETAIL_PANEL_CLASS}>
+              <div className={`${DETAIL_PANEL_CLASS} grid gap-4 sm:grid-cols-2 lg:grid-cols-3`}>
                 <DetailGrid label="Platform" value={selectedModel.platform} />
                 <DetailGrid
                   label="Gauge"

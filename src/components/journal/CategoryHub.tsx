@@ -50,16 +50,19 @@ export function CategoryHub({ category, data }: HubProps) {
           <article key={item.slug} className="rounded-3xl border border-border/70 bg-card">
             <Link
               href={`/journal/${item.slug}`}
-              className="flex h-full flex-col focus-ring"
+              className="flex h-full flex-col rounded-3xl focus-ring"
               onClick={() => logAnalytics(`FeaturedStoryClick:${item.slug}`)}
             >
-              <div className="relative" style={{ aspectRatio: item.hero.aspectRatio ?? 16 / 9 }}>
+              <div
+                className="card-media relative"
+                style={{ aspectRatio: item.hero.aspectRatio ?? 16 / 9 }}
+              >
                 <Image
                   src={item.hero.url}
                   alt={item.hero.alt}
                   fill
                   sizes="(min-width: 1024px) 500px, 100vw"
-                  className="rounded-t-3xl object-cover"
+                  className="object-cover"
                   loading="lazy"
                 />
               </div>

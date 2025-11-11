@@ -26,17 +26,19 @@ export function PlatformCard({ platform, priority = false }: PlatformCardProps) 
       onClick={() => logAnalytics(`shotguns_platform_card_click:${platform.id}`)}
     >
       <div
-        className="relative overflow-hidden rounded-2xl bg-neutral-200 transition-transform duration-300 group-hover:scale-[1.01]"
+        className="card-media relative rounded-2xl bg-black transition-transform duration-300 group-hover:scale-[1.01]"
         style={{ aspectRatio: ratio }}
       >
         <Image
           src={platform.hero.url}
           alt={platform.hero.alt}
           fill
-          sizes="(min-width: 1280px) 384px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+          sizes="100vw"
           className="object-cover"
           priority={priority}
           loading={priority ? "eager" : "lazy"}
+          quality={100}
+          unoptimized
         />
       </div>
 

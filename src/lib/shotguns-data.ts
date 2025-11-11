@@ -2,7 +2,14 @@ import { cache } from "react";
 
 import { shotgunsData } from "@/content/shotguns";
 import { portableTextToHtml } from "@/lib/portable-text";
-import type { ShotgunsSectionData, Platform, GradeSeries, ShotgunsSeriesEntry, DisciplineSummary } from "@/types/catalog";
+import type {
+  ShotgunsSectionData,
+  Platform,
+  GradeSeries,
+  ShotgunsSeriesEntry,
+  DisciplineSummary,
+  ShotgunsLandingData,
+} from "@/types/catalog";
 import {
   getDisciplines,
   getGrades,
@@ -13,7 +20,6 @@ import {
   type ShotgunsLandingPayload,
   type ShotgunsPlatformPayload,
 } from "@/sanity/queries/shotguns";
-import type { PortableTextBlock } from "@/sanity/queries/utils";
 
 const FALLBACK = shotgunsData;
 
@@ -92,14 +98,14 @@ function applyLanding(target: ShotgunsSectionData, landing?: ShotgunsLandingPayl
         .filter(([key]) => Boolean(key)),
     );
 
-    target.landing.disciplines = target.landing.disciplines.map((discipline) => {
-      const hub = hubMap.get(discipline.id);
-      if (hub?.championImage && discipline.champion) {
-        discipline.champion.image = hub.championImage;
-      }
-      return discipline;
-    });
-  }
+  target.landing.disciplines = target.landing.disciplines.map((discipline) => {
+    const hub = hubMap.get(discipline.id);
+    if (hub?.championImage && discipline.champion) {
+      discipline.champion.image = hub.championImage;
+    }
+    return discipline;
+  });
+}
 }
 
 function applyPlatforms(target: ShotgunsSectionData, platforms?: ShotgunsPlatformPayload[]) {
@@ -324,20 +330,99 @@ function applyDisciplines(
       .filter(Boolean) as Array<[string, ShotgunsDisciplinePayload]>,
   );
 
-  for (const [slug, discipline] of Object.entries(target.disciplines)) {
-    const cms = disciplineMap.get(slug);
-    if (!cms) continue;
+  const landingFallbackMap = new Map(
+    target.landing.disciplines.map((discipline) => [discipline.id, discipline]),
+  );
+  const updatedLanding: ShotgunsLandingData["disciplines"] = [];
+
+  target.landing.disciplines.forEach((entry) => {
+    const cms = disciplineMap.get(entry.id);
+    const summary = target.disciplines[entry.id];
+    if (!cms) {
+      return;
+    }
 
     if (cms.hero) {
-      discipline.hero = cms.hero;
+      summary.hero = cms.hero;
     }
-    if (cms.championImage && discipline.champion) {
-      discipline.champion.image = cms.championImage;
+    if (cms.championImage) {
+      if (summary.champion) {
+        summary.champion.image = cms.championImage;
+      } else {
+        summary.champion = {
+          id: entry.id,
+          name: entry.name,
+          title: entry.id,
+          quote: "",
+          image: cms.championImage,
+        };
+      }
     }
     const overviewHtml = portableTextToHtml(cms.overviewPortableText);
     if (overviewHtml) {
-      discipline.overviewHtml = overviewHtml;
+      summary.overviewHtml = overviewHtml;
     }
+    if (cms.recommendedPlatformIds?.length) {
+      summary.recommendedPlatforms = cms.recommendedPlatformIds;
+    }
+    if (cms.popularModels?.length) {
+      summary.popularModels = cms.popularModels;
+    }
+
+    updatedLanding.push({
+      id: entry.id,
+      name: cms.name ?? entry.name,
+      overviewHtml: summary.overviewHtml ?? entry.overviewHtml,
+      recommendedPlatforms:
+        summary.recommendedPlatforms?.length
+          ? summary.recommendedPlatforms
+          : entry.recommendedPlatforms,
+      popularModels: summary.popularModels,
+      champion: summary.champion ?? entry.champion,
+      hero: summary.hero ?? entry.hero,
+    });
+  });
+
+  for (const [slug, cms] of disciplineMap.entries()) {
+    if (landingFallbackMap.has(slug)) continue;
+    const summary: DisciplineSummary = {
+      id: slug,
+      name: cms.name ?? slug,
+      overviewHtml: portableTextToHtml(cms.overviewPortableText) ?? "",
+      recommendedPlatforms: cms.recommendedPlatformIds ?? [],
+      recipe: {
+        poiRange: "",
+        barrelLengths: "",
+        ribNotes: "",
+      },
+    };
+    if (cms.hero) summary.hero = cms.hero;
+    if (cms.championImage) {
+      summary.champion = {
+        id: slug,
+        name: cms.name ?? slug,
+        title: "",
+        quote: "",
+        image: cms.championImage,
+      };
+    }
+    if (cms.popularModels?.length) {
+      summary.popularModels = cms.popularModels;
+    }
+    target.disciplines[slug] = summary;
+    updatedLanding.push({
+      id: slug,
+      name: summary.name,
+      overviewHtml: summary.overviewHtml,
+      recommendedPlatforms: summary.recommendedPlatforms,
+      popularModels: summary.popularModels,
+      champion: summary.champion,
+      hero: summary.hero,
+    });
+  }
+
+  if (updatedLanding.length) {
+    target.landing.disciplines = updatedLanding;
   }
 }
 

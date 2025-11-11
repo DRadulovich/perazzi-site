@@ -150,6 +150,7 @@ export interface ShotgunsDisciplinePayload {
   hero?: FactoryAsset;
   championImage?: FactoryAsset;
   recommendedPlatformIds?: string[];
+  popularModels?: Array<{ id: string; name?: string; hero?: FactoryAsset }>;
 }
 
 export interface ShotgunsGradePayload {
@@ -257,7 +258,14 @@ const disciplinesQuery = groq`
     championImage{
       ${imageWithMetaFields}
     },
-    recommendedPlatforms
+    recommendedPlatforms,
+    popularModels[]->{
+      _id,
+      s_model_name,
+      s_image_local_path{
+        ${imageWithMetaFields}
+      }
+    }
   }
 `;
 
@@ -388,6 +396,17 @@ export async function getDisciplines(): Promise<ShotgunsDisciplinePayload[]> {
       recommendedPlatformIds: discipline.recommendedPlatforms
         ?.map((ref) => ref._ref)
         .filter(Boolean) as string[] | undefined,
+      popularModels: discipline.popularModels
+        ?.map((model) =>
+          model?._id
+            ? {
+                id: model._id as string,
+                name: model.s_model_name ?? undefined,
+                hero: mapImageResult(model.s_image_local_path ?? null),
+              }
+            : null,
+        )
+        .filter(Boolean) as Array<{ id: string; name?: string; hero?: FactoryAsset }> | undefined,
     }));
 }
 
