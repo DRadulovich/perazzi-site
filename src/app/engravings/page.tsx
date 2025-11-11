@@ -5,7 +5,7 @@ import { SanityImageSource } from "@sanity/image-url/lib/types/types";
 
 import { EngravingSearchTable } from "@/components/engravings/EngravingSearchTable";
 import { client } from "@/sanity/lib/client";
-import engravingHero from "@/../Photos/ENGRAVINGS/Extra Gold/Engraving_85_-_Left_side_65_900_900_0.jpg";
+import engravingHero from "@/../Photos/ENGRAVINGS/p-web-d-2.jpg";
 
 const engravingsQuery = groq`*[_type == "engravings"] | order(engraving_grade->name asc, engraving_id asc, engraving_side asc) {
   _id,
@@ -62,8 +62,8 @@ export default async function EngravingsPage() {
               The Perazzi Engraving Library
             </h1>
             <p className="max-w-2xl text-sm text-white/80 sm:text-base">
-              Explore every documented engraving pattern in the Sanity catalog. Filter by grade, focus on a particular
-              side of the receiver, and open each entry in a lightbox to examine the artwork in detail.
+              A living archive of hand and light. Here, master engravers leave their signatures—lines that breathe,
+              patterns that carry meaning—so your shotgun can wear a story as singular as its owner.
             </p>
           </div>
         </div>

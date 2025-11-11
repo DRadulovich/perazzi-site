@@ -34,18 +34,47 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
   const [gradeFilters, setGradeFilters] = useState<string[]>([]);
   const [sideFilters, setSideFilters] = useState<string[]>([]);
   const [selected, setSelected] = useState<EngravingRow | null>(null);
+  const [favorites, setFavorites] = useState<EngravingRow[]>([]);
+  const [compareOpen, setCompareOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [isPending, startTransition] = useTransition();
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const detailButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [lastFocusedId, setLastFocusedId] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement | null>(null);
+  const compareModalRef = useRef<HTMLDivElement | null>(null);
   const [heroLoaded, setHeroLoaded] = useState(false);
 
   const closeModal = useCallback(() => {
     setSelected(null);
     setHeroLoaded(false);
   }, []);
+
+  const toggleFavorite = useCallback((engraving: EngravingRow) => {
+    setFavorites((prev) => {
+      const exists = prev.some((fav) => fav._id === engraving._id);
+      if (exists) {
+        return prev.filter((fav) => fav._id !== engraving._id);
+      }
+      if (prev.length >= 6) {
+        window.alert("You can only favorite up to 6 engravings.");
+        return prev;
+      }
+      return [...prev, engraving];
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!selected && !compareOpen) return;
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        if (selected) closeModal();
+        if (compareOpen) setCompareOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [selected, compareOpen, closeModal]);
 
   useEffect(() => {
     if (!selected) return;
@@ -91,6 +120,39 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
     modalNode.addEventListener("keydown", handleTrap);
     return () => modalNode.removeEventListener("keydown", handleTrap);
   }, [selected]);
+
+  useEffect(() => {
+    if (!compareOpen) return;
+    const node = compareModalRef.current;
+    if (!node) return;
+    const focusableSelectors = [
+      "a[href]",
+      'button:not([disabled])',
+      'textarea:not([disabled])',
+      'input:not([disabled])',
+      'select:not([disabled])',
+      '[tabindex]:not([tabindex="-1"])',
+    ];
+    const focusables = Array.from(node.querySelectorAll<HTMLElement>(focusableSelectors.join(",")));
+    focusables[0]?.focus();
+
+    const handleTrap = (event: KeyboardEvent) => {
+      if (event.key !== "Tab" || focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (event.shiftKey) {
+        if (document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else if (document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    node.addEventListener("keydown", handleTrap);
+    return () => node.removeEventListener("keydown", handleTrap);
+  }, [compareOpen]);
 
   useEffect(() => {
     if (selected || !lastFocusedId) return;
@@ -232,7 +294,10 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
     : null;
 
   return (
-    <section className="mt-10 space-y-8">
+    <section
+      className="mt-10 space-y-8 text-white"
+      style={{ colorScheme: "dark", backgroundColor: "transparent" }}
+    >
       <div className={FILTER_PANEL_CLASS}>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <label className="flex w-full items-center gap-3 rounded-full border border-white/20 bg-black/40 px-4 py-2 text-sm text-neutral-300 focus-within:border-white">
@@ -250,6 +315,60 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
             <span className="font-semibold text-white"> {engravings.length}</span>
           </p>
         </div>
+
+        {favorites.length > 0 && (
+          <div className="rounded-3xl border border-white/10 bg-black/30 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400">
+                Favorites ({favorites.length}/6)
+              </p>
+              <button
+                type="button"
+                disabled={favorites.length < 2}
+                onClick={() => setCompareOpen(true)}
+                className={clsx(
+                  "rounded-full px-4 py-1 text-xs uppercase tracking-[0.3em]",
+                  favorites.length < 2
+                    ? "border border-white/20 text-white/40"
+                    : "border border-white/40 text-white hover:border-white hover:text-white",
+                )}
+              >
+                Compare
+              </button>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-4">
+              {favorites.map((fav) => {
+                const previewUrl = getSanityImageUrl(fav.image, { width: 200, quality: 70 });
+                return (
+                  <div key={fav._id} className="flex flex-col items-center text-center text-white">
+                    <button
+                      type="button"
+                      className="relative h-16 w-16 overflow-hidden rounded-full border border-white/20 bg-white"
+                      onClick={() => {
+                        setSelected(fav);
+                        setLastFocusedId(fav._id);
+                      }}
+                    >
+                      {previewUrl ? (
+                        <Image src={previewUrl} alt={fav.imageAlt || fav.engravingId} fill className="object-cover" />
+                      ) : (
+                        <span className="text-xs text-black">No Image</span>
+                      )}
+                    </button>
+                    <p className="mt-2 text-xs font-semibold">#{fav.engravingId}</p>
+                    <button
+                      type="button"
+                      className="text-[10px] uppercase tracking-[0.3em] text-white/60 hover:text-white"
+                      onClick={() => toggleFavorite(fav)}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-wrap gap-4">
           <FilterGroup
@@ -282,6 +401,7 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
             return <CardSkeleton key={`skeleton-${index}`} />;
           }
           const cardImageUrl = getSanityImageUrl(engraving.image, { width: 2000, quality: 90 });
+          const isFavorite = favorites.some((fav) => fav._id === engraving._id);
           return (
             <article key={engraving._id} className={CARD_CLASS}>
               <div className="card-media relative aspect-[4/3] w-full bg-white">
@@ -301,6 +421,15 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
                     No Image Available
                   </div>
                 )}
+                {cardImageUrl ? (
+                  <div
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                      background:
+                        "radial-gradient(circle at center, transparent 45%, rgba(0,0,0,0.4) 85%)",
+                    }}
+                  />
+                ) : null}
                 <div
                   className={clsx(
                     "absolute inset-x-0 bottom-0 flex flex-col p-5 text-black",
@@ -327,7 +456,19 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
                 <Spec label="Side" value={engraving.engravingSide} />
               </div>
 
-              <div className="border-t border-white/5 bg-black/50 px-6 py-4 text-right">
+              <div className="flex items-center justify-between gap-3 border-t border-white/5 bg-black/50 px-6 py-4">
+                <button
+                  type="button"
+                  onClick={() => toggleFavorite(engraving)}
+                  className={clsx(
+                    "rounded-full border px-5 py-2 text-sm font-semibold uppercase tracking-widest transition",
+                    isFavorite
+                      ? "border-perazzi-red bg-perazzi-red/80 text-white"
+                      : "border-white/30 text-white hover:border-white hover:text-white",
+                  )}
+                >
+                  {isFavorite ? "Saved" : "Save"}
+                </button>
                 <button
                   ref={(node) => {
                     detailButtonRefs.current[engraving._id] = node;
@@ -400,6 +541,68 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
                 <Detail label="Engraving ID" value={selected.engravingId} />
                 <Detail label="Side" value={selected.engravingSide} />
               </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {compareOpen ? (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/80 p-3 sm:p-4 md:p-6 backdrop-blur"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setCompareOpen(false)}
+        >
+          <div
+            ref={compareModalRef}
+            className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 py-1 text-xs uppercase tracking-widest text-black transition hover:border-black hover:bg-white sm:right-5 sm:top-5 sm:text-sm"
+              onClick={() => setCompareOpen(false)}
+            >
+              Close
+            </button>
+            <div className="space-y-4 border-b border-white/10 p-6 text-center">
+              <p className="text-xs uppercase tracking-[0.4em] text-white/70">Compare Engravings</p>
+              <h2 className="text-3xl font-semibold">Side-by-side favorites</h2>
+            </div>
+            <div className="grid gap-6 overflow-y-auto p-6 sm:grid-cols-2 lg:grid-cols-3">
+              {favorites.map((fav) => {
+                const compareImage = getSanityImageUrl(fav.image, { width: 2400, quality: 95 });
+                return (
+                  <article key={fav._id} className="rounded-3xl border border-white/10 bg-black/30 p-4">
+                    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-white">
+                      {compareImage ? (
+                        <Image
+                          src={compareImage}
+                          alt={fav.imageAlt || `Engraving ${fav.engravingId}`}
+                          fill
+                          className="object-contain bg-white"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-black">No Image</div>
+                      )}
+                      {compareImage ? (
+                        <div
+                          className="pointer-events-none absolute inset-0"
+                          style={{
+                            background:
+                              "radial-gradient(circle at center, transparent 45%, rgba(0,0,0,0.4) 85%)",
+                          }}
+                        />
+                      ) : null}
+                    </div>
+                    <div className="mt-4 space-y-1 text-black">
+                      <p className="text-xs uppercase tracking-[0.35em] text-perazzi-red">{fav.gradeName}</p>
+                      <p className="text-xl font-semibold text-white">Engraving {fav.engravingId}</p>
+                      <p className="text-sm text-white/80">{fav.engravingSide}</p>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           </div>
         </div>
