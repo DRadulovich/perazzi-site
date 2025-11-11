@@ -279,6 +279,7 @@ const HeritageFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) => (
 const NAV_LINKS: NavItem[] = [
   { text: "Home", href: "/" },
   { text: "Shotguns", href: "/shotguns", component: ShotgunsFlyout },
+  { text: "Bespoke Journey", href: "/bespoke" },
   { text: "Experience", href: "/experience", component: ExperienceFlyout },
   { text: "Heritage", href: "/heritage", component: HeritageFlyout },
 ];
@@ -300,9 +301,9 @@ const SHOTGUN_GRID = [
     href: "/shotguns/tm",
   },
   {
-    title: "Bespoke Journey",
-    description: "Commission a one-off build tailored to your vision.",
-    href: "/bespoke",
+    title: "Model Search",
+    description: "Browse every current Perazzi model across all platforms.",
+    href: "/shotguns/all",
   },
 ];
 
