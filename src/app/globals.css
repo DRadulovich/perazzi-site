@@ -189,6 +189,12 @@ body {
 .border-subtle { border-color: var(--border-color); }
 .border-border { border-color: var(--border-color); }
 
+.card-media {
+  overflow: hidden;
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+}
+
 @keyframes accordion-down {
   from {
     height: 0;
