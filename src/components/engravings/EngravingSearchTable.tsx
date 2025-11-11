@@ -294,10 +294,7 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
     : null;
 
   return (
-    <section
-      className="mt-10 space-y-8 text-white"
-      style={{ colorScheme: "dark", backgroundColor: "transparent" }}
-    >
+    <section className="mt-10 space-y-8">
       <div className={FILTER_PANEL_CLASS}>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <label className="flex w-full items-center gap-3 rounded-full border border-white/20 bg-black/40 px-4 py-2 text-sm text-neutral-300 focus-within:border-white">
@@ -317,7 +314,7 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
         </div>
 
         {favorites.length > 0 && (
-          <div className="rounded-3xl border border-white/10 bg-black/30 p-4">
+          <div className="rounded-3xl border border-white/10 bg-black/30 p-4 text-white">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400">
                 Favorites ({favorites.length}/6)
@@ -513,7 +510,7 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
               Close
             </button>
 
-            <div className="grid flex-1 gap-6 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[3fr,2fr]">
+            <div className="grid flex-1 overflow-y-auto p-4 sm:p-6">
               <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl bg-white">
                 {modalImageUrl ? (
                   <Image
@@ -534,12 +531,18 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
                 ) : (
                   <div className="flex h-full items-center justify-center text-neutral-600">No Image Available</div>
                 )}
-              </div>
-
-              <div className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-black/40 p-4 sm:p-6">
-                <Detail label="Grade" value={selected.gradeName} />
-                <Detail label="Engraving ID" value={selected.engravingId} />
-                <Detail label="Side" value={selected.engravingSide} />
+                <div
+                  className={clsx(
+                    "absolute inset-x-0 bottom-0 flex flex-col p-8 text-black",
+                    selected.engravingSide === "Right" ? "items-end text-right" : "items-start text-left",
+                  )}
+                >
+                  <p className="text-sm font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+                    {selected.gradeName}
+                  </p>
+                  <h2 className="text-5xl font-semibold leading-tight">Engraving {selected.engravingId}</h2>
+                  <p className="text-lg text-black/70">{selected.engravingSide}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -583,7 +586,7 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
                           className="object-contain bg-white"
                         />
                       ) : (
-                        <div className="flex h-full items-center justify-center text-black">No Image</div>
+                        <div className="flex h-full items-center justify-center text-neutral-600">No Image</div>
                       )}
                       {compareImage ? (
                         <div
@@ -595,7 +598,7 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
                         />
                       ) : null}
                     </div>
-                    <div className="mt-4 space-y-1 text-black">
+                    <div className="mt-4 space-y-1 text-white">
                       <p className="text-xs uppercase tracking-[0.35em] text-perazzi-red">{fav.gradeName}</p>
                       <p className="text-xl font-semibold text-white">Engraving {fav.engravingId}</p>
                       <p className="text-sm text-white/80">{fav.engravingSide}</p>
@@ -620,31 +623,31 @@ function Spec({ label, value }: { label: string; value?: string }) {
   );
 }
 
-function Detail({ label, value }: { label: string; value?: string }) {
-  return (
-    <div>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-perazzi-red">{label}</p>
-      <p className="text-lg text-white">{value || "—"}</p>
-    </div>
-  );
-}
-
 function FilterGroup({
   label,
   options,
   values,
   onToggle,
+  tone = "dark",
 }: {
   label: string;
   options: Array<{ value: string; count: number }>;
   values: string[];
   onToggle: (value: string) => void;
+  tone?: "light" | "dark";
 }) {
   if (!options.length) return null;
   const total = options.reduce((sum, option) => sum + option.count, 0);
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <span className="text-sm uppercase tracking-[0.3em] text-neutral-500">{label}</span>
+      <span
+        className={clsx(
+          "text-sm uppercase tracking-[0.3em]",
+          tone === "dark" ? "text-neutral-500" : "text-ink-muted",
+        )}
+      >
+        {label}
+      </span>
       <div className="flex flex-wrap gap-2">
         <FilterChip active={!values.length} label={`All (${total})`} onClick={() => onToggle("__reset__")} />
         {options.map((option) => (
@@ -653,6 +656,7 @@ function FilterGroup({
             active={values.includes(option.value)}
             label={`${option.value} (${option.count})`}
             onClick={() => onToggle(option.value)}
+            tone={tone}
           />
         ))}
       </div>
@@ -664,10 +668,12 @@ function FilterChip({
   label,
   active,
   onClick,
+  tone = "dark",
 }: {
   label: string;
   active: boolean;
   onClick: () => void;
+  tone?: "light" | "dark";
 }) {
   return (
     <button
@@ -676,8 +682,12 @@ function FilterChip({
       className={clsx(
         "rounded-full px-4 py-1 text-xs uppercase tracking-widest transition",
         active
-          ? "bg-white text-black"
-          : "border border-white/20 bg-transparent text-white/70 hover:border-white/60",
+          ? tone === "dark"
+            ? "bg-white text-black"
+            : "bg-ink text-white"
+          : tone === "dark"
+            ? "border border-white/20 bg-transparent text-white/70 hover:border-white/60"
+            : "border border-border bg-transparent text-ink/70 hover:border-ink",
       )}
     >
       {label}

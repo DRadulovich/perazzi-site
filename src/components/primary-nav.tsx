@@ -296,9 +296,9 @@ const SHOTGUN_GRID = [
     href: "/shotguns/mx",
   },
   {
-    title: "TM Platform",
-    description: "Precision low-rib timing for trap traditionalists.",
-    href: "/shotguns/tm",
+    title: "Engraving Library",
+    description: "Search every catalogued engraving pattern in high resolution.",
+    href: "/engravings",
   },
   {
     title: "Model Search",
