@@ -12,9 +12,11 @@ function cloneExperience(): ExperiencePageData {
   return JSON.parse(JSON.stringify(experienceData));
 }
 
+type PickerInput = Partial<Omit<PickerItem, "id">> & { id?: string };
+
 function mergePickerItems(
   fallbackItems: PickerItem[],
-  incoming?: ExperiencePageData["picker"],
+  incoming?: PickerInput[],
 ): PickerItem[] {
   if (!incoming?.length) return fallbackItems;
   const fallbackMap = new Map(fallbackItems.map((item) => [item.id, item]));

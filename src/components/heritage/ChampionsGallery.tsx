@@ -117,7 +117,7 @@ type ChampionCardProps = {
 
 function ChampionCard({ champion }: ChampionCardProps) {
   const ratio = champion.image.aspectRatio ?? 3 / 4;
-  const analyticsRef = useAnalyticsObserver(`ChampionCardViewed:${champion.id}`, {
+  const analyticsRef = useAnalyticsObserver<HTMLLIElement>(`ChampionCardViewed:${champion.id}`, {
     threshold: 0.3,
   });
   const [open, setOpen] = useState(false);
@@ -164,6 +164,22 @@ function ChampionCard({ champion }: ChampionCardProps) {
               <blockquote className="border-l-2 border-perazzi-red/40 pl-3 text-sm italic text-ink-muted">
                 “{champion.quote}”
               </blockquote>
+              {champion.bio ? (
+                <p className="text-xs text-ink-muted line-clamp-3">{champion.bio}</p>
+              ) : null}
+              {champion.resume &&
+              (champion.resume.winOne || champion.resume.winTwo || champion.resume.winThree) ? (
+                <div className="space-y-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
+                    Career Highlights
+                  </p>
+                  <ul className="space-y-1 text-xs text-ink">
+                    {champion.resume.winOne ? <li>• {champion.resume.winOne}</li> : null}
+                    {champion.resume.winTwo ? <li>• {champion.resume.winTwo}</li> : null}
+                    {champion.resume.winThree ? <li>• {champion.resume.winThree}</li> : null}
+                  </ul>
+                </div>
+              ) : null}
               {champion.disciplines?.length ? (
                 <ul className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.2em] text-ink-muted">
                   {champion.disciplines.map((discipline) => (
@@ -172,6 +188,20 @@ function ChampionCard({ champion }: ChampionCardProps) {
                     </li>
                   ))}
                 </ul>
+              ) : null}
+              {champion.platforms?.length ? (
+                <div className="space-y-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
+                    Platforms
+                  </p>
+                  <ul className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.2em] text-ink-muted">
+                    {champion.platforms.map((platform) => (
+                      <li key={platform} className="rounded-full border border-border px-3 py-1">
+                        {platform}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               ) : null}
             </div>
             <span className="mt-auto pt-6 text-xs uppercase tracking-[0.3em] text-perazzi-red">
@@ -208,6 +238,36 @@ function ChampionCard({ champion }: ChampionCardProps) {
                     <blockquote className="border-l-2 border-perazzi-red/40 pl-3 text-base italic text-ink">
                       “{champion.quote}”
                     </blockquote>
+                    {champion.bio ? (
+                      <p className="text-sm text-ink-muted">{champion.bio}</p>
+                    ) : null}
+                    {champion.resume &&
+                    (champion.resume.winOne || champion.resume.winTwo || champion.resume.winThree) ? (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+                          Career Highlights
+                        </p>
+                        <ul className="space-y-1 text-sm text-ink">
+                          {champion.resume.winOne ? <li>• {champion.resume.winOne}</li> : null}
+                          {champion.resume.winTwo ? <li>• {champion.resume.winTwo}</li> : null}
+                          {champion.resume.winThree ? <li>• {champion.resume.winThree}</li> : null}
+                        </ul>
+                      </div>
+                    ) : null}
+                    {champion.platforms?.length ? (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+                          Platforms
+                        </p>
+                        <ul className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.2em] text-ink-muted">
+                          {champion.platforms.map((platform) => (
+                            <li key={platform} className="rounded-full border border-border px-3 py-1">
+                              {platform}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
                     {champion.article ? (
                       <a
                         href={`/${champion.article.slug}`}

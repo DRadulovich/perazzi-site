@@ -17,7 +17,7 @@ export default function Head() {
   return (
     <>
       <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="" />
-      <link rel="preload" as="image" href={heroUrl} fetchpriority="high" />
+      <link rel="preload" as="image" href={heroUrl} fetchPriority="high" />
       <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
     </>
   );

@@ -51,6 +51,11 @@ type PlatformResponse = {
     title?: string;
     quote?: string;
     image?: SanityImageResult;
+    resume?: {
+      winOne?: string;
+      winTwo?: string;
+      winThree?: string;
+    };
   };
   snippet?: {
     text?: string;
@@ -76,6 +81,11 @@ type DisciplineResponse = {
   hero?: SanityImageResult;
   championImage?: SanityImageResult;
   recommendedPlatforms?: Array<{ _ref?: string }>;
+  popularModels?: Array<{
+    _id?: string;
+    s_model_name?: string;
+    s_image_local_path?: SanityImageResult;
+  }>;
 };
 
 type GradeResponse = {
@@ -128,6 +138,11 @@ export interface ShotgunsPlatformPayload {
     title?: string;
     quote?: string;
     image?: FactoryAsset;
+    resume?: {
+      winOne?: string;
+      winTwo?: string;
+      winThree?: string;
+    };
   };
   disciplines?: Array<{ id: string; name?: string }>;
   fixedCounterpart?: {

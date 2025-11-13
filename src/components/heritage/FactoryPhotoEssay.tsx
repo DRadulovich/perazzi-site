@@ -160,7 +160,7 @@ type PhotoCardProps = {
 
 function PhotoCard({ item, onOpen }: PhotoCardProps) {
   const ratio = item.image.aspectRatio ?? 3 / 2;
-  const analyticsRef = useAnalyticsObserver(`FactoryEssaySeen:${item.image.id}`, {
+  const analyticsRef = useAnalyticsObserver<HTMLDivElement>(`FactoryEssaySeen:${item.image.id}`, {
     threshold: 0.3,
   });
 

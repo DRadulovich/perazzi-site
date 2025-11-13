@@ -59,6 +59,13 @@ export interface ChampionEvergreen {
   image: FactoryAsset;
   article?: ArticleRef;
   disciplines?: string[];
+  platforms?: string[];
+  bio?: string;
+  resume?: {
+    winOne?: string;
+    winTwo?: string;
+    winThree?: string;
+  };
 }
 
 export interface HeritagePageData {

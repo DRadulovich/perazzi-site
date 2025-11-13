@@ -123,7 +123,7 @@ const scheduler = {
 export function BookingOptions({ booking }: BookingOptionsProps) {
   const analyticsRef = useAnalyticsObserver("BookingOptionsSeen");
   const isDesktop = useMediaQuery("(min-width: 1024px)") ?? false;
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useReducedMotion() ?? false;
   const [showScheduler, setShowScheduler] = useState(false);
 
   return (

@@ -35,6 +35,8 @@ const modelsQuery = groq`*[_type == "models"] | order(s_model_name asc) {
   "ribStyle4": coalesce(s_rib_style_id_4, "")
 }`;
 
+const isNonEmptyString = (value?: string | null): value is string => Boolean(value && value.trim().length);
+
 type ModelQueryResult = {
   _id: string;
   name?: string;
@@ -71,14 +73,14 @@ export default async function ModelSearchPage() {
     version: model.version || "",
     use: model.use || "",
     platform: model.platform || "",
-    gaugeNames: (model.gaugeNames as string[]) || [],
+    gaugeNames: model.gaugeNames ?? [],
     grade: model.grade || "",
     image: model.image || null,
     imageAlt: model.imageAlt || model.name || "Perazzi model",
-    triggerTypes: [model.triggerType1, model.triggerType2].filter(Boolean),
-    triggerSprings: [model.triggerSpring1, model.triggerSpring2].filter(Boolean),
-    ribTypes: [model.ribType1, model.ribType2].filter(Boolean),
-    ribStyles: [model.ribStyle1, model.ribStyle2, model.ribStyle3, model.ribStyle4].filter(Boolean),
+    triggerTypes: [model.triggerType1, model.triggerType2].filter(isNonEmptyString),
+    triggerSprings: [model.triggerSpring1, model.triggerSpring2].filter(isNonEmptyString),
+    ribTypes: [model.ribType1, model.ribType2].filter(isNonEmptyString),
+    ribStyles: [model.ribStyle1, model.ribStyle2, model.ribStyle3, model.ribStyle4].filter(isNonEmptyString),
   }));
 
   return (

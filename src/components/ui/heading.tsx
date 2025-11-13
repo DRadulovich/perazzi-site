@@ -1,4 +1,4 @@
-import { forwardRef, type HTMLAttributes } from "react";
+import { forwardRef, type HTMLAttributes, type JSX } from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,7 @@ const sizeClasses = {
 } as const;
 
 type HeadingSize = keyof typeof sizeClasses;
+type HeadingTag = "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
 
 type HeadingProps = HTMLAttributes<HTMLHeadingElement> & {
   asChild?: boolean;
@@ -31,11 +32,24 @@ export const Heading = forwardRef<HTMLHeadingElement, HeadingProps>(
     },
     ref,
   ) => {
-    const Comp = asChild
-      ? Slot
-      : (`h${level}` as keyof JSX.IntrinsicElements);
+    if (asChild) {
+      return (
+        <Slot
+          ref={ref as never}
+          className={cn(
+            "text-balance",
+            sizeClasses[size],
+            muted && "text-ink-muted",
+            className,
+          )}
+          {...props}
+        />
+      );
+    }
+
+    const Tag = `h${level}` as HeadingTag;
     return (
-      <Comp
+      <Tag
         ref={ref as never}
         className={cn(
           "text-balance",

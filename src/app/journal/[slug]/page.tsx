@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { Article } from "@/types/journal";
 import { ArticleHero } from "@/components/journal/ArticleHero";
 import { PortableBody } from "@/components/journal/PortableBody";
 import { MetaBar } from "@/components/journal/MetaBar";
@@ -83,7 +84,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   );
 }
 
-function getArticleJsonLd(article, authorName: string) {
+function getArticleJsonLd(article: Article, authorName: string) {
   return {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -110,7 +111,7 @@ function getArticleJsonLd(article, authorName: string) {
   };
 }
 
-function getBreadcrumbJsonLd(article) {
+function getBreadcrumbJsonLd(article: Article) {
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",

@@ -27,6 +27,9 @@ const warn = (message: string) => {
   console.warn(`[sanity][shotguns] ${message}`);
 };
 
+const isNonEmptyString = (value?: string | null): value is string =>
+  typeof value === "string" && value.length > 0;
+
 export const getShotgunsSectionData = cache(async (): Promise<ShotgunsSectionData> => {
   const cloned: ShotgunsSectionData = JSON.parse(JSON.stringify(FALLBACK));
 
@@ -91,21 +94,23 @@ function applyLanding(target: ShotgunsSectionData, landing?: ShotgunsLandingPayl
   }
 
   if (landing.disciplineHubs?.length) {
-    const hubMap = new Map(
-      landing.disciplineHubs
-        .filter((hub) => hub?.key)
-        .map((hub) => [hub?.key ?? "", hub])
-        .filter(([key]) => Boolean(key)),
-    );
+    const hubEntries = landing.disciplineHubs
+      .filter(
+        (hub): hub is NonNullable<(typeof landing.disciplineHubs)[number]> & { key: string } =>
+          Boolean(hub?.key),
+      )
+      .map((hub) => [hub.key, hub] as const);
 
-  target.landing.disciplines = target.landing.disciplines.map((discipline) => {
-    const hub = hubMap.get(discipline.id);
-    if (hub?.championImage && discipline.champion) {
-      discipline.champion.image = hub.championImage;
-    }
-    return discipline;
-  });
-}
+    const hubMap = new Map(hubEntries);
+
+    target.landing.disciplines = target.landing.disciplines.map((discipline) => {
+      const hub = hubMap.get(discipline.id);
+      if (hub?.championImage && discipline.champion) {
+        discipline.champion.image = hub.championImage;
+      }
+      return discipline;
+    });
+  }
 }
 
 function applyPlatforms(target: ShotgunsSectionData, platforms?: ShotgunsPlatformPayload[]) {
@@ -130,11 +135,12 @@ const cleanSlug = (value?: string | null) => {
 
 function mapPlatformFromCms(platform: ShotgunsPlatformPayload): Platform | undefined {
   const slug = cleanSlug(platform.slug) ?? cleanSlug(platform.name) ?? platform.id?.toLowerCase();
-  if (!slug || !platform.hero) return undefined;
+  const hero = platform.hero;
+  if (!slug || !hero) return undefined;
 
   const typicalDisciplines =
-    platform.disciplines?.map((item) => item.name).filter(Boolean) ??
-    platform.disciplines?.map((item) => item.id) ??
+    platform.disciplines?.map((item) => item.name).filter(isNonEmptyString) ??
+    platform.disciplines?.map((item) => item.id).filter(isNonEmptyString) ??
     [];
   const disciplineRefs = platform.disciplines?.map((item) => ({
     id: item.id,
@@ -174,7 +180,7 @@ function mapPlatformFromCms(platform: ShotgunsPlatformPayload): Platform | undef
     kind: slug.toUpperCase() as Platform["kind"],
     tagline: platform.snippetText ?? platform.lineage ?? "",
     lineageHtml: platform.lineage,
-    hero: platform.hero,
+    hero,
     hallmark: platform.champion?.quote ?? platform.champion?.title ?? "",
     weightDistribution: undefined,
     typicalDisciplines,
@@ -184,12 +190,14 @@ function mapPlatformFromCms(platform: ShotgunsPlatformPayload): Platform | undef
     champion,
     highlights:
       platform.highlights
-        ?.map((highlight, index) => ({
-          title: highlight.title ?? `Highlight ${index + 1}`,
-          body: highlight.body ?? "",
-          media: highlight.media ?? platform.hero,
-        }))
-        .filter((highlight) => Boolean(highlight.media)) ?? [],
+        ?.map((highlight, index) => {
+          const media = highlight.media ?? hero;
+          return {
+            title: highlight.title ?? `Highlight ${index + 1}`,
+            body: highlight.body ?? "",
+            media,
+          };
+        }) ?? [],
   };
 }
 
@@ -432,28 +440,48 @@ function applyGrades(target: ShotgunsSectionData, grades?: ShotgunsGradePayload[
     return;
   }
 
-  const gradeMap = new Map(
+  const cmsMap = new Map(
     grades
       .map((grade) => {
-        const key = grade.id?.toLowerCase();
+        const key = grade.id?.toLowerCase() ?? grade.name?.toLowerCase();
         return key ? [key, grade] : null;
       })
       .filter(Boolean) as Array<[string, ShotgunsGradePayload]>,
   );
 
-  target.grades = target.grades.map((grade) => {
-    const cms = gradeMap.get(grade.id.toLowerCase());
+  const merged: GradeSeries[] = target.grades.map((grade) => {
+    const key = grade.id.toLowerCase();
+    const cms = cmsMap.get(key);
     if (!cms) return grade;
-    const updated: GradeSeries = { ...grade };
 
-    if (cms.engravingGallery?.length) {
-      updated.gallery = cms.engravingGallery;
-    }
+    const galleryFromCms = [
+      ...(cms.hero ? [cms.hero] : []),
+      ...(cms.engravingGallery ?? []),
+    ];
 
-    if (cms.hero) {
-      updated.gallery = [cms.hero, ...(updated.gallery ?? [])];
-    }
+    const updated: GradeSeries = {
+      ...grade,
+      name: cms.name ?? grade.name,
+      description: cms.description ?? grade.description,
+      gallery: galleryFromCms.length ? galleryFromCms : grade.gallery,
+    };
 
+    cmsMap.delete(key);
     return updated;
   });
+
+  cmsMap.forEach((cms, key) => {
+    const gallery = [
+      ...(cms.hero ? [cms.hero] : []),
+      ...(cms.engravingGallery ?? []),
+    ];
+    merged.push({
+      id: cms.id ?? key,
+      name: cms.name ?? cms.id ?? key.toUpperCase(),
+      description: cms.description ?? "",
+      gallery,
+    });
+  });
+
+  target.grades = merged;
 }

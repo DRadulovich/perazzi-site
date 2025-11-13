@@ -3,11 +3,11 @@
 import { useEffect, useRef } from "react";
 import { logAnalytics } from "@/lib/analytics";
 
-export function useAnalyticsObserver(
+export function useAnalyticsObserver<T extends HTMLElement = HTMLElement>(
   analyticsId: string,
   options: IntersectionObserverInit = { threshold: 0.5 },
 ) {
-  const ref = useRef<HTMLElement | null>(null);
+  const ref = useRef<T | null>(null);
 
   useEffect(() => {
     const node = ref.current;

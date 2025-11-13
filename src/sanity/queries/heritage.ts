@@ -6,6 +6,7 @@ import type { FactoryAsset } from "@/types/content";
 import { sanityClient } from "../../../sanity/client";
 import {
   imageWithMetaFields,
+  imageFields,
   mapImageResult,
   type PortableTextBlock,
   type SanityImageResult,
@@ -44,6 +45,30 @@ type HeritageEventResponse = {
   }>;
 };
 
+type ChampionResponse = {
+  _id?: string;
+  name?: string;
+  title?: string;
+  quote?: string;
+  image?: SanityImageResult;
+  disciplines?: Array<{ name?: string }>;
+  platforms?: Array<{
+    _id?: string;
+    name?: string;
+  }>;
+  articles?: Array<{
+    _id?: string;
+    title?: string;
+    slug?: { current?: string };
+  }>;
+  bio?: { text?: string };
+  resume?: {
+    winOne?: string;
+    winTwo?: string;
+    winThree?: string;
+  };
+};
+
 export interface HeritageHomePayload {
   hero?: {
     title?: string;
@@ -71,6 +96,23 @@ export interface HeritageEventPayload {
   media?: FactoryAsset;
   champions?: Array<{ id: string; name?: string }>;
   platforms?: Array<{ id: string; name?: string; slug?: string }>;
+}
+
+export interface ChampionPayload {
+  id: string;
+  name?: string;
+  title?: string;
+  quote?: string;
+  image?: FactoryAsset;
+  disciplines?: string[];
+  article?: { id: string; title?: string; slug?: string };
+  platforms?: string[];
+  bio?: string;
+  resume?: {
+    winOne?: string;
+    winTwo?: string;
+    winThree?: string;
+  };
 }
 
 const heritageHomeQuery = groq`
@@ -115,6 +157,38 @@ const heritageEventsQuery = groq`
       _id,
       name,
       slug
+    }
+  }
+`;
+
+const championsQuery = groq`
+  *[_type == "champion"]{
+    _id,
+    name,
+    title,
+    quote,
+    image{
+      ${imageFields}
+    },
+    disciplines[]->{
+      name
+    },
+    platforms[]->{
+      _id,
+      name
+    },
+    articles[]->{
+      _id,
+      title,
+      slug
+    },
+    bio{
+      text
+    },
+    resume{
+      winOne,
+      winTwo,
+      winThree
     }
   }
 `;
@@ -174,4 +248,32 @@ export async function getHeritageEvents(): Promise<HeritageEventPayload[]> {
           slug: platform.slug?.current ?? undefined,
         })),
     }));
+}
+
+export async function getHeritageChampions(): Promise<ChampionPayload[]> {
+  const data = await sanityClient.fetch<ChampionResponse[]>(championsQuery).catch(() => []);
+
+  return data
+    .filter((champion): champion is ChampionResponse & { _id: string } => Boolean(champion?._id))
+    .map((champion) => {
+      const article = champion.articles?.find((item) => item?._id);
+      return {
+        id: champion._id as string,
+        name: champion.name ?? undefined,
+        title: champion.title ?? undefined,
+        quote: champion.quote ?? undefined,
+        image: mapImageResult(champion.image ?? null),
+        disciplines: champion.disciplines?.map((discipline) => discipline?.name).filter(Boolean) as string[] | undefined,
+        platforms: champion.platforms?.map((platform) => platform?.name).filter(Boolean) as string[] | undefined,
+        bio: champion.bio?.text ?? undefined,
+        resume: champion.resume,
+        article: article
+          ? {
+              id: article._id as string,
+              title: article.title ?? undefined,
+              slug: article.slug?.current ?? undefined,
+            }
+          : undefined,
+      };
+    });
 }

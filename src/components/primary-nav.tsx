@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
-import type { Dispatch, ReactNode, SetStateAction } from "react";
+import type { Dispatch, ReactElement, ReactNode, SetStateAction } from "react";
 import { useState } from "react";
 import { FiArrowRight, FiChevronDown, FiMenu, FiX } from "react-icons/fi";
 import { FaUserCircle } from "react-icons/fa";
 import useMeasure from "react-use-measure";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
-type FlyoutRenderer = (props: { onNavigate?: () => void; textTone?: "light" | "dark" }) => JSX.Element;
+type FlyoutRenderer = (props: { onNavigate?: () => void; textTone?: "light" | "dark" }) => ReactElement;
 
 type NavItem = {
   text: string;

@@ -25,7 +25,7 @@ export const disciplines: Record<string, DisciplineSummary> = {
     name: "Trap",
     overviewHtml:
       "<p>Trap shooters demand a sight picture that rises with the target but never jars the shoulder. Perazzi platforms favor calm ribs and recoil management to keep your focus intact.</p>",
-    platforms: ["platform-mx", "platform-ht", "platform-tm"],
+    recommendedPlatforms: ["platform-mx", "platform-ht", "platform-tm"],
     recipe: {
       poiRange: "70/30–90/10",
       barrelLengths: '30"–34"',
@@ -40,6 +40,8 @@ export const disciplines: Record<string, DisciplineSummary> = {
     ),
     champion: {
       id: "champion-trap",
+      name: "Silvana Rossi",
+      title: "Olympic Trap Champion",
       quote:
         "Perazzi lets me watch the target, not recoil. The rib stays steady even when light shifts mid-round.",
       image: asset(
@@ -62,7 +64,7 @@ export const disciplines: Record<string, DisciplineSummary> = {
     name: "Skeet",
     overviewHtml:
       "<p>Skeet favors neutral balance and quick transitions across the eighth station. Lightweight barrels and responsive triggers keep your swing connected.</p>",
-    platforms: ["platform-mx"],
+    recommendedPlatforms: ["platform-mx"],
     recipe: {
       poiRange: "50/50–60/40",
       barrelLengths: '28"–30"',
@@ -76,6 +78,8 @@ export const disciplines: Record<string, DisciplineSummary> = {
     ),
     champion: {
       id: "champion-skeet",
+      name: "Marco Innocenti",
+      title: "World Skeet Finalist",
       quote:
         "The MX lets me move without thinking—neutral balance keeps the bead riding the bird across station four.",
       image: asset(
@@ -98,7 +102,7 @@ export const disciplines: Record<string, DisciplineSummary> = {
     name: "Sporting",
     overviewHtml:
       "<p>Sporting and FITASC layouts call for adaptable ribs, modular ballast, and barrels that flow through complex chandelles.</p>",
-    platforms: ["platform-ht"],
+    recommendedPlatforms: ["platform-ht"],
     recipe: {
       poiRange: "50/50–70/30",
       barrelLengths: '30"–32"',
@@ -113,6 +117,8 @@ export const disciplines: Record<string, DisciplineSummary> = {
     ),
     champion: {
       id: "champion-sporting",
+      name: "Giulia Bonomi",
+      title: "FITASC Medalist",
       quote:
         "High Tech ballast keeps my muzzle where I want it—whether it’s battues or looping chandelles.",
       image: asset(

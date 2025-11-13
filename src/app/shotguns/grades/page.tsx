@@ -10,6 +10,7 @@ import { ProvenanceNote } from "@/components/shotguns/ProvenanceNote";
 import { OptionsGrid } from "@/components/shotguns/OptionsGrid";
 import { ProcessNote } from "@/components/shotguns/ProcessNote";
 import { CTASection } from "@/components/shotguns/CTASection";
+import { getGradeAnchorId } from "@/lib/grade-anchors";
 import { getShotgunsSectionData } from "@/lib/shotguns-data";
 
 export default async function GradesPage() {
@@ -24,7 +25,11 @@ export default async function GradesPage() {
       <ProvenanceNote html={engravingProvenanceHtml} />
 
       {grades.map((grade) => (
-        <section key={grade.id} className="space-y-10">
+        <section
+          key={grade.id}
+          id={getGradeAnchorId(grade)}
+          className="space-y-10 scroll-mt-24"
+        >
           <header className="space-y-2">
             <h2 className="text-2xl font-semibold text-ink">{grade.name}</h2>
             <p className="max-w-3xl text-sm text-ink-muted">

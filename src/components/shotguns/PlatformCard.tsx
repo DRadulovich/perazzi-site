@@ -12,8 +12,7 @@ type PlatformCardProps = {
 };
 
 export function PlatformCard({ platform, priority = false }: PlatformCardProps) {
-  const ratio = platform.hero.aspectRatio ?? 4 / 3;
-  const analyticsRef = useAnalyticsObserver(
+  const analyticsRef = useAnalyticsObserver<HTMLAnchorElement>(
     `shotguns_platform_card_impression:${platform.id}`,
   );
 
@@ -27,14 +26,14 @@ export function PlatformCard({ platform, priority = false }: PlatformCardProps) 
     >
       <div
         className="card-media relative rounded-2xl bg-black transition-transform duration-300 group-hover:scale-[1.01]"
-        style={{ aspectRatio: ratio }}
+        style={{ aspectRatio: "16 / 9" }}
       >
         <Image
           src={platform.hero.url}
           alt={platform.hero.alt}
           fill
-          sizes="100vw"
-          className="object-cover"
+          sizes="(min-width: 1024px) 600px, 100vw"
+          className="object-cover object-center"
           priority={priority}
           loading={priority ? "eager" : "lazy"}
           quality={100}

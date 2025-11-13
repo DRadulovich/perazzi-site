@@ -27,7 +27,7 @@ export function BuildStepsScroller({
   reduceMotion,
   skipTargetId = "build-steps-end",
 }: BuildStepsScrollerProps) {
-  const containerRef = useRef<HTMLElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const trackerRef = useAnalyticsObserver("BuildStepsSeen");
   const prefersReducedMotion = useReducedMotion();
   const shouldReduceMotion = reduceMotion ?? prefersReducedMotion;

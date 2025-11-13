@@ -12,7 +12,9 @@ function cloneBespoke(): BuildPageData {
   return JSON.parse(JSON.stringify(buildData));
 }
 
-function mergeSteps(fallback: FittingStage[], incoming?: BuildPageData["steps"]): FittingStage[] {
+type PartialStage = Partial<FittingStage> & { id: string };
+
+function mergeSteps(fallback: FittingStage[], incoming?: PartialStage[]): FittingStage[] {
   if (!incoming?.length) return fallback;
   const fallbackMap = new Map(fallback.map((step) => [step.id, step]));
 

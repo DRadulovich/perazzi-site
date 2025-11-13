@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef } from "react";
-import { FiArrowLeft, FiArrowRight } from "react-icons/fi";
+import { useMemo, useState } from "react";
 import type { Platform } from "@/types/catalog";
 import { PlatformCard } from "./PlatformCard";
 
@@ -9,35 +8,50 @@ type PlatformGridProps = {
   platforms: Platform[];
 };
 
+const PLATFORM_TABS = [
+  {
+    label: "The Perazzi Standard",
+    order: ["ht", "mx"],
+  },
+  {
+    label: "Purpose-Built Variants",
+    order: ["tm", "dc"],
+  },
+  {
+    label: "Heritage Archive",
+    order: ["sho"],
+  },
+] as const;
+
 export function PlatformGrid({ platforms }: PlatformGridProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeTabIndex, setActiveTabIndex] = useState(0);
 
   const orderedPlatforms = useMemo(() => {
-    const order = ["mx", "ht", "tm", "dc", "sho"];
     const lookup = new Map(
       platforms.map((platform) => [platform.slug.toLowerCase(), platform]),
     );
 
-    const inOrder = order
-      .map((slug) => lookup.get(slug))
-      .filter((platform): platform is Platform => Boolean(platform));
-
-    const remaining = platforms.filter((platform) => !order.includes(platform.slug.toLowerCase()));
+    const inOrder = PLATFORM_TABS.flatMap((tab) =>
+      tab.order
+        .map((slug) => lookup.get(slug))
+        .filter((platform): platform is Platform => Boolean(platform)),
+    );
+    const remaining = platforms.filter((platform) => !lookup.has(platform.slug.toLowerCase()));
 
     return [...inOrder, ...remaining];
   }, [platforms]);
 
-  const scrollBy = useCallback(
-    (direction: 1 | -1) => {
-      if (!scrollRef.current) return;
-      const distance = scrollRef.current.clientWidth || 0;
-      scrollRef.current.scrollBy({
-        left: direction * distance,
-        behavior: "smooth",
-      });
-    },
-    [],
-  );
+  const groupedPlatforms = useMemo(() => {
+    const lookup = new Map(orderedPlatforms.map((platform) => [platform.slug.toLowerCase(), platform]));
+    return PLATFORM_TABS.map((tab) => {
+      const matches = tab.order
+        .map((slug) => lookup.get(slug))
+        .filter((platform): platform is Platform => Boolean(platform));
+      return matches;
+    });
+  }, [orderedPlatforms]);
+
+  const activeGroup = groupedPlatforms[activeTabIndex] ?? orderedPlatforms;
 
   return (
     <section
@@ -54,41 +68,68 @@ export function PlatformGrid({ platforms }: PlatformGridProps) {
       </div>
 
       <div className="flex items-center justify-between">
-        <p className="text-sm text-ink-muted">Scroll across the platform lineage.</p>
+        <p className="text-sm text-ink-muted">Choose a lineage to explore.</p>
         <div className="flex gap-2">
           <button
             type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-ink hover:bg-card focus-ring"
-            aria-label="Scroll platforms left"
-            onClick={() => scrollBy(-1)}
+            className="rounded-full border border-border px-3 py-2 text-xs uppercase tracking-[0.3em] text-ink focus-ring"
+            onClick={() =>
+              setActiveTabIndex((index) =>
+                index === 0 ? PLATFORM_TABS.length - 1 : index - 1,
+              )
+            }
+            aria-label="Previous platform group"
           >
-            <FiArrowLeft />
+            Prev
           </button>
           <button
             type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-border text-ink hover:bg-card focus-ring"
-            aria-label="Scroll platforms right"
-            onClick={() => scrollBy(1)}
+            className="rounded-full border border-border px-3 py-2 text-xs uppercase tracking-[0.3em] text-ink focus-ring"
+            onClick={() =>
+              setActiveTabIndex((index) =>
+                (index + 1) % PLATFORM_TABS.length,
+              )
+            }
+            aria-label="Next platform group"
           >
-            <FiArrowRight />
+            Next
           </button>
         </div>
       </div>
 
       <div
-        ref={scrollRef}
-        className="flex gap-6 overflow-x-auto pb-4"
+        role="tablist"
+        aria-label="Platform categories"
+        className="flex flex-wrap gap-2"
       >
-        {orderedPlatforms.map((platform, index) => (
-          <div
+        {PLATFORM_TABS.map((tab, index) => {
+          const isActive = index === activeTabIndex;
+          return (
+            <button
+              key={tab.label}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] focus-ring transition ${
+                isActive
+                  ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
+                  : "border-border/70 bg-card/60 text-ink hover:border-ink/60"
+              }`}
+              onClick={() => setActiveTabIndex(index)}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
+        {activeGroup.map((platform, index) => (
+          <PlatformCard
             key={platform.id}
-            className="flex-shrink-0 w-full md:w-[calc(50%-0.75rem)]"
-          >
-            <PlatformCard
-              platform={platform}
-              priority={index === 0}
-            />
-          </div>
+            platform={platform}
+            priority={index === 0 && activeTabIndex === 0}
+          />
         ))}
       </div>
     </section>

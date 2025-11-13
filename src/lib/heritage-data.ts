@@ -3,7 +3,7 @@ import { cache } from "react";
 import { heritageData } from "@/content/heritage";
 import { portableTextToHtml } from "@/lib/portable-text";
 import type { HeritageEvent, HeritagePageData } from "@/types/heritage";
-import { getHeritageEvents, getHeritageHome } from "@/sanity/queries/heritage";
+import { getHeritageChampions, getHeritageEvents, getHeritageHome } from "@/sanity/queries/heritage";
 
 const warn = (message: string) => {
   console.warn(`[sanity][heritage] ${message}`);
@@ -42,7 +42,11 @@ export const getHeritagePageData = cache(async (): Promise<HeritagePageData> => 
   const data = cloneHeritage();
 
   try {
-    const [home, events] = await Promise.all([getHeritageHome(), getHeritageEvents()]);
+    const [home, events, champions] = await Promise.all([
+      getHeritageHome(),
+      getHeritageEvents(),
+      getHeritageChampions(),
+    ]);
 
     if (home?.hero?.background) {
       data.hero = {
@@ -73,6 +77,34 @@ export const getHeritagePageData = cache(async (): Promise<HeritagePageData> => 
       if (mapped.length) {
         data.timeline = mapped;
       }
+    }
+
+    if (champions.length) {
+      const mappedChampions = champions
+        .map((champion) => {
+          if (!champion.image) return null;
+          return {
+            id: champion.id,
+            name: champion.name ?? "Perazzi Champion",
+            title: champion.title ?? "",
+            quote: champion.quote ?? "",
+            image: champion.image,
+            bio: champion.bio,
+            resume: champion.resume,
+            platforms: champion.platforms,
+            disciplines: champion.disciplines,
+            article: champion.article
+              ? {
+                  id: champion.article.id,
+                  title: champion.article.title ?? "Champion profile",
+                  slug: champion.article.slug ?? "",
+                }
+              : undefined,
+          };
+        })
+        .filter(Boolean) as HeritagePageData["champions"];
+
+      data.champions = mappedChampions;
     }
   } catch (error) {
     warn((error as Error).message);
