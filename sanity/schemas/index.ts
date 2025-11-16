@@ -6,6 +6,10 @@ import { factoryAsset } from "./factoryAsset";
 import { gauge } from "./gauge";
 import { grade } from "./grade";
 import { heritageEvent } from "./heritageEvent";
+import { recommendedServiceCenter } from "./recommendedServiceCenter";
+import { authorizedDealer } from "./authorizedDealer";
+import { manufactureYear } from "./manufactureYear";
+import { scheduledEvent } from "./scheduledEvent";
 import { platform } from "./platform";
 import { siteSettings } from "./siteSettings";
 import { imageWithMeta } from "./objects/imageWithMeta";
@@ -29,6 +33,10 @@ export const schemaTypes = [
   platform,
   discipline,
   champion,
+  authorizedDealer,
+  recommendedServiceCenter,
+  manufactureYear,
+  scheduledEvent,
   heritageEvent,
   factoryAsset,
   grade,

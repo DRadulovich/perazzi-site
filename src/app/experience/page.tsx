@@ -2,26 +2,31 @@ import Script from "next/script";
 import { ExperiencePicker } from "@/components/experience/ExperiencePicker";
 import { VisitFactory } from "@/components/experience/VisitFactory";
 import { BookingOptions } from "@/components/experience/BookingOptions"; // Experience-specific variant
-import { DemoProgram } from "@/components/experience/DemoProgram";
+import { TravelNetwork } from "@/components/experience/TravelNetwork";
 import { MosaicGallery } from "@/components/experience/MosaicGallery";
 import { FAQList } from "@/components/experience/FAQList";
 import { ExperienceHero } from "@/components/experience/ExperienceHero";
 import { CTASection } from "@/components/shotguns/CTASection";
 import { getExperiencePageData } from "@/lib/experience-data";
+import { getExperienceNetworkData } from "@/sanity/queries/experience";
 import type { FAQItem } from "@/types/experience";
 
 export default async function ExperiencePage() {
+  const [pageData, networkData] = await Promise.all([
+    getExperiencePageData(),
+    getExperienceNetworkData(),
+  ]);
+
   const {
     hero,
     picker,
     visit,
     fittingOptions,
-    demo,
     mosaic,
     faq,
     finalCta,
     bookingScheduler,
-  } = await getExperiencePageData();
+  } = pageData;
 
   const faqJsonLd = faq.length ? FAQ_SCHEMA(faq) : null;
 
@@ -46,7 +51,7 @@ export default async function ExperiencePage() {
       <ExperiencePicker items={picker} />
       <VisitFactory visit={visit} />
       <BookingOptions options={fittingOptions} scheduler={bookingScheduler} />
-      <DemoProgram demo={demo} />
+      <TravelNetwork data={networkData} />
       <MosaicGallery assets={mosaic} />
       <FAQList items={faq} />
       <CTASection

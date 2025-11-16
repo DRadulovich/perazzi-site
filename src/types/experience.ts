@@ -40,19 +40,37 @@ export interface FittingOption {
   href: string;
 }
 
-export interface DemoEvent {
-  id: string;
-  date: string;
-  clubName: string;
-  cityState: string;
-  href?: string;
+export interface ScheduledEventEntry {
+  _id: string;
+  eventName: string;
+  eventLocation: string;
+  startDate?: string;
+  endDate?: string;
+  location?: string;
 }
 
-export interface DemoProgramData {
-  introHtml: string;
-  events?: DemoEvent[];
-  requestCta: { label: string; href: string };
-  whatToExpectHtml?: string;
+export interface AuthorizedDealerEntry {
+  _id: string;
+  dealerName: string;
+  state: string;
+  address: string;
+  city: string;
+}
+
+export interface RecommendedServiceCenterEntry {
+  _id: string;
+  centerName: string;
+  state: string;
+  address: string;
+  city: string;
+  phone: string;
+  contact: string;
+}
+
+export interface ExperienceNetworkData {
+  scheduledEvents: ScheduledEventEntry[];
+  dealers: AuthorizedDealerEntry[];
+  serviceCenters: RecommendedServiceCenterEntry[];
 }
 
 export interface FAQItem {
@@ -65,7 +83,6 @@ export interface ExperiencePageData {
   picker: PickerItem[];
   visit: VisitFactoryData;
   fittingOptions: FittingOption[];
-  demo: DemoProgramData;
   mosaic: FactoryAsset[];
   faq: FAQItem[];
   finalCta: {
