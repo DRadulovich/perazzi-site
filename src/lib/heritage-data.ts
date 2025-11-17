@@ -13,29 +13,51 @@ function cloneHeritage(): HeritagePageData {
   return JSON.parse(JSON.stringify(heritageData));
 }
 
+const extractYear = (value?: string | null) => {
+  if (!value) return null;
+  const match = value.match(/\d{4}/);
+  if (match) {
+    const year = Number(match[0]);
+    return Number.isFinite(year) ? year : null;
+  }
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+};
+
+const compareEventsByYear = (a: HeritageEvent, b: HeritageEvent) => {
+  const yearA = extractYear(a.date);
+  const yearB = extractYear(b.date);
+  if (yearA === null && yearB === null) return 0;
+  if (yearA === null) return 1;
+  if (yearB === null) return -1;
+  return yearA - yearB;
+};
+
 function mapEvents(events: Awaited<ReturnType<typeof getHeritageEvents>>): HeritageEvent[] {
   if (!events.length) return [];
-  return events.map((event) => ({
-    id: event.id,
-    date: event.date ?? "",
-    title: event.title ?? "",
-    summaryHtml: portableTextToHtml(event.bodyPortableText) ?? "",
-    media: event.media ?? undefined,
-    links:
-      event.champions || event.platforms
-        ? {
-            champions: event.champions?.map((champion) => ({
-              id: champion.id,
-              name: champion.name ?? "Champion",
-            })),
-            platforms: event.platforms?.map((platform) => ({
-              id: platform.id,
-              title: platform.name ?? "Platform",
-              slug: platform.slug ?? "",
-            })),
-          }
-        : undefined,
-  }));
+  return events
+    .map((event) => ({
+      id: event.id,
+      date: event.date ?? "",
+      title: event.title ?? "",
+      summaryHtml: portableTextToHtml(event.bodyPortableText) ?? "",
+      media: event.media ?? undefined,
+      links:
+        event.champions || event.platforms
+          ? {
+              champions: event.champions?.map((champion) => ({
+                id: champion.id,
+                name: champion.name ?? "Champion",
+              })),
+              platforms: event.platforms?.map((platform) => ({
+                id: platform.id,
+                title: platform.name ?? "Platform",
+                slug: platform.slug ?? "",
+              })),
+            }
+          : undefined,
+    }))
+    .sort(compareEventsByYear);
 }
 
 export const getHeritagePageData = cache(async (): Promise<HeritagePageData> => {

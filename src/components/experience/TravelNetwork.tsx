@@ -2,16 +2,11 @@
 
 import { useMemo, useState } from "react";
 
-import type {
-  AuthorizedDealerEntry,
-  ExperienceNetworkData,
-  RecommendedServiceCenterEntry,
-  ScheduledEventEntry,
-} from "@/types/experience";
+import type { AuthorizedDealerEntry, ExperienceNetworkData, ScheduledEventEntry } from "@/types/experience";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
-type TabKey = "schedule" | "dealers" | "service";
+type TabKey = "schedule" | "dealers";
 
 type TravelNetworkProps = {
   data: ExperienceNetworkData;
@@ -33,13 +28,8 @@ export function TravelNetwork({ data }: TravelNetworkProps) {
         label: "Our Dealers",
         count: data.dealers.length,
       },
-      {
-        key: "service" as const,
-        label: "Service Centers",
-        count: data.serviceCenters.length,
-      },
     ],
-    [data.dealers.length, data.scheduledEvents.length, data.serviceCenters.length],
+    [data.dealers.length, data.scheduledEvents.length],
   );
 
   return (
@@ -51,14 +41,13 @@ export function TravelNetwork({ data }: TravelNetworkProps) {
     >
       <div className="space-y-2">
         <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
-          Travel & service
+          Travel network
         </p>
         <h2 id="travel-network-heading" className="text-2xl font-semibold text-ink">
           Meet us on the road
         </h2>
         <p className="text-base text-ink-muted md:text-lg">
-          Track our travel schedule, connect with a trusted Perazzi dealer, or schedule service with
-          the partners closest to you.
+          Track our travel schedule or connect with a trusted Perazzi dealer closest to you.
         </p>
       </div>
       <div
@@ -88,7 +77,6 @@ export function TravelNetwork({ data }: TravelNetworkProps) {
       <div>
         {activeTab === "schedule" && <ScheduleList events={data.scheduledEvents} />}
         {activeTab === "dealers" && <DealerList dealers={data.dealers} />}
-        {activeTab === "service" && <ServiceCenterList centers={data.serviceCenters} />}
       </div>
     </section>
   );
@@ -135,34 +123,6 @@ function DealerList({ dealers }: { dealers: AuthorizedDealerEntry[] }) {
             {dealer.address}
             <br />
             {dealer.city}
-          </p>
-        </article>
-      ))}
-    </div>
-  );
-}
-
-function ServiceCenterList({ centers }: { centers: RecommendedServiceCenterEntry[] }) {
-  if (!centers.length) {
-    return <p className="text-sm text-ink-muted">Service partners are being published. Please check back soon.</p>;
-  }
-
-  return (
-    <div className="grid gap-4 md:grid-cols-2">
-      {centers.map((center) => (
-        <article key={center._id} className="rounded-2xl border border-border/70 bg-card/70 p-4">
-          <h3 className="text-base font-semibold text-ink">{center.centerName}</h3>
-          <p className="text-xs uppercase tracking-[0.3em] text-ink-muted">{center.state}</p>
-          <p className="mt-2 text-sm text-ink-muted">
-            {center.address}
-            <br />
-            {center.city}
-          </p>
-          <p className="mt-2 text-sm text-ink">
-            <span className="font-semibold">Contact:</span> {center.contact}
-          </p>
-          <p className="text-sm text-ink">
-            <span className="font-semibold">Phone:</span> {center.phone}
           </p>
         </article>
       ))}

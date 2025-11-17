@@ -1,28 +1,26 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
+
 import type { ServiceLocation, ServiceLocationType } from "@/types/service";
-import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
+import { cn } from "@/lib/utils";
 
 type ServiceNetworkFinderProps = {
   locations: ServiceLocation[];
 };
 
-const staticMap = {
-  url: "https://res.cloudinary.com/pwebsite/image/fetch/f_auto,q_auto/https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
-  alt: "Abstract map placeholder",
-  aspectRatio: 4 / 3,
-};
+const defaultMapSrc =
+  "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d44746.87813164304!2d10.2902568!3d45.5199988!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47817776ebf93163%3A0x7b1471b5b8b3b944!2sPerazzi!5e0!3m2!1sen!2sit!4v1720000000000!5m2!1sen!2sit";
+const defaultMapLink = "https://maps.google.com/?q=Perazzi+service+network";
 
 export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
   const analyticsRef = useAnalyticsObserver("ServiceNetworkSeen");
   const [filter, setFilter] = useState<ServiceLocationType | "All">("All");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [mapOpen, setMapOpen] = useState(false);
+  const [activeLocationId, setActiveLocationId] = useState<string | null>(() => locations[0]?.id ?? null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -41,10 +39,21 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
     });
   }, [locations, filter, debouncedSearch]);
 
+  const resolvedActiveLocationId = useMemo(() => {
+    if (!filteredLocations.length) return null;
+    if (activeLocationId && filteredLocations.some((location) => location.id === activeLocationId)) {
+      return activeLocationId;
+    }
+    return filteredLocations[0]?.id ?? null;
+  }, [filteredLocations, activeLocationId]);
+
+  const activeLocation =
+    filteredLocations.find((location) => location.id === resolvedActiveLocationId) ?? null;
+
   const types: (ServiceLocationType | "All")[] = ["All", "Factory", "Service Center", "Specialist"];
 
-  const defaultMapSrc =
-    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d44746.87813164304!2d10.2902568!3d45.5199988!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47817776ebf93163%3A0x7b1471b5b8b3b944!2sPerazzi!5e0!3m2!1sen!2sit!4v1720000000000!5m2!1sen!2sit";
+  const mapSrc = activeLocation ? buildMapSrc(activeLocation) : defaultMapSrc;
+  const mapLinkHref = activeLocation ? buildMapLink(activeLocation) : defaultMapLink;
 
   return (
     <section
@@ -61,7 +70,7 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
           id="service-network-heading"
           className="text-2xl font-semibold text-ink"
         >
-          Authorized locations worldwide
+          Authorized US Service Locations
         </h2>
       </div>
       <form role="search" className="flex flex-col gap-3 md:flex-row md:items-end">
@@ -83,13 +92,13 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
           </select>
         </label>
         <label className="flex w-full flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">
-          Search by city or name
+          Search by State or Name
           <input
             type="search"
             className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 text-sm text-ink focus-ring"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="e.g. London, Botticino"
+            placeholder="e.g. FL, TX"
           />
         </label>
       </form>
@@ -98,89 +107,96 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
       </p>
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <ul role="list" className="space-y-4">
-          {filteredLocations.map((location) => (
-            <li
-              key={location.id}
-              className="rounded-2xl border border-border/70 bg-card/70 p-4"
-            >
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
-                  {location.type}
-                </p>
-                <h3 className="text-lg font-semibold text-ink">{location.name}</h3>
-                <div
-                  className="text-sm text-ink-muted"
-                  dangerouslySetInnerHTML={{ __html: location.addressHtml }}
-                />
-                <div className="text-sm text-ink">
-                  {location.phone ? <div>{location.phone}</div> : null}
-                  {location.email ? (
-                    <a
-                      href={`mailto:${location.email}`}
-                      className="text-perazzi-red focus-ring"
-                    >
-                      {location.email}
-                    </a>
-                  ) : null}
-                  {location.website ? (
-                    <a
-                      href={location.website}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="block text-perazzi-red focus-ring"
-                      onClick={() =>
-                        logAnalytics(`FinderResultClick:${location.id}`)
-                      }
-                    >
-                      Website<span className="sr-only"> (opens in a new tab)</span>
-                    </a>
+          {filteredLocations.length === 0 ? (
+            <li className="rounded-2xl border border-border/70 bg-card/70 p-4 text-sm text-ink-muted">
+              No locations match your filters. Try clearing the search or selecting a different type.
+            </li>
+          ) : (
+            filteredLocations.map((location) => {
+              const isActive = activeLocation?.id === location.id;
+              return (
+                <li key={location.id}>
+                  <div
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={isActive}
+                  className={cn(
+                    "flex flex-col gap-2 rounded-2xl border p-4 transition-colors focus-ring",
+                    isActive
+                      ? "border-perazzi-red bg-perazzi-red/5"
+                      : "border-border/70 bg-card/70",
+                  )}
+                  onClick={() => {
+                    setActiveLocationId(location.id);
+                    logAnalytics(`FinderResultClick:${location.id}`);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setActiveLocationId(location.id);
+                      logAnalytics(`FinderResultClick:${location.id}`);
+                    }
+                  }}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+                    {location.type}
+                  </p>
+                  <h3 className="text-lg font-semibold text-ink">{location.name}</h3>
+                  <div
+                    className="text-sm text-ink-muted"
+                    dangerouslySetInnerHTML={{ __html: location.addressHtml }}
+                  />
+                  <div className="text-sm text-ink">
+                    {location.contact ? (
+                      <div>
+                        <span className="font-semibold">Contact:</span> {location.contact}
+                      </div>
+                    ) : null}
+                    {location.phone ? (
+                      <div>
+                        <span className="font-semibold">Phone:</span> {location.phone}
+                      </div>
+                    ) : null}
+                    {location.email ? (
+                      <a href={`mailto:${location.email}`} className="text-perazzi-red focus-ring">
+                        {location.email}
+                      </a>
+                    ) : null}
+                    {location.website ? (
+                      <a
+                        href={location.website}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block text-perazzi-red focus-ring"
+                      >
+                        Website<span className="sr-only"> (opens in a new tab)</span>
+                      </a>
+                    ) : null}
+                  </div>
+                  {location.notesHtml ? (
+                    <div
+                      className="text-xs text-ink-muted"
+                      dangerouslySetInnerHTML={{ __html: location.notesHtml }}
+                    />
                   ) : null}
                 </div>
-                {location.notesHtml ? (
-                  <div
-                    className="text-xs text-ink-muted"
-                    dangerouslySetInnerHTML={{ __html: location.notesHtml }}
-                  />
-                ) : null}
-              </div>
-            </li>
-          ))}
+              </li>
+              );
+            })
+          )}
         </ul>
         <div className="space-y-3">
-          <div
-            className="relative overflow-hidden rounded-2xl border border-border/70 bg-neutral-200"
-            style={{ aspectRatio: staticMap.aspectRatio }}
-          >
-            {mapOpen ? (
-              <iframe
-                src={defaultMapSrc}
-                title="Map of authorized service network"
-                className="h-full w-full"
-                loading="lazy"
-              />
-            ) : (
-              <Image
-                src={staticMap.url}
-                alt="Static map preview for the Perazzi service network; use the Open map button for an interactive view."
-                fill
-                sizes="(min-width: 1024px) 560px, 100vw"
-                className="object-cover"
-              />
-            )}
+          <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-neutral-200" style={{ aspectRatio: 4 / 3 }}>
+            <iframe
+              key={mapSrc}
+              src={mapSrc}
+              title={activeLocation ? `Map of ${activeLocation.name}` : "Map of authorized service network"}
+              className="h-full w-full"
+              loading="lazy"
+            />
           </div>
-          {!mapOpen ? (
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setMapOpen(true);
-                logAnalytics("FinderMapOpen");
-              }}
-            >
-              Load interactive map
-            </Button>
-          ) : null}
           <a
-            href="https://maps.google.com/?q=Perazzi+service+network"
+            href={mapLinkHref}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-sm font-semibold text-perazzi-red focus-ring"
@@ -201,4 +217,27 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
       </div>
     </section>
   );
+}
+
+function stripHtml(value?: string) {
+  if (!value) return "";
+  return value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function buildMapQuery(location: ServiceLocation) {
+  if (location.mapQuery) return location.mapQuery;
+  const address = stripHtml(location.addressHtml);
+  return address || location.name;
+}
+
+function buildMapSrc(location: ServiceLocation) {
+  const query = buildMapQuery(location);
+  if (!query) return defaultMapSrc;
+  return `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+}
+
+function buildMapLink(location: ServiceLocation) {
+  const query = buildMapQuery(location);
+  if (!query) return defaultMapLink;
+  return `https://maps.google.com/?q=${encodeURIComponent(query)}`;
 }

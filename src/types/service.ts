@@ -18,10 +18,14 @@ export interface ServiceLocation {
   name: string;
   type: ServiceLocationType;
   addressHtml: string;
+  city?: string;
+  state?: string;
   phone?: string;
   email?: string;
   website?: string;
+  contact?: string;
   notesHtml?: string;
+  mapQuery?: string;
 }
 
 export interface GuideDownload {

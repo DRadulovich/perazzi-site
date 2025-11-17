@@ -12,8 +12,17 @@ export const heritageEvent = defineType({
     }),
     defineField({
       name: "date",
-      type: "date",
-      validation: (rule) => rule.required(),
+      title: "Year",
+      type: "string",
+      description: "Enter the four-digit year for this milestone (e.g. 1972).",
+      validation: (rule) =>
+        rule
+          .required()
+          .regex(/^\d{4}$/, {
+            name: "fourDigitYear",
+            invert: false,
+            message: "Enter a four-digit year like 1972.",
+          }),
     }),
     defineField({
       name: "body",

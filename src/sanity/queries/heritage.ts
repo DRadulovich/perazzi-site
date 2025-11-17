@@ -141,7 +141,7 @@ const heritageHomeQuery = groq`
 `;
 
 const heritageEventsQuery = groq`
-  *[_type == "heritageEvent"]{
+  *[_type == "heritageEvent"] | order(date asc){
     _id,
     title,
     date,

@@ -14,12 +14,32 @@ type ServiceHomeResponse = {
   };
 };
 
+type RecommendedServiceCenterResponse = {
+  _id?: string;
+  centerName?: string;
+  state?: string;
+  address?: string;
+  city?: string;
+  phone?: string;
+  contact?: string;
+};
+
 export interface ServiceHomePayload {
   hero?: {
     title?: string;
     subheading?: string;
     background?: FactoryAsset;
   };
+}
+
+export interface RecommendedServiceCenterPayload {
+  id: string;
+  centerName: string;
+  address: string;
+  city: string;
+  state?: string;
+  phone?: string;
+  contact?: string;
 }
 
 const serviceHomeQuery = groq`
@@ -31,6 +51,18 @@ const serviceHomeQuery = groq`
         ${imageWithMetaFields}
       }
     }
+  }
+`;
+
+const recommendedServiceCentersQuery = groq`
+  *[_type == "recommendedServiceCenter"] | order(state asc, centerName asc){
+    _id,
+    centerName,
+    state,
+    address,
+    city,
+    phone,
+    contact
   }
 `;
 
@@ -47,4 +79,27 @@ export async function getServiceHome(): Promise<ServiceHomePayload | null> {
         }
       : undefined,
   };
+}
+
+export async function getRecommendedServiceCenters(): Promise<RecommendedServiceCenterPayload[]> {
+  const data = await sanityClient
+    .fetch<RecommendedServiceCenterResponse[] | null>(recommendedServiceCentersQuery)
+    .catch(() => null);
+
+  return (
+    data
+      ?.filter(
+        (center): center is RecommendedServiceCenterResponse & { _id: string; centerName: string; address: string; city: string } =>
+          Boolean(center?._id && center?.centerName && center?.address && center?.city),
+      )
+      .map((center) => ({
+        id: center._id as string,
+        centerName: center.centerName as string,
+        address: center.address as string,
+        city: center.city as string,
+        state: center.state ?? undefined,
+        phone: center.phone ?? undefined,
+        contact: center.contact ?? undefined,
+      })) ?? []
+  );
 }

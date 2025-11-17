@@ -47,13 +47,13 @@ export function ChampionsGallery({ champions }: ChampionsGalleryProps) {
     >
       <div className="space-y-2">
         <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
-          Evergreen champions
+          The Perazzi Champions
         </p>
         <h2
           id="heritage-champions-heading"
           className="text-2xl font-semibold text-ink"
         >
-          The athletes who shaped the lineage
+          The athletes who shaped our lineage
         </h2>
       </div>
       {disciplines.length ? (
