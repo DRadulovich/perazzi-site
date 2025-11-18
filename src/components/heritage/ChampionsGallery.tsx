@@ -47,7 +47,7 @@ export function ChampionsGallery({ champions }: ChampionsGalleryProps) {
     >
       <div className="space-y-2">
         <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
-          The Perazzi Champions
+          Perazzi Champions
         </p>
         <h2
           id="heritage-champions-heading"
