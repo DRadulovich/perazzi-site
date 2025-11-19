@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import { useChatState } from "@/components/chat/useChatState";
 import { ChatInput } from "@/components/chat/ChatInput";
+import type { ChatTriggerPayload } from "@/lib/chat-trigger";
 
 const QUICK_STARTS = [
   {
@@ -26,6 +27,8 @@ type ChatPanelProps = {
   onClose?: () => void;
   variant?: "rail" | "sheet";
   className?: string;
+  pendingPrompt?: ChatTriggerPayload | null;
+  onPromptConsumed?: () => void;
 };
 
 const markdownComponents = {
@@ -46,11 +49,19 @@ const markdownComponents = {
   ),
 };
 
-export function ChatPanel({ open, onClose, variant = "rail", className }: ChatPanelProps) {
+export function ChatPanel({
+  open,
+  onClose,
+  variant = "rail",
+  className,
+  pendingPrompt,
+  onPromptConsumed,
+}: ChatPanelProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
-  const { messages, pending, isTyping, error, sendMessage, context } = useChatState();
+  const { messages, pending, isTyping, error, sendMessage, context, updateContext } = useChatState();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [showQuickStarts, setShowQuickStarts] = useState(true);
+  const lastPromptRef = useRef<ChatTriggerPayload | null>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -63,6 +74,28 @@ export function ChatPanel({ open, onClose, variant = "rail", className }: ChatPa
       panelRef.current.focus();
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !pendingPrompt) return;
+    if (lastPromptRef.current === pendingPrompt) return;
+    lastPromptRef.current = pendingPrompt;
+    if (pendingPrompt.context) {
+      updateContext(pendingPrompt.context);
+    }
+    if (pendingPrompt.question) {
+      sendMessage({
+        question: pendingPrompt.question,
+        context: pendingPrompt.context,
+      });
+    }
+    onPromptConsumed?.();
+  }, [open, pendingPrompt, sendMessage, updateContext, onPromptConsumed]);
+
+  useEffect(() => {
+    if (!pendingPrompt) {
+      lastPromptRef.current = null;
+    }
+  }, [pendingPrompt]);
 
   if (!open) return null;
 

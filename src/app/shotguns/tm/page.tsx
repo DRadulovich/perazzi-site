@@ -8,6 +8,8 @@ import { RelatedList } from "@/components/shotguns/RelatedList";
 import { CTASection } from "@/components/shotguns/CTASection";
 import { getShotgunsSectionData } from "@/lib/shotguns-data";
 import { platformToSeriesEntry } from "@/lib/platform-series";
+import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
+import { buildPlatformPrompt } from "@/lib/platform-prompts";
 
 export default async function TMSeriesPage() {
   const { series, disciplines, landing } = await getShotgunsSectionData();
@@ -17,6 +19,16 @@ export default async function TMSeriesPage() {
   return (
     <div className="space-y-16">
       <SeriesHero hero={tmSeries.hero} analyticsId="SeriesHero:tm" />
+      <div className="rounded-3xl border border-border/70 bg-card px-6 py-5 shadow-sm sm:px-8">
+        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-ink-muted">Platform guidance</p>
+        <p className="mt-1 text-sm text-ink">Questions about the TM Platform? Ask Perazzi.</p>
+        <div className="mt-4">
+          <ChatTriggerButton
+            label="Ask about TM Platform"
+            payload={buildPlatformPrompt("tm", { pageUrl: "/shotguns/tm" })}
+          />
+        </div>
+      </div>
       <AtAGlanceStrip data={tmSeries.atAGlance} />
       <SeriesStory html={tmSeries.storyHtml} />
       <EngHighlightsGrid highlights={tmSeries.highlights} />

@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import type { Platform } from "@/types/catalog";
 import { PlatformCard } from "./PlatformCard";
+import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
+import { buildPlatformPrompt } from "@/lib/platform-prompts";
 
 type PlatformGridProps = {
   platforms: Platform[];
@@ -125,11 +127,15 @@ export function PlatformGrid({ platforms }: PlatformGridProps) {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
         {activeGroup.map((platform, index) => (
-          <PlatformCard
-            key={platform.id}
-            platform={platform}
-            priority={index === 0 && activeTabIndex === 0}
-          />
+          <div key={platform.id} className="space-y-3">
+            <PlatformCard platform={platform} priority={index === 0 && activeTabIndex === 0} />
+            <ChatTriggerButton
+              label={`Ask about ${platform.name}`}
+              variant="outline"
+              className="w-full justify-center"
+              payload={buildPlatformPrompt(platform.slug)}
+            />
+          </div>
         ))}
       </div>
     </section>

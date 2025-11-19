@@ -8,6 +8,7 @@ import { RelatedList } from "@/components/shotguns/RelatedList";
 import { CTASection } from "@/components/shotguns/CTASection";
 import { getHeritagePageData } from "@/lib/heritage-data";
 import { getManufactureYearBySerial } from "@/sanity/queries/manufactureYear";
+import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
 
 async function serialLookupAction(
   _: SerialLookupFormState,
@@ -78,6 +79,22 @@ export default async function HeritagePage() {
           { label: "Heritage", href: "/heritage" },
         ]}
       />
+      <section className="rounded-3xl border border-border/70 bg-card px-6 py-5 shadow-sm sm:px-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">Ask the workshop</p>
+        <p className="mt-2 text-sm text-ink">
+          Want a story from the atelier or guidance on provenance research? Ask the concierge to narrate it for you.
+        </p>
+        <div className="mt-4">
+          <ChatTriggerButton
+            label="Ask about heritage"
+            payload={{
+              question:
+                "Share an inspiring Perazzi heritage story—highlighting Daniele's workshop and champions—and guide me on how to use provenance resources like the serial lookup to learn more.",
+              context: { pageUrl: "/heritage", mode: "heritage" },
+            }}
+          />
+        </div>
+      </section>
       <BrandTimeline events={timeline} skipTargetId="heritage-after-timeline" />
       <SerialLookup lookupAction={serialLookupAction} />
       <section

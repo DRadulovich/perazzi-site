@@ -6,6 +6,7 @@ import { BookingOptions } from "@/components/bespoke/BookingOptions"; // Bespoke
 import { AssuranceBlock } from "@/components/bespoke/AssuranceBlock";
 import { CTASection } from "@/components/shotguns/CTASection";
 import { getBespokePageData } from "@/lib/bespoke-data";
+import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
 
 export default async function BespokeBuildPage() {
   const { hero, journey, steps, experts, booking, assurance, footerCta } = await getBespokePageData();
@@ -13,6 +14,22 @@ export default async function BespokeBuildPage() {
   return (
     <div className="space-y-16 px-2 sm:px-4 lg:px-6" id="bespoke-top">
       <BuildHero hero={hero} />
+      <section className="rounded-3xl border border-border/70 bg-card px-6 py-5 shadow-sm sm:px-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">Concierge insight</p>
+        <p className="mt-2 text-sm text-ink">
+          Considering a bespoke build? Ask how Perazzi sequences fitting, platform selection, and engraving.
+        </p>
+        <div className="mt-4">
+          <ChatTriggerButton
+            label="Ask about bespoke builds"
+            payload={{
+              question:
+                "Walk me through the bespoke Perazzi build journey—how fitting, platform choice, engraving, and hand finishing come together—and what decisions I should prepare for before visiting the atelier.",
+              context: { pageUrl: "/bespoke", mode: "prospect" },
+            }}
+          />
+        </div>
+      </section>
       <JourneyOverview journey={journey} />
       <BuildStepsScroller steps={steps} skipTargetId="bespoke-experts" />
       <section

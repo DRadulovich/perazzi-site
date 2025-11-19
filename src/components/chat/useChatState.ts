@@ -22,17 +22,20 @@ class ConciergeRequestError extends Error {
   }
 }
 
+type ChatContextShape = {
+  pageUrl?: string;
+  modelSlug?: string;
+  platformSlug?: string;
+  mode?: string;
+  locale?: string;
+};
+
 export function useChatState(initialMessages: ChatEntry[] = []) {
   const [messages, setMessages] = useState<ChatEntry[]>(initialMessages);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
-  const [context, setContext] = useState<{
-    pageUrl?: string;
-    modelSlug?: string;
-    mode?: string;
-    locale?: string;
-  }>({});
+  const [context, setContext] = useState<ChatContextShape>({});
 
   const addMessage = (entry: ChatEntry) => {
     setMessages((prev) => {
@@ -44,6 +47,10 @@ export function useChatState(initialMessages: ChatEntry[] = []) {
     });
   };
 
+  const updateContext = (patch: Partial<ChatContextShape>) => {
+    setContext((prev) => ({ ...prev, ...patch }));
+  };
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -51,7 +58,7 @@ export function useChatState(initialMessages: ChatEntry[] = []) {
       if (stored) {
         const parsed = JSON.parse(stored) as {
           messages?: ChatEntry[];
-          context?: typeof context;
+          context?: ChatContextShape;
         };
         if (parsed?.messages?.length) {
           setMessages(parsed.messages.slice(-MAX_MESSAGES));
@@ -67,7 +74,7 @@ export function useChatState(initialMessages: ChatEntry[] = []) {
 
   const sendMessage = async (payload: {
     question: string;
-    context?: { pageUrl?: string; modelSlug?: string; mode?: string; locale?: string };
+    context?: ChatContextShape;
   }) => {
     const userEntry: ChatEntry = {
       id: crypto.randomUUID(),
@@ -79,10 +86,11 @@ export function useChatState(initialMessages: ChatEntry[] = []) {
     setIsTyping(true);
     setError(null);
     try {
-      const effectiveContext = {
+      const effectiveContext: ChatContextShape = {
         pageUrl: payload.context?.pageUrl ?? context.pageUrl,
         locale: payload.context?.locale ?? context.locale,
         modelSlug: payload.context?.modelSlug ?? context.modelSlug,
+        platformSlug: payload.context?.platformSlug ?? context.platformSlug,
         mode: payload.context?.mode ?? context.mode,
       };
 
@@ -154,5 +162,6 @@ export function useChatState(initialMessages: ChatEntry[] = []) {
     error,
     context,
     sendMessage,
+    updateContext,
   };
 }

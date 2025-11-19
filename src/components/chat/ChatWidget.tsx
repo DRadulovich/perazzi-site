@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { ChatPanel } from "@/components/chat/ChatPanel";
+import type { ChatTriggerPayload } from "@/lib/chat-trigger";
+import { CHAT_TRIGGER_EVENT } from "@/lib/chat-trigger";
 
 const MIN_WIDTH = 360;
 const MAX_WIDTH = 720;
@@ -11,9 +13,9 @@ const MOBILE_BREAKPOINT = 768;
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
+  const [pendingPrompt, setPendingPrompt] = useState<ChatTriggerPayload | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -38,9 +40,9 @@ export function ChatWidget() {
       root.style.setProperty("--chat-rail-width", "0px");
       return;
     }
-    const widthValue = isOpen && !isFullscreen ? `${panelWidth}px` : "0px";
+    const widthValue = isOpen ? `${panelWidth}px` : "0px";
     root.style.setProperty("--chat-rail-width", widthValue);
-  }, [isOpen, isFullscreen, panelWidth, isMobile]);
+  }, [isOpen, panelWidth, isMobile]);
 
   useEffect(
     () => () => {
@@ -50,7 +52,7 @@ export function ChatWidget() {
   );
 
   useEffect(() => {
-    if (!isResizing || isFullscreen) return;
+    if (!isResizing) return;
 
     const handleMouseMove = (event: MouseEvent) => {
       const calculated = window.innerWidth - event.clientX;
@@ -71,7 +73,7 @@ export function ChatWidget() {
       document.body.style.userSelect = "";
       document.body.style.cursor = "";
     };
-  }, [isResizing, isFullscreen]);
+  }, [isResizing]);
 
   const bodyLocked = isMobile && isOpen;
   useEffect(() => {
@@ -122,20 +124,21 @@ export function ChatWidget() {
     };
   }, [isMobile, isOpen]);
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && isFullscreen) {
-        setIsFullscreen(false);
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isFullscreen]);
-
   const handleClose = () => {
-    setIsFullscreen(false);
     setIsOpen(false);
   };
+
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<ChatTriggerPayload>).detail ?? {};
+      setPendingPrompt(detail);
+      setIsOpen(true);
+    };
+    window.addEventListener(CHAT_TRIGGER_EVENT, handler as EventListener);
+    return () => window.removeEventListener(CHAT_TRIGGER_EVENT, handler as EventListener);
+  }, []);
+
+  const consumePrompt = () => setPendingPrompt(null);
 
   return (
     <>
@@ -163,6 +166,8 @@ export function ChatWidget() {
                 open
                 onClose={handleClose}
                 variant="sheet"
+                pendingPrompt={pendingPrompt}
+                onPromptConsumed={consumePrompt}
                 className="rounded-none shadow-none h-full"
               />
             </div>
@@ -172,19 +177,23 @@ export function ChatWidget() {
         <>
           {isOpen && (
             <aside
-              className={`fixed right-0 top-0 z-40 flex h-full flex-col bg-transparent ${isFullscreen ? "left-0 w-full" : ""}`}
-              style={!isFullscreen ? { width: panelWidth } : undefined}
+              className="fixed right-0 top-0 z-40 flex h-full flex-col bg-transparent"
+              style={{ width: panelWidth }}
             >
-              {!isFullscreen && (
-                <div
-                  className="absolute left-0 top-0 z-50 h-full w-2 cursor-col-resize border-l border-transparent transition hover:border-l-subtle"
-                  onMouseDown={() => setIsResizing(true)}
-                  role="separator"
-                  aria-orientation="vertical"
-                  aria-hidden="true"
-                />
-              )}
-              <ChatPanel open onClose={handleClose} variant="rail" />
+              <div
+                className="absolute left-0 top-0 z-50 h-full w-2 cursor-col-resize border-l border-transparent transition hover:border-l-subtle"
+                onMouseDown={() => setIsResizing(true)}
+                role="separator"
+                aria-orientation="vertical"
+                aria-hidden="true"
+              />
+              <ChatPanel
+                open
+                onClose={handleClose}
+                variant="rail"
+                pendingPrompt={pendingPrompt}
+                onPromptConsumed={consumePrompt}
+              />
             </aside>
           )}
           {!isOpen && (
