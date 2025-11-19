@@ -41,12 +41,12 @@ export function PrimaryNav({ brandLabel }: PrimaryNavProps) {
         <Logo label={brandLabel} />
         <div className="hidden items-center gap-6 lg:flex">
           <Links pathname={pathname ?? "/"} />
-          <ThemeToggle variant="inverted" />
           <CTAs />
+          <ThemeToggle variant="inverted" />
         </div>
         <div className="flex items-center gap-3 lg:hidden">
-          <ThemeToggle variant="ghost" />
           <MobileMenu pathname={pathname ?? "/"} brandLabel={brandLabel} />
+          <ThemeToggle variant="ghost" />
         </div>
       </div>
     </nav>

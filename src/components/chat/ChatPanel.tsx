@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
+import remarkGfm from "remark-gfm";
 import { useChatState } from "@/components/chat/useChatState";
 import { ChatInput } from "@/components/chat/ChatInput";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
@@ -47,6 +48,23 @@ const markdownComponents = {
   strong: (props: React.HTMLAttributes<HTMLElement>) => (
     <strong className="font-semibold" {...props} />
   ),
+  table: (props: React.TableHTMLAttributes<HTMLTableElement>) => (
+    <div className="my-4 overflow-x-auto">
+      <table className="w-full border-collapse text-left text-sm" {...props} />
+    </div>
+  ),
+  thead: (props: React.HTMLAttributes<HTMLTableSectionElement>) => (
+    <thead className="bg-subtle text-xs uppercase tracking-[0.2em] text-ink-muted" {...props} />
+  ),
+  th: (props: React.ThHTMLAttributes<HTMLTableCellElement>) => (
+    <th className="border border-subtle px-3 py-2 font-semibold text-ink" {...props} />
+  ),
+  td: (props: React.TdHTMLAttributes<HTMLTableCellElement>) => (
+    <td className="border border-subtle px-3 py-2 text-ink" {...props} />
+  ),
+  tbody: (props: React.HTMLAttributes<HTMLTableSectionElement>) => (
+    <tbody className="divide-y divide-subtle" {...props} />
+  ),
 };
 
 export function ChatPanel({
@@ -61,6 +79,7 @@ export function ChatPanel({
   const { messages, pending, isTyping, error, sendMessage, context, updateContext } = useChatState();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [showQuickStarts, setShowQuickStarts] = useState(true);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const lastPromptRef = useRef<ChatTriggerPayload | null>(null);
 
   useEffect(() => {
@@ -96,6 +115,19 @@ export function ChatPanel({
       lastPromptRef.current = null;
     }
   }, [pendingPrompt]);
+
+  const handleCopy = async (id: string, content: string) => {
+    if (typeof navigator === "undefined" || !navigator.clipboard) return;
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedId(id);
+      window.setTimeout(() => {
+        setCopiedId((current) => (current === id ? null : current));
+      }, 2000);
+    } catch (error) {
+      console.warn("Failed to copy content", error);
+    }
+  };
 
   if (!open) return null;
 
@@ -149,49 +181,64 @@ export function ChatPanel({
       <div className="flex flex-1 flex-col overflow-hidden">
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-10 text-sm text-ink">
           <div className="flex flex-col gap-6">
-            <div className="rounded-3xl border border-subtle bg-subtle/40 px-5 py-4 text-sm text-ink">
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Guided Questions</p>
+        <div className="rounded-3xl border border-subtle bg-subtle/40 px-5 py-4 text-sm text-ink">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Guided Questions</p>
+            <button
+              type="button"
+              className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:text-ink"
+              onClick={() => setShowQuickStarts((prev) => !prev)}
+            >
+              {showQuickStarts ? "Hide" : "Show"}
+            </button>
+          </div>
+          {showQuickStarts && (
+            <div className="mt-4 grid gap-3">
+              {QUICK_STARTS.map((qs) => (
                 <button
+                  key={qs.label}
                   type="button"
-                  className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:text-ink"
-                  onClick={() => setShowQuickStarts((prev) => !prev)}
+                  className="w-full rounded-2xl border border-subtle bg-card px-4 py-3 text-left font-medium text-ink transition hover:border-ink disabled:cursor-not-allowed"
+                  onClick={() => sendMessage({ question: qs.prompt })}
+                  disabled={pending}
                 >
-                  {showQuickStarts ? "Hide" : "Show"}
+                  {qs.label}
                 </button>
-              </div>
-              {showQuickStarts && (
-                <div className="mt-4 grid gap-3">
-                  {QUICK_STARTS.map((qs) => (
-                    <button
-                      key={qs.label}
-                      type="button"
-                      className="w-full rounded-2xl border border-subtle bg-card px-4 py-3 text-left font-medium text-ink transition hover:border-ink disabled:cursor-not-allowed"
-                      onClick={() => sendMessage({ question: qs.prompt })}
-                      disabled={pending}
-                    >
-                      {qs.label}
-                    </button>
-                  ))}
-                </div>
-              )}
+              ))}
             </div>
-            {messages.length === 0 ? (
-              <p className="text-ink-muted">
-                Ask about heritage, platforms, or service, and I'll help you connect the craft to your own journey.
-              </p>
-            ) : (
-              <ul className="flex flex-col gap-4">
-                {messages.map((msg) => (
-                  <li key={msg.id} className={msg.role === "user" ? "text-right" : "text-left"}>
+          )}
+        </div>
+        {messages.length === 0 ? (
+          <p className="text-ink-muted">
+            Ask about heritage, platforms, or service, and I'll help you connect the craft to your own journey.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-6">
+            {messages.map((msg, index) => {
+              const isAssistant = msg.role === "assistant";
+              const showMarker =
+                isAssistant && (index === 0 || messages[index - 1]?.role !== "assistant");
+              return (
+                <li key={msg.id} className="relative">
+                  {showMarker && (
+                    <div className="mb-3 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-white">
+                      <div className="flex-1 border-t border-perazzi-red" aria-hidden="true" />
+                      <span className="rounded-full bg-perazzi-red px-3 py-1 text-[11px] tracking-[0.3em] text-white">
+                        Perazzi Insight
+                      </span>
+                      <div className="flex-1 border-t border-perazzi-red" aria-hidden="true" />
+                    </div>
+                  )}
+                  <div className={isAssistant ? "text-left" : "text-right"}>
                     <div
                       className={`inline-block rounded-2xl px-4 py-3 ${
-                        msg.role === "user" ? "bg-ink text-card" : "bg-card border border-subtle text-ink"
+                        isAssistant ? "bg-card border border-subtle text-ink" : "bg-ink text-card"
                       }`}
                     >
-                      {msg.role === "assistant" ? (
+                      {isAssistant ? (
                         <ReactMarkdown
                           rehypePlugins={[rehypeSanitize]}
+                          remarkPlugins={[remarkGfm]}
                           components={markdownComponents}
                         >
                           {msg.content}
@@ -200,15 +247,30 @@ export function ChatPanel({
                         msg.content
                       )}
                       {msg.similarity !== undefined && (
-                        <p className="mt-2 text-xs text-ink-muted">Similarity: {(msg.similarity * 100).toFixed(1)}%</p>
+                        <p className="mt-2 text-xs text-ink-muted">
+                          Similarity: {(msg.similarity * 100).toFixed(1)}%
+                        </p>
+                      )}
+                      {isAssistant && (
+                        <div className="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em]">
+                          <button
+                            type="button"
+                            className="rounded-full border border-subtle px-3 py-1 text-ink-muted transition hover:border-ink hover:text-ink"
+                            onClick={() => handleCopy(msg.id, msg.content)}
+                          >
+                            {copiedId === msg.id ? "Copied" : "Copy"}
+                          </button>
+                        </div>
                       )}
                     </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+      </div>
         <div className="border-t border-subtle px-6 py-4">
           {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
           <ChatInput
