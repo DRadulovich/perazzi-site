@@ -1,0 +1,35 @@
+:root {
+  --brand: #bb1010;
+  --brand-hover: #9c0b0b;
+  --card: #ffffff;
+  --ink: #0f0f0f;
+  --ink-muted: #585858;
+  --canvas: #faf7f1;
+  --subtle: rgba(15,15,15,0.08);
+}
+.bg-brand { background-color: var(--brand); color: var(--card); }
+.bg-brand-hover { background-color: var(--brand-hover); color: var(--card); }
+.text-card { color: var(--card); }
+.text-ink { color: var(--ink); }
+.text-ink-muted { color: var(--ink-muted); }
+.shadow-elevated { box-shadow: 0 20px 60px rgba(15,15,15,0.15); }
+.button-primary {
+  background: var(--ink);
+  color: var(--card);
+  border-radius: 9999px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+  transition: background 0.2s ease;
+}
+.button-primary:hover {
+  background: var(--ink-muted);
+}
+.button-secondary {
+  border: 1px solid var(--subtle);
+  border-radius: 9999px;
+  padding: 0.5rem 1.5rem;
+  font-weight: 600;
+}
+.button-secondary:hover {
+  border-color: var(--ink);
+}

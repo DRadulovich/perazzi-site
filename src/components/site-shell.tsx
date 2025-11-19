@@ -3,6 +3,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { getTranslations } from "next-intl/server";
 import { SkipToContent } from "@/components/skip-to-content";
 import { PrimaryNav } from "@/components/primary-nav";
+import { ChatWidgetClient } from "@/components/chat";
 
 type SiteShellProps = {
   children: ReactNode;
@@ -28,6 +29,7 @@ export async function SiteShell({ children }: SiteShellProps) {
           Placeholder footer · Service, legal, and contact hooks will live here.
         </div>
       </footer>
+      <ChatWidgetClient />
       <Analytics />
     </div>
   );

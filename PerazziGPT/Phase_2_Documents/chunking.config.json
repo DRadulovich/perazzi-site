@@ -1,0 +1,75 @@
+{
+  "defaults": {
+    "target_words": 500,
+    "max_words": 1000,
+    "max_tokens": 1200,
+    "overlap_words": 60,
+    "max_overlap_delta": 10
+  },
+  "rules": [
+    {
+      "glob": "docs/assistant-spec.md",
+      "type": "prompt",
+      "target_words": 800,
+      "max_words": 1200,
+      "overlap_words": 80,
+      "allow_overflow": true
+    },
+    {
+      "glob": "PerazziGPT/Phase_1_Documents/*.md",
+      "type": "prompt",
+      "target_words": 700,
+      "max_words": 1200,
+      "overlap_words": 80,
+      "allow_overflow": true
+    },
+    {
+      "glob": "PerazziGPT/Brand_Info/*.md",
+      "type": "narrative",
+      "target_words": 300,
+      "max_words": 650,
+      "max_tokens": 1100,
+      "overlap_words": 0
+    },
+    {
+      "glob": "PerazziGPT/Live_Site_Narratives/*.md",
+      "type": "narrative",
+      "target_words": 500,
+      "overlap_words": 60
+    },
+    {
+      "glob": "PerazziGPT/Company_Info/*.md",
+      "type": "list",
+      "target_entries": 4,
+      "overlap_words": 0
+    },
+    {
+      "glob": "PerazziGPT/Gun_Info/*.md",
+      "type": "reference",
+      "target_rows": 6,
+      "target_words": 300,
+      "max_words": 450,
+      "max_tokens": 900,
+      "overlap_words": 20
+    },
+    {
+      "glob": "PerazziGPT/Gun_Info/*.json",
+      "type": "json",
+      "objects_per_chunk": 2
+    },
+    {
+      "glob": "PerazziGPT/Sanity_Info/*.json",
+      "type": "sanity_dataset",
+      "objects_per_chunk": 2,
+      "target_words": 400,
+      "overlap_words": 0
+    },
+    {
+      "glob": "PerazziGPT/Pricing_And_Models/*.csv",
+      "type": "pricing",
+      "describe_columns": ["Category", "Item", "Description"],
+      "exclude_columns": ["MSRP", "Price", "Retail", "Dealer"],
+      "target_words": 200
+    }
+  ]
+}

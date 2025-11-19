@@ -1,0 +1,14 @@
+{
+  "generated_at": "2025-11-18T22:16:25.000Z",
+  "total_chunks": 29,
+  "documents": [
+    {
+      "doc_id": "perazzigpt-brand-info-perazzi-brand-bible-md",
+      "path": "PerazziGPT/Brand_Info/Perazzi Brand Bible.md",
+      "chunk_count": 29,
+      "total_tokens": 17740,
+      "last_updated": "2025-11-18T21:19:18.164Z",
+      "guardrail_flags": []
+    }
+  ]
+}
