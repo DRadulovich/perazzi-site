@@ -326,7 +326,14 @@ export function isConnectionError(error: unknown) {
   const candidate = error as any;
   const cause = candidate.cause;
   const code = (cause && cause.code) || candidate.code;
-  return code === "ENOTFOUND" || code === "ECONNREFUSED" || code === "EAI_AGAIN";
+  const message = (candidate.message ?? cause?.message ?? "").toString().toLowerCase();
+  return (
+    code === "ENOTFOUND" ||
+    code === "ECONNREFUSED" ||
+    code === "EAI_AGAIN" ||
+    message.includes("connection error") ||
+    message.includes("fetch failed")
+  );
 }
 
 export class OpenAIConnectionError extends Error {

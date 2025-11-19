@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ChatMessage } from "@/types/perazzi-assistant";
 
 export type ChatEntry = {
@@ -9,6 +9,9 @@ export type ChatEntry = {
   content: string;
   similarity?: number;
 };
+
+const STORAGE_KEY = "perazzi-chat-history";
+const MAX_MESSAGES = 40;
 
 class ConciergeRequestError extends Error {
   status?: number;
@@ -23,6 +26,7 @@ export function useChatState(initialMessages: ChatEntry[] = []) {
   const [messages, setMessages] = useState<ChatEntry[]>(initialMessages);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isTyping, setIsTyping] = useState(false);
   const [context, setContext] = useState<{
     pageUrl?: string;
     modelSlug?: string;
@@ -31,8 +35,35 @@ export function useChatState(initialMessages: ChatEntry[] = []) {
   }>({});
 
   const addMessage = (entry: ChatEntry) => {
-    setMessages((prev) => [...prev, entry]);
+    setMessages((prev) => {
+      const next = [...prev, entry];
+      if (next.length > MAX_MESSAGES) {
+        return next.slice(next.length - MAX_MESSAGES);
+      }
+      return next;
+    });
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const stored = window.localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as {
+          messages?: ChatEntry[];
+          context?: typeof context;
+        };
+        if (parsed?.messages?.length) {
+          setMessages(parsed.messages.slice(-MAX_MESSAGES));
+        }
+        if (parsed?.context) {
+          setContext(parsed.context);
+        }
+      }
+    } catch (error) {
+      console.warn("Failed to load stored chat state", error);
+    }
+  }, []);
 
   const sendMessage = async (payload: {
     question: string;
@@ -45,6 +76,7 @@ export function useChatState(initialMessages: ChatEntry[] = []) {
     };
     addMessage(userEntry);
     setPending(true);
+    setIsTyping(true);
     setError(null);
     try {
       const effectiveContext = {
@@ -98,12 +130,27 @@ export function useChatState(initialMessages: ChatEntry[] = []) {
       }
     } finally {
       setPending(false);
+      setIsTyping(false);
     }
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const payload = JSON.stringify({
+        messages,
+        context,
+      });
+      window.localStorage.setItem(STORAGE_KEY, payload);
+    } catch (error) {
+      console.warn("Failed to persist chat history", error);
+    }
+  }, [messages, context]);
 
   return {
     messages,
     pending,
+    isTyping,
     error,
     context,
     sendMessage,

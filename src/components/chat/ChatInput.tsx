@@ -19,30 +19,35 @@ export function ChatInput({ onSend, pending }: ChatInputProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-2">
-      <textarea
-        className="h-24 w-full resize-none rounded-2xl border border-subtle bg-card px-4 py-3 text-sm outline-none focus:border-ink"
-        placeholder="Ask something about Perazzi, service, or heritage..."
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-        disabled={pending}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault();
-            if (!pending && value.trim()) {
-              onSend(value.trim());
-              setValue("");
+      <div className="relative">
+        <textarea
+          className="h-24 w-full resize-none rounded-2xl border border-subtle bg-card px-4 py-3 pr-20 text-base outline-none focus:border-ink"
+          placeholder="Ask something about Perazzi, service, or heritage..."
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          disabled={pending}
+          inputMode="text"
+          rows={3}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              if (!pending && value.trim()) {
+                onSend(value.trim());
+                setValue("");
+              }
             }
-          }
-        }}
-      />
-      <div className="flex justify-end gap-3 text-sm">
-        <button
-          type="submit"
-          disabled={pending || !value.trim()}
-          className="rounded-full bg-ink px-5 py-2 text-card transition hover:bg-ink-muted disabled:cursor-not-allowed disabled:bg-subtle disabled:text-ink-muted"
-        >
-          {pending ? "Thinking..." : "Send"}
-        </button>
+          }}
+        />
+        <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center">
+          <button
+            type="submit"
+            disabled={pending || !value.trim()}
+            className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-ink text-card shadow-sm transition hover:bg-ink-muted disabled:cursor-not-allowed disabled:bg-subtle disabled:text-ink-muted"
+          >
+            <span className="sr-only">Send</span>
+            <span className="text-base leading-none">{pending ? "…" : "↑"}</span>
+          </button>
+        </div>
       </div>
     </form>
   );

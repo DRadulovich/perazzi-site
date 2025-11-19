@@ -1,23 +1,46 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 
 const MIN_WIDTH = 360;
 const MAX_WIDTH = 720;
 const DEFAULT_WIDTH = 420;
+const MOBILE_BREAKPOINT = 768;
 
 export function ChatWidget() {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const query = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
+    const updateMatch = (event: MediaQueryListEvent | MediaQueryList) => {
+      setIsMobile(event.matches);
+    };
+    updateMatch(query);
+    const listener = (event: MediaQueryListEvent) => updateMatch(event);
+    if (typeof query.addEventListener === "function") {
+      query.addEventListener("change", listener);
+      return () => query.removeEventListener("change", listener);
+    }
+    query.addListener(listener);
+    return () => query.removeListener(listener);
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
     const root = document.documentElement;
+    if (isMobile) {
+      root.style.setProperty("--chat-rail-width", "0px");
+      return;
+    }
     const widthValue = isOpen && !isFullscreen ? `${panelWidth}px` : "0px";
     root.style.setProperty("--chat-rail-width", widthValue);
-  }, [isOpen, isFullscreen, panelWidth]);
+  }, [isOpen, isFullscreen, panelWidth, isMobile]);
 
   useEffect(
     () => () => {
@@ -50,6 +73,55 @@ export function ChatWidget() {
     };
   }, [isResizing, isFullscreen]);
 
+  const bodyLocked = isMobile && isOpen;
+  useEffect(() => {
+    if (!bodyLocked || typeof document === "undefined") return;
+    const scrollY = window.scrollY;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalBodyPosition = document.body.style.position;
+    const originalBodyWidth = document.body.style.width;
+    const originalBodyTop = document.body.style.top;
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.width = "100%";
+    document.body.style.top = `-${scrollY}px`;
+
+    return () => {
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.body.style.overflow = originalBodyOverflow;
+      document.body.style.position = originalBodyPosition;
+      document.body.style.width = originalBodyWidth;
+      document.body.style.top = originalBodyTop;
+      window.scrollTo(0, scrollY);
+    };
+  }, [bodyLocked]);
+
+  useEffect(() => {
+    if (!isMobile || !isOpen || typeof window === "undefined") return;
+    const updateViewportVars = () => {
+      const viewport = window.visualViewport;
+      const height = viewport?.height ?? window.innerHeight;
+      const offset = viewport?.offsetTop ?? 0;
+      document.documentElement.style.setProperty("--chat-sheet-height", `${height}px`);
+      document.documentElement.style.setProperty("--chat-sheet-offset", `${offset}px`);
+    };
+    updateViewportVars();
+    const viewport = window.visualViewport;
+    viewport?.addEventListener("resize", updateViewportVars);
+    viewport?.addEventListener("scroll", updateViewportVars);
+    window.addEventListener("resize", updateViewportVars);
+    return () => {
+      viewport?.removeEventListener("resize", updateViewportVars);
+      viewport?.removeEventListener("scroll", updateViewportVars);
+      window.removeEventListener("resize", updateViewportVars);
+      document.documentElement.style.removeProperty("--chat-sheet-height");
+      document.documentElement.style.removeProperty("--chat-sheet-offset");
+    };
+  }, [isMobile, isOpen]);
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && isFullscreen) {
@@ -60,30 +132,6 @@ export function ChatWidget() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isFullscreen]);
 
-  const headerActions = useMemo(
-    () => (
-      <>
-        <button
-          type="button"
-          onClick={() => setIsFullscreen((prev) => !prev)}
-          className="rounded-full border border-subtle px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:text-ink"
-        >
-          {isFullscreen ? "Exit fullscreen" : "Fullscreen"}
-        </button>
-        {!isFullscreen && (
-          <button
-            type="button"
-            onClick={() => setIsOpen(false)}
-            className="rounded-full border border-subtle px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:text-ink"
-          >
-            Hide
-          </button>
-        )}
-      </>
-    ),
-    [isFullscreen],
-  );
-
   const handleClose = () => {
     setIsFullscreen(false);
     setIsOpen(false);
@@ -91,31 +139,64 @@ export function ChatWidget() {
 
   return (
     <>
-      {isOpen && (
-        <aside
-          className={`fixed right-0 top-0 z-40 flex h-full flex-col bg-transparent ${isFullscreen ? "left-0 w-full" : ""}`}
-          style={!isFullscreen ? { width: panelWidth } : undefined}
-        >
-          {!isFullscreen && (
-            <div
-              className="absolute left-0 top-0 z-50 h-full w-2 cursor-col-resize border-l border-transparent transition hover:border-l-subtle"
-              onMouseDown={() => setIsResizing(true)}
-              role="separator"
-              aria-orientation="vertical"
-              aria-hidden="true"
-            />
+      {isMobile ? (
+        <>
+          {!isOpen && (
+            <button
+              type="button"
+              aria-label="Open Perazzi Concierge"
+              onClick={() => setIsOpen(true)}
+              className="fixed bottom-5 right-5 z-40 flex items-center rounded-full bg-brand px-6 py-3 text-base font-semibold text-card shadow-elevated transition hover:bg-brand-hover focus:outline-none focus-visible:ring"
+            >
+              Perazzi Guide
+            </button>
           )}
-          <ChatPanel open onClose={handleClose} headerActions={headerActions} />
-        </aside>
-      )}
-      {!isOpen && (
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-30 rounded-full bg-brand px-6 py-3 text-card shadow-elevated transition hover:bg-brand-hover focus:outline-none focus-visible:ring"
-        >
-          Open Perazzi Concierge
-        </button>
+          {isOpen && (
+            <div
+              className="fixed inset-0 z-50 bg-card text-ink overscroll-none"
+              style={{
+                height: "var(--chat-sheet-height, 100vh)",
+                top: "var(--chat-sheet-offset, 0px)",
+              }}
+            >
+              <ChatPanel
+                open
+                onClose={handleClose}
+                variant="sheet"
+                className="rounded-none shadow-none h-full"
+              />
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          {isOpen && (
+            <aside
+              className={`fixed right-0 top-0 z-40 flex h-full flex-col bg-transparent ${isFullscreen ? "left-0 w-full" : ""}`}
+              style={!isFullscreen ? { width: panelWidth } : undefined}
+            >
+              {!isFullscreen && (
+                <div
+                  className="absolute left-0 top-0 z-50 h-full w-2 cursor-col-resize border-l border-transparent transition hover:border-l-subtle"
+                  onMouseDown={() => setIsResizing(true)}
+                  role="separator"
+                  aria-orientation="vertical"
+                  aria-hidden="true"
+                />
+              )}
+              <ChatPanel open onClose={handleClose} variant="rail" />
+            </aside>
+          )}
+          {!isOpen && (
+            <button
+              type="button"
+              onClick={() => setIsOpen(true)}
+              className="fixed bottom-6 right-6 z-30 rounded-full bg-brand px-6 py-3 text-card shadow-elevated transition hover:bg-brand-hover focus:outline-none focus-visible:ring"
+            >
+              Open Perazzi Guide
+            </button>
+          )}
+        </>
       )}
     </>
   );

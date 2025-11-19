@@ -1,6 +1,5 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
@@ -9,15 +8,15 @@ import { ChatInput } from "@/components/chat/ChatInput";
 
 const QUICK_STARTS = [
   {
-    label: "Help me choose a gun",
+    label: "Explore My Options",
     prompt: "Help me choose the best model for me to use based on the disciplines that I participate in.",
   },
   {
-    label: "I already own a Perazzi",
-    prompt: "I own an Perazzi. What other information should I know to get the most out of my gun?",
+    label: "I Already Own A Perazzi",
+    prompt: "I own a Perazzi. What other information should I know to get the most out of my gun?",
   },
   {
-    label: "Service & care",
+    label: "Care and Preservation",
     prompt: "How should I care for my Perazzi and what is the recommended service schedule?",
   },
 ];
@@ -25,7 +24,8 @@ const QUICK_STARTS = [
 type ChatPanelProps = {
   open: boolean;
   onClose?: () => void;
-  headerActions?: ReactNode;
+  variant?: "rail" | "sheet";
+  className?: string;
 };
 
 const markdownComponents = {
@@ -46,9 +46,9 @@ const markdownComponents = {
   ),
 };
 
-export function ChatPanel({ open, onClose, headerActions }: ChatPanelProps) {
+export function ChatPanel({ open, onClose, variant = "rail", className }: ChatPanelProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
-  const { messages, pending, error, sendMessage } = useChatState();
+  const { messages, pending, isTyping, error, sendMessage, context } = useChatState();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [showQuickStarts, setShowQuickStarts] = useState(true);
 
@@ -66,6 +66,14 @@ export function ChatPanel({ open, onClose, headerActions }: ChatPanelProps) {
 
   if (!open) return null;
 
+  const rootClasses = [
+    "flex h-full w-full flex-col bg-card text-ink shadow-elevated",
+    variant === "rail" ? "border-l border-subtle" : "",
+    className ?? "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <div
       id="perazzi-chat-panel"
@@ -73,34 +81,44 @@ export function ChatPanel({ open, onClose, headerActions }: ChatPanelProps) {
       aria-label="Perazzi Concierge"
       tabIndex={-1}
       ref={panelRef}
-      className="flex h-full w-full flex-col border-l border-subtle bg-card text-ink shadow-elevated"
-      style={{ minWidth: "320px" }}
+      className={rootClasses}
+      style={{ minWidth: variant === "rail" ? "320px" : undefined }}
     >
-      <div className="flex items-center justify-between border-b border-subtle px-6 py-5">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Perazzi Concierge</p>
-          <h2 className="text-xl font-semibold">How can we help?</h2>
+      <div className="space-y-3 border-b border-subtle px-6 py-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Perazzi Concierge</p>
+            <h2 className="text-xl font-semibold">Where shall we begin?</h2>
+          </div>
+          <div className="flex items-center gap-2">
+            {onClose && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-full p-2 text-2xl leading-none text-ink-muted transition hover:bg-subtle focus-visible:ring-2 focus-visible:ring-brand"
+                aria-label="Close chat"
+              >
+                ×
+              </button>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {headerActions}
-          {onClose && (
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-full p-2 text-2xl leading-none text-ink-muted transition hover:bg-subtle focus-visible:ring-2 focus-visible:ring-brand"
-              aria-label="Close chat"
-            >
-              ×
-            </button>
-          )}
-        </div>
+        {isTyping && (
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+            <span className="relative flex h-5 w-5 items-center justify-center">
+              <span className="absolute inline-flex h-full w-full animate-spin rounded-full border-2 border-subtle border-t-transparent" />
+              <span className="inline-flex h-2 w-2 rounded-full bg-ink" />
+            </span>
+            <span className="tracking-[0.08em]">Collecting references…</span>
+          </div>
+        )}
       </div>
       <div className="flex flex-1 flex-col overflow-hidden">
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-10 text-sm text-ink">
           <div className="flex flex-col gap-6">
             <div className="rounded-3xl border border-subtle bg-subtle/40 px-5 py-4 text-sm text-ink">
               <div className="flex items-center justify-between gap-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Quick start prompts</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Guided Questions</p>
                 <button
                   type="button"
                   className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:text-ink"
@@ -127,7 +145,7 @@ export function ChatPanel({ open, onClose, headerActions }: ChatPanelProps) {
             </div>
             {messages.length === 0 ? (
               <p className="text-ink-muted">
-                Ask about platforms, service, or the bespoke process and I’ll respond in the best way that I can.
+                Ask about heritage, platforms, or service, and I'll help you connect the craft to your own journey.
               </p>
             ) : (
               <ul className="flex flex-col gap-4">
@@ -172,13 +190,6 @@ export function ChatPanel({ open, onClose, headerActions }: ChatPanelProps) {
               })
             }
           />
-          {onClose && (
-            <div className="mt-3 flex justify-end">
-              <button type="button" onClick={onClose} className="button-secondary text-ink">
-                Close for now
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>
