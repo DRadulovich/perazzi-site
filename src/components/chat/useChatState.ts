@@ -10,6 +10,15 @@ export type ChatEntry = {
   similarity?: number;
 };
 
+class ConciergeRequestError extends Error {
+  status?: number;
+  constructor(message: string, status?: number) {
+    super(message);
+    this.name = "ConciergeRequestError";
+    this.status = status;
+  }
+}
+
 export function useChatState(initialMessages: ChatEntry[] = []) {
   const [messages, setMessages] = useState<ChatEntry[]>(initialMessages);
   const [pending, setPending] = useState(false);
@@ -58,7 +67,19 @@ export function useChatState(initialMessages: ChatEntry[] = []) {
         }),
       });
       if (!res.ok) {
-        throw new Error(`Request failed with ${res.status}`);
+        let message =
+          res.status === 503
+            ? "The Perazzi workshop is briefly offline. Please try again in a moment."
+            : "Something went wrong. Please try again.";
+        try {
+          const payload = await res.json();
+          if (payload?.error) {
+            message = payload.error;
+          }
+        } catch {
+          // Ignore body parsing failures; fall back to default message
+        }
+        throw new ConciergeRequestError(message, res.status);
       }
       const data = await res.json();
       const assistantEntry: ChatEntry = {
@@ -70,7 +91,11 @@ export function useChatState(initialMessages: ChatEntry[] = []) {
       addMessage(assistantEntry);
     } catch (err) {
       console.error(err);
-      setError("Something went wrong. Please try again.");
+      if (err instanceof ConciergeRequestError) {
+        setError(err.message);
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
     } finally {
       setPending(false);
     }

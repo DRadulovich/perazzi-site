@@ -44,6 +44,13 @@
       "overlap_words": 0
     },
     {
+      "glob": "PerazziGPT/Company_Info/*.json",
+      "type": "reference",
+      "objects_per_chunk": 1,
+      "target_words": 250,
+      "overlap_words": 0
+    },
+    {
       "glob": "PerazziGPT/Gun_Info/*.md",
       "type": "reference",
       "target_rows": 6,

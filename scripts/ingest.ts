@@ -50,6 +50,19 @@ type ChunkRecord = {
   headingCoverage: string[];
 };
 
+type ChunkDef = {
+  text: string;
+  words: number;
+  headings: string[];
+  topics?: string[];
+  disciplines?: string[];
+  platforms?: string[];
+  geo?: string[];
+  entityIds?: string[];
+  structuredRefs?: Array<Record<string, any>>;
+  guardrailFlags?: string[];
+};
+
 type CoverageEntry = {
   doc_id: string;
   path: string;
@@ -75,6 +88,39 @@ const EMIT_METADATA = Boolean(argv["emit-metadata"]);
 const DOC_FILTER = argv.doc ? String(argv.doc) : null;
 const CONFIG_PATH = path.resolve(process.cwd(), String(argv.config));
 const PROJECT_ROOT = process.cwd();
+const SANITY_ROOT = path.join(PROJECT_ROOT, "PerazziGPT", "Sanity_Info");
+
+type SanityLookups = {
+  platforms: Map<
+    string,
+    {
+      id: string;
+      name: string;
+      slug: string;
+      disciplineIds: string[];
+      summary?: string;
+    }
+  >;
+  disciplines: Map<
+    string,
+    {
+      id: string;
+      name: string;
+      slug: string;
+    }
+  >;
+  gauges: Map<
+    string,
+    {
+      id: string;
+      name: string;
+      notes?: string;
+    }
+  >;
+};
+
+const sanityLookups: SanityLookups = loadSanityLookups();
+const PLATFORM_SLUGS = new Set(Array.from(sanityLookups.platforms.values()).map((p) => p.slug));
 
 function loadConfig(): ChunkingConfig {
   if (!fs.existsSync(CONFIG_PATH)) {
@@ -84,6 +130,47 @@ function loadConfig(): ChunkingConfig {
 }
 
 const config = loadConfig();
+
+function loadSanityArray<T = any>(fileName: string): T[] {
+  const filePath = path.join(SANITY_ROOT, fileName);
+  if (!fs.existsSync(filePath)) {
+    return [];
+  }
+  try {
+    const contents = fs.readFileSync(filePath, "utf8");
+    return JSON.parse(contents) as T[];
+  } catch {
+    return [];
+  }
+}
+
+function loadSanityLookups(): SanityLookups {
+  const platformEntries = loadSanityArray<any>("platform.json").map((item) => ({
+    id: item._id,
+    name: item.name ?? item.title ?? "Perazzi Platform",
+    slug: item.slug?.current ?? slugify(item.name ?? "perazzi-platform"),
+    disciplineIds: (item.disciplines ?? []).map((ref: any) => ref?._ref).filter(Boolean),
+    summary: item.snippet?.text ?? "",
+  }));
+
+  const disciplineEntries = loadSanityArray<any>("discipline.json").map((item) => ({
+    id: item._id,
+    name: item.name ?? "Discipline",
+    slug: item.slug?.current ?? slugify(item.name ?? "discipline"),
+  }));
+
+  const gaugeEntries = loadSanityArray<any>("gauge.json").map((item) => ({
+    id: item._id,
+    name: item.name ?? "Gauge",
+    notes: item.handlingNotes ?? "",
+  }));
+
+  return {
+    platforms: new Map(platformEntries.map((entry) => [entry.id, entry])),
+    disciplines: new Map(disciplineEntries.map((entry) => [entry.id, entry])),
+    gauges: new Map(gaugeEntries.map((entry) => [entry.id, entry])),
+  };
+}
 
 function slugify(input: string): string {
   return input
@@ -147,6 +234,61 @@ function getRuleForFile(filePath: string): ChunkRule {
     }
   }
   throw new Error(`No chunking rule matched ${rel}`);
+}
+
+function dedupeLower(values?: Array<string | null | undefined>, fallback: string[] = []) {
+  const normalized = (values ?? [])
+    .map((val) => (val ?? "").toString().trim().toLowerCase())
+    .filter(Boolean);
+  const unique = Array.from(new Set(normalized));
+  return unique.length ? unique : fallback;
+}
+
+function dedupeExact(values?: Array<string | null | undefined>, fallback: string[] = []) {
+  const normalized = (values ?? []).map((val) => (val ?? "").toString().trim()).filter(Boolean);
+  const unique = Array.from(new Set(normalized));
+  return unique.length ? unique : fallback;
+}
+
+function inferTopicsFromPath(filePath: string): string[] {
+  const normalized = filePath.replace(/\\/g, "/");
+  if (normalized.includes("Phase_1_Documents")) return ["policies", "guardrails"];
+  if (normalized.includes("Brand_Info")) return ["heritage", "history"];
+  if (normalized.includes("Live_Site_Narratives")) return ["heritage", "storytelling"];
+  if (normalized.includes("Company_Info/Authorized_Dealers")) return ["dealers", "service", "network"];
+  if (normalized.includes("Company_Info/Recommended_Service_Centers"))
+    return ["service", "care", "network"];
+  if (normalized.includes("Company_Info/Athletes")) return ["olympic", "athletes"];
+  if (normalized.includes("Company_Info/Olympic_Medals")) return ["olympic", "athletes", "heritage"];
+  if (normalized.includes("Company_Info/Scheduled_Events")) return ["events"];
+  if (normalized.includes("Gun_Info/Manufacture_Year")) return ["models", "heritage"];
+  if (normalized.includes("Gun_Info/Rib_Information")) return ["specs", "models"];
+  if (normalized.includes("Sanity_Info/models")) return ["models", "specs", "platforms"];
+  if (normalized.includes("Sanity_Info/authorizedDealer")) return ["dealers", "service"];
+  if (normalized.includes("Sanity_Info/recommendedServiceCenter")) return ["service", "care"];
+  if (normalized.includes("Pricing_And_Models")) return ["models", "specs"];
+  return ["general"];
+}
+
+function inferGeoFromPath(filePath: string): string[] {
+  if (filePath.includes("Authorized_Dealers") || filePath.includes("authorizedDealer")) {
+    return ["north-america"];
+  }
+  if (filePath.includes("Scheduled_Events") || filePath.includes("heritageEvent")) {
+    return ["global"];
+  }
+  return ["global"];
+}
+
+function inferGuardrailFlags(filePath: string, chunkText: string, rule: ChunkRule): string[] {
+  if (/Consumer_Warning_Notice/.test(filePath)) return ["contains_legal_language"];
+  if (/Phase_1_Documents/.test(filePath)) return ["policy_reference"];
+  if (/Pricing_And_Models/.test(filePath)) {
+    const pricingSignal = /\$\s*\d|USD|MSRP|Retail/i.test(chunkText);
+    return pricingSignal ? ["contains_pricing_fields"] : [];
+  }
+  if (/Warranty/i.test(filePath)) return ["contains_warranty_language"];
+  return rule.type === "prompt" ? ["policy_reference"] : [];
 }
 
 function looksLikeHeading(text: string): boolean {
@@ -272,8 +414,11 @@ function lastWords(text: string, wordCount: number): string {
   return slice.join(" ");
 }
 
-function splitIntoChunksFromParagraphs(paragraphs: string[], opts: { targetWords: number; maxWords: number; overlapWords: number; allowOverflow?: boolean }) {
-  const chunks: { text: string; words: number; headings: string[] }[] = [];
+function splitIntoChunksFromParagraphs(
+  paragraphs: string[],
+  opts: { targetWords: number; maxWords: number; overlapWords: number; allowOverflow?: boolean },
+): ChunkDef[] {
+  const chunks: ChunkDef[] = [];
   let buffer: string[] = [];
   let bufferWords = 0;
   let overlapCarry = "";
@@ -342,7 +487,7 @@ function splitIntoChunksFromParagraphs(paragraphs: string[], opts: { targetWords
   return chunks;
 }
 
-function chunkMarkdown(filePath: string, text: string, rule: ChunkRule) {
+function chunkMarkdown(filePath: string, text: string, rule: ChunkRule): ChunkDef[] {
   const rawParagraphs = splitParagraphs(text);
   const limit = rule.max_words ?? config.defaults.max_words;
   const paragraphs = expandParagraphs(rawParagraphs, limit);
@@ -354,7 +499,7 @@ function chunkMarkdown(filePath: string, text: string, rule: ChunkRule) {
   });
 }
 
-function chunkJson(filePath: string, text: string, rule: ChunkRule) {
+function chunkJson(filePath: string, text: string, rule: ChunkRule): ChunkDef[] {
   const json = JSON.parse(text);
   let entries: any[] = [];
   if (Array.isArray(json)) {
@@ -367,7 +512,7 @@ function chunkJson(filePath: string, text: string, rule: ChunkRule) {
     entries = Object.values(json).filter((val) => Array.isArray(val)).flat();
   }
   const size = rule.objects_per_chunk ?? 1;
-  const chunks: { text: string; words: number; headings: string[] }[] = [];
+  const chunks: ChunkDef[] = [];
   for (let i = 0; i < entries.length; i += size) {
     const slice = entries.slice(i, i + size);
     const body = slice
@@ -404,7 +549,7 @@ function chunkCsv(filePath: string, text: string, rule: ChunkRule) {
     );
   }
   const target = rule.target_words ?? 200;
-  const chunks: { text: string; words: number; headings: string[] }[] = [];
+  const chunks: ChunkDef[] = [];
   let buffer: string[] = [];
   let bufferWords = 0;
   records.forEach((record, idx) => {
@@ -429,6 +574,191 @@ function chunkCsv(filePath: string, text: string, rule: ChunkRule) {
     chunks.push({ text: textChunk, words: bufferWords, headings: [] });
   }
   return chunks;
+}
+
+function chunkSanityModels(filePath: string, text: string): ChunkDef[] {
+  const models: any[] = JSON.parse(text);
+  return models.map((model) => {
+    const name: string = model.s_model_name ?? "Perazzi Model";
+    const slug = slugify(name);
+    const platformRef = model.s_platform_id?._ref;
+    const platformMeta = platformRef ? sanityLookups.platforms.get(platformRef) : undefined;
+    const platformName = platformMeta?.name ?? "Perazzi Platform";
+    const platformSlug = platformMeta?.slug ?? null;
+    const disciplineSlugs =
+      platformMeta?.disciplineIds
+        .map((id) => sanityLookups.disciplines.get(id ?? ""))
+        .filter(Boolean)
+        .map((disc) => disc!.slug) ?? [];
+    const disciplineNames =
+      platformMeta?.disciplineIds
+        .map((id) => sanityLookups.disciplines.get(id ?? ""))
+        .filter(Boolean)
+        .map((disc) => disc!.name) ?? [];
+    const gaugeRefs = [model.s_gauge_id_1, model.s_gauge_id_2, model.s_gauge_id_3]
+      .map((ref) => (typeof ref === "object" ? ref?._ref : null))
+      .filter(Boolean) as string[];
+    const gaugeNames = gaugeRefs
+      .map((id) => sanityLookups.gauges.get(id)?.name)
+      .filter(Boolean);
+    const gaugeNotes = gaugeRefs
+      .map((id) => sanityLookups.gauges.get(id)?.notes)
+      .filter(Boolean);
+    const ribTypes = [model.s_rib_type_id_1, model.s_rib_type_id_2, model.s_rib_type_id_3]
+      .map((value: string) => value?.trim())
+      .filter(Boolean);
+    const triggerTypes = [model.s_trigger_type_id_1, model.s_trigger_type_id_2]
+      .map((value: string) => value?.trim())
+      .filter(Boolean);
+    const triggerSprings = [model.s_trigger_spring_id_1, model.s_trigger_spring_id_2]
+      .map((value: string) => value?.trim())
+      .filter(Boolean);
+    const version = model.s_version_id ?? "";
+    const useCase = model.s_use_id ? model.s_use_id.toString() : "Competition";
+    const summaryLines = [
+      `### ${name}`,
+      `**Platform:** ${platformName}`,
+      version ? `**Designation:** ${version}` : null,
+      gaugeNames.length ? `**Gauge options:** ${gaugeNames.join(", ")}` : null,
+      ribTypes.length ? `**Rib type(s):** ${ribTypes.join(", ")}` : null,
+      triggerTypes.length ? `**Trigger:** ${triggerTypes.join(", ")}` : null,
+      triggerSprings.length ? `**Trigger springs:** ${triggerSprings.join(", ")}` : null,
+      disciplineNames.length ? `**Disciplines:** ${disciplineNames.join(", ")}` : null,
+      `**Use case:** ${useCase}`,
+    ]
+      .filter(Boolean)
+      .map((line) => line!.trim());
+
+    if (gaugeNotes.length) {
+      summaryLines.push(`**Gauge handling notes:** ${gaugeNotes.join(" ")}`);
+    }
+    if (platformMeta?.summary) {
+      summaryLines.push(`> ${platformMeta.summary.trim()}`);
+    }
+
+    const textBlock = summaryLines.join("\n");
+
+    return {
+      text: textBlock,
+      words: countWords(textBlock),
+      headings: [`### ${name}`],
+      topics: ["models", "specs", "platforms"],
+      disciplines: disciplineSlugs,
+      platforms: platformSlug ? [platformSlug] : [],
+      entityIds: [model._id, slug],
+      structuredRefs: [
+        {
+          type: "model_overview",
+          slug,
+          platform: platformSlug,
+          name,
+          version,
+          disciplines: disciplineSlugs,
+          gauge: gaugeNames,
+          ribTypes,
+          triggerTypes,
+          useCase,
+        },
+      ],
+    };
+  });
+}
+
+function chunkSanityDealers(filePath: string, text: string): ChunkDef[] {
+  const dealers: any[] = JSON.parse(text);
+  return dealers.map((dealer) => {
+    const name: string = dealer.dealerName ?? "Authorized Dealer";
+    const location = [dealer.city, dealer.state].filter(Boolean).join(", ");
+    const geo =
+      dealer.state && typeof dealer.state === "string" ? [slugify(dealer.state)] : ["north-america"];
+    const lines = [
+      `### ${name}`,
+      location ? `**Location:** ${location}` : null,
+      dealer.address ? `**Address:** ${dealer.address}` : null,
+      dealer.phone ? `**Phone:** ${dealer.phone}` : null,
+      dealer.email ? `**Email:** ${dealer.email}` : null,
+      dealer.hours ? `**Hours:** ${dealer.hours}` : null,
+      dealer.notes ? `**Notes:** ${dealer.notes}` : null,
+    ]
+      .filter(Boolean)
+      .map((line) => line!.trim());
+    const textBlock = lines.join("\n");
+    return {
+      text: textBlock,
+      words: countWords(textBlock),
+      headings: [`### ${name}`],
+      topics: ["dealers", "service", "network"],
+      geo,
+      entityIds: [dealer._id, slugify(name)],
+      structuredRefs: [
+        {
+          type: "authorized_dealer",
+          id: dealer._id,
+          name,
+          location,
+        },
+      ],
+    };
+  });
+}
+
+function chunkOlympicMedals(filePath: string, text: string): ChunkDef[] {
+  const records: any[] = JSON.parse(text);
+  return records.map((entry, idx) => {
+    const athlete: string = entry.Athlete ?? "Perazzi Olympian";
+    const event: string = entry.Event ?? "";
+    const medal: string = entry.Medal ?? "";
+    const year: string = entry.Olympics ?? "";
+    const perazziModel: string = entry["Perazzi Model"] ?? "";
+    const disciplineTags = extractDisciplinesFromEvent(event);
+    const lines = [
+      `### ${athlete}`,
+      entry.Country ? `**Country:** ${entry.Country}` : null,
+      event ? `**Event:** ${event}` : null,
+      medal ? `**Medal:** ${medal}` : null,
+      year ? `**Olympics:** ${year}` : null,
+      perazziModel ? `**Perazzi platform:** ${perazziModel}` : null,
+      entry.Evidence ? `**Highlights:** ${entry.Evidence}` : null,
+    ]
+      .filter(Boolean)
+      .map((line) => line!.trim());
+    if (Array.isArray(entry.Sources) && entry.Sources.length) {
+      lines.push("**Sources:**");
+      entry.Sources.forEach((source: string) => {
+        lines.push(`- ${source}`);
+      });
+    }
+    const textBlock = lines.join("\n");
+    return {
+      text: textBlock,
+      words: countWords(textBlock),
+      headings: [`### ${athlete}`],
+      topics: ["olympic", "athletes", "heritage"],
+      disciplines: disciplineTags,
+      geo: entry.Country ? [slugify(entry.Country)] : ["global"],
+      entityIds: [slugify(athlete), `olympic-${idx}`],
+      structuredRefs: [
+        {
+          type: "olympic_result",
+          athlete,
+          event,
+          medal,
+          olympics: year,
+          model: perazziModel,
+        },
+      ],
+    };
+  });
+}
+
+function extractDisciplinesFromEvent(event: string): string[] {
+  const normalized = (event ?? "").toLowerCase();
+  const tags: string[] = [];
+  if (normalized.includes("skeet")) tags.push("skeet");
+  if (normalized.includes("trap")) tags.push("trap");
+  if (normalized.includes("double")) tags.push("double_trap");
+  if (normalized.includes("helice") || normalized.includes("pigeon")) tags.push("helice");
+  return Array.from(new Set(tags));
 }
 
 function extractHeadings(text: string): string[] {
@@ -460,10 +790,42 @@ function buildMetadata(opts: {
   lastUpdated: Date;
   rule: ChunkRule;
   guardrailFlags: string[];
+  topics?: string[];
+  disciplines?: string[];
+  platforms?: string[];
+  geo?: string[];
+  entityIds?: string[];
+  structuredRefs?: Array<Record<string, any>>;
 }) {
-  const { filePath, chunkText, chunkIndex, chunkCount, tokens, audience, docId, type, lastUpdated, rule, guardrailFlags } = opts;
+  const {
+    filePath,
+    chunkText,
+    chunkIndex,
+    chunkCount,
+    tokens,
+    audience,
+    docId,
+    type,
+    lastUpdated,
+    rule,
+    guardrailFlags,
+    topics,
+    disciplines,
+    platforms,
+    geo,
+    entityIds,
+    structuredRefs,
+  } = opts;
   const title = firstHeadingOrFallback(chunkText, type);
   const summary = chunkText.split(/\n+/)[0]?.slice(0, 280) ?? "";
+  const normalizedTopics = dedupeLower(topics, inferTopicsFromPath(filePath));
+  const normalizedDisciplines = dedupeLower(disciplines, ["general"]);
+  const normalizedPlatforms = dedupeLower(
+    (platforms ?? []).filter((platform) => PLATFORM_SLUGS.has(platform)),
+    []
+  );
+  const normalizedGeo = dedupeLower(geo, inferGeoFromPath(filePath));
+  const normalizedEntityIds = dedupeExact(entityIds, []);
   const baseMetadata = {
     id: docId,
     chunk_id: `${docId}#chunk-${String(chunkIndex + 1).padStart(2, "0")}`,
@@ -473,10 +835,14 @@ function buildMetadata(opts: {
     summary,
     language: "en",
     audience,
-    discipline: "general",
-    platform: "general",
+    discipline: normalizedDisciplines[0] ?? "general",
+    discipline_tags: normalizedDisciplines,
+    platform: normalizedPlatforms[0] ?? "general",
+    platform_tags: normalizedPlatforms,
+    topics: normalizedTopics,
     persona: inferPersona(audience, filePath),
-    region: "global",
+    region: normalizedGeo[0] ?? "global",
+    geo_tags: normalizedGeo,
     market_notes: "",
     locale_variant: "en-US",
     source_path: path.relative(PROJECT_ROOT, filePath),
@@ -494,19 +860,20 @@ function buildMetadata(opts: {
     embedding_norm: null,
     visibility: inferVisibility(audience),
     confidentiality: inferConfidentiality(audience),
-    guardrail_flags: guardrailFlags,
+    guardrail_flags: dedupeLower(guardrailFlags),
     pricing_sensitive: guardrailFlags.length > 0,
     legal_reviewed: null,
     author: "Perazzi Concierge Automation",
     approver: "Perazzi Concierge Automation",
     stakeholders: [],
     cta_links: [],
-    context_tags: [],
-    related_entities: [],
-    structured_refs: [],
+    context_tags: normalizedTopics,
+    related_entities: normalizedEntityIds,
+    structured_refs: structuredRefs ?? [],
     safety_notes: "",
     escalation_path: "none",
     off_topic_response: "",
+    entity_ids: normalizedEntityIds,
   };
   return baseMetadata;
 }
@@ -543,9 +910,18 @@ async function main() {
     const text = fs.readFileSync(filePath, "utf8");
     const rule = getRuleForFile(filePath);
     const ext = path.extname(filePath).toLowerCase();
-    let chunkDefs: { text: string; words: number; headings: string[] }[] = [];
+    const relPath = path.relative(PROJECT_ROOT, filePath).replace(/\\/g, "/");
+    let chunkDefs: ChunkDef[] = [];
     if (ext === ".json") {
-      chunkDefs = chunkJson(filePath, text, rule);
+      if (relPath.endsWith("Sanity_Info/models.json")) {
+        chunkDefs = chunkSanityModels(filePath, text);
+      } else if (relPath.endsWith("Sanity_Info/authorizedDealer.json")) {
+        chunkDefs = chunkSanityDealers(filePath, text);
+      } else if (relPath.endsWith("Company_Info/Olympic_Medals.json")) {
+        chunkDefs = chunkOlympicMedals(filePath, text);
+      } else {
+        chunkDefs = chunkJson(filePath, text, rule);
+      }
     } else if (ext === ".csv") {
       chunkDefs = chunkCsv(filePath, text, rule);
     } else {
@@ -559,7 +935,6 @@ async function main() {
     const type = fileToType(filePath);
     const audience = inferAudience(filePath);
     const headings = extractHeadings(text);
-    const guardrailFlags = filePath.includes("Pricing_And_Models") ? ["contains_pricing_fields"] : [];
     const stats = fs.statSync(filePath);
     chunkDefs.forEach((chunkDef, idx) => {
       const tokens = encoding.encode(chunkDef.text).length;
@@ -594,7 +969,13 @@ async function main() {
         type,
         lastUpdated: stats.mtime,
         rule,
-        guardrailFlags,
+        guardrailFlags: chunkDef.guardrailFlags ?? inferGuardrailFlags(filePath, chunkDef.text, rule),
+        topics: chunkDef.topics,
+        disciplines: chunkDef.disciplines,
+        platforms: chunkDef.platforms,
+        geo: chunkDef.geo,
+        entityIds: chunkDef.entityIds,
+        structuredRefs: chunkDef.structuredRefs,
       });
       chunkRecords.push({
         docId,

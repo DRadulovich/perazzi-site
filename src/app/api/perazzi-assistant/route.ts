@@ -8,7 +8,13 @@ import type {
   PerazziAssistantResponse,
   RetrievedChunk,
 } from "@/types/perazzi-assistant";
-import { retrievePerazziContext } from "@/lib/perazzi-retrieval";
+import {
+  retrievePerazziContext,
+  OpenAIConnectionError,
+  isConnectionError,
+} from "@/lib/perazzi-retrieval";
+import { detectRetrievalHints, buildResponseTemplates } from "@/lib/perazzi-intents";
+import type { RetrievalHints } from "@/lib/perazzi-intents";
 
 const LOW_CONFIDENCE_THRESHOLD = Number(process.env.PERAZZI_LOW_CONF_THRESHOLD ?? 0.1);
 const LOW_CONFIDENCE_MESSAGE =
@@ -31,6 +37,13 @@ const PHASE_ONE_SPEC = fs.readFileSync(
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+const ENABLE_FILE_LOG = process.env.PERAZZI_ENABLE_FILE_LOG === "true";
+const CONVERSATION_LOG_PATH = path.join(
+  process.cwd(),
+  "tmp",
+  "logs",
+  "perazzi-conversations.ndjson",
+);
 
 function getLowConfidenceThreshold() {
   const value = Number(process.env.PERAZZI_LOW_CONF_THRESHOLD ?? 0);
@@ -46,9 +59,11 @@ export async function POST(request: Request) {
     }
 
     const sanitizedMessages = sanitizeMessages(body!.messages!);
+    const latestQuestion = getLatestUserContent(sanitizedMessages);
+    const hints = detectRetrievalHints(latestQuestion, body?.context);
     const guardrailBlock = detectBlockedIntent(sanitizedMessages);
     if (guardrailBlock) {
-      logInteraction(body!, [], 0, "blocked", guardrailBlock.reason);
+      logInteraction(body!, [], 0, "blocked", guardrailBlock.reason, hints);
       return NextResponse.json<PerazziAssistantResponse>({
         answer: guardrailBlock.message,
         guardrail: { status: "blocked", reason: guardrailBlock.reason },
@@ -57,9 +72,18 @@ export async function POST(request: Request) {
       });
     }
 
-    const retrieval = await retrievePerazziContext(body as PerazziAssistantRequest);
+    const responseTemplates = buildResponseTemplates(hints);
+    const retrieval = await retrievePerazziContext(body as PerazziAssistantRequest, hints);
     if (retrieval.maxScore < getLowConfidenceThreshold()) {
-      logInteraction(body!, retrieval.chunks, retrieval.maxScore, "low_confidence");
+      logInteraction(
+        body!,
+        retrieval.chunks,
+        retrieval.maxScore,
+        "low_confidence",
+        undefined,
+        hints,
+        responseTemplates,
+      );
       return NextResponse.json<PerazziAssistantResponse>({
         answer: LOW_CONFIDENCE_MESSAGE,
         guardrail: { status: "low_confidence", reason: "retrieval_low" },
@@ -72,9 +96,10 @@ export async function POST(request: Request) {
       sanitizedMessages,
       body?.context,
       retrieval.chunks,
+      responseTemplates,
     );
 
-  logInteraction(body!, retrieval.chunks, retrieval.maxScore, "ok");
+    logInteraction(body!, retrieval.chunks, retrieval.maxScore, "ok", undefined, hints, responseTemplates);
     return NextResponse.json<PerazziAssistantResponse>({
       answer,
       citations: retrieval.chunks.map(({ chunkId, title, sourcePath }) => ({
@@ -87,6 +112,12 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Perazzi assistant error", error);
+    if (error instanceof OpenAIConnectionError) {
+      return NextResponse.json(
+        { error: "We’re having trouble reaching the Perazzi knowledge service. Please try again in a moment." },
+        { status: 503 },
+      );
+    }
     return NextResponse.json(
       { error: "Unexpected error while processing the request." },
       { status: 500 },
@@ -128,23 +159,41 @@ export function detectBlockedIntent(messages: ChatMessage[]) {
   return null;
 }
 
+function getLatestUserContent(messages: ChatMessage[]): string | null {
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    if (messages[i].role === "user") {
+      return messages[i].content ?? null;
+    }
+  }
+  return null;
+}
+
 async function generateAssistantAnswer(
   sanitizedMessages: ChatMessage[],
   context: PerazziAssistantRequest["context"],
   chunks: RetrievedChunk[],
+  templates: string[],
 ): Promise<string> {
-  const systemPrompt = buildSystemPrompt(context, chunks);
+  const systemPrompt = buildSystemPrompt(context, chunks, templates);
   const finalMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
     { role: "system", content: systemPrompt },
     ...sanitizedMessages,
   ];
 
-  const completion = await openai.chat.completions.create({
-    model: OPENAI_MODEL,
-    temperature: 0.4,
-    max_completion_tokens: 800,
-    messages: finalMessages,
-  });
+  let completion;
+  try {
+    completion = await openai.chat.completions.create({
+      model: OPENAI_MODEL,
+      temperature: 0.4,
+      max_completion_tokens: 800,
+      messages: finalMessages,
+    });
+  } catch (error) {
+    if (isConnectionError(error)) {
+      throw new OpenAIConnectionError("Unable to reach OpenAI completions endpoint", { cause: error });
+    }
+    throw error;
+  }
 
   return completion.choices[0]?.message?.content ?? LOW_CONFIDENCE_MESSAGE;
 }
@@ -152,6 +201,7 @@ async function generateAssistantAnswer(
 export function buildSystemPrompt(
   context: PerazziAssistantRequest["context"],
   chunks: RetrievedChunk[],
+  templates: string[] = [],
 ): string {
   const docSnippets = chunks
     .map(
@@ -167,6 +217,12 @@ export function buildSystemPrompt(
     .filter(Boolean)
     .join(" | ");
 
+  const templateGuidance = templates.length
+    ? `\nResponse structure guidelines:\n${templates
+        .map((template) => `- ${template}`)
+        .join("\n")}\n`
+    : "";
+
   return `${PHASE_ONE_SPEC}
 
 Context: ${contextSummary || "General Perazzi concierge inquiry"}
@@ -174,7 +230,7 @@ Context: ${contextSummary || "General Perazzi concierge inquiry"}
 Use the following retrieved references when relevant:
 ${docSnippets || "(No additional references available for this request.)"}
 
-When composing responses:
+${templateGuidance}When composing responses:
 - Write in polished Markdown with short paragraphs separated by blank lines.
 - Use bold subheadings or bullet lists when outlining model comparisons, steps, or care tips.
 - Keep sentences concise and avoid filler; every line should feel written from the Perazzi workshop floor.
@@ -187,6 +243,8 @@ function logInteraction(
   maxScore: number,
   status: "ok" | "low_confidence" | "blocked",
   reason?: string,
+  hints?: RetrievalHints,
+  templates?: string[],
 ) {
   const data = {
     type: "perazzi-assistant-log",
@@ -196,6 +254,21 @@ function logInteraction(
     retrieved: chunks.map(({ chunkId, score }) => ({ chunkId, score })),
     maxScore,
     guardrail: { status, reason },
+    intents: hints?.intents ?? [],
+    topics: hints?.topics ?? [],
+    templates: templates ?? [],
   };
   console.info(JSON.stringify(data));
+  if (ENABLE_FILE_LOG) {
+    appendEvalLog(data);
+  }
+}
+
+function appendEvalLog(entry: Record<string, any>) {
+  try {
+    fs.mkdirSync(path.dirname(CONVERSATION_LOG_PATH), { recursive: true });
+    fs.appendFileSync(CONVERSATION_LOG_PATH, `${JSON.stringify(entry)}\n`, "utf8");
+  } catch {
+    // Ignore logging failures to avoid impacting response flow
+  }
 }
