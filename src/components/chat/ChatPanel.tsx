@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
@@ -182,7 +183,7 @@ export function ChatPanel({
       return;
     }
     const notePrompt = `Using a quiet, reverent Perazzi voice, write a beautifully composed “Legacy Note” as if it were from the perspective of the user's future self. Base it on these three answers:\\n1) ${updated[0] ?? ""}\\n2) ${updated[1] ?? ""}\\n3) ${updated[2] ?? ""}\\nMake it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lines to create some space, then add one line: "Whenever we talk about configurations or specs, we’ll keep this in mind."`;
-    sendMessage({ question: notePrompt, context });
+    sendMessage({ question: notePrompt, context, skipEcho: true });
     exitLegacyMode();
   };
 
@@ -223,16 +224,29 @@ export function ChatPanel({
     .filter(Boolean)
     .join(" ");
 
+  const legacyOverlay =
+    legacyMode && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            className="fixed inset-0 z-20 bg-black/75 transition-opacity duration-700 ease-out"
+            aria-hidden="true"
+          />,
+          document.body,
+        )
+      : null;
+
   return (
-    <div
-      id="perazzi-chat-panel"
-      role="dialog"
-      aria-label="Perazzi Concierge"
-      tabIndex={-1}
-      ref={panelRef}
-      className={rootClasses}
-      style={{ minWidth: variant === "rail" ? "320px" : undefined }}
-    >
+    <>
+      {legacyOverlay}
+      <div
+        id="perazzi-chat-panel"
+        role="dialog"
+        aria-label="Perazzi Concierge"
+        tabIndex={-1}
+        ref={panelRef}
+        className={`${rootClasses} z-40`}
+        style={{ minWidth: variant === "rail" ? "320px" : undefined }}
+      >
       <div className="space-y-3 border-b border-subtle px-6 py-5">
         <div className="flex items-center justify-between">
           <div>
@@ -242,14 +256,6 @@ export function ChatPanel({
             <h2 className="text-xl font-semibold">Where shall we begin?</h2>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className="rounded-full border border-subtle px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-ink-muted transition hover:border-ink hover:text-ink"
-              aria-label="Toggle legacy mode"
-              onClick={() => (legacyMode ? exitLegacyMode() : startLegacyMode())}
-            >
-              ∞ Legacy
-            </button>
             {legacyMode && (
               <button
                 type="button"
@@ -386,6 +392,7 @@ export function ChatPanel({
           <ChatInput pending={pending} onSend={handleSend} />
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
