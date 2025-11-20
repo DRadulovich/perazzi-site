@@ -36,3 +36,7 @@ export interface RetrievedChunk extends Citation {
   baseScore?: number;
   score: number;
 }
+
+export type LegacyNotePayload = {
+  answers: string[];
+};

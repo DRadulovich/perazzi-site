@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import { useChatState } from "@/components/chat/useChatState";
 import { ChatInput } from "@/components/chat/ChatInput";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
+import { cn } from "@/lib/utils";
 
 const QUICK_STARTS = [
   {
@@ -76,11 +77,25 @@ export function ChatPanel({
   onPromptConsumed,
 }: ChatPanelProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
-  const { messages, pending, isTyping, error, sendMessage, context, updateContext } = useChatState();
+  const { messages, pending, isTyping, error, sendMessage, context, updateContext, appendLocal } =
+    useChatState();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [showQuickStarts, setShowQuickStarts] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const lastPromptRef = useRef<ChatTriggerPayload | null>(null);
+  const [legacyMode, setLegacyMode] = useState(false);
+  const [legacyStep, setLegacyStep] = useState(0);
+  const [legacyAnswers, setLegacyAnswers] = useState<string[]>([]);
+  const [legacyTriggerSeen, setLegacyTriggerSeen] = useState(false);
+
+  const legacyQuestions = useMemo(
+    () => [
+      "When you imagine your Perazzi years from now, what moment do you hope it will remember with you?",
+      "Who do you picture holding it after you — and what do you want them to understand about you?",
+      "What part of yourself do you hope this shotgun will quietly protect and encourage?",
+    ],
+    [],
+  );
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -129,6 +144,75 @@ export function ChatPanel({
     }
   };
 
+  const legacyTriggers = [
+    "i want this gun to mean something",
+    "what will my legacy be",
+    "legacy with a perazzi",
+  ];
+
+  const startLegacyMode = () => {
+    setLegacyMode(true);
+    setLegacyStep(0);
+    setLegacyAnswers([]);
+    setLegacyTriggerSeen(true);
+    appendLocal({
+      id: crypto.randomUUID(),
+      role: "assistant",
+      content: legacyQuestions[0],
+    });
+  };
+
+  const exitLegacyMode = () => {
+    setLegacyMode(false);
+    setLegacyStep(0);
+    setLegacyAnswers([]);
+  };
+
+  const handleLegacyAnswer = (answer: string) => {
+    const updated = [...legacyAnswers, answer];
+    setLegacyAnswers(updated);
+    const nextStep = legacyStep + 1;
+    setLegacyStep(nextStep);
+    if (nextStep < legacyQuestions.length) {
+      appendLocal({
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: legacyQuestions[nextStep],
+      });
+      return;
+    }
+    const notePrompt = `Using a quiet, reverent Perazzi voice, write a short “Legacy Note” as if it were from the user's future self or the heir's perspective. Base it on these three answers:\\n1) ${updated[0] ?? ""}\\n2) ${updated[1] ?? ""}\\n3) ${updated[2] ?? ""}\\nKeep it concise: 4–6 sentences. At the end, add one line: "Whenever we talk about configurations or specs, we’ll keep this in mind."`;
+    sendMessage({ question: notePrompt, context });
+    exitLegacyMode();
+  };
+
+  const handleSend = (question: string) => {
+    const normalized = question.toLowerCase().trim();
+    const matchesLegacy =
+      !legacyTriggerSeen && legacyTriggers.some((phrase) => normalized.includes(phrase));
+
+    if (legacyMode || matchesLegacy) {
+      const userEntry = { id: crypto.randomUUID(), role: "user" as const, content: question };
+      appendLocal(userEntry);
+      if (matchesLegacy && !legacyMode) {
+        startLegacyMode();
+        return;
+      }
+      // already in legacy mode
+      handleLegacyAnswer(question);
+      return;
+    }
+
+    sendMessage({
+      question,
+      context: {
+        pageUrl: window.location.pathname,
+        locale: navigator.language,
+        ...context,
+      },
+    });
+  };
+
   if (!open) return null;
 
   const rootClasses = [
@@ -152,10 +236,29 @@ export function ChatPanel({
       <div className="space-y-3 border-b border-subtle px-6 py-5">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Perazzi Concierge</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">
+              {legacyMode ? "Legacy Conversation" : "Perazzi Concierge"}
+            </p>
             <h2 className="text-xl font-semibold">Where shall we begin?</h2>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="rounded-full border border-subtle px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-ink-muted transition hover:border-ink hover:text-ink"
+              aria-label="Toggle legacy mode"
+              onClick={() => (legacyMode ? exitLegacyMode() : startLegacyMode())}
+            >
+              ∞ Legacy
+            </button>
+            {legacyMode && (
+              <button
+                type="button"
+                className="rounded-full border border-subtle px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-ink-muted transition hover:border-ink hover:text-ink"
+                onClick={exitLegacyMode}
+              >
+                Exit
+              </button>
+            )}
             {onClose && (
               <button
                 type="button"
@@ -171,34 +274,41 @@ export function ChatPanel({
       </div>
       <div className="flex flex-1 flex-col overflow-hidden">
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-10 text-sm text-ink">
-          <div className="flex flex-col gap-6">
-        <div className="rounded-3xl border border-subtle bg-subtle/40 px-5 py-4 text-sm text-ink">
-          <div className="flex items-center justify-between gap-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Guided Questions</p>
-            <button
-              type="button"
-              className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:text-ink"
-              onClick={() => setShowQuickStarts((prev) => !prev)}
-            >
-              {showQuickStarts ? "Hide" : "Show"}
-            </button>
-          </div>
-          {showQuickStarts && (
-            <div className="mt-4 grid gap-3">
-              {QUICK_STARTS.map((qs) => (
-                <button
-                  key={qs.label}
-                  type="button"
-                  className="w-full rounded-2xl border border-subtle bg-card px-4 py-3 text-left font-medium text-ink transition hover:border-ink disabled:cursor-not-allowed"
-                  onClick={() => sendMessage({ question: qs.prompt })}
-                  disabled={pending}
-                >
-                  {qs.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+          <div className={cn("flex flex-col gap-6", legacyMode ? "bg-subtle/20 rounded-3xl p-4" : "")}>
+            {!legacyMode && (
+              <div className="rounded-3xl border border-subtle bg-subtle/40 px-5 py-4 text-sm text-ink">
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Guided Questions</p>
+                  <button
+                    type="button"
+                    className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:text-ink"
+                    onClick={() => setShowQuickStarts((prev) => !prev)}
+                  >
+                    {showQuickStarts ? "Hide" : "Show"}
+                  </button>
+                </div>
+                {showQuickStarts && (
+                  <div className="mt-4 grid gap-3">
+                    {QUICK_STARTS.map((qs) => (
+                      <button
+                        key={qs.label}
+                        type="button"
+                        className="w-full rounded-2xl border border-subtle bg-card px-4 py-3 text-left font-medium text-ink transition hover:border-ink disabled:cursor-not-allowed"
+                        onClick={() =>
+                          sendMessage({
+                            question: qs.prompt,
+                            context: { pageUrl: window.location.pathname, locale: navigator.language, ...context },
+                          })
+                        }
+                        disabled={pending}
+                      >
+                        {qs.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
         {messages.length === 0 ? (
           <p className="text-ink-muted">
             Ask about heritage, platforms, or service, and I'll help you connect the craft to your own journey.
@@ -273,18 +383,7 @@ export function ChatPanel({
       </div>
         <div className="border-t border-subtle px-6 py-4">
           {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
-          <ChatInput
-            pending={pending}
-            onSend={(question) =>
-              sendMessage({
-                question,
-                context: {
-                  pageUrl: window.location.pathname,
-                  locale: navigator.language,
-                },
-              })
-            }
-          />
+          <ChatInput pending={pending} onSend={handleSend} />
         </div>
       </div>
     </div>

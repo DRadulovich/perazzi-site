@@ -155,6 +155,10 @@ export function useChatState(initialMessages: ChatEntry[] = []) {
     }
   }, [messages, context]);
 
+  const appendLocal = (entry: ChatEntry) => {
+    addMessage(entry);
+  };
+
   return {
     messages,
     pending,
@@ -163,5 +167,6 @@ export function useChatState(initialMessages: ChatEntry[] = []) {
     context,
     sendMessage,
     updateContext,
+    appendLocal,
   };
 }
