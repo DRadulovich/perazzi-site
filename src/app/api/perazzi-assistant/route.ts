@@ -146,7 +146,11 @@ export function sanitizeMessages(messages: ChatMessage[]): ChatMessage[] {
 }
 
 export function detectBlockedIntent(messages: ChatMessage[]) {
-  const combined = messages.map((msg) => msg.content).join(" ").toLowerCase();
+  const combined = messages
+    .filter((msg) => msg.role === "user")
+    .map((msg) => msg.content)
+    .join(" ")
+    .toLowerCase();
   if (/\b(price|pricing|cost|cheap|affordable)\b/.test(combined)) {
     return { reason: "pricing", message: BLOCKED_RESPONSES.pricing };
   }
