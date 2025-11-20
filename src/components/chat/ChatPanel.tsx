@@ -181,7 +181,7 @@ export function ChatPanel({
       });
       return;
     }
-    const notePrompt = `Using a quiet, reverent Perazzi voice, write a short “Legacy Note” as if it were from the user's future self or the heir's perspective. Base it on these three answers:\\n1) ${updated[0] ?? ""}\\n2) ${updated[1] ?? ""}\\n3) ${updated[2] ?? ""}\\nKeep it concise: 4–6 sentences. At the end, add one line: "Whenever we talk about configurations or specs, we’ll keep this in mind."`;
+    const notePrompt = `Using a quiet, reverent Perazzi voice, write a beautifully composed “Legacy Note” as if it were from the perspective of the user's future self. Base it on these three answers:\\n1) ${updated[0] ?? ""}\\n2) ${updated[1] ?? ""}\\n3) ${updated[2] ?? ""}\\nMake it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lines to create some space, then add one line: "Whenever we talk about configurations or specs, we’ll keep this in mind."`;
     sendMessage({ question: notePrompt, context });
     exitLegacyMode();
   };
