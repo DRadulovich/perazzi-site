@@ -3,15 +3,15 @@ import type { ChatTriggerPayload } from "@/lib/chat-trigger";
 const PLATFORM_MESSAGES: Record<string, { question: string }> = {
   ht: {
     question:
-      "Give me an overview of the High Tech platform's ballast, rib scheme, and fitting philosophy, and outline when to begin with the removable-trigger High Tech standard grade versus the fixed-trigger High Tech S.",
+      "Give me a full overview of the HT platform and build philosophy, and outline what the purpose is between the fixed trigger High Tech S compared to the removable trigger High Tech models.",
   },
   mx: {
     question:
-      "Explain the MX platform lineage, balance, and trigger feel, then clarify how to choose between the removable-trigger MX8 standard grade and the fixed-trigger MX12 starting point.",
+      "Explain the MX platform lineage, balance, and trigger feel, then clarify how to choose between the removable-trigger MX8 and the fixed-trigger MX12 models.",
   },
   tm: {
     question:
-      "Describe what defines the TM platform, why its removable-trigger builds excel in bunker and live-pigeon disciplines, and what a shooter should know before commissioning one.",
+      "Describe what defines the TM platform, why its removable-trigger builds excel in american trap, and what a shooter should know before commissioning one.",
   },
   dc: {
     question:
@@ -19,7 +19,7 @@ const PLATFORM_MESSAGES: Record<string, { question: string }> = {
   },
   sho: {
     question:
-      "Share how the SHO sidelock platform differs within Perazzi's heritage, what disciplines or collectors it serves, and the hallmarks to expect from these removable-trigger builds.",
+      "Share how the SHO sidelock platform differs within Perazzi's heritage, what disciplines or collectors it serves, and the hallmarks to expect from these heritage builds.",
   },
 };
 
@@ -36,7 +36,7 @@ export function buildPlatformPrompt(
     };
   }
   return {
-    question: `Help me understand the ${slug.toUpperCase()} platform and which configurations I should start from.`,
+    question: `Help me understand the ${slug.toUpperCase()} platform and which model configurations I should start from.`,
     context: { platformSlug: normalized, ...extraContext },
   };
 }
