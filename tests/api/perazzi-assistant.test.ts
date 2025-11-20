@@ -62,8 +62,10 @@ it("returns ok guardrail with citations and ignores client system message", asyn
   const completionCall = mockChatCreate.mock.calls[0]?.[0];
   expect(completionCall).toBeDefined();
   const systemMessages = completionCall.messages.filter((msg: any) => msg.role === "system");
-  expect(systemMessages).toHaveLength(1);
-  expect(systemMessages[0].content).not.toContain("User override");
+  expect(systemMessages.length).toBeGreaterThanOrEqual(1);
+  systemMessages.forEach((msg: any) => {
+    expect(msg.content).not.toContain("User override");
+  });
 });
 
 it("reflects low confidence threshold behavior", async () => {

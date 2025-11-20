@@ -7,6 +7,7 @@ import type { RetrievalHints } from "@/lib/perazzi-intents";
 const EMBEDDING_MODEL = process.env.PERAZZI_EMBED_MODEL ?? "text-embedding-3-small";
 const CHUNKS_TABLE = sanitizeTableName(process.env.PGVECTOR_TABLE ?? "perazzi_chunks");
 const CHUNK_LIMIT = Number(process.env.PERAZZI_RETRIEVAL_LIMIT ?? 8);
+const MIN_SIMILARITY = Number(process.env.PERAZZI_MIN_SIMILARITY ?? 0.12);
 
 let pgPool: Pool | null = null;
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -73,7 +74,21 @@ export async function retrievePerazziContext(
     });
 
     const combined = [...targetedChunks, ...generalChunks];
-    const deduped = dedupeChunks(combined).slice(0, CHUNK_LIMIT);
+    let deduped = dedupeChunks(combined)
+      .filter((chunk) => chunk.baseScore >= MIN_SIMILARITY)
+      .slice(0, CHUNK_LIMIT);
+
+    // Lexical fallback (simple ILIKE) when embeddings return nothing useful
+    if (!deduped.length) {
+      const lexical = await fetchLexicalFallback({
+        client,
+        languages,
+        question,
+        limit: Math.max(3, CHUNK_LIMIT / 2),
+      });
+      deduped = lexical.slice(0, CHUNK_LIMIT);
+    }
+
     const maxScore = deduped[0]?.score ?? 0;
     return { chunks: deduped, maxScore };
   } finally {
@@ -164,12 +179,21 @@ export function computeBoost(
       boost += 0.05;
     }
   }
+
+  const sourcePath = (metadata.source_path ?? metadata.sourcePath ?? "").toString().toLowerCase();
+  if (sourcePath.includes("pricing_and_models")) {
+    boost += 0.08;
+  }
+  if (sourcePath.includes("sanity_info")) {
+    boost -= 0.02;
+  }
   return boost;
 }
 
 function mapRowToChunk(
   row: any,
   metadata: Record<string, any>,
+  baseScore: number,
   score: number,
 ): RetrievedChunk {
   const title =
@@ -184,6 +208,7 @@ function mapRowToChunk(
     title,
     sourcePath,
     content: row.content ?? "",
+    baseScore,
     score,
   };
 }
@@ -213,13 +238,56 @@ async function fetchChunksForFilter(opts: {
           const baseScore = chunkEmbedding
             ? cosineSimilarity(queryEmbedding, chunkEmbedding)
             : 0;
-          const boostedScore = baseScore + computeBoost(metadata, context, hints);
-          return mapRowToChunk(row, metadata, boostedScore);
+          const boostedScore = clampScore(baseScore + computeBoost(metadata, context, hints));
+          return mapRowToChunk(row, metadata, baseScore, boostedScore);
         })
         .sort((a: RetrievedChunk, b: RetrievedChunk) => b.score - a.score)
         .slice(0, limit);
     }
   }
+  return [];
+}
+
+function clampScore(value: number) {
+  if (Number.isNaN(value)) return 0;
+  return Math.max(0, Math.min(1, value));
+}
+
+async function fetchLexicalFallback(opts: {
+  client: any;
+  languages: string[];
+  question: string;
+  limit: number;
+}): Promise<RetrievedChunk[]> {
+  const { client, languages, question, limit } = opts;
+  const terms = question
+    .split(/\s+/)
+    .map((word) => word.replace(/[^a-z0-9]/gi, "").toLowerCase())
+    .filter((word) => word.length > 3)
+    .slice(0, 4);
+  if (!terms.length) return [];
+
+  for (const language of languages) {
+    const rows = await client.query(
+      `
+        SELECT chunk_id, content, metadata, embedding
+        FROM ${CHUNKS_TABLE}
+        WHERE (metadata->>'language') = $1
+          AND (${terms.map((_, idx) => `content ILIKE $${idx + 2}`).join(" OR ")})
+        LIMIT $${terms.length + 2}
+      `,
+      [language, ...terms.map((term) => `%${term}%`), limit],
+    );
+
+    if (rows.rowCount) {
+      return rows.rows.map((row: any) => {
+        const metadata = row.metadata ?? {};
+        const baseScore = 0.15; // lexical fallback — treat as weak but acceptable
+        return mapRowToChunk(row, metadata, baseScore, clampScore(baseScore + 0.01));
+      });
+    }
+  }
+
   return [];
 }
 
@@ -276,11 +344,17 @@ function buildParams({
 
 function dedupeChunks(chunks: RetrievedChunk[]): RetrievedChunk[] {
   const seen = new Set<string>();
+  const perSourceCount = new Map<string, number>();
   const result: RetrievedChunk[] = [];
   chunks.forEach((chunk) => {
     if (!seen.has(chunk.chunkId)) {
-      seen.add(chunk.chunkId);
-      result.push(chunk);
+      const source = chunk.sourcePath ?? "unknown";
+      const count = perSourceCount.get(source) ?? 0;
+      if (count < 2) {
+        perSourceCount.set(source, count + 1);
+        seen.add(chunk.chunkId);
+        result.push(chunk);
+      }
     }
   });
   return result.sort((a, b) => b.score - a.score);

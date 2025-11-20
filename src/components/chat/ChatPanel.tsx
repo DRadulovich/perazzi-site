@@ -168,15 +168,6 @@ export function ChatPanel({
             )}
           </div>
         </div>
-        {isTyping && (
-          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-ink-muted">
-            <span className="relative flex h-5 w-5 items-center justify-center">
-              <span className="absolute inline-flex h-full w-full animate-spin rounded-full border-2 border-subtle border-t-transparent" />
-              <span className="inline-flex h-2 w-2 rounded-full bg-ink" />
-            </span>
-            <span className="tracking-[0.08em]">Collecting references…</span>
-          </div>
-        )}
       </div>
       <div className="flex flex-1 flex-col overflow-hidden">
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-10 text-sm text-ink">
@@ -264,6 +255,15 @@ export function ChatPanel({
                       )}
                     </div>
                   </div>
+                  {isTyping && index === messages.length - 1 && msg.role === "user" && (
+                    <div className="mt-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+                      <span className="relative flex h-5 w-5 items-center justify-center">
+                        <span className="absolute inline-flex h-full w-full animate-spin rounded-full border-2 border-subtle border-t-transparent" />
+                        <span className="inline-flex h-2 w-2 rounded-full bg-ink" />
+                      </span>
+                      <span className="tracking-[0.08em]">Collecting references…</span>
+                    </div>
+                  )}
                 </li>
               );
             })}
