@@ -117,6 +117,10 @@ export function BuildSheetDrawer({ open, entries, onClose, onRevisit }: BuildShe
                     if (editMode && onRevisit) {
                       onRevisit(entry.id);
                       onClose?.();
+                      return;
+                    }
+                    if (entry.details) {
+                      setCollapsed((prev) => ({ ...prev, [entry.id]: !prev[entry.id] }));
                     }
                   }}
                 >
@@ -126,25 +130,13 @@ export function BuildSheetDrawer({ open, entries, onClose, onRevisit }: BuildShe
                       <div className="flex items-center gap-2">
                         <span className="text-ink-muted">{entry.value}</span>
                         {entry.details ? (
-                          <button
-                            type="button"
+                          <FiChevronUp
                             className={clsx(
-                              "text-[11px] font-semibold uppercase tracking-[0.15em] text-perazzi-red transition hover:text-ink",
-                              "flex items-center"
+                              "text-perazzi-red transition-transform",
+                              collapsed[entry.id] ? "rotate-180" : "rotate-0",
                             )}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCollapsed((prev) => ({ ...prev, [entry.id]: !prev[entry.id] }));
-                            }}
-                          >
-                            <FiChevronUp
-                              className={clsx(
-                                "transition-transform",
-                                collapsed[entry.id] ? "rotate-180" : "rotate-0",
-                              )}
-                              aria-hidden
-                            />
-                          </button>
+                            aria-hidden
+                          />
                         ) : null}
                       </div>
                     </div>

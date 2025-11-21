@@ -97,14 +97,14 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
             <p className="text-sm text-ink-muted">No details available.</p>
           ) : (
             <div className="space-y-3">
-            {cards.map((card) => (
-              <button
-                key={`${card.id}-${card.optionValue ?? ""}`}
-                type="button"
-                onClick={() => onSelect?.(card)}
-                className={clsx(
-                  "w-full text-left transition",
-                  selectedCard?.id === card.id ? "border-ink bg-subtle/50" : "border-subtle hover:border-ink",
+              {cards.map((card) => (
+                <button
+                  key={`${card.id}-${card.optionValue ?? ""}`}
+                  type="button"
+                  onClick={() => onSelect?.(card)}
+                  className={clsx(
+                    "w-full text-left transition",
+                    selectedCard?.id === card.id ? "border-ink bg-subtle/50" : "border-subtle hover:border-ink",
                     "flex flex-col rounded-2xl border bg-card p-3 text-sm text-ink shadow-sm",
                   )}
                 >
@@ -118,7 +118,10 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
                     />
                   ) : null}
                   <div className="mt-2 space-y-1">
-                    <p className="text-base font-semibold">{card.title}</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-base font-semibold">{card.title}</p>
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-perazzi-red">View more</span>
+                    </div>
                     {card.description ? <p className="text-sm text-ink-muted line-clamp-3">{card.description}</p> : null}
                     {card.platform ? (
                       <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Platform: {card.platform}</p>

@@ -264,6 +264,16 @@ export function ConciergePageShell() {
     return undefined;
   }, [nextField, fieldOrder, buildState]);
 
+  const displayOptions = useMemo(() => {
+    if (nextField?.id === "ENGRAVING") {
+      return engravingResults.map((engraving) => ({
+        value: `${engraving.engravingId} (${engraving.engravingSide})`,
+        label: `${engraving.engravingId} · ${engraving.engravingSide}`,
+      }));
+    }
+    return nextFieldOptions.map((opt) => ({ value: opt.value, label: opt.value }));
+  }, [nextField, engravingResults, nextFieldOptions]);
+
   const handleSend = async () => {
     const question = draft.trim();
     if (!question || pending) return;
@@ -458,7 +468,7 @@ export function ConciergePageShell() {
 
   const handleExplainCurrent = async () => {
     if (!nextField) return;
-    const optionLabels = nextFieldOptions.map((opt) => opt.value).join(", ");
+    const optionLabels = displayOptions.map((opt) => opt.value).join(", ");
     const question = `Could you help me understand the "${nextField.id}" options and explain the differences between ${optionLabels}, and why I would choose each one?`;
     await sendMessage({
       question,
@@ -743,10 +753,10 @@ export function ConciergePageShell() {
                   {FIELD_DESCRIPTIONS[nextField.id] ? (
                     <p className="text-sm text-ink-muted">{FIELD_DESCRIPTIONS[nextField.id]}</p>
                   ) : null}
-                  {nextFieldOptions.length ? (
+                  {displayOptions.length ? (
                     <>
                       <div className="grid gap-2">
-                        {nextFieldOptions.map((opt) => {
+                        {displayOptions.map((opt) => {
                           const isHighlighted =
                             highlightedOption?.fieldId === nextField.id && highlightedOption.value === opt.value;
                           return (
@@ -763,7 +773,7 @@ export function ConciergePageShell() {
                                   : "border-subtle text-ink-muted hover:border-ink hover:text-ink",
                               )}
                             >
-                              {opt.value}
+                              {opt.label ?? opt.value}
                             </button>
                           );
                         })}
@@ -801,101 +811,15 @@ export function ConciergePageShell() {
                             </p>
                           ) : (
                             <>
-                              <p className="text-sm text-ink-muted">
-                                Engravings for grade {buildState.GRADE}. Select a number below.
-                              </p>
-                              {engravingLoading && !engravingResults.length ? (
+                              {engravingLoading ? (
                                 <p className="text-sm text-ink-muted">Loading engravings…</p>
-                              ) : null}
-                              {engravingError ? (
+                              ) : engravingError ? (
                                 <p className="text-xs text-red-600">{engravingError}</p>
-                              ) : null}
-                              {engravingResults.length ? (
-                                <div className="space-y-2">
-                                  <div className="grid grid-cols-2 gap-2">
-                                    {engravingResults.map((engraving) => {
-                                      const label = `${engraving.engravingId} · ${engraving.engravingSide}`;
-                                      const value = `${engraving.engravingId} (${engraving.engravingSide})`;
-                                      const isHighlighted =
-                                        highlightedOption?.fieldId === nextField.id &&
-                                        highlightedOption.value === value;
-                                      return (
-                                        <button
-                                          key={engraving._id}
-                                          type="button"
-                                          onClick={() =>
-                                            setHighlightedOption({ fieldId: nextField.id, value })
-                                          }
-                                          className={clsx(
-                                            "rounded-xl border px-3 py-2 text-left text-sm font-semibold transition",
-                                            isHighlighted
-                                              ? "border-ink bg-subtle/50 text-ink"
-                                              : "border-subtle text-ink-muted hover:border-ink hover:text-ink",
-                                          )}
-                                        >
-                                          {label}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={handleSelectHighlighted}
-                                    className="w-full rounded-full bg-brand px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
-                                    disabled={!highlightedOption || highlightedOption.fieldId !== nextField.id}
-                                  >
-                                    Select
-                                  </button>
-                                </div>
-                              ) : !engravingLoading ? (
+                              ) : (
                                 <p className="text-sm text-ink-muted">
                                   No engravings found for grade {buildState.GRADE}.
                                 </p>
-                              ) : null}
-                              {engravingResults.length ? (
-                                <ul className="grid gap-2">
-                                  {engravingResults.map((engraving) => {
-                                    const imgUrl = engraving.image
-                                      ? getSanityImageUrl(engraving.image, { width: 120, height: 80 })
-                                      : null;
-                                    const value = `${engraving.engravingId} (${engraving.engravingSide})`;
-                                    return (
-                                      <li
-                                        key={engraving._id}
-                                        className="flex items-center gap-3 rounded-xl border border-subtle bg-card px-3 py-2"
-                                      >
-                                        {imgUrl ? (
-                                          <Image
-                                            src={imgUrl}
-                                            alt={engraving.imageAlt ?? engraving.engravingId}
-                                            width={120}
-                                            height={80}
-                                            className="h-16 w-24 rounded-lg object-cover"
-                                          />
-                                        ) : null}
-                                        <div className="flex-1 text-sm text-ink">
-                                          <p className="font-semibold">
-                                            {engraving.engravingId} · {engraving.engravingSide}
-                                          </p>
-                                          <p className="text-ink-muted">{engraving.gradeName}</p>
-                                        </div>
-                                        <button
-                                          type="button"
-                                          className="rounded-full border border-subtle px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
-                                          onClick={() => {
-                                            setHighlightedOption({
-                                              fieldId: nextField.id,
-                                              value,
-                                            });
-                                          }}
-                                        >
-                                          Highlight
-                                        </button>
-                                      </li>
-                                    );
-                                  })}
-                                </ul>
-                              ) : null}
+                              )}
                             </>
                           )}
                         </>
