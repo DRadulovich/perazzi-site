@@ -345,8 +345,15 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                   <p className="text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
                     {model.use}
                   </p>
+                  {/*
+                    Show model name and grade together to read as a single entry, e.g. "DC 12 - Standard".
+                    Keep highlight behavior consistent.
+                  */}
                   <h3 className="text-2xl font-semibold leading-tight">
-                    {highlightText(model.name, query)}
+                    {highlightText(
+                      model.grade ? `${model.name} - ${model.grade}` : model.name,
+                      query,
+                    )}
                   </h3>
                   <p className="text-sm text-neutral-600">
                     {highlightText((model.gaugeNames || []).join(", ") || "", query)}

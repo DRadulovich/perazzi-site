@@ -195,6 +195,18 @@ export function useChatState(
     addMessage(entry);
   };
 
+  const clearConversation = useCallback(() => {
+    setMessages([]);
+    setError(null);
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.removeItem(storageKey);
+      } catch (err) {
+        console.warn("Failed to clear stored chat history", err);
+      }
+    }
+  }, [storageKey]);
+
   return {
     messages,
     pending,
@@ -205,5 +217,6 @@ export function useChatState(
     sendMessage,
     updateContext,
     appendLocal,
+    clearConversation,
   };
 }

@@ -198,6 +198,7 @@ export function ConciergePageShell() {
     context,
     updateContext,
     sendMessage,
+    clearConversation,
   } = usePerazziAssistant({
     storageKey: "perazzi-assistant-concierge",
     initialContext: { pageUrl: "/concierge", mode: "prospect" },
@@ -291,6 +292,13 @@ export function ConciergePageShell() {
       },
     });
     setDraft("");
+  };
+
+  const handleClearChat = () => {
+    const confirmed = typeof window === "undefined" ? true : window.confirm("Clear chat history for this session?");
+    if (confirmed) {
+      clearConversation();
+    }
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -686,15 +694,24 @@ export function ConciergePageShell() {
               <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Conversation</p>
               <p className="text-sm text-ink-muted">Context carries across each message.</p>
             </div>
-            {pending || isTyping ? (
-              <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-ink-muted">
-                <span className="relative flex h-5 w-5 items-center justify-center">
-                  <span className="absolute inline-flex h-full w-full animate-spin rounded-full border-2 border-subtle border-t-transparent" />
-                  <span className="inline-flex h-2 w-2 rounded-full bg-ink" />
-                </span>
-                <span>Collecting references…</span>
-              </div>
-            ) : null}
+            <div className="flex items-center gap-3">
+              {pending || isTyping ? (
+                <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+                  <span className="relative flex h-5 w-5 items-center justify-center">
+                    <span className="absolute inline-flex h-full w-full animate-spin rounded-full border-2 border-subtle border-t-transparent" />
+                    <span className="inline-flex h-2 w-2 rounded-full bg-ink" />
+                  </span>
+                  <span>Collecting references…</span>
+                </div>
+              ) : null}
+              <button
+                type="button"
+                onClick={handleClearChat}
+                className="rounded-full border border-subtle px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+              >
+                Clear chat
+              </button>
+            </div>
           </div>
           <div className="mt-4 flex-1 overflow-y-auto pr-1">
             {latestGuardrail && latestGuardrail !== "ok" ? (

@@ -14,7 +14,7 @@ type EngravingGradesCarouselProps = {
 const GRADE_TABS = [
   {
     label: "The Benchmark",
-    order: ["standard grade", "lusso", "sc2"],
+    order: ["standard", "lusso", "sc2"],
   },
   {
     label: "SC3 Grade",

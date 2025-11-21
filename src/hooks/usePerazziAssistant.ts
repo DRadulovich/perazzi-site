@@ -34,6 +34,7 @@ export function usePerazziAssistant(options: UsePerazziAssistantOptions = {}) {
     sendMessage,
     updateContext,
     appendLocal,
+    clearConversation,
   } = useChatState(options.initialMessages ?? [], {
     storageKey: options.storageKey,
     initialContext: options.initialContext as ChatContextShape | undefined,
@@ -50,5 +51,6 @@ export function usePerazziAssistant(options: UsePerazziAssistantOptions = {}) {
     updateContext: updateContext as (patch: Partial<AssistantContext>) => void,
     appendLocal,
     sendMessage,
+    clearConversation,
   };
 }
