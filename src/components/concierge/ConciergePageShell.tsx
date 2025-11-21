@@ -7,6 +7,7 @@ import { ConversationView } from "@/components/chat/ConversationView";
 import { usePerazziAssistant } from "@/hooks/usePerazziAssistant";
 import type { PlatformSlug } from "@/hooks/usePerazziAssistant";
 import { GuardrailNotice } from "@/components/concierge/GuardrailNotice";
+import { SanityDetailsDrawer } from "@/components/concierge/SanityDetailsDrawer";
 import { derivePanels, type AssistantMeta } from "@/lib/perazzi-derivation";
 import { buildDealerBriefRequest } from "@/lib/dealer-brief";
 import {
@@ -18,6 +19,7 @@ import {
   validateSelection,
   gunOrderConfig,
 } from "@/lib/gun-config";
+import { mergeOptionResults } from "@/lib/build-info-cache";
 import type { ChatMessage, PerazziAssistantRequest } from "@/types/perazzi-assistant";
 import Image from "next/image";
 import { getSanityImageUrl } from "@/lib/sanityImage";
@@ -155,6 +157,21 @@ export function ConciergePageShell() {
       popularModels?: string[];
     }>
   >([]);
+  const [infoByOption, setInfoByOption] = useState<Record<string, Array<{
+    id: string;
+    title: string;
+    description?: string;
+    imageUrl?: string | null;
+    fullImageUrl?: string | null;
+    platform?: string | null;
+    grade?: string | null;
+    gauges?: string[];
+    triggerTypes?: string[];
+    recommendedPlatforms?: string[];
+    popularModels?: string[];
+    optionValue?: string;
+  }>>>({});
+  const [infoError, setInfoError] = useState<string | null>(null);
   const [selectedInfoCard, setSelectedInfoCard] = useState<{
     id: string;
     title: string;
@@ -168,6 +185,7 @@ export function ConciergePageShell() {
     recommendedPlatforms?: string[];
     popularModels?: string[];
   } | null>(null);
+  const [detailsDrawerOpen, setDetailsDrawerOpen] = useState(false);
 
   const {
     messages,
@@ -221,6 +239,8 @@ export function ConciergePageShell() {
     }
     setHighlightedOption(null);
     setInfoCards([]);
+    setInfoByOption({});
+    setInfoError(null);
   }, [nextField]);
 
   const nextFieldAfterCurrent = useMemo(() => {
@@ -347,27 +367,89 @@ export function ConciergePageShell() {
     }
   }, [nextField, buildState.GRADE, fetchEngravings]);
 
-  const fetchInfoForOption = useCallback(
-    async (fieldId: string, value: string) => {
-      setInfoLoading(true);
-      try {
-        const res = await fetch(`/api/build-info?field=${encodeURIComponent(fieldId)}&value=${encodeURIComponent(value)}`);
-        if (!res.ok) {
-          setInfoCards([]);
-          setInfoLoading(false);
-          return;
-        }
-        const data = await res.json();
-        setInfoCards(data.items ?? []);
-      } catch (error) {
-        console.error(error);
+  // When in engraving step, surface engraving results into infoCards/infoByOption for drawer
+  useEffect(() => {
+    if (nextField?.id === "ENGRAVING") {
+      if (engravingResults.length) {
+        const items = engravingResults.map((engraving) => ({
+          id: engraving._id,
+          title: `${engraving.engravingId} · ${engraving.engravingSide}`,
+          description: engraving.gradeName ? `Grade: ${engraving.gradeName}` : "",
+          imageUrl: engraving.image ? getSanityImageUrl(engraving.image, { width: 400, quality: 80 }) : null,
+          fullImageUrl: engraving.image ? getSanityImageUrl(engraving.image, { width: 1600, quality: 90 }) : null,
+          grade: engraving.gradeName ?? null,
+          optionValue: `${engraving.engravingId} (${engraving.engravingSide})`,
+        }));
+        setInfoByOption({ engraving: items });
+        setInfoCards(items);
+      } else {
+        setInfoByOption({});
         setInfoCards([]);
-      } finally {
-        setInfoLoading(false);
       }
-    },
-    [],
-  );
+    }
+  }, [nextField, engravingResults]);
+
+  useEffect(() => {
+    if (highlightedOption && infoByOption[highlightedOption.value]) {
+      const firstCard = infoByOption[highlightedOption.value][0];
+      if (firstCard) {
+        setSelectedInfoCard(firstCard);
+      }
+    }
+  }, [highlightedOption, infoByOption]);
+
+  // Prefetch build info for all options in the current step
+  useEffect(() => {
+    if (!nextField || nextField.id === "ENGRAVING") {
+      setInfoCards([]);
+      setInfoByOption({});
+      setInfoError(null);
+      return;
+    }
+    const options = nextFieldOptions.map((opt) => opt.value);
+    if (!options.length) {
+      setInfoCards([]);
+      setInfoByOption({});
+      setInfoError(null);
+      return;
+    }
+    const controller = new AbortController();
+    setInfoLoading(true);
+    setInfoError(null);
+    const run = async () => {
+      try {
+        const results = await Promise.all(
+          options.map(async (opt) => {
+            const res = await fetch(
+              `/api/build-info?field=${encodeURIComponent(nextField.id)}&value=${encodeURIComponent(opt)}`,
+              { signal: controller.signal },
+            );
+            if (!res.ok) {
+              throw new Error("fetch_failed");
+            }
+            const data = await res.json();
+            const items = (data.items ?? []).map((item: any) => ({ ...item, optionValue: opt }));
+            return { option: opt, items };
+          }),
+        );
+        const { map, flat } = mergeOptionResults(results);
+        setInfoByOption(map);
+        setInfoCards(flat);
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        console.error(error);
+        setInfoByOption({});
+        setInfoCards([]);
+        setInfoError("Unable to load details for this step.");
+      } finally {
+        if (!controller.signal.aborted) {
+          setInfoLoading(false);
+        }
+      }
+    };
+    void run();
+    return () => controller.abort();
+  }, [nextField, nextFieldOptions]);
 
   const handleExplainCurrent = async () => {
     if (!nextField) return;
@@ -487,9 +569,9 @@ export function ConciergePageShell() {
         </div>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         {/* Conversation */}
-        <section className="flex min-h-[70vh] max-h-[80vh] flex-col overflow-hidden rounded-3xl border border-subtle bg-card p-4 shadow-sm sm:p-6">
+        <section className="flex min-h-[70vh] max-h-[80vh] flex-col overflow-hidden rounded-3xl border border-subtle bg-card p-4 shadow-sm sm:p-6 lg:order-2">
           <div className="flex items-center justify-between gap-3 border-b border-subtle pb-3">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Conversation</p>
@@ -540,7 +622,7 @@ export function ConciergePageShell() {
         </section>
 
         {/* Build Navigator */}
-        <aside className="space-y-4 rounded-3xl border border-subtle bg-card p-4 shadow-sm sm:p-6">
+        <aside className="space-y-4 rounded-3xl border border-subtle bg-card p-4 shadow-sm sm:p-6 lg:order-1">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Build navigator</p>
@@ -581,7 +663,6 @@ export function ConciergePageShell() {
                               type="button"
                               onClick={() => {
                                 setHighlightedOption({ fieldId: nextField.id, value: opt.value });
-                                fetchInfoForOption(nextField.id, opt.value);
                               }}
                               className={clsx(
                                 "w-full rounded-xl border px-3 py-2 text-left text-sm font-semibold transition",
@@ -598,10 +679,17 @@ export function ConciergePageShell() {
                       <button
                         type="button"
                         onClick={handleSelectHighlighted}
-                        className="mt-3 w-full rounded-full bg-brand px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+                        className="mt-2 w-full rounded-full bg-brand px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
                         disabled={!highlightedOption || highlightedOption.fieldId !== nextField.id}
                       >
                         Select
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDetailsDrawerOpen(true)}
+                        className="mt-2 w-full rounded-full border border-subtle bg-card px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+                      >
+                        {infoLoading ? "Loading details…" : "View More Details"}
                       </button>
                       <button
                         type="button"
@@ -797,61 +885,6 @@ export function ConciergePageShell() {
           </div>
         </aside>
 
-        {/* Sanity Cards */}
-        <div className="flex min-h-[70vh] max-h-[80vh] flex-col overflow-hidden rounded-3xl border border-subtle bg-card p-4 shadow-sm sm:p-6">
-          <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Sanity Data Cards</p>
-          {highlightedOption && infoLoading ? (
-            <p className="text-sm text-ink-muted">Loading details for {highlightedOption.value}…</p>
-          ) : null}
-          {highlightedOption && !infoLoading && infoCards.length === 0 ? (
-            <p className="text-sm text-ink-muted">No details available yet for {highlightedOption.value}.</p>
-          ) : null}
-          <div className="mt-3 flex-1 overflow-y-auto pr-1">
-            {infoCards.length ? (
-              <div className="grid gap-4 md:grid-cols-1">
-                {infoCards.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setSelectedInfoCard(item)}
-                    className="flex h-full flex-col rounded-2xl border border-subtle bg-card p-3 text-left text-sm text-ink shadow-sm transition hover:border-ink hover:shadow-md"
-                  >
-                    {item.imageUrl ? (
-                      <Image
-                        src={item.imageUrl}
-                        alt={item.title}
-                        width={400}
-                        height={240}
-                        className="h-40 w-full rounded-xl object-cover"
-                      />
-                    ) : null}
-                    <div className="mt-2 space-y-1">
-                      <p className="text-base font-semibold">{item.title}</p>
-                      {item.description ? (
-                        <p className="text-sm text-ink-muted line-clamp-3">{item.description}</p>
-                      ) : null}
-                      {item.platform ? (
-                        <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">
-                          Platform: {item.platform}
-                        </p>
-                      ) : null}
-                      {item.grade ? (
-                        <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Grade: {item.grade}</p>
-                      ) : null}
-                      {item.gauges?.length ? (
-                        <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">
-                          Gauges: {item.gauges.join(", ")}
-                        </p>
-                      ) : null}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            ) : !highlightedOption ? (
-              <p className="text-sm text-ink-muted">Highlight an option above to see related details.</p>
-            ) : null}
-          </div>
-        </div>
 
       </div>
       {selectedInfoCard ? (
@@ -904,6 +937,15 @@ export function ConciergePageShell() {
           </div>
         </div>
       ) : null}
+      <SanityDetailsDrawer
+        open={detailsDrawerOpen}
+        cards={infoCards}
+        selectedCard={selectedInfoCard}
+        loading={infoLoading}
+        error={infoError}
+        onSelect={(card) => setSelectedInfoCard(card)}
+        onClose={() => setDetailsDrawerOpen(false)}
+      />
     </div>
   );
 }
