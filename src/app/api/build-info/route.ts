@@ -217,6 +217,7 @@ function mapResult(rows: any[]) {
     recommendedPlatforms: row.recommendedPlatforms ?? [],
     popularModels: row.popularModels ?? [],
     imageUrl: row.image ? getSanityImageUrl(row.image, { width: 400, quality: 80 }) : null,
+    fullImageUrl: row.image ? getSanityImageUrl(row.image, { width: 1600, quality: 90 }) : null,
   }));
 }
 

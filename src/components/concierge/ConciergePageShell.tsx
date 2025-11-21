@@ -62,6 +62,50 @@ const FIELD_DESCRIPTIONS: Record<string, string> = {
   STOCK_PROFILE: "Choose stock profile aligned with your discipline and mount for fit and shooting style.",
 };
 
+const FIELD_LABELS: Record<string, string> = {
+  FRAME_SIZE: "Frame Scale Selection",
+  PLATFORM: "Platform Selection",
+  DISCIPLINE: "Discipline Preference",
+  MODEL: "Model Selection",
+  TRIGGER_TYPE: "Trigger Type",
+  GRADE: "Grade Selection",
+  ENGRAVING: "Engraving Selection",
+  ACTION_FINISH: "Action Finish",
+  GAUGE: "Barrel Gauge",
+  LENGTH: "Barrel Length",
+  WEIGHT: "Barrel Weight",
+  CHOKE_TYPE: "Choke Type Selection",
+  B1_CHOKE: "Bottom Barrel Constriction",
+  B2_CHOKE: "Top Barrel Constriction",
+  CHAMBER_LENGTH: "Chamber Length",
+  BORE_DIAMETER: "Bore Diameter",
+  MONOBLOC: "Monobloc Weight Preference",
+  SIDERIBS_LENGTH: "Siderib Length",
+  SIDERIBS_VENTILATION: "Siderib Ventilation",
+  BEAD_FRONT: "Front Bead Selection",
+  BEAD_FRONT_COLOR: "Front Bead Color",
+  BEAD_FRONT_STYLE: "Front Bead Style",
+  BEAD_MID: "Mid-Bead Preference",
+  RIB_TYPE: "Rib Type Selection",
+  RIB_HEIGHT: "Rib Height Selection",
+  RIB_STYLE: "Rib Style Selection",
+  RIB_TRAMLINE: "Tramline Preference",
+  RIB_TRAMLINE_SIZE: "Tramline Size",
+  RIB_TAPER_12: "Rib Taper Selection",
+  RIB_TAPER_20: "Rib Taper Selection",
+  RIB_TAPER_28_410: "Rib Taper Selection",
+  RIB_TAPER_SXS: "Rib Taper Selection",
+  TRIGGER_GROUP_SPRINGS: "Trigger Spring Choice",
+  TRIGGER_GROUP_SELECTIVE: "Trigger Group Selectability",
+  TRIGGER_GROUP_SAFETY: "Auto Safetey Preference",
+  WOOD_UPGRADE: "Wood Grade Selection",
+  FOREND_SHAPE: "Forend Shape",
+  FOREND_CHECKER: "Forend Checkering",
+  STOCK_PROFILE: "Stock Profile Geometry",
+};
+
+const getFieldLabel = (id: string) => FIELD_LABELS[id] ?? id;
+
 const MODES = [
   { label: "New to Perazzi", value: "prospect" as const },
   { label: "Existing owner", value: "owner" as const },
@@ -97,8 +141,33 @@ export function ConciergePageShell() {
   const [highlightedOption, setHighlightedOption] = useState<{ fieldId: string; value: string } | null>(null);
   const [infoLoading, setInfoLoading] = useState(false);
   const [infoCards, setInfoCards] = useState<
-    Array<{ id: string; title: string; description?: string; imageUrl?: string | null; platform?: string | null; grade?: string | null; gauges?: string[] }>
+    Array<{
+      id: string;
+      title: string;
+      description?: string;
+      imageUrl?: string | null;
+      fullImageUrl?: string | null;
+      platform?: string | null;
+      grade?: string | null;
+      gauges?: string[];
+      triggerTypes?: string[];
+      recommendedPlatforms?: string[];
+      popularModels?: string[];
+    }>
   >([]);
+  const [selectedInfoCard, setSelectedInfoCard] = useState<{
+    id: string;
+    title: string;
+    description?: string;
+    imageUrl?: string | null;
+    fullImageUrl?: string | null;
+    platform?: string | null;
+    grade?: string | null;
+    gauges?: string[];
+    triggerTypes?: string[];
+    recommendedPlatforms?: string[];
+    popularModels?: string[];
+  } | null>(null);
 
   const {
     messages,
@@ -418,9 +487,60 @@ export function ConciergePageShell() {
         </div>
       </header>
 
-      <div className="grid gap-6">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-        <aside className="order-1 space-y-4 rounded-3xl border border-subtle bg-card p-4 shadow-sm sm:p-6 lg:order-none">
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Conversation */}
+        <section className="flex min-h-[70vh] max-h-[80vh] flex-col overflow-hidden rounded-3xl border border-subtle bg-card p-4 shadow-sm sm:p-6">
+          <div className="flex items-center justify-between gap-3 border-b border-subtle pb-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Conversation</p>
+              <p className="text-sm text-ink-muted">Context carries across each message.</p>
+            </div>
+            {pending || isTyping ? (
+              <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+                <span className="relative flex h-5 w-5 items-center justify-center">
+                  <span className="absolute inline-flex h-full w-full animate-spin rounded-full border-2 border-subtle border-t-transparent" />
+                  <span className="inline-flex h-2 w-2 rounded-full bg-ink" />
+                </span>
+                <span>Collecting references…</span>
+              </div>
+            ) : null}
+          </div>
+          <div className="mt-4 flex-1 overflow-y-auto pr-1">
+            {latestGuardrail && latestGuardrail !== "ok" ? (
+              <div className="mb-3">
+                <GuardrailNotice status={latestGuardrail} />
+              </div>
+            ) : null}
+            <ConversationView messages={messages} pending={pending} isTyping={isTyping} />
+          </div>
+          <div className="mt-4 space-y-2 border-t border-subtle pt-4">
+            {error ? <p className="text-sm text-red-600">Something went wrong reaching the concierge. Please try again.</p> : null}
+            <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted">
+              Ask the workshop
+            </label>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <textarea
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask about platforms, fitting, service, or heritage…"
+                className="min-h-[96px] flex-1 rounded-2xl border border-subtle bg-card px-3 py-2 text-sm text-ink shadow-inner focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                disabled={pending}
+              />
+              <button
+                type="button"
+                onClick={handleSend}
+                className="shrink-0 rounded-full bg-brand px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-70"
+                disabled={pending || !draft.trim()}
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Build Navigator */}
+        <aside className="space-y-4 rounded-3xl border border-subtle bg-card p-4 shadow-sm sm:p-6">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Build navigator</p>
@@ -435,7 +555,7 @@ export function ConciergePageShell() {
             {buildError ? <p className="text-xs text-red-600">{buildError}</p> : null}
 
             <div className="space-y-2 rounded-2xl border border-subtle px-3 py-3">
-              <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Current section</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Current Build Category</p>
               <p className="text-sm text-ink">
                 {nextField ? nextField.section || "Unknown" : "Complete"}
               </p>
@@ -445,7 +565,7 @@ export function ConciergePageShell() {
               <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Current step</p>
               {nextField ? (
                 <>
-                  <p className="text-sm font-semibold text-ink">{nextField.id}</p>
+                  <p className="text-sm font-semibold text-ink">{getFieldLabel(nextField.id)}</p>
                   {FIELD_DESCRIPTIONS[nextField.id] ? (
                     <p className="text-sm text-ink-muted">{FIELD_DESCRIPTIONS[nextField.id]}</p>
                   ) : null}
@@ -616,7 +736,7 @@ export function ConciergePageShell() {
               <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Next step</p>
               {nextFieldAfterCurrent ? (
                 <>
-                  <p className="text-sm font-semibold text-ink">{nextFieldAfterCurrent.id}</p>
+                  <p className="text-sm font-semibold text-ink">{getFieldLabel(nextFieldAfterCurrent.id)}</p>
                   {FIELD_DESCRIPTIONS[nextFieldAfterCurrent.id] ? (
                     <p className="text-sm text-ink-muted">
                       {FIELD_DESCRIPTIONS[nextFieldAfterCurrent.id]}
@@ -665,7 +785,7 @@ export function ConciergePageShell() {
                           if (editBuildMode) handleRevisitField(fid);
                         }}
                       >
-                        <span className="font-semibold">{fid}</span>
+                        <span className="font-semibold">{getFieldLabel(fid)}</span>
                         <span className="text-ink-muted">{buildState[fid]}</span>
                       </li>
                     ))}
@@ -677,57 +797,8 @@ export function ConciergePageShell() {
           </div>
         </aside>
 
-        <section className="order-2 flex min-h-[60vh] max-h-[80vh] flex-col overflow-hidden rounded-3xl border border-subtle bg-card p-4 shadow-sm sm:p-6 lg:order-none">
-          <div className="flex items-center justify-between gap-3 border-b border-subtle pb-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Conversation</p>
-              <p className="text-sm text-ink-muted">Context carries across each message.</p>
-            </div>
-            {pending || isTyping ? (
-              <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-ink-muted">
-                <span className="relative flex h-5 w-5 items-center justify-center">
-                  <span className="absolute inline-flex h-full w-full animate-spin rounded-full border-2 border-subtle border-t-transparent" />
-                  <span className="inline-flex h-2 w-2 rounded-full bg-ink" />
-                </span>
-                <span>Collecting references…</span>
-              </div>
-            ) : null}
-          </div>
-          <div className="mt-4 flex-1 overflow-y-auto pr-1">
-            {latestGuardrail && latestGuardrail !== "ok" ? (
-              <div className="mb-3">
-                <GuardrailNotice status={latestGuardrail} />
-              </div>
-            ) : null}
-            <ConversationView messages={messages} pending={pending} isTyping={isTyping} />
-          </div>
-          <div className="mt-4 space-y-2 border-t border-subtle pt-4">
-            {error ? <p className="text-sm text-red-600">Something went wrong reaching the concierge. Please try again.</p> : null}
-            <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted">
-              Ask the workshop
-            </label>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <textarea
-                value={draft}
-                onChange={(event) => setDraft(event.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask about platforms, fitting, service, or heritage…"
-                className="min-h-[96px] flex-1 rounded-2xl border border-subtle bg-card px-3 py-2 text-sm text-ink shadow-inner focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                disabled={pending}
-              />
-              <button
-                type="button"
-                onClick={handleSend}
-                className="shrink-0 rounded-full bg-brand px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-70"
-                disabled={pending || !draft.trim()}
-              >
-                Send
-              </button>
-            </div>
-          </div>
-        </section>
-        </div>
-        <div className="space-y-3 rounded-3xl border border-subtle bg-card p-4 shadow-sm sm:p-6">
+        {/* Sanity Cards */}
+        <div className="flex min-h-[70vh] max-h-[80vh] flex-col overflow-hidden rounded-3xl border border-subtle bg-card p-4 shadow-sm sm:p-6">
           <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Sanity Data Cards</p>
           {highlightedOption && infoLoading ? (
             <p className="text-sm text-ink-muted">Loading details for {highlightedOption.value}…</p>
@@ -735,49 +806,104 @@ export function ConciergePageShell() {
           {highlightedOption && !infoLoading && infoCards.length === 0 ? (
             <p className="text-sm text-ink-muted">No details available yet for {highlightedOption.value}.</p>
           ) : null}
-          {infoCards.length ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {infoCards.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex h-full flex-col rounded-2xl border border-subtle bg-card p-3 text-sm text-ink shadow-sm"
-                >
-                  {item.imageUrl ? (
-                    <Image
-                      src={item.imageUrl}
-                      alt={item.title}
-                      width={400}
-                      height={240}
-                      className="h-40 w-full rounded-xl object-cover"
-                    />
-                  ) : null}
-                  <div className="mt-2 space-y-1">
-                    <p className="text-base font-semibold">{item.title}</p>
-                    {item.description ? (
-                      <p className="text-sm text-ink-muted line-clamp-3">{item.description}</p>
+          <div className="mt-3 flex-1 overflow-y-auto pr-1">
+            {infoCards.length ? (
+              <div className="grid gap-4 md:grid-cols-1">
+                {infoCards.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setSelectedInfoCard(item)}
+                    className="flex h-full flex-col rounded-2xl border border-subtle bg-card p-3 text-left text-sm text-ink shadow-sm transition hover:border-ink hover:shadow-md"
+                  >
+                    {item.imageUrl ? (
+                      <Image
+                        src={item.imageUrl}
+                        alt={item.title}
+                        width={400}
+                        height={240}
+                        className="h-40 w-full rounded-xl object-cover"
+                      />
                     ) : null}
-                    {item.platform ? (
-                      <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">
-                        Platform: {item.platform}
-                      </p>
-                    ) : null}
-                    {item.grade ? (
-                      <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Grade: {item.grade}</p>
-                    ) : null}
-                    {item.gauges?.length ? (
-                      <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">
-                        Gauges: {item.gauges.join(", ")}
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : !highlightedOption ? (
-            <p className="text-sm text-ink-muted">Highlight an option above to see related details.</p>
-          ) : null}
+                    <div className="mt-2 space-y-1">
+                      <p className="text-base font-semibold">{item.title}</p>
+                      {item.description ? (
+                        <p className="text-sm text-ink-muted line-clamp-3">{item.description}</p>
+                      ) : null}
+                      {item.platform ? (
+                        <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">
+                          Platform: {item.platform}
+                        </p>
+                      ) : null}
+                      {item.grade ? (
+                        <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Grade: {item.grade}</p>
+                      ) : null}
+                      {item.gauges?.length ? (
+                        <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">
+                          Gauges: {item.gauges.join(", ")}
+                        </p>
+                      ) : null}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : !highlightedOption ? (
+              <p className="text-sm text-ink-muted">Highlight an option above to see related details.</p>
+            ) : null}
+          </div>
         </div>
+
       </div>
+      {selectedInfoCard ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-8">
+          <div className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-card shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setSelectedInfoCard(null)}
+              className="absolute right-4 top-4 rounded-full border border-subtle bg-card px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+            >
+              Close
+            </button>
+            <div className="flex-1 space-y-4 overflow-y-auto p-6 pr-5">
+              {selectedInfoCard.imageUrl ? (
+                <Image
+                  src={selectedInfoCard.fullImageUrl ?? selectedInfoCard.imageUrl ?? ""}
+                  alt={selectedInfoCard.title}
+                  width={1600}
+                  height={1000}
+                  className="w-full rounded-2xl object-cover"
+                />
+              ) : null}
+              <div className="space-y-2">
+                <h3 className="text-xl font-semibold text-ink">{selectedInfoCard.title}</h3>
+                {selectedInfoCard.description ? (
+                  <p className="text-sm text-ink-muted whitespace-pre-line">{selectedInfoCard.description}</p>
+                ) : null}
+                <div className="grid gap-2 text-sm text-ink">
+                  {selectedInfoCard.platform ? (
+                    <p><span className="font-semibold">Platform:</span> {selectedInfoCard.platform}</p>
+                  ) : null}
+                  {selectedInfoCard.grade ? (
+                    <p><span className="font-semibold">Grade:</span> {selectedInfoCard.grade}</p>
+                  ) : null}
+                  {selectedInfoCard.gauges?.length ? (
+                    <p><span className="font-semibold">Gauges:</span> {selectedInfoCard.gauges.join(", ")}</p>
+                  ) : null}
+                  {selectedInfoCard.triggerTypes?.length ? (
+                    <p><span className="font-semibold">Trigger types:</span> {selectedInfoCard.triggerTypes.join(", ")}</p>
+                  ) : null}
+                  {selectedInfoCard.recommendedPlatforms?.length ? (
+                    <p><span className="font-semibold">Recommended platforms:</span> {selectedInfoCard.recommendedPlatforms.join(", ")}</p>
+                  ) : null}
+                  {selectedInfoCard.popularModels?.length ? (
+                    <p><span className="font-semibold">Popular models:</span> {selectedInfoCard.popularModels.join(", ")}</p>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
