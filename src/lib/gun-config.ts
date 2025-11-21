@@ -41,8 +41,12 @@ export function getFieldOrder(): string[] {
 }
 
 export function getNextField(state: BuildState): FieldDefinition | undefined {
+  const skipEngravingIfGrade = new Set(["STANDARD", "LUSSO", "SC2"]);
   for (const field of gunOrderConfig.fields) {
     if (state[field.id]) continue;
+    if (field.id === "ENGRAVING" && skipEngravingIfGrade.has(state.GRADE ?? "")) {
+      continue;
+    }
     if (!dependenciesSatisfied(field, state)) continue;
     const valid = getValidOptions(field.id, state);
     if (field.options.length > 0 && valid.length === 0) {

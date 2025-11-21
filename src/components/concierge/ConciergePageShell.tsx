@@ -435,8 +435,12 @@ export function ConciergePageShell() {
       try {
         const results = await Promise.all(
           options.map(async (opt) => {
+            const modelParam =
+              nextField.id === "GRADE" && buildState.MODEL
+                ? `&model=${encodeURIComponent(buildState.MODEL)}`
+                : "";
             const res = await fetch(
-              `/api/build-info?field=${encodeURIComponent(nextField.id)}&value=${encodeURIComponent(opt)}`,
+              `/api/build-info?field=${encodeURIComponent(nextField.id)}&value=${encodeURIComponent(opt)}${modelParam}`,
               { signal: controller.signal },
             );
             if (!res.ok) {
@@ -464,7 +468,7 @@ export function ConciergePageShell() {
     };
     void run();
     return () => controller.abort();
-  }, [nextField, nextFieldOptions]);
+  }, [nextField, nextFieldOptions, buildState.MODEL]);
 
   const handleExplainCurrent = async () => {
     if (!nextField) return;
@@ -513,6 +517,7 @@ export function ConciergePageShell() {
   const fetchInfoForSelection = useCallback(
     async (fieldId: string, value: string) => {
       if (!value) return [];
+      const gradeModel = buildState.MODEL;
       if (fieldId === "ENGRAVING") {
         const idPart = value.split(" ")[0];
         try {
@@ -533,8 +538,10 @@ export function ConciergePageShell() {
         }
       }
       try {
+        const modelParam =
+          fieldId === "GRADE" && gradeModel ? `&model=${encodeURIComponent(gradeModel)}` : "";
         const res = await fetch(
-          `/api/build-info?field=${encodeURIComponent(fieldId)}&value=${encodeURIComponent(value)}`,
+          `/api/build-info?field=${encodeURIComponent(fieldId)}&value=${encodeURIComponent(value)}${modelParam}`,
         );
         if (!res.ok) return [];
         const data = await res.json();
@@ -543,7 +550,7 @@ export function ConciergePageShell() {
         return [];
       }
     },
-    [],
+    [buildState.MODEL],
   );
 
   useEffect(() => {

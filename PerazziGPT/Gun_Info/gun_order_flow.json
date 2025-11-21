@@ -702,6 +702,45 @@
         "MODEL"
       ],
       "options": [
+                {
+          "value": "STANDARD",
+          "constraints": {
+            "MODEL": [
+              "MX1",
+              "MX10",
+              "MX10RS",
+              "MX12",
+              "MX12/3",
+              "MX15",
+              "MX16",
+              "MX20",
+              "MX2000/3",
+              "MX2000/8",
+              "MX2000S",
+              "MX2000S/3",
+              "MX2005",
+              "MX28",
+              "MX28 B",
+              "MX410",
+              "MX410 B",
+              "MX8",
+              "MX8 VINTAGE",
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS",
+              "TM9",
+              "TM9X",
+              "DC 12",
+              "DC 20"
+            ]
+          }
+        },
         {
           "value": "LUSSO",
           "constraints": {

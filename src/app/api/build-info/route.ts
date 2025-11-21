@@ -79,6 +79,21 @@ const gradeQuery = groq`*[
   "image": hero.asset
 }[0...5]`;
 
+const modelGradeQuery = groq`*[
+  _type == "models" && (
+    s_model_name match $modelTerm ||
+    s_model_name match $altModelTerm ||
+    s_model_name match $compactModelTerm ||
+    s_model_name match $looseModelTerm ||
+    s_version_id match $modelTerm ||
+    s_version_id match $altModelTerm ||
+    s_version_id match $compactModelTerm ||
+    s_version_id match $looseModelTerm
+  )
+][0...3]{
+  "grade": s_grade_id->name
+}`;
+
 const platformFallback = groq`*[_type == "platform"] | order(name asc)[0...10]{
   _id,
   "title": name,
@@ -237,6 +252,7 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const field = (searchParams.get("field") ?? "").trim().toUpperCase();
   const rawValue = (searchParams.get("value") ?? "").trim();
+  const rawModel = (searchParams.get("model") ?? "").trim();
   const value = normalizeValue(field, rawValue);
   if (!field || !value) {
     return NextResponse.json({ error: "Missing field or value" }, { status: 400 });
@@ -271,7 +287,27 @@ export async function GET(request: NextRequest) {
         }
         break;
       case "GRADE":
-        rows = await client.fetch(gradeQuery, { term, altTerm, compactTerm, looseTerm });
+        if (rawModel) {
+          const { term: modelTerm, altTerm: altModelTerm, compactTerm: compactModelTerm, looseTerm: looseModelTerm } =
+            buildTerms(rawModel);
+          const modelGradeRows = await client.fetch(modelGradeQuery, {
+            modelTerm,
+            altModelTerm,
+            compactModelTerm,
+            looseModelTerm,
+          });
+          const modelGradeNames = new Set(
+            (modelGradeRows ?? [])
+              .map((row: any) => String(row.grade ?? "").toLowerCase())
+              .filter(Boolean),
+          );
+          if (modelGradeNames.size && modelGradeNames.has(lowerValue)) {
+            rows = await client.fetch(gradeQuery, { term, altTerm, compactTerm, looseTerm });
+          }
+        }
+        if (!rows.length) {
+          rows = await client.fetch(gradeQuery, { term, altTerm, compactTerm, looseTerm });
+        }
         if (!rows.length) {
           rows = await client.fetch(gradeFallback, { lowerValue, looseTerm });
         }
