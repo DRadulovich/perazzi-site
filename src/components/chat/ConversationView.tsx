@@ -47,10 +47,13 @@ const markdownComponents = {
 
 export function ConversationView({ messages, isTyping, pending }: ConversationViewProps) {
   const listRef = useRef<HTMLUListElement | null>(null);
+  const lastMessageRef = useRef<HTMLLIElement | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (listRef.current) {
+    if (lastMessageRef.current) {
+      lastMessageRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else if (listRef.current) {
       listRef.current.scrollTop = listRef.current.scrollHeight;
     }
   }, [messages]);
@@ -84,8 +87,13 @@ export function ConversationView({ messages, isTyping, pending }: ConversationVi
         const isAssistant = msg.role === "assistant";
         const showMarker =
           isAssistant && (index === 0 || messages[index - 1]?.role !== "assistant");
+        const isLast = index === messages.length - 1;
         return (
-          <li key={msg.id} className="relative">
+          <li
+            key={msg.id}
+            className="relative"
+            ref={isLast ? lastMessageRef : undefined}
+          >
             {showMarker && (
               <div className="mb-3 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-white">
                 <div className="flex-1 border-t border-perazzi-red" aria-hidden="true" />

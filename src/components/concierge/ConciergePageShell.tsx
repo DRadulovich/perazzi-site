@@ -8,6 +8,7 @@ import { usePerazziAssistant } from "@/hooks/usePerazziAssistant";
 import type { PlatformSlug } from "@/hooks/usePerazziAssistant";
 import { GuardrailNotice } from "@/components/concierge/GuardrailNotice";
 import { SanityDetailsDrawer } from "@/components/concierge/SanityDetailsDrawer";
+import { BuildSheetDrawer } from "@/components/concierge/BuildSheetDrawer";
 import { derivePanels, type AssistantMeta } from "@/lib/perazzi-derivation";
 import { buildDealerBriefRequest } from "@/lib/dealer-brief";
 import {
@@ -186,6 +187,8 @@ export function ConciergePageShell() {
     popularModels?: string[];
   } | null>(null);
   const [detailsDrawerOpen, setDetailsDrawerOpen] = useState(false);
+  const [buildSheetDrawerOpen, setBuildSheetDrawerOpen] = useState(false);
+  const [selectedInfoByField, setSelectedInfoByField] = useState<Record<string, any[]>>({});
 
   const {
     messages,
@@ -316,6 +319,10 @@ export function ConciergePageShell() {
       }
     }
     setBuildError(null);
+    const matchedInfo = infoByOption[value] ?? infoCards.filter((card) => card.optionValue === value);
+    if (matchedInfo && matchedInfo.length) {
+      setSelectedInfoByField((prev) => ({ ...prev, [fieldId]: matchedInfo }));
+    }
     setBuildState((prev) => ({ ...prev, [fieldId]: value }));
     setEditBuildMode(false);
   };
@@ -328,6 +335,7 @@ export function ConciergePageShell() {
   const resetBuild = () => {
     setBuildError(null);
     setBuildState({});
+    setSelectedInfoByField({});
   };
 
   const fetchEngravings = useCallback(
@@ -380,7 +388,13 @@ export function ConciergePageShell() {
           grade: engraving.gradeName ?? null,
           optionValue: `${engraving.engravingId} (${engraving.engravingSide})`,
         }));
-        setInfoByOption({ engraving: items });
+        const map: Record<string, any[]> = {};
+        items.forEach((item) => {
+          if (item.optionValue) {
+            map[item.optionValue] = [item];
+          }
+        });
+        setInfoByOption(map);
         setInfoCards(items);
       } else {
         setInfoByOption({});
@@ -388,15 +402,6 @@ export function ConciergePageShell() {
       }
     }
   }, [nextField, engravingResults]);
-
-  useEffect(() => {
-    if (highlightedOption && infoByOption[highlightedOption.value]) {
-      const firstCard = infoByOption[highlightedOption.value][0];
-      if (firstCard) {
-        setSelectedInfoCard(firstCard);
-      }
-    }
-  }, [highlightedOption, infoByOption]);
 
   // Prefetch build info for all options in the current step
   useEffect(() => {
@@ -495,6 +500,72 @@ export function ConciergePageShell() {
     });
   };
 
+  const fetchInfoForSelection = useCallback(
+    async (fieldId: string, value: string) => {
+      if (!value) return [];
+      if (fieldId === "ENGRAVING") {
+        const idPart = value.split(" ")[0];
+        try {
+          const res = await fetch(`/api/engravings?id=${encodeURIComponent(idPart)}`);
+          if (!res.ok) return [];
+          const data = await res.json();
+          return (data.engravings ?? []).map((engraving: any) => ({
+            id: engraving._id,
+            title: `${engraving.engravingId} · ${engraving.engravingSide}`,
+            description: engraving.gradeName ? `Grade: ${engraving.gradeName}` : "",
+            imageUrl: engraving.image ? getSanityImageUrl(engraving.image, { width: 400, quality: 80 }) : null,
+            fullImageUrl: engraving.image ? getSanityImageUrl(engraving.image, { width: 1600, quality: 90 }) : null,
+            grade: engraving.gradeName ?? null,
+            optionValue: `${engraving.engravingId} (${engraving.engravingSide})`,
+          }));
+        } catch {
+          return [];
+        }
+      }
+      try {
+        const res = await fetch(
+          `/api/build-info?field=${encodeURIComponent(fieldId)}&value=${encodeURIComponent(value)}`,
+        );
+        if (!res.ok) return [];
+        const data = await res.json();
+        return (data.items ?? []).map((item: any) => ({ ...item, optionValue: value }));
+      } catch {
+        return [];
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!buildSheetDrawerOpen) return;
+    const missing = fieldOrder
+      .filter((fid) => buildState[fid])
+      .filter((fid) => !selectedInfoByField[fid]);
+    if (!missing.length) return;
+    const controller = new AbortController();
+    const run = async () => {
+      const updates: Record<string, any[]> = {};
+      for (const fid of missing) {
+        const val = buildState[fid];
+        const cached = infoByOption[val];
+        if (cached && cached.length) {
+          updates[fid] = cached;
+          continue;
+        }
+        const fetched = await fetchInfoForSelection(fid, val);
+        if (controller.signal.aborted) return;
+        if (fetched.length) {
+          updates[fid] = fetched;
+        }
+      }
+      if (Object.keys(updates).length) {
+        setSelectedInfoByField((prev) => ({ ...prev, ...updates }));
+      }
+    };
+    void run();
+    return () => controller.abort();
+  }, [buildSheetDrawerOpen, fieldOrder, buildState, infoByOption, selectedInfoByField, fetchInfoForSelection]);
+
   const handleNextStep = async (intent: string) => {
     const intentCopy: Record<string, string> = {
       contact_dealer: "Help me find an authorized dealer and outline what information to bring.",
@@ -560,12 +631,33 @@ export function ConciergePageShell() {
     <div className="space-y-8">
       <header className="space-y-3">
         <p className="text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted">Perazzi Concierge</p>
-        <div className="space-y-2">
-          <h1 className="text-3xl font-semibold text-ink">Concierge</h1>
-          <p className="max-w-2xl text-sm text-ink-muted">
-            A full-page workshop companion. Choose your journey, ask questions, and we’ll keep a dedicated space for platforms,
-            profile, next steps, and sources beside the chat.
-          </p>
+        <div className="space-y-3">
+          <h1 className="text-3xl font-semibold text-ink">Designing a Perazzi, Together</h1>
+          <div className="space-y-3 text-sm text-ink-muted">
+            <p>
+              This space is the closest you can come to sitting across from a Perazzi master, without leaving home. The Build Navigator
+              walks you step by step through every element of a bespoke shotgun—platform, fit, balance, aesthetics—while the Perazzi
+              Concierge listens, answers, and explains as if you were in the atelier itself.
+            </p>
+            <p>
+              A Perazzi is not a catalogue choice; it is a composition. There are more possibilities here than most guns will ever offer,
+              and that is the point. You are not expected to finish in a few minutes. You are invited to move slowly—explore each stage,
+              open the cards, press “explain these options,” ask questions, change your mind, return tomorrow and see it with fresh eyes.
+            </p>
+            <p>
+              As you progress, the system remembers where you are and responds to what you say, helping you translate your history, style,
+              and ambitions into real decisions. By the time you reach the end, you won’t just have selected options from a list—you’ll
+              have shaped an instrument with a clear purpose and a familiar soul: a Perazzi that already feels like it belongs to you.
+            </p>
+            <p>
+              If you feel unsure where to begin, that’s exactly the right place to start. Ask a simple question, open a single stage, or
+              let the Navigator suggest the next step—there is no “wrong” way to move through this process. You can speak to the assistant
+              as you would to a trusted fitter: share your habits, doubts, even the way you hope the gun will make you feel on the stand.
+              Take a few minutes or a few evenings; step away and return when you’re ready. When you’re curious, begin—and let the
+              conversation slowly reveal the Perazzi that feels like it was waiting for you.
+            </p>
+            <p>(NOTE: This immersive experience is best done on a computer, and not a mobile device.)</p>
+          </div>
         </div>
       </header>
 
@@ -612,7 +704,7 @@ export function ConciergePageShell() {
               <button
                 type="button"
                 onClick={handleSend}
-                className="shrink-0 rounded-full bg-brand px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-70"
+                className="shrink-0 rounded-2xl bg-brand px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-70"
                 disabled={pending || !draft.trim()}
               >
                 Send
@@ -820,68 +912,42 @@ export function ConciergePageShell() {
               )}
             </div>
 
-            <div className="space-y-2 rounded-2xl border border-subtle px-3 py-3">
-              <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Next step</p>
-              {nextFieldAfterCurrent ? (
-                <>
-                  <p className="text-sm font-semibold text-ink">{getFieldLabel(nextFieldAfterCurrent.id)}</p>
-                  {FIELD_DESCRIPTIONS[nextFieldAfterCurrent.id] ? (
-                    <p className="text-sm text-ink-muted">
-                      {FIELD_DESCRIPTIONS[nextFieldAfterCurrent.id]}
-                    </p>
-                  ) : null}
-                </>
-              ) : nextField ? (
-                <p className="text-sm text-ink-muted">Depends on your current selection.</p>
-              ) : (
-                <div className="space-y-2">
-                  <p className="text-sm text-ink-muted">All steps satisfied.</p>
-                  <button
-                    type="button"
-                    onClick={handleBuildReview}
-                    className="w-full rounded-full bg-brand px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
-                    disabled={!Object.keys(buildState).length}
-                  >
-                    Send build for review
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2 rounded-2xl border border-subtle px-3 py-3">
-              <div className="flex items-center justify-between">
-                <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Current build sheet</p>
+              <div className="space-y-3 rounded-2xl border border-subtle px-3 py-3">
                 <button
                   type="button"
-                  onClick={() => setEditBuildMode((v) => !v)}
-                  className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:text-ink"
+                  onClick={() => setBuildSheetDrawerOpen(true)}
+                  className="w-full rounded-full border border-perazzi-red bg-perazzi-red px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:border-ink hover:text-card"
                 >
-                  {editBuildMode ? "Cancel" : "Edit"}
+                  View Build Sheet
                 </button>
-              </div>
-              {Object.keys(buildState).length ? (
-                <ul className="space-y-1 text-sm text-ink">
-                  {fieldOrder
-                    .filter((fid) => buildState[fid])
-                    .map((fid) => (
-                      <li
-                        key={fid}
-                        className={`flex items-center justify-between gap-3 ${
-                          editBuildMode ? "cursor-pointer rounded-xl border border-dashed border-subtle px-2 py-2" : ""
-                        }`}
-                        onClick={() => {
-                          if (editBuildMode) handleRevisitField(fid);
-                        }}
+                <div className="space-y-2 rounded-2xl border border-subtle px-3 py-3">
+                  <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Next step</p>
+                  {nextFieldAfterCurrent ? (
+                    <>
+                      <p className="text-sm font-semibold text-ink">{getFieldLabel(nextFieldAfterCurrent.id)}</p>
+                      {FIELD_DESCRIPTIONS[nextFieldAfterCurrent.id] ? (
+                        <p className="text-sm text-ink-muted">
+                          {FIELD_DESCRIPTIONS[nextFieldAfterCurrent.id]}
+                        </p>
+                      ) : null}
+                    </>
+                  ) : nextField ? (
+                    <p className="text-sm text-ink-muted">Depends on your current selection.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-sm text-ink-muted">All steps satisfied.</p>
+                      <button
+                        type="button"
+                        onClick={handleBuildReview}
+                        className="w-full rounded-full bg-brand px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+                        disabled={!Object.keys(buildState).length}
                       >
-                        <span className="font-semibold">{getFieldLabel(fid)}</span>
-                        <span className="text-ink-muted">{buildState[fid]}</span>
-                      </li>
-                    ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-ink-muted">Selections will appear here as you choose them.</p>
-              )}
-            </div>
+                        Send build for review
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
           </div>
         </aside>
 
@@ -945,6 +1011,36 @@ export function ConciergePageShell() {
         error={infoError}
         onSelect={(card) => setSelectedInfoCard(card)}
         onClose={() => setDetailsDrawerOpen(false)}
+      />
+      <BuildSheetDrawer
+        open={buildSheetDrawerOpen}
+        entries={fieldOrder
+          .filter((fid) => buildState[fid])
+          .map((fid) => {
+            const val = buildState[fid];
+            const info = selectedInfoByField[fid] ?? infoByOption[val] ?? [];
+            const first = info[0];
+            return {
+              id: fid,
+              label: getFieldLabel(fid),
+              value: val,
+              details: first
+                ? {
+                    description: first.description,
+                    platform: first.platform ?? null,
+                    grade: first.grade ?? null,
+                    gauges: first.gauges ?? [],
+                    triggerTypes: first.triggerTypes ?? [],
+                    recommendedPlatforms: first.recommendedPlatforms ?? [],
+                    popularModels: first.popularModels ?? [],
+                    imageUrl: first.imageUrl ?? null,
+                    fullImageUrl: first.fullImageUrl ?? null,
+                  }
+                : undefined,
+            };
+          })}
+        onClose={() => setBuildSheetDrawerOpen(false)}
+        onRevisit={(fid) => handleRevisitField(fid)}
       />
     </div>
   );

@@ -16,6 +16,7 @@ type InfoCard = {
   triggerTypes?: string[];
   recommendedPlatforms?: string[];
   popularModels?: string[];
+  optionValue?: string;
 };
 
 type SanityDetailsDrawerProps = {
@@ -96,14 +97,14 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
             <p className="text-sm text-ink-muted">No details available.</p>
           ) : (
             <div className="space-y-3">
-              {cards.map((card) => (
-                <button
-                  key={card.id}
-                  type="button"
-                  onClick={() => onSelect?.(card)}
-                  className={clsx(
-                    "w-full text-left transition",
-                    selectedCard?.id === card.id ? "border-ink bg-subtle/50" : "border-subtle hover:border-ink",
+            {cards.map((card) => (
+              <button
+                key={`${card.id}-${card.optionValue ?? ""}`}
+                type="button"
+                onClick={() => onSelect?.(card)}
+                className={clsx(
+                  "w-full text-left transition",
+                  selectedCard?.id === card.id ? "border-ink bg-subtle/50" : "border-subtle hover:border-ink",
                     "flex flex-col rounded-2xl border bg-card p-3 text-sm text-ink shadow-sm",
                   )}
                 >
