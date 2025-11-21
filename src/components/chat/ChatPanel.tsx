@@ -5,10 +5,10 @@ import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
-import { useChatState } from "@/components/chat/useChatState";
 import { ChatInput } from "@/components/chat/ChatInput";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
 import { cn } from "@/lib/utils";
+import { usePerazziAssistant } from "@/hooks/usePerazziAssistant";
 
 const QUICK_STARTS = [
   {
@@ -79,7 +79,7 @@ export function ChatPanel({
 }: ChatPanelProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
   const { messages, pending, isTyping, error, sendMessage, context, updateContext, appendLocal } =
-    useChatState();
+    usePerazziAssistant();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [showQuickStarts, setShowQuickStarts] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);

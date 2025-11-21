@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { ChatMessage } from "@/types/perazzi-assistant";
+import { useCallback, useEffect, useState } from "react";
+import type { Citation, PerazziAssistantResponse } from "@/types/perazzi-assistant";
 
 export type ChatEntry = {
   id: string;
@@ -10,7 +10,30 @@ export type ChatEntry = {
   similarity?: number;
 };
 
-const STORAGE_KEY = "perazzi-chat-history";
+export type ChatContextShape = {
+  pageUrl?: string;
+  modelSlug?: string;
+  platformSlug?: string;
+  mode?: string;
+  locale?: string;
+};
+
+export type AssistantResponseMeta = {
+  citations?: Citation[];
+  guardrail?: PerazziAssistantResponse["guardrail"];
+  similarity?: number;
+  intents?: string[];
+  topics?: string[];
+  templates?: string[];
+};
+
+export type UseChatStateOptions = {
+  storageKey?: string;
+  initialContext?: ChatContextShape;
+  onResponseMeta?: (meta: AssistantResponseMeta) => void;
+};
+
+const DEFAULT_STORAGE_KEY = "perazzi-chat-history";
 const MAX_MESSAGES = 40;
 
 class ConciergeRequestError extends Error {
@@ -22,22 +45,18 @@ class ConciergeRequestError extends Error {
   }
 }
 
-type ChatContextShape = {
-  pageUrl?: string;
-  modelSlug?: string;
-  platformSlug?: string;
-  mode?: string;
-  locale?: string;
-};
-
-export function useChatState(initialMessages: ChatEntry[] = []) {
+export function useChatState(
+  initialMessages: ChatEntry[] = [],
+  options: UseChatStateOptions = {},
+) {
   const [messages, setMessages] = useState<ChatEntry[]>(initialMessages);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
-  const [context, setContext] = useState<ChatContextShape>({});
+  const [context, setContext] = useState<ChatContextShape>(options.initialContext ?? {});
+  const storageKey = options.storageKey ?? DEFAULT_STORAGE_KEY;
 
-  const addMessage = (entry: ChatEntry) => {
+  const addMessage = useCallback((entry: ChatEntry) => {
     setMessages((prev) => {
       const next = [...prev, entry];
       if (next.length > MAX_MESSAGES) {
@@ -45,16 +64,17 @@ export function useChatState(initialMessages: ChatEntry[] = []) {
       }
       return next;
     });
-  };
+  }, []);
 
-  const updateContext = (patch: Partial<ChatContextShape>) => {
-    setContext((prev) => ({ ...prev, ...patch }));
-  };
+  const updateContext = useCallback(
+    (patch: Partial<ChatContextShape>) => setContext((prev) => ({ ...prev, ...patch })),
+    [],
+  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
+      const stored = window.localStorage.getItem(storageKey);
       if (stored) {
         const parsed = JSON.parse(stored) as {
           messages?: ChatEntry[];
@@ -64,12 +84,20 @@ export function useChatState(initialMessages: ChatEntry[] = []) {
           setMessages(parsed.messages.slice(-MAX_MESSAGES));
         }
         if (parsed?.context) {
-          setContext(parsed.context);
+          setContext((prev) => ({
+            ...(options.initialContext ?? {}),
+            ...prev,
+            ...parsed.context,
+          }));
         }
+      } else if (options.initialContext) {
+        setContext((prev) => ({ ...options.initialContext, ...prev }));
       }
     } catch (error) {
       console.warn("Failed to load stored chat state", error);
     }
+    // We intentionally omit dependencies to only run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const sendMessage = async (payload: {
@@ -129,6 +157,14 @@ export function useChatState(initialMessages: ChatEntry[] = []) {
         similarity: data.similarity,
       };
       addMessage(assistantEntry);
+      options.onResponseMeta?.({
+        citations: data.citations,
+        guardrail: data.guardrail,
+        similarity: data.similarity,
+        intents: data.intents,
+        topics: data.topics,
+        templates: data.templates,
+      });
     } catch (err) {
       console.error(err);
       if (err instanceof ConciergeRequestError) {
@@ -149,11 +185,11 @@ export function useChatState(initialMessages: ChatEntry[] = []) {
         messages,
         context,
       });
-      window.localStorage.setItem(STORAGE_KEY, payload);
+      window.localStorage.setItem(storageKey, payload);
     } catch (error) {
       console.warn("Failed to persist chat history", error);
     }
-  }, [messages, context]);
+  }, [messages, context, storageKey]);
 
   const appendLocal = (entry: ChatEntry) => {
     addMessage(entry);
@@ -165,6 +201,7 @@ export function useChatState(initialMessages: ChatEntry[] = []) {
     isTyping,
     error,
     context,
+    setContext,
     sendMessage,
     updateContext,
     appendLocal,

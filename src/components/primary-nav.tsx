@@ -280,6 +280,7 @@ const NAV_LINKS: NavItem[] = [
   { text: "Home", href: "/" },
   { text: "Shotguns", href: "/shotguns", component: ShotgunsFlyout },
   { text: "Bespoke Journey", href: "/bespoke" },
+  { text: "Concierge", href: "/concierge" },
   { text: "Experience", href: "/experience", component: ExperienceFlyout },
   { text: "Heritage", href: "/heritage", component: HeritageFlyout },
 ];

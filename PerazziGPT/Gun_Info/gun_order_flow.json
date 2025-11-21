@@ -1,0 +1,2362 @@
+{
+  "fields": [
+    {
+      "id": "FRAME_SIZE",
+      "section": "RECEIVER",
+      "dependsOn": [],
+      "options": [
+        {
+          "value": "12",
+          "constraints": {}
+        },
+        {
+          "value": "20",
+          "constraints": {}
+        },
+        {
+          "value": "28",
+          "constraints": {}
+        }
+      ]
+    },
+    {
+      "id": "PLATFORM",
+      "section": "RECEIVER",
+      "dependsOn": [
+        "FRAME_SIZE"
+      ],
+      "options": [
+        {
+          "value": "MX",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20",
+              "28"
+            ]
+          }
+        },
+        {
+          "value": "HT",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20",
+              "28"
+            ]
+          }
+        },
+        {
+          "value": "TM",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12"
+            ]
+          }
+        },
+        {
+          "value": "DC",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "DISCIPLINE",
+      "section": "RECEIVER",
+      "dependsOn": [
+        "PLATFORM"
+      ],
+      "options": [
+        {
+          "value": "SPORTING",
+          "constraints": {
+            "PLATFORM": [
+              "MX",
+              "HT"
+            ]
+          }
+        },
+        {
+          "value": "TRAP",
+          "constraints": {
+            "PLATFORM": [
+              "MX",
+              "HT",
+              "TM"
+            ]
+          }
+        },
+        {
+          "value": "SKEET",
+          "constraints": {
+            "PLATFORM": [
+              "MX",
+              "HT"
+            ]
+          }
+        },
+        {
+          "value": "GAME",
+          "constraints": {
+            "PLATFORM": [
+              "MX",
+              "HT",
+              "DC"
+            ]
+          }
+        },
+        {
+          "value": "PIGEON & ELECTOCIBLES",
+          "constraints": {
+            "PLATFORM": [
+              "MX"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "MODEL",
+      "section": "RECEIVER",
+      "dependsOn": [
+        "FRAME_SIZE",
+        "PLATFORM",
+        "DISCIPLINE"
+      ],
+      "options": [
+        {
+          "value": "MX1",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12"
+            ],
+            "PLATFORM": [
+              "MX"
+            ],
+            "DISCIPLINE": [
+              "PIGEON & ELECTOCIBLES"
+            ]
+          }
+        },
+        {
+          "value": "MX10",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12"
+            ],
+            "PLATFORM": [
+              "MX"
+            ],
+            "DISCIPLINE": [
+              "TRAP"
+            ]
+          }
+        },
+        {
+          "value": "MX10RS",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12"
+            ],
+            "PLATFORM": [
+              "MX"
+            ],
+            "DISCIPLINE": [
+              "TRAP"
+            ]
+          }
+        },
+        {
+          "value": "MX12",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12"
+            ],
+            "PLATFORM": [
+              "MX"
+            ],
+            "DISCIPLINE": [
+              "SPORTING",
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "MX12/3",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12"
+            ],
+            "PLATFORM": [
+              "MX"
+            ],
+            "DISCIPLINE": [
+              "SPORTING",
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "MX15",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12"
+            ],
+            "PLATFORM": [
+              "MX"
+            ],
+            "DISCIPLINE": [
+              "TRAP"
+            ]
+          }
+        },
+        {
+          "value": "MX16",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12"
+            ],
+            "PLATFORM": [
+              "MX"
+            ],
+            "DISCIPLINE": [
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "MX20",
+          "constraints": {
+            "FRAME_SIZE": [
+              "20"
+            ],
+            "PLATFORM": [
+              "MX"
+            ],
+            "DISCIPLINE": [
+              "SPORTING",
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "MX2000/3",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20"
+            ],
+            "PLATFORM": [
+              "MX"
+            ],
+            "DISCIPLINE": [
+              "SPORTING",
+              "TRAP",
+              "SKEET",
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "MX2000/8",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20"
+            ],
+            "PLATFORM": [
+              "MX"
+            ],
+            "DISCIPLINE": [
+              "SPORTING",
+              "TRAP",
+              "SKEET",
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "MX2000S",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20"
+            ],
+            "PLATFORM": [
+              "MX"
+            ],
+            "DISCIPLINE": [
+              "SPORTING",
+              "TRAP",
+              "SKEET",
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "MX2000S/3",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20"
+            ],
+            "PLATFORM": [
+              "MX"
+            ],
+            "DISCIPLINE": [
+              "SPORTING",
+              "TRAP",
+              "SKEET",
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "MX2005",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20"
+            ],
+            "PLATFORM": [
+              "MX"
+            ],
+            "DISCIPLINE": [
+              "SPORTING",
+              "TRAP",
+              "SKEET",
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "MX28",
+          "constraints": {
+            "FRAME_SIZE": [
+              "28"
+            ],
+            "PLATFORM": [
+              "MX"
+            ],
+            "DISCIPLINE": [
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "MX28 B",
+          "constraints": {
+            "FRAME_SIZE": [
+              "28"
+            ],
+            "PLATFORM": [
+              "MX"
+            ],
+            "DISCIPLINE": [
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "MX410",
+          "constraints": {
+            "FRAME_SIZE": [
+              "28"
+            ],
+            "PLATFORM": [
+              "MX"
+            ],
+            "DISCIPLINE": [
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "MX410 B",
+          "constraints": {
+            "FRAME_SIZE": [
+              "28"
+            ],
+            "PLATFORM": [
+              "MX"
+            ],
+            "DISCIPLINE": [
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "MX8",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20"
+            ],
+            "PLATFORM": [
+              "MX"
+            ],
+            "DISCIPLINE": [
+              "SPORTING",
+              "TRAP",
+              "SKEET",
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "MX8 VINTAGE",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20"
+            ],
+            "PLATFORM": [
+              "MX"
+            ],
+            "DISCIPLINE": [
+              "SPORTING",
+              "TRAP",
+              "SKEET",
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "HTS",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20"
+            ],
+            "PLATFORM": [
+              "HT"
+            ],
+            "DISCIPLINE": [
+              "SPORTING",
+              "TRAP",
+              "SKEET",
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "HTS 3",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20"
+            ],
+            "PLATFORM": [
+              "HT"
+            ],
+            "DISCIPLINE": [
+              "SPORTING",
+              "TRAP",
+              "SKEET",
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "HTS 5",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20"
+            ],
+            "PLATFORM": [
+              "HT"
+            ],
+            "DISCIPLINE": [
+              "SPORTING",
+              "TRAP",
+              "SKEET",
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "HT",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20"
+            ],
+            "PLATFORM": [
+              "HT"
+            ],
+            "DISCIPLINE": [
+              "SPORTING",
+              "TRAP",
+              "SKEET",
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "HT 3",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20"
+            ],
+            "PLATFORM": [
+              "HT"
+            ],
+            "DISCIPLINE": [
+              "SPORTING",
+              "TRAP",
+              "SKEET",
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "HT 5",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20"
+            ],
+            "PLATFORM": [
+              "HT"
+            ],
+            "DISCIPLINE": [
+              "SPORTING",
+              "TRAP",
+              "SKEET",
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "HT 8",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20"
+            ],
+            "PLATFORM": [
+              "HT"
+            ],
+            "DISCIPLINE": [
+              "SPORTING",
+              "TRAP",
+              "SKEET",
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "HT 10",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12"
+            ],
+            "PLATFORM": [
+              "HT"
+            ],
+            "DISCIPLINE": [
+              "TRAP"
+            ]
+          }
+        },
+        {
+          "value": "HT RS",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12"
+            ],
+            "PLATFORM": [
+              "HT"
+            ],
+            "DISCIPLINE": [
+              "TRAP"
+            ]
+          }
+        },
+        {
+          "value": "TM9",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12"
+            ],
+            "PLATFORM": [
+              "TM"
+            ],
+            "DISCIPLINE": [
+              "TRAP"
+            ]
+          }
+        },
+        {
+          "value": "TM9X",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12"
+            ],
+            "PLATFORM": [
+              "TM"
+            ],
+            "DISCIPLINE": [
+              "TRAP"
+            ]
+          }
+        },
+        {
+          "value": "DC 12",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12"
+            ],
+            "PLATFORM": [
+              "DC"
+            ],
+            "DISCIPLINE": [
+              "SPORTING",
+              "GAME"
+            ]
+          }
+        },
+        {
+          "value": "DC 20",
+          "constraints": {
+            "FRAME_SIZE": [
+              "20"
+            ],
+            "PLATFORM": [
+              "DC"
+            ],
+            "DISCIPLINE": [
+              "SPORTING",
+              "GAME"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "TRIGGER_TYPE",
+      "section": "RECEIVER",
+      "dependsOn": [
+        "MODEL"
+      ],
+      "options": [
+        {
+          "value": "REMOVABLE",
+          "constraints": {
+            "MODEL": [
+              "MX1",
+              "MX10",
+              "MX10RS",
+              "MX15",
+              "MX2000/3",
+              "MX2000/8",
+              "MX2005",
+              "MX8",
+              "MX8 VINTAGE",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS",
+              "TM9",
+              "TM9X",
+              "DC 12",
+              "DC 20"
+            ]
+          }
+        },
+        {
+          "value": "FIXED",
+          "constraints": {
+            "MODEL": [
+              "MX12",
+              "MX12/3",
+              "MX16",
+              "MX20",
+              "MX2000S",
+              "MX2000S/3",
+              "MX28",
+              "MX28 B",
+              "MX410",
+              "MX410 B",
+              "HTS",
+              "HTS 3",
+              "HTS 5"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "GRADE",
+      "section": "RECEIVER",
+      "dependsOn": [
+        "MODEL"
+      ],
+      "options": [
+        {
+          "value": "LUSSO",
+          "constraints": {
+            "MODEL": [
+              "MX1",
+              "MX10",
+              "MX10RS",
+              "MX12",
+              "MX12/3",
+              "MX15",
+              "MX16",
+              "MX20",
+              "MX8",
+              "MX8 VINTAGE",
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS",
+              "TM9",
+              "TM9X",
+              "DC 12",
+              "DC 20"
+            ]
+          }
+        },
+        {
+          "value": "SC2",
+          "constraints": {
+            "MODEL": [
+              "MX1",
+              "MX10",
+              "MX10RS",
+              "MX12",
+              "MX12/3",
+              "MX15",
+              "MX16",
+              "MX20",
+              "MX2000/3",
+              "MX2000/8",
+              "MX2000S",
+              "MX2000S/3",
+              "MX2005",
+              "MX8",
+              "MX8 VINTAGE",
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS",
+              "TM9",
+              "TM9X",
+              "DC 12",
+              "DC 20"
+            ]
+          }
+        },
+        {
+          "value": "SC3",
+          "constraints": {
+            "MODEL": [
+              "MX1",
+              "MX10",
+              "MX10RS",
+              "MX12",
+              "MX12/3",
+              "MX15",
+              "MX16",
+              "MX20",
+              "MX2000/3",
+              "MX2000/8",
+              "MX2000S",
+              "MX2000S/3",
+              "MX2005",
+              "MX28",
+              "MX28 B",
+              "MX410",
+              "MX410 B",
+              "MX8",
+              "MX8 VINTAGE",
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS",
+              "TM9",
+              "TM9X",
+              "DC 12",
+              "DC 20"
+            ]
+          }
+        },
+        {
+          "value": "SC3 GOLD",
+          "constraints": {
+            "MODEL": [
+              "MX1",
+              "MX10",
+              "MX10RS",
+              "MX12",
+              "MX12/3",
+              "MX15",
+              "MX16",
+              "MX20",
+              "MX2000/3",
+              "MX2000/8",
+              "MX2000S",
+              "MX2000S/3",
+              "MX2005",
+              "MX28",
+              "MX28 B",
+              "MX410",
+              "MX410 B",
+              "MX8",
+              "MX8 VINTAGE",
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS",
+              "TM9",
+              "TM9X",
+              "DC 12",
+              "DC 20"
+            ]
+          }
+        },
+        {
+          "value": "SC3 SIDEPLATES",
+          "constraints": {
+            "MODEL": [
+              "MX1",
+              "MX10",
+              "MX10RS",
+              "MX12",
+              "MX12/3",
+              "MX15",
+              "MX16",
+              "MX20",
+              "MX2000/3",
+              "MX2000/8",
+              "MX2000S",
+              "MX2000S/3",
+              "MX2005",
+              "MX28",
+              "MX28 B",
+              "MX410",
+              "MX410 B",
+              "MX8",
+              "MX8 VINTAGE",
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS",
+              "TM9",
+              "TM9X",
+              "DC 12",
+              "DC 20"
+            ]
+          }
+        },
+        {
+          "value": "SC3 GOLD SIDEPLATES",
+          "constraints": {
+            "MODEL": [
+              "MX1",
+              "MX10",
+              "MX10RS",
+              "MX12",
+              "MX12/3",
+              "MX15",
+              "MX16",
+              "MX20",
+              "MX2000/3",
+              "MX2000/8",
+              "MX2000S",
+              "MX2000S/3",
+              "MX2005",
+              "MX28",
+              "MX28 B",
+              "MX410",
+              "MX410 B",
+              "MX8",
+              "MX8 VINTAGE",
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS",
+              "TM9",
+              "TM9X",
+              "DC 12",
+              "DC 20"
+            ]
+          }
+        },
+        {
+          "value": "SCO",
+          "constraints": {
+            "MODEL": [
+              "MX1",
+              "MX10",
+              "MX10RS",
+              "MX12",
+              "MX12/3",
+              "MX15",
+              "MX16",
+              "MX20",
+              "MX2000/3",
+              "MX2000/8",
+              "MX2000S",
+              "MX2000S/3",
+              "MX2005",
+              "MX28",
+              "MX28 B",
+              "MX410",
+              "MX410 B",
+              "MX8",
+              "MX8 VINTAGE",
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS",
+              "TM9",
+              "TM9X",
+              "DC 12",
+              "DC 20"
+            ]
+          }
+        },
+        {
+          "value": "SCO GOLD",
+          "constraints": {
+            "MODEL": [
+              "MX1",
+              "MX10",
+              "MX10RS",
+              "MX12",
+              "MX12/3",
+              "MX15",
+              "MX16",
+              "MX20",
+              "MX2000/3",
+              "MX2000/8",
+              "MX2000S",
+              "MX2000S/3",
+              "MX2005",
+              "MX28",
+              "MX28 B",
+              "MX410",
+              "MX410 B",
+              "MX8",
+              "MX8 VINTAGE",
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS",
+              "TM9",
+              "TM9X",
+              "DC 12",
+              "DC 20"
+            ]
+          }
+        },
+        {
+          "value": "SCO SIDEPLATES",
+          "constraints": {
+            "MODEL": [
+              "MX1",
+              "MX10",
+              "MX10RS",
+              "MX12",
+              "MX12/3",
+              "MX15",
+              "MX16",
+              "MX20",
+              "MX2000/3",
+              "MX2000/8",
+              "MX2000S",
+              "MX2000S/3",
+              "MX2005",
+              "MX28",
+              "MX28 B",
+              "MX410",
+              "MX410 B",
+              "MX8",
+              "MX8 VINTAGE",
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS",
+              "TM9",
+              "TM9X",
+              "DC 12",
+              "DC 20"
+            ]
+          }
+        },
+        {
+          "value": "SCO GOLD SIDEPLATES",
+          "constraints": {
+            "MODEL": [
+              "MX1",
+              "MX10",
+              "MX10RS",
+              "MX12",
+              "MX12/3",
+              "MX15",
+              "MX16",
+              "MX20",
+              "MX2000/3",
+              "MX2000/8",
+              "MX2000S",
+              "MX2000S/3",
+              "MX2005",
+              "MX28",
+              "MX28 B",
+              "MX410",
+              "MX410 B",
+              "MX8",
+              "MX8 VINTAGE",
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS",
+              "TM9",
+              "TM9X",
+              "DC 12",
+              "DC 20"
+            ]
+          }
+        },
+        {
+          "value": "EXTRA",
+          "constraints": {
+            "MODEL": [
+              "MX1",
+              "MX10",
+              "MX10RS",
+              "MX12",
+              "MX12/3",
+              "MX15",
+              "MX16",
+              "MX20",
+              "MX2000/3",
+              "MX2000/8",
+              "MX2000S",
+              "MX2000S/3",
+              "MX2005",
+              "MX28",
+              "MX28 B",
+              "MX410",
+              "MX410 B",
+              "MX8",
+              "MX8 VINTAGE",
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS",
+              "TM9",
+              "TM9X",
+              "DC 12",
+              "DC 20"
+            ]
+          }
+        },
+        {
+          "value": "EXTRA GOLD",
+          "constraints": {
+            "MODEL": [
+              "MX1",
+              "MX10",
+              "MX10RS",
+              "MX12",
+              "MX12/3",
+              "MX15",
+              "MX16",
+              "MX20",
+              "MX2000/3",
+              "MX2000/8",
+              "MX2000S",
+              "MX2000S/3",
+              "MX2005",
+              "MX28",
+              "MX28 B",
+              "MX410",
+              "MX410 B",
+              "MX8",
+              "MX8 VINTAGE",
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS",
+              "TM9",
+              "TM9X",
+              "DC 12",
+              "DC 20"
+            ]
+          }
+        },
+        {
+          "value": "EXTRA SUPER",
+          "constraints": {
+            "MODEL": [
+              "MX1",
+              "MX10",
+              "MX10RS",
+              "MX12",
+              "MX12/3",
+              "MX15",
+              "MX16",
+              "MX20",
+              "MX2000/3",
+              "MX2000/8",
+              "MX2000S",
+              "MX2000S/3",
+              "MX2005",
+              "MX28",
+              "MX28 B",
+              "MX410",
+              "MX410 B",
+              "MX8",
+              "MX8 VINTAGE",
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS",
+              "TM9",
+              "TM9X",
+              "DC 12",
+              "DC 20"
+            ]
+          }
+        },
+        {
+          "value": "GOLD",
+          "constraints": {
+            "MODEL": [
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS"
+            ]
+          }
+        },
+        {
+          "value": "PLATINUM",
+          "constraints": {
+            "MODEL": [
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS"
+            ]
+          }
+        },
+        {
+          "value": "2020",
+          "constraints": {
+            "MODEL": [
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS"
+            ]
+          }
+        },
+        {
+          "value": "2024",
+          "constraints": {
+            "MODEL": [
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS"
+            ]
+          }
+        },
+        {
+          "value": "X",
+          "constraints": {
+            "MODEL": [
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS"
+            ]
+          }
+        },
+        {
+          "value": "P",
+          "constraints": {
+            "MODEL": [
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS"
+            ]
+          }
+        },
+        {
+          "value": "2020 PALLADIUM",
+          "constraints": {
+            "MODEL": [
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS"
+            ]
+          }
+        },
+        {
+          "value": "2020 GOLD",
+          "constraints": {
+            "MODEL": [
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS"
+            ]
+          }
+        },
+        {
+          "value": "X GOLD",
+          "constraints": {
+            "MODEL": [
+              "HTS",
+              "HTS 3",
+              "HTS 5",
+              "HT",
+              "HT 3",
+              "HT 5",
+              "HT 8",
+              "HT 10",
+              "HT RS"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "ENGRAVING",
+      "section": "RECEIVER",
+      "dependsOn": [
+        "GRADE"
+      ],
+      "options": []
+    },
+    {
+      "id": "ACTION_FINISH",
+      "section": "RECEIVER",
+      "dependsOn": [],
+      "options": [
+        {
+          "value": "BLUED",
+          "constraints": {}
+        },
+        {
+          "value": "NICKEL",
+          "constraints": {}
+        },
+        {
+          "value": "COIN",
+          "constraints": {}
+        },
+        {
+          "value": "CASE COLORED",
+          "constraints": {}
+        }
+      ]
+    },
+    {
+      "id": "GAUGE",
+      "section": "BARRELS",
+      "dependsOn": [
+        "FRAME_SIZE"
+      ],
+      "options": [
+        {
+          "value": "12",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12"
+            ]
+          }
+        },
+        {
+          "value": "20",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20"
+            ]
+          }
+        },
+        {
+          "value": "28",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20",
+              "28"
+            ]
+          }
+        },
+        {
+          "value": "410",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20",
+              "28"
+            ]
+          }
+        },
+        {
+          "value": "16",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "LENGTH",
+      "section": "BARRELS",
+      "dependsOn": [],
+      "options": [
+        {
+          "value": "28in",
+          "constraints": {}
+        },
+        {
+          "value": "29in",
+          "constraints": {}
+        },
+        {
+          "value": "29.5in",
+          "constraints": {}
+        },
+        {
+          "value": "30in",
+          "constraints": {}
+        },
+        {
+          "value": "31in",
+          "constraints": {}
+        },
+        {
+          "value": "32in",
+          "constraints": {}
+        },
+        {
+          "value": "33in",
+          "constraints": {}
+        },
+        {
+          "value": "34in",
+          "constraints": {}
+        },
+        {
+          "value": "35in",
+          "constraints": {}
+        }
+      ]
+    },
+    {
+      "id": "WEIGHT",
+      "section": "BARRELS",
+      "dependsOn": [],
+      "options": [
+        {
+          "value": "ALAP",
+          "constraints": {}
+        },
+        {
+          "value": "NORMAL",
+          "constraints": {}
+        },
+        {
+          "value": "HEAVY",
+          "constraints": {}
+        }
+      ]
+    },
+    {
+      "id": "CHOKE_TYPE",
+      "section": "BARRELS",
+      "dependsOn": [],
+      "options": [
+        {
+          "value": "SCREW IN",
+          "constraints": {}
+        },
+        {
+          "value": "BOTTOM SCREW IN ONLY",
+          "constraints": {}
+        },
+        {
+          "value": "FIXED",
+          "constraints": {}
+        }
+      ]
+    },
+    {
+      "id": "B1_CHOKE",
+      "section": "BARRELS",
+      "dependsOn": [
+        "CHOKE_TYPE"
+      ],
+      "options": [
+        {
+          "value": "0.000",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "BOTTOM SCREW IN ONLY",
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.004",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "BOTTOM SCREW IN ONLY",
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.008",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "BOTTOM SCREW IN ONLY",
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.012",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "BOTTOM SCREW IN ONLY",
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.016",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "BOTTOM SCREW IN ONLY",
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.020",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "BOTTOM SCREW IN ONLY",
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.024",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "BOTTOM SCREW IN ONLY",
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.028",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "BOTTOM SCREW IN ONLY",
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.032",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "BOTTOM SCREW IN ONLY",
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.036",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "BOTTOM SCREW IN ONLY",
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.040",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "BOTTOM SCREW IN ONLY",
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.044",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "BOTTOM SCREW IN ONLY",
+              "FIXED"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "B2_CHOKE",
+      "section": "BARRELS",
+      "dependsOn": [
+        "CHOKE_TYPE"
+      ],
+      "options": [
+        {
+          "value": "0.000",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.004",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.008",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.012",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.016",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.020",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.024",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.028",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.032",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.036",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.040",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "0.044",
+          "constraints": {
+            "CHOKE_TYPE": [
+              "FIXED"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "CHAMBER_LENGTH",
+      "section": "BARRELS",
+      "dependsOn": [],
+      "options": [
+        {
+          "value": "3in",
+          "constraints": {}
+        }
+      ]
+    },
+    {
+      "id": "BORE_DIAMETER",
+      "section": "BARRELS",
+      "dependsOn": [
+        "GAUGE"
+      ],
+      "options": [
+        {
+          "value": "18.4mm",
+          "constraints": {
+            "GAUGE": [
+              "12"
+            ]
+          }
+        },
+        {
+          "value": "18.5mm",
+          "constraints": {
+            "GAUGE": [
+              "12"
+            ]
+          }
+        },
+        {
+          "value": "18.6mm",
+          "constraints": {
+            "GAUGE": [
+              "12"
+            ]
+          }
+        },
+        {
+          "value": "18.7mm",
+          "constraints": {
+            "GAUGE": [
+              "12"
+            ]
+          }
+        },
+        {
+          "value": "18.8mm",
+          "constraints": {
+            "GAUGE": [
+              "12"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "MONOBLOC",
+      "section": "BARRELS",
+      "dependsOn": [],
+      "options": [
+        {
+          "value": "LIGHT",
+          "constraints": {}
+        },
+        {
+          "value": "HEAVY",
+          "constraints": {}
+        }
+      ]
+    },
+    {
+      "id": "SIDERIBS_LENGTH",
+      "section": "BARRELS",
+      "dependsOn": [],
+      "options": [
+        {
+          "value": "FULL",
+          "constraints": {}
+        },
+        {
+          "value": "HALF",
+          "constraints": {}
+        },
+        {
+          "value": "WITHOUT",
+          "constraints": {}
+        }
+      ]
+    },
+    {
+      "id": "SIDERIBS_VENTILATION",
+      "section": "BARRELS",
+      "dependsOn": [
+        "SIDERIBS_LENGTH"
+      ],
+      "options": [
+        {
+          "value": "VENTILATED",
+          "constraints": {
+            "SIDERIBS_LENGTH": [
+              "FULL",
+              "HALF"
+            ]
+          }
+        },
+        {
+          "value": "SOLID",
+          "constraints": {
+            "SIDERIBS_LENGTH": [
+              "FULL",
+              "HALF"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "BEAD_FRONT",
+      "section": "BARRELS",
+      "dependsOn": [],
+      "options": [
+        {
+          "value": "SCREW",
+          "constraints": {}
+        },
+        {
+          "value": "LONG",
+          "constraints": {}
+        }
+      ]
+    },
+    {
+      "id": "BEAD_FRONT_COLOR",
+      "section": "BARRELS",
+      "dependsOn": [
+        "BEAD_FRONT"
+      ],
+      "options": [
+        {
+          "value": "RED",
+          "constraints": {
+            "BEAD_FRONT": [
+              "LONG"
+            ]
+          }
+        },
+        {
+          "value": "WHITE",
+          "constraints": {
+            "BEAD_FRONT": [
+              "LONG"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "BEAD_FRONT_STYLE",
+      "section": "BARRELS",
+      "dependsOn": [
+        "BEAD_FRONT"
+      ],
+      "options": [
+        {
+          "value": "STANDARD",
+          "constraints": {
+            "BEAD_FRONT": [
+              "SCREW"
+            ]
+          }
+        },
+        {
+          "value": "GAME",
+          "constraints": {
+            "BEAD_FRONT": [
+              "SCREW"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "BEAD_MID",
+      "section": "BARRELS",
+      "dependsOn": [],
+      "options": [
+        {
+          "value": "YES",
+          "constraints": {}
+        },
+        {
+          "value": "NO",
+          "constraints": {}
+        }
+      ]
+    },
+    {
+      "id": "RIB_TYPE",
+      "section": "BARRELS",
+      "dependsOn": [
+        "MODEL"
+      ],
+      "options": [
+        {
+          "value": "FIXED",
+          "constraints": {
+            "MODEL": [
+              "MX1",
+              "MX12",
+              "MX16",
+              "MX20",
+              "MX2000S",
+              "MX28",
+              "MX28 B",
+              "MX410",
+              "MX410 B",
+              "MX8",
+              "MX8 VINTAGE",
+              "HTS",
+              "HT",
+              "TM9"
+            ]
+          }
+        },
+        {
+          "value": "ADJUSTABLE",
+          "constraints": {
+            "MODEL": [
+              "MX10",
+              "MX2000/10",
+              "HT 10",
+              "MX10RS",
+              "HT RS",
+              "MX15",
+              "TM9X",
+              "MX2008",
+              "MX2005",
+              "HT 5",
+              "MX2000/3",
+              "HT 3",
+              "MX12/3",
+              "MX2000/3"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "RIB_HEIGHT",
+      "section": "BARRELS",
+      "dependsOn": [
+        "RIB_TYPE",
+        "FIXED"
+      ],
+      "options": [
+        {
+          "value": "FLAT",
+          "constraints": {
+            "RIB_TYPE": [
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "RAMP 2mm",
+          "constraints": {
+            "RIB_TYPE": [
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "RAMP 4mm",
+          "constraints": {
+            "RIB_TYPE": [
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "RAMP 6mm",
+          "constraints": {
+            "RIB_TYPE": [
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "STEP 2mm",
+          "constraints": {
+            "RIB_TYPE": [
+              "FIXED"
+            ]
+          }
+        },
+        {
+          "value": "STEP 4mm",
+          "constraints": {
+            "RIB_TYPE": [
+              "FIXED"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "RIB_STYLE",
+      "section": "BARRELS",
+      "dependsOn": [],
+      "options": [
+        {
+          "value": "FLAT",
+          "constraints": {}
+        },
+        {
+          "value": "CONCAVE",
+          "constraints": {}
+        }
+      ]
+    },
+    {
+      "id": "RIB_TRAMLINE",
+      "section": "BARRELS",
+      "dependsOn": [],
+      "options": [
+        {
+          "value": "YES",
+          "constraints": {}
+        },
+        {
+          "value": "NO",
+          "constraints": {}
+        }
+      ]
+    },
+    {
+      "id": "RIB_TRAMLINE_SIZE",
+      "section": "BARRELS",
+      "dependsOn": [
+        "RIB_TRAMLINE"
+      ],
+      "options": [
+        {
+          "value": "3MM",
+          "constraints": {
+            "RIB_TRAMLINE": [
+              "YES"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "RIB_TAPER_12",
+      "section": "BARRELS",
+      "dependsOn": [
+        "FRAME_SIZE"
+      ],
+      "options": [
+        {
+          "value": "11mm x  11mm",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12"
+            ]
+          }
+        },
+        {
+          "value": "11mm x 7mm",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12"
+            ]
+          }
+        },
+        {
+          "value": "10mm x 7mm",
+          "constraints": {
+            "FRAME_SIZE": [
+              "20"
+            ]
+          }
+        },
+        {
+          "value": "7mm x 7mm",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20",
+              "28"
+            ]
+          }
+        },
+        {
+          "value": "7mm x 4mm",
+          "constraints": {
+            "FRAME_SIZE": [
+              "12",
+              "20",
+              "28"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "TRIGGER_GROUP_SPRINGS",
+      "section": "BARRELS",
+      "dependsOn": [
+        "TRIGGER_TYPE"
+      ],
+      "options": [
+        {
+          "value": "FLAT",
+          "constraints": {
+            "TRIGGER_TYPE": [
+              "REMOVABLE"
+            ]
+          }
+        },
+        {
+          "value": "COIL",
+          "constraints": {
+            "TRIGGER_TYPE": [
+              "REMOVABLE",
+              "FIXED"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "TRIGGER_GROUP_SELECTIVE",
+      "section": "BARRELS",
+      "dependsOn": [
+        "TRIGGER_TYPE"
+      ],
+      "options": [
+        {
+          "value": "YES",
+          "constraints": {
+            "TRIGGER_TYPE": [
+              "REMOVABLE"
+            ]
+          }
+        },
+        {
+          "value": "NO",
+          "constraints": {
+            "TRIGGER_TYPE": [
+              "REMOVABLE"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "TRIGGER_GROUP_SAFETY",
+      "section": "BARRELS",
+      "dependsOn": [],
+      "options": [
+        {
+          "value": "AUTOSAFE",
+          "constraints": {}
+        },
+        {
+          "value": "STANDARD",
+          "constraints": {}
+        }
+      ]
+    },
+    {
+      "id": "WOOD_UPGRADE",
+      "section": "WOOD",
+      "dependsOn": [],
+      "options": [
+        {
+          "value": "MX STANDARD GRADE",
+          "constraints": {}
+        },
+        {
+          "value": "HT STANDARD GRADE",
+          "constraints": {}
+        },
+        {
+          "value": "MX2000",
+          "constraints": {}
+        },
+        {
+          "value": "SC2",
+          "constraints": {}
+        },
+        {
+          "value": "SC3",
+          "constraints": {}
+        },
+        {
+          "value": "SCO",
+          "constraints": {}
+        },
+        {
+          "value": "SCO GOLD",
+          "constraints": {}
+        },
+        {
+          "value": "EXTRA",
+          "constraints": {}
+        }
+      ]
+    },
+    {
+      "id": "FOREND_SHAPE",
+      "section": "WOOD",
+      "dependsOn": [],
+      "options": [
+        {
+          "value": "SLIM BEAVERTAIL",
+          "constraints": {}
+        },
+        {
+          "value": "BEAVERTAIL",
+          "constraints": {}
+        },
+        {
+          "value": "ENGLISH SPORTING",
+          "constraints": {}
+        },
+        {
+          "value": "THIN ENGLISH SPORTING",
+          "constraints": {}
+        },
+        {
+          "value": "SCHNABLE",
+          "constraints": {}
+        },
+        {
+          "value": "ROUND",
+          "constraints": {}
+        },
+        {
+          "value": "GAME",
+          "constraints": {}
+        }
+      ]
+    },
+    {
+      "id": "FOREND_CHECKER",
+      "section": "WOOD",
+      "dependsOn": [],
+      "options": [
+        {
+          "value": "STANDARD",
+          "constraints": {}
+        },
+        {
+          "value": "FULL",
+          "constraints": {}
+        }
+      ]
+    },
+    {
+      "id": "STOCK_PROFILE",
+      "section": "WOOD",
+      "dependsOn": [],
+      "options": [
+        {
+          "value": "AMERICAN TRAP",
+          "constraints": {}
+        },
+        {
+          "value": "INTERNATIONAL TRAP",
+          "constraints": {}
+        },
+        {
+          "value": "AMERICAN SKEET",
+          "constraints": {}
+        },
+        {
+          "value": "INTERNATIONAL SKEET",
+          "constraints": {}
+        },
+        {
+          "value": "AMERICAN SPORTING",
+          "constraints": {}
+        },
+        {
+          "value": "UK SPORTER",
+          "constraints": {}
+        },
+        {
+          "value": "AMERICAN GAME",
+          "constraints": {}
+        },
+        {
+          "value": "UK GAME",
+          "constraints": {}
+        },
+        {
+          "value": "PRINCE OF WALES",
+          "constraints": {}
+        },
+        {
+          "value": "AUSTRALIANA",
+          "constraints": {}
+        },
+        {
+          "value": "WOODWARD",
+          "constraints": {}
+        },
+        {
+          "value": "PURDEY",
+          "constraints": {}
+        },
+        {
+          "value": "ENGLISH STRAIGHT",
+          "constraints": {}
+        },
+        {
+          "value": "MONTE CARLO",
+          "constraints": {}
+        }
+      ]
+    }
+  ]
+}

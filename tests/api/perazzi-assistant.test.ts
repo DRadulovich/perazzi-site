@@ -56,8 +56,13 @@ it("returns ok guardrail with citations and ignores client system message", asyn
   const body = await response.json();
 
   expect(body.guardrail.status).toBe("ok");
+  expect(body.guardrail.reason).toBeNull();
   expect(body.citations).toHaveLength(1);
   expect(body.answer).toContain("MX2000");
+  expect(body.intents).toBeDefined();
+  expect(body.topics).toBeDefined();
+  expect(body.templates).toBeDefined();
+  expect(body.citations[0]?.excerpt).toBeDefined();
 
   const completionCall = mockChatCreate.mock.calls[0]?.[0];
   expect(completionCall).toBeDefined();
@@ -83,6 +88,9 @@ it("reflects low confidence threshold behavior", async () => {
 
   expect(body.guardrail.status).toBe("low_confidence");
   expect(body.similarity).toBeCloseTo(0.05, 2);
+  expect(body.intents).toBeDefined();
+  expect(body.topics).toBeDefined();
+  expect(body.templates).toBeDefined();
   expect(mockChatCreate).not.toHaveBeenCalled();
   process.env.PERAZZI_LOW_CONF_THRESHOLD = original;
 });

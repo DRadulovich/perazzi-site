@@ -13,6 +13,36 @@ const INTENT_DEFINITIONS: Array<{
   topics: string[];
 }> = [
   {
+    name: "platform_mx",
+    pattern: /\b(mx\s?(8|10|12|2000)?|mx8|mx10|mx12|mx2000)\b/i,
+    topics: ["platforms", "platform_mx", "models"],
+  },
+  {
+    name: "platform_ht",
+    pattern: /\b(high\s*tech|hts?|ht)\b/i,
+    topics: ["platforms", "platform_ht", "models"],
+  },
+  {
+    name: "platform_tm",
+    pattern: /\btm\s?(1|x)?\b/i,
+    topics: ["platforms", "platform_tm", "models"],
+  },
+  {
+    name: "platform_dc",
+    pattern: /\bdc\b/i,
+    topics: ["platforms", "platform_dc", "models"],
+  },
+  {
+    name: "platform_sho",
+    pattern: /\bsho\b/i,
+    topics: ["platforms", "platform_sho", "models"],
+  },
+  {
+    name: "bespoke",
+    pattern: /\b(bespoke|atelier|fitting|build process|custom build|made to order)\b/i,
+    topics: ["bespoke", "models", "platforms"],
+  },
+  {
     name: "models",
     pattern: /\b(model|platform|mx\d{1,3}[a-z]?|high\s*tech|hts|tm1|mx2000|mx8|mx10|spec|rib)\b/i,
     topics: ["models", "specs", "platforms"],
@@ -105,6 +135,11 @@ export function detectRetrievalHints(
   if (context?.mode === "prospect") {
     topics.add("models");
     topics.add("platforms");
+  }
+
+  if (context?.platformSlug) {
+    topics.add("platforms");
+    topics.add(`platform_${context.platformSlug.toLowerCase()}`);
   }
 
   return {

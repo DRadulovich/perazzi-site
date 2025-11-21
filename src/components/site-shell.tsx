@@ -7,9 +7,10 @@ import { ChatWidgetClient } from "@/components/chat";
 
 type SiteShellProps = {
   children: ReactNode;
+  showChatWidget?: boolean;
 };
 
-export async function SiteShell({ children }: SiteShellProps) {
+export async function SiteShell({ children, showChatWidget = true }: SiteShellProps) {
   const t = await getTranslations("Header");
 
   return (
@@ -29,7 +30,7 @@ export async function SiteShell({ children }: SiteShellProps) {
           Placeholder footer · Service, legal, and contact hooks will live here.
         </div>
       </footer>
-      <ChatWidgetClient />
+      {showChatWidget !== false && <ChatWidgetClient />}
       <Analytics />
     </div>
   );

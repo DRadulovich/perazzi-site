@@ -4,6 +4,7 @@ import { urlFor } from "@/sanity/lib/image";
 
 export type ImageBuilderOptions = {
   width?: number;
+  height?: number;
   quality?: number;
 };
 
@@ -34,6 +35,9 @@ export function getSanityImageUrl(
     let builder = urlFor(source);
     if (options.width) {
       builder = builder.width(options.width);
+    }
+    if (options.height) {
+      builder = builder.height(options.height);
     }
     if (options.quality) {
       builder = builder.quality(options.quality);

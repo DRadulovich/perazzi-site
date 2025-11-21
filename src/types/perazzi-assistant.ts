@@ -10,24 +10,30 @@ export interface PerazziAssistantRequest {
   context?: {
     pageUrl?: string | null;
     modelSlug?: string | null;
+    platformSlug?: string | null;
     mode?: string | null;
     locale?: string | null;
   };
+  summaryIntent?: string | null;
 }
 
 export interface Citation {
   chunkId: string;
   title: string;
   sourcePath: string;
+  excerpt?: string;
 }
 
 export interface PerazziAssistantResponse {
   answer: string;
-  citations?: Citation[];
+  citations: Citation[];
   guardrail: {
     status: "ok" | "low_confidence" | "blocked";
-    reason?: string | null;
+    reason: string | null;
   };
+  intents: string[];
+  topics: string[];
+  templates: string[];
   similarity?: number;
 }
 

@@ -29,6 +29,7 @@ const BLOCKED_RESPONSES: Record<string, string> = {
 };
 
 const OPENAI_MODEL = process.env.PERAZZI_COMPLETIONS_MODEL ?? "gpt-4.1-mini";
+const MAX_COMPLETION_TOKENS = Number(process.env.PERAZZI_MAX_COMPLETION_TOKENS ?? 3000);
 const PHASE_ONE_SPEC = fs.readFileSync(
   path.join(process.cwd(), "docs", "assistant-spec.md"),
   "utf8",
@@ -108,6 +109,9 @@ export async function POST(request: Request) {
         answer: guardrailBlock.message,
         guardrail: { status: "blocked", reason: guardrailBlock.reason },
         citations: [],
+        intents: hints.intents,
+        topics: hints.topics,
+        templates: [],
         similarity: 0,
       });
     }
@@ -120,7 +124,7 @@ export async function POST(request: Request) {
         retrieval.chunks,
         retrieval.maxScore,
         "low_confidence",
-        undefined,
+        "retrieval_low",
         hints,
         responseTemplates,
       );
@@ -128,6 +132,9 @@ export async function POST(request: Request) {
         answer: LOW_CONFIDENCE_MESSAGE,
         guardrail: { status: "low_confidence", reason: "retrieval_low" },
         citations: [],
+        intents: hints.intents,
+        topics: hints.topics,
+        templates: responseTemplates,
         similarity: retrieval.maxScore,
       });
     }
@@ -142,12 +149,11 @@ export async function POST(request: Request) {
     logInteraction(body!, retrieval.chunks, retrieval.maxScore, "ok", undefined, hints, responseTemplates);
     return NextResponse.json<PerazziAssistantResponse>({
       answer,
-      citations: retrieval.chunks.map(({ chunkId, title, sourcePath }) => ({
-        chunkId,
-        title,
-        sourcePath,
-      })),
-      guardrail: { status: "ok" },
+      citations: retrieval.chunks.map(mapChunkToCitation),
+      guardrail: { status: "ok", reason: null },
+      intents: hints.intents,
+      topics: hints.topics,
+      templates: responseTemplates,
       similarity: retrieval.maxScore,
     });
   } catch (error) {
@@ -228,7 +234,7 @@ async function generateAssistantAnswer(
     completion = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       temperature: 0.4,
-      max_completion_tokens: 800,
+      max_completion_tokens: MAX_COMPLETION_TOKENS,
       messages: finalMessages,
     });
   } catch (error) {
@@ -280,6 +286,27 @@ ${templateGuidance}When composing responses:
 - Use bold subheadings or bullet lists when outlining model comparisons, steps, or care tips.
 - Keep sentences concise and avoid filler; every line should feel written from the Perazzi workshop floor.
 - If you are not certain, clearly state the limitation and offer to connect the user with Perazzi staff.`;
+}
+
+function buildExcerpt(content: string, limit = 320): string {
+  if (!content) return "";
+  const clean = content.replace(/\s+/g, " ").trim();
+  if (clean.length <= limit) return clean;
+  const truncated = clean.slice(0, limit);
+  const lastSentence = truncated.lastIndexOf(".");
+  if (lastSentence > limit * 0.5) {
+    return `${truncated.slice(0, lastSentence + 1).trim()}`;
+  }
+  return `${truncated.trim()}…`;
+}
+
+function mapChunkToCitation(chunk: RetrievedChunk) {
+  return {
+    chunkId: chunk.chunkId,
+    title: chunk.title,
+    sourcePath: chunk.sourcePath,
+    excerpt: buildExcerpt(chunk.content),
+  };
 }
 
 function logInteraction(
