@@ -53,6 +53,19 @@ export function BuildSheetDrawer({ open, entries, onClose, onRevisit }: BuildShe
     return () => window.removeEventListener("keydown", handleKey);
   }, [open, onClose]);
 
+  const entriesWithDetails = entries.filter((entry) => entry.details);
+  const allCollapsed =
+    entriesWithDetails.length > 0 &&
+    entriesWithDetails.every((entry) => collapsed[entry.id]);
+
+  const handleToggleAll = () => {
+    const next: Record<string, boolean> = {};
+    entriesWithDetails.forEach((entry) => {
+      next[entry.id] = !allCollapsed ? true : false;
+    });
+    setCollapsed((prev) => ({ ...prev, ...next }));
+  };
+
   return (
     <>
       <button
@@ -81,6 +94,15 @@ export function BuildSheetDrawer({ open, entries, onClose, onRevisit }: BuildShe
             <p className="text-sm text-ink">Selections so far</p>
           </div>
           <div className="flex items-center gap-2">
+            {entriesWithDetails.length ? (
+              <button
+                type="button"
+                onClick={handleToggleAll}
+                className="rounded-full border border-subtle bg-card px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+              >
+                {allCollapsed ? "Expand all" : "Collapse all"}
+              </button>
+            ) : null}
             {onClose ? (
               <button
                 type="button"

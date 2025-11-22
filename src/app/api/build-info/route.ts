@@ -3,6 +3,47 @@ import { groq } from "next-sanity";
 import { sanityClient as baseClient } from "../../../../sanity/client";
 import { getSanityImageUrl } from "@/lib/sanityImage";
 
+const skipFields = new Set(["RIB_TAPER_20", "RIB_TAPER_28_410", "RIB_TAPER_SXS"]);
+
+const buildConfiguratorQuery = groq`*[_type == "buildConfigurator"][0]{
+  FRAME_SIZE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  PLATFORM[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  DISCIPLINE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  MODEL[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  TRIGGER_TYPE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  GRADE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  ENGRAVING[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  ACTION_FINISH[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  GAUGE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  LENGTH[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  WEIGHT[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  CHOKE_TYPE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  B1_CHOKE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  B2_CHOKE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  CHAMBER_LENGTH[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  BORE_DIAMETER[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  MONOBLOC[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  SIDERIBS_LENGTH[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  SIDERIBS_VENTILATION[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  BEAD_FRONT[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  BEAD_FRONT_COLOR[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  BEAD_FRONT_STYLE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  BEAD_MID[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  RIB_TYPE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  RIB_HEIGHT[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  RIB_STYLE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  RIB_TRAMLINE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  RIB_TRAMLINE_SIZE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  RIB_TAPER_12[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  TRIGGER_GROUP_SPRINGS[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  TRIGGER_GROUP_SELECTIVE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  TRIGGER_GROUP_SAFETY[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  WOOD_UPGRADE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  FOREND_SHAPE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  FOREND_CHECKER[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+  STOCK_PROFILE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
+}`;
+
 const platformQuery = groq`*[
   _type == "platform" && (
     name match $term ||
@@ -246,6 +287,33 @@ function buildTerms(rawValue: string) {
   return { term, altTerm, compactTerm, looseTerm };
 }
 
+async function fetchConfiguratorItems(client: any, field: string, value: string) {
+  const doc = await client.fetch(buildConfiguratorQuery);
+  if (!doc) return [];
+  const items = doc[field];
+  if (!Array.isArray(items)) return [];
+  const normField = field.trim().toUpperCase();
+  const normValue = value.trim().toUpperCase();
+  const filtered = items.filter((item: any) => {
+    const stepId = (item?.stepId ?? normField).toUpperCase();
+    const optionVal = (item?.optionValue ?? "").toUpperCase();
+    return stepId === normField && optionVal === normValue;
+  });
+  return filtered.map((item: any, idx: number) => ({
+    id: item._id ?? `${field}-${value}-${idx}`,
+    title: item.optionValue ?? item.title ?? value,
+    description: toPlainText(item.description ?? ""),
+    platform: item.platform ?? null,
+    grade: item.grade ?? null,
+    gauges: item.gauge ? [item.gauge] : [],
+    triggerTypes: item.trigger ? [item.trigger] : [],
+    recommendedPlatforms: item.discipline ? [item.discipline] : [],
+    popularModels: [],
+    imageUrl: item.image ? getSanityImageUrl(item.image.asset ?? item.image, { width: 400, quality: 80 }) : null,
+    fullImageUrl: item.image ? getSanityImageUrl(item.image.asset ?? item.image, { width: 1600, quality: 90 }) : null,
+  }));
+}
+
 export async function GET(request: NextRequest) {
   // Use API (non-CDN) client to avoid DNS/cache issues when resolving fresh data.
   const client = baseClient.withConfig({ useCdn: false });
@@ -253,14 +321,28 @@ export async function GET(request: NextRequest) {
   const field = (searchParams.get("field") ?? "").trim().toUpperCase();
   const rawValue = (searchParams.get("value") ?? "").trim();
   const rawModel = (searchParams.get("model") ?? "").trim();
-  const value = normalizeValue(field, rawValue);
-  if (!field || !value) {
+  const normalizedValue = field === "PLATFORM" ? rawValue : normalizeValue(field, rawValue);
+  if (!field || !normalizedValue) {
     return NextResponse.json({ error: "Missing field or value" }, { status: 400 });
   }
-  const { term, altTerm, compactTerm, looseTerm } = buildTerms(value);
-  const lowerValue = value.toLowerCase();
+  const { term, altTerm, compactTerm, looseTerm } = buildTerms(normalizedValue);
+  const lowerValue = normalizedValue.toLowerCase();
   try {
     let rows: any[] = [];
+    // For most fields, try to serve from buildConfigurator first (except engraving and skipped taper fields).
+    if (field === "ENGRAVING") {
+      // handled later in switch
+    } else if (skipFields.has(field)) {
+      return NextResponse.json({ items: [] });
+    } else if (field === "PLATFORM") {
+      const configuratorItems = await fetchConfiguratorItems(client, field, rawValue);
+      return NextResponse.json({ items: configuratorItems });
+    } else {
+      const configuratorItems = await fetchConfiguratorItems(client, field, normalizedValue);
+      if (configuratorItems.length) {
+        return NextResponse.json({ items: configuratorItems });
+      }
+    }
     switch (field) {
       case "PLATFORM":
         rows = await client.fetch(platformQuery, { term, altTerm, compactTerm, looseTerm });

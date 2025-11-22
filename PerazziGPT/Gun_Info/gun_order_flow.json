@@ -2133,7 +2133,7 @@
       ],
       "options": [
         {
-          "value": "11mm x  11mm",
+          "value": "11mm x 11mm",
           "constraints": {
             "FRAME_SIZE": [
               "12"

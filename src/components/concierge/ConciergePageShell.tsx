@@ -100,7 +100,7 @@ const FIELD_LABELS: Record<string, string> = {
   RIB_TAPER_SXS: "Rib Taper Selection",
   TRIGGER_GROUP_SPRINGS: "Trigger Spring Choice",
   TRIGGER_GROUP_SELECTIVE: "Trigger Group Selectability",
-  TRIGGER_GROUP_SAFETY: "Auto Safetey Preference",
+  TRIGGER_GROUP_SAFETY: "Auto Safety Preference",
   WOOD_UPGRADE: "Wood Grade Selection",
   FOREND_SHAPE: "Forend Shape",
   FOREND_CHECKER: "Forend Checkering",
