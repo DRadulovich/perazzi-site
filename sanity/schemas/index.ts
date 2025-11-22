@@ -23,6 +23,8 @@ import { journalLanding } from "./documents/journalLanding";
 import { author } from "./documents/author";
 import { models } from "./documents/models";
 import { engravings } from "./documents/engravings";
+import { buildConfigurator } from "./documents/buildConfigurator";
+import { configuratorSidebarCard } from "./documents/configuratorSidebarCard";
 
 export const schemaTypes = [
   // Objects first so they’re available to documents
@@ -55,4 +57,6 @@ export const schemaTypes = [
   author,
   models,
   engravings,
+  buildConfigurator,
+  configuratorSidebarCard,
 ];

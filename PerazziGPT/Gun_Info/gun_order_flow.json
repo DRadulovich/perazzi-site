@@ -2025,8 +2025,7 @@
       "id": "RIB_HEIGHT",
       "section": "BARRELS",
       "dependsOn": [
-        "RIB_TYPE",
-        "FIXED"
+        "RIB_TYPE"
       ],
       "options": [
         {
