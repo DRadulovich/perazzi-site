@@ -119,11 +119,11 @@ const NavLink = ({ item, pathname }: { item: NavItem; pathname: string }) => {
 const CTAs = () => (
   <div className="flex items-center gap-3">
     <Link
-      href="/service"
+      href="/concierge"
       className="flex items-center gap-2 rounded-xl border border-white/50 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-perazzi-black"
     >
       <FaUserCircle />
-      <span>Service</span>
+      <span>Build Planner</span>
     </Link>
     <a
       href="https://store.perazzi.com"
@@ -182,7 +182,7 @@ const ExperienceFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) =>
     <div className="grid gap-6 sm:grid-cols-2">
       <div>
         <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-ink-muted">
-          For Individuals
+          TRAVEL
         </h3>
         <div className="mt-3 space-y-2">
           <Link
@@ -203,7 +203,7 @@ const ExperienceFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) =>
       </div>
       <div>
         <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-ink-muted">
-          For Teams
+          INQUIRE
         </h3>
         <div className="mt-3 space-y-2">
           <Link
@@ -280,9 +280,9 @@ const NAV_LINKS: NavItem[] = [
   { text: "Home", href: "/" },
   { text: "Shotguns", href: "/shotguns", component: ShotgunsFlyout },
   { text: "Bespoke Journey", href: "/bespoke" },
-  { text: "Concierge", href: "/concierge" },
   { text: "Experience", href: "/experience", component: ExperienceFlyout },
   { text: "Heritage", href: "/heritage", component: HeritageFlyout },
+  { text: "Service", href: "/service" },
 ];
 
 const SHOTGUN_GRID = [

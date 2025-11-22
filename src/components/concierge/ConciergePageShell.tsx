@@ -25,6 +25,13 @@ import type { ChatMessage, PerazziAssistantRequest } from "@/types/perazzi-assis
 import Image from "next/image";
 import { getSanityImageUrl } from "@/lib/sanityImage";
 import clsx from "clsx";
+type SavedBuild = {
+  id: string;
+  name: string;
+  timestamp: number;
+  buildState: BuildState;
+  selectedInfoByField?: Record<string, any[]>;
+};
 
 const FIELD_DESCRIPTIONS: Record<string, string> = {
   FRAME_SIZE: "Choose the frame size that defines core architecture and which gauges/platforms are possible.",
@@ -189,6 +196,8 @@ export function ConciergePageShell() {
   const [detailsDrawerOpen, setDetailsDrawerOpen] = useState(false);
   const [buildSheetDrawerOpen, setBuildSheetDrawerOpen] = useState(false);
   const [selectedInfoByField, setSelectedInfoByField] = useState<Record<string, any[]>>({});
+  const [savedBuilds, setSavedBuilds] = useState<SavedBuild[]>([]);
+  const SAVES_KEY = "perazzi-build-saves";
 
   const {
     messages,
@@ -218,6 +227,28 @@ export function ConciergePageShell() {
       updateContext({ locale });
     }
   }, [locale, updateContext]);
+
+  useEffect(() => {
+    try {
+      const raw = typeof window !== "undefined" ? window.localStorage.getItem(SAVES_KEY) : null;
+      if (raw) {
+        const parsed = JSON.parse(raw) as SavedBuild[];
+        setSavedBuilds(parsed);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const persistSaves = (saves: SavedBuild[]) => {
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(SAVES_KEY, JSON.stringify(saves));
+      }
+    } catch {
+      // ignore persistence failures
+    }
+  };
 
   const activeMode = useMemo(
     () => MODES.find((mode) => mode.value === context.mode)?.value ?? "prospect",
@@ -354,6 +385,48 @@ export function ConciergePageShell() {
     setBuildError(null);
     setBuildState({});
     setSelectedInfoByField({});
+  };
+
+  const handleSaveBuild = () => {
+    const name = typeof window !== "undefined" ? window.prompt("Name this build:") : "";
+    if (!name) return;
+    const newSave: SavedBuild = {
+      id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`,
+      name,
+      timestamp: Date.now(),
+      buildState,
+      selectedInfoByField,
+    };
+    setSavedBuilds((prev) => {
+      const existingNames = prev.find((b) => b.name === name);
+      const filtered = existingNames ? prev.filter((b) => b.name !== name) : [...prev];
+      const next = [...filtered, newSave]
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .slice(0, 3);
+      persistSaves(next);
+      return next;
+    });
+  };
+
+  const handleLoadSaved = (id: string) => {
+    const target = savedBuilds.find((b) => b.id === id);
+    if (!target) return;
+    const confirmed =
+      typeof window === "undefined" ? true : window.confirm("Load this saved build? Current selections will be replaced.");
+    if (!confirmed) return;
+    setBuildState(target.buildState || {});
+    setSelectedInfoByField(target.selectedInfoByField || {});
+    setEditBuildMode(false);
+    setBuildError(null);
+    setBuildSheetDrawerOpen(false);
+  };
+
+  const handleDeleteSaved = (id: string) => {
+    const confirmed =
+      typeof window === "undefined" ? true : window.confirm("Delete this saved build?");
+    if (!confirmed) return;
+    const next = savedBuilds.filter((b) => b.id !== id);
+    persistSaves(next);
   };
 
   const fetchEngravings = useCallback(
@@ -655,7 +728,7 @@ export function ConciergePageShell() {
   return (
     <div className="space-y-8">
       <header className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted">Perazzi Concierge</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted">Perazzi Build Planner</p>
         <div className="space-y-3">
           <h1 className="text-3xl font-semibold text-ink">Designing a Perazzi, Together</h1>
           <div className="space-y-3 text-sm text-ink-muted">
@@ -989,6 +1062,10 @@ export function ConciergePageShell() {
           })}
         onClose={() => setBuildSheetDrawerOpen(false)}
         onRevisit={(fid) => handleRevisitField(fid)}
+        onSave={handleSaveBuild}
+        savedBuilds={savedBuilds}
+        onLoadSaved={handleLoadSaved}
+        onDeleteSaved={handleDeleteSaved}
       />
     </div>
   );

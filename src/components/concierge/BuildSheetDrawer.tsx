@@ -17,14 +17,33 @@ type BuildSheetDetails = {
   fullImageUrl?: string | null;
 };
 
+export type SavedBuild = {
+  id: string;
+  name: string;
+  timestamp: number;
+};
+
 type BuildSheetDrawerProps = {
   open: boolean;
   entries: Array<BuildSheetEntry & { details?: BuildSheetDetails }>;
   onClose?: () => void;
   onRevisit?: (fieldId: string) => void;
+  onSave?: () => void;
+  savedBuilds?: SavedBuild[];
+  onLoadSaved?: (id: string) => void;
+  onDeleteSaved?: (id: string) => void;
 };
 
-export function BuildSheetDrawer({ open, entries, onClose, onRevisit }: BuildSheetDrawerProps) {
+export function BuildSheetDrawer({
+  open,
+  entries,
+  onClose,
+  onRevisit,
+  onSave,
+  savedBuilds = [],
+  onLoadSaved,
+  onDeleteSaved,
+}: BuildSheetDrawerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -88,12 +107,44 @@ export function BuildSheetDrawer({ open, entries, onClose, onRevisit }: BuildShe
         aria-label="Current build sheet"
         aria-hidden={!open}
       >
-        <div className="flex items-center justify-between border-b border-subtle px-4 py-3 sm:px-6">
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Build sheet</p>
-            <p className="text-sm text-ink">Selections so far</p>
+        <div className="flex flex-col gap-2 border-b border-subtle px-4 py-3 sm:px-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Build sheet</p>
+              <p className="text-sm text-ink">Selections so far</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {onClose ? (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-full border border-subtle bg-card px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+                >
+                  Close
+                </button>
+              ) : null}
+              {onRevisit ? (
+                <button
+                  type="button"
+                  onClick={() => setEditMode((prev) => !prev)}
+                  className="rounded-full border border-subtle bg-card px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+                >
+                  {editMode ? "Done" : "Edit"}
+                </button>
+              ) : null}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="h-px w-full bg-subtle" />
+          <div className="flex flex-wrap items-center gap-2">
+            {onSave ? (
+              <button
+                type="button"
+                onClick={onSave}
+                className="rounded-full border border-subtle bg-card px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+              >
+                Save build
+              </button>
+            ) : null}
             {entriesWithDetails.length ? (
               <button
                 type="button"
@@ -103,26 +154,40 @@ export function BuildSheetDrawer({ open, entries, onClose, onRevisit }: BuildShe
                 {allCollapsed ? "Expand all" : "Collapse all"}
               </button>
             ) : null}
-            {onClose ? (
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-full border border-subtle bg-card px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
-              >
-                Close
-              </button>
-            ) : null}
-            {onRevisit ? (
-              <button
-                type="button"
-                onClick={() => setEditMode((prev) => !prev)}
-                className="rounded-full border border-subtle bg-card px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
-              >
-                {editMode ? "Done" : "Edit"}
-              </button>
-            ) : null}
           </div>
         </div>
+        {savedBuilds.length ? (
+          <div className="flex flex-wrap items-center gap-2 border-b border-subtle px-4 py-3 text-xs text-ink sm:px-6">
+            <span className="text-ink-muted uppercase tracking-[0.2em]">Saved</span>
+            {savedBuilds
+              .slice()
+              .sort((a, b) => b.timestamp - a.timestamp)
+              .map((build) => (
+                <div
+                  key={build.id}
+                  className="flex items-center gap-1 rounded-full border border-subtle bg-card px-3 py-1"
+                >
+                  <button
+                    type="button"
+                    onClick={() => onLoadSaved?.(build.id)}
+                    className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink hover:text-ink"
+                  >
+                    {build.name}
+                  </button>
+                  {onDeleteSaved ? (
+                    <button
+                      type="button"
+                      onClick={() => onDeleteSaved(build.id)}
+                      className="text-[11px] font-semibold text-ink-muted hover:text-red-600"
+                      aria-label={`Delete ${build.name}`}
+                    >
+                      ×
+                    </button>
+                  ) : null}
+                </div>
+              ))}
+          </div>
+        ) : null}
         <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
           {entries.length === 0 ? (
             <p className="text-sm text-ink-muted">Selections will appear here as you choose them.</p>
