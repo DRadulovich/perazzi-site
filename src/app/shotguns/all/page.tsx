@@ -7,32 +7,23 @@ import { ModelSearchTable } from "@/components/shotguns/ModelSearchTable";
 import { client } from "@/sanity/lib/client";
 import medalsHero from "@/../Photos/olympic-medals-1.jpg";
 
-const modelsQuery = groq`*[_type == "models"] | order(s_model_name asc) {
+const modelsQuery = groq`*[_type == "allModels"] | order(name asc) {
   _id,
-  "name": s_model_name,
-  "version": s_version_id,
-  "use": s_use_id,
-  "platform": s_platform_id->name,
-  "gaugeNames": array::compact([
-    s_gauge_id_1->name,
-    s_gauge_id_2->name,
-    s_gauge_id_3->name,
-    s_gauge_id_4->name,
-    s_gauge_id_5->name
-  ]),
-  "grade": s_grade_id->name,
-  "image": s_image_local_path.asset,
-  "imageAlt": coalesce(s_image_local_path.alt, s_model_name),
-  "triggerType1": coalesce(s_trigger_type_id_1, ""),
-  "triggerType2": coalesce(s_trigger_type_id_2, ""),
-  "triggerSpring1": coalesce(s_trigger_spring_id_1, ""),
-  "triggerSpring2": coalesce(s_trigger_spring_id_2, ""),
-  "ribType1": coalesce(s_rib_type_id_1, ""),
-  "ribType2": coalesce(s_rib_type_id_2, ""),
-  "ribStyle1": coalesce(s_rib_style_id_1, ""),
-  "ribStyle2": coalesce(s_rib_style_id_2, ""),
-  "ribStyle3": coalesce(s_rib_style_id_3, ""),
-  "ribStyle4": coalesce(s_rib_style_id_4, "")
+  name,
+  baseModel,
+  category,
+  "use": category,
+  "platform": platform->name,
+  "platformSlug": platform->slug.current,
+  gauges,
+  grade->{
+    name
+  },
+  image,
+  imageFallbackUrl,
+  "imageAlt": coalesce(image.alt, name),
+  trigger,
+  rib
 }`;
 
 const isNonEmptyString = (value?: string | null): value is string => Boolean(value && value.trim().length);
@@ -40,23 +31,18 @@ const isNonEmptyString = (value?: string | null): value is string => Boolean(val
 type ModelQueryResult = {
   _id: string;
   name?: string;
-  version?: string;
+  baseModel?: string;
+  category?: string;
   use?: string;
   platform?: string;
-  gaugeNames?: string[];
-  grade?: string;
+  platformSlug?: string | null;
+  gauges?: string[];
+  grade?: { name?: string };
   image?: SanityImageSource | null;
+  imageFallbackUrl?: string | null;
   imageAlt?: string;
-  triggerType1?: string;
-  triggerType2?: string;
-  triggerSpring1?: string;
-  triggerSpring2?: string;
-  ribType1?: string;
-  ribType2?: string;
-  ribStyle1?: string;
-  ribStyle2?: string;
-  ribStyle3?: string;
-  ribStyle4?: string;
+  trigger?: { type?: string; springs?: string[] };
+  rib?: { type?: string; adjustableNotch?: number | null; heightMm?: number | null; styles?: string[] };
 };
 
 export const metadata: Metadata = {
@@ -70,17 +56,20 @@ export default async function ModelSearchPage() {
   const models = rawModels.map((model) => ({
     _id: model._id,
     name: model.name || "",
-    version: model.version || "",
+    version: model.baseModel || "",
     use: model.use || "",
     platform: model.platform || "",
-    gaugeNames: model.gaugeNames ?? [],
-    grade: model.grade || "",
+    gaugeNames: model.gauges ?? [],
+    grade: model.grade?.name || "",
     image: model.image || null,
+    imageFallbackUrl: model.imageFallbackUrl || null,
     imageAlt: model.imageAlt || model.name || "Perazzi model",
-    triggerTypes: [model.triggerType1, model.triggerType2].filter(isNonEmptyString),
-    triggerSprings: [model.triggerSpring1, model.triggerSpring2].filter(isNonEmptyString),
-    ribTypes: [model.ribType1, model.ribType2].filter(isNonEmptyString),
-    ribStyles: [model.ribStyle1, model.ribStyle2, model.ribStyle3, model.ribStyle4].filter(isNonEmptyString),
+    triggerTypes: model.trigger?.type ? [model.trigger.type] : [],
+    triggerSprings: (model.trigger?.springs || []).filter(isNonEmptyString),
+    ribTypes: model.rib?.type ? [model.rib.type] : [],
+    ribStyles: (model.rib?.styles || []).filter(isNonEmptyString),
+    ribNotch: model.rib?.adjustableNotch ?? null,
+    ribHeight: model.rib?.heightMm ?? null,
   }));
 
   return (

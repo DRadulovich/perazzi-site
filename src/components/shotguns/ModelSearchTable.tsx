@@ -22,7 +22,10 @@ export type ModelSearchRow = {
   triggerSprings?: string[];
   ribTypes?: string[];
   ribStyles?: string[];
+  ribNotch?: number | null;
+  ribHeight?: number | null;
   image?: SanityImageSource | null;
+  imageFallbackUrl?: string | null;
   imageAlt?: string;
 };
 
@@ -38,13 +41,15 @@ const CARD_SHELL_CLASS =
 const SPEC_PANEL_CLASS =
   "grid gap-4 border-t border-white/10 bg-black/40 px-6 py-5 text-sm text-neutral-200 sm:grid-cols-2";
 const DETAIL_PANEL_CLASS =
-  "flex-1 space-y-5 rounded-3xl border border-white/10 bg-black/40 p-4 sm:p-6";
+  "flex-1 space-y-4 rounded-3xl border border-white/10 bg-black/40 p-4 sm:p-5";
 
 export function ModelSearchTable({ models }: ModelShowcaseProps) {
   const [query, setQuery] = useState("");
   const [platformFilters, setPlatformFilters] = useState<string[]>([]);
   const [gaugeFilters, setGaugeFilters] = useState<string[]>([]);
   const [useFilters, setUseFilters] = useState<string[]>([]);
+  const [triggerTypeFilters, setTriggerTypeFilters] = useState<string[]>([]);
+  const [ribTypeFilters, setRibTypeFilters] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState<ModelSearchRow | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [isPending, startTransition] = useTransition();
@@ -136,6 +141,8 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
     const platform: Record<string, number> = {};
     const gauge: Record<string, number> = {};
     const useCount: Record<string, number> = {};
+    const triggerTypeCount: Record<string, number> = {};
+    const ribTypeCount: Record<string, number> = {};
 
     for (const model of searchFiltered) {
       if (model.platform) platform[model.platform] = (platform[model.platform] || 0) + 1;
@@ -143,8 +150,14 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
         gauge[g] = (gauge[g] || 0) + 1;
       });
       if (model.use) useCount[model.use] = (useCount[model.use] || 0) + 1;
+      (model.triggerTypes || []).forEach((t) => {
+        if (t) triggerTypeCount[t] = (triggerTypeCount[t] || 0) + 1;
+      });
+      (model.ribTypes || []).forEach((r) => {
+        if (r) ribTypeCount[r] = (ribTypeCount[r] || 0) + 1;
+      });
     }
-    return { platform, gauge, use: useCount };
+    return { platform, gauge, use: useCount, triggerType: triggerTypeCount, ribType: ribTypeCount };
   }, [searchFiltered]);
 
   const platformOptions = useMemo(
@@ -159,6 +172,14 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
     () => Object.entries(optionCounts.use).map(([value, count]) => ({ value, count })),
     [optionCounts.use],
   );
+  const triggerTypeOptions = useMemo(
+    () => Object.entries(optionCounts.triggerType).map(([value, count]) => ({ value, count })),
+    [optionCounts.triggerType],
+  );
+  const ribTypeOptions = useMemo(
+    () => Object.entries(optionCounts.ribType).map(([value, count]) => ({ value, count })),
+    [optionCounts.ribType],
+  );
 
   const filteredModels = useMemo(() => {
     return searchFiltered.filter((model) => {
@@ -168,13 +189,20 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
       const matchesGauge =
         !gaugeFilters.length ||
         (model.gaugeNames || []).some((gauge) => gaugeFilters.includes(gauge));
+      const matchesTrigger =
+        !triggerTypeFilters.length ||
+        (model.triggerTypes || []).some((t) => triggerTypeFilters.includes(t));
+      const matchesRib =
+        !ribTypeFilters.length || (model.ribTypes || []).some((r) => ribTypeFilters.includes(r));
 
       if (!matchesPlatform) return false;
       if (!matchesUse) return false;
       if (!matchesGauge) return false;
+      if (!matchesTrigger) return false;
+      if (!matchesRib) return false;
       return true;
     });
-  }, [searchFiltered, platformFilters, useFilters, gaugeFilters]);
+  }, [searchFiltered, platformFilters, useFilters, gaugeFilters, triggerTypeFilters, ribTypeFilters]);
 
   useEffect(() => {
     const node = loadMoreRef.current;
@@ -257,7 +285,9 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
       )
     : displayModels;
   const modalImageUrl = selectedModel
-    ? getSanityImageUrl(selectedModel.image, { width: 3200, quality: 95 })
+    ? getSanityImageUrl(selectedModel.image, { width: 3200, quality: 95 }) ||
+      selectedModel.imageFallbackUrl ||
+      null
     : null;
 
   return (
@@ -299,7 +329,23 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
             values={useFilters}
             onToggle={handleMultiFilterChange(useFilters, setUseFilters)}
           />
-          {(platformFilters.length || gaugeFilters.length || useFilters.length) && (
+          <FilterGroup
+            label="Trigger"
+            options={triggerTypeOptions}
+            values={triggerTypeFilters}
+            onToggle={handleMultiFilterChange(triggerTypeFilters, setTriggerTypeFilters)}
+          />
+          <FilterGroup
+            label="Rib"
+            options={ribTypeOptions}
+            values={ribTypeFilters}
+            onToggle={handleMultiFilterChange(ribTypeFilters, setRibTypeFilters)}
+          />
+          {(platformFilters.length ||
+            gaugeFilters.length ||
+            useFilters.length ||
+            triggerTypeFilters.length ||
+            ribTypeFilters.length) && (
             <button
               type="button"
               onClick={clearFilters}
@@ -316,7 +362,8 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
           if (!model) {
             return <CardSkeleton key={`skeleton-${index}`} />;
           }
-          const cardImageUrl = getSanityImageUrl(model.image, { width: 2400, quality: 90 });
+          const cardImageUrl =
+            getSanityImageUrl(model.image, { width: 2400, quality: 90 }) || model.imageFallbackUrl || null;
           return (
             <article
               key={model._id}
@@ -345,15 +392,11 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                   <p className="text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
                     {model.use}
                   </p>
-                  {/*
-                    Show model name and grade together to read as a single entry, e.g. "DC 12 - Standard".
-                    Keep highlight behavior consistent.
+                 {/*
+                    Keep highlight behavior consistent while showing only the model name on the card.
                   */}
                   <h3 className="text-2xl font-semibold leading-tight">
-                    {highlightText(
-                      model.grade ? `${model.name} - ${model.grade}` : model.name,
-                      query,
-                    )}
+                    {highlightText(model.name, query)}
                   </h3>
                   <p className="text-sm text-neutral-600">
                     {highlightText((model.gaugeNames || []).join(", ") || "", query)}
@@ -362,12 +405,26 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
               </div>
 
               <div className={SPEC_PANEL_CLASS}>
-                <Spec label="Platform" value={model.platform} />
                 <Spec label="Trigger" value={(model.triggerTypes || []).join(", ") || undefined} />
                 <Spec label="Springs" value={(model.triggerSprings || []).join(", ") || undefined} />
                 <Spec label="Rib" value={(model.ribTypes || []).join(", ") || undefined} />
                 <Spec label="Rib Style" value={(model.ribStyles || []).join(", ") || undefined} />
-                <Spec label="Grade" value={model.grade} />
+                <Spec
+                  label="Rib Notch"
+                  value={
+                    model.ribNotch !== null && model.ribNotch !== undefined
+                      ? String(model.ribNotch)
+                      : undefined
+                  }
+                />
+                <Spec
+                  label="Rib Height"
+                  value={
+                    model.ribHeight !== null && model.ribHeight !== undefined
+                      ? `${model.ribHeight} mm`
+                      : undefined
+                  }
+                />
               </div>
               <div className="border-t border-white/5 bg-black/50 px-6 py-4 text-right">
                 <button
@@ -446,24 +503,35 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                 </div>
               </div>
 
-              <div className={`${DETAIL_PANEL_CLASS} grid gap-4 sm:grid-cols-2 lg:grid-cols-3`}>
-                <DetailGrid label="Platform" value={selectedModel.platform} />
-                <DetailGrid
-                  label="Gauge"
-                  value={(selectedModel.gaugeNames || []).join(", ") || undefined}
-                />
-                <DetailGrid
-                  label="Trigger Type"
-                  value={renderList(selectedModel.triggerTypes)}
-                />
-                <DetailGrid
-                  label="Trigger Springs"
-                  value={renderList(selectedModel.triggerSprings)}
-                />
-                <DetailGrid label="Rib Type" value={renderList(selectedModel.ribTypes)} />
-                <DetailGrid label="Rib Style" value={renderList(selectedModel.ribStyles)} />
-                <DetailGrid label="Use" value={selectedModel.use || undefined} />
-                <DetailGrid label="Grade" value={selectedModel.grade || undefined} />
+              <div className={`${DETAIL_PANEL_CLASS} grid gap-3 sm:grid-cols-2 lg:grid-cols-3`}>
+                {[
+                  { label: "Platform", value: selectedModel.platform },
+                  { label: "Use", value: selectedModel.use || undefined },
+                  { label: "Gauge", value: renderList(selectedModel.gaugeNames) },
+                  { label: "Trigger Type", value: renderList(selectedModel.triggerTypes) },
+                  { label: "Trigger Springs", value: renderList(selectedModel.triggerSprings) },
+                  { label: "Rib Type", value: renderList(selectedModel.ribTypes) },
+                  { label: "Rib Style", value: renderList(selectedModel.ribStyles) },
+                  {
+                    label: "Rib Notch",
+                    value:
+                      selectedModel.ribNotch !== null && selectedModel.ribNotch !== undefined
+                        ? String(selectedModel.ribNotch)
+                        : undefined,
+                  },
+                  {
+                    label: "Rib Height",
+                    value:
+                      selectedModel.ribHeight !== null && selectedModel.ribHeight !== undefined
+                        ? `${selectedModel.ribHeight} mm`
+                        : undefined,
+                  },
+                  { label: "Grade", value: selectedModel.grade || undefined },
+                ]
+                  .filter((entry) => Boolean(entry.value))
+                  .map((entry) => (
+                    <DetailGrid key={entry.label} label={entry.label} value={entry.value} />
+                  ))}
               </div>
             </div>
           </div>
@@ -510,18 +578,32 @@ function FilterGroup({
     <div className="flex flex-wrap items-center gap-3">
       <span className="text-sm uppercase tracking-[0.3em] text-neutral-500">{label}</span>
       <div className="flex flex-wrap gap-2">
-        <FilterChip active={!values.length} label={`All (${total})`} onClick={handleAll} />
+        <FilterChip active={!values.length} label="All" onClick={handleAll} />
         {options.map((option) => (
           <FilterChip
             key={option.value}
             active={values.includes(option.value)}
-            label={`${option.value} (${option.count})`}
+            label={option.value}
             onClick={() => onToggle(option.value)}
           />
         ))}
       </div>
     </div>
   );
+}
+
+function humanizeValue(value?: string | null) {
+  if (!value) return undefined;
+  const mmMatch = value.match(/^(\d+(?:\.\d+)?)\s*mm$/i);
+  if (mmMatch) {
+    return `${mmMatch[1]}mm`;
+  }
+  const cleaned = value.replace(/[_-]+/g, " ").trim();
+  return cleaned
+    .split(" ")
+    .map((word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : ""))
+    .join(" ")
+    .trim();
 }
 
 function FilterChip({
@@ -550,30 +632,36 @@ function FilterChip({
 }
 
 function Spec({ label, value }: { label: string; value?: string }) {
+  const display = humanizeValue(value) ?? value;
   return (
     <div>
       <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-perazzi-red">
         {label}
       </p>
-      <p className="text-sm text-white">{value || "—"}</p>
+      <p className="text-sm text-white">{display || "—"}</p>
     </div>
   );
 }
 
 function DetailGrid({ label, value }: { label: string; value?: string }) {
+  const display = humanizeValue(value) ?? value;
   return (
     <div>
       <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-perazzi-red">
         {label}
       </p>
-      <p className="text-lg text-white">{value || "—"}</p>
+      <p className="text-lg text-white">{display || "—"}</p>
     </div>
   );
 }
 
 function renderList(list: SpecList) {
   if (!list || !list.length) return undefined;
-  return list.join(", ");
+  const mapped = list
+    .map((entry) => humanizeValue(entry) ?? entry)
+    .filter(Boolean) as string[];
+  if (!mapped.length) return undefined;
+  return mapped.join(", ");
 }
 
 function highlightText(text: string, needle: string): ReactNode {
