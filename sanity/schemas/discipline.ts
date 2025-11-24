@@ -40,7 +40,7 @@ export const discipline = defineType({
       name: "popularModels",
       title: "Most Popular Models",
       type: "array",
-      of: [{ type: "reference", to: [{ type: "models" }] }],
+      of: [{ type: "reference", to: [{ type: "allModels" }] }],
       description: "Select one or more models that best represent this discipline.",
     }),
   ],

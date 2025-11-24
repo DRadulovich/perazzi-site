@@ -63,33 +63,28 @@ const platformQuery = groq`*[
 }[0...5]`;
 
 const modelQuery = groq`*[
-  _type == "models" && (
-    s_model_name match $term ||
-    s_model_name match $altTerm ||
-    s_model_name match $compactTerm ||
-    s_model_name match $looseTerm ||
-    s_version_id match $term ||
-    s_version_id match $altTerm ||
-    s_version_id match $compactTerm ||
-    s_version_id match $looseTerm
+  _type == "allModels" && (
+    name match $term ||
+    name match $altTerm ||
+    name match $compactTerm ||
+    name match $looseTerm ||
+    slug.current match $term ||
+    slug.current match $altTerm ||
+    slug.current match $compactTerm ||
+    slug.current match $looseTerm ||
+    baseModel match $term ||
+    baseModel match $altTerm ||
+    baseModel match $compactTerm ||
+    baseModel match $looseTerm
   )
 ]{
   _id,
-  "title": s_model_name,
-  "platform": s_platform_id->name,
-  "gauges": [
-    s_gauge_id_1->name,
-    s_gauge_id_2->name,
-    s_gauge_id_3->name,
-    s_gauge_id_4->name,
-    s_gauge_id_5->name
-  ],
-  "triggerTypes": [
-    s_trigger_type_id_1,
-    s_trigger_type_id_2
-  ],
-  "grade": s_grade_id->name,
-  "image": s_image_local_path.asset
+  "title": name,
+  "platform": platform->name,
+  "gauges": gauges,
+  "triggerTypes": trigger.type ? [trigger.type] : [],
+  "grade": grade->name,
+  "image": coalesce(image.asset, null)
 }[0...5]`;
 
 const disciplineQuery = groq`*[_type == "discipline" && (name match $term || slug.current match $term)]{
@@ -97,7 +92,7 @@ const disciplineQuery = groq`*[_type == "discipline" && (name match $term || slu
   "title": name,
   overview,
   "recommendedPlatforms": recommendedPlatforms[]->name,
-  "popularModels": popularModels[]->s_model_name
+  "popularModels": []
 }[0...5]`;
 
 const gaugeQuery = groq`*[_type == "gauge" && (name match $term || name match $altTerm || name match $compactTerm || name match $looseTerm)]{
@@ -121,18 +116,18 @@ const gradeQuery = groq`*[
 }[0...5]`;
 
 const modelGradeQuery = groq`*[
-  _type == "models" && (
-    s_model_name match $modelTerm ||
-    s_model_name match $altModelTerm ||
-    s_model_name match $compactModelTerm ||
-    s_model_name match $looseModelTerm ||
-    s_version_id match $modelTerm ||
-    s_version_id match $altModelTerm ||
-    s_version_id match $compactModelTerm ||
-    s_version_id match $looseModelTerm
+  _type == "allModels" && (
+    name match $modelTerm ||
+    name match $altModelTerm ||
+    name match $compactModelTerm ||
+    name match $looseModelTerm ||
+    slug.current match $modelTerm ||
+    slug.current match $altModelTerm ||
+    slug.current match $compactModelTerm ||
+    slug.current match $looseModelTerm
   )
 ][0...3]{
-  "grade": s_grade_id->name
+  "grade": grade->name
 }`;
 
 const platformFallback = groq`*[_type == "platform"] | order(name asc)[0...10]{
@@ -143,29 +138,20 @@ const platformFallback = groq`*[_type == "platform"] | order(name asc)[0...10]{
 }`;
 
 const modelFallback = groq`*[
-  _type == "models" && (
-    lower(s_model_name) == $lowerValue ||
-    s_model_name match $looseTerm ||
-    lower(s_version_id) == $lowerValue ||
-    s_version_id match $looseTerm
+  _type == "allModels" && (
+    lower(name) == $lowerValue ||
+    name match $looseTerm ||
+    slug.current match $looseTerm ||
+    lower(baseModel) == $lowerValue
   )
 ][0...10]{
   _id,
-  "title": s_model_name,
-  "platform": s_platform_id->name,
-  "gauges": [
-    s_gauge_id_1->name,
-    s_gauge_id_2->name,
-    s_gauge_id_3->name,
-    s_gauge_id_4->name,
-    s_gauge_id_5->name
-  ],
-  "triggerTypes": [
-    s_trigger_type_id_1,
-    s_trigger_type_id_2
-  ],
-  "grade": s_grade_id->name,
-  "image": s_image_local_path.asset
+  "title": name,
+  "platform": platform->name,
+  "gauges": gauges,
+  "triggerTypes": trigger.type ? [trigger.type] : [],
+  "grade": grade->name,
+  "image": coalesce(image.asset, null)
 }`;
 
 const disciplineFallback = groq`*[
@@ -179,7 +165,7 @@ const disciplineFallback = groq`*[
   "title": name,
   overview,
   "recommendedPlatforms": recommendedPlatforms[]->name,
-  "popularModels": popularModels[]->s_model_name
+  "popularModels": []
 }`;
 
 const gaugeFallback = groq`*[
@@ -206,25 +192,18 @@ const gradeFallback = groq`*[
 }`;
 
 const triggerTypeQuery = groq`*[
-  _type == "models" && (
-    s_trigger_type_id_1 match $term ||
-    s_trigger_type_id_1 match $altTerm ||
-    s_trigger_type_id_1 match $compactTerm ||
-    s_trigger_type_id_1 match $looseTerm ||
-    s_trigger_type_id_2 match $term ||
-    s_trigger_type_id_2 match $altTerm ||
-    s_trigger_type_id_2 match $compactTerm ||
-    s_trigger_type_id_2 match $looseTerm
+  _type == "allModels" && (
+    trigger.type match $term ||
+    trigger.type match $altTerm ||
+    trigger.type match $compactTerm ||
+    trigger.type match $looseTerm
   )
 ]{
   _id,
-  "title": s_model_name,
-  "platform": s_platform_id->name,
-  "triggerTypes": [
-    s_trigger_type_id_1,
-    s_trigger_type_id_2
-  ],
-  "image": s_image_local_path.asset
+  "title": name,
+  "platform": platform->name,
+  "triggerTypes": trigger.type ? [trigger.type] : [],
+  "image": coalesce(image.asset, null)
 }[0...5]`;
 
 const PLATFORM_ALIASES: Record<string, string> = {

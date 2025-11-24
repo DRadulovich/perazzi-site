@@ -32,6 +32,13 @@
       "overlap_words": 25
     },
     {
+      "glob": "PerazziGPT/DEVELOPER/corpus_models_details.json",
+      "type": "model_spec",
+      "objects_per_chunk": 1,
+      "target_words": 180,
+      "overlap_words": 0
+    },
+    {
       "glob": "PerazziGPT/Live_Site_Narratives/*.md",
       "type": "narrative",
       "target_words": 400,
@@ -52,7 +59,7 @@
       "overlap_words": 0
     },
     {
-      "glob": "PerazziGPT/Gun_Info/*.md",
+      "glob": "PerazziGPT/Gun_Info/Manufacture_Year.md",
       "type": "reference",
       "target_rows": 4,
       "target_words": 220,
@@ -61,13 +68,17 @@
       "overlap_words": 15
     },
     {
-      "glob": "PerazziGPT/Gun_Info/*.json",
-      "type": "json",
-      "objects_per_chunk": 2
+      "glob": "PerazziGPT/Gun_Info/Rib_Information.md",
+      "type": "reference",
+      "target_rows": 4,
+      "target_words": 220,
+      "max_words": 320,
+      "max_tokens": 700,
+      "overlap_words": 15
     },
     {
-      "glob": "PerazziGPT/Sanity_Info/*.json",
-      "type": "sanity_dataset",
+      "glob": "PerazziGPT/Sanity_Info/authorizedDealer.json",
+      "type": "dealer_sanity",
       "objects_per_chunk": 1,
       "target_words": 220,
       "overlap_words": 0

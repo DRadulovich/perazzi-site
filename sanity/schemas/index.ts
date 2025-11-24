@@ -21,8 +21,8 @@ import { heritageHome } from "./documents/heritageHome";
 import { serviceHome } from "./documents/serviceHome";
 import { journalLanding } from "./documents/journalLanding";
 import { author } from "./documents/author";
-import { models } from "./documents/models";
 import { engravings } from "./documents/engravings";
+import { allModels } from "./documents/allModels";
 import { buildConfigurator } from "./documents/buildConfigurator";
 import { configuratorSidebarCard } from "./documents/configuratorSidebarCard";
 
@@ -55,8 +55,8 @@ export const schemaTypes = [
   serviceHome,
   journalLanding,
   author,
-  models,
   engravings,
+  allModels,
   buildConfigurator,
   configuratorSidebarCard,
 ];

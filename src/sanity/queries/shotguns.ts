@@ -83,8 +83,8 @@ type DisciplineResponse = {
   recommendedPlatforms?: Array<{ _ref?: string }>;
   popularModels?: Array<{
     _id?: string;
-    s_model_name?: string;
-    s_image_local_path?: SanityImageResult;
+    name?: string;
+    image?: SanityImageResult;
   }>;
 };
 
@@ -276,8 +276,8 @@ const disciplinesQuery = groq`
     recommendedPlatforms,
     popularModels[]->{
       _id,
-      s_model_name,
-      s_image_local_path{
+      name,
+      image{
         ${imageWithMetaFields}
       }
     }
@@ -416,8 +416,8 @@ export async function getDisciplines(): Promise<ShotgunsDisciplinePayload[]> {
           model?._id
             ? {
                 id: model._id as string,
-                name: model.s_model_name ?? undefined,
-                hero: mapImageResult(model.s_image_local_path ?? null),
+                name: model.name ?? undefined,
+                hero: mapImageResult(model.image ?? null),
               }
             : null,
         )

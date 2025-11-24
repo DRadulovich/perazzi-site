@@ -3,9 +3,9 @@ import type { StructureResolver } from "sanity/desk";
 // https://www.sanity.io/docs/structure-builder-cheat-sheet
 export const structure: StructureResolver = (S) => {
   const listItems = S.documentTypeListItems().map((listItem) => {
-    if (listItem.getId() === "models") {
+    if (listItem.getId() === "allModels") {
       return listItem.child(
-        S.documentTypeList("models").defaultOrdering([{ field: "s_model_name", direction: "asc" }]),
+        S.documentTypeList("allModels").defaultOrdering([{ field: "name", direction: "asc" }]),
       );
     }
     return listItem;

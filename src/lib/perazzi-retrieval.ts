@@ -149,12 +149,71 @@ export function computeBoost(
     }
   }
 
+  const contextPlatform = context?.platformSlug?.toLowerCase();
+  const metadataPlatforms: string[] = Array.isArray(metadata.platform_tags)
+    ? metadata.platform_tags.map((value: any) => value.toString().toLowerCase())
+    : metadata.platform
+      ? [metadata.platform.toString().toLowerCase()]
+      : [];
+  if (contextPlatform && metadataPlatforms.includes(contextPlatform)) {
+    boost += 0.1;
+  }
+  if (hints?.topics?.length) {
+    const hintPlatforms = hints.topics
+      .filter((t) => t.startsWith("platform_"))
+      .map((t) => t.replace("platform_", ""));
+    if (hintPlatforms.some((p) => metadataPlatforms.includes(p))) {
+      boost += 0.08;
+    }
+  }
+
   if (hints?.topics?.length) {
     const chunkTopics: string[] = Array.isArray(metadata.topics)
       ? metadata.topics.map((value: any) => value.toString().toLowerCase())
       : [];
     if (chunkTopics.some((topic) => hints.topics.includes(topic))) {
       boost += 0.12;
+    }
+  }
+
+  // Discipline alignment
+  if (hints?.topics?.length) {
+    const hintDisciplines = hints.topics
+      .filter((t) => t.startsWith("discipline_"))
+      .map((t) => t.replace("discipline_", ""));
+    const chunkDisciplines: string[] = Array.isArray(metadata.discipline_tags)
+      ? metadata.discipline_tags.map((d: any) => d.toString().toLowerCase())
+      : [];
+    if (hintDisciplines.some((d) => chunkDisciplines.includes(d))) {
+      boost += 0.06;
+    }
+  }
+
+  // Grade alignment
+  if (hints?.topics?.length) {
+    const hintGrades = hints.topics.filter((t) => t.startsWith("grade_"));
+    const chunkTopics: string[] = Array.isArray(metadata.topics)
+      ? metadata.topics.map((value: any) => value.toString().toLowerCase())
+      : [];
+    if (hintGrades.some((g) => chunkTopics.includes(g))) {
+      boost += 0.05;
+    }
+  }
+
+  // Rib alignment
+  if (hints?.topics?.length) {
+    const chunkTopics: string[] = Array.isArray(metadata.topics)
+      ? metadata.topics.map((value: any) => value.toString().toLowerCase())
+      : [];
+    if (hints.topics.includes("rib_adjustable") && chunkTopics.includes("rib_adjustable")) {
+      boost += 0.05;
+    }
+    if (hints.topics.includes("rib_fixed") && chunkTopics.includes("rib_fixed")) {
+      boost += 0.05;
+    }
+    const notchHints = hints.topics.filter((t) => t.startsWith("rib_notch_"));
+    if (notchHints.some((n) => chunkTopics.includes(n))) {
+      boost += 0.05;
     }
   }
 

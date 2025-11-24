@@ -118,3 +118,7 @@ structured_refs: []
 ```
 
 Treat this document as the contract between ingestion, the vector store, and the Concierge API. Update it whenever metadata requirements change, keeping version history in git for auditability.
+
+## 11. Model Corpus Notes
+- **Assistant (RAG) model specs:** `PerazziGPT/DEVELOPER/corpus_models_details.json` emits `model_spec` chunks with platform/discipline/grade/rib/trigger metadata, `topics` (e.g., `platform_*`, `discipline_*`, `grade_*`, `rib_*`), and `specText` for embeddings.
+- **Front-end display:** Sanity `allModels` remains a simplified (~79 models) dataset populated from `PerazziGPT/DEVELOPER/corpus_models_sanity.json` via `scripts/importAllModels.ts` and is not ingested into RAG.

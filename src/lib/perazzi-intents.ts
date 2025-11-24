@@ -77,6 +77,51 @@ const INTENT_DEFINITIONS: Array<{
     pattern: /\b(price|cost|how much|msrp|retail)\b/i,
     topics: ["pricing_policies"],
   },
+  {
+    name: "discipline_trap",
+    pattern: /\b(trap|bunker|handicap)\b/i,
+    topics: ["discipline_trap"],
+  },
+  {
+    name: "discipline_skeet",
+    pattern: /\b(skeet)\b/i,
+    topics: ["discipline_skeet"],
+  },
+  {
+    name: "discipline_sporting",
+    pattern: /\b(sporting|fitasc|clays)\b/i,
+    topics: ["discipline_sporting"],
+  },
+  {
+    name: "discipline_game",
+    pattern: /\b(game|field|hunting|live bird|pigeon|helice)\b/i,
+    topics: ["discipline_game"],
+  },
+  {
+    name: "rib_adjustable",
+    pattern: /\b(adjustable (rib|ribs)|notch rib|high rib)\b/i,
+    topics: ["rib_adjustable"],
+  },
+  {
+    name: "rib_fixed",
+    pattern: /\b(fixed (rib|ribs))\b/i,
+    topics: ["rib_fixed"],
+  },
+  {
+    name: "grade_sc3",
+    pattern: /\b(sc3)\b/i,
+    topics: ["grade_sc3"],
+  },
+  {
+    name: "grade_sco",
+    pattern: /\b(sco|sideplates)\b/i,
+    topics: ["grade_sco"],
+  },
+  {
+    name: "grade_lusso",
+    pattern: /\b(lusso)\b/i,
+    topics: ["grade_lusso"],
+  },
 ];
 
 const TEMPLATE_GUIDES: Record<string, string> = {
@@ -131,6 +176,9 @@ export function detectRetrievalHints(
     topics.add("models");
     topics.add("specs");
   }
+  if (context?.platformSlug) {
+    topics.add(`platform_${context.platformSlug.toLowerCase()}`);
+  }
 
   if (context?.mode === "prospect") {
     topics.add("models");
@@ -140,6 +188,18 @@ export function detectRetrievalHints(
   if (context?.platformSlug) {
     topics.add("platforms");
     topics.add(`platform_${context.platformSlug.toLowerCase()}`);
+  }
+
+  const notchMatch = lowerQuestion.match(/(\d+)\s*(?:-?\s*)?notch/);
+  if (notchMatch) {
+    keywords.add(`rib_notch_${notchMatch[1]}`);
+    topics.add(`rib_notch_${notchMatch[1]}`);
+  }
+  if (lowerQuestion.includes("adjustable rib")) {
+    topics.add("rib_adjustable");
+  }
+  if (lowerQuestion.includes("fixed rib")) {
+    topics.add("rib_fixed");
   }
 
   return {

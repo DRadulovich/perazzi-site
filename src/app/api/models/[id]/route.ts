@@ -4,25 +4,20 @@ import { groq } from "next-sanity";
 import { client } from "@/sanity/lib/client";
 import { urlFor } from "@/sanity/lib/image";
 
-const modelQuery = groq`*[_type == "models" && _id == $id][0]{
+const modelQuery = groq`*[_type == "allModels" && _id == $id][0]{
   _id,
-  "name": s_model_name,
-  "version": s_version_id,
-  "use": s_use_id,
-  "platform": s_platform_id->name,
-  "gaugeNames": array::compact([
-    s_gauge_id_1->name,
-    s_gauge_id_2->name,
-    s_gauge_id_3->name,
-    s_gauge_id_4->name,
-    s_gauge_id_5->name
-  ]),
-  "grade": s_grade_id->name,
-  "triggerTypes": array::compact([s_trigger_type_id_1, s_trigger_type_id_2]),
-  "triggerSprings": array::compact([s_trigger_spring_id_1, s_trigger_spring_id_2]),
-  "ribTypes": array::compact([s_rib_type_id_1, s_rib_type_id_2]),
-  "ribStyles": array::compact([s_rib_style_id_1, s_rib_style_id_2, s_rib_style_id_3, s_rib_style_id_4]),
-  "image": s_image_local_path
+  name,
+  baseModel,
+  category,
+  "use": category,
+  "platform": platform->name,
+  "gaugeNames": gauges,
+  "grade": grade->name,
+  "triggerTypes": trigger.type ? [trigger.type] : [],
+  "triggerSprings": trigger.springs,
+  "ribTypes": rib.type ? [rib.type] : [],
+  "ribStyles": rib.styles,
+  "image": image
 }`;
 
 type RouteContext = {
@@ -49,7 +44,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     const payload = {
       id: model._id,
       name: model.name ?? "Untitled Model",
-      version: model.version ?? "",
+      version: model.baseModel ?? "",
       use: model.use ?? "",
       platform: model.platform ?? "",
       grade: model.grade ?? "",

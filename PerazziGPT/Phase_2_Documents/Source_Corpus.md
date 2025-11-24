@@ -49,17 +49,13 @@ This manifest lists all content types eligible for ingestion, their priority ord
 ### 5. Gun Information
 - `PerazziGPT/Gun_Info/Manufacture_Year.md`
 - `PerazziGPT/Gun_Info/Rib_Information.md`
-- `PerazziGPT/Gun_Info/Sanity_Model_Database.json`
 
 **Notes:** Embed textual sections and structured entries; ensure chunking keeps per-model context intact.
 
-### 6. Sanity Exports (Reference Only for Now)
-- `PerazziGPT/Sanity_Info/models.json`
-- `PerazziGPT/Sanity_Info/models-with-assets.json`
-- `PerazziGPT/Sanity_Info/models-with-assets.ndjson`
-- `PerazziGPT/Sanity_Info/models-with-schema.ndjson`
-
-**Notes:** Do not embed directly until automation is ready. Use for schema reference; flag as `visibility=internal`. (Can be moved up the priority ladder once ingestion scripts parse them.)
+### 6. Model Corpus Split (RAG vs Front-End)
+- **RAG (detailed, variant-level):** `PerazziGPT/DEVELOPER/corpus_models_details.json` ingested as `model_spec` chunks with platform/discipline/grade/rib/trigger metadata and `specText`.
+- **Front-end (simplified):** Sanity `allModels` populated from `PerazziGPT/DEVELOPER/corpus_models_sanity.json` for site display/search only. Not part of RAG ingestion.
+- Legacy Sanity model exports (`PerazziGPT/Sanity_Info/models*.json`) remain reference-only and are not ingested.
 
 ### 7. Pricing & Models (Selective Embedding)
 - `PerazziGPT/Pricing_And_Models/*.csv`

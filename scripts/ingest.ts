@@ -576,6 +576,86 @@ function chunkCsv(filePath: string, text: string, rule: ChunkRule) {
   return chunks;
 }
 
+function chunkModelDetails(filePath: string, text: string): ChunkDef[] {
+  const records: any[] = JSON.parse(text);
+  if (!Array.isArray(records) || !records.length) return [];
+  const chunks: ChunkDef[] = [];
+  records.forEach((record) => {
+    const name: string = record.name ?? record.slug ?? record.id ?? "Perazzi Model";
+    const slug: string | undefined = record.slug ?? record.id ?? undefined;
+    const platform: string | undefined = record.platform ?? record.platformSlug ?? undefined;
+    const disciplines: string[] = Array.isArray(record.disciplines)
+      ? record.disciplines.map((d: any) => (d ?? "").toString().toLowerCase()).filter(Boolean)
+      : [];
+    const topics: string[] = Array.isArray(record.topics)
+      ? record.topics.map((t: any) => (t ?? "").toString().toLowerCase()).filter(Boolean)
+      : [];
+    const grade: string | undefined = record.grade ? record.grade.toString().toLowerCase() : undefined;
+    const ribType: string | undefined = record.rib?.type ? record.rib.type.toString().toLowerCase() : undefined;
+    const ribNotch: number | null =
+      record.rib?.adjustableNotch !== undefined && record.rib?.adjustableNotch !== null
+        ? Number(record.rib.adjustableNotch)
+        : null;
+    const triggerType: string | undefined = record.trigger?.type ? record.trigger.type.toString().toLowerCase() : undefined;
+    const springs: string[] = Array.isArray(record.trigger?.springs)
+      ? record.trigger.springs.map((s: any) => (s ?? "").toString().toLowerCase()).filter(Boolean)
+      : [];
+    const specText: string = record.specText || "";
+    const textBody =
+      specText ||
+      [
+        name ? `Model name: ${name}` : "",
+        platform ? `Platform: ${platform}` : "",
+        record.category ? `Category: ${record.category}` : "",
+        record.disciplines ? `Disciplines: ${(record.disciplines as any[]).join(", ")}` : "",
+        record.gauges ? `Gauges: ${(record.gauges as any[]).join(", ")}` : "",
+        record.barrelConfig ? `Barrel: ${record.barrelConfig}` : "",
+      ]
+        .filter(Boolean)
+        .join(" | ");
+    const words = countWords(textBody);
+    const entityIds: string[] = [];
+    if (slug) entityIds.push(slug);
+    if (record.id && record.id !== slug) entityIds.push(String(record.id));
+    if (record.baseModel) entityIds.push(String(record.baseModel));
+    const topicTags = new Set<string>(["models", "specs", ...topics]);
+    disciplines.forEach((d) => topicTags.add(`discipline_${d}`));
+    if (platform) topicTags.add(`platform_${platform}`);
+    if (grade) topicTags.add(`grade_${slugify(grade)}`);
+    if (ribType) topicTags.add(`rib_${ribType}`);
+    if (ribNotch && Number.isFinite(ribNotch)) topicTags.add(`rib_notch_${ribNotch}`);
+    if (triggerType) topicTags.add(`trigger_${triggerType}`);
+    springs.forEach((s) => topicTags.add(`trigger_spring_${s}`));
+    const structuredRefs = [
+      {
+        type: "model_spec",
+        slug,
+        name,
+        platform,
+        baseModel: record.baseModel ?? null,
+        category: record.category ?? null,
+        disciplines,
+        gauges: record.gauges ?? [],
+        barrelConfig: record.barrelConfig ?? null,
+        trigger: record.trigger ?? null,
+        rib: record.rib ?? null,
+        grade: record.grade ?? null,
+      },
+    ];
+    chunks.push({
+      text: textBody,
+      words,
+      headings: [`### ${name}`],
+      topics: Array.from(topicTags),
+      disciplines,
+      platforms: platform ? [platform] : [],
+      entityIds,
+      structuredRefs,
+    });
+  });
+  return chunks;
+}
+
 function chunkSanityModels(filePath: string, text: string): ChunkDef[] {
   const models: any[] = JSON.parse(text);
   return models.map((model) => {
@@ -913,7 +993,9 @@ async function main() {
     const relPath = path.relative(PROJECT_ROOT, filePath).replace(/\\/g, "/");
     let chunkDefs: ChunkDef[] = [];
     if (ext === ".json") {
-      if (relPath.endsWith("Sanity_Info/models.json")) {
+      if (relPath.endsWith("PerazziGPT/DEVELOPER/corpus_models_details.json")) {
+        chunkDefs = chunkModelDetails(filePath, text);
+      } else if (relPath.endsWith("Sanity_Info/models.json")) {
         chunkDefs = chunkSanityModels(filePath, text);
       } else if (relPath.endsWith("Sanity_Info/authorizedDealer.json")) {
         chunkDefs = chunkSanityDealers(filePath, text);
