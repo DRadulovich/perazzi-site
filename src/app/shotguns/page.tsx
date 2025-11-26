@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { LandingHero } from "@/components/shotguns/LandingHero";
 import { PlatformGrid } from "@/components/shotguns/PlatformGrid";
 import { TriggerExplainer } from "@/components/shotguns/TriggerExplainer";
@@ -16,10 +17,57 @@ export default async function ShotgunsLandingPage() {
     <div className="space-y-16">
       <LandingHero hero={landing.hero} />
       <PlatformGrid platforms={landing.platforms} />
-      <CinematicImageStrip
-        src="/cinematic_background_photos/p-web-2.jpg"
-        alt="Perazzi shotgun captured in cinematic lighting"
-      />
+      <section
+        className="relative w-screen overflow-hidden py-32 sm:py-40"
+        style={{
+          marginLeft: "calc(50% - 50vw)",
+          marginRight: "calc(50% - 50vw)",
+        }}
+      >
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <Image
+            src="/cinematic_background_photos/p-web-2.jpg"
+            alt="Perazzi shotgun captured in cinematic lighting"
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority={false}
+          />
+          <div className="absolute inset-0 bg-[color:var(--scrim-soft)]" aria-hidden />
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              backgroundImage:
+                "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
+                "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 25%), " +
+                "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 25%)",
+            }}
+            aria-hidden
+          />
+        </div>
+        <div className="relative z-10 mx-auto max-w-5xl px-6 lg:px-10">
+          <div className="rounded-3xl border border-[color:var(--border-color)] bg-[color:var(--color-canvas)]/40 p-6 text-ink shadow-elevated backdrop-blur-sm sm:p-8 lg:p-10">
+            <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+                Discipline fit
+              </p>
+              <p className="text-base text-ink">
+                Not sure why specific platforms or models suit each discipline differently? Ask how geometry changes shooting rhythm for Trap, Skeet, and Sporting clays.
+              </p>
+            </div>
+            <div className="mt-6">
+              <ChatTriggerButton
+                label="Ask Perazzi"
+                payload={{
+                  question:
+                    "Why do clay disciplines demand niche characteristics in Perazzi platforms or models, and how do those engineering choices benefit a shooter’s timing and consistency?",
+                  context: { pageUrl: "/shotguns" },
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
       <a className="skip-link" href="#discipline-rail-heading">
         Skip to disciplines
       </a>

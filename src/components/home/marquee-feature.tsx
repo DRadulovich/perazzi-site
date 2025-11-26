@@ -18,7 +18,7 @@ export function MarqueeFeature({ champion }: MarqueeFeatureProps) {
     <section
       ref={analyticsRef}
       data-analytics-id="ChampionStorySeen"
-      className="relative w-screen overflow-hidden py-50 sm:py-60"
+      className="relative flex w-screen items-center overflow-hidden py-50 sm:py-60"
       style={{
         marginLeft: "calc(50% - 50vw)",
         marginRight: "calc(50% - 50vw)",

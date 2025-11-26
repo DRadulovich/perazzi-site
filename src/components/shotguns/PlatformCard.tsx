@@ -21,11 +21,11 @@ export function PlatformCard({ platform, priority = false }: PlatformCardProps) 
       ref={analyticsRef}
       href={`/shotguns/${platform.slug}`}
       data-analytics-id={`PlatformCard:${platform.id}`}
-      className="group flex h-full flex-col rounded-3xl border border-border/70 bg-card p-6 shadow-sm transition-transform focus-ring hover:-translate-y-1"
+      className="group flex h-full flex-col rounded-3xl border border-[color:var(--border-color)] bg-[color:var(--color-canvas)]/40 p-6 shadow-elevated backdrop-blur-sm transition-transform focus-ring hover:-translate-y-1"
       onClick={() => logAnalytics(`shotguns_platform_card_click:${platform.id}`)}
     >
       <div
-        className="card-media relative rounded-2xl bg-black transition-transform duration-300 group-hover:scale-[1.01]"
+        className="card-media relative rounded-2xl bg-[color:var(--surface-elevated)] transition-transform duration-300 group-hover:scale-[1.01]"
         style={{ aspectRatio: "16 / 9" }}
       >
         <Image
@@ -39,6 +39,10 @@ export function PlatformCard({ platform, priority = false }: PlatformCardProps) 
           quality={100}
           unoptimized
         />
+        <div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[color:var(--scrim-strong)]/60 via-transparent to-transparent"
+          aria-hidden
+        />
       </div>
 
       <header className="mt-4 space-y-1">
@@ -49,7 +53,7 @@ export function PlatformCard({ platform, priority = false }: PlatformCardProps) 
       </header>
 
       {platform.weightDistribution ? (
-        <p className="mt-2 text-xs uppercase tracking-[0.3em] text-ink-muted">
+        <p className="mt-2 text-xs uppercase tracking-[0.22em] text-ink-muted">
           {platform.weightDistribution}
         </p>
       ) : null}
@@ -62,7 +66,7 @@ export function PlatformCard({ platform, priority = false }: PlatformCardProps) 
           {platform.typicalDisciplines.map((discipline) => (
             <li
               key={discipline}
-              className="rounded-full bg-ink/5 px-3 py-1 text-xs uppercase tracking-[0.25em] text-ink"
+              className="rounded-full bg-[color:var(--surface-elevated)]/85 px-3 py-1 text-[0.7rem] uppercase tracking-[0.18em] text-ink"
             >
               {discipline}
             </li>
@@ -84,7 +88,7 @@ export function PlatformCard({ platform, priority = false }: PlatformCardProps) 
       ) : null}
 
       {platform.hallmark || platform.champion ? (
-        <div className="mt-6 flex gap-3">
+        <div className="mt-6 flex gap-3 md:hidden">
           <span className="w-1 self-stretch rounded-full bg-perazzi-red/80" />
           <div className="flex flex-col gap-4">
             {platform.hallmark ? (

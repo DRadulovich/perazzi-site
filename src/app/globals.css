@@ -122,6 +122,7 @@ body {
   text-rendering: optimizeLegibility;
   padding-right: var(--chat-rail-width, 0px);
   transition: padding-right 0.2s ease;
+  overflow-x: hidden;
 }
 
 /* Focus ring (Perazzi red) */

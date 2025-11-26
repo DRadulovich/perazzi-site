@@ -78,7 +78,7 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
             <div
               className="relative hidden w-screen lg:block"
               style={{
-                minHeight: "175vh",
+                minHeight: "80vh",
                 marginLeft: "calc(50% - 50vw)",
                 marginRight: "calc(50% - 50vw)",
               }}
@@ -104,7 +104,7 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
                   aria-hidden
                 />
               </div>
-              <div className="min-h-[175vh] grid place-items-center">
+              <div className="min-h-[80vh] grid place-items-center">
                 <div className="relative z-10 w-full max-w-7xl px-6 py-12 lg:px-10">
                   <div className="max-w-3xl space-y-3 text-ink">
                     <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
