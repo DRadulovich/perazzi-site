@@ -144,7 +144,7 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
     };
   }, [closeManifesto, getFocusableElements, manifestoOpen]);
 
-  const navReserve = 88;
+  const navReserve = 0;
   const overlayTransition = prefersReducedMotion ? { duration: 0.1 } : { duration: 0.8, ease: "easeOut" };
   const panelTransition = prefersReducedMotion ? { duration: 0.1 } : { delay: 0.15, duration: 0.6, ease: "easeOut" };
 
@@ -210,14 +210,6 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
               );
             })}
           </h1>
-          <button
-            ref={triggerRef}
-            type="button"
-            className="mt-4 inline-flex items-center justify-center rounded-full border border-white/40 px-5 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:border-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            onClick={openManifesto}
-          >
-            Read the manifesto
-          </button>
           {hero.background.caption ? (
             <p className="mt-4 w-full max-w-xl text-balance text-sm leading-relaxed text-white/75">
               {hero.background.caption}

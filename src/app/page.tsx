@@ -10,7 +10,7 @@ export default async function HomePage() {
   const homeData = await getHome();
 
   return (
-    <SiteShell>
+    <SiteShell mainClassName="flex-1 px-4 pb-12 pt-0 sm:px-8 lg:px-12">
       <div className="space-y-16">
         <HeroBanner hero={homeData.hero} />
         <section className="rounded-3xl border border-border/70 bg-card px-6 py-5 text-center shadow-sm sm:px-8">
