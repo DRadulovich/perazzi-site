@@ -726,11 +726,11 @@ export function ConciergePageShell() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" id="concierge-workshop" tabIndex={-1}>
       <header className="space-y-3">
         <p className="text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted">Perazzi Build Planner</p>
         <div className="space-y-3">
-          <h1 className="text-3xl font-semibold text-ink">Designing a Perazzi, Together</h1>
+          <h2 className="text-3xl font-semibold text-ink">Designing a Perazzi, Together</h2>
           <div className="space-y-3 text-sm text-ink-muted">
             <p>
               This space is the closest you can come to sitting across from a Perazzi master, without leaving home. The Build Navigator
@@ -761,7 +761,11 @@ export function ConciergePageShell() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         {/* Conversation */}
-        <section className="flex min-h-[70vh] max-h-[80vh] flex-col overflow-hidden rounded-3xl border border-subtle bg-card p-4 shadow-sm sm:p-6 lg:order-2">
+        <section
+          id="concierge-conversation"
+          className="flex min-h-[70vh] max-h-[80vh] flex-col overflow-hidden rounded-3xl border border-subtle bg-card p-4 shadow-sm sm:p-6 lg:order-2"
+          tabIndex={-1}
+        >
           <div className="flex items-center justify-between gap-3 border-b border-subtle pb-3">
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Conversation</p>
@@ -821,7 +825,11 @@ export function ConciergePageShell() {
         </section>
 
         {/* Build Navigator */}
-        <aside className="space-y-4 rounded-3xl border border-subtle bg-card p-4 shadow-sm sm:p-6 lg:order-1">
+        <aside
+          id="concierge-navigator"
+          className="space-y-4 rounded-3xl border border-subtle bg-card p-4 shadow-sm sm:p-6 lg:order-1"
+          tabIndex={-1}
+        >
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Build navigator</p>

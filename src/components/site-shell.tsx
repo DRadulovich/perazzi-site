@@ -8,10 +8,19 @@ import { ChatWidgetClient } from "@/components/chat";
 type SiteShellProps = {
   children: ReactNode;
   showChatWidget?: boolean;
+  mainClassName?: string;
+  contentClassName?: string;
 };
 
-export async function SiteShell({ children, showChatWidget = true }: SiteShellProps) {
+export async function SiteShell({
+  children,
+  showChatWidget = true,
+  mainClassName,
+  contentClassName,
+}: SiteShellProps) {
   const t = await getTranslations("Header");
+  const mainClasses = mainClassName ?? "flex-1 px-4 py-12 sm:px-8 lg:px-12";
+  const contentClasses = contentClassName ?? "mx-auto flex max-w-7xl flex-col gap-12";
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas text-ink">
@@ -21,9 +30,9 @@ export async function SiteShell({ children, showChatWidget = true }: SiteShellPr
       </header>
       <main
         id="site-content"
-        className="flex-1 px-4 py-12 sm:px-8 lg:px-12"
+        className={mainClasses}
       >
-        <div className="mx-auto flex max-w-7xl flex-col gap-12">{children}</div>
+        <div className={contentClasses}>{children}</div>
       </main>
       <footer className="border-t border-subtle bg-card px-4 py-8 text-sm text-ink-muted sm:px-8">
         <div className="mx-auto max-w-6xl">

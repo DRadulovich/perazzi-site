@@ -5,6 +5,7 @@ import { DisciplineRail } from "@/components/shotguns/DisciplineRail";
 import { PrimerBlock } from "@/components/shotguns/PrimerBlock";
 import { CTASection } from "@/components/shotguns/CTASection";
 import { EngravingGradesCarousel } from "@/components/shotguns/EngravingGradesCarousel";
+import { CinematicImageStrip } from "@/components/shotguns/CinematicImageStrip";
 import { getShotgunsSectionData } from "@/lib/shotguns-data";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
 
@@ -15,7 +16,10 @@ export default async function ShotgunsLandingPage() {
     <div className="space-y-16">
       <LandingHero hero={landing.hero} />
       <PlatformGrid platforms={landing.platforms} />
-      <TriggerExplainer explainer={landing.triggerExplainer} />
+      <CinematicImageStrip
+        src="/cinematic_background_photos/p-web-2.jpg"
+        alt="Perazzi shotgun captured in cinematic lighting"
+      />
       <a className="skip-link" href="#discipline-rail-heading">
         Skip to disciplines
       </a>
@@ -44,6 +48,11 @@ export default async function ShotgunsLandingPage() {
           />
         </div>
       </section>
+      <TriggerExplainer explainer={landing.triggerExplainer} />
+      <CinematicImageStrip
+        src="/cinematic_background_photos/p-web-27.jpg"
+        alt="Perazzi craftsmanship rendered in cinematic lighting"
+      />
       <PrimerBlock
         copy={landing.gaugesTeaser.copy}
         href={landing.gaugesTeaser.href}

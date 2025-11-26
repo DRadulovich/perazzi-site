@@ -62,15 +62,15 @@ export function PlatformGrid({ platforms }: PlatformGridProps) {
     >
       <div className="space-y-2">
         <h2 id="platforms-heading" className="text-2xl font-semibold text-ink">
-          Platforms &amp; Purpose
+          Our Platforms and Lineages
         </h2>
         <p className="max-w-3xl text-base text-ink-muted">
-          Begin with lineage: MX, High Tech, and TM each carry a different balance, trigger philosophy, and place on the line.
+          Explore the MX, HT, and TM Platforms and learn how each carry a different balance, design philosophy, and place on the line.
         </p>
       </div>
 
       <div className="flex items-center justify-between">
-        <p className="text-sm text-ink-muted">Choose a lineage to explore.</p>
+        <p className="text-sm text-ink-muted">Choose a platform to explore.</p>
         <div className="flex gap-2">
           <button
             type="button"

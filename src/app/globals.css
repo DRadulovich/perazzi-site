@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 /* ---------- Brand Tokens (Perazzi) ---------- */
 :root {
@@ -264,4 +265,41 @@ body {
 }
 .button-secondary:hover {
   border-color: var(--ink);
+}
+
+@layer components {
+  .prose {
+    --tw-prose-body: var(--color-ink);
+    --tw-prose-headings: var(--color-ink);
+    --tw-prose-lead: var(--ink-muted);
+    --tw-prose-links: var(--color-ink);
+    --tw-prose-bold: var(--color-ink);
+    --tw-prose-counters: var(--ink-muted);
+    --tw-prose-bullets: var(--ink-muted);
+    --tw-prose-hr: var(--border-color);
+    --tw-prose-quotes: var(--color-ink);
+    --tw-prose-quote-borders: var(--border-color);
+    --tw-prose-captions: var(--ink-muted);
+    --tw-prose-code: var(--color-ink);
+    --tw-prose-pre-code: var(--perazzi-white);
+    --tw-prose-pre-bg: var(--surface-elevated);
+    --tw-prose-th-borders: var(--border-color);
+    --tw-prose-td-borders: var(--border-color);
+    --tw-prose-invert-body: var(--perazzi-white);
+    --tw-prose-invert-headings: var(--perazzi-white);
+    --tw-prose-invert-lead: var(--perazzi-white);
+    --tw-prose-invert-links: var(--perazzi-white);
+    --tw-prose-invert-bold: var(--perazzi-white);
+    --tw-prose-invert-counters: var(--perazzi-white);
+    --tw-prose-invert-bullets: var(--perazzi-white);
+    --tw-prose-invert-hr: var(--border-color);
+    --tw-prose-invert-quotes: var(--perazzi-white);
+    --tw-prose-invert-quote-borders: var(--border-color);
+    --tw-prose-invert-captions: var(--ink-muted);
+    --tw-prose-invert-code: var(--perazzi-white);
+    --tw-prose-invert-pre-code: var(--color-ink);
+    --tw-prose-invert-pre-bg: var(--perazzi-white);
+    --tw-prose-invert-th-borders: var(--border-color);
+    --tw-prose-invert-td-borders: var(--border-color);
+  }
 }

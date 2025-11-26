@@ -6,6 +6,7 @@ import { SerialLookup, type SerialLookupFormState } from "@/components/heritage/
 import { OralHistories } from "@/components/heritage/OralHistories";
 import { RelatedList } from "@/components/shotguns/RelatedList";
 import { CTASection } from "@/components/shotguns/CTASection";
+import { CinematicImageStrip } from "@/components/shotguns/CinematicImageStrip";
 import { getHeritagePageData } from "@/lib/heritage-data";
 import { getManufactureYearBySerial } from "@/sanity/queries/manufactureYear";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
@@ -97,6 +98,10 @@ export default async function HeritagePage() {
       </section>
       <BrandTimeline events={timeline} skipTargetId="heritage-after-timeline" />
       <SerialLookup lookupAction={serialLookupAction} />
+      <CinematicImageStrip
+        src="/cinematic_background_photos/p-web-10.jpg"
+        alt="Perazzi heritage imagery in cinematic lighting"
+      />
       <section
         id="heritage-champions"
         tabIndex={-1}
@@ -107,6 +112,10 @@ export default async function HeritagePage() {
           Heritage champions section
         </div>
         <ChampionsGallery champions={champions} />
+        <CinematicImageStrip
+          src="/cinematic_background_photos/olympic-medals-1.jpg"
+          alt="Perazzi Olympic medals displayed in cinematic lighting"
+        />
         <FactoryPhotoEssay items={factoryEssay} introHtml={factoryIntroHtml} />
         {oralHistories && oralHistories.length > 0 ? (
           <OralHistories histories={oralHistories} />

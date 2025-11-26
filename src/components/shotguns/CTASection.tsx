@@ -56,7 +56,6 @@ export function CTASection({
             asChild
             variant="primary"
             size="lg"
-            className="bg-white text-perazzi-black hover:bg-white/90 focus-visible:bg-white"
             onClick={() => logClick("primary")}
           >
             <a href={primary.href}>{primary.label}</a>

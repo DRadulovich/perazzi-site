@@ -10,9 +10,10 @@ import { ScrollIndicator } from "./scroll-indicator";
 type HeroBannerProps = {
   hero: HomeData["hero"];
   analyticsId?: string;
+  fullBleed?: boolean;
 };
 
-export function HeroBanner({ hero, analyticsId }: HeroBannerProps) {
+export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const [mediaLoaded, setMediaLoaded] = useState(false);
   const [touchedCount, setTouchedCount] = useState(0);
@@ -64,7 +65,7 @@ export function HeroBanner({ hero, analyticsId }: HeroBannerProps) {
     <section
       ref={setRefs}
       data-analytics-id={analyticsId ?? "HeroSeen"}
-      className="relative isolate w-full overflow-hidden rounded-3xl bg-perazzi-black text-white"
+      className={`relative isolate w-full overflow-hidden bg-perazzi-black text-white ${fullBleed ? "rounded-none" : "rounded-3xl"}`}
       aria-labelledby="home-hero-heading"
     >
       <div className="relative w-full" style={{ aspectRatio: ratio }}>

@@ -7,9 +7,10 @@ import type { BuildHero } from "@/types/build";
 
 type BuildHeroProps = {
   hero: BuildHero;
+  fullBleed?: boolean;
 };
 
-export function BuildHero({ hero }: BuildHeroProps) {
+export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
   const containerRef = useAnalyticsObserver("HeroSeen:bespoke");
   const prefersReducedMotion = useReducedMotion();
   const ratio = hero.media.aspectRatio ?? 16 / 9;
@@ -31,7 +32,9 @@ export function BuildHero({ hero }: BuildHeroProps) {
     <section
       ref={containerRef}
       data-analytics-id="HeroSeen:bespoke"
-      className="relative isolate overflow-hidden rounded-3xl bg-perazzi-black text-white"
+      className={`relative isolate overflow-hidden bg-perazzi-black text-white ${
+        fullBleed ? "rounded-none" : "rounded-3xl"
+      }`}
     >
       <motion.div
         className="relative w-full"

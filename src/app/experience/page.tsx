@@ -7,6 +7,7 @@ import { MosaicGallery } from "@/components/experience/MosaicGallery";
 import { FAQList } from "@/components/experience/FAQList";
 import { ExperienceHero } from "@/components/experience/ExperienceHero";
 import { CTASection } from "@/components/shotguns/CTASection";
+import { CinematicImageStrip } from "@/components/shotguns/CinematicImageStrip";
 import { getExperiencePageData } from "@/lib/experience-data";
 import { getExperienceNetworkData } from "@/sanity/queries/experience";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
@@ -66,8 +67,16 @@ export default async function ExperiencePage() {
         </div>
       </section>
       <ExperiencePicker items={picker} />
+      <CinematicImageStrip
+        src="/cinematic_background_photos/p-web-4.jpg"
+        alt="Perazzi experience captured in cinematic lighting"
+      />
       <VisitFactory visit={visit} />
       <BookingOptions options={fittingOptions} scheduler={bookingScheduler} />
+      <CinematicImageStrip
+        src="/cinematic_background_photos/p-web-6.jpg"
+        alt="Perazzi travel and fitting in cinematic lighting"
+      />
       <TravelNetwork data={networkData} />
       <MosaicGallery assets={mosaic} />
       <FAQList items={faq} />

@@ -40,7 +40,6 @@ export function CTASection({ finale }: CTASectionProps) {
             asChild
             variant="primary"
             size="lg"
-            className="bg-white text-perazzi-black hover:bg-white/90 focus-visible:bg-white"
             onClick={() => logAnalytics("FinalCTAClicked:primary")}
           >
             <a href={finale.ctaPrimary.href}>{finale.ctaPrimary.label}</a>

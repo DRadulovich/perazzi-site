@@ -1,10 +1,18 @@
+import imageUrlBuilder from "@sanity/image-url";
+import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import { NextRequest, NextResponse } from "next/server";
 import { groq } from "next-sanity";
 
-import { client } from "@/sanity/lib/client";
-import { urlFor } from "@/sanity/lib/image";
+import { sanityClient } from "../../../../../sanity/client";
 
-const modelQuery = groq`*[_type == "allModels" && _id == $id][0]{
+const imageBuilder = imageUrlBuilder({
+  projectId: sanityClient.config().projectId,
+  dataset: sanityClient.config().dataset,
+});
+
+const urlFor = (source: SanityImageSource) => imageBuilder.image(source);
+
+const modelQuery = groq`*[_type == "allModels" && (_id == $id || slug.current == $id || idLegacy == $id)][0]{
   _id,
   name,
   baseModel,
@@ -34,7 +42,7 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Missing model id" }, { status: 400 });
     }
 
-    const model = await client.fetch(modelQuery, { id });
+    const model = await sanityClient.fetch(modelQuery, { id });
     if (!model) {
       return NextResponse.json({ error: "Model not found" }, { status: 404 });
     }
