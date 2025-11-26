@@ -15,6 +15,9 @@ type HeroBannerProps = {
 
 export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const lastFocusedRef = useRef<HTMLElement | null>(null);
   const [mediaLoaded, setMediaLoaded] = useState(false);
   const [touchedCount, setTouchedCount] = useState(0);
   const [manifestoOpen, setManifestoOpen] = useState(false);
@@ -44,52 +47,142 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
     setManifestoOpen(false);
   }, [heroHeading]);
 
+  const getFocusableElements = useCallback((container: HTMLElement) => {
+    return Array.from(
+      container.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter((el) => !el.getAttribute("aria-hidden"));
+  }, []);
+
+  const closeManifesto = useCallback(() => {
+    setManifestoOpen(false);
+    setTouchedCount(0);
+    const focusTarget = triggerRef.current ?? lastFocusedRef.current;
+    if (focusTarget) {
+      focusTarget.focus();
+    }
+  }, []);
+
+  const openManifesto = useCallback(() => {
+    lastFocusedRef.current = document.activeElement as HTMLElement | null;
+    setTouchedCount(heroWords.length);
+    setManifestoOpen(true);
+  }, [heroWords.length]);
+
   const handleWordTouch = (index: number) => {
     if (manifestoOpen) return;
     if (index === touchedCount) {
       const next = index + 1;
       setTouchedCount(next);
       if (next === heroWords.length && heroWords.length > 0) {
-        setManifestoOpen(true);
+        openManifesto();
       }
     }
   };
-  const ratio = hero.background.aspectRatio ?? 16 / 9;
 
   const setRefs = useCallback((node: HTMLElement | null) => {
     sectionRef.current = node;
     analyticsRef.current = node;
   }, [analyticsRef]);
 
+  useEffect(() => {
+    if (!manifestoOpen) return;
+    const dialogEl = dialogRef.current;
+    if (!dialogEl) return;
+
+    const focusable = getFocusableElements(dialogEl);
+    const first = focusable[0] ?? dialogEl;
+    first.focus({ preventScroll: true });
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeManifesto();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+      const currentFocusable = getFocusableElements(dialogEl);
+      if (currentFocusable.length === 0) {
+        event.preventDefault();
+        dialogEl.focus();
+        return;
+      }
+
+      const firstEl = currentFocusable[0];
+      const lastEl = currentFocusable[currentFocusable.length - 1];
+      const activeEl = document.activeElement;
+
+      if (event.shiftKey) {
+        if (activeEl === firstEl || !dialogEl.contains(activeEl)) {
+          event.preventDefault();
+          lastEl.focus();
+        }
+        return;
+      }
+
+      if (activeEl === lastEl) {
+        event.preventDefault();
+        firstEl.focus();
+      }
+    };
+
+    const handleFocusIn = (event: FocusEvent) => {
+      if (!dialogEl.contains(event.target as Node)) {
+        const focusableTargets = getFocusableElements(dialogEl);
+        (focusableTargets[0] ?? dialogEl).focus({ preventScroll: true });
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("focusin", handleFocusIn);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("focusin", handleFocusIn);
+    };
+  }, [closeManifesto, getFocusableElements, manifestoOpen]);
+
+  const navReserve = 88;
+  const overlayTransition = prefersReducedMotion ? { duration: 0.1 } : { duration: 0.8, ease: "easeOut" };
+  const panelTransition = prefersReducedMotion ? { duration: 0.1 } : { delay: 0.15, duration: 0.6, ease: "easeOut" };
+
   return (
     <section
       ref={setRefs}
       data-analytics-id={analyticsId ?? "HeroSeen"}
-      className={`relative isolate w-full overflow-hidden bg-perazzi-black text-white ${fullBleed ? "rounded-none" : "rounded-3xl"}`}
+      className={`relative isolate flex min-h-screen w-screen flex-col overflow-hidden bg-perazzi-black text-white ${fullBleed ? "rounded-none" : "lg:rounded-none"}`}
+      style={{
+        marginLeft: fullBleed ? undefined : "calc(50% - 50vw)",
+        marginRight: fullBleed ? undefined : "calc(50% - 50vw)",
+        minHeight: `calc(100vh - ${navReserve}px)`,
+        paddingTop: `${navReserve}px`,
+      }}
       aria-labelledby="home-hero-heading"
     >
-      <div className="relative w-full" style={{ aspectRatio: ratio }}>
-        <motion.div
-          className="absolute inset-0"
-          style={{
-            y: prefersReducedMotion ? "0%" : parallaxY,
-          }}
-        >
-          <Image
-            src={hero.background.url}
-            alt={hero.background.alt}
-            fill
-            priority
-            sizes="(min-width: 1536px) 1200px, (min-width: 1280px) 1100px, (min-width: 1024px) 80vw, 100vw"
-            className="object-cover"
-            onLoad={() => setMediaLoaded(true)}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-        </motion.div>
+      <motion.div
+        className="absolute inset-0"
+        style={{
+          y: prefersReducedMotion ? "0%" : parallaxY,
+        }}
+      >
+        <Image
+          src={hero.background.url}
+          alt={hero.background.alt}
+          fill
+          priority
+          sizes="(min-width: 1536px) 1400px, (min-width: 1280px) 1200px, (min-width: 1024px) 90vw, 100vw"
+          className="object-cover"
+          onLoad={() => setMediaLoaded(true)}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+      </motion.div>
 
-        <div className="relative z-10 mx-auto flex h-full w-full max-w-5xl flex-col items-center justify-center px-6 py-12 text-center sm:px-10 lg:py-16">
+      <div className="relative z-10 flex flex-1">
+        <div className="mx-auto flex w-full max-w-5xl flex-col items-center justify-center gap-5 px-6 pb-16 text-center sm:px-10 lg:gap-8 lg:pb-24">
           <p
-            className={`text-xs font-semibold uppercase tracking-[0.4em] text-white/80 transition-opacity duration-700 ${
+            className={`text-xs font-semibold uppercase tracking-[0.4em] text-white/80 transition-opacity duration-700 motion-reduce:transition-none ${
               mediaLoaded ? "opacity-100" : "opacity-0"
             }`}
           >
@@ -97,7 +190,7 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
           </p>
           <h1
             id="home-hero-heading"
-            className={`mt-4 flex flex-wrap justify-center gap-2 text-balance text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl transition-opacity duration-700 ${
+            className={`mt-2 flex flex-wrap justify-center gap-2 text-balance text-3xl font-semibold leading-tight text-white transition-opacity duration-700 motion-reduce:transition-none sm:text-4xl lg:text-5xl ${
               mediaLoaded ? "opacity-100 delay-100" : "opacity-0"
             }`}
           >
@@ -117,31 +210,50 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
               );
             })}
           </h1>
+          <button
+            ref={triggerRef}
+            type="button"
+            className="mt-4 inline-flex items-center justify-center rounded-full border border-white/40 px-5 py-3 text-xs font-semibold uppercase tracking-[0.3em] text-white transition hover:border-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            onClick={openManifesto}
+          >
+            Read the manifesto
+          </button>
           {hero.background.caption ? (
-            <p className="mt-6 w-full max-w-xl text-balance text-sm leading-relaxed text-white/75">
+            <p className="mt-4 w-full max-w-xl text-balance text-sm leading-relaxed text-white/75">
               {hero.background.caption}
             </p>
           ) : null}
         </div>
       </div>
 
-      <ScrollIndicator />
+      <ScrollIndicator className="bottom-10" />
 
       {manifestoOpen && (
         <motion.div
-          initial={{ opacity: 0 }}
+          initial={{ opacity: prefersReducedMotion ? 1 : 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          transition={overlayTransition}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6 text-center text-white"
           role="dialog"
-          aria-label="Perazzi Manifesto"
+          aria-modal="true"
+          aria-labelledby="manifesto-title"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              closeManifesto();
+            }
+          }}
         >
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.7, ease: "easeOut" }}
-            className="max-w-2xl space-y-6"
+            ref={dialogRef}
+            initial={prefersReducedMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={panelTransition}
+            className="max-w-2xl space-y-6 rounded-3xl bg-black/50 p-8 shadow-2xl ring-1 ring-white/10 backdrop-blur"
+            tabIndex={-1}
           >
+            <h2 id="manifesto-title" className="sr-only">
+              Perazzi Manifesto
+            </h2>
             <div className="space-y-3 text-xs font-semibold uppercase tracking-[0.35em] leading-6 text-white">
               {[
                 "A Perazzi is not something you own.",
@@ -151,9 +263,13 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
               ].map((line, idx) => (
                 <motion.p
                   key={line}
-                  initial={{ opacity: 0, y: 6 }}
+                  initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7 + idx * 0.2, duration: 0.6, ease: "easeOut" }}
+                  transition={
+                    prefersReducedMotion
+                      ? { duration: 0.01 }
+                      : { delay: 0.3 + idx * 0.15, duration: 0.5, ease: "easeOut" }
+                  }
                 >
                   {line}
                 </motion.p>
@@ -162,13 +278,10 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
             <motion.button
               type="button"
               className="mt-8 text-xs font-semibold uppercase tracking-[0.25em] text-white/70 underline underline-offset-4 transition hover:text-white"
-              onClick={() => {
-                setManifestoOpen(false);
-                setTouchedCount(0);
-              }}
-              initial={{ opacity: 0 }}
+              onClick={closeManifesto}
+              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 1.9, duration: 0.45, ease: "easeOut" }}
+              transition={prefersReducedMotion ? { duration: 0.1 } : { delay: 1.2, duration: 0.35, ease: "easeOut" }}
             >
               Close – return to the surface
             </motion.button>

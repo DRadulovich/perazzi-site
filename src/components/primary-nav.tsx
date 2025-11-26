@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
@@ -53,10 +54,17 @@ export function PrimaryNav({ brandLabel }: PrimaryNavProps) {
   );
 }
 
-const Logo = ({ label, color = "white" }: { label: string; color?: string }) => (
+const Logo = ({ label }: { label: string }) => (
   <Link href="/" className="inline-flex items-center">
     <span className="sr-only">{label}</span>
-    <img src="/PLW.png" alt={label} className="h-10 w-auto" />
+    <Image
+      src="/PLW.png"
+      alt="Perazzi logo"
+      width={120}
+      height={38}
+      priority
+      className="h-10 w-auto"
+    />
   </Link>
 );
 
