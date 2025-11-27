@@ -1,12 +1,11 @@
 "use client";
 
-import { motion, useMotionValueEvent, useReducedMotion, useScroll } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
+import NextImage from "next/image";
+import { motion, useReducedMotion } from "framer-motion";
+import { useMemo, useRef } from "react";
 import type { FittingStage } from "@/types/build";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
-import { useMediaQuery } from "@/hooks/use-media-query";
 import { logAnalytics } from "@/lib/analytics";
-import { BuildStepItem } from "./BuildStepItem";
 
 type BuildStepsScrollerProps = {
   steps: FittingStage[];
@@ -27,179 +26,160 @@ export function BuildStepsScroller({
   reduceMotion,
   skipTargetId = "build-steps-end",
 }: BuildStepsScrollerProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
   const trackerRef = useAnalyticsObserver("BuildStepsSeen");
   const prefersReducedMotion = useReducedMotion();
   const shouldReduceMotion = reduceMotion ?? prefersReducedMotion;
-  const isLg = useMediaQuery("(min-width: 1024px)");
-  const isXl = useMediaQuery("(min-width: 1280px)");
-  const breakpointEnabled = pinnedBreakpoint === "xl" ? isXl : isLg;
-  const pinnedEnabled = breakpointEnabled && !shouldReduceMotion;
-  const initialIndex = initialStepId
-    ? Math.max(0, steps.findIndex((step) => step.id === initialStepId))
-    : 0;
-  const [activeStep, setActiveStep] = useState(initialIndex);
-
-  const scrollTargetRef = pinnedEnabled ? containerRef : trackerRef;
-
-  const { scrollYProgress } = useScroll({
-    target: scrollTargetRef,
-    offset: ["start start", "end start"],
-  });
-
   const mappedSteps = useMemo(() => steps, [steps]);
-
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
-  const segmentSize = mappedSteps.length ? 1 / mappedSteps.length : 1;
-  useMotionValueEvent(scrollYProgress, "change", (value) => {
-    if (!pinnedEnabled || !mappedSteps.length) return;
-    const nextIndex = Math.min(
-      mappedSteps.length - 1,
-      Math.max(0, Math.floor(value / segmentSize)),
-    );
-    if (nextIndex !== currentIndex) {
-      setCurrentIndex(nextIndex);
-    }
-  });
-  useEffect(() => {
-    if (currentIndex !== activeStep) {
-      setActiveStep(currentIndex);
-    }
-  }, [currentIndex, activeStep]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const syncFromHash = () => {
-      if (!pinnedEnabled || !mappedSteps.length) return;
-      const hash = window.location.hash.replace("#", "");
-      if (!hash.startsWith("step-")) return;
-      const targetIndex = mappedSteps.findIndex((step) => `step-${step.id}` === hash);
-      if (targetIndex >= 0) {
-        setCurrentIndex(targetIndex);
-        setActiveStep(targetIndex);
-      }
-    };
-    syncFromHash();
-    window.addEventListener("hashchange", syncFromHash);
-    return () => window.removeEventListener("hashchange", syncFromHash);
-  }, [mappedSteps, pinnedEnabled]);
-
-  useEffect(() => {
-    const current = mappedSteps[activeStep];
-    if (current) {
-      logAnalytics(`BuildStepActive:${current.id}`);
-      onStepView?.(current.id);
-      const next = mappedSteps[activeStep + 1];
-      if (next && next.media.kind === "image") {
-        const preload = new Image();
-        preload.src = next.media.url;
-      }
-    }
-  }, [activeStep, mappedSteps, onStepView]);
+  const seenStepsRef = useRef<Set<string>>(new Set());
+  void initialStepId;
+  void pinnedBreakpoint;
 
   return (
     <section
       ref={trackerRef}
       aria-labelledby="build-steps-heading"
       data-analytics-id="BuildStepsSeen"
-      className="space-y-6"
+      className="relative w-screen overflow-hidden py-16 sm:py-20"
+      style={{
+        marginLeft: "calc(50% - 50vw)",
+        marginRight: "calc(50% - 50vw)",
+      }}
     >
-      <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
-          The journey
-        </p>
-        <h2 id="build-steps-heading" className="text-2xl font-semibold text-ink">
-          Six moments that shape a bespoke Perazzi
-        </h2>
-        <a
-          href={`#${skipTargetId}`}
-          className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-perazzi-red focus-ring"
-        >
-          Skip step-by-step
-          <span aria-hidden="true">→</span>
-        </a>
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <NextImage
+          src="/redesign-photos/bespoke/pweb-bespoke-buildstepscroller-bg.jpg"
+          alt="Perazzi bespoke build steps background"
+          fill
+          sizes="100vw"
+          className="object-cover"
+          priority={false}
+        />
+        <div className="absolute inset-0 bg-[color:var(--scrim-soft)]" aria-hidden />
       </div>
-      {pinnedEnabled ? (
-        <div
-          ref={containerRef}
-          className="relative"
-          style={{ height: `${mappedSteps.length * 120}vh` }}
-        >
-          <div
-            className="sticky top-16 flex flex-col gap-8 rounded-3xl bg-card/60 p-8 shadow-lg backdrop-blur lg:top-24"
-            style={{ height: "calc(100vh - 3rem)", minHeight: "640px" }}
+
+      <div className="relative z-10 mx-auto max-w-7xl space-y-8 px-6 lg:px-10">
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+            The journey
+          </p>
+          <h2 id="build-steps-heading" className="text-2xl font-semibold text-ink">
+            Six moments that shape a bespoke Perazzi
+          </h2>
+          <a
+            href={`#${skipTargetId}`}
+            className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-perazzi-red focus-ring"
           >
-            <div
-              className="flex justify-center gap-2"
-              role="tablist"
-              aria-label="Build steps"
-            >
-              {mappedSteps.map((step, index) => (
-                <button
-                  key={step.id}
-                  type="button"
-                  id={`build-step-tab-${step.id}`}
-                  role="tab"
-                  aria-selected={activeStep === index}
-                  aria-current={activeStep === index ? "true" : undefined}
-                  aria-controls={`build-step-panel-${step.id}`}
-                  className={`h-2 w-8 rounded-full transition-colors focus-ring ${
-                    activeStep === index ? "bg-perazzi-red" : "bg-border"
-                  }`}
-                  onClick={() => setActiveStep(index)}
-                >
-                  <span className="sr-only">{step.title}</span>
-                </button>
-              ))}
-            </div>
-            <div className="relative flex-1">
-              {mappedSteps.map((step, index) => (
-                <motion.div
-                  key={step.id}
-                  id={`build-step-panel-${step.id}`}
-                  role="tabpanel"
-                  aria-labelledby={`build-step-tab-${step.id}`}
-                  className="absolute inset-0"
-                  initial={shouldReduceMotion ? false : { opacity: 0, y: 40 }}
-                  animate={{
-                    opacity: activeStep === index ? 1 : 0,
-                    y: shouldReduceMotion ? 0 : activeStep === index ? 0 : 40,
-                  }}
-                  transition={
-                    shouldReduceMotion
-                      ? undefined
-                      : { duration: 0.4, ease: [0.33, 1, 0.68, 1] }
-                  }
-                >
-                  <BuildStepItem
-                    step={step}
-                    index={index}
-                    onCtaClick={onStepCta}
-                    layout="pinned"
-                  />
-                </motion.div>
-              ))}
-            </div>
+            Skip step-by-step
+            <span aria-hidden="true">→</span>
+          </a>
+        </div>
+        <div className="relative mx-auto max-w-5xl">
+          <div
+            className="pointer-events-none absolute inset-y-0 left-1/2 hidden w-px -translate-x-1/2 bg-[color:var(--border-color)] lg:block"
+            aria-hidden
+          />
+          <div className="space-y-12 lg:space-y-20">
+            {mappedSteps.map((step, index) => (
+              <motion.div
+                key={step.id}
+                className="relative"
+                initial={shouldReduceMotion ? false : { opacity: 0, y: 24 }}
+                whileInView={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={
+                  shouldReduceMotion
+                    ? undefined
+                    : { duration: 0.6, ease: [0.33, 1, 0.68, 1] }
+                }
+                onViewportEnter={() => {
+                  if (seenStepsRef.current.has(step.id)) return;
+                  seenStepsRef.current.add(step.id);
+                  logAnalytics(`BuildStepActive:${step.id}`);
+                  onStepView?.(step.id);
+                }}
+              >
+                <span
+                  className="pointer-events-none absolute left-1/2 top-1/2 hidden h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-perazzi-red bg-[color:var(--color-canvas)] lg:block"
+                  aria-hidden
+                />
+                <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-16">
+                  {index % 2 === 0 ? (
+                    <>
+                      <StepText step={step} index={index} onStepCta={onStepCta} />
+                      <StepImage step={step} />
+                    </>
+                  ) : (
+                    <>
+                      <StepImage step={step} />
+                      <StepText step={step} index={index} onStepCta={onStepCta} />
+                    </>
+                  )}
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
-      ) : (
-        <div className="space-y-6">
-          {mappedSteps.map((step, index) => (
-            <BuildStepItem
-              key={step.id}
-              step={step}
-              index={index}
-              onCtaClick={onStepCta}
-              layout="stacked"
-            />
-          ))}
-        </div>
-      )}
-      {skipTargetId === "build-steps-end" ? (
-        <div id={skipTargetId} className="sr-only" tabIndex={-1}>
-          Step-by-step overview complete.
-        </div>
-      ) : null}
+        {skipTargetId === "build-steps-end" ? (
+          <div id={skipTargetId} className="sr-only" tabIndex={-1}>
+            Step-by-step overview complete.
+          </div>
+        ) : null}
+      </div>
     </section>
+  );
+}
+
+function StepText({
+  step,
+  index,
+  onStepCta,
+}: {
+  step: FittingStage;
+  index: number;
+  onStepCta?: (id: string) => void;
+}) {
+  const hasCta = step.ctaHref && step.ctaLabel;
+  return (
+    <div className="space-y-4 text-ink">
+      <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+        Step {index + 1}
+      </p>
+      <h3 className="text-2xl font-semibold">{step.title}</h3>
+      {step.bodyHtml ? (
+        <div
+          className="prose prose-sm max-w-none text-ink-muted"
+          dangerouslySetInnerHTML={{ __html: step.bodyHtml }}
+        />
+      ) : null}
+      {hasCta ? (
+        <a
+          href={step.ctaHref}
+          onClick={() => onStepCta?.(step.id)}
+          className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-perazzi-red focus-ring"
+        >
+          {step.ctaLabel}
+          <span aria-hidden="true">→</span>
+        </a>
+      ) : null}
+    </div>
+  );
+}
+
+function StepImage({ step }: { step: FittingStage }) {
+  if (step.media.kind !== "image") return null;
+  const ratio = step.media.aspectRatio ?? 16 / 9;
+  return (
+    <div
+      className="relative overflow-hidden rounded-2xl bg-[color:var(--surface-elevated)]"
+      style={{ aspectRatio: ratio }}
+    >
+      <NextImage
+        src={step.media.url}
+        alt={step.media.alt ?? step.title}
+        fill
+        sizes="(min-width: 1280px) 520px, (min-width: 1024px) 50vw, 100vw"
+        className="object-cover object-center"
+      />
+    </div>
   );
 }

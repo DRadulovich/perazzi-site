@@ -163,38 +163,12 @@ export function DisciplineRail({
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10 space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">
-            <h2 id="discipline-rail-heading" className="text-xl font-semibold text-ink">
-              Disciplines at a glance
+            <h2 id="discipline-rail-heading" className="text-4xl font-black italic uppercase tracking-[0.35em] text-ink">
+              Disciplines at a Glance
             </h2>
-            <p className="text-sm text-ink-muted">
-              Trap, skeet, and sporting each ask something different of your platform.
+            <p className="max-w-4xl text-xl font-light italic text-ink-muted mb-15">
+              Every discipline demands something unique from your platform, whether it's precision, speed, or adaptability.
             </p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className="rounded-full border border-border px-3 py-2 text-xs uppercase tracking-[0.3em] text-ink focus-ring"
-              onClick={() =>
-                setActiveTabIndex((index) =>
-                  index === 0 ? DISCIPLINE_TABS.length - 1 : index - 1,
-                )
-              }
-              aria-label={ariaPrevLabel}
-            >
-              Prev
-            </button>
-            <button
-              type="button"
-              className="rounded-full border border-border px-3 py-2 text-xs uppercase tracking-[0.3em] text-ink focus-ring"
-              onClick={() =>
-                setActiveTabIndex((index) =>
-                  (index + 1) % DISCIPLINE_TABS.length,
-                )
-              }
-              aria-label={ariaNextLabel}
-            >
-              Next
-            </button>
           </div>
         </div>
         <div
