@@ -1,8 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
 import type { HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { ScrollIndicator } from "./scroll-indicator";
@@ -145,8 +147,8 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
   }, [closeManifesto, getFocusableElements, manifestoOpen]);
 
   const navReserve = 0;
-  const overlayTransition = prefersReducedMotion ? { duration: 0.1 } : { duration: 0.8, ease: "easeOut" };
-  const panelTransition = prefersReducedMotion ? { duration: 0.1 } : { delay: 0.15, duration: 0.6, ease: "easeOut" };
+  const overlayTransition = prefersReducedMotion ? { duration: 0.1 } : { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const };
+  const panelTransition = prefersReducedMotion ? { duration: 0.1 } : { delay: 0.15, duration: 0.6, ease: [0.16, 1, 0.3, 1] as const };
 
   return (
     <section
@@ -176,7 +178,7 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
           className="object-cover"
           onLoad={() => setMediaLoaded(true)}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-perazzi-black via-black/75 to-black/75" />
       </motion.div>
 
       <div className="relative z-10 flex flex-1">
@@ -190,7 +192,7 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
           </p>
           <h1
             id="home-hero-heading"
-            className={`mt-2 flex flex-wrap justify-center gap-2 text-balance text-3xl font-semibold leading-tight text-white transition-opacity duration-700 motion-reduce:transition-none sm:text-4xl lg:text-5xl ${
+            className={`mt-0 flex flex-wrap justify-center gap-2 text-balance text-3xl font-semibold leading-[1.12] text-white transition-opacity duration-700 motion-reduce:transition-none sm:text-4xl lg:text-5xl ${
               mediaLoaded ? "opacity-100 delay-100" : "opacity-0"
             }`}
           >
@@ -200,7 +202,7 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
                 <span
                   key={`${word}-${index}`}
                   className={`relative cursor-pointer transition-colors ${
-                    touched ? "underline decoration-perazzi-red decoration-2 underline-offset-4" : "hover:text-perazzi-red"
+                    touched ? "underline decoration-perazzi-red/0 decoration-0 underline-offset-4" : "hover:text-perazzi-red/0"
                   }`}
                   onMouseEnter={() => handleWordTouch(index)}
                   onTouchStart={() => handleWordTouch(index)}
@@ -211,10 +213,26 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
             })}
           </h1>
           {hero.background.caption ? (
-            <p className="mt-4 w-full max-w-xl text-balance text-sm leading-relaxed text-white/75">
+            <p className="mt-0 w-full max-w-xl text-balance text-sm leading-relaxed text-white/75">
               {hero.background.caption}
             </p>
           ) : null}
+          <div className="mt-0 flex flex-wrap items-center justify-center gap-4">
+            <ChatTriggerButton
+              label="Ask the concierge"
+              payload={{
+                question:
+                  "Introduce me to Perazzi's bespoke philosophy and help me choose where to begin if I'm exploring my first build.",
+                context: { pageUrl: "/" },
+              }}
+            />
+            <Link
+              href="/shotguns"
+              className="text-xs font-semibold uppercase tracking-[0.25em] text-white/80 underline underline-offset-4 hover:text-white focus-ring"
+            >
+              Explore shotguns
+            </Link>
+          </div>
         </div>
       </div>
 

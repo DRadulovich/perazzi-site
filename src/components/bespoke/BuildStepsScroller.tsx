@@ -55,6 +55,16 @@ export function BuildStepsScroller({
           priority={false}
         />
         <div className="absolute inset-0 bg-[color:var(--scrim-soft)]" aria-hidden />
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
+              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 100%), " +
+              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 100%)",
+          }}
+          aria-hidden
+        />
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl space-y-8 px-6 lg:px-10">

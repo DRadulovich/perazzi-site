@@ -107,12 +107,12 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
               <div className="min-h-[80vh] grid place-items-center">
                 <div className="relative z-10 w-full max-w-7xl px-6 py-12 lg:px-10">
                   <div className="max-w-3xl space-y-3 text-ink">
-                    <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+                    <p className="text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
                       Craftsmanship journey
                     </p>
                     <h2
                       id="craft-timeline-heading"
-                      className="text-2xl font-semibold text-ink"
+                      className="text-2xl font-light italic text-ink mb-15"
                     >
                       Three rituals that define a bespoke Perazzi build
                     </h2>

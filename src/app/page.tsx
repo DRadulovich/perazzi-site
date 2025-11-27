@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { SiteShell } from "@/components/site-shell";
 import { CTASection } from "@/components/home/cta-section";
 import { HeroBanner } from "@/components/home/hero-banner";
@@ -13,59 +14,23 @@ export default async function HomePage() {
     <SiteShell mainClassName="flex-1 px-4 pb-12 pt-0 sm:px-8 lg:px-12">
       <div className="space-y-0">
         <HeroBanner hero={homeData.hero} />
-        <section
-          className="relative w-screen overflow-hidden py-10 sm:py-12"
-          style={{
-            marginLeft: "calc(50% - 50vw)",
-            marginRight: "calc(50% - 50vw)",
-          }}
-          aria-labelledby="home-concierge-heading"
-        >
-          <div className="relative mx-auto max-w-5xl px-6 lg:px-10">
-            <div className="rounded-3xl border border-border bg-card p-6 text-center text-ink shadow-elevated sm:p-8">
-              <p
-                id="home-concierge-heading"
-                className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted"
-              >
-                Perazzi Concierge
-              </p>
-              <p className="mt-3 text-base text-ink">
-                Prefer to speak with the workshop? Open the concierge and we’ll guide your first step.
-              </p>
-              <div className="mt-6 flex justify-center">
-                <ChatTriggerButton
-                  label="Ask the concierge"
-                  payload={{
-                    question:
-                      "Introduce me to Perazzi's bespoke philosophy and help me choose where to begin if I'm exploring my first build.",
-                    context: { pageUrl: "/" },
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </section>
         <TimelineScroller stages={homeData.stages} />
         <section
-          className="relative w-screen overflow-hidden py-10 sm:py-12"
-          style={{
-            marginLeft: "calc(50% - 50vw)",
-            marginRight: "calc(50% - 50vw)",
-          }}
+          className="border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-16 sm:py-20"
           aria-labelledby="home-guide-heading"
         >
-          <div className="relative mx-auto max-w-5xl px-6 lg:px-10">
-            <div className="rounded-3xl border border-border bg-card p-6 text-ink mb-10 shadow-elevated sm:p-8">
+          <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
+            <div className="space-y-4 text-ink">
               <p
                 id="home-guide-heading"
-                className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted"
+                className="text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
               >
                 Need a guide?
               </p>
-              <p className="mt-3 text-sm text-ink">
-                Ask how Perazzi links heritage, champions, and today’s platforms—then follow the concierge into the catalog.
+              <p className="text-lg font-light italic text-ink-muted mb-10">
+                Ask how Perazzi links heritage, champions, and today’s platforms, then step into the catalog with a clearer sense of where you belong – whether that’s HT, MX, TM or beyond.
               </p>
-              <div className="mt-5">
+              <div className="flex flex-wrap gap-3 justify-start">
                 <ChatTriggerButton
                   label="Ask about platforms"
                   payload={{
@@ -75,7 +40,34 @@ export default async function HomePage() {
                   }}
                   variant="outline"
                 />
+                <Link
+                  href="/shotguns"
+                  className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red focus-ring"
+                >
+                  Explore shotguns
+                  <span aria-hidden="true">→</span>
+                </Link>
               </div>
+            </div>
+
+            <div className="space-y-3 text-xl font-light italic text-ink-muted">
+              <p className="text-xl font-semibold text-ink">
+                Three starting points most Perazzi shooters choose:
+              </p>
+              <ul className="space-y-2">
+                <li>
+                  <span className="text-xl font-black text-ink">HT</span> – modern competition geometry for demanding sporting layouts.
+                </li>
+                <li>
+                  <span className="text-xl font-black text-ink">MX</span> – the classic lineage: balanced, adaptable, and endlessly configurable.
+                </li>
+                <li>
+                  <span className="text-xl font-black text-ink">TM</span> – purpose-built for American trap with a dedicated silhouette.
+                </li>
+              </ul>
+              <p className="text-lg font-light italic text-ink-muted">
+                The concierge can map your disciplines, preferences, and ambitions to a starting platform and the right next pages to visit.
+              </p>
             </div>
           </div>
         </section>

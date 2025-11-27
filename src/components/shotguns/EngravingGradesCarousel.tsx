@@ -59,78 +59,109 @@ export function EngravingGradesCarousel({ grades }: EngravingGradesCarouselProps
   const tabPanelId = "engraving-grades-panel";
 
   return (
-    <section className="space-y-6" aria-labelledby="engraving-grades-heading">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="space-y-1">
-          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
-            Engraving Grades
-          </p>
-          <h2 id="engraving-grades-heading" className="text-2xl font-semibold text-ink">
-            Commission tiers &amp; engraving houses
-          </h2>
-        </div>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            className="rounded-full border border-border px-3 py-2 text-xs uppercase tracking-[0.3em] text-ink focus-ring"
-            onClick={() =>
-              setActiveTab((index) =>
-                index === 0 ? GRADE_TABS.length - 1 : index - 1,
-              )
-            }
-            aria-label="Previous grade group"
-          >
-            Prev
-          </button>
-          <button
-            type="button"
-            className="rounded-full border border-border px-3 py-2 text-xs uppercase tracking-[0.3em] text-ink focus-ring"
-            onClick={() =>
-              setActiveTab((index) => (index + 1) % GRADE_TABS.length)
-            }
-            aria-label="Next grade group"
-          >
-            Next
-          </button>
-        </div>
+    <section
+      className="relative w-screen overflow-hidden py-32 sm:py-40"
+      style={{
+        marginLeft: "calc(50% - 50vw)",
+        marginRight: "calc(50% - 50vw)",
+      }}
+      aria-labelledby="engraving-grades-heading"
+    >
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <Image
+          src="/redesign-photos/shotguns/pweb-shotguns-engravingsgradecarousel-bg.jpg"
+          alt="Perazzi engraving workshop background"
+          fill
+          sizes="100vw"
+          className="object-cover"
+          priority={false}
+        />
+        <div className="absolute inset-0 bg-[color:var(--scrim-soft)]" aria-hidden />
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
+              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 80%), " +
+              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 80%)",
+          }}
+          aria-hidden
+        />
       </div>
 
-      <div
-        role="tablist"
-        aria-label="Engraving grade categories"
-        className="flex flex-wrap gap-2"
-      >
-        {GRADE_TABS.map((tab, index) => {
-          const isActive = index === activeTab;
-          return (
+      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10 space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-4xl font-bold italic uppercase tracking-[0.35em] text-ink">
+              Engraving Grades
+            </p>
+            <h2 id="engraving-grades-heading" className="max-w-4xl text-xl font-semibold italic text-ink-muted mb-15">
+              Commission tiers &amp; engraving houses
+            </h2>
+          </div>
+          <div className="flex gap-2">
             <button
-              key={tab.label}
               type="button"
-              role="tab"
-              aria-selected={isActive}
-              aria-controls={tabPanelId}
-              className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] focus-ring transition ${
-                isActive
-                  ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
-                  : "border-border/70 bg-card/60 text-ink hover:border-ink/60"
-              }`}
-              onClick={() => setActiveTab(index)}
+              className="rounded-full border border-border px-3 py-2 text-xs uppercase tracking-[0.3em] text-ink focus-ring"
+              onClick={() =>
+                setActiveTab((index) =>
+                  index === 0 ? GRADE_TABS.length - 1 : index - 1,
+                )
+              }
+              aria-label="Previous grade group"
             >
-              {tab.label}
+              Prev
             </button>
-          );
-        })}
-      </div>
+            <button
+              type="button"
+              className="rounded-full border border-border px-3 py-2 text-xs uppercase tracking-[0.3em] text-ink focus-ring"
+              onClick={() =>
+                setActiveTab((index) => (index + 1) % GRADE_TABS.length)
+              }
+              aria-label="Next grade group"
+            >
+              Next
+            </button>
+          </div>
+        </div>
 
-      <div
-        id={tabPanelId}
-        role="tabpanel"
-        aria-labelledby={`engraving-grades-heading`}
-        className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
-      >
-        {activeGrades.map((grade) => (
-          <GradeCard key={grade.id} grade={grade} />
-        ))}
+        <div
+          role="tablist"
+          aria-label="Engraving grade categories"
+          className="flex flex-wrap gap-2"
+        >
+          {GRADE_TABS.map((tab, index) => {
+            const isActive = index === activeTab;
+            return (
+              <button
+                key={tab.label}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                aria-controls={tabPanelId}
+                className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] focus-ring transition ${
+                  isActive
+                    ? "border-perazzi-red bg-[color:var(--color-canvas)]/40 text-perazzi-red backdrop-blur-sm shadow-elevated"
+                    : "border-border/70 bg-transparent text-ink-muted hover:border-ink/60"
+                }`}
+                onClick={() => setActiveTab(index)}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div
+          id={tabPanelId}
+          role="tabpanel"
+          aria-labelledby={`engraving-grades-heading`}
+          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+        >
+          {activeGrades.map((grade) => (
+            <GradeCard key={grade.id} grade={grade} />
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -142,9 +173,9 @@ function GradeCard({ grade }: { grade: GradeSeries }) {
   const gradeAnchor = getGradeAnchorId(grade);
 
   return (
-    <article className="flex h-full flex-col rounded-3xl border border-border/70 bg-card p-5 shadow-sm">
+    <article className="flex h-full flex-col rounded-3xl border border-[color:var(--border-color)] bg-[color:var(--color-canvas)]/45 p-5 shadow-elevated backdrop-blur-sm">
       <div
-        className="relative overflow-hidden rounded-2xl bg-neutral-200"
+        className="relative overflow-hidden rounded-2xl bg-[color:var(--surface-elevated)]"
         style={{ aspectRatio: ratio }}
       >
         {heroAsset ? (
@@ -161,6 +192,12 @@ function GradeCard({ grade }: { grade: GradeSeries }) {
             Imagery coming soon
           </div>
         )}
+        {heroAsset ? (
+          <div
+            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[color:var(--scrim-strong)]/60 via-transparent to-transparent"
+            aria-hidden
+          />
+        ) : null}
       </div>
       <div className="mt-4 flex flex-1 flex-col gap-3">
         <h3 className="text-lg font-semibold text-ink">{grade.name}</h3>

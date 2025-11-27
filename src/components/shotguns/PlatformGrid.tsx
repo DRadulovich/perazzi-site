@@ -68,45 +68,12 @@ export function PlatformGrid({ platforms }: PlatformGridProps) {
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10" style={{ minHeight: "100vh" }}>
         <div className="space-y-8">
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+            <p className="text-4xl font-black italic uppercase tracking-[0.35em] text-ink">
               Platforms & Lineages
             </p>
-            <h2 id="platforms-heading" className="text-2xl font-semibold text-ink">
-              Our Platforms and Lineages
-            </h2>
-            <p className="max-w-3xl text-base text-ink-muted">
+            <h2 id="platforms-heading" className="max-w-4xl text-xl font-light italic text-ink-muted mb-15">
               Explore the MX, HT, and TM Platforms and learn how each carry a different balance, design philosophy, and place on the line.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <p className="text-sm text-ink-muted">Choose a platform to explore.</p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className="rounded-full border border-border/80 bg-[color:var(--color-canvas)]/40 px-3 py-2 text-xs uppercase tracking-[0.2em] text-ink backdrop-blur-sm focus-ring"
-                onClick={() =>
-                  setActiveIndex((index) =>
-                    index === 0 ? orderedPlatforms.length - 1 : index - 1,
-                  )
-                }
-                aria-label="Previous platform group"
-              >
-                Prev
-              </button>
-              <button
-                type="button"
-                className="rounded-full border border-border/80 bg-[color:var(--color-canvas)]/40 px-3 py-2 text-xs uppercase tracking-[0.2em] text-ink backdrop-blur-sm focus-ring"
-                onClick={() =>
-                  setActiveIndex((index) =>
-                    orderedPlatforms.length === 0 ? 0 : (index + 1) % orderedPlatforms.length,
-                  )
-                }
-                aria-label="Next platform group"
-              >
-                Next
-              </button>
-            </div>
+            </h2>
           </div>
 
           <div

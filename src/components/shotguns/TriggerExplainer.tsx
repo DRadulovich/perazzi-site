@@ -19,7 +19,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
 
   return (
     <section
-      className="relative overflow-hidden py-16 sm:py-20"
+      className="relative overflow-hidden py-16 sm:py-20 mt-25"
       style={{
         width: "100vw",
         marginLeft: "calc(50% - 50vw)",
@@ -62,12 +62,12 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
             id="trigger-explainer-content"
             className="grid gap-8 overflow-hidden transition-all duration-300 data-[state=closed]:h-0 data-[state=closed]:opacity-0 data-[state=open]:h-auto data-[state=open]:opacity-100 lg:grid-cols-2 lg:items-start"
           >
-            <div className="space-y-4 lg:flex lg:h-full lg:flex-col lg:justify-center">
+            <div className="space-y-4 lg:flex lg:h-full lg:flex-col lg:justify-start">
               <div className="space-y-2">
-                <h2 id="trigger-explainer-heading" className="text-xl font-semibold text-ink">
+                <h2 id="trigger-explainer-heading" className="text-4xl font-bold italic uppercase tracking-[0.35em] text-ink">
                   {explainer.title}
                 </h2>
-                <p className="text-sm text-ink">
+                <p className="max-w-4xl text-xl font-semibold italic text-ink-muted mb-15">
                   Removable or fixed—choose by confidence and feel.
                 </p>
                 <Collapsible.Trigger

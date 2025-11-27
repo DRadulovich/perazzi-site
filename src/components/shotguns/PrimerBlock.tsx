@@ -12,7 +12,7 @@ export function PrimerBlock({ copy, href, bullets }: PrimerBlockProps) {
     >
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-3">
-          <h2 className="text-xl font-semibold text-ink">Gauge primer</h2>
+          <h2 className="text-2xl font-bold italic uppercase tracking-[0.35em] text-ink">Gauge primer</h2>
           <p className="max-w-3xl text-sm text-ink-muted">{copy}</p>
           <ul className="list-disc space-y-1 pl-5 text-sm text-ink-muted">
             {bullets.map((item) => (
