@@ -141,154 +141,172 @@ export function DisciplineRail({
 
   return (
     <section
-      className="space-y-4"
+      className="relative w-screen overflow-hidden py-16 sm:py-20"
+      style={{
+        marginLeft: "calc(50% - 50vw)",
+        marginRight: "calc(50% - 50vw)",
+      }}
       aria-labelledby="discipline-rail-heading"
     >
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h2 id="discipline-rail-heading" className="text-xl font-semibold text-ink">
-            Disciplines at a glance
-          </h2>
-          <p className="text-sm text-ink-muted">
-            Trap, skeet, and sporting each ask something different of your platform.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            className="rounded-full border border-border px-3 py-2 text-xs uppercase tracking-[0.3em] text-ink focus-ring"
-            onClick={() =>
-              setActiveTabIndex((index) =>
-                index === 0 ? DISCIPLINE_TABS.length - 1 : index - 1,
-              )
-            }
-            aria-label={ariaPrevLabel}
-          >
-            Prev
-          </button>
-          <button
-            type="button"
-            className="rounded-full border border-border px-3 py-2 text-xs uppercase tracking-[0.3em] text-ink focus-ring"
-            onClick={() =>
-              setActiveTabIndex((index) =>
-                (index + 1) % DISCIPLINE_TABS.length,
-              )
-            }
-            aria-label={ariaNextLabel}
-          >
-            Next
-          </button>
-        </div>
-      </div>
-      <div
-        role="tablist"
-        aria-label="Discipline categories"
-        className="flex flex-wrap gap-2"
-      >
-        {DISCIPLINE_TABS.map((tab, index) => {
-          const isActive = index === activeTabIndex;
-          const tabId = `discipline-tab-${index}`;
-          return (
-            <button
-              key={tab.label}
-              id={tabId}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              aria-controls={tabPanelId}
-              className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] focus-ring transition ${
-                isActive
-                  ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
-                  : "border-border/70 bg-card/60 text-ink hover:border-ink/60"
-              }`}
-              onClick={() => setActiveTabIndex(index)}
-            >
-              {tab.label}
-            </button>
-          );
-        })}
-      </div>
-      <div
-        ref={listRef}
-        role="tabpanel"
-        id={tabPanelId}
-        aria-live="polite"
-        aria-labelledby={`discipline-rail-heading discipline-tab-${activeTabIndex}`}
-        className="grid gap-6 pb-4 md:grid-cols-2 lg:grid-cols-3"
-        tabIndex={0}
-      >
-        {displayedDisciplines.map((discipline, index) => (
-          <DisciplineCard
-            key={discipline.id}
-            discipline={discipline}
-            index={index}
-            total={displayedDisciplines.length}
-            platformName={platformName}
-            isDarkTheme={isDarkTheme}
-            onSelectModel={handleModelSelect}
-            loadingModelId={modelLoadingId}
-          />
-        ))}
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <Image
+          src="/redesign-photos/shotguns/pweb-shotguns-disciplinerail-bg.jpg"
+          alt="Perazzi discipline background"
+          fill
+          sizes="100vw"
+          className="object-cover"
+          priority={false}
+        />
+        <div className="absolute inset-0 bg-[color:var(--scrim-soft)]" aria-hidden />
       </div>
 
-      {modelModalOpen && selectedModel ? (
+      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10 space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h2 id="discipline-rail-heading" className="text-xl font-semibold text-ink">
+              Disciplines at a glance
+            </h2>
+            <p className="text-sm text-ink-muted">
+              Trap, skeet, and sporting each ask something different of your platform.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className="rounded-full border border-border px-3 py-2 text-xs uppercase tracking-[0.3em] text-ink focus-ring"
+              onClick={() =>
+                setActiveTabIndex((index) =>
+                  index === 0 ? DISCIPLINE_TABS.length - 1 : index - 1,
+                )
+              }
+              aria-label={ariaPrevLabel}
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              className="rounded-full border border-border px-3 py-2 text-xs uppercase tracking-[0.3em] text-ink focus-ring"
+              onClick={() =>
+                setActiveTabIndex((index) =>
+                  (index + 1) % DISCIPLINE_TABS.length,
+                )
+              }
+              aria-label={ariaNextLabel}
+            >
+              Next
+            </button>
+          </div>
+        </div>
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur"
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setModelModalOpen(false)}
+          role="tablist"
+          aria-label="Discipline categories"
+          className="flex flex-wrap gap-2"
         >
-          <div
-            className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 py-1 text-xs uppercase tracking-widest text-black transition hover:border-black hover:bg-white sm:right-5 sm:top-5 sm:text-sm"
-              onClick={() => setModelModalOpen(false)}
-            >
-              Close
-            </button>
+          {DISCIPLINE_TABS.map((tab, index) => {
+            const isActive = index === activeTabIndex;
+            const tabId = `discipline-tab-${index}`;
+            return (
+              <button
+                key={tab.label}
+                id={tabId}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                aria-controls={tabPanelId}
+                className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] focus-ring transition ${
+                  isActive
+                    ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
+                    : "border-border/70 bg-card/60 text-ink hover:border-ink/60"
+                }`}
+                onClick={() => setActiveTabIndex(index)}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+        <div
+          ref={listRef}
+          role="tabpanel"
+          id={tabPanelId}
+          aria-live="polite"
+          aria-labelledby={`discipline-rail-heading discipline-tab-${activeTabIndex}`}
+          className="grid gap-6 pb-4 md:grid-cols-2 lg:grid-cols-3"
+          tabIndex={0}
+        >
+          {displayedDisciplines.map((discipline, index) => (
+            <DisciplineCard
+              key={discipline.id}
+              discipline={discipline}
+              index={index}
+              total={displayedDisciplines.length}
+              platformName={platformName}
+              isDarkTheme={isDarkTheme}
+              onSelectModel={handleModelSelect}
+              loadingModelId={modelLoadingId}
+            />
+          ))}
+        </div>
 
-            <div className="grid flex-1 gap-6 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[3fr,1.6fr]">
-              <div className="card-media relative aspect-[16/10] w-full overflow-hidden rounded-3xl bg-white">
-                {selectedModel.imageUrl ? (
-                  <Image
-                    src={selectedModel.imageUrl}
-                    alt={selectedModel.imageAlt || selectedModel.name}
-                    fill
-                    className="object-contain bg-white"
-                    sizes="(min-width: 1024px) 70vw, 100vw"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-neutral-600">No Image Available</div>
-                )}
-                <div className="absolute inset-x-0 bottom-6 flex flex-col gap-2 px-6 text-black">
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
-                    {selectedModel.grade}
-                  </p>
-                  <h2 className="text-4xl font-semibold leading-tight">{selectedModel.name}</h2>
-                  <p className="text-base text-black/70">{selectedModel.use}</p>
+        {modelModalOpen && selectedModel ? (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur"
+            role="dialog"
+            aria-modal="true"
+            onClick={() => setModelModalOpen(false)}
+          >
+            <div
+              className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 py-1 text-xs uppercase tracking-widest text-black transition hover:border-black hover:bg-white sm:right-5 sm:top-5 sm:text-sm"
+                onClick={() => setModelModalOpen(false)}
+              >
+                Close
+              </button>
+
+              <div className="grid flex-1 gap-6 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[3fr,1.6fr]">
+                <div className="card-media relative aspect-[16/10] w-full overflow-hidden rounded-3xl bg-white">
+                  {selectedModel.imageUrl ? (
+                    <Image
+                      src={selectedModel.imageUrl}
+                      alt={selectedModel.imageAlt || selectedModel.name}
+                      fill
+                      className="object-contain bg-white"
+                      sizes="(min-width: 1024px) 70vw, 100vw"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-neutral-600">No Image Available</div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-6 flex flex-col gap-2 px-6 text-black">
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+                      {selectedModel.grade}
+                    </p>
+                    <h2 className="text-4xl font-semibold leading-tight">{selectedModel.name}</h2>
+                    <p className="text-base text-black/70">{selectedModel.use}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="grid gap-4 rounded-3xl border border-white/10 bg-black/40 p-4 sm:p-6 sm:grid-cols-2 lg:grid-cols-3">
-                <Detail label="Platform" value={selectedModel.platform} />
-                <Detail label="Gauge" value={selectedModel.gaugeNames?.join(", ")} />
-                <Detail label="Trigger Type" value={selectedModel.triggerTypes?.join(", ")} />
-                <Detail label="Trigger Springs" value={selectedModel.triggerSprings?.join(", ")} />
-                <Detail label="Rib Type" value={selectedModel.ribTypes?.join(", ")} />
-                <Detail label="Rib Style" value={selectedModel.ribStyles?.join(", ")} />
+                <div className="grid gap-4 rounded-3xl border border-white/10 bg-black/40 p-4 sm:p-6 sm:grid-cols-2 lg:grid-cols-3">
+                  <Detail label="Platform" value={selectedModel.platform} />
+                  <Detail label="Gauge" value={selectedModel.gaugeNames?.join(", ")} />
+                  <Detail label="Trigger Type" value={selectedModel.triggerTypes?.join(", ")} />
+                  <Detail label="Trigger Springs" value={selectedModel.triggerSprings?.join(", ")} />
+                  <Detail label="Rib Type" value={selectedModel.ribTypes?.join(", ")} />
+                  <Detail label="Rib Style" value={selectedModel.ribStyles?.join(", ")} />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
 
-      {modelError ? (
-        <p className="text-center text-sm text-red-500" role="status">
-          {modelError}
-        </p>
-      ) : null}
+        {modelError ? (
+          <p className="text-center text-sm text-red-500" role="status">
+            {modelError}
+          </p>
+        ) : null}
+      </div>
     </section>
   );
 }

@@ -51,8 +51,8 @@ export function CinematicImageStrip({ src, alt }: CinematicImageStripProps) {
           // Uses var(--color-canvas) which the theme toggles for light/dark surfaces.
           style={{
             backgroundImage:
-              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%)," +
-              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%)",
+              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 100%, transparent 75%)," +
+              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 100%, transparent 75%)",
           }}
           aria-hidden="true"
         />

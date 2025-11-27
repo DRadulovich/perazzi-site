@@ -58,8 +58,8 @@ export function PlatformGrid({ platforms }: PlatformGridProps) {
           style={{
             backgroundImage:
               "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
-              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 100%), " +
-              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 100%)",
+              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%), " +
+              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%)",
           }}
           aria-hidden
         />
@@ -161,7 +161,7 @@ export function PlatformGrid({ platforms }: PlatformGridProps) {
                   }
                 >
                   {activePlatform.hallmark ? (
-                    <p className="text-2xl italic text-ink">{activePlatform.hallmark}</p>
+                    <p className="text-xl italic text-ink">{activePlatform.hallmark}</p>
                   ) : null}
                   {activePlatform.champion ? (
                     <div className="flex items-center justify-center gap-5">
