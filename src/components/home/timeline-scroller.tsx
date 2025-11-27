@@ -108,7 +108,7 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
                 <div className="relative z-10 w-full max-w-7xl px-6 py-12 lg:px-10">
                   <div className="max-w-3xl space-y-3 text-ink">
                     <p className="text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-                      Craftsmanship journey
+                      Craftsmanship Journey
                     </p>
                     <h2
                       id="craft-timeline-heading"
