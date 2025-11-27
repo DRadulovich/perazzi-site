@@ -178,7 +178,7 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
           className="object-cover"
           onLoad={() => setMediaLoaded(true)}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-perazzi-black via-black/75 to-black/75" />
+        <div className="absolute inset-0 bg-gradient-to-t from-canvas/50 via-perazzi-black/66 to-perazzi-black" />
       </motion.div>
 
       <div className="relative z-10 flex flex-1">
