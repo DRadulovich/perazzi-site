@@ -1,5 +1,4 @@
 import { HeritageHero } from "@/components/heritage/HeritageHero";
-import { BrandTimeline } from "@/components/heritage/BrandTimeline";
 import { ChampionsGallery } from "@/components/heritage/ChampionsGallery";
 import { FactoryPhotoEssay } from "@/components/heritage/FactoryPhotoEssay";
 import { SerialLookup, type SerialLookupFormState } from "@/components/heritage/SerialLookup";
@@ -10,6 +9,7 @@ import { CinematicImageStrip } from "@/components/shotguns/CinematicImageStrip";
 import { getHeritagePageData } from "@/lib/heritage-data";
 import { getManufactureYearBySerial } from "@/sanity/queries/manufactureYear";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
+import { HeritageCinematicScroller } from "@/components/heritage/HeritageCinematicScroller";
 
 async function serialLookupAction(
   _: SerialLookupFormState,
@@ -80,6 +80,7 @@ export default async function HeritagePage() {
           { label: "Heritage", href: "/heritage" },
         ]}
       />
+      <HeritageCinematicScroller events={timeline} />
       <section className="rounded-3xl border border-border/70 bg-card px-6 py-5 shadow-sm sm:px-8">
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">Ask the workshop</p>
         <p className="mt-2 text-sm text-ink">
@@ -96,7 +97,6 @@ export default async function HeritagePage() {
           />
         </div>
       </section>
-      <BrandTimeline events={timeline} skipTargetId="heritage-after-timeline" />
       <SerialLookup lookupAction={serialLookupAction} />
       <CinematicImageStrip
         src="/cinematic_background_photos/p-web-10.jpg"
