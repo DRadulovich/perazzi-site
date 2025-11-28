@@ -1,0 +1,256 @@
+"use client";
+
+import * as React from "react";
+import { useInView, useMotionValueEvent, useScroll } from "framer-motion";
+import { cn } from "@/lib/utils";
+import type { HeritageEraWithEvents } from "@/types/heritage";
+import { EraBackgroundLayer } from "./EraBackgroundLayer";
+import { HeritageEventSlide } from "./HeritageEventSlide";
+import { HeritageEventRail } from "./HeritageEventRail";
+
+export type HeritageEraSectionProps = {
+  era: HeritageEraWithEvents;
+  index: number;
+  className?: string;
+  registerEraRef?: (eraId: string, el: HTMLElement | null) => void;
+  registerEraFocusRef?: (eraId: string, el: HTMLAnchorElement | null) => void;
+  onActiveEventChange?: (eraId: string, eventIndex: number) => void;
+  onEraInView?: (eraId: string, index: number) => void;
+  onEraScrollProgress?: (eraId: string, index: number, progress: number) => void;
+  prefersReducedMotion?: boolean;
+  headerOffset?: number;
+};
+
+export function HeritageEraSection({
+  era,
+  index,
+  className,
+  registerEraRef,
+  registerEraFocusRef,
+  onActiveEventChange,
+  onEraInView,
+  onEraScrollProgress,
+  prefersReducedMotion,
+  headerOffset,
+}: HeritageEraSectionProps) {
+  const travelEndForEvents = 0.8;
+  const forwardThreshold = 0.6;
+  const backwardThreshold = 0.4;
+  const sectionRef = React.useRef<HTMLElement | null>(null);
+  const eraFocusRef = React.useRef<HTMLAnchorElement | null>(null);
+  const [isShortViewport, setIsShortViewport] = React.useState(false);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+  const isInView = useInView(sectionRef, {
+    margin: "-40% 0px -40% 0px",
+  });
+  const [activeEventIndex, setActiveEventIndex] = React.useState(0);
+  const activeEventRef = React.useRef(0);
+  const totalEvents = era.events.length;
+  const lastProgressRef = React.useRef(0);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handle = () => {
+      setIsShortViewport(window.innerHeight < 600);
+    };
+
+    handle();
+    window.addEventListener("resize", handle);
+    return () => {
+      window.removeEventListener("resize", handle);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (isInView) {
+      onEraInView?.(era.id, index);
+    }
+  }, [isInView, era.id, index, onEraInView]);
+
+  React.useEffect(() => {
+    activeEventRef.current = 0;
+    setActiveEventIndex(0);
+    onActiveEventChange?.(era.id, 0);
+  }, [totalEvents, era.id, onActiveEventChange]);
+
+  useMotionValueEvent(scrollYProgress, "change", (value) => {
+    const progress = Math.min(1, Math.max(0, value));
+    const prevProgress = lastProgressRef.current;
+    if (Math.abs(progress - prevProgress) > 0.01) {
+      lastProgressRef.current = progress;
+      onEraScrollProgress?.(era.id, index, progress);
+    }
+
+    if (totalEvents <= 1) {
+      return;
+    }
+
+    const capped = Math.min(progress, travelEndForEvents);
+    const segmentedProgress =
+      travelEndForEvents > 0 ? capped / travelEndForEvents : 0;
+
+    const eventSpan = totalEvents > 1 ? totalEvents - 1 : 1;
+    const eventPosition = segmentedProgress * eventSpan;
+
+    const currentIndex = activeEventRef.current;
+    const nextIndex = Math.min(totalEvents - 1, currentIndex + 1);
+    const prevIndex = Math.max(0, currentIndex - 1);
+
+    if (eventPosition > currentIndex + forwardThreshold && nextIndex !== currentIndex) {
+      activeEventRef.current = nextIndex;
+      setActiveEventIndex(nextIndex);
+      onActiveEventChange?.(era.id, nextIndex);
+      return;
+    }
+
+    if (eventPosition < currentIndex - (1 - backwardThreshold) && prevIndex !== currentIndex) {
+      activeEventRef.current = prevIndex;
+      setActiveEventIndex(prevIndex);
+      onActiveEventChange?.(era.id, prevIndex);
+      return;
+    }
+  });
+
+  if (prefersReducedMotion) {
+    return (
+      <section
+        ref={(el) => {
+          sectionRef.current = el;
+          registerEraRef?.(era.id, el);
+        }}
+        className={cn("relative border-b border-white/5", className)}
+        aria-labelledby={`heritage-era-${index}`}
+      >
+        <EraBackgroundLayer
+          src={era.backgroundSrc}
+          overlayColor={era.overlayColor}
+          alt={era.label}
+        />
+
+        <a
+          ref={(el) => {
+            eraFocusRef.current = el;
+            registerEraFocusRef?.(era.id, el);
+          }}
+          tabIndex={-1}
+          className="sr-only"
+        >
+          {era.label}
+        </a>
+
+        <div className="relative z-10 px-4 py-16">
+          <div className="mx-auto max-w-6xl rounded-3xl border border-white/15 bg-black/55 px-4 py-8 backdrop-blur-md md:px-10 md:py-10">
+            <header className="max-w-4xl">
+              <h2
+                id={`heritage-era-${index}`}
+                className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-300 md:text-xs"
+              >
+                {era.label}
+              </h2>
+              <p className="mt-2 text-xs uppercase tracking-[0.25em] text-neutral-500">
+                {era.startYear}–{era.endYear}
+              </p>
+              <div className="mt-3">
+                <a
+                  href="#perazzi-heritage-heading"
+                  className="inline-flex items-center text-[0.6rem] uppercase tracking-[0.22em] text-neutral-500 underline-offset-4 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white hover:text-neutral-200"
+                >
+                  Back to timeline
+                </a>
+              </div>
+            </header>
+
+            <div className="mt-8 space-y-6">
+              {era.events.map((event) => (
+                <HeritageEventSlide
+                  key={event.id}
+                  event={event}
+                  className="w-full"
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const extraEvents = Math.max(0, totalEvents - 1);
+  const baseScreens = 2;
+  const screensPerExtraEvent = 1;
+  const extraPaddingScreens = 1;
+  const totalScreens = baseScreens + extraEvents * screensPerExtraEvent + extraPaddingScreens;
+  const sectionMinHeight = totalScreens * 100;
+
+  return (
+    <section
+      ref={(el) => {
+        sectionRef.current = el;
+        registerEraRef?.(era.id, el);
+      }}
+      className={cn("relative border-b border-white/5", className)}
+      aria-labelledby={`heritage-era-${index}`}
+      style={{
+        minHeight: `${sectionMinHeight}vh`,
+      }}
+    >
+      <a
+        ref={(el) => {
+          eraFocusRef.current = el;
+          registerEraFocusRef?.(era.id, el);
+        }}
+        tabIndex={-1}
+        className="sr-only"
+      >
+        {era.label}
+      </a>
+
+      <div
+        className={cn(
+          "relative sticky flex items-center",
+          isShortViewport ? "h-[85vh]" : "h-screen",
+        )}
+        style={{ top: headerOffset ?? 0 }}
+      >
+        <EraBackgroundLayer
+          src={era.backgroundSrc}
+          overlayColor={era.overlayColor}
+          alt={era.label}
+        />
+
+        <div className="relative z-10 w-full px-4 py-10 md:px-8 md:py-16">
+          <header className="mx-auto max-w-6xl pb-6">
+            <h2
+              id={`heritage-era-${index}`}
+              className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-300 md:text-xs"
+            >
+              {era.label}
+            </h2>
+            <p className="mt-2 text-xs uppercase tracking-[0.25em] text-neutral-500">
+              {era.startYear}–{era.endYear}
+            </p>
+            <div className="mt-3">
+              <a
+                href="#perazzi-heritage-heading"
+                className="inline-flex items-center text-[0.6rem] uppercase tracking-[0.22em] text-neutral-500 underline-offset-4 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white hover:text-neutral-200"
+              >
+                Back to timeline
+              </a>
+            </div>
+          </header>
+
+          <HeritageEventRail
+            events={era.events}
+            scrollProgress={scrollYProgress}
+            activeEventIndex={activeEventIndex}
+            prefersReducedMotion={prefersReducedMotion}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}

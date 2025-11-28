@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { motion, useSpring, useTransform, type MotionValue } from "framer-motion";
+import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { HeritageEvent } from "@/types/heritage";
 import { HeritageEventSlide } from "./HeritageEventSlide";
@@ -20,7 +20,7 @@ export function HeritageEventRail({
   className,
   scrollProgress,
   activeEventIndex = 0,
-  prefersReducedMotion,
+  prefersReducedMotion: _prefersReducedMotion,
 }: HeritageEventRailProps) {
   if (!events || events.length === 0) {
     return null;
@@ -31,6 +31,10 @@ export function HeritageEventRail({
   const trackRef = React.useRef<HTMLDivElement | null>(null);
   const [maxOffset, setMaxOffset] = React.useState(0);
   const isScrollable = maxOffset > 4;
+  const movementStart = 0.03;
+  const travelEnd = 0.6;
+  const fallbackProgress = useMotionValue(0);
+  const progress = scrollProgress ?? fallbackProgress;
 
   React.useLayoutEffect(() => {
     function measure() {
@@ -52,18 +56,12 @@ export function HeritageEventRail({
     };
   }, [events.length]);
 
-  const rawX: MotionValue<number> | undefined = React.useMemo(
-    () =>
-      scrollProgress && isScrollable && !isSingle
-        ? useTransform(scrollProgress, [0, 1], [0, -maxOffset])
-        : undefined,
-    [scrollProgress, isScrollable, maxOffset, isSingle],
+  const rawX: MotionValue<number> = useTransform(
+    progress,
+    [movementStart, travelEnd],
+    [0, -maxOffset],
   );
-
-  const x = React.useMemo(
-    () => (rawX ? useSpring(rawX, heritageMotion.railSpring) : undefined),
-    [rawX],
-  );
+  const x = useSpring(rawX, heritageMotion.railSpring);
 
   return (
     <div
@@ -75,33 +73,20 @@ export function HeritageEventRail({
     >
       <motion.div
         ref={trackRef}
-        className="flex h-full w-full"
-        style={x !== undefined ? { x } : undefined}
+        className="flex h-full w-full will-change-transform"
+        style={isScrollable && !isSingle ? { x } : undefined}
       >
-        {events.map((event, index) => {
-          const isActive = index === activeEventIndex;
-          return (
-            <motion.div
-              key={event.id}
-              className="flex h-full w-full flex-none items-stretch px-1 sm:px-2"
-              animate={{
-                scale: isActive ? 1.0 : 0.96,
-                opacity: isActive ? 1 : 0.7,
-              }}
-              transition={
-                prefersReducedMotion
-                  ? { duration: 0 }
-                  : heritageMotion.slideEmphasisSpring
-              }
-            >
-              <HeritageEventSlide
-                event={event}
-                isActive={isActive}
-                className="w-full"
-              />
-            </motion.div>
-          );
-        })}
+        {events.map((event) => (
+          <div
+            key={event.id}
+            className="flex h-full w-full flex-none items-stretch px-1 sm:px-2"
+          >
+            <HeritageEventSlide
+              event={event}
+              className="w-full"
+            />
+          </div>
+        ))}
       </motion.div>
     </div>
   );

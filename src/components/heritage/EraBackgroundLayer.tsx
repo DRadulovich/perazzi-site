@@ -2,15 +2,18 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { motion, useTransform, type MotionValue } from "framer-motion";
 import { cn } from "@/lib/utils";
+
+const ERA_CANVAS_OVERLAY_GRADIENT =
+  "linear-gradient(to right, color-mix(in srgb, var(--color-black) 0%, transparent) 0%, color-mix(in srgb, var(--color-black) 0%, transparent) 0%, color-mix(in srgb, var(--color-black) 0%, transparent) 0%), " +
+  "linear-gradient(to bottom, color-mix(in srgb, var(--color-black) 100%, transparent) 0%, transparent 30%), " +
+  "linear-gradient(to top, color-mix(in srgb, var(--color-black) 100%, transparent) 0%, transparent 30%)";
 
 export type EraBackgroundLayerProps = {
   src: string;
   overlayColor: string;
   alt?: string;
   className?: string;
-  scrollProgress?: MotionValue<number>;
 };
 
 export function EraBackgroundLayer({
@@ -18,10 +21,7 @@ export function EraBackgroundLayer({
   overlayColor,
   alt = "",
   className,
-  scrollProgress,
 }: EraBackgroundLayerProps) {
-  const translateY = scrollProgress ? useTransform(scrollProgress, [0, 1], [-10, 10]) : undefined;
-
   return (
     <div
       className={cn(
@@ -30,10 +30,7 @@ export function EraBackgroundLayer({
       )}
       aria-hidden="true"
     >
-      <motion.div
-        className="absolute inset-0"
-        style={translateY ? { y: translateY } : undefined}
-      >
+      <div className="absolute inset-0">
         <Image
           src={src}
           alt={alt}
@@ -42,7 +39,7 @@ export function EraBackgroundLayer({
           sizes="100vw"
           className="object-cover"
         />
-      </motion.div>
+      </div>
 
       <div className="absolute inset-0">
         <div
@@ -51,8 +48,12 @@ export function EraBackgroundLayer({
             background: overlayColor,
           }}
         />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/50" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_40%,_black/45_100%)]" />
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage: ERA_CANVAS_OVERLAY_GRADIENT,
+          }}
+        />
       </div>
     </div>
   );

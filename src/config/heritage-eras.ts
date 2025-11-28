@@ -18,10 +18,14 @@ export type HeritageEra = {
   id: HeritageEraId;
   label: string;
   startYear: number;
-  endYear: number | null;
+  endYear: number;
   backgroundSrc: string;
-  overlayMood: HeritageOverlayMood;
+  overlayMood?: HeritageOverlayMood;
   overlayColor: string;
+  /**
+   * Marks an era that is still in progress; used for display labels.
+   */
+  isOngoing?: boolean;
 };
 
 export const HERITAGE_ERAS: HeritageEra[] = [
@@ -65,12 +69,20 @@ export const HERITAGE_ERAS: HeritageEra[] = [
     id: "living_atelier",
     label: "The Living Atelier",
     startYear: 2013,
-    endYear: null,
+    endYear: Number.MAX_SAFE_INTEGER,
     backgroundSrc: "/redesign-photos/heritage/pweb-heritage-era-5-atelier.jpg",
     overlayMood: "deep_ink_red",
     overlayColor: "rgba(8, 6, 10, 0.78)",
+    isOngoing: true,
   },
 ];
+
+export function formatEraRange(era: HeritageEra) {
+  const currentYear = new Date().getFullYear();
+  const endLabel =
+    era.isOngoing || era.endYear >= currentYear ? "Today" : era.endYear;
+  return `${era.startYear} – ${endLabel}`;
+}
 
 export function getEraForYear(year: number): HeritageEra | null {
   if (Number.isNaN(year)) return null;
@@ -78,7 +90,7 @@ export function getEraForYear(year: number): HeritageEra | null {
   return (
     HERITAGE_ERAS.find((era) => {
       const afterStart = year >= era.startYear;
-      const beforeEnd = era.endYear == null ? true : year <= era.endYear;
+      const beforeEnd = era.isOngoing ? true : year <= era.endYear;
       return afterStart && beforeEnd;
     }) ?? null
   );

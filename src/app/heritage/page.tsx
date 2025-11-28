@@ -9,7 +9,8 @@ import { CinematicImageStrip } from "@/components/shotguns/CinematicImageStrip";
 import { getHeritagePageData } from "@/lib/heritage-data";
 import { getManufactureYearBySerial } from "@/sanity/queries/manufactureYear";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
-import { HeritageCinematicScroller } from "@/components/heritage/HeritageCinematicScroller";
+import { PerazziHeritageEras } from "@/components/heritage/PerazziHeritageEras";
+import { groupEventsByEra } from "@/utils/heritage/groupEventsByEra";
 
 async function serialLookupAction(
   _: SerialLookupFormState,
@@ -70,17 +71,20 @@ export default async function HeritagePage() {
     related,
     finalCta,
   } = await getHeritagePageData();
+  const eraGroups = groupEventsByEra(timeline);
 
   return (
     <div className="space-y-16">
-      <HeritageHero
-        hero={hero}
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Heritage", href: "/heritage" },
-        ]}
-      />
-      <HeritageCinematicScroller events={timeline} />
+    <HeritageHero
+      hero={hero}
+      breadcrumbs={[
+        { label: "Home", href: "/" },
+        { label: "Heritage", href: "/heritage" },
+      ]}
+    />
+    <div className="relative left-1/2 right-1/2 w-screen -translate-x-1/2">
+      <PerazziHeritageEras eras={eraGroups} />
+    </div>
       <section className="rounded-3xl border border-border/70 bg-card px-6 py-5 shadow-sm sm:px-8">
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">Ask the workshop</p>
         <p className="mt-2 text-sm text-ink">

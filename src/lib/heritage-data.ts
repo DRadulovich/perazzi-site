@@ -36,13 +36,8 @@ const compareEventsByYear = (a: HeritageEvent, b: HeritageEvent) => {
 function mapEvents(events: Awaited<ReturnType<typeof getHeritageEvents>>): HeritageEvent[] {
   if (!events.length) return [];
   return events
-    .map((event) => ({
-      id: event.id,
-      date: event.date ?? "",
-      title: event.title ?? "",
-      summaryHtml: portableTextToHtml(event.bodyPortableText) ?? "",
-      media: event.media ?? undefined,
-      links:
+    .map((event) => {
+      const referenceLinks =
         event.champions || event.platforms
           ? {
               champions: event.champions?.map((champion) => ({
@@ -55,8 +50,17 @@ function mapEvents(events: Awaited<ReturnType<typeof getHeritageEvents>>): Herit
                 slug: platform.slug ?? "",
               })),
             }
-          : undefined,
-    }))
+          : undefined;
+
+      return {
+        id: event.id,
+        date: event.date ?? "",
+        title: event.title ?? "",
+        summaryHtml: portableTextToHtml(event.bodyPortableText) ?? "",
+        media: event.media ?? undefined,
+        referenceLinks,
+      };
+    })
     .sort(compareEventsByYear);
 }
 

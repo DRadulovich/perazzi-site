@@ -36,7 +36,7 @@ export const timeline: HeritageEvent[] = [
     title: "First Olympic Gold with Mattarelli",
     summaryHtml:
       "<p>Ennio Mattarelli wins Trap gold in Tokyo with an early Perazzi, validating the workshop’s obsession with fit and mechanical calm under pressure.</p>",
-    links: {
+    referenceLinks: {
       champions: [{ id: "mattarelli", name: "Ennio Mattarelli" }],
     },
   },
@@ -51,7 +51,7 @@ export const timeline: HeritageEvent[] = [
       "https://images.unsplash.com/photo-1603791452906-bf92c8fef56c",
       "Close-up of a removable shotgun trigger group being tuned",
     ),
-    links: {
+    referenceLinks: {
       platforms: [
         { id: "platform-mx8", slug: "mx", title: "MX Platform" },
       ],
@@ -83,7 +83,7 @@ export const timeline: HeritageEvent[] = [
     title: "SCO Engraving Atelier Opens",
     summaryHtml:
       "<p>Launch of the SCO engraving program pairs Botticino mechanics with master Italian engravers, enabling bespoke storytelling on every receiver face.</p>",
-    links: {
+    referenceLinks: {
       articles: [
         {
           id: "engraving-house",
@@ -111,7 +111,7 @@ export const timeline: HeritageEvent[] = [
     title: "Champion Mentorship Program",
     summaryHtml:
       "<p>Evergreen champions begin mentoring bespoke clients directly, pairing technical insight with lived experience on the world circuit.</p>",
-    links: {
+    referenceLinks: {
       champions: [
         { id: "sofia-rossi", name: "Sofia Rossi" },
         { id: "marco-de-santis", name: "Marco De Santis" },
