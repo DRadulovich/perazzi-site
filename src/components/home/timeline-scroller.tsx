@@ -122,18 +122,11 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
                     legacy piece. A skip link is provided for assistive tech.
                   </p>
                 </div>
-                <a
-                  href={`#${skipTargetId}`}
-                  onClick={focusSkipTarget}
-                  className="inline-flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink hover:border-ink/60 focus-ring transition"
-                >
-                  Skip timeline
-                </a>
               </div>
 
               {enablePinned ? (
                 <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
-                  <div className="rounded-3xl border border-border/0 bg-card/0 p-4 shadow-sm">
+                  <div className="rounded-3xl bg-card/0 p-4">
                     <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-ink">
                       Fitting Timeline
                     </p>
@@ -222,7 +215,7 @@ function TimelineControlButton({
     >
       <span
         className={cn(
-          "block text-[11px] uppercase tracking-[0.25em] text-perazzi-red/80 group-hover:text-ink-muted/90",
+          "block text-[11px] uppercase font-bold tracking-[0.25em] text-perazzi-red/80 group-hover:text-ink-muted/90",
           active && "text-card/80",
         )}
       >

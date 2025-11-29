@@ -39,7 +39,7 @@ export function PlatformGrid({ platforms }: PlatformGridProps) {
       style={{
         marginLeft: "calc(50% - 50vw)",
         marginRight: "calc(50% - 50vw)",
-        minHeight: "120vh",
+        minHeight: "80vh",
       }}
       aria-labelledby="platforms-heading"
     >
@@ -48,7 +48,7 @@ export function PlatformGrid({ platforms }: PlatformGridProps) {
           src="/redesign-photos/shotguns/pweb-shotguns-platformgrid-bg.jpg"
           alt="Perazzi workshop background for platform section"
           fill
-          sizes="100vw"
+          sizes="80vw"
           className="object-cover"
           priority={false}
         />

@@ -1,4 +1,4 @@
- "use client";
+"use client";
 
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Platform, ShotgunsLandingData } from "@/types/catalog";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useTheme } from "@/components/theme/ThemeProvider";
+import { cn } from "@/lib/utils";
 
 type DisciplineCard = ShotgunsLandingData["disciplines"][number];
 
@@ -141,7 +142,7 @@ export function DisciplineRail({
 
   return (
     <section
-      className="relative w-screen overflow-hidden py-16 sm:py-20"
+      className="relative isolate w-screen overflow-hidden py-16 sm:py-20"
       style={{
         marginLeft: "calc(50% - 50vw)",
         marginRight: "calc(50% - 50vw)",
@@ -158,68 +159,82 @@ export function DisciplineRail({
           priority={false}
         />
         <div className="absolute inset-0 bg-[color:var(--scrim-soft)]" aria-hidden />
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
+              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%), " +
+              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%)",
+          }}
+          aria-hidden
+        />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10 space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="space-y-1">
-            <h2 id="discipline-rail-heading" className="text-4xl font-black italic uppercase tracking-[0.35em] text-ink">
+      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
+        <div className="space-y-6 rounded-3xl border border-border/70 bg-card/0 px-6 py-8 shadow-lg backdrop-blur-sm sm:px-10">
+          <div className="space-y-3">
+            <p className="text-4xl font-black italic uppercase tracking-[0.35em] text-ink">
               Disciplines at a Glance
-            </h2>
-            <p className="max-w-4xl text-xl font-light italic text-ink-muted mb-15">
-              Every discipline demands something unique from your platform, whether it's precision, speed, or adaptability.
             </p>
+            <h2
+              id="discipline-rail-heading"
+              className="text-xl font-light italic text-ink-muted"
+            >
+              Every discipline demands something unique from your platform, whether it's precision, speed, or adaptability.
+            </h2>
           </div>
-        </div>
-        <div
-          role="tablist"
-          aria-label="Discipline categories"
-          className="flex flex-wrap gap-2"
-        >
-          {DISCIPLINE_TABS.map((tab, index) => {
-            const isActive = index === activeTabIndex;
-            const tabId = `discipline-tab-${index}`;
-            return (
-              <button
-                key={tab.label}
-                id={tabId}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                aria-controls={tabPanelId}
-                className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] focus-ring transition ${
-                  isActive
-                    ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
-                    : "border-border/70 bg-card/60 text-ink hover:border-ink/60"
-                }`}
-                onClick={() => setActiveTabIndex(index)}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-        <div
-          ref={listRef}
-          role="tabpanel"
-          id={tabPanelId}
-          aria-live="polite"
-          aria-labelledby={`discipline-rail-heading discipline-tab-${activeTabIndex}`}
-          className="grid gap-6 pb-4 md:grid-cols-2 lg:grid-cols-3"
-          tabIndex={0}
-        >
-          {displayedDisciplines.map((discipline, index) => (
-            <DisciplineCard
-              key={discipline.id}
-              discipline={discipline}
-              index={index}
-              total={displayedDisciplines.length}
-              platformName={platformName}
-              isDarkTheme={isDarkTheme}
-              onSelectModel={handleModelSelect}
-              loadingModelId={modelLoadingId}
-            />
-          ))}
+          <div
+            role="tablist"
+            aria-label="Discipline categories"
+            className="flex flex-wrap gap-2"
+          >
+            {DISCIPLINE_TABS.map((tab, index) => {
+              const isActive = index === activeTabIndex;
+              const tabId = `discipline-tab-${index}`;
+              return (
+                <button
+                  key={tab.label}
+                  id={tabId}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls={tabPanelId}
+                  className={cn(
+                    "rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] focus-ring transition",
+                    isActive
+                      ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
+                      : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
+                  )}
+                  onClick={() => setActiveTabIndex(index)}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+          <div
+            ref={listRef}
+            role="tabpanel"
+            id={tabPanelId}
+            aria-live="polite"
+            aria-labelledby={`discipline-rail-heading discipline-tab-${activeTabIndex}`}
+            className="grid gap-6 pb-4 md:grid-cols-2 lg:grid-cols-3"
+            tabIndex={0}
+          >
+            {displayedDisciplines.map((discipline, index) => (
+              <DisciplineCard
+                key={discipline.id}
+                discipline={discipline}
+                index={index}
+                total={displayedDisciplines.length}
+                platformName={platformName}
+                isDarkTheme={isDarkTheme}
+                onSelectModel={handleModelSelect}
+                loadingModelId={modelLoadingId}
+              />
+            ))}
+          </div>
         </div>
 
         {modelModalOpen && selectedModel ? (
@@ -321,10 +336,10 @@ function DisciplineCard({
     <article
       ref={cardRef}
       data-analytics-id={`DisciplineChip:${discipline.id}`}
-      className="flex flex-col rounded-3xl border border-border/70 bg-card text-left shadow-lg focus-ring"
+      className="flex flex-col rounded-3xl border border-border/70 bg-card/75 text-left shadow-sm focus-ring"
       aria-label={`Slide ${index + 1} of ${total}: ${discipline.name}`}
     >
-      <div className="card-media relative aspect-[30/11] w-full rounded-t-3xl bg-neutral-900">
+      <div className="card-media relative aspect-[30/11] w-full rounded-t-3xl bg-[color:var(--color-canvas)]">
         {discipline.hero ? (
           <Image
             src={discipline.hero.url}
@@ -334,9 +349,16 @@ function DisciplineCard({
             sizes="(min-width: 1024px) 33vw, 100vw"
           />
         ) : null}
-        <div className={heroOverlayClass} />
-        <div className={`absolute inset-x-0 bottom-0 flex flex-col items-center justify-end p-6 ${heroTextClass}`}>
-          <p className="text-base font-semibold uppercase tracking-[0.35em]">
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-0 bg-gradient-to-t",
+            isDarkTheme
+              ? "from-white via-white/70 to-transparent"
+              : "from-[color:var(--scrim-strong)] via-[color:var(--scrim-strong)]/60 to-transparent",
+          )}
+        />
+        <div className="absolute inset-x-0 bottom-0 flex flex-col items-center justify-end p-6 text-white">
+          <p className="text-base font-semibold uppercase tracking-[0.35em] text-white">
             {discipline.name}
           </p>
         </div>
@@ -355,7 +377,7 @@ function DisciplineCard({
               {discipline.recommendedPlatforms.map((platformId) => (
                 <li
                   key={platformId}
-                  className="rounded-full bg-ink/5 px-3 py-1 text-xs uppercase tracking-[0.25em] text-ink"
+                  className="rounded-full border border-border px-3 py-1 text-xs uppercase tracking-[0.2em] text-ink-muted"
                 >
                   {platformName(platformId)}
                 </li>
@@ -385,7 +407,7 @@ function DisciplineCard({
                       onSelectModel(model.id);
                     }
                   }}
-                  className="group relative w-full cursor-pointer overflow-hidden rounded-2xl bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-perazzi-red"
+                  className="group relative w-full cursor-pointer overflow-hidden rounded-2xl border border-border/70 bg-card/75 focus:outline-none focus:ring-2 focus:ring-perazzi-red"
                 >
                   {model.hero ? (
                     <Image
@@ -398,10 +420,18 @@ function DisciplineCard({
                     />
                   ) : null}
                   <div
-                    className={`pointer-events-none absolute inset-0 transition-[background-color] duration-700 ${modelOverlayBase} ${modelOverlayHover}`}
+                    className={cn(
+                      "pointer-events-none absolute inset-0 bg-gradient-to-t transition duration-500",
+                      isDarkTheme
+                        ? "from-white/80 via-white/60 to-transparent group-hover:from-white/70"
+                        : "from-[color:var(--scrim-strong)]/80 via-[color:var(--scrim-strong)]/60 to-transparent group-hover:from-[color:var(--scrim-strong)]/70",
+                    )}
                   />
                   <figcaption
-                    className={`absolute inset-0 flex items-center justify-center p-2 text-center text-xs font-semibold uppercase tracking-[0.3em] transition-opacity duration-700 group-hover:opacity-0 ${modelTextClass}`}
+                    className={cn(
+                      "absolute inset-0 flex items-center justify-center p-2 text-center text-xs font-semibold uppercase tracking-[0.3em] transition-opacity duration-500 group-hover:opacity-0",
+                      isDarkTheme ? "text-black" : "text-white",
+                    )}
                   >
                     {loadingModelId === model.id ? "Loading…" : model.name || "Untitled"}
                   </figcaption>

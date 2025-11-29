@@ -81,9 +81,9 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
               id="trigger-explainer-content"
               className="grid gap-6 overflow-hidden transition-all duration-300 data-[state=closed]:h-0 data-[state=closed]:opacity-0 data-[state=open]:h-auto data-[state=open]:opacity-100 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start"
             >
-              <div className="rounded-3xl border border-border/0 bg-card/0 p-5 shadow-sm sm:p-6 lg:flex lg:h-full lg:flex-col lg:justify-start">
+              <div className="rounded-3xl border border-border/0 bg-card/0 p-5 sm:p-6 lg:flex lg:h-full lg:flex-col lg:justify-start">
                 <div
-                  className="prose prose-sm max-w-none text-ink-muted prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4"
+                  className="prose prose-sm max-w-none text-ink prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4"
                   dangerouslySetInnerHTML={{ __html: explainer.copyHtml }}
                 />
                 <div className="mt-5 flex flex-wrap gap-3">
@@ -104,7 +104,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                 </div>
               </div>
 
-              <figure className="rounded-3xl border border-border/70 bg-card/75 p-4 shadow-sm">
+              <figure className="rounded-3xl border border-border/70 bg-card/50 p-3 shadow-sm">
                 <div
                   className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
                   style={{ aspectRatio: ratio }}
