@@ -49,7 +49,7 @@ export interface DisciplineSummary {
   name: string;
   overviewHtml: string;
   recommendedPlatforms: string[];
-  popularModels?: Array<{ id: string; name?: string; hero?: FactoryAsset }>;
+  popularModels?: Array<{ id: string; idLegacy?: string; name?: string; hero?: FactoryAsset }>;
   recipe: {
     poiRange: string;
     barrelLengths: string;

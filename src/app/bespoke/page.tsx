@@ -1,5 +1,5 @@
+import Link from "next/link";
 import { BuildHero } from "@/components/bespoke/BuildHero";
-import { JourneyOverview } from "@/components/bespoke/JourneyOverview";
 import { BuildStepsScroller } from "@/components/bespoke/BuildStepsScroller";
 import { ExpertCard } from "@/components/bespoke/ExpertCard";
 import { BookingOptions } from "@/components/bespoke/BookingOptions"; // Bespoke-specific variant
@@ -10,7 +10,7 @@ import { getBespokePageData } from "@/lib/bespoke-data";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
 
 export default async function BespokeBuildPage() {
-  const { hero, journey, steps, experts, booking, assurance, footerCta } = await getBespokePageData();
+  const { hero, steps, experts, booking, assurance, footerCta } = await getBespokePageData();
 
   return (
     <div className="space-y-16 px-2 sm:px-4 lg:px-6" id="bespoke-top">
@@ -20,24 +20,63 @@ export default async function BespokeBuildPage() {
       >
         <BuildHero hero={hero} fullBleed />
       </div>
-      <section className="rounded-3xl border border-border/70 bg-card px-6 py-5 shadow-sm sm:px-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">Concierge insight</p>
-        <p className="mt-2 text-sm text-ink">
-          Considering a bespoke build? Ask how Perazzi sequences fitting, platform selection, and engraving.
-        </p>
-        <div className="mt-4">
-          <ChatTriggerButton
-            label="Ask about bespoke builds"
-            payload={{
-              question:
-                "Walk me through the bespoke Perazzi build journey—how fitting, platform choice, engraving, and hand finishing come together—and what decisions I should prepare for before visiting the atelier.",
-              context: { pageUrl: "/bespoke", mode: "prospect" },
-            }}
-          />
+      <BuildStepsScroller steps={steps} skipTargetId="bespoke-experts" />
+      <section
+        className="border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-16 sm:py-20"
+        aria-labelledby="bespoke-guide-heading"
+      >
+        <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
+          <div className="space-y-4 text-ink">
+            <p
+              id="bespoke-guide-heading"
+              className="text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
+            >
+              Need a bespoke guide?
+            </p>
+            <p className="text-lg font-light italic text-ink-muted mb-10">
+              Ask how fittings, platform choices, engraving, and finishing should flow for you—so your visit to the atelier is focused, confident, and personal.
+            </p>
+            <div className="flex flex-wrap gap-3 justify-start">
+              <ChatTriggerButton
+                label="Plan my bespoke visit"
+                payload={{
+                  question:
+                    "Map my bespoke Perazzi journey: what to expect at the fitting, how to choose platform and barrels, how engraving is staged, and what decisions I should prep before visiting the atelier.",
+                  context: { pageUrl: "/bespoke", mode: "prospect" },
+                }}
+                variant="outline"
+              />
+              <Link
+                href="/experience/visit"
+                className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red focus-ring"
+              >
+                Request a visit
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+          </div>
+
+          <div className="space-y-3 text-xl font-light italic text-ink-muted">
+            <p className="text-xl font-semibold text-ink">
+              Three things we’ll map together:
+            </p>
+            <ul className="space-y-2">
+              <li>
+                <span className="text-xl font-black text-ink">Fit &amp; Dynamics</span> — try-gun measurements, balance targets, and barrel regulation priorities.
+              </li>
+              <li>
+                <span className="text-xl font-black text-ink">Platform &amp; Wood</span> — HT or MX lineage, fore-end/stock profiles, and wood blank options.
+              </li>
+              <li>
+                <span className="text-xl font-black text-ink">Engraving &amp; Finish</span> — story direction, coverage, timelines, and hand-finish details.
+              </li>
+            </ul>
+            <p className="text-lg font-light italic text-ink-muted">
+              The concierge aligns your disciplines, aesthetic cues, and schedule so the atelier session runs smoothly.
+            </p>
+          </div>
         </div>
       </section>
-      <JourneyOverview journey={journey} />
-      <BuildStepsScroller steps={steps} skipTargetId="bespoke-experts" />
       <CinematicImageStrip
         src="/cinematic_background_photos/p-web-25.jpg"
         alt="Perazzi bespoke craftsmanship in cinematic lighting"

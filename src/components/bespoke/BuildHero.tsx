@@ -13,7 +13,6 @@ type BuildHeroProps = {
 export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
   const containerRef = useAnalyticsObserver("HeroSeen:bespoke");
   const prefersReducedMotion = useReducedMotion();
-  const ratio = hero.media.aspectRatio ?? 16 / 9;
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
@@ -25,19 +24,19 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
   );
 
   const mediaStyle = prefersReducedMotion
-    ? { aspectRatio: ratio }
-    : { aspectRatio: ratio, y: parallax };
+    ? { height: "100vh" }
+    : { height: "100vh", y: parallax };
 
   return (
     <section
       ref={containerRef}
       data-analytics-id="HeroSeen:bespoke"
-      className={`relative isolate overflow-hidden bg-perazzi-black text-white ${
+      className={`relative isolate min-h-screen overflow-hidden bg-perazzi-black text-white ${
         fullBleed ? "rounded-none" : "rounded-3xl"
       }`}
     >
       <motion.div
-        className="relative w-full"
+        className="relative h-full w-full"
         style={mediaStyle}
       >
           <Image

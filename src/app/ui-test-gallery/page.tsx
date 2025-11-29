@@ -8,7 +8,6 @@ import blurDark from "@/../Photos/BLUR_DARK.jpg";
 import blurLight from "@/../Photos/BLUR_LIGHT.jpg";
 import { CatalogGrid, CatalogTile, type CatalogModelCard } from "@/components/uiTestGallery/CatalogGrid";
 import { CinematicSection, GlassButton, GlassCard, MatteChip } from "@/components/uiTestGallery/CinematicSection";
-import HeritageTimelineDemo from "@/components/uiTestGallery/HeritageTimelineDemo";
 import BuildConfiguratorDemo from "@/components/uiTestGallery/BuildConfiguratorDemo";
 import ConciergeChatDemo from "@/components/uiTestGallery/ConciergeChatDemo";
 import { getShotgunsSectionData } from "@/lib/shotguns-data";
@@ -415,9 +414,6 @@ export default async function UITestGalleryPage() {
               Direct lift of the live craftsmanship timeline so we can judge pacing, scroll feel, and glass framing without touching the
               production heritage route.
             </p>
-          </div>
-          <div className="mt-8 md:mt-10 lg:mt-12 lg:max-w-6xl lg:ml-auto lg:mr-6">
-            <HeritageTimelineDemo />
           </div>
           <p className="mt-8 max-w-2xl text-sm text-white/80 drop-shadow-[0_10px_28px_rgba(0,0,0,0.7)]">
             Ambient note — atelier history projected through glass, letting the milestones glow against the dark.

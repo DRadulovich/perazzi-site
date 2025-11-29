@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { Platform, ShotgunsLandingData } from "@/types/catalog";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -64,7 +64,6 @@ export function DisciplineRail({
   ariaPrevLabel = "Previous slide",
   ariaNextLabel = "Next slide",
 }: DisciplineRailProps) {
-  const listRef = useRef<HTMLDivElement | null>(null);
   const { theme } = useTheme();
   const isDarkTheme = theme === "dark";
 
@@ -72,18 +71,12 @@ export function DisciplineRail({
   const [modelModalOpen, setModelModalOpen] = useState(false);
   const [modelLoadingId, setModelLoadingId] = useState<string | null>(null);
   const [modelError, setModelError] = useState<string | null>(null);
-  const [activeTabIndex, setActiveTabIndex] = useState(0);
+  const [openCategory, setOpenCategory] = useState<string | null>(DISCIPLINE_TABS[0]?.label ?? null);
+  const [activeDisciplineId, setActiveDisciplineId] = useState<string | null>(null);
 
   const platformName = (platformId: string) =>
     platforms.find((platform) => platform.id === platformId)?.name ??
     platformId.replace("platform-", "").toUpperCase();
-
-  const scrollBy = (direction: "prev" | "next") => {
-    const node = listRef.current;
-    if (!node) return;
-    const amount = direction === "next" ? node.clientWidth : -node.clientWidth;
-    node.scrollBy({ left: amount, behavior: "smooth" });
-  };
 
   const handleModelSelect = async (modelId: string) => {
     if (!modelId) return;
@@ -121,24 +114,34 @@ export function DisciplineRail({
     return map;
   }, [disciplines]);
 
-  const displayedDisciplines = useMemo(() => {
-    const tab = DISCIPLINE_TABS[activeTabIndex];
-    if (!tab) return disciplines;
+  const categories = useMemo(() => {
+    return DISCIPLINE_TABS.map((tab) => {
+      const resolved = tab.items
+        .map((aliases) => {
+          for (const alias of aliases) {
+            const match = disciplineLookup.get(alias);
+            if (match) return match;
+          }
+          return undefined;
+        })
+        .filter((item): item is DisciplineCard => Boolean(item));
+      return { label: tab.label, disciplines: resolved };
+    }).filter((category) => category.disciplines.length);
+  }, [disciplineLookup]);
 
-    const ordered = tab.items
-      .map((aliases) => {
-        for (const alias of aliases) {
-          const match = disciplineLookup.get(alias);
-          if (match) return match;
-        }
-        return undefined;
-      })
-      .filter((item): item is DisciplineCard => Boolean(item));
+  useEffect(() => {
+    const firstCategory = categories[0];
+    if (!activeDisciplineId && firstCategory?.disciplines[0]) {
+      setActiveDisciplineId(firstCategory.disciplines[0].id);
+      setOpenCategory(firstCategory.label);
+    }
+  }, [categories, activeDisciplineId]);
 
-    return ordered.length ? ordered : disciplines;
-  }, [activeTabIndex, disciplineLookup, disciplines]);
-
-  const tabPanelId = "discipline-tabpanel";
+  const selectedDiscipline =
+    disciplines.find((discipline) => discipline.id === activeDisciplineId) ??
+    categories[0]?.disciplines[0] ??
+    disciplines[0] ??
+    null;
 
   return (
     <section
@@ -151,7 +154,7 @@ export function DisciplineRail({
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <Image
-          src="/redesign-photos/shotguns/pweb-shotguns-disciplinerail-bg.jpg"
+          src="/redesign-photos/shotguns/pweb-shotguns-disciplinerail2-bg.jpg"
           alt="Perazzi discipline background"
           fill
           sizes="100vw"
@@ -184,56 +187,94 @@ export function DisciplineRail({
               Every discipline demands something unique from your platform, whether it's precision, speed, or adaptability.
             </h2>
           </div>
-          <div
-            role="tablist"
-            aria-label="Discipline categories"
-            className="flex flex-wrap gap-2"
-          >
-            {DISCIPLINE_TABS.map((tab, index) => {
-              const isActive = index === activeTabIndex;
-              const tabId = `discipline-tab-${index}`;
-              return (
-                <button
-                  key={tab.label}
-                  id={tabId}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  aria-controls={tabPanelId}
-                  className={cn(
-                    "rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] focus-ring transition",
-                    isActive
-                      ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
-                      : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
-                  )}
-                  onClick={() => setActiveTabIndex(index)}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-          <div
-            ref={listRef}
-            role="tabpanel"
-            id={tabPanelId}
-            aria-live="polite"
-            aria-labelledby={`discipline-rail-heading discipline-tab-${activeTabIndex}`}
-            className="grid gap-6 pb-4 md:grid-cols-2 lg:grid-cols-3"
-            tabIndex={0}
-          >
-            {displayedDisciplines.map((discipline, index) => (
-              <DisciplineCard
-                key={discipline.id}
-                discipline={discipline}
-                index={index}
-                total={displayedDisciplines.length}
-                platformName={platformName}
-                isDarkTheme={isDarkTheme}
-                onSelectModel={handleModelSelect}
-                loadingModelId={modelLoadingId}
-              />
-            ))}
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
+            <div className="space-y-3 rounded-3xl bg-card/0 p-5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
+                Discipline categories
+              </p>
+              <div className="space-y-3">
+                {categories.map((category) => {
+                  const isOpen = openCategory === category.label;
+                  return (
+                    <div
+                      key={category.label}
+                      className="rounded-2xl border border-border/70 bg-card/75"
+                    >
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold uppercase tracking-[0.2em] text-ink focus-ring"
+                        aria-expanded={isOpen}
+                        onClick={() =>
+                          setOpenCategory((prev) =>
+                            prev === category.label ? null : category.label,
+                          )
+                        }
+                      >
+                        {category.label}
+                        <span
+                          className={cn(
+                            "text-lg transition-transform",
+                            isOpen ? "rotate-45" : "rotate-0",
+                          )}
+                          aria-hidden="true"
+                        >
+                          +
+                        </span>
+                      </button>
+                      {isOpen ? (
+                        <div className="border-t border-border/60">
+                          <ul className="space-y-1 p-3">
+                            {category.disciplines.map((discipline) => {
+                              const isActive = discipline.id === activeDisciplineId;
+                              return (
+                                <li key={discipline.id}>
+                                  <button
+                                    type="button"
+                                    onClick={() => setActiveDisciplineId(discipline.id)}
+                                    className={cn(
+                                      "group w-full rounded-2xl px-3 py-2 text-left text-sm transition-colors focus-ring",
+                                      isActive
+                                        ? "bg-ink text-card"
+                                        : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
+                                    )}
+                                    aria-pressed={isActive}
+                                  >
+                                    <span className="block text-sm font-semibold tracking-wide">
+                                      {discipline.name}
+                                    </span>
+                                    <span className="mt-0.5 block text-[11px] uppercase tracking-[0.25em] text-ink-muted group-hover:text-ink-muted/90">
+                                      {discipline.id.replace(/-/g, " ")}
+                                    </span>
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="min-h-[26rem]">
+              {selectedDiscipline ? (
+                <DisciplineCard
+                  discipline={selectedDiscipline}
+                  index={0}
+                  total={1}
+                  platformName={platformName}
+                  isDarkTheme={isDarkTheme}
+                  onSelectModel={handleModelSelect}
+                  loadingModelId={modelLoadingId}
+                />
+              ) : (
+                <p className="text-sm text-ink-muted">
+                  Select a discipline to view its details.
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -273,8 +314,12 @@ export function DisciplineRail({
                     <p className="text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
                       {selectedModel.grade}
                     </p>
-                    <h2 className="text-4xl font-semibold leading-tight">{selectedModel.name}</h2>
-                    <p className="text-base text-black/70">{selectedModel.use}</p>
+                    <h2 className="text-4xl font-semibold uppercase leading-tight tracking-[0.2em]">
+                      {selectedModel.name}
+                    </h2>
+                    <p className="text-base uppercase tracking-[0.2em] text-black/70">
+                      {selectedModel.use}
+                    </p>
                   </div>
                 </div>
                 <div className="grid gap-4 rounded-3xl border border-white/10 bg-black/40 p-4 sm:p-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -324,14 +369,6 @@ function DisciplineCard({
     { threshold: 0.4 },
   );
 
-  const heroOverlayClass = isDarkTheme
-    ? "pointer-events-none absolute inset-0 bg-gradient-to-t from-white via-white/70 to-transparent"
-    : "pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent";
-  const heroTextClass = isDarkTheme ? "text-black" : "text-white";
-  const modelOverlayBase = isDarkTheme ? "bg-white/90" : "bg-black/95";
-  const modelOverlayHover = isDarkTheme ? "group-hover:bg-white/70" : "group-hover:bg-black/75";
-  const modelTextClass = isDarkTheme ? "text-black" : "text-white";
-
   return (
     <article
       ref={cardRef}
@@ -349,14 +386,7 @@ function DisciplineCard({
             sizes="(min-width: 1024px) 33vw, 100vw"
           />
         ) : null}
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 bg-gradient-to-t",
-            isDarkTheme
-              ? "from-white via-white/70 to-transparent"
-              : "from-[color:var(--scrim-strong)] via-[color:var(--scrim-strong)]/60 to-transparent",
-          )}
-        />
+        <div className="pointer-events-none absolute inset-0 bg-black/50" />
         <div className="absolute inset-x-0 bottom-0 flex flex-col items-center justify-end p-6 text-white">
           <p className="text-base font-semibold uppercase tracking-[0.35em] text-white">
             {discipline.name}
@@ -393,18 +423,18 @@ function DisciplineCard({
             <div className="flex flex-col gap-3">
               {discipline.popularModels.map((model) => (
                 <figure
-                  key={model.id}
+                  key={model.idLegacy ?? model.id}
                   role="button"
                   tabIndex={0}
                   onClick={(event) => {
                     event.preventDefault();
                     event.stopPropagation();
-                    onSelectModel(model.id);
+                    onSelectModel(model.idLegacy ?? model.id);
                   }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
-                      onSelectModel(model.id);
+                      onSelectModel(model.idLegacy ?? model.id);
                     }
                   }}
                   className="group relative w-full cursor-pointer overflow-hidden rounded-2xl border border-border/70 bg-card/75 focus:outline-none focus:ring-2 focus:ring-perazzi-red"
@@ -419,18 +449,11 @@ function DisciplineCard({
                       sizes="(min-width: 1024px) 320px, 100vw"
                     />
                   ) : null}
-                  <div
-                    className={cn(
-                      "pointer-events-none absolute inset-0 bg-gradient-to-t transition duration-500",
-                      isDarkTheme
-                        ? "from-white/80 via-white/60 to-transparent group-hover:from-white/70"
-                        : "from-[color:var(--scrim-strong)]/80 via-[color:var(--scrim-strong)]/60 to-transparent group-hover:from-[color:var(--scrim-strong)]/70",
-                    )}
-                  />
+                  <div className="pointer-events-none absolute inset-0 bg-perazzi-black/75 transition duration-500 group-hover:bg-perazzi-black/60" />
                   <figcaption
                     className={cn(
-                      "absolute inset-0 flex items-center justify-center p-2 text-center text-xs font-semibold uppercase tracking-[0.3em] transition-opacity duration-500 group-hover:opacity-0",
-                      isDarkTheme ? "text-black" : "text-white",
+                      "absolute inset-0 flex items-center justify-center p-2 text-center text-md font-bold uppercase tracking-[0.3em] transition-opacity duration-500 group-hover:opacity-0",
+                      isDarkTheme ? "text-white" : "text-white",
                     )}
                   >
                     {loadingModelId === model.id ? "Loading…" : model.name || "Untitled"}
@@ -449,7 +472,9 @@ function Detail({ label, value }: { label: string; value?: string }) {
   return (
     <div>
       <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-perazzi-red">{label}</p>
-      <p className="text-base text-white">{value || "—"}</p>
+      <p className="text-base uppercase tracking-[0.2em] text-white">
+        {value || "—"}
+      </p>
     </div>
   );
 }

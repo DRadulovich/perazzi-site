@@ -77,61 +77,59 @@ export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {
         animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
-        <div className="grid min-h-screen items-center gap-8 px-6 py-12 sm:px-10 lg:px-16 md:grid-cols-12 lg:gap-12">
-          <div className="flex h-full flex-col gap-6 md:col-span-5 lg:col-span-5 md:justify-between">
-          {breadcrumbs?.length ? (
-            <nav aria-label="Breadcrumb">
-              <ol className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/70">
-                {breadcrumbs.map((crumb, index) => (
-                  <li key={crumb.href} className="flex items-center gap-2">
-                    <Link
-                      href={crumb.href}
-                      className="focus-ring rounded-full px-3 py-1 hover:text-white"
-                      prefetch={false}
-                    >
-                      {crumb.label}
-                    </Link>
-                    {index < breadcrumbs.length - 1 ? (
-                      <span aria-hidden="true" className="text-white/40">
-                        /
-                      </span>
-                    ) : null}
-                  </li>
-                ))}
-              </ol>
-            </nav>
-          ) : null}
-          <div className="space-y-4 text-left">
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
-              Service
-            </p>
-            <h1 className="text-balance text-3xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
-              {hero.title}
-            </h1>
-            {hero.subheading ? (
-              <p className="text-lg text-white/80">{hero.subheading}</p>
+        <div className="flex min-h-screen flex-col gap-8 px-6 py-12 sm:px-10 lg:px-16">
+          <div className="flex flex-col gap-6 lg:max-w-4xl">
+            {breadcrumbs?.length ? (
+              <nav aria-label="Breadcrumb">
+                <ol className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/70">
+                  {breadcrumbs.map((crumb, index) => (
+                    <li key={crumb.href} className="flex items-center gap-2">
+                      <Link
+                        href={crumb.href}
+                        className="focus-ring rounded-full px-3 py-1 hover:text-white"
+                        prefetch={false}
+                      >
+                        {crumb.label}
+                      </Link>
+                      {index < breadcrumbs.length - 1 ? (
+                        <span aria-hidden="true" className="text-white/40">
+                          /
+                        </span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ol>
+              </nav>
             ) : null}
+            <div className="space-y-4 text-left">
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
+                Service
+              </p>
+              <h1 className="text-balance text-3xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
+                {hero.title}
+              </h1>
+              {hero.subheading ? (
+                <p className="text-lg text-white/80">{hero.subheading}</p>
+              ) : null}
+            </div>
           </div>
-        </div>
-        <motion.div
-          className="md:col-span-7 lg:col-span-7 h-full"
-          style={prefersReducedMotion ? undefined : { y: parallax }}
-          aria-hidden="true"
-        >
-          <div
-            className="relative h-full min-h-[360px] overflow-hidden rounded-2xl"
+
+          <motion.div
+            style={prefersReducedMotion ? undefined : { y: parallax }}
+            aria-hidden="true"
           >
-            <Image
-              src={hero.background.url}
-              alt={hero.background.alt ?? hero.title}
-              fill
-              priority
-              sizes="(min-width: 1280px) 960px, (min-width: 1024px) 66vw, 100vw"
-              className="object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent" />
-          </div>
-        </motion.div>
+            <div className="relative aspect-[16/9] w-full min-h-[360px] overflow-hidden rounded-2xl shadow-2xl ring-1 ring-white/10">
+              <Image
+                src={hero.background.url}
+                alt={hero.background.alt ?? hero.title}
+                fill
+                priority
+                sizes="(min-width: 1280px) 1200px, (min-width: 1024px) 960px, 100vw"
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+            </div>
+          </motion.div>
         </div>
       </motion.section>
     </section>

@@ -21,11 +21,11 @@ const modelQuery = groq`*[_type == "allModels" && (_id == $id || slug.current ==
   "platform": platform->name,
   "gaugeNames": gauges,
   "grade": grade->name,
-  "triggerTypes": trigger.type ? [trigger.type] : [],
+  "triggerTypes": select(defined(trigger.type) => [trigger.type], []),
   "triggerSprings": trigger.springs,
-  "ribTypes": rib.type ? [rib.type] : [],
+  "ribTypes": select(defined(rib.type) => [rib.type], []),
   "ribStyles": rib.styles,
-  "image": image
+  image
 }`;
 
 type RouteContext = {

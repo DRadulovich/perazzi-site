@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { LandingHero } from "@/components/shotguns/LandingHero";
 import { PlatformGrid } from "@/components/shotguns/PlatformGrid";
 import { TriggerExplainer } from "@/components/shotguns/TriggerExplainer";
@@ -7,6 +6,7 @@ import { CTASection } from "@/components/shotguns/CTASection";
 import { EngravingGradesCarousel } from "@/components/shotguns/EngravingGradesCarousel";
 import { getShotgunsSectionData } from "@/lib/shotguns-data";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
+import Link from "next/link";
 
 export default async function ShotgunsLandingPage() {
   const { landing, grades } = await getShotgunsSectionData();
@@ -79,56 +79,112 @@ export default async function ShotgunsLandingPage() {
         disciplines={landing.disciplines}
         platforms={landing.platforms}
       />
-      <TriggerExplainer explainer={landing.triggerExplainer} />
       <section
-        className="relative w-screen overflow-hidden py-16 sm:py-20"
-        style={{
-          marginLeft: "calc(50% - 50vw)",
-          marginRight: "calc(50% - 50vw)",
-        }}
+        className="border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-16 sm:py-20"
         aria-labelledby="gauge-primer-heading"
       >
-        <div className="absolute inset-0 z-0 overflow-hidden">
-          <Image
-            src="/cinematic_background_photos/p-web-27.jpg"
-            alt="Perazzi craftsmanship rendered in cinematic lighting"
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority={false}
-          />
-          <div className="absolute inset-0 bg-[color:var(--scrim-soft)]" aria-hidden />
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{
-              backgroundImage:
-                "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
-                "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 100%, transparent 75%), " +
-                "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 100%, transparent 75%)",
-            }}
-            aria-hidden
-          />
-        </div>
-        <div className="relative z-10 mx-auto max-w-5xl px-6 lg:px-10">
-          <div className="rounded-3xl border border-[color:var(--border-color)] bg-[color:var(--color-canvas)]/40 p-6 text-ink shadow-elevated backdrop-blur-sm sm:p-8 lg:p-10">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="space-y-3">
-                <h2 id="gauge-primer-heading" className="text-xl font-semibold text-ink">Gauge Primer</h2>
-                <p className="max-w-3xl text-sm text-ink-muted">{landing.gaugesTeaser.copy}</p>
-                <ul className="list-disc space-y-1 pl-5 text-sm text-ink-muted">
-                  {landing.gaugesTeaser.bullets.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-              <a
+        <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
+          <div className="space-y-4 text-ink">
+            <p
+              id="gauge-primer-heading"
+              className="text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
+            >
+              Gauge selection
+            </p>
+            <p className="text-lg font-light italic text-ink-muted mb-10">
+              Decode how 12, 20, and 28 gauge choices shape recoil feel, swing speed, and payload — and how to pair them with your platform and disciplines.
+            </p>
+            <div className="flex flex-wrap gap-3 justify-start">
+              <ChatTriggerButton
+                label="Ask about gauges"
+                variant="outline"
+                payload={{
+                  question:
+                    "Help me choose between 12, 20, and 28 gauge for my Perazzi: recoil feel, payload options, swing speed, and how gauge pairs with MX vs HT platforms for my disciplines.",
+                  context: { pageUrl: "/shotguns" },
+                }}
+              />
+              <Link
                 href={landing.gaugesTeaser.href}
-                className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-perazzi-red focus-ring"
+                className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red focus-ring"
               >
                 Explore gauges
                 <span aria-hidden="true">→</span>
-              </a>
+              </Link>
             </div>
+          </div>
+
+          <div className="space-y-3 text-xl font-light italic text-ink-muted">
+            <p className="text-xl font-semibold text-ink">
+              What to compare:
+            </p>
+            <ul className="space-y-2">
+              {landing.gaugesTeaser.bullets.map((item) => (
+                <li key={item} className="text-lg">
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <p className="text-lg font-light italic text-ink-muted">
+              We’ll tailor gauge choice to your primary discipline, preferred swing, and how you like a gun to absorb recoil.
+            </p>
+          </div>
+        </div>
+      </section>
+      <TriggerExplainer explainer={landing.triggerExplainer} />
+      <section
+        className="border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-16 sm:py-20"
+        aria-labelledby="trigger-choice-heading"
+      >
+        <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
+          <div className="space-y-4 text-ink">
+            <p
+              id="trigger-choice-heading"
+              className="text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
+            >
+              Trigger choice
+            </p>
+            <p className="text-lg font-light italic text-ink-muted mb-10">
+              Decide when to choose a fixed trigger group for simplicity, or a detachable set for quick swaps, varied pull weights, and service resilience.
+            </p>
+            <div className="flex flex-wrap gap-3 justify-start">
+              <ChatTriggerButton
+                label="Choose my trigger"
+                variant="outline"
+                payload={{
+                  question:
+                    "Help me decide between a fixed trigger and a removable trigger group on my Perazzi: reliability, service, pull-weight options, and what matters for travel or competition timelines.",
+                  context: { pageUrl: "/shotguns", mode: "prospect" },
+                }}
+              />
+              <Link
+                href="#trigger-explainer-heading"
+                className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red focus-ring"
+              >
+                See trigger details
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+          </div>
+
+          <div className="space-y-3 text-xl font-light italic text-ink-muted">
+            <p className="text-xl font-semibold text-ink">
+              What to weigh:
+            </p>
+            <ul className="space-y-2">
+              <li className="text-lg">
+                Fixed group – lighter, fewer parts to manage, set-and-forget confidence.
+              </li>
+              <li className="text-lg">
+                Removable group – fast swaps for pull weight or service, keeps you running at events.
+              </li>
+              <li className="text-lg">
+                Support & travel – how you compete, who services your gun, and what spares you carry.
+              </li>
+            </ul>
+            <p className="text-lg font-light italic text-ink-muted">
+              We’ll align trigger choice to your platform, discipline rhythm, and how you like your release to feel under pressure.
+            </p>
           </div>
         </div>
       </section>

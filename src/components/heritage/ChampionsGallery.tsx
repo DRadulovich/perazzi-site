@@ -160,7 +160,7 @@ export function ChampionsGallery({ champions }: ChampionsGalleryProps) {
           {/* Two-column layout: left = list of names, right = selected champion detail */}
           <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)] lg:items-start">
             {/* Left column – names list */}
-            <div className="rounded-3xl border border-border/70 bg-card/75 p-4">
+            <div className="rounded-3xl bg-card/0 p-4">
               <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
                 Champions
               </p>
