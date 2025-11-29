@@ -21,7 +21,6 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
   const analyticsRef = useAnalyticsObserver("HeroSeen:experience");
   const containerRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
-  const ratio = hero.background.aspectRatio ?? 16 / 9;
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
@@ -46,21 +45,52 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
     : { y: parallax };
 
   return (
-    <motion.section
-      ref={setRefs}
-      data-analytics-id="HeroSeen:experience"
-      className="overflow-hidden rounded-3xl bg-perazzi-black text-white"
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
-      animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
+    <section
+      className="relative isolate w-screen overflow-hidden py-6 sm:py-8 min-h-screen"
+      style={{
+        marginLeft: "calc(50% - 50vw)",
+        marginRight: "calc(50% - 50vw)",
+      }}
+      aria-labelledby="experience-hero-heading"
     >
-      <div className="grid gap-8 px-6 py-12 sm:px-10 lg:px-16 md:grid-cols-12 lg:gap-12">
-        <div className="flex flex-col gap-6 md:col-span-5 lg:col-span-5">
-          {breadcrumbs?.length ? (
-            <nav aria-label="Breadcrumb">
-              <ol className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/70">
-                {breadcrumbs.map((crumb, index) => (
-                  <li key={crumb.href} className="flex items-center gap-2">
+      <motion.div
+        className="absolute inset-0 z-0"
+        style={mediaStyle}
+        aria-hidden="true"
+      >
+        <div
+          className="absolute inset-0 bg-center bg-cover"
+          style={{
+            backgroundImage: `url(${hero.background.url})`,
+          }}
+        />
+        <div className="absolute inset-0 bg-black/35" />
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 16%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 4%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 16%, transparent) 100%), " +
+              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 60%, transparent) 0%, transparent 75%), " +
+              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 60%, transparent) 0%, transparent 75%)",
+          }}
+        />
+      </motion.div>
+
+      <motion.section
+        ref={setRefs}
+        data-analytics-id="HeroSeen:experience"
+        className="relative z-10 mx-auto min-h-screen max-w-6xl overflow-hidden rounded-3xl bg-perazzi-black/85 text-white shadow-lg backdrop-blur-sm border border-border/70"
+        initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
+        animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
+        <div className="grid min-h-screen items-center gap-8 px-6 py-12 sm:px-10 lg:px-16 md:grid-cols-12 lg:gap-12">
+          <div className="flex h-full flex-col gap-6 md:col-span-5 lg:col-span-5 md:justify-between">
+            {breadcrumbs?.length ? (
+              <nav aria-label="Breadcrumb">
+                <ol className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/70">
+                  {breadcrumbs.map((crumb, index) => (
+                    <li key={crumb.href} className="flex items-center gap-2">
                     <Link
                       href={crumb.href}
                       className="focus-ring rounded-full px-3 py-1 hover:text-white"
@@ -97,17 +127,16 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
           </div>
         </div>
         <motion.div
-          className="md:col-span-7 lg:col-span-7"
-          style={mediaStyle}
+          className="md:col-span-7 lg:col-span-7 h-full"
+          style={prefersReducedMotion ? undefined : mediaStyle}
           aria-hidden="true"
         >
           <div
-            className="relative overflow-hidden rounded-2xl"
-            style={{ aspectRatio: ratio }}
+            className="relative h-full min-h-[360px] overflow-hidden rounded-2xl"
           >
             <Image
               src={hero.background.url}
-              alt=""
+              alt={hero.background.alt ?? hero.title}
               fill
               priority
               sizes="(min-width: 1280px) 960px, (min-width: 1024px) 66vw, 100vw"
@@ -117,6 +146,7 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
           </div>
         </motion.div>
       </div>
-    </motion.section>
+      </motion.section>
+    </section>
   );
 }

@@ -15,10 +15,10 @@ type ServiceHeroProps = {
 };
 
 export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {
+  const HEADER_OFFSET = 80;
   const analyticsRef = useAnalyticsObserver("HeroSeen:service");
   const containerRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
-  const ratio = hero.background.aspectRatio ?? 16 / 9;
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
@@ -38,16 +38,47 @@ export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {
   );
 
   return (
-    <motion.section
-      ref={setRefs}
-      data-analytics-id="HeroSeen:service"
-      className="overflow-hidden rounded-3xl bg-perazzi-black text-white"
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
-      animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
+    <section
+      className="relative isolate w-screen overflow-hidden min-h-screen pb-6 sm:pb-8"
+      style={{
+        marginLeft: "calc(50% - 50vw)",
+        marginRight: "calc(50% - 50vw)",
+        marginTop: `-${HEADER_OFFSET}px`,
+        paddingTop: `${HEADER_OFFSET}px`,
+      }}
+      aria-labelledby="service-hero-heading"
     >
-      <div className="grid gap-8 px-6 py-12 sm:px-10 lg:px-16 md:grid-cols-12 lg:gap-12">
-        <div className="flex flex-col gap-6 md:col-span-5 lg:col-span-5">
+      <motion.div
+        className="absolute inset-0 z-0"
+        style={prefersReducedMotion ? undefined : { y: parallax }}
+        aria-hidden="true"
+      >
+        <div
+          className="absolute inset-0 bg-center bg-cover"
+          style={{ backgroundImage: `url(${hero.background.url})` }}
+        />
+        <div className="absolute inset-0 bg-black/35" />
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, color-mix(in srgb, var(--color-black) 16%, transparent) 0%, color-mix(in srgb, var(--color-black) 4%, transparent) 50%, color-mix(in srgb, var(--color-black) 16%, transparent) 100%), " +
+              "linear-gradient(to bottom, color-mix(in srgb, var(--color-black) 60%, transparent) 0%, transparent 75%), " +
+              "linear-gradient(to top, color-mix(in srgb, var(--color-black) 60%, transparent) 0%, transparent 75%)",
+          }}
+        />
+      </motion.div>
+
+      <motion.section
+        ref={setRefs}
+        data-analytics-id="HeroSeen:service"
+        className="relative z-10 mx-auto min-h-screen max-w-6xl overflow-hidden rounded-3xl bg-card/0 text-white shadow-lg backdrop-blur-sm border border-gray-700/30"
+        initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
+        animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
+        <div className="grid min-h-screen items-center gap-8 px-6 py-12 sm:px-10 lg:px-16 md:grid-cols-12 lg:gap-12">
+          <div className="flex h-full flex-col gap-6 md:col-span-5 lg:col-span-5 md:justify-between">
           {breadcrumbs?.length ? (
             <nav aria-label="Breadcrumb">
               <ol className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/70">
@@ -83,17 +114,16 @@ export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {
           </div>
         </div>
         <motion.div
-          className="md:col-span-7 lg:col-span-7"
+          className="md:col-span-7 lg:col-span-7 h-full"
           style={prefersReducedMotion ? undefined : { y: parallax }}
           aria-hidden="true"
         >
           <div
-            className="relative overflow-hidden rounded-2xl"
-            style={{ aspectRatio: ratio }}
+            className="relative h-full min-h-[360px] overflow-hidden rounded-2xl"
           >
             <Image
               src={hero.background.url}
-              alt=""
+              alt={hero.background.alt ?? hero.title}
               fill
               priority
               sizes="(min-width: 1280px) 960px, (min-width: 1024px) 66vw, 100vw"
@@ -102,7 +132,8 @@ export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {
             <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent" />
           </div>
         </motion.div>
-      </div>
-    </motion.section>
+        </div>
+      </motion.section>
+    </section>
   );
 }
