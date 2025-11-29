@@ -27,133 +27,179 @@ export function VisitFactory({ visit }: VisitFactoryProps) {
     <section
       ref={analyticsRef}
       data-analytics-id="VisitFactorySeen"
-      className="space-y-6 rounded-3xl border border-border/70 bg-card px-6 py-8 shadow-sm sm:px-10"
+      className="relative isolate w-screen overflow-hidden py-16 sm:py-20"
+      style={{
+        marginLeft: "calc(50% - 50vw)",
+        marginRight: "calc(50% - 50vw)",
+      }}
       aria-labelledby="visit-factory-heading"
     >
-      <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
-          Visit Botticino
-        </p>
-        <h2
-          id="visit-factory-heading"
-          className="text-2xl font-semibold text-ink"
-        >
-          See the factory in person
-        </h2>
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <Image
+          src="/redesign-photos/experience/pweb-experience-visitfactory-bg.jpg"
+          alt="Perazzi Botticino factory background"
+          fill
+          sizes="100vw"
+          className="object-cover"
+          priority={false}
+        />
         <div
-          className="prose prose-base max-w-none text-ink-muted md:prose-lg md:max-w-3xl lg:max-w-4xl"
-          dangerouslySetInnerHTML={{ __html: visit.introHtml }}
+          className="absolute inset-0 bg-[color:var(--scrim-soft)]"
+          aria-hidden
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
+              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%), " +
+              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%)",
+          }}
+          aria-hidden
         />
       </div>
-      <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-        <article className="space-y-4 rounded-2xl border border-border/70 bg-card/70 p-5">
-          <h3 className="text-lg font-semibold text-ink">{visit.location.name}</h3>
-          <div
-            className="text-sm text-ink-muted"
-            dangerouslySetInnerHTML={{ __html: visit.location.addressHtml }}
-          />
-          {visit.location.hoursHtml ? (
-            <div
-              className="text-xs uppercase tracking-[0.3em] text-ink-muted"
-              dangerouslySetInnerHTML={{ __html: visit.location.hoursHtml }}
-            />
-          ) : null}
-          {visit.location.notesHtml ? (
-            <div
-              className="text-xs text-ink-muted"
-              dangerouslySetInnerHTML={{ __html: visit.location.notesHtml }}
-            />
-          ) : null}
-          <div className="space-y-3 pt-4">
-            <p id={mapNoteId} className="sr-only">
-              Selecting Open map loads an interactive map you can pan and zoom.
+
+      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
+        <div className="space-y-6 rounded-3xl border border-border/70 bg-card/0 px-6 py-8 shadow-lg backdrop-blur-sm sm:px-10">
+          <div className="space-y-2">
+            <p className="text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
+              Visit Botticino
             </p>
+            <h2
+              id="visit-factory-heading"
+              className="text-xl font-light italic text-ink-muted mb-4"
+            >
+              See the factory in person
+            </h2>
             <div
-              id={mapPanelId}
-              className="relative overflow-hidden rounded-2xl border border-border/60 bg-neutral-200"
-              style={{ aspectRatio: visit.location.staticMap.aspectRatio ?? 4 / 3 }}
-              aria-live="polite"
-            >
-              {mapOpen && visit.location.mapEmbedSrc ? (
-                <iframe
-                  src={visit.location.mapEmbedSrc}
-                  title={`Map to ${visit.location.name}`}
-                  className="h-full w-full"
-                  loading="lazy"
-                  aria-describedby={mapNoteId}
-                />
-              ) : (
-                <Image
-                  src={visit.location.staticMap.url}
-                  alt={visit.location.staticMap.alt}
-                  fill
-                  sizes="(min-width: 1280px) 640px, (min-width: 1024px) 50vw, 100vw"
-                  className="object-cover"
-                />
-              )}
-            </div>
-            {!mapOpen && visit.location.mapEmbedSrc ? (
-              <Button
-                variant="secondary"
-                size="sm"
-                aria-controls={mapPanelId}
-                aria-describedby={mapNoteId}
-                aria-expanded={mapOpen}
-                onClick={() => {
-                  setMapOpen(true);
-                  logAnalytics("VisitMapOpen");
-                }}
-              >
-                Open map
-              </Button>
-            ) : null}
-            <a
-              href={mapHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-semibold text-perazzi-red focus-ring"
-            >
-              Open in Maps
-              <span className="sr-only"> (opens in a new tab)</span>
-            </a>
+              className="prose prose-base max-w-none text-ink-muted md:prose-lg md:max-w-3xl lg:max-w-4xl prose-headings:text-ink prose-strong:text-ink"
+              dangerouslySetInnerHTML={{ __html: visit.introHtml }}
+            />
           </div>
-        </article>
-        <div className="space-y-4">
-          {visit.whatToExpectHtml ? (
-            <Collapsible.Root open={expectOpen} onOpenChange={setExpectOpen}>
-              <Collapsible.Trigger
-                className="flex w-full items-center justify-between rounded-2xl border border-border px-4 py-3 text-left text-sm font-semibold text-ink focus-ring"
-                aria-expanded={expectOpen}
-                aria-controls="visit-expect-content"
-              >
-                What to expect
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    "text-lg transition-transform",
-                    expectOpen ? "rotate-45" : "rotate-0",
-                  )}
-                >
-                  +
-                </span>
-              </Collapsible.Trigger>
-              <Collapsible.Content
-                id="visit-expect-content"
-                className="mt-3 rounded-2xl border border-border/60 bg-card/60 p-4 text-sm text-ink-muted"
-              >
+
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
+            <article className="space-y-5 rounded-3xl border border-border/70 bg-card/75 p-5 shadow-sm sm:p-6 lg:p-7">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
+                Botticino headquarters
+              </p>
+              <h3 className="text-xl font-semibold text-ink">
+                {visit.location.name}
+              </h3>
+              <div
+                className="text-sm text-ink-muted"
+                dangerouslySetInnerHTML={{ __html: visit.location.addressHtml }}
+              />
+              {visit.location.hoursHtml ? (
                 <div
-                  dangerouslySetInnerHTML={{ __html: visit.whatToExpectHtml }}
+                  className="text-[11px] uppercase tracking-[0.25em] text-ink-muted"
+                  dangerouslySetInnerHTML={{ __html: visit.location.hoursHtml }}
                 />
-              </Collapsible.Content>
-            </Collapsible.Root>
-          ) : null}
-          <Button
-            asChild
-            size="lg"
-            onClick={() => logAnalytics("VisitCtaClick")}
-          >
-            <a href={visit.cta.href}>{visit.cta.label}</a>
-          </Button>
+              ) : null}
+              {visit.location.notesHtml ? (
+                <div
+                  className="text-sm text-ink-muted"
+                  dangerouslySetInnerHTML={{ __html: visit.location.notesHtml }}
+                />
+              ) : null}
+              <div className="space-y-3 pt-2">
+                <p id={mapNoteId} className="sr-only">
+                  Selecting Open map loads an interactive map you can pan and zoom.
+                </p>
+                <div
+                  id={mapPanelId}
+                  className="relative overflow-hidden rounded-2xl border border-border/70 bg-[color:var(--color-canvas)]"
+                  style={{ aspectRatio: visit.location.staticMap.aspectRatio ?? 4 / 3 }}
+                  aria-live="polite"
+                >
+                  {mapOpen && visit.location.mapEmbedSrc ? (
+                    <iframe
+                      src={visit.location.mapEmbedSrc}
+                      title={`Map to ${visit.location.name}`}
+                      className="h-full w-full"
+                      loading="lazy"
+                      aria-describedby={mapNoteId}
+                    />
+                  ) : (
+                    <Image
+                      src={visit.location.staticMap.url}
+                      alt={visit.location.staticMap.alt}
+                      fill
+                      sizes="(min-width: 1280px) 640px, (min-width: 1024px) 50vw, 100vw"
+                      className="object-cover"
+                    />
+                  )}
+                  <div
+                    className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[color:var(--scrim-strong)]/70 via-[color:var(--scrim-strong)]/40 to-transparent"
+                    aria-hidden
+                  />
+                </div>
+                {!mapOpen && visit.location.mapEmbedSrc ? (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    aria-controls={mapPanelId}
+                    aria-describedby={mapNoteId}
+                    aria-expanded={mapOpen}
+                    onClick={() => {
+                      setMapOpen(true);
+                      logAnalytics("VisitMapOpen");
+                    }}
+                    className="rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em]"
+                  >
+                    Open map
+                  </Button>
+                ) : null}
+                <a
+                  href={mapHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
+                >
+                  Open in Maps
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </a>
+              </div>
+            </article>
+
+            <div className="space-y-4">
+              {visit.whatToExpectHtml ? (
+                <Collapsible.Root open={expectOpen} onOpenChange={setExpectOpen}>
+                  <Collapsible.Trigger
+                    className="flex w-full items-center justify-between rounded-3xl border border-border/70 bg-card/75 px-4 py-3 text-left text-sm font-semibold uppercase tracking-[0.2em] text-ink focus-ring"
+                    aria-expanded={expectOpen}
+                    aria-controls="visit-expect-content"
+                  >
+                    What to expect
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "text-lg transition-transform",
+                        expectOpen ? "rotate-45" : "rotate-0",
+                      )}
+                    >
+                      +
+                    </span>
+                  </Collapsible.Trigger>
+                  <Collapsible.Content
+                    id="visit-expect-content"
+                    className="mt-3 rounded-3xl border border-border/70 bg-card/75 p-4 text-sm text-ink-muted shadow-sm"
+                  >
+                    <div
+                      dangerouslySetInnerHTML={{ __html: visit.whatToExpectHtml }}
+                    />
+                  </Collapsible.Content>
+                </Collapsible.Root>
+              ) : null}
+              <Button
+                asChild
+                size="lg"
+                onClick={() => logAnalytics("VisitCtaClick")}
+                className="rounded-full px-6 py-3 text-xs font-semibold uppercase tracking-[0.3em]"
+              >
+                <a href={visit.cta.href}>{visit.cta.label}</a>
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </section>

@@ -178,13 +178,13 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
           className="object-cover"
           onLoad={() => setMediaLoaded(true)}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-canvas/50 via-perazzi-black/66 to-perazzi-black" />
+        <div className="absolute inset-0 bg-gradient-to-t from-perazzi-black via-perazzi-black/75 to-perazzi-black/0" />
       </motion.div>
 
       <div className="relative z-10 flex flex-1">
-        <div className="mx-auto flex w-full max-w-5xl flex-col items-center justify-center gap-5 px-6 pb-16 text-center sm:px-10 lg:gap-8 lg:pb-24">
+        <div className="mx-auto flex w-full max-w-5xl flex-col items-center justify-center gap-2 px-6 pb-16 text-center sm:px-2 lg:gap-2 lg:pb-24">
           <p
-            className={`text-xs font-semibold uppercase tracking-[0.4em] text-white/80 transition-opacity duration-700 motion-reduce:transition-none ${
+            className={`text-xs font-bold uppercase tracking-[0.4em] text-white/80 transition-opacity duration-700 motion-reduce:transition-none ${
               mediaLoaded ? "opacity-100" : "opacity-0"
             }`}
           >
@@ -192,7 +192,7 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
           </p>
           <h1
             id="home-hero-heading"
-            className={`mt-0 flex flex-wrap justify-center gap-2 text-balance text-3xl font-semibold leading-[1.12] text-white transition-opacity duration-700 motion-reduce:transition-none sm:text-4xl lg:text-5xl ${
+            className={`mt-0 flex flex-wrap justify-center gap-2 text-balance text-3xl font-bold mt-1 mb-5 leading-[1.12] text-white transition-opacity duration-700 motion-reduce:transition-none sm:text-4xl lg:text-5xl ${
               mediaLoaded ? "opacity-100 delay-100" : "opacity-0"
             }`}
           >
@@ -213,7 +213,7 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
             })}
           </h1>
           {hero.background.caption ? (
-            <p className="mt-0 w-full max-w-xl text-balance text-sm leading-relaxed text-white/75">
+            <p className="mt-0 w-full max-w-2xl text-balance text-md leading-relaxed text-white/75">
               {hero.background.caption}
             </p>
           ) : null}
@@ -243,7 +243,7 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
           initial={{ opacity: prefersReducedMotion ? 1 : 0 }}
           animate={{ opacity: 1 }}
           transition={overlayTransition}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6 text-center text-white"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6 text-center text-text"
           role="dialog"
           aria-modal="true"
           aria-labelledby="manifesto-title"

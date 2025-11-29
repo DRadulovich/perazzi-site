@@ -12,6 +12,8 @@ type FactoryPhotoEssayProps = {
   introHtml?: string;
 };
 
+const CARD_ASPECT_RATIO = 3 / 2;
+
 export function FactoryPhotoEssay({ items, introHtml }: FactoryPhotoEssayProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const hasItems = items.length > 0;
@@ -90,7 +92,10 @@ export function FactoryPhotoEssay({ items, introHtml }: FactoryPhotoEssayProps) 
         >
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 bg-black/80 backdrop-blur-sm" />
-            <Dialog.Content className="fixed inset-0 flex items-center justify-center p-4 focus:outline-none">
+            <Dialog.Content
+              className="fixed inset-0 flex items-center justify-center overflow-y-auto px-4 sm:px-6 focus:outline-none"
+              style={{ paddingTop: "15vh", paddingBottom: "15vh" }}
+            >
               <Dialog.Title className="sr-only">
                 Factory photo detail
               </Dialog.Title>
@@ -98,7 +103,7 @@ export function FactoryPhotoEssay({ items, introHtml }: FactoryPhotoEssayProps) 
                 {currentItem?.image.caption ?? currentItem?.image.alt}
               </Dialog.Description>
               {currentItem ? (
-                <figure className="relative flex max-w-4xl flex-col gap-3 rounded-3xl bg-card p-6 shadow-2xl">
+                <figure className="relative flex w-full max-w-5xl flex-col gap-3 rounded-3xl bg-card p-6 shadow-2xl max-h-[70vh]">
                   <p
                     className="sr-only"
                     aria-live="polite"
@@ -106,8 +111,11 @@ export function FactoryPhotoEssay({ items, introHtml }: FactoryPhotoEssayProps) 
                     Photo {(openIndex ?? 0) + 1} of {items.length}
                   </p>
                   <div
-                    className="relative overflow-hidden rounded-2xl bg-neutral-200"
-                    style={{ aspectRatio: currentItem.image.aspectRatio ?? 3 / 2 }}
+                    className="relative w-full flex-1 min-h-0 overflow-hidden rounded-2xl bg-neutral-200"
+                    style={{
+                      aspectRatio: currentItem.image.aspectRatio ?? 3 / 2,
+                      maxHeight: "calc(70vh - 8rem)",
+                    }}
                   >
                     <Image
                       src={currentItem.image.url}
@@ -159,7 +167,6 @@ type PhotoCardProps = {
 };
 
 function PhotoCard({ item, onOpen }: PhotoCardProps) {
-  const ratio = item.image.aspectRatio ?? 3 / 2;
   const analyticsRef = useAnalyticsObserver<HTMLDivElement>(`FactoryEssaySeen:${item.image.id}`, {
     threshold: 0.3,
   });
@@ -169,7 +176,7 @@ function PhotoCard({ item, onOpen }: PhotoCardProps) {
       <button
         type="button"
         className="group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card focus-ring"
-        style={{ aspectRatio: ratio }}
+        style={{ aspectRatio: CARD_ASPECT_RATIO }}
         onClick={onOpen}
         aria-label={`Open photo essay item: ${item.image.alt}`}
       >

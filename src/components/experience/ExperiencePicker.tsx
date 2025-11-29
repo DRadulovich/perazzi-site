@@ -4,24 +4,19 @@ import { motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import type { PickerItem } from "@/types/experience";
+import type { FAQItem } from "@/types/experience";
+import { FAQList } from "./FAQList";
 import { logAnalytics } from "@/lib/analytics";
 
 type ExperiencePickerProps = {
   items: PickerItem[];
+  faqItems?: FAQItem[];
 };
 
-export function ExperiencePicker({ items }: ExperiencePickerProps) {
+export function ExperiencePicker({ items, faqItems }: ExperiencePickerProps) {
   const prefersReducedMotion = useReducedMotion();
 
   if (!items.length) return null;
-
-  const planVisit =
-    items.find((item) => item.id === "plan-visit") ||
-    items.find((item) =>
-      item.title?.toLowerCase().includes("plan a visit"),
-    ) ||
-    items[0];
-  const secondaryItems = items.filter((item) => item.id !== planVisit.id);
 
   return (
     <section
@@ -71,22 +66,20 @@ export function ExperiencePicker({ items }: ExperiencePickerProps) {
             </h2>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start">
-            <ExperiencePickerCard
-              item={planVisit}
-              delay={prefersReducedMotion ? 0 : 0}
-              emphasis
-            />
-            <div className="space-y-6">
-              {secondaryItems.map((item, index) => (
-                <ExperiencePickerCard
-                  key={item.id}
-                  item={item}
-                  delay={prefersReducedMotion ? 0 : (index + 1) * 0.08}
-                />
-              ))}
-            </div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:items-start">
+            {items.map((item, index) => (
+              <ExperiencePickerCard
+                key={item.id}
+                item={item}
+                delay={prefersReducedMotion ? 0 : index * 0.08}
+              />
+            ))}
           </div>
+          {faqItems?.length ? (
+            <div className="pt-4">
+              <FAQList items={faqItems} embedded />
+            </div>
+          ) : null}
         </div>
       </div>
     </section>
@@ -96,13 +89,12 @@ export function ExperiencePicker({ items }: ExperiencePickerProps) {
 function ExperiencePickerCard({
   item,
   delay,
-  emphasis = false,
 }: {
   item: PickerItem;
   delay: number;
-  emphasis?: boolean;
 }) {
-  const aspect = emphasis ? 2 / 3 : 3 / 1;
+  const aspect = 3 / 2;
+  const microLabel = "Perazzi Experience";
 
   return (
     <motion.article
@@ -130,13 +122,13 @@ function ExperiencePickerCard({
             loading="lazy"
           />
           <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[color:var(--scrim-strong)]/70 via-[color:var(--scrim-strong)]/45 to-transparent"
+            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[color:var(--scrim-strong)]/70 via-[color:var(--scrim-strong)]/45 to-transparent transition-transform duration-300 group-hover:scale-105"
             aria-hidden
           />
         </div>
         <div className="flex flex-1 flex-col gap-3 px-6 py-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
-            {item.tagline ?? "Perazzi Experience"}
+            {microLabel}
           </p>
           <h3 className="text-xl font-semibold text-ink">{item.title}</h3>
           <p className="text-sm text-ink-muted">{item.summary}</p>

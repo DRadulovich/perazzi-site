@@ -33,21 +33,19 @@ export function HeritageEventSlide({
       >
         <div
           className={cn(
-            "flex w-full items-center justify-center p-4 sm:p-6 lg:p-8",
+            "flex w-full items-stretch p-4 sm:p-6 lg:p-8",
             "border-b border-white/10 md:w-1/2 md:border-b-0 md:border-r md:border-white/10",
           )}
         >
           {hasMedia ? (
-            <div className="w-full max-w-xl">
-              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-white/15 bg-black/30">
-                <Image
-                  src={event.media!.url}
-                  alt={event.media!.alt ?? event.title}
-                  fill
-                  sizes="(min-width: 1024px) 48vw, 100vw"
-                  className="object-cover"
-                />
-              </div>
+            <div className="relative h-full w-full min-h-[240px] overflow-hidden rounded-xl border border-white/15 bg-black/30">
+              <Image
+                src={event.media!.url}
+                alt={event.media!.alt ?? event.title}
+                fill
+                sizes="(min-width: 1024px) 48vw, 100vw"
+                className="object-cover"
+              />
             </div>
           ) : (
             <div className="flex w-full max-w-xl items-center justify-center rounded-xl border border-dashed border-white/20 bg-black/20 text-[0.65rem] uppercase tracking-[0.25em] text-neutral-500">

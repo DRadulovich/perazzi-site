@@ -102,14 +102,14 @@ export function ChampionsGallery({ champions }: ChampionsGalleryProps) {
 
       {/* Foreground glass container */}
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-3xl border border-border/70 bg-card/80 px-6 py-8 shadow-lg backdrop-blur sm:px-10">
+        <div className="space-y-6 rounded-3xl border border-border/70 bg-card/0 px-6 py-8 shadow-lg backdrop-blur-sm sm:px-10">
           <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+            <p className="text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
               Perazzi Champions
             </p>
             <h2
               id="heritage-champions-heading"
-              className="text-2xl font-semibold text-ink"
+              className="text-xl font-light italic text-ink-muted mb-10"
             >
               The athletes who shaped our lineage
             </h2>
@@ -128,7 +128,7 @@ export function ChampionsGallery({ champions }: ChampionsGalleryProps) {
                   "rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] focus-ring transition",
                   activeDiscipline === null
                     ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
-                    : "border-border bg-card text-ink hover:border-ink/60",
+                    : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
                 )}
                 onClick={() => setActiveDiscipline(null)}
               >
@@ -143,7 +143,7 @@ export function ChampionsGallery({ champions }: ChampionsGalleryProps) {
                     "rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] focus-ring transition",
                     activeDiscipline === discipline
                       ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
-                      : "border-border bg-card text-ink hover:border-ink/60",
+                      : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
                   )}
                   onClick={() =>
                     setActiveDiscipline(
@@ -160,7 +160,7 @@ export function ChampionsGallery({ champions }: ChampionsGalleryProps) {
           {/* Two-column layout: left = list of names, right = selected champion detail */}
           <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)] lg:items-start">
             {/* Left column – names list */}
-            <div className="rounded-3xl border border-border/70 bg-card/60 p-4">
+            <div className="rounded-3xl border border-border/70 bg-card/75 p-4">
               <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
                 Champions
               </p>
@@ -191,7 +191,7 @@ export function ChampionsGallery({ champions }: ChampionsGalleryProps) {
             </div>
 
             {/* Right column – selected champion detail */}
-            <div className="min-h-[18rem] rounded-3xl border border-border/70 bg-card p-5 shadow-sm">
+            <div className="min-h-[18rem] rounded-3xl border border-border/70 bg-card/75 p-5 shadow-sm">
               <AnimatePresence mode="wait">
                 {selectedChampion ? (
                   <motion.div
