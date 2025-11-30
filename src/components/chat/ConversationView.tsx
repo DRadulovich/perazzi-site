@@ -95,7 +95,7 @@ export function ConversationView({ messages, isTyping, pending }: ConversationVi
             ref={isLast ? lastMessageRef : undefined}
           >
             {showMarker && (
-              <div className="mb-3 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-white">
+              <div className="mb-3 flex items-center gap-3 text-[11px] sm:text-xs uppercase tracking-[0.2em] text-white">
                 <div className="flex-1 border-t border-perazzi-red" aria-hidden="true" />
                 <span className="rounded-full bg-perazzi-red px-3 py-1 text-[11px] tracking-[0.3em] text-white">
                   Perazzi Insight
@@ -121,7 +121,7 @@ export function ConversationView({ messages, isTyping, pending }: ConversationVi
                   msg.content
                 )}
                 {msg.similarity !== undefined && (
-                  <p className="mt-2 text-xs text-ink-muted">
+                  <p className="mt-2 text-[11px] sm:text-xs text-ink-muted">
                     Similarity: {(msg.similarity * 100).toFixed(1)}%
                   </p>
                 )}

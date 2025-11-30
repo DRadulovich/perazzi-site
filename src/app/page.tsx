@@ -13,21 +13,21 @@ export default async function HomePage() {
   return (
     <SiteShell mainClassName="flex-1 px-4 pb-12 pt-0 sm:px-8 lg:px-12">
       <div className="space-y-0">
-        <HeroBanner hero={homeData.hero} />
+        <HeroBanner hero={homeData.hero} fullBleed />
         <TimelineScroller stages={homeData.stages} />
         <section
-          className="border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-16 sm:py-20"
+          className="border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-10 sm:py-16"
           aria-labelledby="home-guide-heading"
         >
           <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
             <div className="space-y-4 text-ink">
               <p
                 id="home-guide-heading"
-                className="text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
+                className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
               >
                 Need a guide?
               </p>
-              <p className="text-lg font-light italic text-ink-muted mb-10">
+              <p className="mb-8 text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
                 Ask how Perazzi links heritage, champions, and today’s platforms, then step into the catalog with a clearer sense of where you belong – whether that’s HT, MX, TM or beyond.
               </p>
               <div className="flex flex-wrap gap-3 justify-start">
@@ -42,7 +42,7 @@ export default async function HomePage() {
                 />
                 <Link
                   href="/shotguns"
-                  className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red focus-ring"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
                 >
                   Explore shotguns
                   <span aria-hidden="true">→</span>
@@ -50,22 +50,22 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="space-y-3 text-xl font-light italic text-ink-muted">
-              <p className="text-xl font-semibold text-ink">
+            <div className="space-y-3 text-sm sm:text-base font-light italic text-ink-muted">
+              <p className="text-sm sm:text-base font-semibold not-italic text-ink">
                 Three starting points most Perazzi shooters choose:
               </p>
               <ul className="space-y-2">
                 <li>
-                  <span className="text-xl font-black text-ink">HT</span> – modern competition geometry for demanding sporting layouts.
+                  <span className="text-base sm:text-lg font-black not-italic text-ink">HT</span> – modern competition geometry for demanding sporting layouts.
                 </li>
                 <li>
-                  <span className="text-xl font-black text-ink">MX</span> – the classic lineage: balanced, adaptable, and endlessly configurable.
+                  <span className="text-base sm:text-lg font-black not-italic text-ink">MX</span> – the classic lineage: balanced, adaptable, and endlessly configurable.
                 </li>
                 <li>
-                  <span className="text-xl font-black text-ink">TM</span> – purpose-built for American trap with a dedicated silhouette.
+                  <span className="text-base sm:text-lg font-black not-italic text-ink">TM</span> – purpose-built for American trap with a dedicated silhouette.
                 </li>
               </ul>
-              <p className="text-lg font-light italic text-ink-muted">
+              <p className="text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
                 The concierge can map your disciplines, preferences, and ambitions to a starting platform and the right next pages to visit.
               </p>
             </div>
@@ -75,9 +75,11 @@ export default async function HomePage() {
         {homeData.finale ? (
           <CTASection finale={homeData.finale} />
         ) : (
-          <section className="rounded-3xl border border-border/70 bg-card px-6 py-8 text-center text-ink shadow-sm sm:px-10">
-            <p className="text-lg font-semibold">Final invitation coming soon</p>
-            <p className="mt-2 text-sm text-ink-muted">
+          <section className="rounded-2xl border border-border/60 bg-card/10 px-4 py-6 text-center text-ink shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 sm:shadow-lg">
+            <p className="text-base sm:text-lg font-semibold">
+              Final invitation coming soon
+            </p>
+            <p className="mt-2 text-xs sm:text-sm text-ink-muted leading-relaxed">
               Update the Home CTA in Sanity to surface the latest experience.
             </p>
           </section>

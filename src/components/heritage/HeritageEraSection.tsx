@@ -143,21 +143,21 @@ export function HeritageEraSection({
         </a>
 
         <div className="relative z-10 px-4 py-16">
-          <div className="mx-auto max-w-6xl rounded-3xl border border-white/15 bg-black/55 px-4 py-8 backdrop-blur-md md:px-10 md:py-10">
+          <div className="mx-auto max-w-6xl rounded-2xl border border-white/15 bg-black/60 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:px-6 sm:py-8 sm:shadow-md md:px-10 md:py-10">
             <header className="max-w-4xl">
               <h2
                 id={`heritage-era-${index}`}
-                className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-300 md:text-xs"
+                className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-neutral-300"
               >
                 {era.label}
               </h2>
-              <p className="mt-2 text-xs uppercase tracking-[0.25em] text-neutral-500">
+              <p className="mt-2 text-[11px] sm:text-[0.7rem] uppercase tracking-[0.25em] text-neutral-500">
                 {era.startYear}–{era.endYear}
               </p>
               <div className="mt-3">
                 <a
                   href="#perazzi-heritage-heading"
-                  className="inline-flex items-center text-[0.6rem] uppercase tracking-[0.22em] text-neutral-500 underline-offset-4 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white hover:text-neutral-200"
+                  className="inline-flex items-center text-[11px] sm:text-xs uppercase tracking-[0.22em] text-neutral-500 underline-offset-4 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white hover:text-neutral-200"
                 >
                   Back to timeline
                 </a>
@@ -226,17 +226,17 @@ export function HeritageEraSection({
           <header className="mx-auto max-w-6xl pb-6">
             <h2
               id={`heritage-era-${index}`}
-              className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-300 md:text-xs"
+              className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-neutral-300"
             >
               {era.label}
             </h2>
-            <p className="mt-2 text-xs uppercase tracking-[0.25em] text-neutral-500">
+            <p className="mt-2 text-[11px] sm:text-[0.7rem] uppercase tracking-[0.25em] text-neutral-500">
               {era.startYear}–{era.endYear}
             </p>
             <div className="mt-3">
               <a
                 href="#perazzi-heritage-heading"
-                className="inline-flex items-center text-[0.6rem] uppercase tracking-[0.22em] text-neutral-500 underline-offset-4 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white hover:text-neutral-200"
+                className="inline-flex items-center text-[11px] sm:text-xs uppercase tracking-[0.22em] text-neutral-500 underline-offset-4 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white hover:text-neutral-200"
               >
                 Back to timeline
               </a>

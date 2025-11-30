@@ -48,9 +48,17 @@ export default async function ExperiencePage() {
           { label: "Experience", href: "/experience" },
         ]}
       />
-      <section className="rounded-3xl border border-border/70 bg-card px-6 py-5 shadow-sm sm:px-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">Visit planning</p>
-        <p className="mt-2 text-sm text-ink">
+      <section
+        className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-5"
+        aria-labelledby="experience-visit-planning-heading"
+      >
+        <h2
+          id="experience-visit-planning-heading"
+          className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted"
+        >
+          Visit planning
+        </h2>
+        <p className="mt-2 text-sm sm:text-base leading-relaxed text-ink">
           Wondering what happens during a fitting or Botticino visit? Ask the concierge before you schedule.
         </p>
         <div className="mt-4">

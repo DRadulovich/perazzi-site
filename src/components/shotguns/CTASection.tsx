@@ -34,7 +34,7 @@ export function CTASection({
     <motion.section
       ref={analyticsRef}
       data-analytics-id={dataAnalyticsId}
-      className="rounded-3xl bg-perazzi-black px-6 py-10 text-white sm:px-10"
+      className="rounded-2xl bg-perazzi-black px-4 py-8 text-white sm:rounded-3xl sm:px-6 sm:py-10 sm:shadow-md"
       initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
       whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.5 }}
@@ -44,11 +44,11 @@ export function CTASection({
       <div className="space-y-6">
         <h2
           id="shotguns-cta-heading"
-          className="text-2xl font-semibold tracking-tight text-white"
+          className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-white"
         >
           Begin your fitting
         </h2>
-        <p className="max-w-2xl text-lg leading-relaxed text-white/80">
+        <p className="max-w-2xl text-sm sm:text-base md:text-lg leading-relaxed text-white/80">
           {text}
         </p>
         <div className="flex flex-wrap gap-4">

@@ -22,8 +22,9 @@ export function CinematicImageStrip({ src, alt }: CinematicImageStripProps) {
   return (
     <section
       ref={sectionRef}
-      className="relative isolate w-screen overflow-hidden bg-perazzi-black"
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden bg-perazzi-black"
       style={{ marginLeft: "calc(50% - 50vw)", marginRight: "calc(50% - 50vw)" }}
+      aria-hidden="true"
     >
       <div
         className="relative"
@@ -39,6 +40,7 @@ export function CinematicImageStrip({ src, alt }: CinematicImageStripProps) {
             fill
             sizes="100vw"
             className="object-cover"
+            loading="lazy"
           />
           <div
             className="absolute inset-0 bg-gradient-to-r from-black/25 via-black/10 to-black/25"

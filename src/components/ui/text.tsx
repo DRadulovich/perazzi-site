@@ -3,16 +3,20 @@ import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@/lib/utils";
 
 const sizeClasses = {
-  lg: "text-lg",
-  md: "text-base",
-  sm: "text-sm",
-  xs: "text-xs tracking-wide uppercase",
+  // Large body / emphasis text: slightly larger on bigger screens
+  lg: "text-base sm:text-lg",
+  // Default body text: mobile-first, scales up at sm+
+  md: "text-sm sm:text-base",
+  // Secondary body / compact text
+  sm: "text-xs sm:text-sm",
+  // Microcopy: uppercase, tracked, mobile-first
+  xs: "text-[11px] sm:text-xs tracking-[0.3em] uppercase",
 } as const;
 
 const leadingClasses = {
-  normal: "leading-7",
-  relaxed: "leading-8",
-  tight: "leading-5",
+  normal: "leading-normal",
+  relaxed: "leading-relaxed",
+  tight: "leading-snug",
 } as const;
 
 type TextSize = keyof typeof sizeClasses;

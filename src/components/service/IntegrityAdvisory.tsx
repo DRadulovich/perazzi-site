@@ -9,15 +9,15 @@ export function IntegrityAdvisory() {
     <section
       ref={analyticsRef}
       data-analytics-id="IntegrityAdvisorySeen"
-      className="space-y-4 rounded-3xl border border-border/70 bg-card px-6 py-8 shadow-sm sm:px-10"
+      className="space-y-4 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 sm:shadow-md lg:px-10"
     >
-      <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+      <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
         Authenticity & fitment
       </p>
-      <h2 className="text-2xl font-semibold text-ink">
+      <h2 className="text-2xl sm:text-3xl font-semibold text-ink">
         Protect your investment
       </h2>
-      <div className="prose prose-sm max-w-none text-ink-muted">
+      <div className="prose prose-sm max-w-none leading-relaxed text-ink-muted md:prose-lg">
         <p>
           Perazzi parts are serialised and fit by hand. Grey-market spares often
           compromise safety, timing, or regulation. Work only with the factory

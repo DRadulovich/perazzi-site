@@ -20,8 +20,12 @@ export function ChatInput({ onSend, pending }: ChatInputProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-2">
       <div className="relative">
+        <label htmlFor="perazzi-chat-input" className="sr-only">
+          Ask the Perazzi concierge
+        </label>
         <textarea
-          className="h-24 w-full resize-none rounded-2xl border border-subtle bg-card px-4 py-3 pr-20 text-base outline-none focus:border-ink"
+          id="perazzi-chat-input"
+          className="h-24 w-full resize-none rounded-2xl border border-subtle bg-card px-4 py-3 pr-20 text-sm sm:text-base outline-none focus:border-ink focus-ring"
           placeholder="Ask something about Perazzi, service, or heritage..."
           value={value}
           onChange={(event) => setValue(event.target.value)}

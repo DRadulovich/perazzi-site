@@ -14,19 +14,19 @@ type FAQListProps = {
 };
 
 export function FAQList({ items, embedded = false }: FAQListProps) {
-  const analyticsRef = useAnalyticsObserver("ExperienceFAQSeen");
+  const analyticsRef = useAnalyticsObserver<HTMLDivElement>("ExperienceFAQSeen");
 
   if (!items.length) return null;
 
   const content = (
     <>
       <div className="space-y-2">
-        <p className="text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
+        <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
           FAQ
         </p>
         <h2
           id="experience-faq-heading"
-          className="text-xl font-light italic text-ink-muted"
+          className="text-sm sm:text-base font-light italic leading-relaxed text-ink-muted"
         >
           Questions from future owners
         </h2>
@@ -44,7 +44,7 @@ export function FAQList({ items, embedded = false }: FAQListProps) {
       <div
         ref={analyticsRef}
         data-analytics-id="ExperienceFAQSeen"
-        className="space-y-6 rounded-3xl border border-border/70 bg-card/75 px-6 py-8 shadow-sm sm:px-8"
+        className="space-y-6 rounded-2xl border border-border/60 bg-card/40 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/75 sm:px-6 sm:py-8"
         aria-labelledby="experience-faq-heading"
       >
         {content}
@@ -54,9 +54,7 @@ export function FAQList({ items, embedded = false }: FAQListProps) {
 
   return (
     <section
-      ref={analyticsRef}
-      data-analytics-id="ExperienceFAQSeen"
-      className="relative isolate w-screen overflow-hidden py-16 sm:py-20"
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
       style={{
         marginLeft: "calc(50% - 50vw)",
         marginRight: "calc(50% - 50vw)",
@@ -71,6 +69,7 @@ export function FAQList({ items, embedded = false }: FAQListProps) {
           sizes="100vw"
           className="object-cover"
           priority={false}
+          loading="lazy"
         />
         <div
           className="absolute inset-0 bg-[color:var(--scrim-soft)]"
@@ -88,8 +87,12 @@ export function FAQList({ items, embedded = false }: FAQListProps) {
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-3xl border border-border/70 bg-card/0 px-6 py-8 shadow-lg backdrop-blur-sm sm:px-10">
+      <div
+        ref={analyticsRef}
+        data-analytics-id="ExperienceFAQSeen"
+        className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10"
+      >
+        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
           {content}
         </div>
       </div>
@@ -113,7 +116,7 @@ function FAQItemCard({ item, index }: FAQItemCardProps) {
   return (
     <Collapsible.Root open={open} onOpenChange={setOpen}>
       <Collapsible.Trigger
-        className="flex w-full items-center justify-between rounded-3xl border border-border/70 bg-card/75 px-4 py-3 text-left text-sm font-semibold text-ink focus-ring shadow-sm"
+        className="flex w-full items-center justify-between rounded-2xl border border-border/60 bg-card/40 px-4 py-3 text-left text-sm font-semibold text-ink focus-ring shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/75"
         aria-expanded={open}
       >
         {item.q}
@@ -127,7 +130,7 @@ function FAQItemCard({ item, index }: FAQItemCardProps) {
           +
         </span>
       </Collapsible.Trigger>
-      <Collapsible.Content className="mt-2 overflow-hidden rounded-2xl border border-border/60 bg-card/60 p-4 text-sm text-ink-muted">
+      <Collapsible.Content className="mt-2 overflow-hidden rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted sm:bg-card/60">
         <div dangerouslySetInnerHTML={{ __html: item.aHtml }} />
       </Collapsible.Content>
     </Collapsible.Root>

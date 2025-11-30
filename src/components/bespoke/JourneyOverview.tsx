@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import type { JourneyOverviewData } from "@/types/build";
+import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 type JourneyOverviewProps = {
   journey: JourneyOverviewData;
@@ -9,10 +10,13 @@ type JourneyOverviewProps = {
 
 export function JourneyOverview({ journey }: JourneyOverviewProps) {
   const prefersReducedMotion = useReducedMotion();
+  const analyticsRef = useAnalyticsObserver<HTMLElement>("JourneyOverviewSeen");
 
   return (
     <motion.section
-      className="rounded-3xl border border-border/70 bg-card px-6 py-8 shadow-sm sm:px-10"
+      ref={analyticsRef}
+      data-analytics-id="JourneyOverviewSeen"
+      className="rounded-2xl border border-border/60 bg-card/10 px-4 py-6 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8"
       initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
       whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.4 }}
@@ -20,8 +24,11 @@ export function JourneyOverview({ journey }: JourneyOverviewProps) {
       aria-labelledby="journey-overview-heading"
     >
       <div className="space-y-4">
+        <h2 id="journey-overview-heading" className="sr-only">
+          Journey overview
+        </h2>
         <div
-          className="prose prose-sm max-w-none text-ink"
+          className="prose prose-sm max-w-none leading-relaxed text-ink"
           dangerouslySetInnerHTML={{ __html: journey.introHtml }}
         />
         <nav aria-label="Journey steps">
@@ -30,7 +37,7 @@ export function JourneyOverview({ journey }: JourneyOverviewProps) {
               <li key={step.id}>
                 <a
                   href={step.href}
-                  className="group inline-flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-sm font-semibold text-ink focus-ring transition-colors hover:border-perazzi-red/60"
+                  className="group inline-flex w-full items-center justify-between rounded-2xl border border-border/60 bg-card/10 px-4 py-3 text-sm font-semibold text-ink focus-ring transition-colors hover:border-perazzi-red/60 sm:border-border/70 sm:bg-card/60"
                 >
                   <span>{step.label}</span>
                   <span
@@ -45,7 +52,7 @@ export function JourneyOverview({ journey }: JourneyOverviewProps) {
           </ol>
         </nav>
         <div
-          className="text-xs text-ink-muted"
+          className="text-[11px] sm:text-xs leading-relaxed text-ink-muted"
           dangerouslySetInnerHTML={{ __html: journey.disclaimerHtml }}
         />
       </div>

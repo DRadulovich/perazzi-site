@@ -43,7 +43,9 @@ export default function HeritageSectionPage({
         title={copy.title}
         description={copy.description}
       />
-      <p className="max-w-3xl text-base text-ink-muted">{copy.body}</p>
+      <p className="max-w-3xl text-sm sm:text-base leading-relaxed text-ink-muted">
+        {copy.body}
+      </p>
     </div>
   );
 }

@@ -30,7 +30,7 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
     if (!currentStage) return;
     if (!seenStagesRef.current.has(currentStage.id)) {
       seenStagesRef.current.add(currentStage.id);
-      logAnalytics(`CraftStagesSeen:${currentStage.id}`);
+      logAnalytics(`CraftTimeline.StageSeen:${currentStage.id}`);
     }
   }, [activeStage, stages]);
 
@@ -39,7 +39,7 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
       stages.map((stage) => (
         <div
           key={`stacked-${stage.id}`}
-          className="motion-reduce:opacity-100"
+          className="snap-start motion-reduce:opacity-100"
         >
           <TimelineItem stage={stage} />
         </div>
@@ -67,7 +67,7 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
           analyticsRef.current = node;
         }}
         data-analytics-id="CraftTimelineSeen"
-        className="relative isolate w-screen overflow-hidden py-16 sm:py-20"
+        className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
         style={{
           marginLeft: "calc(50% - 50vw)",
           marginRight: "calc(50% - 50vw)",
@@ -102,31 +102,31 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
         <div
           id="craft-timeline-content"
           tabIndex={-1}
-          className="focus:outline-none"
+          className="focus:outline-none focus-ring"
         >
           <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-            <div className="space-y-6 rounded-3xl border border-border/70 bg-card/0 px-6 py-8 shadow-lg backdrop-blur-sm sm:px-10">
+            <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
               <div className="space-y-4 md:flex md:items-center md:justify-between md:gap-8">
                 <div className="space-y-3">
-                  <p className="text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
+                  <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
                     Craftsmanship Journey
                   </p>
                   <h2
                     id="craft-timeline-heading"
-                    className="text-xl font-light italic text-ink-muted"
+                    className="text-base sm:text-lg lg:text-xl font-light italic text-ink-muted"
                   >
                     Three rituals that define a bespoke Perazzi build
                   </h2>
-                  <p className="max-w-3xl text-sm text-ink-muted lg:max-w-4xl">
-                    Scroll through each stage to see how measurement, tunnel testing, and finishing combine into a
-                    legacy piece. A skip link is provided for assistive tech.
+                  <p className="max-w-3xl text-xs sm:text-sm leading-relaxed text-ink-muted lg:max-w-4xl">
+                    Scroll through each stage to see how measurement, tunnel
+                    testing, and finishing combine into a legacy piece.
                   </p>
                 </div>
               </div>
 
               {enablePinned ? (
                 <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
-                  <div className="rounded-3xl bg-card/0 p-4">
+                  <div className="space-y-4 border-none bg-card/0 p-4 shadow-none sm:border-none sm:bg-card/0 sm:p-4 sm:shadow-none">
                     <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-ink">
                       Fitting Timeline
                     </p>
@@ -163,11 +163,14 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
                     <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
                       Fitting timeline
                     </p>
-                    <p className="text-sm text-ink-muted">
-                      Tap through each stage to follow the bespoke process from first measurements to the final finish.
+                    <p className="text-xs sm:text-sm leading-relaxed text-ink-muted">
+                      Scroll through each stage to follow the bespoke process
+                      from first measurements to the final finish.
                     </p>
                   </div>
-                  <div className="space-y-10">{stackedStages}</div>
+                  <div className="space-y-10 snap-y snap-mandatory">
+                    {stackedStages}
+                  </div>
                 </div>
               )}
             </div>
@@ -221,7 +224,9 @@ function TimelineControlButton({
       >
         Stage {order}
       </span>
-      <span className="mt-0.5 block text-sm font-semibold tracking-wide">{label}</span>
+      <span className="mt-0.5 block text-sm font-semibold tracking-wide">
+        {label}
+      </span>
     </motion.button>
   );
 }
@@ -232,13 +237,17 @@ type PinnedStageProps = {
   animationsEnabled: boolean;
 };
 
-function PinnedStagePanel({ stage, active, animationsEnabled }: PinnedStageProps) {
+function PinnedStagePanel({
+  stage,
+  active,
+  animationsEnabled,
+}: PinnedStageProps) {
   const sizes = "(min-width: 1600px) 860px, (min-width: 1280px) 760px, 100vw";
   const Wrapper = animationsEnabled ? motion.div : "div";
 
   const media = (
     <div className="flex h-full w-full flex-col gap-4 p-4 sm:p-6">
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]">
+      <div className="relative aspect-[3/2] sm:aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]">
         <Image
           src={stage.media.url}
           alt={stage.media.alt}
@@ -257,7 +266,9 @@ function PinnedStagePanel({ stage, active, animationsEnabled }: PinnedStageProps
           Stage {stage.order}
         </p>
         <h3 className="text-2xl font-semibold text-ink">{stage.title}</h3>
-        <p className="text-sm leading-relaxed text-ink-muted">{stage.body}</p>
+        <p className="text-sm leading-relaxed text-ink-muted">
+          {stage.body}
+        </p>
         {stage.media.caption ? (
           <p className="text-xs text-ink-muted">{stage.media.caption}</p>
         ) : null}

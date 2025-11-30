@@ -11,7 +11,10 @@ export function DisciplineMap({ items, disciplines }: DisciplineMapProps) {
       className="space-y-4"
       aria-labelledby="discipline-map-heading"
     >
-      <h2 id="discipline-map-heading" className="text-xl font-semibold text-ink">
+      <h2
+        id="discipline-map-heading"
+        className="text-xl sm:text-2xl font-semibold text-ink"
+      >
         Discipline pairing
       </h2>
       <div className="flex flex-wrap gap-4">
@@ -23,13 +26,15 @@ export function DisciplineMap({ items, disciplines }: DisciplineMapProps) {
             <a
               key={entry.disciplineId}
               href={href}
-              className="flex max-w-sm flex-col rounded-3xl border border-border/60 bg-card p-4 text-left shadow-sm focus-ring"
+              className="flex max-w-sm flex-col rounded-2xl border border-border/60 bg-card/10 p-4 text-left shadow-sm focus-ring sm:rounded-3xl sm:bg-card"
               data-analytics-id={`SeriesDisciplineChip:${entry.disciplineId}`}
             >
-              <span className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+              <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
                 {label}
               </span>
-              <p className="mt-2 text-sm text-ink-muted">{entry.rationale}</p>
+              <p className="mt-2 text-sm sm:text-base leading-relaxed text-ink-muted">
+                {entry.rationale}
+              </p>
             </a>
           );
         })}

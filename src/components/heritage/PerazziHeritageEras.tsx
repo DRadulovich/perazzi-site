@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import type { PerazziHeritageErasProps } from "@/types/heritage";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { HeritageErasStack } from "./HeritageErasStack";
+import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 export function PerazziHeritageEras({ eras, className }: PerazziHeritageErasProps) {
   if (!eras || eras.length === 0) {
@@ -12,15 +13,17 @@ export function PerazziHeritageEras({ eras, className }: PerazziHeritageErasProp
   }
 
   const prefersReducedMotion = usePrefersReducedMotion();
+  const analyticsRef = useAnalyticsObserver<HTMLElement>("PerazziHeritageErasSeen");
 
   return (
     <section
-      className={cn("relative w-full min-h-screen", className)}
+      ref={analyticsRef}
+      data-analytics-id="PerazziHeritageErasSeen"
+      className={cn("relative w-screen max-w-[100vw] min-h-screen", className)}
       aria-label="Perazzi heritage eras"
       style={{
         marginLeft: "calc(50% - 50vw)",
         marginRight: "calc(50% - 50vw)",
-        width: "100vw",
       }}
     >
       <HeritageErasStack

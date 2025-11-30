@@ -45,17 +45,20 @@ export function SerialLookup({ lookupAction }: SerialLookupProps) {
     <section
       ref={analyticsRef}
       data-analytics-id="SerialLookupSeen"
-      className="space-y-6 rounded-3xl border border-border/70 bg-card px-6 py-8 shadow-sm sm:px-10"
+      className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 sm:shadow-md lg:px-10"
       aria-labelledby="serial-lookup-heading"
     >
       <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
           Heritage Record
         </p>
-        <h2 id="serial-lookup-heading" className="text-2xl font-semibold text-ink">
+        <h2
+          id="serial-lookup-heading"
+          className="text-2xl sm:text-3xl font-semibold text-ink"
+        >
           Discover When Your Story Began
         </h2>
-        <p className="text-base text-ink-muted md:text-lg">
+        <p className="text-sm sm:text-base md:text-lg leading-relaxed text-ink-muted">
           Enter the serial number engraved on your receiver. We’ll consult the Perazzi archives and reveal the year your shotgun was born—and the proof mark that sealed its place in history.
         </p>
       </div>
@@ -71,7 +74,7 @@ export function SerialLookup({ lookupAction }: SerialLookupProps) {
               value={serial}
               onChange={(event) => setSerial(event.target.value)}
               className={cn(
-                "mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-base text-ink",
+                "mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm sm:text-base text-ink",
                 "placeholder:text-ink-muted focus:border-perazzi-red focus:outline-none focus:ring-2 focus:ring-perazzi-red/40",
               )}
               aria-describedby={errorId}
@@ -124,11 +127,13 @@ function LookupResult({ state }: { state: SerialLookupFormState }) {
 
   const { data } = state;
   return (
-    <div className="rounded-2xl border border-border/60 bg-card/70 p-4 md:p-6" aria-live="polite">
-      <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+    <div className="rounded-2xl border border-border/60 bg-card/40 p-4 shadow-sm sm:bg-card/70 md:p-6" aria-live="polite">
+      <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
         Record Found
       </p>
-      <h3 className="mt-2 text-2xl font-semibold text-ink">{data.year}</h3>
+      <h3 className="mt-2 text-2xl sm:text-3xl font-semibold text-ink">
+        {data.year}
+      </h3>
       <p className="text-sm text-ink-muted">Proof Code: {data.proofCode}</p>
       <dl className="mt-4 space-y-1 text-sm text-ink-muted">
         <div className="flex items-center justify-between">

@@ -17,13 +17,13 @@ export function TimelineItem({
   layout = "stacked",
   animationsEnabled = true,
 }: TimelineItemProps) {
-  const ratio = stage.media.aspectRatio ?? 4 / 3;
+  const ratio = stage.media.aspectRatio ?? 3 / 2;
   const Wrapper = layout === "pinned" && animationsEnabled ? motion.article : "article";
 
   const content = (
     <>
       <div
-        className="relative w-full overflow-hidden rounded-lg bg-neutral-200"
+        className="relative w-full overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
         style={{ aspectRatio: ratio }}
       >
         <Image
@@ -38,7 +38,9 @@ export function TimelineItem({
       <p className="mt-4 text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
         Stage {stage.order}
       </p>
-      <h3 className="mt-2 text-lg font-semibold text-ink">{stage.title}</h3>
+      <h3 className="mt-2 text-base sm:text-lg font-semibold text-ink">
+        {stage.title}
+      </h3>
       <p className="mt-2 text-sm leading-relaxed text-ink-muted">{stage.body}</p>
       {stage.media.caption ? (
         <p className="mt-3 text-xs text-ink-muted">{stage.media.caption}</p>
@@ -51,7 +53,7 @@ export function TimelineItem({
       return (
         <Wrapper
           key={stage.id}
-          className="absolute inset-0 rounded-2xl bg-card/80 p-6 shadow-xl"
+          className="absolute inset-0 rounded-3xl border border-border/70 bg-card/75 p-4 sm:p-6 shadow-sm"
           initial={{ opacity: 0, y: 30 }}
           animate={{
             opacity: active ? 1 : 0,
@@ -65,14 +67,14 @@ export function TimelineItem({
       );
     }
     return (
-      <article className="absolute inset-0 rounded-2xl bg-card/80 p-6 shadow-xl">
+      <article className="absolute inset-0 rounded-3xl border border-border/70 bg-card/75 p-4 sm:p-6 shadow-sm">
         {content}
       </article>
     );
   }
 
   return (
-    <article className="space-y-0 rounded-3xl border border-border/60 bg-card/90 p-6 shadow-sm">
+    <article className="space-y-0 rounded-2xl border-none bg-card/0 p-4 shadow-none sm:rounded-3xl sm:p-6">
       {content}
     </article>
   );

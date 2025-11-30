@@ -14,22 +14,26 @@ type OralHistoriesProps = {
 };
 
 export function OralHistories({ histories }: OralHistoriesProps) {
+  const sectionRef = useAnalyticsObserver<HTMLElement>("OralHistoriesSeen");
+
   if (!histories.length) {
     return null;
   }
 
   return (
     <section
-      className="space-y-6 rounded-3xl border border-border/70 bg-card px-6 py-8 shadow-sm sm:px-10"
+      ref={sectionRef}
+      data-analytics-id="OralHistoriesSeen"
+      className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8"
       aria-labelledby="oral-histories-heading"
     >
       <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
           Oral histories
         </p>
         <h2
           id="oral-histories-heading"
-          className="text-2xl font-semibold text-ink"
+          className="text-2xl sm:text-3xl font-semibold text-ink"
         >
           Voices from Botticino
         </h2>
@@ -65,11 +69,11 @@ function OralHistoryCard({ history }: OralHistoryCardProps) {
     <article
       ref={analyticsRef}
       data-analytics-id={`OralHistorySeen:${history.id}`}
-      className="flex h-full flex-col gap-4 rounded-3xl border border-border/70 bg-card/80 p-6 shadow-sm"
+      className="flex h-full flex-col gap-4 rounded-2xl border border-border/75 bg-card/80 p-5 shadow-sm sm:rounded-3xl sm:p-6"
     >
       {history.image ? (
         <div
-          className="relative overflow-hidden rounded-2xl bg-neutral-200"
+          className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
           style={{ aspectRatio: history.image.aspectRatio ?? 1 }}
         >
           <Image
@@ -82,11 +86,13 @@ function OralHistoryCard({ history }: OralHistoryCardProps) {
         </div>
       ) : null}
       <div className="space-y-2">
-        <h3 className="text-lg font-semibold text-ink">{history.title}</h3>
-        <blockquote className="border-l-2 border-perazzi-red/50 pl-3 text-sm italic text-ink-muted">
+        <h3 className="text-base sm:text-lg font-semibold text-ink">
+          {history.title}
+        </h3>
+        <blockquote className="border-l-2 border-perazzi-red/50 pl-3 text-sm italic leading-relaxed text-ink-muted">
           “{history.quote}”
         </blockquote>
-        <p className="text-xs uppercase tracking-[0.3em] text-ink-muted">
+        <p className="text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink-muted">
           {history.attribution}
         </p>
       </div>
@@ -107,7 +113,7 @@ function OralHistoryCard({ history }: OralHistoryCardProps) {
       {history.transcriptHtml ? (
         <Collapsible.Root open={open} onOpenChange={setOpen}>
           <Collapsible.Trigger
-            className="mt-auto inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink focus-ring"
+            className="mt-auto inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink focus-ring"
             aria-expanded={open}
             aria-controls={contentId}
           >
@@ -126,7 +132,7 @@ function OralHistoryCard({ history }: OralHistoryCardProps) {
           <Collapsible.Content
             id={contentId}
             className={cn(
-              "mt-4 overflow-hidden rounded-2xl border border-border/60 bg-card/70 p-4 text-sm text-ink-muted",
+              "mt-4 overflow-hidden rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted sm:bg-card/70",
               prefersReducedMotion
                 ? "transition-none"
                 : "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
@@ -138,7 +144,7 @@ function OralHistoryCard({ history }: OralHistoryCardProps) {
           </Collapsible.Content>
           <noscript>
             <div
-              className="mt-4 rounded-2xl border border-border/60 bg-card/70 p-4 text-sm text-ink-muted"
+              className="mt-4 rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted sm:bg-card/70"
               dangerouslySetInnerHTML={{ __html: history.transcriptHtml }}
             />
           </noscript>

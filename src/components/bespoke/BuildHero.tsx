@@ -27,13 +27,18 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
     ? { height: "100vh" }
     : { height: "100vh", y: parallax };
 
+  const sectionStyle = fullBleed
+    ? { marginLeft: "calc(50% - 50vw)", marginRight: "calc(50% - 50vw)" }
+    : undefined;
+
   return (
     <section
       ref={containerRef}
       data-analytics-id="HeroSeen:bespoke"
       className={`relative isolate min-h-screen overflow-hidden bg-perazzi-black text-white ${
-        fullBleed ? "rounded-none" : "rounded-3xl"
+        fullBleed ? "w-screen max-w-[100vw] rounded-none" : "rounded-3xl"
       }`}
+      style={sectionStyle}
     >
       <motion.div
         className="relative h-full w-full"
@@ -58,10 +63,10 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
         animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: "easeOut" }}
       >
-        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
+        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
           {hero.eyebrow}
         </p>
-        <h1 className="mt-4 text-balance text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
+        <h1 className="mt-4 text-balance text-2xl font-semibold leading-tight text-white sm:text-3xl lg:text-4xl">
           {hero.title}
         </h1>
         <div
@@ -73,7 +78,7 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
         className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center"
         aria-hidden="true"
       >
-        <span className="inline-flex items-center gap-2 rounded-full border border-white/40 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white/80">
+        <span className="inline-flex items-center gap-2 rounded-full border border-white/40 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-white/80">
           Scroll
           <span className="text-lg leading-none">↓</span>
         </span>

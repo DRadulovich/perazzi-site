@@ -16,7 +16,7 @@ export function OptionsGrid({ options }: OptionsGridProps) {
     >
       <h2
         id="grade-options-heading"
-        className="text-xl font-semibold text-ink"
+        className="text-xl sm:text-2xl font-semibold text-ink"
       >
         Commission options
       </h2>
@@ -24,12 +24,12 @@ export function OptionsGrid({ options }: OptionsGridProps) {
         {options.map((option) => (
           <article
             key={option.id}
-            className="rounded-3xl border border-border/70 bg-card p-4 shadow-sm"
+            className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card"
           >
             <h3 className="text-base font-semibold text-ink">
               {option.title}
             </h3>
-            <p className="mt-2 text-sm text-ink-muted">
+            <p className="mt-2 text-sm sm:text-base leading-relaxed text-ink-muted">
               {option.description}
             </p>
           </article>

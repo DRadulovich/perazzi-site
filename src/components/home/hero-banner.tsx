@@ -154,10 +154,12 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
     <section
       ref={setRefs}
       data-analytics-id={analyticsId ?? "HeroSeen"}
-      className={`relative isolate flex min-h-screen w-screen flex-col overflow-hidden bg-perazzi-black text-white ${fullBleed ? "rounded-none" : "lg:rounded-none"}`}
+      className={`relative isolate flex min-h-screen flex-col overflow-hidden bg-perazzi-black text-white ${
+        fullBleed ? "w-screen max-w-[100vw] rounded-none" : "w-full rounded-3xl"
+      }`}
       style={{
-        marginLeft: fullBleed ? undefined : "calc(50% - 50vw)",
-        marginRight: fullBleed ? undefined : "calc(50% - 50vw)",
+        marginLeft: fullBleed ? "calc(50% - 50vw)" : undefined,
+        marginRight: fullBleed ? "calc(50% - 50vw)" : undefined,
         minHeight: `calc(100vh - ${navReserve}px)`,
         paddingTop: `${navReserve}px`,
       }}
@@ -184,7 +186,7 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
       <div className="relative z-10 flex flex-1">
         <div className="mx-auto flex w-full max-w-5xl flex-col items-center justify-center gap-2 px-6 pb-16 text-center sm:px-2 lg:gap-2 lg:pb-24">
           <p
-            className={`text-xs font-bold uppercase tracking-[0.4em] text-white/80 transition-opacity duration-700 motion-reduce:transition-none ${
+            className={`text-[11px] sm:text-xs font-bold uppercase tracking-[0.4em] text-white/80 transition-opacity duration-700 motion-reduce:transition-none ${
               mediaLoaded ? "opacity-100" : "opacity-0"
             }`}
           >
@@ -192,7 +194,7 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
           </p>
           <h1
             id="home-hero-heading"
-            className={`mt-0 flex flex-wrap justify-center gap-2 text-balance text-3xl font-bold mt-1 mb-5 leading-[1.12] text-white transition-opacity duration-700 motion-reduce:transition-none sm:text-4xl lg:text-5xl ${
+            className={`mt-1 mb-5 flex flex-wrap justify-center gap-2 text-balance text-2xl font-bold leading-[1.12] text-white transition-opacity duration-700 motion-reduce:transition-none sm:text-3xl lg:text-4xl ${
               mediaLoaded ? "opacity-100 delay-100" : "opacity-0"
             }`}
           >
@@ -213,7 +215,7 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
             })}
           </h1>
           {hero.background.caption ? (
-            <p className="mt-0 w-full max-w-2xl text-balance text-md leading-relaxed text-white/75">
+            <p className="mt-0 w-full max-w-2xl text-balance text-xs sm:text-sm leading-relaxed text-white/75">
               {hero.background.caption}
             </p>
           ) : null}
@@ -228,7 +230,7 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
             />
             <Link
               href="/shotguns"
-              className="text-xs font-semibold uppercase tracking-[0.25em] text-white/80 underline underline-offset-4 hover:text-white focus-ring"
+              className="inline-flex items-center justify-center rounded-full border border-white/40 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-white/80 hover:text-white hover:border-white focus-ring"
             >
               Explore shotguns
             </Link>
@@ -264,7 +266,7 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
             <h2 id="manifesto-title" className="sr-only">
               Perazzi Manifesto
             </h2>
-            <div className="space-y-3 text-xs font-semibold uppercase tracking-[0.35em] leading-6 text-white">
+            <div className="space-y-3 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] leading-6 text-white">
               {[
                 "A Perazzi is not something you own.",
                 "It is something you grow into.",
@@ -287,7 +289,7 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
             </div>
             <motion.button
               type="button"
-              className="mt-8 text-xs font-semibold uppercase tracking-[0.25em] text-white/70 underline underline-offset-4 transition hover:text-white"
+              className="mt-8 inline-flex items-center justify-center rounded-full px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-white/70 underline underline-offset-4 transition hover:text-white focus-ring"
               onClick={closeManifesto}
               initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
               animate={{ opacity: 1 }}

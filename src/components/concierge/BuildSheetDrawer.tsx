@@ -110,15 +110,17 @@ export function BuildSheetDrawer({
         <div className="flex flex-col gap-2 border-b border-subtle px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Build sheet</p>
-              <p className="text-sm text-ink">Selections so far</p>
+              <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+                Build sheet
+              </p>
+              <p className="text-sm sm:text-base text-ink">Selections so far</p>
             </div>
             <div className="flex items-center gap-2">
               {onClose ? (
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-full border border-subtle bg-card px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+                  className="inline-flex min-h-10 items-center justify-center rounded-full border border-subtle bg-card px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink focus-ring"
                 >
                   Close
                 </button>
@@ -127,7 +129,7 @@ export function BuildSheetDrawer({
                 <button
                   type="button"
                   onClick={() => setEditMode((prev) => !prev)}
-                  className="rounded-full border border-subtle bg-card px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+                  className="inline-flex min-h-10 items-center justify-center rounded-full border border-subtle bg-card px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink focus-ring"
                 >
                   {editMode ? "Done" : "Edit"}
                 </button>
@@ -140,7 +142,7 @@ export function BuildSheetDrawer({
               <button
                 type="button"
                 onClick={onSave}
-                className="rounded-full border border-subtle bg-card px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+                className="inline-flex min-h-10 items-center justify-center rounded-full border border-subtle bg-card px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink focus-ring"
               >
                 Save build
               </button>
@@ -149,7 +151,7 @@ export function BuildSheetDrawer({
               <button
                 type="button"
                 onClick={handleToggleAll}
-                className="rounded-full border border-subtle bg-card px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+                className="inline-flex min-h-10 items-center justify-center rounded-full border border-subtle bg-card px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink focus-ring"
               >
                 {allCollapsed ? "Expand all" : "Collapse all"}
               </button>
@@ -157,7 +159,7 @@ export function BuildSheetDrawer({
           </div>
         </div>
         {savedBuilds.length ? (
-          <div className="flex flex-wrap items-center gap-2 border-b border-subtle px-4 py-3 text-xs text-ink sm:px-6">
+          <div className="flex flex-wrap items-center gap-2 border-b border-subtle px-4 py-3 text-[11px] sm:text-xs text-ink sm:px-6">
             <span className="text-ink-muted uppercase tracking-[0.2em]">Saved</span>
             {savedBuilds
               .slice()
@@ -170,7 +172,7 @@ export function BuildSheetDrawer({
                   <button
                     type="button"
                     onClick={() => onLoadSaved?.(build.id)}
-                    className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink hover:text-ink"
+                    className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink hover:text-ink focus-ring"
                   >
                     {build.name}
                   </button>
@@ -178,7 +180,7 @@ export function BuildSheetDrawer({
                     <button
                       type="button"
                       onClick={() => onDeleteSaved(build.id)}
-                      className="text-[11px] font-semibold text-ink-muted hover:text-red-600"
+                      className="text-[11px] font-semibold text-ink-muted hover:text-red-600 focus-ring"
                       aria-label={`Delete ${build.name}`}
                     >
                       ×
@@ -190,14 +192,16 @@ export function BuildSheetDrawer({
         ) : null}
         <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
           {entries.length === 0 ? (
-            <p className="text-sm text-ink-muted">Selections will appear here as you choose them.</p>
+            <p className="text-sm sm:text-base leading-relaxed text-ink-muted">
+              Selections will appear here as you choose them.
+            </p>
           ) : (
-            <ul className="space-y-2 text-sm text-ink">
+            <ul className="space-y-2 text-sm sm:text-base text-ink">
               {entries.map((entry) => (
                 <li
                   key={entry.id}
                   className={clsx(
-                    "rounded-2xl border border-subtle bg-card px-3 py-2 transition",
+                    "rounded-2xl border border-subtle/60 bg-card px-3 py-2 transition",
                     editMode ? "cursor-pointer hover:border-ink hover:shadow-sm" : "",
                   )}
                   onClick={() => {
@@ -236,7 +240,7 @@ export function BuildSheetDrawer({
                             className="w-full max-h-48 rounded-lg object-cover"
                           />
                         ) : null}
-                        <div className="space-y-1 text-xs text-ink">
+                        <div className="space-y-1 text-[11px] sm:text-xs leading-relaxed text-ink">
                           {entry.details.description ? <p className="text-ink">{entry.details.description}</p> : null}
                           {entry.details.platform ? (
                             <p className="text-ink-muted">Platform: {entry.details.platform}</p>

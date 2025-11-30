@@ -353,7 +353,7 @@ const MobileMenu = ({
     <div className="lg:hidden">
       <button
         onClick={() => setOpen(true)}
-        className="text-2xl text-white focus:outline-none"
+        className="inline-flex h-10 w-10 items-center justify-center rounded-full text-2xl text-white focus-ring"
         aria-label="Open navigation menu"
       >
         <FiMenu />
@@ -368,11 +368,11 @@ const MobileMenu = ({
             className="fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col bg-perazzi-black text-white shadow-2xl"
           >
             <div className="flex items-center justify-between border-b border-border px-6 py-4">
-              <Logo label={brandLabel} color="#1F1F1F" />
+              <Logo label={brandLabel} />
               <button
                 onClick={() => setOpen(false)}
                 aria-label="Close navigation menu"
-                className="text-2xl text-ink"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full text-2xl text-ink focus-ring"
               >
                 <FiX />
               </button>
@@ -419,7 +419,7 @@ const MobileMenuLink = ({
       <div className="flex items-center justify-between">
         <Link
           href={item.href}
-          className={`text-lg font-semibold ${isActive ? "text-perazzi-red" : "text-ink"}`}
+          className={`text-base sm:text-lg font-semibold ${isActive ? "text-perazzi-red" : "text-white"}`}
           onClick={() => setMenuOpen(false)}
         >
           {item.text}
@@ -428,14 +428,14 @@ const MobileMenuLink = ({
           <button
             onClick={() => setOpen((prev) => !prev)}
             aria-label={`Toggle ${item.text} links`}
-            className="text-2xl text-ink"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-2xl text-white focus-ring"
           >
             <motion.div animate={{ rotate: open ? 180 : 0 }}>
               <FiChevronDown />
             </motion.div>
           </button>
         ) : (
-          <FiArrowRight className="text-ink" />
+          <FiArrowRight className="text-white" />
         )}
       </div>
       {hasFold && FlyoutContent && (
@@ -447,7 +447,7 @@ const MobileMenuLink = ({
           }}
           className="overflow-hidden"
         >
-          <div ref={ref} className="rounded-2xl bg-card p-3 text-perazzi-black">
+          <div ref={ref} className="rounded-2xl bg-card/0 p-0 text-white shadow-none">
             <FlyoutContent onNavigate={() => setMenuOpen(false)} textTone="dark" />
           </div>
         </motion.div>

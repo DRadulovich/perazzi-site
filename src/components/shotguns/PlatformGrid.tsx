@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import { useMemo, useState } from "react";
+import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import type { Platform } from "@/types/catalog";
 import { PlatformCard } from "./PlatformCard";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
@@ -15,6 +16,7 @@ type PlatformGridProps = {
 export function PlatformGrid({ platforms }: PlatformGridProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const prefersReducedMotion = useReducedMotion();
+  const analyticsRef = useAnalyticsObserver("PlatformGridSeen");
 
   const orderedPlatforms = useMemo(() => {
     const lookup = new Map(
@@ -35,7 +37,9 @@ export function PlatformGrid({ platforms }: PlatformGridProps) {
 
   return (
     <section
-      className="relative w-screen overflow-hidden py-16 sm:py-20"
+      ref={analyticsRef}
+      data-analytics-id="PlatformGridSeen"
+      className="relative w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
       style={{
         marginLeft: "calc(50% - 50vw)",
         marginRight: "calc(50% - 50vw)",
@@ -48,7 +52,7 @@ export function PlatformGrid({ platforms }: PlatformGridProps) {
           src="/redesign-photos/shotguns/pweb-shotguns-platformgrid-bg.jpg"
           alt="Perazzi workshop background for platform section"
           fill
-          sizes="80vw"
+          sizes="100vw"
           className="object-cover"
           priority={false}
         />
@@ -65,13 +69,16 @@ export function PlatformGrid({ platforms }: PlatformGridProps) {
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10" style={{ minHeight: "100vh" }}>
+      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
         <div className="space-y-8">
           <div className="space-y-2">
-            <p className="text-4xl font-black italic uppercase tracking-[0.35em] text-ink">
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-black italic uppercase tracking-[0.35em] text-ink">
               Platforms & Lineages
             </p>
-            <h2 id="platforms-heading" className="max-w-4xl text-xl font-light italic text-ink-muted mb-15">
+            <h2
+              id="platforms-heading"
+              className="mb-6 max-w-4xl text-sm sm:text-base font-light italic text-ink-muted"
+            >
               Explore the MX, HT, and TM Platforms and learn how each carry a different balance, design philosophy, and place on the line.
             </h2>
           </div>
@@ -102,7 +109,7 @@ export function PlatformGrid({ platforms }: PlatformGridProps) {
             })}
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 min-h-[900px] sm:min-h-[820px] md:min-h-[750px] items-stretch">
+          <div className="grid gap-6 md:grid-cols-2 min-h-[720px] sm:min-h-[820px] md:min-h-[750px] items-stretch">
             {activePlatform ? (
               <div className="space-y-3">
                 <PlatformCard platform={activePlatform} priority={activeIndex === 0} />

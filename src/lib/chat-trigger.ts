@@ -1,10 +1,6 @@
-export type ChatContextInput = {
-  pageUrl?: string;
-  modelSlug?: string;
-  platformSlug?: string;
-  mode?: string;
-  locale?: string;
-};
+import type { AssistantContext } from "@/hooks/usePerazziAssistant";
+
+export type ChatContextInput = Partial<AssistantContext>;
 
 export type ChatTriggerPayload = {
   question?: string;

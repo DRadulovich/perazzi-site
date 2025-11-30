@@ -55,6 +55,7 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
       <button
         type="button"
         ref={backdropRef}
+        tabIndex={-1}
         className={clsx(
           "fixed inset-0 z-30 h-full w-full bg-black/30 transition-opacity duration-300",
           open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
@@ -75,14 +76,14 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
       >
         <div className="flex items-center justify-between border-b border-subtle px-4 py-3 sm:px-6">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Sanity Data</p>
-            <p className="text-sm text-ink">Details for the current step</p>
+            <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">Sanity Data</p>
+            <p className="text-sm sm:text-base text-ink">Details for the current step</p>
           </div>
           {onClose ? (
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border border-subtle bg-card px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+              className="inline-flex min-h-10 items-center justify-center rounded-full border border-subtle bg-card px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink focus-ring"
             >
               Close
             </button>
@@ -90,11 +91,11 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
         </div>
         <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
           {error ? (
-            <p className="text-sm text-red-600">{error}</p>
+            <p className="text-sm sm:text-base leading-relaxed text-red-600">{error}</p>
           ) : loading ? (
-            <p className="text-sm text-ink-muted">Loading details…</p>
+            <p className="text-sm sm:text-base leading-relaxed text-ink-muted">Loading details…</p>
           ) : cards.length === 0 ? (
-            <p className="text-sm text-ink-muted">No details available.</p>
+            <p className="text-sm sm:text-base leading-relaxed text-ink-muted">No details available.</p>
           ) : (
             <div className="space-y-3">
               {cards.map((card) => (
@@ -104,8 +105,8 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
                   onClick={() => onSelect?.(card)}
                   className={clsx(
                     "w-full text-left transition",
-                    selectedCard?.id === card.id ? "border-ink bg-subtle/50" : "border-subtle hover:border-ink",
-                    "flex flex-col rounded-2xl border bg-card p-3 text-sm text-ink shadow-sm",
+                    selectedCard?.id === card.id ? "border-ink bg-subtle/50" : "border-subtle/60 hover:border-ink",
+                    "flex flex-col rounded-2xl border bg-card p-3 text-sm sm:text-base text-ink shadow-sm focus-ring",
                   )}
                 >
                   {card.imageUrl ? (
@@ -120,17 +121,27 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
                   <div className="mt-2 space-y-1">
                     <div className="flex items-center justify-between">
                       <p className="text-base font-semibold">{card.title}</p>
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-perazzi-red">View more</span>
+                      <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-perazzi-red">
+                        View more
+                      </span>
                     </div>
-                    {card.description ? <p className="text-sm text-ink-muted line-clamp-3">{card.description}</p> : null}
+                    {card.description ? (
+                      <p className="text-sm sm:text-base leading-relaxed text-ink-muted line-clamp-3">
+                        {card.description}
+                      </p>
+                    ) : null}
                     {card.platform ? (
-                      <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Platform: {card.platform}</p>
+                      <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+                        Platform: {card.platform}
+                      </p>
                     ) : null}
                     {card.grade ? (
-                      <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Grade: {card.grade}</p>
+                      <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+                        Grade: {card.grade}
+                      </p>
                     ) : null}
                     {card.gauges?.length ? (
-                      <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">
+                      <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
                         Gauges: {card.gauges.join(", ")}
                       </p>
                     ) : null}

@@ -1,6 +1,7 @@
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
+import type { PlatformSlug } from "@/hooks/usePerazziAssistant";
 
-const PLATFORM_MESSAGES: Record<string, { question: string }> = {
+const PLATFORM_MESSAGES: Record<PlatformSlug, { question: string }> = {
   ht: {
     question:
       "Give me a full overview of the HT platform and build philosophy, and outline what the purpose is between the fixed trigger High Tech S compared to the removable trigger High Tech models.",
@@ -28,15 +29,18 @@ export function buildPlatformPrompt(
   extraContext: ChatTriggerPayload["context"] = {},
 ): ChatTriggerPayload {
   const normalized = slug.toLowerCase();
-  const entry = PLATFORM_MESSAGES[normalized];
-  if (entry) {
+  const platformSlug = (Object.keys(PLATFORM_MESSAGES) as PlatformSlug[]).find(
+    (key) => key === normalized,
+  );
+  const entry = platformSlug ? PLATFORM_MESSAGES[platformSlug] : undefined;
+  if (entry && platformSlug) {
     return {
       question: entry.question,
-      context: { platformSlug: normalized, ...extraContext },
+      context: { platformSlug, ...extraContext },
     };
   }
   return {
     question: `Help me understand the ${slug.toUpperCase()} platform and which model configurations I should start from.`,
-    context: { platformSlug: normalized, ...extraContext },
+    context: platformSlug ? { platformSlug, ...extraContext } : extraContext,
   };
 }

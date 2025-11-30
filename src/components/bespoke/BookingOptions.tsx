@@ -25,15 +25,17 @@ function BookingOptionCard({ option }: BookingOptionCardProps) {
     <article
       ref={optionRef}
       data-analytics-id={`BookingOptionSeen:${option.id}`}
-      className="flex h-full flex-col rounded-3xl border border-border/70 bg-card p-6 shadow-sm transition-shadow hover:shadow-md"
+      className="flex h-full flex-col rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm transition-shadow hover:shadow-md sm:rounded-3xl sm:border-border/70 sm:bg-card sm:p-6"
     >
       <div className="space-y-2">
-        <h3 className="text-lg font-semibold text-ink">{option.title}</h3>
-        <p className="text-xs uppercase tracking-[0.3em] text-ink-muted">
+        <h3 className="text-base sm:text-lg font-semibold text-ink">
+          {option.title}
+        </h3>
+        <p className="text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink-muted">
           {option.durationMins} minutes
         </p>
         <div
-          className="prose prose-base max-w-none text-ink-muted md:prose-lg"
+          className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg"
           dangerouslySetInnerHTML={{ __html: option.descriptionHtml }}
         />
       </div>
@@ -81,7 +83,7 @@ function WhatToExpectCollapsible({
       }}
     >
       <Collapsible.Trigger
-        className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card px-4 py-3 text-left text-sm font-semibold text-ink focus-ring md:px-6 md:py-4 md:text-base lg:px-7 lg:py-5"
+        className="flex w-full items-center justify-between rounded-2xl border border-border/60 bg-card/10 px-4 py-3 text-left text-sm font-semibold text-ink focus-ring md:px-6 md:py-4 md:text-base lg:px-7 lg:py-5 md:border-border/70 md:bg-card"
         aria-controls={contentId}
         aria-expanded={open}
       >
@@ -106,7 +108,7 @@ function WhatToExpectCollapsible({
         )}
       >
         <div
-          className="prose prose-base max-w-none pb-4 text-ink-muted md:prose-lg lg:pb-5"
+          className="prose prose-base max-w-none pb-4 leading-relaxed text-ink-muted md:prose-lg lg:pb-5"
           dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
         />
       </Collapsible.Content>
@@ -134,7 +136,7 @@ export function BookingOptions({ booking }: BookingOptionsProps) {
       aria-labelledby="booking-options-heading"
     >
       <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
           Reserve time
         </p>
         <h2
@@ -151,9 +153,9 @@ export function BookingOptions({ booking }: BookingOptionsProps) {
       </div>
       <aside
         aria-label="What to expect during your fitting"
-        className="space-y-3 rounded-3xl border border-border/70 bg-card/60 p-6 shadow-sm md:space-y-4 md:p-8 lg:space-y-5 lg:p-10"
+        className="space-y-3 rounded-2xl border border-border/60 bg-card/40 p-4 shadow-sm md:space-y-4 md:p-8 md:rounded-3xl md:border-border/70 md:bg-card/60 lg:space-y-5 lg:p-10"
       >
-        <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-ink-muted">
+        <h3 className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
           What to expect
         </h3>
         <div className="space-y-3 md:space-y-4 lg:space-y-5">
@@ -167,8 +169,8 @@ export function BookingOptions({ booking }: BookingOptionsProps) {
           ))}
         </div>
       </aside>
-      <div className="space-y-3 rounded-3xl border border-border/70 bg-card/60 p-6 shadow-sm md:space-y-4 md:p-8 lg:space-y-5 lg:p-10">
-        <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-ink-muted">
+      <div className="space-y-3 rounded-2xl border border-border/60 bg-card/40 p-4 shadow-sm md:space-y-4 md:p-8 md:rounded-3xl md:border-border/70 md:bg-card/60 lg:space-y-5 lg:p-10">
+        <h3 className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
           Schedule with the concierge
         </h3>
         {showScheduler ? (
@@ -189,7 +191,7 @@ export function BookingOptions({ booking }: BookingOptionsProps) {
             Load scheduler
           </Button>
         )}
-        <p className="text-xs text-ink-muted">
+        <p className="text-[11px] sm:text-xs text-ink-muted">
           Prefer email?{" "}
           <a
             href={scheduler.fallback}
@@ -202,7 +204,7 @@ export function BookingOptions({ booking }: BookingOptionsProps) {
         </p>
       </div>
       {booking.note ? (
-        <p className="text-xs text-ink-muted">{booking.note}</p>
+        <p className="text-[11px] sm:text-xs text-ink-muted">{booking.note}</p>
       ) : null}
     </section>
   );

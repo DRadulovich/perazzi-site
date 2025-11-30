@@ -22,7 +22,7 @@ export function ScrollIndicator({ className }: ScrollIndicatorProps) {
       transition={{ delay: 0.6 }}
     >
       <motion.span
-        className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.4em] text-white/80"
+        className="flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.4em] text-white/80"
         animate={{ y: [0, 6, 0] }}
         transition={{
           duration: 2,

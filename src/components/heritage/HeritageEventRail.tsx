@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import type { HeritageEvent } from "@/types/heritage";
 import { HeritageEventSlide } from "./HeritageEventSlide";
 import { heritageMotion } from "@/lib/motionConfig";
+import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 export type HeritageEventRailProps = {
   events: HeritageEvent[];
@@ -20,13 +21,14 @@ export function HeritageEventRail({
   className,
   scrollProgress,
   activeEventIndex = 0,
-  prefersReducedMotion: _prefersReducedMotion,
+  prefersReducedMotion = false,
 }: HeritageEventRailProps) {
   if (!events || events.length === 0) {
     return null;
   }
 
   const isSingle = events.length === 1;
+  const analyticsRef = useAnalyticsObserver<HTMLDivElement>("HeritageEventRailSeen");
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const trackRef = React.useRef<HTMLDivElement | null>(null);
   const [maxOffset, setMaxOffset] = React.useState(0);
@@ -65,7 +67,11 @@ export function HeritageEventRail({
 
   return (
     <div
-      ref={containerRef}
+      ref={(node) => {
+        containerRef.current = node;
+        analyticsRef.current = node;
+      }}
+      data-analytics-id="HeritageEventRailSeen"
       className={cn(
         "relative mt-8 h-[55vh] w-full overflow-hidden sm:h-[60vh] md:h-[70vh]",
         className,
@@ -74,7 +80,7 @@ export function HeritageEventRail({
       <motion.div
         ref={trackRef}
         className="flex h-full w-full will-change-transform"
-        style={isScrollable && !isSingle ? { x } : undefined}
+        style={isScrollable && !isSingle && !prefersReducedMotion ? { x } : undefined}
       >
         {events.map((event) => (
           <div

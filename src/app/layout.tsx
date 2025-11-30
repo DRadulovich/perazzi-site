@@ -51,7 +51,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} data-theme={initialTheme} suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-canvas text-ink`}
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased min-h-screen bg-canvas text-ink overflow-x-hidden`}
       >
         <Providers
           locale={locale}

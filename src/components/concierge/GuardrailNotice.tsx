@@ -7,7 +7,11 @@ export function GuardrailNotice({ status }: { status?: GuardrailStatus }) {
 
   if (status === "low_confidence") {
     return (
-      <div className="rounded-2xl border border-subtle bg-subtle/40 px-4 py-3 text-sm text-ink">
+      <div
+        role="status"
+        aria-live="polite"
+        className="rounded-2xl border border-subtle bg-subtle/40 px-4 py-3 text-sm sm:text-base leading-relaxed text-ink"
+      >
         This answer is based on limited information and may be incomplete.
       </div>
     );
@@ -15,7 +19,11 @@ export function GuardrailNotice({ status }: { status?: GuardrailStatus }) {
 
   if (status === "blocked") {
     return (
-      <div className="rounded-2xl border border-subtle bg-subtle/40 px-4 py-3 text-sm text-ink">
+      <div
+        role="status"
+        aria-live="polite"
+        className="rounded-2xl border border-subtle bg-subtle/40 px-4 py-3 text-sm sm:text-base leading-relaxed text-ink"
+      >
         Policy-limited answer.
       </div>
     );

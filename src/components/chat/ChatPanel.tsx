@@ -9,6 +9,7 @@ import { ChatInput } from "@/components/chat/ChatInput";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
 import { cn } from "@/lib/utils";
 import { usePerazziAssistant } from "@/hooks/usePerazziAssistant";
+import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 const QUICK_STARTS = [
   {
@@ -78,6 +79,7 @@ export function ChatPanel({
   onPromptConsumed,
 }: ChatPanelProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const analyticsRef = useAnalyticsObserver<HTMLDivElement>("ChatPanelSeen");
   const { messages, pending, isTyping, error, sendMessage, context, updateContext, appendLocal } =
     usePerazziAssistant();
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -243,14 +245,18 @@ export function ChatPanel({
         role="dialog"
         aria-label="Perazzi Concierge"
         tabIndex={-1}
-        ref={panelRef}
+        ref={(node) => {
+          panelRef.current = node;
+          analyticsRef.current = node;
+        }}
+        data-analytics-id="ChatPanelSeen"
         className={`${rootClasses} z-40`}
         style={{ minWidth: variant === "rail" ? "320px" : undefined }}
       >
       <div className="space-y-3 border-b border-subtle px-6 py-5">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">
+            <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
               {legacyMode ? "Legacy Conversation" : "Perazzi Concierge"}
             </p>
             <h2 className="text-xl font-semibold">Where shall we begin?</h2>
@@ -259,7 +265,7 @@ export function ChatPanel({
             {legacyMode && (
               <button
                 type="button"
-                className="rounded-full border border-subtle px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-ink-muted transition hover:border-ink hover:text-ink"
+                className="rounded-full border border-subtle px-3 py-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted transition hover:border-ink hover:text-ink"
                 onClick={exitLegacyMode}
               >
                 Exit
@@ -282,12 +288,12 @@ export function ChatPanel({
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-10 text-sm text-ink">
           <div className={cn("flex flex-col gap-6", legacyMode ? "bg-subtle/20 rounded-3xl p-4" : "")}>
             {!legacyMode && (
-              <div className="rounded-3xl border border-subtle bg-subtle/40 px-5 py-4 text-sm text-ink">
+              <div className="rounded-2xl border border-subtle/60 bg-subtle/40 p-4 text-sm text-ink sm:rounded-3xl sm:border-subtle sm:px-5 sm:py-4">
                 <div className="flex items-center justify-between gap-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Guided Questions</p>
+                  <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">Guided Questions</p>
                   <button
                     type="button"
-                    className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:text-ink"
+                    className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:text-ink"
                     onClick={() => setShowQuickStarts((prev) => !prev)}
                   >
                     {showQuickStarts ? "Hide" : "Show"}
@@ -328,9 +334,9 @@ export function ChatPanel({
               return (
                 <li key={msg.id} className="relative">
                   {showMarker && (
-                    <div className="mb-3 flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-white">
+                    <div className="mb-3 flex items-center gap-3 text-[11px] sm:text-xs uppercase tracking-[0.2em] text-white">
                       <div className="flex-1 border-t border-perazzi-red" aria-hidden="true" />
-                      <span className="rounded-full bg-perazzi-red px-3 py-1 text-[11px] tracking-[0.3em] text-white">
+                      <span className="rounded-full bg-perazzi-red px-3 py-1 text-[11px] sm:text-xs tracking-[0.3em] text-white">
                         Perazzi Insight
                       </span>
                       <div className="flex-1 border-t border-perazzi-red" aria-hidden="true" />
@@ -354,7 +360,7 @@ export function ChatPanel({
                         msg.content
                       )}
                       {msg.similarity !== undefined && (
-                        <p className="mt-2 text-xs text-ink-muted">
+                        <p className="mt-2 text-[11px] sm:text-xs text-ink-muted">
                           Similarity: {(msg.similarity * 100).toFixed(1)}%
                         </p>
                       )}

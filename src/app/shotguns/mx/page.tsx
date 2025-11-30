@@ -19,16 +19,26 @@ export default async function MXSeriesPage() {
   return (
     <div className="space-y-16">
       <SeriesHero hero={mxSeries.hero} analyticsId="SeriesHero:mx" />
-      <div className="rounded-3xl border border-border/70 bg-card px-6 py-5 shadow-sm sm:px-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-ink-muted">Platform guidance</p>
-        <p className="mt-1 text-sm text-ink">Questions about the MX Platform? Ask Perazzi.</p>
+      <section
+        className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-5"
+        aria-labelledby="mx-platform-guidance-heading"
+      >
+        <h2
+          id="mx-platform-guidance-heading"
+          className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted"
+        >
+          Platform guidance
+        </h2>
+        <p className="mt-1 text-sm sm:text-base leading-relaxed text-ink">
+          Questions about the MX Platform? Ask Perazzi.
+        </p>
         <div className="mt-4">
           <ChatTriggerButton
             label="Ask about MX Platform"
             payload={buildPlatformPrompt("mx", { pageUrl: "/shotguns/mx" })}
           />
         </div>
-      </div>
+      </section>
       <AtAGlanceStrip data={mxSeries.atAGlance} />
       <SeriesStory html={mxSeries.storyHtml} />
       <EngHighlightsGrid highlights={mxSeries.highlights} />

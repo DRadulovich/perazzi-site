@@ -20,7 +20,7 @@ export function BuildStepItem({
   onCtaClick,
   layout = "stacked",
 }: BuildStepItemProps) {
-  const ratio = step.media.aspectRatio ?? 4 / 3;
+  const ratio = step.media.aspectRatio ?? 3 / 2;
   const analyticsRef = useAnalyticsObserver(`BuildStepVisible:${step.id}`);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const isPinned = layout === "pinned";
@@ -55,7 +55,7 @@ export function BuildStepItem({
 
   const media = (
     <div
-      className={`relative overflow-hidden rounded-2xl bg-neutral-200 ${
+      className={`relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)] ${
         isPinned ? "flex-1 h-full min-h-0 w-full" : ""
       }`}
       style={isPinned ? undefined : { aspectRatio: ratio }}
@@ -90,23 +90,23 @@ export function BuildStepItem({
 
   const caption = step.captionHtml ? (
     <figcaption
-      className="rounded-xl border border-border/60 bg-card/60 p-4 text-xs text-ink-muted"
+      className="rounded-2xl border border-border/60 bg-card/40 p-4 text-[11px] sm:text-xs leading-relaxed text-ink-muted"
       dangerouslySetInnerHTML={{ __html: step.captionHtml }}
     />
   ) : null;
 
   const header = (
     <header className="space-y-1">
-      <span className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+      <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
         Step {index + 1}
       </span>
-      <h3 className="text-xl font-semibold text-ink">{step.title}</h3>
+      <h3 className="text-base sm:text-xl font-semibold text-ink">{step.title}</h3>
     </header>
   );
 
   const description = (
     <div
-      className="prose prose-sm max-w-none text-ink-muted"
+      className="prose prose-sm max-w-none leading-relaxed text-ink-muted"
       dangerouslySetInnerHTML={{ __html: step.bodyHtml }}
     />
   );
@@ -131,8 +131,8 @@ export function BuildStepItem({
       data-analytics-id={`BuildStepVisible:${step.id}`}
       className={
         isPinned
-          ? "grid h-full min-h-0 grid-rows-[minmax(0,1fr)_minmax(0,3fr)] gap-6 rounded-3xl bg-card/80 p-6 shadow-xl"
-          : "space-y-4 rounded-3xl border border-border/70 bg-card p-6 shadow-sm"
+          ? "grid h-full min-h-0 grid-rows-[minmax(0,1fr)_minmax(0,3fr)] gap-6 rounded-2xl bg-card/80 p-4 shadow-lg sm:rounded-3xl sm:p-6 sm:shadow-xl"
+          : "space-y-4 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:p-6"
       }
       aria-label={`Step ${index + 1}: ${step.title}`}
     >

@@ -58,15 +58,23 @@ export default async function ServicePage() {
         ]}
       />
       <ServiceOverview overview={overview} />
-      <section className="rounded-3xl border border-border/70 bg-card px-6 py-5 shadow-sm sm:px-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">Service guidance</p>
-        <p className="mt-2 text-sm text-ink">
-          Need help mapping out service and care cadence? Ask Perazzi for the recommended intervals and how to coordinate
-          with the atelier.
+      <section
+        className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-5"
+        aria-labelledby="service-guidance-heading"
+      >
+        <h2
+          id="service-guidance-heading"
+          className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted"
+        >
+          Service guidance
+        </h2>
+        <p className="mt-2 text-sm sm:text-base leading-relaxed text-ink">
+          Need help mapping out service and care cadence? Ask Perazzi for the recommended intervals and how to
+          coordinate with the atelier.
         </p>
         <div className="mt-4">
           <ChatTriggerButton
-            label="Ask about service & care"
+            label="Ask about service &amp; care"
             payload={{
               question:
                 "Walk me through Perazzi's recommended care cadence, how the authorized centers coordinate with Botticino, and what an owner should prepare before scheduling service.",
@@ -87,9 +95,17 @@ export default async function ServicePage() {
         fallbackHref={SERVICE_REQUEST_EMBED.fallback}
         analyticsOpenId="RequestServiceOpen"
       />
-      <section className="rounded-3xl border border-border/70 bg-card px-6 py-5 shadow-sm sm:px-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">Shipping prep</p>
-        <p className="mt-2 text-sm text-ink">
+      <section
+        className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-5"
+        aria-labelledby="service-shipping-heading"
+      >
+        <h2
+          id="service-shipping-heading"
+          className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted"
+        >
+          Shipping prep
+        </h2>
+        <p className="mt-2 text-sm sm:text-base leading-relaxed text-ink">
           Wondering what to include when shipping your gun or scheduling an inspection? Ask before you book.
         </p>
         <div className="mt-4">

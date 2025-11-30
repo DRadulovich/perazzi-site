@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { GradeSeries } from "@/types/catalog";
 import { getGradeAnchorId } from "@/lib/grade-anchors";
 import { cn } from "@/lib/utils";
+import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 type EngravingGradesCarouselProps = {
   grades: GradeSeries[];
@@ -37,6 +38,8 @@ const normalize = (value?: string | null) =>
 export function EngravingGradesCarousel({ grades }: EngravingGradesCarouselProps) {
   const [openCategory, setOpenCategory] = useState<string | null>(GRADE_TABS[0]?.label ?? null);
   const [activeGradeId, setActiveGradeId] = useState<string | null>(null);
+
+  const analyticsRef = useAnalyticsObserver<HTMLElement>("EngravingGradesCarouselSeen");
 
   const gradeLookup = useMemo(() => {
     const map = new Map<string, GradeSeries>();
@@ -78,7 +81,9 @@ export function EngravingGradesCarousel({ grades }: EngravingGradesCarouselProps
 
   return (
     <section
-      className="relative isolate w-screen overflow-hidden py-32 sm:py-40"
+      ref={analyticsRef}
+      data-analytics-id="EngravingGradesCarouselSeen"
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
       style={{
         marginLeft: "calc(50% - 50vw)",
         marginRight: "calc(50% - 50vw)",
@@ -108,21 +113,21 @@ export function EngravingGradesCarousel({ grades }: EngravingGradesCarouselProps
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-3xl border border-border/70 bg-card/0 px-6 py-8 shadow-lg backdrop-blur-sm sm:px-10">
+        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
           <div className="space-y-3">
-            <p className="text-4xl font-black italic uppercase tracking-[0.35em] text-ink">
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-black italic uppercase tracking-[0.35em] text-ink">
               Engraving Grades
             </p>
             <h2
               id="engraving-grades-heading"
-              className="max-w-4xl text-xl font-light italic text-ink-muted"
+              className="max-w-4xl text-sm sm:text-base font-light italic text-ink-muted"
             >
               Commission tiers &amp; engraving houses
             </h2>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
-            <div className="space-y-3 rounded-3xl bg-transparent p-5">
+            <div className="space-y-3 rounded-2xl bg-transparent p-4 sm:rounded-3xl sm:p-5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
                 Grade categories
               </p>
@@ -132,7 +137,7 @@ export function EngravingGradesCarousel({ grades }: EngravingGradesCarouselProps
                   return (
                     <div
                       key={category.label}
-                      className="rounded-2xl border border-border/70 bg-card/75"
+                      className="rounded-2xl border border-border/60 bg-card/75 sm:border-border/70"
                     >
                       <button
                         type="button"
@@ -209,8 +214,11 @@ function GradeCard({ grade }: { grade: GradeSeries }) {
   const gradeAnchor = getGradeAnchorId(grade);
 
   return (
-    <article className="flex h-full flex-col rounded-3xl border border-border/70 bg-card/75 p-5 md:p-6 lg:p-7">
-      <div className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]" style={{ aspectRatio: 16 / 9 }}>
+    <article className="flex h-full flex-col rounded-2xl border border-border/60 bg-card/75 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:p-5 lg:p-6">
+      <div
+        className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
+        style={{ aspectRatio: ratio }}
+      >
         {heroAsset ? (
           <Image
             src={heroAsset.url}
@@ -229,7 +237,7 @@ function GradeCard({ grade }: { grade: GradeSeries }) {
           <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-perazzi-red">
             Engraving Grade
           </p>
-          <h3 className="text-xl font-semibold uppercase tracking-[0.25em] text-black">
+          <h3 className="text-lg sm:text-xl font-semibold uppercase tracking-[0.25em] text-black">
             {grade.name}
           </h3>
         </div>
@@ -239,7 +247,7 @@ function GradeCard({ grade }: { grade: GradeSeries }) {
         <div className="mt-auto pt-2">
           <Link
             href={`/engravings?grade=${gradeAnchor}`}
-            className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
           >
             View engraving
             <span aria-hidden="true">→</span>

@@ -4,6 +4,7 @@ import * as React from "react";
 import type { HeritageEraWithEvents } from "@/types/heritage";
 import { cn } from "@/lib/utils";
 import { HeritageEraSection } from "./HeritageEraSection";
+import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 export type HeritageErasStackProps = {
   eras: HeritageEraWithEvents[];
@@ -30,8 +31,14 @@ function HeritageErasStackBase({
 }: HeritageErasStackProps) {
   if (!eras || eras.length === 0) return null;
 
+  const analyticsRef = useAnalyticsObserver<HTMLDivElement>("HeritageErasStackSeen");
+
   return (
-    <div className={cn("relative", className)}>
+    <div
+      ref={analyticsRef}
+      data-analytics-id="HeritageErasStackSeen"
+      className={cn("relative", className)}
+    >
       {eras.map((era, index) => (
         <HeritageEraSection
           key={era.id}

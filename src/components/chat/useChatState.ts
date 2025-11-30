@@ -103,13 +103,16 @@ export function useChatState(
   const sendMessage = async (payload: {
     question: string;
     context?: ChatContextShape;
+    skipEcho?: boolean;
   }) => {
     const userEntry: ChatEntry = {
       id: crypto.randomUUID(),
       role: "user",
       content: payload.question,
     };
-    addMessage(userEntry);
+    if (!payload.skipEcho) {
+      addMessage(userEntry);
+    }
     setPending(true);
     setIsTyping(true);
     setError(null);

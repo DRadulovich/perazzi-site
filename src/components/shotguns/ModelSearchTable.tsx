@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 import { getSanityImageUrl } from "@/lib/sanityImage";
+import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 type SpecList = string[] | undefined;
 
@@ -37,11 +38,11 @@ const PAGE_SIZE = 9;
 const FILTER_PANEL_CLASS =
   "space-y-4 rounded-[32px] border border-white/15 bg-[linear-gradient(135deg,#070707,#101010)]/95 px-4 py-5 shadow-[0_35px_120px_rgba(0,0,0,0.45)] sm:px-6 sm:py-6";
 const CARD_SHELL_CLASS =
-  "group flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-neutral-950/80 text-left shadow-2xl shadow-black/40 transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red";
+  "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-neutral-950/80 text-left shadow-lg shadow-black/40 transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red sm:rounded-3xl sm:shadow-2xl";
 const SPEC_PANEL_CLASS =
-  "grid gap-4 border-t border-white/10 bg-black/40 px-6 py-5 text-sm text-neutral-200 sm:grid-cols-2";
+  "grid gap-4 border-t border-white/10 bg-black/40 px-4 py-4 text-xs text-neutral-200 sm:grid-cols-2 sm:px-6 sm:py-5 sm:text-sm";
 const DETAIL_PANEL_CLASS =
-  "flex-1 space-y-4 rounded-3xl border border-white/10 bg-black/40 p-4 sm:p-5";
+  "flex-1 space-y-4 rounded-2xl border border-white/10 bg-black/40 p-4 sm:rounded-3xl sm:p-5";
 
 export function ModelSearchTable({ models }: ModelShowcaseProps) {
   const [query, setQuery] = useState("");
@@ -58,6 +59,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
   const [lastFocusedId, setLastFocusedId] = useState<string | null>(null);
   const modalRef = useRef<HTMLDivElement | null>(null);
   const [heroLoaded, setHeroLoaded] = useState(false);
+  const analyticsRef = useAnalyticsObserver<HTMLElement>("ModelSearchTableSeen");
   const closeModal = useCallback(() => {
     setSelectedModel(null);
     setHeroLoaded(false);
@@ -291,7 +293,11 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
     : null;
 
   return (
-    <section className="mt-10 space-y-8">
+    <section
+      ref={analyticsRef}
+      data-analytics-id="ModelSearchTableSeen"
+      className="mt-10 space-y-8"
+    >
       <div className={FILTER_PANEL_CLASS}>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <label className="flex w-full items-center gap-3 rounded-full border border-white/20 bg-black/40 px-4 py-2 text-sm text-neutral-300 focus-within:border-white">
@@ -349,7 +355,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
             <button
               type="button"
               onClick={clearFilters}
-              className="rounded-full border border-white/30 px-4 py-1 text-xs uppercase tracking-widest text-white/80 transition hover:border-white hover:text-white"
+              className="rounded-full border border-white/30 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-widest text-white/80 transition hover:border-white hover:text-white"
             >
               Reset filters
             </button>
@@ -395,7 +401,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                  {/*
                     Keep highlight behavior consistent while showing only the model name on the card.
                   */}
-                  <h3 className="text-2xl font-semibold leading-tight">
+                  <h3 className="text-xl sm:text-2xl font-semibold leading-tight">
                     {highlightText(model.name, query)}
                   </h3>
                   <p className="text-sm text-neutral-600">
@@ -468,7 +474,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
           >
             <button
               type="button"
-              className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 py-1 text-xs uppercase tracking-widest text-black transition hover:border-black hover:bg-white sm:right-5 sm:top-5 sm:text-sm"
+              className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-widest text-black transition hover:border-black hover:bg-white sm:right-5 sm:top-5"
               onClick={closeModal}
             >
               Close
@@ -498,7 +504,9 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                   <p className="text-xs font-semibold uppercase tracking-[0.4em] text-perazzi-red">
                     {selectedModel.use}
                   </p>
-                  <h2 className="text-4xl font-semibold leading-tight">{selectedModel.name}</h2>
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold leading-tight">
+                    {selectedModel.name}
+                  </h2>
                   <p className="text-sm text-neutral-300">{selectedModel.version}</p>
                 </div>
               </div>
@@ -543,9 +551,9 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
 
 function CardSkeleton() {
   return (
-    <div className="animate-pulse overflow-hidden rounded-3xl border border-white/5 bg-neutral-900/60">
+    <div className="animate-pulse overflow-hidden rounded-2xl border border-white/5 bg-neutral-900/60 sm:rounded-3xl">
       <div className="aspect-[16/10] w-full bg-white" />
-      <div className="space-y-3 border-t border-white/5 bg-black/30 p-6">
+      <div className="space-y-3 border-t border-white/5 bg-black/30 p-4 sm:p-6">
         <div className="h-4 w-1/3 rounded bg-white/10" />
         <div className="h-6 w-2/3 rounded bg-white/10" />
         <div className="grid gap-3 sm:grid-cols-2">
@@ -620,7 +628,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={clsx(
-        "rounded-full px-4 py-1 text-xs uppercase tracking-widest transition",
+        "rounded-full px-4 py-2 text-[11px] sm:text-xs uppercase tracking-widest transition",
         active
           ? "bg-white text-black"
           : "border border-white/20 bg-transparent text-white/70 hover:border-white/60",

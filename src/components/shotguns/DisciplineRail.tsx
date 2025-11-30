@@ -73,6 +73,7 @@ export function DisciplineRail({
   const [modelError, setModelError] = useState<string | null>(null);
   const [openCategory, setOpenCategory] = useState<string | null>(DISCIPLINE_TABS[0]?.label ?? null);
   const [activeDisciplineId, setActiveDisciplineId] = useState<string | null>(null);
+  const railAnalyticsRef = useAnalyticsObserver<HTMLElement>("DisciplineRailSeen");
 
   const platformName = (platformId: string) =>
     platforms.find((platform) => platform.id === platformId)?.name ??
@@ -145,7 +146,9 @@ export function DisciplineRail({
 
   return (
     <section
-      className="relative isolate w-screen overflow-hidden py-16 sm:py-20"
+      ref={railAnalyticsRef}
+      data-analytics-id="DisciplineRailSeen"
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
       style={{
         marginLeft: "calc(50% - 50vw)",
         marginRight: "calc(50% - 50vw)",
@@ -175,20 +178,20 @@ export function DisciplineRail({
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-3xl border border-border/70 bg-card/0 px-6 py-8 shadow-lg backdrop-blur-sm sm:px-10">
+        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
           <div className="space-y-3">
-            <p className="text-4xl font-black italic uppercase tracking-[0.35em] text-ink">
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-black italic uppercase tracking-[0.35em] text-ink">
               Disciplines at a Glance
             </p>
             <h2
               id="discipline-rail-heading"
-              className="text-xl font-light italic text-ink-muted"
+              className="text-sm sm:text-base font-light italic text-ink-muted"
             >
               Every discipline demands something unique from your platform, whether it's precision, speed, or adaptability.
             </h2>
           </div>
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
-            <div className="space-y-3 rounded-3xl bg-card/0 p-5">
+            <div className="space-y-3 rounded-2xl bg-card/0 p-4 sm:rounded-3xl sm:p-5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
                 Discipline categories
               </p>
@@ -373,7 +376,7 @@ function DisciplineCard({
     <article
       ref={cardRef}
       data-analytics-id={`DisciplineChip:${discipline.id}`}
-      className="flex flex-col rounded-3xl border border-border/70 bg-card/75 text-left shadow-sm focus-ring"
+      className="flex flex-col rounded-2xl border border-border/60 bg-card/75 text-left shadow-sm focus-ring sm:rounded-3xl sm:border-border/70"
       aria-label={`Slide ${index + 1} of ${total}: ${discipline.name}`}
     >
       <div className="card-media relative aspect-[30/11] w-full rounded-t-3xl bg-[color:var(--color-canvas)]">
@@ -388,7 +391,7 @@ function DisciplineCard({
         ) : null}
         <div className="pointer-events-none absolute inset-0 bg-black/50" />
         <div className="absolute inset-x-0 bottom-0 flex flex-col items-center justify-end p-6 text-white">
-          <p className="text-base font-semibold uppercase tracking-[0.35em] text-white">
+          <p className="text-sm sm:text-base font-semibold uppercase tracking-[0.35em] text-white">
             {discipline.name}
           </p>
         </div>
@@ -472,7 +475,7 @@ function Detail({ label, value }: { label: string; value?: string }) {
   return (
     <div>
       <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-perazzi-red">{label}</p>
-      <p className="text-base uppercase tracking-[0.2em] text-white">
+      <p className="text-sm sm:text-base uppercase tracking-[0.2em] text-white">
         {value || "—"}
       </p>
     </div>

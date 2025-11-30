@@ -14,26 +14,21 @@ export default async function BespokeBuildPage() {
 
   return (
     <div className="space-y-16 px-2 sm:px-4 lg:px-6" id="bespoke-top">
-      <div
-        className="relative w-screen"
-        style={{ marginLeft: "calc(50% - 50vw)", marginRight: "calc(50% - 50vw)" }}
-      >
-        <BuildHero hero={hero} fullBleed />
-      </div>
+      <BuildHero hero={hero} fullBleed />
       <BuildStepsScroller steps={steps} skipTargetId="bespoke-experts" />
       <section
-        className="border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-16 sm:py-20"
+        className="border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-10 sm:py-16"
         aria-labelledby="bespoke-guide-heading"
       >
         <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
           <div className="space-y-4 text-ink">
             <p
               id="bespoke-guide-heading"
-              className="text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
+              className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
             >
               Need a bespoke guide?
             </p>
-            <p className="text-lg font-light italic text-ink-muted mb-10">
+            <p className="mb-8 text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
               Ask how fittings, platform choices, engraving, and finishing should flow for you—so your visit to the atelier is focused, confident, and personal.
             </p>
             <div className="flex flex-wrap gap-3 justify-start">
@@ -48,7 +43,7 @@ export default async function BespokeBuildPage() {
               />
               <Link
                 href="/experience/visit"
-                className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red focus-ring"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 Request a visit
                 <span aria-hidden="true">→</span>
@@ -56,22 +51,22 @@ export default async function BespokeBuildPage() {
             </div>
           </div>
 
-          <div className="space-y-3 text-xl font-light italic text-ink-muted">
-            <p className="text-xl font-semibold text-ink">
+          <div className="space-y-3 text-sm sm:text-base font-light italic text-ink-muted">
+            <p className="text-sm sm:text-base font-semibold not-italic text-ink">
               Three things we’ll map together:
             </p>
             <ul className="space-y-2">
               <li>
-                <span className="text-xl font-black text-ink">Fit &amp; Dynamics</span> — try-gun measurements, balance targets, and barrel regulation priorities.
+                <span className="text-base sm:text-lg font-black not-italic text-ink">Fit &amp; Dynamics</span> — try-gun measurements, balance targets, and barrel regulation priorities.
               </li>
               <li>
-                <span className="text-xl font-black text-ink">Platform &amp; Wood</span> — HT or MX lineage, fore-end/stock profiles, and wood blank options.
+                <span className="text-base sm:text-lg font-black not-italic text-ink">Platform &amp; Wood</span> — HT or MX lineage, fore-end/stock profiles, and wood blank options.
               </li>
               <li>
-                <span className="text-xl font-black text-ink">Engraving &amp; Finish</span> — story direction, coverage, timelines, and hand-finish details.
+                <span className="text-base sm:text-lg font-black not-italic text-ink">Engraving &amp; Finish</span> — story direction, coverage, timelines, and hand-finish details.
               </li>
             </ul>
-            <p className="text-lg font-light italic text-ink-muted">
+            <p className="text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
               The concierge aligns your disciplines, aesthetic cues, and schedule so the atelier session runs smoothly.
             </p>
           </div>

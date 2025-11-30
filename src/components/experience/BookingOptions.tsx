@@ -29,7 +29,7 @@ export function BookingOptions({ options, scheduler }: BookingOptionsProps) {
     <section
       ref={analyticsRef}
       data-analytics-id="ExperienceBookingSeen"
-      className="relative isolate w-screen overflow-hidden py-16 sm:py-20"
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
       style={{
         marginLeft: "calc(50% - 50vw)",
         marginRight: "calc(50% - 50vw)",
@@ -62,14 +62,14 @@ export function BookingOptions({ options, scheduler }: BookingOptionsProps) {
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-3xl border border-border/70 bg-card/0 px-6 py-8 shadow-lg backdrop-blur-sm sm:px-10">
+        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
           <div className="space-y-2">
-            <p className="text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
               Book a fitting
             </p>
             <h2
               id="experience-booking-heading"
-              className="text-xl font-light italic text-ink-muted mb-4"
+              className="mb-4 text-sm sm:text-base font-light italic leading-relaxed text-ink-muted"
             >
               Choose the session that fits your journey
             </h2>
@@ -78,15 +78,17 @@ export function BookingOptions({ options, scheduler }: BookingOptionsProps) {
             {options.map((option) => (
               <article
                 key={option.id}
-                className="flex h-full flex-col rounded-3xl border border-border/70 bg-card/75 p-6 shadow-sm md:p-7 lg:p-8"
+                className="flex h-full flex-col rounded-2xl border border-border/75 bg-card/75 p-5 shadow-sm sm:rounded-3xl sm:p-6 md:p-7 lg:p-8"
               >
                 <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-ink">{option.title}</h3>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
+                  <h3 className="text-base sm:text-lg font-semibold text-ink">
+                    {option.title}
+                  </h3>
+                  <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
                     {option.durationMins} minutes
                   </p>
                   <div
-                    className="prose prose-base max-w-none text-ink-muted md:prose-lg prose-headings:text-ink prose-strong:text-ink"
+                    className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg prose-headings:text-ink prose-strong:text-ink"
                     dangerouslySetInnerHTML={{ __html: option.descriptionHtml }}
                   />
                 </div>
@@ -95,7 +97,7 @@ export function BookingOptions({ options, scheduler }: BookingOptionsProps) {
                     asChild
                     variant="secondary"
                     size="lg"
-                    className="rounded-full px-6 py-3 text-xs font-semibold uppercase tracking-[0.3em]"
+                    className="rounded-full px-6 py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em]"
                     onClick={() =>
                       logAnalytics(`FittingCtaClick:${option.id}`)
                     }
@@ -107,9 +109,9 @@ export function BookingOptions({ options, scheduler }: BookingOptionsProps) {
             ))}
           </div>
           {scheduler ? (
-            <div className="space-y-4 rounded-3xl border border-border/70 bg-card/75 p-6 shadow-sm md:p-8 lg:p-10">
+            <div className="space-y-4 rounded-2xl border border-border/60 bg-card/40 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/75 sm:p-6 md:p-8 lg:p-10">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-lg font-semibold text-ink">
+                <h3 className="text-base sm:text-lg font-semibold text-ink">
                   Schedule with concierge
                 </h3>
                 <Button
@@ -118,7 +120,7 @@ export function BookingOptions({ options, scheduler }: BookingOptionsProps) {
                   aria-controls={schedulerPanelId}
                   aria-expanded={schedulerOpen}
                   aria-describedby={schedulerNoteId}
-                  className="rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em]"
+                  className="rounded-full px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em]"
                   onClick={() => {
                     setSchedulerOpen((prev) => {
                       const next = !prev;
@@ -140,7 +142,7 @@ export function BookingOptions({ options, scheduler }: BookingOptionsProps) {
               </p>
               <div
                 id={schedulerPanelId}
-                className="rounded-2xl border border-border/70 bg-card/60 p-3 md:p-4 lg:p-5"
+                className="rounded-2xl border border-border/60 bg-card/40 p-3 md:p-4 lg:p-5 sm:border-border/70 sm:bg-card/60"
                 aria-live="polite"
               >
                 {schedulerLoaded ? (
@@ -153,12 +155,12 @@ export function BookingOptions({ options, scheduler }: BookingOptionsProps) {
                     tabIndex={schedulerOpen ? 0 : -1}
                   />
                 ) : (
-                  <div className="flex h-[320px] w-full items-center justify-center rounded-2xl border border-dashed border-border/60 text-sm text-ink-muted">
+                  <div className="flex h-[320px] w-full items-center justify-center rounded-2xl border border-dashed border-border/60 text-sm sm:text-base text-ink-muted">
                     The booking form appears here once you choose Begin Your Fitting.
                   </div>
                 )}
               </div>
-              <p className="text-xs text-ink-muted">
+              <p className="text-[11px] sm:text-xs text-ink-muted">
                 Prefer email?{" "}
                 <a
                   href={scheduler.fallbackHref}

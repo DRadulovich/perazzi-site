@@ -59,25 +59,25 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
     <section
       ref={analyticsRef}
       data-analytics-id="ServiceNetworkSeen"
-      className="space-y-6 rounded-3xl border border-border/70 bg-card px-6 py-8 shadow-sm sm:px-10"
+      className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 sm:shadow-md lg:px-10"
       aria-labelledby="service-network-heading"
     >
       <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
           Service network
         </p>
         <h2
           id="service-network-heading"
-          className="text-2xl font-semibold text-ink"
+          className="text-2xl sm:text-3xl font-semibold text-ink"
         >
           Authorized US Service Locations
         </h2>
       </div>
       <form role="search" className="flex flex-col gap-3 md:flex-row md:items-end">
-        <label className="flex w-full flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">
+        <label className="flex w-full flex-col text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink">
           Location type
           <select
-            className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 text-sm text-ink focus-ring"
+            className="mt-1 min-h-10 rounded-2xl border border-border/60 bg-card px-3 py-2 text-sm sm:text-base text-ink focus-ring sm:border-border/70"
             value={filter}
             onChange={(event) => {
               setFilter(event.target.value as ServiceLocationType | "All");
@@ -91,24 +91,24 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
             ))}
           </select>
         </label>
-        <label className="flex w-full flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">
+        <label className="flex w-full flex-col text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink">
           Search by State or Name
           <input
             type="search"
-            className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 text-sm text-ink focus-ring"
+            className="mt-1 min-h-10 rounded-2xl border border-border/60 bg-card px-3 py-2 text-sm sm:text-base text-ink focus-ring sm:border-border/70"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="e.g. FL, TX"
           />
         </label>
       </form>
-      <p className="text-xs text-ink-muted" aria-live="polite" role="status">
+      <p className="text-[11px] sm:text-xs leading-relaxed text-ink-muted" aria-live="polite" role="status">
         {filteredLocations.length} locations available.
       </p>
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <ul role="list" className="space-y-4">
           {filteredLocations.length === 0 ? (
-            <li className="rounded-2xl border border-border/70 bg-card/70 p-4 text-sm text-ink-muted">
+            <li className="rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted sm:bg-card/70 sm:border-border/70">
               No locations match your filters. Try clearing the search or selecting a different type.
             </li>
           ) : (
@@ -117,76 +117,79 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
               return (
                 <li key={location.id}>
                   <div
-                  role="button"
-                  tabIndex={0}
-                  aria-pressed={isActive}
-                  className={cn(
-                    "flex flex-col gap-2 rounded-2xl border p-4 transition-colors focus-ring",
-                    isActive
-                      ? "border-perazzi-red bg-perazzi-red/5"
-                      : "border-border/70 bg-card/70",
-                  )}
-                  onClick={() => {
-                    setActiveLocationId(location.id);
-                    logAnalytics(`FinderResultClick:${location.id}`);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isActive}
+                    className={cn(
+                      "flex flex-col gap-2 rounded-2xl border p-4 transition-colors focus-ring",
+                      isActive
+                        ? "border-perazzi-red bg-perazzi-red/5"
+                        : "border-border/60 bg-card/40 sm:border-border/70 sm:bg-card/70",
+                    )}
+                    onClick={() => {
                       setActiveLocationId(location.id);
                       logAnalytics(`FinderResultClick:${location.id}`);
-                    }
-                  }}
-                >
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
-                    {location.type}
-                  </p>
-                  <h3 className="text-lg font-semibold text-ink">{location.name}</h3>
-                  <div
-                    className="text-sm text-ink-muted"
-                    dangerouslySetInnerHTML={{ __html: location.addressHtml }}
-                  />
-                  <div className="text-sm text-ink">
-                    {location.contact ? (
-                      <div>
-                        <span className="font-semibold">Contact:</span> {location.contact}
-                      </div>
-                    ) : null}
-                    {location.phone ? (
-                      <div>
-                        <span className="font-semibold">Phone:</span> {location.phone}
-                      </div>
-                    ) : null}
-                    {location.email ? (
-                      <a href={`mailto:${location.email}`} className="text-perazzi-red focus-ring">
-                        {location.email}
-                      </a>
-                    ) : null}
-                    {location.website ? (
-                      <a
-                        href={location.website}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="block text-perazzi-red focus-ring"
-                      >
-                        Website<span className="sr-only"> (opens in a new tab)</span>
-                      </a>
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setActiveLocationId(location.id);
+                        logAnalytics(`FinderResultClick:${location.id}`);
+                      }
+                    }}
+                  >
+                    <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+                      {location.type}
+                    </p>
+                    <h3 className="text-lg font-semibold text-ink">{location.name}</h3>
+                    <div
+                      className="text-sm leading-relaxed text-ink-muted"
+                      dangerouslySetInnerHTML={{ __html: location.addressHtml }}
+                    />
+                    <div className="text-sm leading-relaxed text-ink">
+                      {location.contact ? (
+                        <div>
+                          <span className="font-semibold">Contact:</span> {location.contact}
+                        </div>
+                      ) : null}
+                      {location.phone ? (
+                        <div>
+                          <span className="font-semibold">Phone:</span> {location.phone}
+                        </div>
+                      ) : null}
+                      {location.email ? (
+                        <a href={`mailto:${location.email}`} className="text-perazzi-red focus-ring">
+                          {location.email}
+                        </a>
+                      ) : null}
+                      {location.website ? (
+                        <a
+                          href={location.website}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block text-perazzi-red focus-ring"
+                        >
+                          Website<span className="sr-only"> (opens in a new tab)</span>
+                        </a>
+                      ) : null}
+                    </div>
+                    {location.notesHtml ? (
+                      <div
+                        className="text-[11px] sm:text-xs leading-relaxed text-ink-muted"
+                        dangerouslySetInnerHTML={{ __html: location.notesHtml }}
+                      />
                     ) : null}
                   </div>
-                  {location.notesHtml ? (
-                    <div
-                      className="text-xs text-ink-muted"
-                      dangerouslySetInnerHTML={{ __html: location.notesHtml }}
-                    />
-                  ) : null}
-                </div>
-              </li>
+                </li>
               );
             })
           )}
         </ul>
         <div className="space-y-3">
-          <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-neutral-200" style={{ aspectRatio: 4 / 3 }}>
+          <div
+            className="relative overflow-hidden rounded-2xl border border-border/60 bg-[color:var(--color-canvas)]"
+            style={{ aspectRatio: 3 / 2 }}
+          >
             <iframe
               key={mapSrc}
               src={mapSrc}
@@ -199,7 +202,7 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
             href={mapLinkHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-perazzi-red focus-ring"
+            className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
           >
             Open in Maps
             <span aria-hidden="true">→</span>
@@ -207,7 +210,7 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
           </a>
           <a
             href="/service/request"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-perazzi-red focus-ring"
+            className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
             onClick={() => logAnalytics("FinderResultClick:request")}
           >
             Request service

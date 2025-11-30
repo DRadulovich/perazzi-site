@@ -1,7 +1,7 @@
 import { ConciergePageShell } from "@/components/concierge/ConciergePageShell";
 import { ConciergeHero } from "@/components/concierge/ConciergeHero";
 
-const conciergeHero = {
+const conciergeHero: Parameters<typeof ConciergeHero>[0]["hero"] = {
   eyebrow: "Perazzi Concierge",
   title: "Design your Perazzi with the atelier beside you",
   subheading:

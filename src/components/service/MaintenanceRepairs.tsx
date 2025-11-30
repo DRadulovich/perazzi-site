@@ -19,19 +19,22 @@ export function MaintenanceRepairs({ overview, guide }: MaintenanceRepairsProps)
     <section
       ref={analyticsRef}
       data-analytics-id="MaintenanceRepairsSeen"
-      className="space-y-4 rounded-3xl border border-border/70 bg-card px-6 py-8 shadow-sm sm:px-10"
+      className="space-y-4 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 sm:shadow-md lg:px-10"
       aria-labelledby="maintenance-heading"
     >
       <div className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
-          Maintenance & repairs
+        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+          Maintenance &amp; repairs
         </p>
-        <h2 id="maintenance-heading" className="text-2xl font-semibold text-ink">
+        <h2
+          id="maintenance-heading"
+          className="text-2xl sm:text-3xl font-semibold text-ink"
+        >
           How we service your Perazzi
         </h2>
       </div>
       <div
-        className="prose prose-sm max-w-none text-ink-muted"
+        className="prose prose-sm max-w-none leading-relaxed text-ink-muted md:prose-lg"
         dangerouslySetInnerHTML={{ __html: overview.checksHtml }}
       />
       {guide ? (
@@ -39,19 +42,19 @@ export function MaintenanceRepairs({ overview, guide }: MaintenanceRepairsProps)
           href={guide.fileUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-perazzi-red focus-ring"
+          className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
           onClick={() => logAnalytics(`GuideDownload:${guide.id}`)}
         >
           Download {guide.title}
           {guide.fileSize ? (
-            <span className="text-xs text-ink-muted">({guide.fileSize})</span>
+            <span className="text-[11px] sm:text-xs text-ink-muted">({guide.fileSize})</span>
           ) : null}
           <span className="sr-only"> (opens in a new tab)</span>
         </a>
       ) : null}
       <Collapsible.Root open={open} onOpenChange={setOpen}>
         <Collapsible.Trigger
-          className="flex w-full items-center justify-between rounded-2xl border border-border px-4 py-3 text-left text-sm font-semibold text-ink focus-ring"
+          className="flex w-full items-center justify-between rounded-2xl border border-border/60 bg-card/10 px-4 py-3 text-left text-sm font-semibold text-ink focus-ring sm:border-border sm:bg-card/40"
           aria-expanded={open}
           aria-controls="before-send-content"
         >
@@ -65,7 +68,7 @@ export function MaintenanceRepairs({ overview, guide }: MaintenanceRepairsProps)
         </Collapsible.Trigger>
         <Collapsible.Content
           id="before-send-content"
-          className="mt-3 rounded-2xl border border-border/60 bg-card/60 p-4 text-sm text-ink-muted"
+          className="mt-3 rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted sm:bg-card/60"
         >
           <ul className="list-disc pl-5">
             <li>Record the serial number and trigger group number.</li>

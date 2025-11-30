@@ -13,12 +13,19 @@
 .text-ink { color: var(--ink); }
 .text-ink-muted { color: var(--ink-muted); }
 .shadow-elevated { box-shadow: 0 20px 60px rgba(15,15,15,0.15); }
-.button-primary {
-  background: var(--ink);
-  color: var(--card);
+.button-primary,
+.button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem; /* ~40px tap target for mobile */
   border-radius: 9999px;
   padding: 0.5rem 1.5rem;
   font-weight: 600;
+}
+.button-primary {
+  background: var(--ink);
+  color: var(--card);
   transition: background 0.2s ease;
 }
 .button-primary:hover {
@@ -26,9 +33,6 @@
 }
 .button-secondary {
   border: 1px solid var(--subtle);
-  border-radius: 9999px;
-  padding: 0.5rem 1.5rem;
-  font-weight: 600;
 }
 .button-secondary:hover {
   border-color: var(--ink);

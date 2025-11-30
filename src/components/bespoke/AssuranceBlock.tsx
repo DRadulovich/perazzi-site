@@ -7,24 +7,24 @@ type AssuranceBlockProps = {
 
 export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
   const { html, quote, media } = assurance;
-  const ratio = media?.aspectRatio ?? 16 / 9;
+  const ratio = media?.aspectRatio ?? 3 / 2;
 
   return (
     <section
-      className="gap-8 rounded-3xl border border-border/70 bg-card px-6 py-8 shadow-sm sm:px-10 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)]"
+      className="rounded-2xl border border-border/60 bg-card/10 px-4 py-6 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] lg:gap-8"
       aria-labelledby="assurance-heading"
     >
       <div className="space-y-6">
         <div
           id="assurance-heading"
-          className="prose prose-base max-w-none text-ink md:prose-lg"
+          className="prose prose-base max-w-none leading-relaxed text-ink md:prose-lg"
           dangerouslySetInnerHTML={{ __html: html }}
         />
         {quote ? (
-          <blockquote className="rounded-2xl border-l-4 border-perazzi-red/60 bg-card/60 px-6 py-4 text-sm italic text-ink">
+          <blockquote className="rounded-2xl border-l-4 border-perazzi-red/60 bg-card/40 px-5 py-4 text-[13px] sm:text-sm italic leading-relaxed text-ink">
             <p>“{quote.text}”</p>
             {quote.author ? (
-              <cite className="mt-2 block not-italic text-xs uppercase tracking-[0.3em] text-ink-muted">
+              <cite className="mt-2 block not-italic text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink-muted">
                 {quote.author}
               </cite>
             ) : null}
@@ -34,7 +34,7 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
       {media ? (
         <figure className="mt-6 space-y-3 lg:mt-0">
           <div
-            className="relative overflow-hidden rounded-2xl bg-neutral-200"
+            className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
             style={{ aspectRatio: ratio }}
           >
             {media.kind === "image" ? (
@@ -57,7 +57,7 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
             )}
           </div>
           {media.caption ? (
-            <figcaption className="text-xs text-ink-muted">
+            <figcaption className="text-[11px] sm:text-xs leading-relaxed text-ink-muted">
               {media.caption}
             </figcaption>
           ) : null}

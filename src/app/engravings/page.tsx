@@ -44,7 +44,7 @@ export default async function EngravingsPage() {
     }));
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
       <section className="relative mb-12 overflow-hidden rounded-[40px] border border-white/10 bg-black/60">
         <div className="relative h-72 w-full sm:h-96 lg:h-[28rem]">
           <Image
@@ -57,11 +57,13 @@ export default async function EngravingsPage() {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
           <div className="absolute inset-0 flex flex-col justify-center gap-4 px-8 py-10 text-white sm:px-12 lg:px-16">
-            <p className="text-xs uppercase tracking-[0.4em] text-white/70">Engraving Search</p>
-            <h1 className="text-3xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
+            <p className="text-[11px] sm:text-xs uppercase tracking-[0.4em] text-white/70">
+              Engraving Search
+            </p>
+            <h1 className="text-2xl font-semibold leading-tight sm:text-3xl lg:text-4xl">
               The Perazzi Engraving Library
             </h1>
-            <p className="max-w-2xl text-sm text-white/80 sm:text-base">
+            <p className="max-w-2xl text-sm sm:text-base leading-relaxed text-white/80">
               A living archive of hand and light. Here, master engravers leave their signatures—lines that breathe,
               patterns that carry meaning—so your shotgun can wear a story as singular as its owner.
             </p>

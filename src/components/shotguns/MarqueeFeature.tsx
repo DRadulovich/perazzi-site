@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import type { FactoryAsset } from "@/types/content";
+import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 type ChampionData = {
   id: string;
@@ -16,11 +19,17 @@ type MarqueeFeatureProps = {
 };
 
 export function MarqueeFeature({ champion, fallbackText }: MarqueeFeatureProps) {
+  const analyticsRef = useAnalyticsObserver<HTMLElement>("MarqueeFeatureSeen");
+
   if (!champion) {
     return (
-      <section className="rounded-3xl border border-border/70 bg-card px-6 py-8 text-ink shadow-sm sm:px-10">
-        <h2 className="text-xl font-semibold">Perazzi lineage</h2>
-        <p className="mt-3 text-sm text-ink-muted">
+      <section
+        ref={analyticsRef}
+        data-analytics-id="MarqueeFeatureSeen"
+        className="rounded-2xl border border-border/60 bg-card/10 p-4 text-ink shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8"
+      >
+        <h2 className="text-xl sm:text-2xl font-semibold">Perazzi lineage</h2>
+        <p className="mt-3 text-sm sm:text-base leading-relaxed text-ink-muted">
           {fallbackText ??
             "Every Perazzi platform is validated by generations of champions. Visit the heritage timeline to explore their stories."}
         </p>
@@ -32,8 +41,9 @@ export function MarqueeFeature({ champion, fallbackText }: MarqueeFeatureProps) 
 
   return (
     <section
+      ref={analyticsRef}
       data-analytics-id={`ChampionStory:${champion.id}`}
-      className="grid gap-8 rounded-3xl border border-border/70 bg-card px-6 py-10 text-ink shadow-sm sm:px-10 md:grid-cols-[minmax(280px,1fr)_minmax(320px,1fr)] md:items-center"
+      className="grid gap-8 rounded-2xl border border-border/60 bg-card/10 px-4 py-8 text-ink shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-10 sm:shadow-md md:grid-cols-[minmax(280px,1fr)_minmax(320px,1fr)] md:items-center lg:px-10"
     >
       <div
         className="relative overflow-hidden rounded-2xl"
@@ -49,24 +59,26 @@ export function MarqueeFeature({ champion, fallbackText }: MarqueeFeatureProps) 
         />
       </div>
       <div className="space-y-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
           Champion spotlight
         </p>
         {champion.name ? (
-          <h2 className="text-3xl font-semibold text-ink">{champion.name}</h2>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-ink">
+            {champion.name}
+          </h2>
         ) : null}
         {champion.title ? (
-          <cite className="block text-base font-medium text-ink-muted not-italic">
+          <cite className="block text-sm sm:text-base leading-relaxed font-medium text-ink-muted not-italic">
             {champion.title}
           </cite>
         ) : null}
-        <blockquote className="border-l-2 border-perazzi-red/50 pl-4 text-xl italic leading-relaxed text-ink">
+        <blockquote className="border-l-2 border-perazzi-red/50 pl-4 text-lg sm:text-xl italic leading-relaxed text-ink">
           “{champion.quote}”
         </blockquote>
         {champion.href ? (
           <a
             href={champion.href}
-            className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-perazzi-red focus-ring"
+            className="inline-flex min-h-10 items-center justify-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-perazzi-red focus-ring"
           >
             Meet the champions
             <span aria-hidden="true">→</span>

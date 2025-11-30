@@ -57,7 +57,7 @@ function DarkModeThumb({ mode }: { mode: "light" | "dark" }) {
   );
 }
 
-const SunIcon = () => <div className="h-3 w-3 rounded-full bg-white" />;
+const SunIcon = () => <div className="h-3 w-3 rounded-full bg-black" />;
 
 const MoonIcon = () => (
   <div className="relative flex h-3 w-3 items-center justify-center">

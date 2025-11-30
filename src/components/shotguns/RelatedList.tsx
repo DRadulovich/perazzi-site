@@ -23,10 +23,13 @@ export function RelatedList({ items }: RelatedListProps) {
       className="space-y-3"
       aria-labelledby="related-articles-heading"
     >
-      <h2 id="related-articles-heading" className="text-xl font-semibold text-ink">
+      <h2
+        id="related-articles-heading"
+        className="text-xl sm:text-2xl font-semibold text-ink"
+      >
         Related reading
       </h2>
-      <ul className="space-y-2 text-sm text-ink">
+      <ul className="space-y-2 text-sm sm:text-base leading-relaxed text-ink">
         {items.map((item) => (
           <li key={item.id}>
             <Link

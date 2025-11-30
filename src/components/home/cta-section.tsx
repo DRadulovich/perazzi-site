@@ -18,7 +18,7 @@ export function CTASection({ finale }: CTASectionProps) {
     <motion.section
       ref={analyticsRef}
       data-analytics-id="FinalCTASeen"
-      className="rounded-2xl bg-perazzi-black px-6 py-10 text-white sm:px-10"
+      className="rounded-2xl bg-perazzi-black px-4 py-8 text-white sm:px-8 sm:py-10"
       initial={prefersReducedMotion ? false : { opacity: 0, y: 30 }}
       whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.6 }}
@@ -28,11 +28,11 @@ export function CTASection({ finale }: CTASectionProps) {
       <div className="space-y-6">
         <h2
           id="final-cta-heading"
-          className="text-2xl font-semibold tracking-tight text-white"
+          className="text-2xl sm:text-3xl font-semibold tracking-tight text-white"
         >
           Join the legacy
         </h2>
-        <p className="max-w-none text-lg leading-relaxed text-white/80 md:max-w-3xl lg:max-w-4xl">
+        <p className="max-w-none text-sm sm:text-base leading-relaxed text-white/80 md:max-w-3xl lg:max-w-4xl">
           {finale.text}
         </p>
         <div className="flex flex-wrap gap-4">

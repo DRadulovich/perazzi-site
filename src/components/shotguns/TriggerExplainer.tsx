@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import type { ShotgunsLandingData } from "@/types/catalog";
 import { logAnalytics } from "@/lib/analytics";
+import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 type TriggerExplainerProps = {
   explainer: ShotgunsLandingData["triggerExplainer"];
@@ -17,9 +18,13 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
   const resolvedOpen = isDesktop ? true : manualOpen;
   const ratio = explainer.diagram.aspectRatio ?? 16 / 9;
 
+  const analyticsRef = useAnalyticsObserver<HTMLElement>("TriggerExplainerSeen");
+
   return (
     <section
-      className="relative isolate w-screen overflow-hidden py-16 sm:py-20 mt-25"
+      ref={analyticsRef}
+      data-analytics-id="TriggerExplainerSeen"
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 mt-25"
       style={{
         marginLeft: "calc(50% - 50vw)",
         marginRight: "calc(50% - 50vw)",
@@ -49,7 +54,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-3xl border border-border/70 bg-card/0 px-6 py-8 shadow-lg backdrop-blur-sm sm:px-10">
+        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
           <Collapsible.Root
             open={resolvedOpen}
             onOpenChange={(next) => {
@@ -61,11 +66,11 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
             <div className="space-y-3">
               <h2
                 id="trigger-explainer-heading"
-                className="text-4xl font-black uppercase italic tracking-[0.35em] text-ink"
+                className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink"
               >
                 {explainer.title}
               </h2>
-              <p className="text-xl font-light italic text-ink-muted">
+              <p className="text-sm sm:text-base font-light italic text-ink-muted">
                 Removable or fixed—choose by confidence and feel.
               </p>
               <Collapsible.Trigger
@@ -81,7 +86,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
               id="trigger-explainer-content"
               className="grid gap-6 overflow-hidden transition-all duration-300 data-[state=closed]:h-0 data-[state=closed]:opacity-0 data-[state=open]:h-auto data-[state=open]:opacity-100 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start"
             >
-              <div className="rounded-3xl border border-border/0 bg-card/0 p-5 sm:p-6 lg:flex lg:h-full lg:flex-col lg:justify-start">
+              <div className="rounded-2xl border border-border/0 bg-card/0 p-4 sm:rounded-3xl sm:p-6 lg:flex lg:h-full lg:flex-col lg:justify-start">
                 <div
                   className="prose prose-sm max-w-none text-ink prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4"
                   dangerouslySetInnerHTML={{ __html: explainer.copyHtml }}
@@ -92,7 +97,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                       key={link.href}
                       href={link.href}
                       data-analytics-id={`TriggerExplainerLink:${link.href}`}
-                      className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red hover:border-perazzi-red focus-ring transition"
+                      className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red hover:border-perazzi-red focus-ring transition"
                       onClick={() =>
                         logAnalytics(`TriggerExplainerLink:${link.href}`)
                       }
@@ -104,7 +109,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                 </div>
               </div>
 
-              <figure className="rounded-3xl border border-border/70 bg-card/50 p-3 shadow-sm">
+              <figure className="rounded-2xl border border-border/60 bg-card/40 p-3 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/50">
                 <div
                   className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
                   style={{ aspectRatio: ratio }}

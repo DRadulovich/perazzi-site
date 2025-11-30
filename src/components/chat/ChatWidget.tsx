@@ -149,7 +149,7 @@ export function ChatWidget() {
               type="button"
               aria-label="Open Perazzi Concierge"
               onClick={() => setIsOpen(true)}
-              className="fixed bottom-5 right-5 z-40 flex items-center rounded-full bg-brand px-6 py-3 text-base font-semibold text-card shadow-elevated transition hover:bg-brand-hover focus:outline-none focus-visible:ring"
+              className="fixed bottom-5 right-5 z-40 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm sm:text-base font-semibold text-card shadow-elevated transition hover:bg-brand-hover focus-ring"
             >
               Perazzi Guide
             </button>
@@ -199,8 +199,9 @@ export function ChatWidget() {
           {!isOpen && (
             <button
               type="button"
+              aria-label="Open Perazzi Concierge"
               onClick={() => setIsOpen(true)}
-              className="fixed bottom-6 right-6 z-30 rounded-full bg-brand px-6 py-3 text-card shadow-elevated transition hover:bg-brand-hover focus:outline-none focus-visible:ring"
+              className="fixed bottom-6 right-6 z-30 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm sm:text-base font-semibold text-card shadow-elevated transition hover:bg-brand-hover focus-ring"
             >
               Open Perazzi Guide
             </button>

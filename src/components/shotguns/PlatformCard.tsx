@@ -21,7 +21,7 @@ export function PlatformCard({ platform, priority = false }: PlatformCardProps) 
       ref={analyticsRef}
       href={`/shotguns/${platform.slug}`}
       data-analytics-id={`PlatformCard:${platform.id}`}
-      className="group flex h-full flex-col rounded-3xl border border-[color:var(--border-color)] bg-[color:var(--color-canvas)]/40 p-6 shadow-elevated backdrop-blur-sm transition-transform focus-ring hover:-translate-y-1"
+      className="group flex h-full flex-col rounded-2xl border border-[color:var(--border-color)] bg-[color:var(--color-canvas)]/30 p-4 shadow-sm backdrop-blur-sm transition-transform focus-ring hover:-translate-y-1 sm:rounded-3xl sm:bg-[color:var(--color-canvas)]/40 sm:p-6 sm:shadow-elevated"
       onClick={() => logAnalytics(`shotguns_platform_card_click:${platform.id}`)}
     >
       <div
@@ -46,7 +46,7 @@ export function PlatformCard({ platform, priority = false }: PlatformCardProps) 
       </div>
 
       <header className="mt-4 space-y-1">
-        <h3 className="text-xl font-semibold text-ink">
+        <h3 className="text-lg sm:text-xl font-semibold text-ink">
           {platform.name}
         </h3>
         <p className="text-sm text-ink-muted">{platform.tagline}</p>
@@ -127,7 +127,7 @@ export function PlatformCard({ platform, priority = false }: PlatformCardProps) 
       ) : null}
 
       <div className="mt-auto pt-6">
-        <span className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-perazzi-red">
+        <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-perazzi-red">
           Explore the {platform.name} lineage
           <span aria-hidden="true">→</span>
         </span>

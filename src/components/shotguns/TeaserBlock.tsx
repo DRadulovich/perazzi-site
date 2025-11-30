@@ -22,12 +22,16 @@ export function TeaserBlock({
   return (
     <section
       data-analytics-id="ShotgunsGradesCTA"
-      className="rounded-3xl border border-border/70 bg-perazzi-black px-6 py-8 text-white shadow-sm sm:px-10"
+      className="rounded-2xl border border-border/60 bg-perazzi-black px-4 py-6 text-white shadow-sm sm:rounded-3xl sm:border-border/70 sm:px-6 sm:py-8 sm:shadow-md lg:px-10"
     >
       <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-center">
         <div className="space-y-2">
-          <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
-          <p className="max-w-3xl text-sm text-white/80">{copy}</p>
+          <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
+            {title}
+          </h2>
+          <p className="max-w-3xl text-sm sm:text-base leading-relaxed text-white/80">
+            {copy}
+          </p>
           <div className="flex flex-wrap gap-4">
             <figure className="w-40 rounded-2xl border border-white/30 bg-white/5 p-3">
               <div
@@ -43,7 +47,7 @@ export function TeaserBlock({
                   loading="lazy"
                 />
               </div>
-              <figcaption className="mt-2 text-xs text-white/70">
+              <figcaption className="mt-2 text-[11px] sm:text-xs text-white/70">
                 Engraving atelier
               </figcaption>
             </figure>
@@ -61,7 +65,7 @@ export function TeaserBlock({
                   loading="lazy"
                 />
               </div>
-              <figcaption className="mt-2 text-xs text-white/70">
+              <figcaption className="mt-2 text-[11px] sm:text-xs text-white/70">
                 Wood provenance
               </figcaption>
             </figure>
@@ -70,7 +74,7 @@ export function TeaserBlock({
         <div className="md:flex md:justify-end">
           <a
             href={href}
-            className="inline-flex items-center gap-2 rounded-full border border-white/40 px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-white focus-ring"
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-white/40 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-white focus-ring"
           >
             View grades
             <span aria-hidden="true">→</span>

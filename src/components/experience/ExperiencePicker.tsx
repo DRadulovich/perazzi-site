@@ -7,6 +7,7 @@ import type { PickerItem } from "@/types/experience";
 import type { FAQItem } from "@/types/experience";
 import { FAQList } from "./FAQList";
 import { logAnalytics } from "@/lib/analytics";
+import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 type ExperiencePickerProps = {
   items: PickerItem[];
@@ -15,12 +16,15 @@ type ExperiencePickerProps = {
 
 export function ExperiencePicker({ items, faqItems }: ExperiencePickerProps) {
   const prefersReducedMotion = useReducedMotion();
+  const analyticsRef = useAnalyticsObserver<HTMLElement>("ExperiencePickerSeen");
 
   if (!items.length) return null;
 
   return (
     <section
-      className="relative isolate w-screen overflow-hidden py-16 sm:py-20"
+      ref={analyticsRef}
+      data-analytics-id="ExperiencePickerSeen"
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
       style={{
         marginLeft: "calc(50% - 50vw)",
         marginRight: "calc(50% - 50vw)",
@@ -53,14 +57,14 @@ export function ExperiencePicker({ items, faqItems }: ExperiencePickerProps) {
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-3xl border border-border/70 bg-card/0 px-6 py-8 shadow-lg backdrop-blur-sm sm:px-10">
+        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
           <div className="space-y-2">
-            <p className="text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
               Choose your path
             </p>
             <h2
               id="experience-picker-heading"
-              className="text-xl font-light italic text-ink-muted mb-4"
+              className="mb-4 text-sm sm:text-base font-light italic leading-relaxed text-ink-muted"
             >
               Visit, fit, or demo with Perazzi
             </h2>
@@ -105,7 +109,7 @@ function ExperiencePickerCard({
     >
       <Link
         href={item.href}
-        className="group flex h-full flex-col overflow-hidden rounded-3xl border border-border/70 bg-card/75 text-left shadow-sm focus-ring"
+        className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border/75 bg-card/75 text-left shadow-sm focus-ring sm:rounded-3xl"
         data-analytics-id={`PickerCardClick:${item.id}`}
         onClick={() => logAnalytics(`PickerCardClick:${item.id}`)}
       >
@@ -127,12 +131,14 @@ function ExperiencePickerCard({
           />
         </div>
         <div className="flex flex-1 flex-col gap-3 px-6 py-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
+          <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
             {microLabel}
           </p>
-          <h3 className="text-xl font-semibold text-ink">{item.title}</h3>
-          <p className="text-sm text-ink-muted">{item.summary}</p>
-          <span className="mt-auto inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+          <h3 className="text-base sm:text-lg font-semibold text-ink">
+            {item.title}
+          </h3>
+          <p className="text-sm leading-relaxed text-ink-muted">{item.summary}</p>
+          <span className="mt-auto inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
             {item.ctaLabel}
             <span aria-hidden="true">→</span>
           </span>

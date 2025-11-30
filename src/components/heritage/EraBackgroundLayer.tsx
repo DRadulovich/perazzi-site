@@ -36,6 +36,7 @@ export function EraBackgroundLayer({
           alt={alt}
           fill
           priority={false}
+          loading="lazy"
           sizes="100vw"
           className="object-cover"
         />

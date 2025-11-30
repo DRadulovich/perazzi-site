@@ -3,6 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import type { HeritageEvent, HeritageEventLink } from "@/types/heritage";
 
 export type HeritageEventSlideProps = {
@@ -15,12 +16,15 @@ export function HeritageEventSlide({
   className,
 }: HeritageEventSlideProps) {
   const hasMedia = Boolean(event.media?.url);
+  const analyticsRef = useAnalyticsObserver<HTMLElement>(`HeritageEventSeen:${event.id}`);
 
   return (
     <article
+      ref={analyticsRef}
+      data-analytics-id={`HeritageEventSeen:${event.id}`}
       className={cn(
         "flex h-full w-full shrink-0 flex-col",
-        "px-4 sm:px-8 lg:px-12",
+        "px-4 sm:px-6 lg:px-10",
         "transition-colors transition-shadow duration-200 ease-out",
         className,
       )}
@@ -28,7 +32,7 @@ export function HeritageEventSlide({
       <div
         className={cn(
           "flex h-full w-full flex-col md:flex-row",
-          "mx-auto max-w-6xl rounded-2xl border border-white/10 bg-black/60 backdrop-blur-sm",
+          "mx-auto max-w-6xl rounded-2xl border border-white/10 bg-black/60 shadow-sm backdrop-blur-sm",
         )}
       >
         <div
@@ -38,17 +42,17 @@ export function HeritageEventSlide({
           )}
         >
           {hasMedia ? (
-            <div className="relative h-full w-full min-h-[240px] overflow-hidden rounded-xl border border-white/15 bg-black/30">
+            <div className="relative h-full w-full min-h-[240px] overflow-hidden rounded-2xl border border-white/15 bg-[color:var(--color-canvas)]">
               <Image
                 src={event.media!.url}
                 alt={event.media!.alt ?? event.title}
                 fill
-                sizes="(min-width: 1024px) 48vw, 100vw"
+                sizes="(min-width: 1024px) 50vw, 100vw"
                 className="object-cover"
               />
             </div>
           ) : (
-            <div className="flex w-full max-w-xl items-center justify-center rounded-xl border border-dashed border-white/20 bg-black/20 text-[0.65rem] uppercase tracking-[0.25em] text-neutral-500">
+            <div className="flex w-full max-w-xl items-center justify-center rounded-2xl border border-dashed border-white/20 bg-black/20 text-[11px] sm:text-[0.7rem] uppercase tracking-[0.25em] text-neutral-500">
               Perazzi archive
             </div>
           )}
@@ -62,10 +66,10 @@ export function HeritageEventSlide({
         >
           <div className="w-full space-y-5">
             <header className="space-y-1">
-              <p className="text-[0.65rem] uppercase tracking-[0.28em] text-neutral-400">
+              <p className="text-[11px] sm:text-[0.7rem] uppercase tracking-[0.28em] text-neutral-400">
                 {event.date}
               </p>
-              <h3 className="text-xl font-semibold tracking-tight text-neutral-50 md:text-2xl">
+              <h3 className="text-base sm:text-xl font-semibold tracking-tight text-neutral-50">
                 {event.title}
               </h3>
             </header>
@@ -87,7 +91,7 @@ export function HeritageEventSlide({
                       href={link.href}
                       target={isExternal ? "_blank" : undefined}
                       rel={isExternal ? "noopener noreferrer" : undefined}
-                      className="inline-flex items-center gap-2 rounded-full border border-white/25 px-3 py-1 text-[0.65rem] uppercase tracking-[0.25em] text-neutral-100 transition-colors hover:border-white hover:bg-white/10"
+                      className="inline-flex items-center justify-center gap-2 rounded-full border border-white/25 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-[0.25em] text-neutral-100 transition-colors hover:border-white hover:bg-white/10"
                     >
                       <span>{link.label}</span>
                       {isExternal ? (

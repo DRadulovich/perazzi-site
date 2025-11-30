@@ -25,12 +25,28 @@ import type { ChatMessage, PerazziAssistantRequest } from "@/types/perazzi-assis
 import Image from "next/image";
 import { getSanityImageUrl } from "@/lib/sanityImage";
 import clsx from "clsx";
+
+type InfoCard = {
+  id: string;
+  title: string;
+  description?: string;
+  imageUrl?: string | null;
+  fullImageUrl?: string | null;
+  platform?: string | null;
+  grade?: string | null;
+  gauges?: string[];
+  triggerTypes?: string[];
+  recommendedPlatforms?: string[];
+  popularModels?: string[];
+  optionValue?: string;
+};
+
 type SavedBuild = {
   id: string;
   name: string;
   timestamp: number;
   buildState: BuildState;
-  selectedInfoByField?: Record<string, any[]>;
+  selectedInfoByField?: Record<string, InfoCard[]>;
 };
 
 const FIELD_DESCRIPTIONS: Record<string, string> = {
@@ -150,52 +166,13 @@ export function ConciergePageShell() {
   const [engravingError, setEngravingError] = useState<string | null>(null);
   const [highlightedOption, setHighlightedOption] = useState<{ fieldId: string; value: string } | null>(null);
   const [infoLoading, setInfoLoading] = useState(false);
-  const [infoCards, setInfoCards] = useState<
-    Array<{
-      id: string;
-      title: string;
-      description?: string;
-      imageUrl?: string | null;
-      fullImageUrl?: string | null;
-      platform?: string | null;
-      grade?: string | null;
-      gauges?: string[];
-      triggerTypes?: string[];
-      recommendedPlatforms?: string[];
-      popularModels?: string[];
-    }>
-  >([]);
-  const [infoByOption, setInfoByOption] = useState<Record<string, Array<{
-    id: string;
-    title: string;
-    description?: string;
-    imageUrl?: string | null;
-    fullImageUrl?: string | null;
-    platform?: string | null;
-    grade?: string | null;
-    gauges?: string[];
-    triggerTypes?: string[];
-    recommendedPlatforms?: string[];
-    popularModels?: string[];
-    optionValue?: string;
-  }>>>({});
+  const [infoCards, setInfoCards] = useState<InfoCard[]>([]);
+  const [infoByOption, setInfoByOption] = useState<Record<string, InfoCard[]>>({});
   const [infoError, setInfoError] = useState<string | null>(null);
-  const [selectedInfoCard, setSelectedInfoCard] = useState<{
-    id: string;
-    title: string;
-    description?: string;
-    imageUrl?: string | null;
-    fullImageUrl?: string | null;
-    platform?: string | null;
-    grade?: string | null;
-    gauges?: string[];
-    triggerTypes?: string[];
-    recommendedPlatforms?: string[];
-    popularModels?: string[];
-  } | null>(null);
+  const [selectedInfoCard, setSelectedInfoCard] = useState<InfoCard | null>(null);
   const [detailsDrawerOpen, setDetailsDrawerOpen] = useState(false);
   const [buildSheetDrawerOpen, setBuildSheetDrawerOpen] = useState(false);
-  const [selectedInfoByField, setSelectedInfoByField] = useState<Record<string, any[]>>({});
+  const [selectedInfoByField, setSelectedInfoByField] = useState<Record<string, InfoCard[]>>({});
   const [savedBuilds, setSavedBuilds] = useState<SavedBuild[]>([]);
   const SAVES_KEY = "perazzi-build-saves";
 
@@ -470,7 +447,7 @@ export function ConciergePageShell() {
   useEffect(() => {
     if (nextField?.id === "ENGRAVING") {
       if (engravingResults.length) {
-        const items = engravingResults.map((engraving) => ({
+        const items: InfoCard[] = engravingResults.map((engraving) => ({
           id: engraving._id,
           title: `${engraving.engravingId} · ${engraving.engravingSide}`,
           description: engraving.gradeName ? `Grade: ${engraving.gradeName}` : "",
@@ -479,7 +456,7 @@ export function ConciergePageShell() {
           grade: engraving.gradeName ?? null,
           optionValue: `${engraving.engravingId} (${engraving.engravingSide})`,
         }));
-        const map: Record<string, any[]> = {};
+        const map: Record<string, InfoCard[]> = {};
         items.forEach((item) => {
           if (item.optionValue) {
             map[item.optionValue] = [item];
@@ -528,11 +505,12 @@ export function ConciergePageShell() {
               throw new Error("fetch_failed");
             }
             const data = await res.json();
-            const items = (data.items ?? []).map((item: any) => ({ ...item, optionValue: opt }));
+            const rawItems = (data.items ?? []) as InfoCard[];
+            const items: InfoCard[] = rawItems.map((item) => ({ ...item, optionValue: opt }));
             return { option: opt, items };
           }),
         );
-        const { map, flat } = mergeOptionResults(results);
+        const { map, flat } = mergeOptionResults<InfoCard>(results);
         setInfoByOption(map);
         setInfoCards(flat);
       } catch (error) {
@@ -596,7 +574,7 @@ export function ConciergePageShell() {
   };
 
   const fetchInfoForSelection = useCallback(
-    async (fieldId: string, value: string) => {
+    async (fieldId: string, value: string): Promise<InfoCard[]> => {
       if (!value) return [];
       const gradeModel = buildState.MODEL;
       if (fieldId === "ENGRAVING") {
@@ -626,7 +604,8 @@ export function ConciergePageShell() {
         );
         if (!res.ok) return [];
         const data = await res.json();
-        return (data.items ?? []).map((item: any) => ({ ...item, optionValue: value }));
+        const rawItems = (data.items ?? []) as InfoCard[];
+        return rawItems.map((item) => ({ ...item, optionValue: value }));
       } catch {
         return [];
       }
@@ -642,7 +621,7 @@ export function ConciergePageShell() {
     if (!missing.length) return;
     const controller = new AbortController();
     const run = async () => {
-      const updates: Record<string, any[]> = {};
+      const updates: Record<string, InfoCard[]> = {};
       for (const fid of missing) {
         const val = buildState[fid];
         const cached = infoByOption[val];
@@ -728,10 +707,14 @@ export function ConciergePageShell() {
   return (
     <div className="space-y-8" id="concierge-workshop" tabIndex={-1}>
       <header className="space-y-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted">Perazzi Build Planner</p>
+        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted">
+          Perazzi Build Planner
+        </p>
         <div className="space-y-3">
-          <h2 className="text-3xl font-semibold text-ink">Designing a Perazzi, Together</h2>
-          <div className="space-y-3 text-sm text-ink-muted">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-ink">
+            Designing a Perazzi, Together
+          </h2>
+          <div className="space-y-3 text-sm sm:text-base leading-relaxed text-ink-muted">
             <p>
               This space is the closest you can come to sitting across from a Perazzi master, without leaving home. The Build Navigator
               walks you step by step through every element of a bespoke shotgun—platform, fit, balance, aesthetics—while the Perazzi
@@ -763,17 +746,21 @@ export function ConciergePageShell() {
         {/* Conversation */}
         <section
           id="concierge-conversation"
-          className="flex min-h-[70vh] max-h-[80vh] flex-col overflow-hidden rounded-3xl border border-subtle bg-card p-4 shadow-sm sm:p-6 lg:order-2"
+          className="flex min-h-[70vh] max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-subtle/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-subtle sm:bg-card sm:p-6 lg:order-2"
           tabIndex={-1}
         >
           <div className="flex items-center justify-between gap-3 border-b border-subtle pb-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Conversation</p>
-              <p className="text-sm text-ink-muted">Context carries across each message.</p>
+              <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+                Conversation
+              </p>
+              <p className="text-sm sm:text-base text-ink-muted">
+                Context carries across each message.
+              </p>
             </div>
             <div className="flex items-center gap-3">
               {pending || isTyping ? (
-                <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+                <div className="flex items-center gap-2 text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
                   <span className="relative flex h-5 w-5 items-center justify-center">
                     <span className="absolute inline-flex h-full w-full animate-spin rounded-full border-2 border-subtle border-t-transparent" />
                     <span className="inline-flex h-2 w-2 rounded-full bg-ink" />
@@ -784,7 +771,7 @@ export function ConciergePageShell() {
               <button
                 type="button"
                 onClick={handleClearChat}
-                className="rounded-full border border-subtle px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+                className="inline-flex min-h-10 items-center justify-center rounded-full border border-subtle px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink focus-ring"
               >
                 Clear chat
               </button>
@@ -799,8 +786,12 @@ export function ConciergePageShell() {
             <ConversationView messages={messages} pending={pending} isTyping={isTyping} />
           </div>
           <div className="mt-4 space-y-2 border-t border-subtle pt-4">
-            {error ? <p className="text-sm text-red-600">Something went wrong reaching the concierge. Please try again.</p> : null}
-            <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted">
+            {error ? (
+              <p className="text-sm sm:text-base leading-relaxed text-red-600">
+                Something went wrong reaching the concierge. Please try again.
+              </p>
+            ) : null}
+            <label className="block text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted">
               Ask the workshop
             </label>
             <div className="flex flex-col gap-3 sm:flex-row">
@@ -809,13 +800,13 @@ export function ConciergePageShell() {
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask about platforms, fitting, service, or heritage…"
-                className="min-h-[96px] flex-1 rounded-2xl border border-subtle bg-card px-3 py-2 text-sm text-ink shadow-inner focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                className="min-h-[96px] flex-1 rounded-2xl border border-subtle bg-card px-3 py-2 text-sm sm:text-base text-ink shadow-inner focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 disabled={pending}
               />
               <button
                 type="button"
                 onClick={handleSend}
-                className="shrink-0 rounded-2xl bg-brand px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-2xl bg-brand px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-70"
                 disabled={pending || !draft.trim()}
               >
                 Send
@@ -827,15 +818,17 @@ export function ConciergePageShell() {
         {/* Build Navigator */}
         <aside
           id="concierge-navigator"
-          className="space-y-4 rounded-3xl border border-subtle bg-card p-4 shadow-sm sm:p-6 lg:order-1"
+          className="space-y-4 rounded-2xl border border-subtle/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-subtle sm:bg-card sm:p-6 lg:order-1"
           tabIndex={-1}
         >
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Build navigator</p>
+              <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+                Build navigator
+              </p>
               <button
                 type="button"
-                className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:text-ink"
+                className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:text-ink focus-ring"
                 onClick={resetBuild}
               >
                 Reset
@@ -844,19 +837,25 @@ export function ConciergePageShell() {
             {buildError ? <p className="text-xs text-red-600">{buildError}</p> : null}
 
             <div className="space-y-2 rounded-2xl border border-subtle px-3 py-3">
-              <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Current Build Category</p>
-              <p className="text-sm text-ink">
+              <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+                Current Build Category
+              </p>
+              <p className="text-sm sm:text-base text-ink">
                 {nextField ? nextField.section || "Unknown" : "Complete"}
               </p>
             </div>
 
             <div className="space-y-2 rounded-2xl border border-subtle px-3 py-3">
-              <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Current step</p>
+              <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+                Current step
+              </p>
               {nextField ? (
                 <>
-                  <p className="text-sm font-semibold text-ink">{getFieldLabel(nextField.id)}</p>
+                  <p className="text-sm sm:text-base font-semibold text-ink">{getFieldLabel(nextField.id)}</p>
                   {FIELD_DESCRIPTIONS[nextField.id] ? (
-                    <p className="text-sm text-ink-muted">{FIELD_DESCRIPTIONS[nextField.id]}</p>
+                    <p className="text-sm sm:text-base leading-relaxed text-ink-muted">
+                      {FIELD_DESCRIPTIONS[nextField.id]}
+                    </p>
                   ) : null}
                   {displayOptions.length ? (
                     <>
@@ -886,7 +885,7 @@ export function ConciergePageShell() {
                       <button
                         type="button"
                         onClick={handleSelectHighlighted}
-                        className="mt-2 w-full rounded-full bg-brand px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+                        className="mt-2 inline-flex w-full min-h-10 items-center justify-center rounded-full bg-brand px-3 py-2 text-center text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
                         disabled={!highlightedOption || highlightedOption.fieldId !== nextField.id}
                       >
                         Select
@@ -894,14 +893,14 @@ export function ConciergePageShell() {
                       <button
                         type="button"
                         onClick={() => setDetailsDrawerOpen(true)}
-                        className="mt-2 w-full rounded-full border border-subtle bg-card px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+                        className="mt-2 inline-flex w-full min-h-10 items-center justify-center rounded-full border border-subtle bg-card px-3 py-2 text-center text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
                       >
                         {infoLoading ? "Loading details…" : "View More Details"}
                       </button>
                       <button
                         type="button"
                         onClick={handleExplainCurrent}
-                        className="mt-2 w-full rounded-full border border-subtle bg-card px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+                        className="mt-2 inline-flex w-full min-h-10 items-center justify-center rounded-full border border-subtle bg-card px-3 py-2 text-center text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
                       >
                         Explain these options
                       </button>

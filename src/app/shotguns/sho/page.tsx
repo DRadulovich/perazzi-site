@@ -19,16 +19,26 @@ export default async function SHOSeriesPage() {
   return (
     <div className="space-y-16">
       <SeriesHero hero={shoSeries.hero} analyticsId="SeriesHero:sho" />
-      <div className="rounded-3xl border border-border/70 bg-card px-6 py-5 shadow-sm sm:px-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-ink-muted">Platform guidance</p>
-        <p className="mt-1 text-sm text-ink">Questions about the SHO Platform? Ask Perazzi.</p>
+      <section
+        className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-5"
+        aria-labelledby="sho-platform-guidance-heading"
+      >
+        <h2
+          id="sho-platform-guidance-heading"
+          className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted"
+        >
+          Platform guidance
+        </h2>
+        <p className="mt-1 text-sm sm:text-base leading-relaxed text-ink">
+          Questions about the SHO Platform? Ask Perazzi.
+        </p>
         <div className="mt-4">
           <ChatTriggerButton
             label="Ask about SHO Platform"
             payload={buildPlatformPrompt("sho", { pageUrl: "/shotguns/sho" })}
           />
         </div>
-      </div>
+      </section>
       <AtAGlanceStrip data={shoSeries.atAGlance} />
       <SeriesStory html={shoSeries.storyHtml} />
       <EngHighlightsGrid highlights={shoSeries.highlights} />

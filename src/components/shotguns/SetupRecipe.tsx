@@ -22,7 +22,7 @@ export function SetupRecipe({
 
   return (
     <section
-      className="rounded-3xl border border-border/70 bg-card px-6 py-8 shadow-sm sm:px-10"
+      className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 sm:shadow-md lg:px-10"
       aria-labelledby="setup-recipe-heading"
     >
       <Collapsible.Root
@@ -33,11 +33,14 @@ export function SetupRecipe({
         }}
       >
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h2 id="setup-recipe-heading" className="text-xl font-semibold text-ink">
+          <h2
+            id="setup-recipe-heading"
+            className="text-xl sm:text-2xl font-semibold text-ink"
+          >
             Editorial guidance
           </h2>
           <Collapsible.Trigger
-            className="rounded-full border border-border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink focus-ring md:hidden"
+            className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink focus-ring md:hidden"
             aria-controls="setup-recipe-content"
           >
             {resolvedOpen ? "Hide recipe" : "Show recipe"}
@@ -50,22 +53,28 @@ export function SetupRecipe({
         >
           <dl className="grid gap-4 md:grid-cols-3">
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+              <dt className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
                 POI range
               </dt>
-              <dd className="mt-2 text-sm text-ink">{poiRange}</dd>
+              <dd className="mt-2 text-sm sm:text-base leading-relaxed text-ink">
+                {poiRange}
+              </dd>
             </div>
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+              <dt className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
                 Barrel lengths
               </dt>
-              <dd className="mt-2 text-sm text-ink">{barrelLengths}</dd>
+              <dd className="mt-2 text-sm sm:text-base leading-relaxed text-ink">
+                {barrelLengths}
+              </dd>
             </div>
             <div>
-              <dt className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+              <dt className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
                 Rib notes
               </dt>
-              <dd className="mt-2 text-sm text-ink">{ribNotes}</dd>
+              <dd className="mt-2 text-sm sm:text-base leading-relaxed text-ink">
+                {ribNotes}
+              </dd>
             </div>
           </dl>
         </Collapsible.Content>

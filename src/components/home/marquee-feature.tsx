@@ -18,7 +18,7 @@ export function MarqueeFeature({ champion }: MarqueeFeatureProps) {
     <section
       ref={analyticsRef}
       data-analytics-id="ChampionStorySeen"
-      className="relative flex w-screen items-center overflow-hidden py-50 sm:py-60"
+      className="relative flex w-screen max-w-[100vw] items-center overflow-hidden py-10 sm:py-16"
       style={{
         marginLeft: "calc(50% - 50vw)",
         marginRight: "calc(50% - 50vw)",
@@ -48,7 +48,7 @@ export function MarqueeFeature({ champion }: MarqueeFeatureProps) {
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="rounded-3xl border border-[color:var(--border-color)] bg-[color:var(--color-canvas)]/40 p-6 text-ink shadow-elevated backdrop-blur-sm sm:p-8 lg:p-10 md:grid md:grid-cols-[minmax(260px,1fr)_minmax(0,1.4fr)] md:items-center md:gap-10">
+        <div className="rounded-2xl border border-[color:var(--border-color)] bg-[color:var(--color-canvas)]/30 p-4 text-ink shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-[color:var(--color-canvas)]/40 sm:p-6 sm:shadow-elevated lg:p-8 md:grid md:grid-cols-[minmax(260px,1fr)_minmax(0,1.4fr)] md:items-center md:gap-10">
           <motion.div
             initial={prefersReducedMotion ? false : { opacity: 0, x: -30 }}
             whileInView={prefersReducedMotion ? undefined : { opacity: 1, x: 0 }}
@@ -80,19 +80,22 @@ export function MarqueeFeature({ champion }: MarqueeFeatureProps) {
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
               Champion spotlight
             </p>
-            <h2 id="champion-heading" className="text-3xl font-semibold text-ink">
+            <h2
+              id="champion-heading"
+              className="text-2xl sm:text-3xl font-semibold text-ink"
+            >
               {champion.name}
             </h2>
-            <cite className="block text-base font-medium text-ink-muted not-italic">
+            <cite className="block text-sm sm:text-base font-medium text-ink-muted not-italic">
               {champion.title}
             </cite>
-            <blockquote className="border-l-2 border-perazzi-red/50 pl-4 text-xl italic leading-relaxed text-ink">
+            <blockquote className="border-l-2 border-perazzi-red/50 pl-4 text-base sm:text-lg italic leading-relaxed text-ink">
               “{champion.quote}”
             </blockquote>
             {champion.article ? (
               <a
                 href={`/journal/${champion.article.slug}`}
-                className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.2em] text-perazzi-red focus-ring"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-sm font-semibold uppercase tracking-[0.2em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 {champion.article.title}
                 <span aria-hidden="true">→</span>

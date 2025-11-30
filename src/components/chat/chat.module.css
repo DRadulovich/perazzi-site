@@ -3,6 +3,10 @@
   bottom: 1.5rem;
   right: 1.5rem;
   z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
   border-radius: 9999px;
   padding: 0.85rem 2rem;
   font-size: 0.95rem;
@@ -13,6 +17,11 @@
   border: none;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.launcher:focus-visible {
+  outline: 2px solid var(--brand-hover);
+  outline-offset: 2px;
 }
 
 .launcher:hover {
@@ -66,14 +75,24 @@
 
 .quickStartButton {
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 2.5rem;
   border: 1px solid var(--subtle);
   border-radius: 1.25rem;
   padding: 0.9rem 1rem;
   background: var(--card);
+  font-size: 0.9rem;
   font-weight: 600;
   text-align: left;
   cursor: pointer;
   transition: border 0.2s ease;
+}
+
+.quickStartButton:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
 }
 
 .quickStartButton:hover {
@@ -109,8 +128,18 @@
 }
 
 .inputActions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
   border-radius: 9999px;
   padding: 0.45rem 1.2rem;
+  font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
+}
+
+.inputActions button:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
 }

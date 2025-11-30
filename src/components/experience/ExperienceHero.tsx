@@ -47,7 +47,7 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
 
   return (
     <section
-      className="relative isolate w-screen overflow-hidden py-6 sm:py-8 min-h-screen"
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 min-h-screen"
       style={{
         marginLeft: "calc(50% - 50vw)",
         marginRight: "calc(50% - 50vw)",
@@ -82,7 +82,7 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
       <motion.section
         ref={setRefs}
         data-analytics-id="HeroSeen:experience"
-        className="relative z-10 mx-auto min-h-screen max-w-6xl overflow-hidden rounded-3xl bg-card/0 text-white shadow-lg backdrop-blur-sm border border-gray-700/30"
+        className="relative z-10 mx-auto min-h-screen max-w-6xl overflow-hidden rounded-2xl border border-gray-700/30 bg-card/10 text-white shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/0 sm:shadow-lg"
         initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
         animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
@@ -91,7 +91,7 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
           <div className="flex flex-col gap-6 lg:max-w-4xl">
             {breadcrumbs?.length ? (
               <nav aria-label="Breadcrumb">
-                <ol className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/70">
+                <ol className="flex flex-wrap items-center gap-2 text-[11px] sm:text-xs uppercase tracking-[0.3em] text-white/70">
                   {breadcrumbs.map((crumb, index) => (
                     <li key={crumb.href} className="flex items-center gap-2">
                       <Link
@@ -112,18 +112,20 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
               </nav>
             ) : null}
             <div className="space-y-4 text-left">
-              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
+              <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
                 Experience
               </p>
-              <h1 className="text-balance text-3xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
+              <h1 className="text-balance text-2xl font-semibold leading-tight sm:text-3xl lg:text-4xl">
                 {hero.title}
               </h1>
               {hero.subheading ? (
-                <p className="text-lg text-white/80">{hero.subheading}</p>
+                <p className="text-sm sm:text-base leading-relaxed text-white/80">
+                  {hero.subheading}
+                </p>
               ) : null}
             </div>
             <div
-              className="pointer-events-none text-xs font-semibold uppercase tracking-[0.3em] text-white/70"
+              className="pointer-events-none text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-white/70"
               aria-hidden="true"
             >
               Scroll

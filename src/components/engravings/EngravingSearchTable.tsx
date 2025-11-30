@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 import { getSanityImageUrl } from "@/lib/sanityImage";
+import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 type EngravingRow = {
   _id: string;
@@ -25,9 +26,9 @@ const PAGE_SIZE = 12;
 const FILTER_PANEL_CLASS =
   "space-y-4 rounded-[32px] border border-white/15 bg-[linear-gradient(135deg,#070707,#101010)]/95 px-4 py-5 shadow-[0_35px_120px_rgba(0,0,0,0.45)] sm:px-6 sm:py-6";
 const CARD_CLASS =
-  "group flex h-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-neutral-950/80 text-left shadow-2xl shadow-black/40 transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red";
+  "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-neutral-950/80 text-left shadow-lg shadow-black/40 transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red sm:rounded-3xl sm:shadow-2xl";
 const SPEC_PANEL_CLASS =
-  "grid gap-4 border-t border-white/10 bg-black/40 px-6 py-5 text-sm text-neutral-200 sm:grid-cols-2";
+  "grid gap-4 border-t border-white/10 bg-black/40 px-4 py-4 text-[11px] sm:text-sm text-neutral-200 sm:grid-cols-2 sm:px-6 sm:py-5";
 
 export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
   const [query, setQuery] = useState("");
@@ -44,6 +45,7 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
   const modalRef = useRef<HTMLDivElement | null>(null);
   const compareModalRef = useRef<HTMLDivElement | null>(null);
   const [heroLoaded, setHeroLoaded] = useState(false);
+  const analyticsRef = useAnalyticsObserver<HTMLElement>("EngravingSearchTableSeen");
 
   const closeModal = useCallback(() => {
     setSelected(null);
@@ -294,7 +296,11 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
     : null;
 
   return (
-    <section className="mt-10 space-y-8">
+    <section
+      ref={analyticsRef}
+      data-analytics-id="EngravingSearchTableSeen"
+      className="mt-10 space-y-8"
+    >
       <div className={FILTER_PANEL_CLASS}>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <label className="flex w-full items-center gap-3 rounded-full border border-white/20 bg-black/40 px-4 py-2 text-sm text-neutral-300 focus-within:border-white">
@@ -304,7 +310,7 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
               placeholder="Search engraving ID or grade…"
               value={query}
               onChange={(event) => handleQueryChange(event.target.value)}
-              className="w-full bg-transparent text-base text-white placeholder:text-neutral-600 focus:outline-none"
+              className="w-full bg-transparent text-sm sm:text-base text-white placeholder:text-neutral-600 focus:outline-none"
             />
           </label>
           <p className="text-sm text-neutral-400" aria-live="polite" aria-atomic="true">
@@ -316,7 +322,7 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
         {favorites.length > 0 && (
           <div className="rounded-3xl border border-white/10 bg-black/30 p-4 text-white">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400">
+              <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400">
                 Favorites ({favorites.length}/6)
               </p>
               <button
@@ -324,7 +330,7 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
                 disabled={favorites.length < 2}
                 onClick={() => setCompareOpen(true)}
                 className={clsx(
-                  "rounded-full px-4 py-1 text-xs uppercase tracking-[0.3em]",
+                  "rounded-full px-4 py-2 text-[11px] sm:text-xs uppercase tracking-[0.3em] focus-ring",
                   favorites.length < 2
                     ? "border border-white/20 text-white/40"
                     : "border border-white/40 text-white hover:border-white hover:text-white",
@@ -355,7 +361,7 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
                     <p className="mt-2 text-xs font-semibold">#{fav.engravingId}</p>
                     <button
                       type="button"
-                      className="text-[10px] uppercase tracking-[0.3em] text-white/60 hover:text-white"
+                      className="text-[11px] sm:text-xs uppercase tracking-[0.3em] text-white/60 hover:text-white"
                       onClick={() => toggleFavorite(fav)}
                     >
                       Remove
@@ -384,7 +390,7 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
             <button
               type="button"
               onClick={clearFilters}
-              className="rounded-full border border-white/30 px-4 py-1 text-xs uppercase tracking-widest text-white/80 transition hover:border-white hover:text-white"
+              className="rounded-full border border-white/30 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-widest text-white/80 transition hover:border-white hover:text-white focus-ring"
             >
               Reset filters
             </button>
@@ -435,10 +441,10 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
                       : "items-start text-left",
                   )}
                 >
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+                  <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
                     {engraving.gradeName}
                   </p>
-                  <h3 className="text-2xl font-semibold leading-tight">
+                  <h3 className="text-xl sm:text-2xl font-semibold leading-tight">
                     {highlightText(`Engraving ${engraving.engravingId}`, query)}
                   </h3>
                   <p className="text-sm text-black/70">
@@ -458,7 +464,7 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
                   type="button"
                   onClick={() => toggleFavorite(engraving)}
                   className={clsx(
-                    "rounded-full border px-5 py-2 text-sm font-semibold uppercase tracking-widest transition",
+                    "rounded-full border px-5 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-widest transition focus-ring",
                     isFavorite
                       ? "border-perazzi-red bg-perazzi-red/80 text-white"
                       : "border-white/30 text-white hover:border-white hover:text-white",
@@ -474,7 +480,7 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
                     setSelected(engraving);
                     setLastFocusedId(engraving._id);
                   }}
-                  className="rounded-full border border-white/30 px-5 py-2 text-sm font-semibold uppercase tracking-widest text-white transition hover:border-white hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-perazzi-red"
+                  className="rounded-full border border-white/30 px-5 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-white transition hover:border-white hover:text-white focus-ring"
                 >
                   View details
                 </button>
@@ -483,7 +489,7 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
           );
         })}
         {!showSkeletons && filteredEngravings.length === 0 && (
-          <p className="col-span-full rounded-3xl border border-dashed border-white/20 py-16 text-center text-neutral-500">
+          <p className="col-span-full rounded-2xl border border-dashed border-white/20 py-16 text-center text-neutral-500 sm:rounded-3xl">
             No engravings match your current filters.
           </p>
         )}
@@ -504,7 +510,7 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
           >
             <button
               type="button"
-              className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 py-1 text-xs uppercase tracking-widest text-black transition hover:border-black hover:bg-white sm:right-5 sm:top-5 sm:text-sm"
+              className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-widest text-black transition hover:border-black hover:bg-white focus-ring sm:right-5 sm:top-5"
               onClick={closeModal}
             >
               Close
@@ -537,11 +543,15 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
                     selected.engravingSide === "Right" ? "items-end text-right" : "items-start text-left",
                   )}
                 >
-                  <p className="text-sm font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+                  <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
                     {selected.gradeName}
                   </p>
-                  <h2 className="text-5xl font-semibold leading-tight">Engraving {selected.engravingId}</h2>
-                  <p className="text-lg text-black/70">{selected.engravingSide}</p>
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold leading-tight">
+                    Engraving {selected.engravingId}
+                  </h2>
+                  <p className="text-sm sm:text-base text-black/70">
+                    {selected.engravingSide}
+                  </p>
                 </div>
               </div>
             </div>
@@ -563,13 +573,15 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
           >
             <button
               type="button"
-              className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 py-1 text-xs uppercase tracking-widest text-black transition hover:border-black hover:bg-white sm:right-5 sm:top-5 sm:text-sm"
+              className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-widest text-black transition hover:border-black hover:bg-white focus-ring sm:right-5 sm:top-5"
               onClick={() => setCompareOpen(false)}
             >
               Close
             </button>
             <div className="space-y-4 border-b border-white/10 p-6 text-center">
-              <p className="text-xs uppercase tracking-[0.4em] text-white/70">Compare Engravings</p>
+              <p className="text-[11px] sm:text-xs uppercase tracking-[0.4em] text-white/70">
+                Compare Engravings
+              </p>
               <h2 className="text-3xl font-semibold">Side-by-side favorites</h2>
             </div>
             <div className="grid gap-6 overflow-y-auto p-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -599,8 +611,12 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
                       ) : null}
                     </div>
                     <div className="mt-4 space-y-1 text-white">
-                      <p className="text-xs uppercase tracking-[0.35em] text-perazzi-red">{fav.gradeName}</p>
-                      <p className="text-xl font-semibold text-white">Engraving {fav.engravingId}</p>
+                      <p className="text-[11px] sm:text-xs uppercase tracking-[0.35em] text-perazzi-red">
+                        {fav.gradeName}
+                      </p>
+                      <p className="text-lg sm:text-xl font-semibold text-white">
+                        Engraving {fav.engravingId}
+                      </p>
                       <p className="text-sm text-white/80">{fav.engravingSide}</p>
                     </div>
                   </article>
@@ -617,7 +633,9 @@ export function EngravingSearchTable({ engravings }: EngravingSearchProps) {
 function Spec({ label, value }: { label: string; value?: string }) {
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-perazzi-red">{label}</p>
+      <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+        {label}
+      </p>
       <p className="text-sm text-white">{value || "—"}</p>
     </div>
   );
@@ -642,7 +660,7 @@ function FilterGroup({
     <div className="flex flex-wrap items-center gap-3">
       <span
         className={clsx(
-          "text-sm uppercase tracking-[0.3em]",
+          "text-[11px] sm:text-xs uppercase tracking-[0.3em]",
           tone === "dark" ? "text-neutral-500" : "text-ink-muted",
         )}
       >
@@ -680,7 +698,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={clsx(
-        "rounded-full px-4 py-1 text-xs uppercase tracking-widest transition",
+        "rounded-full px-4 py-2 text-[11px] sm:text-xs uppercase tracking-widest transition",
         active
           ? tone === "dark"
             ? "bg-white text-black"
@@ -697,9 +715,9 @@ function FilterChip({
 
 function CardSkeleton() {
   return (
-    <div className="animate-pulse overflow-hidden rounded-3xl border border-white/5 bg-neutral-900/60">
+    <div className="animate-pulse overflow-hidden rounded-2xl border border-white/5 bg-neutral-900/60 sm:rounded-3xl">
       <div className="aspect-[4/3] w-full bg-white/10" />
-      <div className="space-y-3 border-t border-white/5 bg-black/30 p-6">
+      <div className="space-y-3 border-t border-white/5 bg-black/30 p-4 sm:p-6">
         <div className="h-4 w-1/3 rounded bg-white/10" />
         <div className="h-6 w-2/3 rounded bg-white/10" />
         <div className="grid gap-3 sm:grid-cols-2">
