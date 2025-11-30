@@ -44,6 +44,7 @@ export function SerialLookup({ lookupAction }: SerialLookupProps) {
 
   return (
     <section
+      id="heritage-serial-lookup"
       ref={analyticsRef}
       data-analytics-id="SerialLookupSeen"
       className="relative isolate w-screen max-w-[100vw] min-h-[75vh] overflow-hidden py-10 sm:py-16"

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { HeritageHero } from "@/components/heritage/HeritageHero";
 import { ChampionsGallery } from "@/components/heritage/ChampionsGallery";
 import { FactoryPhotoEssay } from "@/components/heritage/FactoryPhotoEssay";
@@ -8,7 +9,6 @@ import { CTASection } from "@/components/shotguns/CTASection";
 import { CinematicImageStrip } from "@/components/shotguns/CinematicImageStrip";
 import { getHeritagePageData } from "@/lib/heritage-data";
 import { getManufactureYearBySerial } from "@/sanity/queries/manufactureYear";
-import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
 import { PerazziHeritageEras } from "@/components/heritage/PerazziHeritageEras";
 import { groupEventsByEra } from "@/utils/heritage/groupEventsByEra";
 
@@ -51,7 +51,7 @@ async function serialLookupAction(
         },
       },
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("[serial-lookup-action]", error);
     return {
       status: "error",
@@ -60,7 +60,7 @@ async function serialLookupAction(
   }
 }
 
-export default async function HeritagePage() {
+export default async function HeritagePage(): Promise<JSX.Element> {
   const {
     hero,
     timeline,
@@ -83,22 +83,61 @@ export default async function HeritagePage() {
         ]}
       />
       <PerazziHeritageEras eras={eraGroups} />
-      <section className="rounded-2xl border border-border/60 bg-card/10 px-4 py-5 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6">
-        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
-          Ask the workshop
-        </p>
-        <p className="mt-2 text-sm leading-relaxed text-ink">
-          Want a story from the atelier or guidance on provenance research? Ask the concierge to narrate it for you.
-        </p>
-        <div className="mt-4">
-          <ChatTriggerButton
-            label="Ask about heritage"
-            payload={{
-              question:
-                "Share an inspiring Perazzi heritage story—highlighting Daniele's workshop and champions—and guide me on how to use provenance resources like the serial lookup to learn more.",
-              context: { pageUrl: "/heritage", mode: "heritage" },
-            }}
-          />
+      <section
+        className="relative isolate w-screen max-w-[100vw] overflow-hidden bg-black py-10 sm:py-16 -mt-16 -mb-16"
+        style={{
+          marginLeft: "calc(50% - 50vw)",
+          marginRight: "calc(50% - 50vw)",
+        }}
+        aria-labelledby="heritage-workshop-heading"
+      >
+        <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 text-white lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
+          <div className="space-y-4">
+            <p
+              id="heritage-workshop-heading"
+              className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em]"
+            >
+              Ask the workshop
+            </p>
+            <p className="mb-8 text-sm sm:text-base font-light italic text-gray-300 leading-relaxed">
+              Trace provenance, decode proof marks, or understand where your gun sits in Perazzi lineage before you dive into the archives.
+            </p>
+            <div className="flex flex-wrap justify-start gap-3">
+              <Link
+                href="#heritage-serial-lookup"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/70 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+              >
+                Check serial record
+                <span aria-hidden="true">-&gt;</span>
+              </Link>
+            </div>
+          </div>
+
+          <div className="space-y-3 text-sm sm:text-base font-light italic text-gray-300">
+            <p className="text-sm sm:text-base font-semibold not-italic text-white">
+              What the atelier can surface:
+            </p>
+            <ul className="space-y-2">
+              <li>
+                <span className="text-base sm:text-lg font-black not-italic text-white">Serial lineage</span>
+                {" "}-{" "}
+                match your serial to proof codes, production year, and model family.
+              </li>
+              <li>
+                <span className="text-base sm:text-lg font-black not-italic text-white">Proof marks & provenance</span>
+                {" "}-{" "}
+                interpret stamps, engravings, and ownership clues for collectors.
+              </li>
+              <li>
+                <span className="text-base sm:text-lg font-black not-italic text-white">Era context</span>
+                {" "}-{" "}
+                connect your shotgun's year to champions, medals, and the right heritage stories.
+              </li>
+            </ul>
+            <p className="text-sm sm:text-base font-light italic text-gray-300 leading-relaxed">
+              Share your serial, photos, and any history you know; we'll pull from the archives and point you to the best next pages to explore.
+            </p>
+          </div>
         </div>
       </section>
       <SerialLookup lookupAction={serialLookupAction} />
