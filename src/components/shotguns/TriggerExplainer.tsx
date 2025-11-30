@@ -17,6 +17,13 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
   const [manualOpen, setManualOpen] = useState(false);
   const resolvedOpen = isDesktop ? true : manualOpen;
   const ratio = explainer.diagram.aspectRatio ?? 16 / 9;
+  const subheading = explainer.subheading ?? "Removable or fixed—choose by confidence and feel.";
+  const background = explainer.background ?? {
+    id: "trigger-explainer-bg",
+    kind: "image",
+    url: "/redesign-photos/shotguns/pweb-shotguns-triggerexplainer-bg.jpg",
+    alt: "Perazzi trigger workshop background",
+  };
 
   const analyticsRef = useAnalyticsObserver<HTMLElement>("TriggerExplainerSeen");
 
@@ -33,8 +40,8 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <Image
-          src="/redesign-photos/shotguns/pweb-shotguns-triggerexplainer-bg.jpg"
-          alt="Perazzi trigger workshop background"
+          src={background.url}
+          alt={background.alt}
           fill
           sizes="100vw"
           className="object-cover"
@@ -71,7 +78,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                 {explainer.title}
               </h2>
               <p className="text-sm sm:text-base font-light italic text-ink-muted">
-                Removable or fixed—choose by confidence and feel.
+                {subheading}
               </p>
               <Collapsible.Trigger
                 className="mt-1 inline-flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink hover:border-ink/60 focus-ring transition lg:hidden"

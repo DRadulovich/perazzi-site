@@ -10,11 +10,108 @@ import Link from "next/link";
 
 export default async function ShotgunsLandingPage() {
   const { landing, grades } = await getShotgunsSectionData();
+  const disciplineFit = landing.disciplineFitAdvisory ?? {
+    eyebrow: "Discipline fit",
+    heading: "The geometry of rhythm",
+    paragraphs: [
+      "Most shooters feel it long before they can explain it — why one gun feels effortless on Sporting, but out of step on Trap.",
+      "Perazzi can translate that feeling into geometry: rib height, stock line, point of impact, and the way a gun wants to move through space. Ask how your primary discipline — or the one you’re growing toward — should shape the way your Perazzi is built.",
+    ],
+    chatPrompt:
+      "Translate my main clay discipline into Perazzi geometry—rib height, stock line, point of impact, and swing speed—for Trap, Skeet, or Sporting/FITASC. Suggest where I should start.",
+    bullets: [
+      {
+        code: "trap",
+        label: "Trap",
+        description:
+          "steep, rising targets that reward an assertive, up-through-the-line move. Higher point of impact, more vertical bias, and a stock that lets you stay tall without lifting your head.",
+      },
+      {
+        code: "skeet",
+        label: "Skeet",
+        description:
+          "short, repeatable arcs where timing and pre-mount rhythm matter more than raw speed. Flatter rib, softer point of impact, and geometry that lets the gun glide instead of chase.",
+      },
+      {
+        code: "sporting",
+        label: "Sporting / FITASC",
+        description:
+          "unpredictable windows, long crossers, and targets that live above, below, and beyond your comfort zone. Neutral, balanced geometry that doesn’t fight you as the picture changes — it simply goes where you ask.",
+      },
+    ],
+  };
+
+  const gaugeAdvisory = landing.gaugeSelectionAdvisory ?? {
+    heading: "Gauge selection",
+    intro:
+      "Decode how 12, 20, and 28 gauge choices shape recoil feel, swing speed, and payload — and how to pair them with your platform and disciplines.",
+    chatLabel: "Ask about gauges",
+    chatPrompt:
+      "Help me choose between 12, 20, and 28 gauge for my Perazzi: recoil feel, payload options, swing speed, and how gauge pairs with MX vs HT platforms for my disciplines.",
+    linkLabel: "Explore gauges",
+    linkHref: landing.gaugesTeaser.href,
+    bullets: landing.gaugesTeaser.bullets,
+    closing:
+      "We’ll tailor gauge choice to your primary discipline, preferred swing, and how you like a gun to absorb recoil.",
+  };
+
+  const triggerChoice = landing.triggerChoiceAdvisory ?? {
+    heading: "Trigger choice",
+    intro:
+      "Decide when to choose a fixed trigger group for simplicity, or a detachable set for quick swaps, varied pull weights, and service resilience.",
+    chatLabel: "Choose my trigger",
+    chatPrompt:
+      "Help me decide between a fixed trigger and a removable trigger group on my Perazzi: reliability, service, pull-weight options, and what matters for travel or competition timelines.",
+    linkLabel: "See trigger details",
+    linkHref: "#trigger-explainer-heading",
+    bullets: [
+      "Fixed group – lighter, fewer parts to manage, set-and-forget confidence.",
+      "Removable group – fast swaps for pull weight or service, keeps you running at events.",
+      "Support & travel – how you compete, who services your gun, and what spares you carry.",
+    ],
+    closing:
+      "We’ll align trigger choice to your platform, discipline rhythm, and how you like your release to feel under pressure.",
+  };
+
+  const disciplineParagraphs =
+    disciplineFit.paragraphs?.length
+      ? disciplineFit.paragraphs
+      : [
+          "Most shooters feel it long before they can explain it — why one gun feels effortless on Sporting, but out of step on Trap.",
+          "Perazzi can translate that feeling into geometry: rib height, stock line, point of impact, and the way a gun wants to move through space. Ask how your primary discipline — or the one you’re growing toward — should shape the way your Perazzi is built.",
+        ];
+
+  const disciplineBullets =
+    disciplineFit.bullets?.length
+      ? disciplineFit.bullets
+      : [
+          {
+            code: "trap",
+            label: "Trap",
+            description:
+              "steep, rising targets that reward an assertive, up-through-the-line move. Higher point of impact, more vertical bias, and a stock that lets you stay tall without lifting your head.",
+          },
+          {
+            code: "skeet",
+            label: "Skeet",
+            description:
+              "short, repeatable arcs where timing and pre-mount rhythm matter more than raw speed. Flatter rib, softer point of impact, and geometry that lets the gun glide instead of chase.",
+          },
+          {
+            code: "sporting",
+            label: "Sporting / FITASC",
+            description:
+              "unpredictable windows, long crossers, and targets that live above, below, and beyond your comfort zone. Neutral, balanced geometry that doesn’t fight you as the picture changes — it simply goes where you ask.",
+          },
+        ];
+
+  const disciplineClosing =
+    "The concierge can map how you mount, move, and see targets to the discipline that fits you now — and the one you’re preparing for next.";
 
   return (
     <div className="space-y-5">
       <LandingHero hero={landing.hero} />
-      <PlatformGrid platforms={landing.platforms} />
+      <PlatformGrid platforms={landing.platforms} ui={landing.platformGridUi} />
       <section
         className="border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-10 sm:py-16"
         aria-labelledby="discipline-fit-heading"
@@ -22,21 +119,18 @@ export default async function ShotgunsLandingPage() {
         <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
           <div className="space-y-4 text-ink">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
-              Discipline fit
+              {disciplineFit.eyebrow ?? "Discipline fit"}
             </p>
             <p
               id="discipline-fit-heading"
               className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
             >
-              The geometry of rhythm
+              {disciplineFit.heading ?? "The geometry of rhythm"}
             </p>
             <div className="mb-6 space-y-4 text-sm sm:text-base font-light italic text-ink-muted leading-relaxed lg:mb-10">
-              <p>
-                Most shooters feel it long before they can explain it — why one gun feels effortless on Sporting, but out of step on Trap.
-              </p>
-              <p>
-                Perazzi can translate that feeling into geometry: rib height, stock line, point of impact, and the way a gun wants to move through space. Ask how your primary discipline — or the one you’re growing toward — should shape the way your Perazzi is built.
-              </p>
+              {disciplineParagraphs.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
             </div>
             <div className="flex flex-wrap gap-3 justify-start">
               <ChatTriggerButton
@@ -44,6 +138,7 @@ export default async function ShotgunsLandingPage() {
                 variant="outline"
                 payload={{
                   question:
+                    disciplineFit.chatPrompt ??
                     "Translate my main clay discipline into Perazzi geometry—rib height, stock line, point of impact, and swing speed—for Trap, Skeet, or Sporting/FITASC. Suggest where I should start.",
                   context: { pageUrl: "/shotguns" },
                 }}
@@ -56,18 +151,16 @@ export default async function ShotgunsLandingPage() {
               Three rhythms most clay shooters learn:
             </p>
             <ul className="space-y-2">
-              <li>
-                <span className="text-base sm:text-lg font-black not-italic text-ink">Trap</span> – steep, rising targets that reward an assertive, up-through-the-line move. Higher point of impact, more vertical bias, and a stock that lets you stay tall without lifting your head.
-              </li>
-              <li>
-                <span className="text-base sm:text-lg font-black not-italic text-ink">Skeet</span> – short, repeatable arcs where timing and pre-mount rhythm matter more than raw speed. Flatter rib, softer point of impact, and geometry that lets the gun glide instead of chase.
-              </li>
-              <li>
-                <span className="text-base sm:text-lg font-black not-italic text-ink">Sporting / FITASC</span> – unpredictable windows, long crossers, and targets that live above, below, and beyond your comfort zone. Neutral, balanced geometry that doesn’t fight you as the picture changes — it simply goes where you ask.
-              </li>
+              {disciplineBullets.map((item) => (
+                <li key={item.code ?? item.label}>
+                  <span className="text-base sm:text-lg font-black not-italic text-ink">{item.label}</span>
+                  {" "}–{" "}
+                  {item.description ?? ""}
+                </li>
+              ))}
             </ul>
             <p className="text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
-              The concierge can map how you mount, move, and see targets to the discipline that fits you now — and the one you’re preparing for next.
+              {disciplineClosing}
             </p>
           </div>
         </div>
@@ -78,6 +171,7 @@ export default async function ShotgunsLandingPage() {
       <DisciplineRail
         disciplines={landing.disciplines}
         platforms={landing.platforms}
+        ui={landing.disciplineRailUi}
       />
       <section
         className="border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-10 sm:py-16"
@@ -89,26 +183,28 @@ export default async function ShotgunsLandingPage() {
               id="gauge-primer-heading"
               className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
             >
-              Gauge selection
+              {gaugeAdvisory.heading ?? "Gauge selection"}
             </p>
             <p className="mb-8 text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
-              Decode how 12, 20, and 28 gauge choices shape recoil feel, swing speed, and payload — and how to pair them with your platform and disciplines.
+              {gaugeAdvisory.intro
+                ?? "Decode how 12, 20, and 28 gauge choices shape recoil feel, swing speed, and payload — and how to pair them with your platform and disciplines."}
             </p>
             <div className="flex flex-wrap gap-3 justify-start">
               <ChatTriggerButton
-                label="Ask about gauges"
+                label={gaugeAdvisory.chatLabel ?? "Ask about gauges"}
                 variant="outline"
                 payload={{
                   question:
-                    "Help me choose between 12, 20, and 28 gauge for my Perazzi: recoil feel, payload options, swing speed, and how gauge pairs with MX vs HT platforms for my disciplines.",
+                    gaugeAdvisory.chatPrompt
+                    ?? "Help me choose between 12, 20, and 28 gauge for my Perazzi: recoil feel, payload options, swing speed, and how gauge pairs with MX vs HT platforms for my disciplines.",
                   context: { pageUrl: "/shotguns" },
                 }}
               />
               <Link
-                href={landing.gaugesTeaser.href}
+                href={gaugeAdvisory.linkHref ?? landing.gaugesTeaser.href}
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
-                Explore gauges
+                {gaugeAdvisory.linkLabel ?? "Explore gauges"}
                 <span aria-hidden="true">→</span>
               </Link>
             </div>
@@ -119,14 +215,15 @@ export default async function ShotgunsLandingPage() {
               What to compare:
             </p>
             <ul className="space-y-2">
-              {landing.gaugesTeaser.bullets.map((item) => (
+              {(gaugeAdvisory.bullets?.length ? gaugeAdvisory.bullets : landing.gaugesTeaser.bullets).map((item) => (
                 <li key={item} className="text-sm sm:text-base">
                   {item}
                 </li>
               ))}
             </ul>
             <p className="text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
-              We’ll tailor gauge choice to your primary discipline, preferred swing, and how you like a gun to absorb recoil.
+              {gaugeAdvisory.closing
+                ?? "We’ll tailor gauge choice to your primary discipline, preferred swing, and how you like a gun to absorb recoil."}
             </p>
           </div>
         </div>
@@ -142,26 +239,28 @@ export default async function ShotgunsLandingPage() {
               id="trigger-choice-heading"
               className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
             >
-              Trigger choice
+              {triggerChoice.heading ?? "Trigger choice"}
             </p>
             <p className="mb-8 text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
-              Decide when to choose a fixed trigger group for simplicity, or a detachable set for quick swaps, varied pull weights, and service resilience.
+              {triggerChoice.intro
+                ?? "Decide when to choose a fixed trigger group for simplicity, or a detachable set for quick swaps, varied pull weights, and service resilience."}
             </p>
             <div className="flex flex-wrap gap-3 justify-start">
               <ChatTriggerButton
-                label="Choose my trigger"
+                label={triggerChoice.chatLabel ?? "Choose my trigger"}
                 variant="outline"
                 payload={{
                   question:
-                    "Help me decide between a fixed trigger and a removable trigger group on my Perazzi: reliability, service, pull-weight options, and what matters for travel or competition timelines.",
+                    triggerChoice.chatPrompt
+                    ?? "Help me decide between a fixed trigger and a removable trigger group on my Perazzi: reliability, service, pull-weight options, and what matters for travel or competition timelines.",
                   context: { pageUrl: "/shotguns", mode: "prospect" },
                 }}
               />
               <Link
-                href="#trigger-explainer-heading"
+                href={triggerChoice.linkHref ?? "#trigger-explainer-heading"}
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
-                See trigger details
+                {triggerChoice.linkLabel ?? "See trigger details"}
                 <span aria-hidden="true">→</span>
               </Link>
             </div>
@@ -172,23 +271,26 @@ export default async function ShotgunsLandingPage() {
               What to weigh:
             </p>
             <ul className="space-y-2">
-              <li className="text-sm sm:text-base">
-                Fixed group – lighter, fewer parts to manage, set-and-forget confidence.
-              </li>
-              <li className="text-sm sm:text-base">
-                Removable group – fast swaps for pull weight or service, keeps you running at events.
-              </li>
-              <li className="text-sm sm:text-base">
-                Support & travel – how you compete, who services your gun, and what spares you carry.
-              </li>
+              {(triggerChoice.bullets?.length
+                ? triggerChoice.bullets
+                : [
+                    "Fixed group – lighter, fewer parts to manage, set-and-forget confidence.",
+                    "Removable group – fast swaps for pull weight or service, keeps you running at events.",
+                    "Support & travel – how you compete, who services your gun, and what spares you carry.",
+                  ]).map((item) => (
+                    <li key={item} className="text-sm sm:text-base">
+                      {item}
+                    </li>
+                  ))}
             </ul>
             <p className="text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
-              We’ll align trigger choice to your platform, discipline rhythm, and how you like your release to feel under pressure.
+              {triggerChoice.closing
+                ?? "We’ll align trigger choice to your platform, discipline rhythm, and how you like your release to feel under pressure."}
             </p>
           </div>
         </div>
       </section>
-      <EngravingGradesCarousel grades={grades} />
+      <EngravingGradesCarousel grades={grades} ui={landing.engravingCarouselUi} />
       <CTASection
         text="Begin your fitting with the Botticino atelier—matching balance, trigger feel, and engraving to your rhythm."
         primary={{ label: "Begin Your Fitting", href: "/experience/fitting" }}

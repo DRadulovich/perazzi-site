@@ -5,12 +5,13 @@ import Image from "next/image";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 
 type CinematicImageStripProps = {
-  src: string;
+  src?: string;
+  image?: { url: string; alt?: string };
   alt?: string;
 };
 
 // Full-bleed cinematic band for the shotguns landing; breaks out of the SiteShell container without adding new content.
-export function CinematicImageStrip({ src, alt }: CinematicImageStripProps) {
+export function CinematicImageStrip({ src, image, alt }: CinematicImageStripProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
   const { scrollYProgress } = useScroll({
@@ -18,6 +19,11 @@ export function CinematicImageStrip({ src, alt }: CinematicImageStripProps) {
     offset: ["start end", "end start"],
   });
   const parallaxY = useTransform(scrollYProgress, [0, 1], ["-4%", "8%"]);
+
+  const resolvedSrc = image?.url ?? src ?? "";
+  const resolvedAlt = image?.alt ?? alt ?? "";
+
+  if (!resolvedSrc) return null;
 
   return (
     <section
@@ -35,8 +41,8 @@ export function CinematicImageStrip({ src, alt }: CinematicImageStripProps) {
           style={{ y: prefersReducedMotion ? "0%" : parallaxY }}
         >
           <Image
-            src={src}
-            alt={alt ?? ""}
+            src={resolvedSrc}
+            alt={resolvedAlt}
             fill
             sizes="100vw"
             className="object-cover"

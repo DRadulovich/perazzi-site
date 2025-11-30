@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { FittingStage } from "@/types/content";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { FittingStage, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { logAnalytics } from "@/lib/analytics";
@@ -12,9 +12,10 @@ import { TimelineItem } from "./timeline-item";
 
 type TimelineScrollerProps = {
   stages: FittingStage[];
+  framing: HomeData["timelineFraming"];
 };
 
-export function TimelineScroller({ stages }: TimelineScrollerProps) {
+export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const analyticsRef = useAnalyticsObserver("CraftTimelineSeen");
   const prefersReducedMotion = useReducedMotion();
@@ -24,6 +25,14 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
   const [activeStage, setActiveStage] = useState(0);
   const seenStagesRef = useRef(new Set<string>());
   const skipTargetId = "home-timeline-anchor";
+  const headingTitle = framing.title ?? "Craftsmanship Journey";
+  const headingEyebrow = framing.eyebrow ?? "Three rituals that define a bespoke Perazzi build";
+  const headingInstructions = framing.instructions
+    ?? "Scroll through each stage to see how measurement, tunnel testing, and finishing combine into a legacy piece.";
+  const alternateTitle = framing.alternateTitle ?? "Fitting Timeline";
+  const backgroundUrl = framing.background?.url
+    ?? "/redesign-photos/homepage/timeline-scroller/pweb-home-timelinescroller-bg.jpg";
+  const backgroundAlt = framing.background?.alt ?? "Perazzi workshop background";
 
   useEffect(() => {
     const currentStage = stages[activeStage];
@@ -33,19 +42,6 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
       logAnalytics(`CraftTimeline.StageSeen:${currentStage.id}`);
     }
   }, [activeStage, stages]);
-
-  const stackedStages = useMemo(
-    () =>
-      stages.map((stage) => (
-        <div
-          key={`stacked-${stage.id}`}
-          className="snap-start motion-reduce:opacity-100"
-        >
-          <TimelineItem stage={stage} />
-        </div>
-      )),
-    [stages],
-  );
 
   const focusSkipTarget = useCallback(() => {
     if (typeof document === "undefined") return;
@@ -76,8 +72,8 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
       >
         <div className="absolute inset-0 -z-10 overflow-hidden">
           <Image
-            src="/redesign-photos/homepage/timeline-scroller/pweb-home-timelinescroller-bg.jpg"
-            alt="Perazzi workshop background"
+            src={backgroundUrl}
+            alt={backgroundAlt}
             fill
             sizes="100vw"
             className="object-cover"
@@ -109,17 +105,16 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
               <div className="space-y-4 md:flex md:items-center md:justify-between md:gap-8">
                 <div className="space-y-3">
                   <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-                    Craftsmanship Journey
+                    {headingTitle}
                   </p>
                   <h2
                     id="craft-timeline-heading"
                     className="text-base sm:text-lg lg:text-xl font-light italic text-ink-muted"
                   >
-                    Three rituals that define a bespoke Perazzi build
+                    {headingEyebrow}
                   </h2>
                   <p className="max-w-3xl text-xs sm:text-sm leading-relaxed text-ink-muted lg:max-w-4xl">
-                    Scroll through each stage to see how measurement, tunnel
-                    testing, and finishing combine into a legacy piece.
+                    {headingInstructions}
                   </p>
                 </div>
               </div>
@@ -128,7 +123,7 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
                 <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
                   <div className="space-y-4 border-none bg-card/0 p-4 shadow-none sm:border-none sm:bg-card/0 sm:p-4 sm:shadow-none">
                     <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-ink">
-                      Fitting Timeline
+                      {alternateTitle}
                     </p>
                     <div className="space-y-1">
                       {stages.map((stage, index) => (
@@ -161,15 +156,67 @@ export function TimelineScroller({ stages }: TimelineScrollerProps) {
                 <div className="space-y-8">
                   <div className="space-y-3">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
-                      Fitting timeline
+                      {alternateTitle}
                     </p>
                     <p className="text-xs sm:text-sm leading-relaxed text-ink-muted">
                       Scroll through each stage to follow the bespoke process
-                      from first measurements to the final finish.
+                      from first measurements to the final finish. Tap a stage to see more.
                     </p>
                   </div>
-                  <div className="space-y-10 snap-y snap-mandatory">
-                    {stackedStages}
+
+                  <div className="space-y-3">
+                    {stages.map((stage, index) => {
+                      const expanded = activeStage === index;
+                      const panelId = `craft-stage-panel-${stage.id}`;
+                      const buttonId = `craft-stage-trigger-${stage.id}`;
+
+                      return (
+                        <div
+                          key={`stacked-${stage.id}`}
+                          className="rounded-2xl border border-border/60 bg-card/10 p-3 sm:p-4"
+                        >
+                          <button
+                            type="button"
+                            id={buttonId}
+                            aria-expanded={expanded}
+                            aria-controls={panelId}
+                            onClick={() =>
+                              setActiveStage(expanded ? -1 : index)
+                            }
+                            className="flex w-full items-center justify-between gap-3 text-left focus-ring"
+                          >
+                            <div>
+                              <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+                                Stage {stage.order}
+                              </p>
+                              <p className="text-sm sm:text-base font-semibold text-ink">
+                                {stage.title}
+                              </p>
+                            </div>
+                            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red/70">
+                              {expanded ? "Collapse" : "Show more"}
+                            </span>
+                          </button>
+
+                          <div
+                            id={panelId}
+                            aria-labelledby={buttonId}
+                            className={cn(
+                              "mt-3 overflow-hidden transition-all duration-300",
+                              expanded
+                                ? "max-h-[999px] opacity-100"
+                                : "max-h-0 opacity-0",
+                            )}
+                          >
+                            {expanded && (
+                              <div className="mt-2">
+                                <TimelineItem stage={stage} />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}

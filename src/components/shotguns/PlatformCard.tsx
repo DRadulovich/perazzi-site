@@ -9,9 +9,10 @@ import { logAnalytics } from "@/lib/analytics";
 type PlatformCardProps = {
   platform: Platform;
   priority?: boolean;
+  footerLabel?: string;
 };
 
-export function PlatformCard({ platform, priority = false }: PlatformCardProps) {
+export function PlatformCard({ platform, priority = false, footerLabel }: PlatformCardProps) {
   const analyticsRef = useAnalyticsObserver<HTMLAnchorElement>(
     `shotguns_platform_card_impression:${platform.id}`,
   );
@@ -128,7 +129,7 @@ export function PlatformCard({ platform, priority = false }: PlatformCardProps) 
 
       <div className="mt-auto pt-6">
         <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-perazzi-red">
-          Explore the {platform.name} lineage
+          {footerLabel ?? `Explore the ${platform.name} lineage`}
           <span aria-hidden="true">→</span>
         </span>
       </div>

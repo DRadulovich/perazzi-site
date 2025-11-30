@@ -11,21 +11,75 @@ import {
   type SanityImageResult,
 } from "./utils";
 
+const platformGridBackgroundPath = "/redesign-photos/shotguns/pweb-shotguns-platformgrid-bg.jpg";
+const disciplineRailBackgroundPath = "/redesign-photos/shotguns/pweb-shotguns-disciplinerail2-bg.jpg";
+const triggerExplainerBackgroundPath = "/redesign-photos/shotguns/pweb-shotguns-triggerexplainer-bg.jpg";
+const engravingCarouselBackgroundPath = "/redesign-photos/shotguns/pweb-shotguns-engravingsgradecarousel-bg.jpg";
+
 type ShotgunsLandingResponse = {
   hero?: {
     title?: string;
     subheading?: string;
     background?: SanityImageResult;
   };
+  platformGridUi?: {
+    heading?: string;
+    subheading?: string;
+    backgroundImage?: { path?: string | null; image?: SanityImageResult };
+    chatLabelTemplate?: string;
+    chatPayloadTemplate?: string;
+    cardFooterTemplate?: string;
+  };
   triggerExplainer?: {
     title?: string;
+    subheading?: string;
     copy?: PortableTextBlock[];
     diagram?: SanityImageResult;
     links?: Array<{ label?: string; href?: string }>;
+    backgroundImage?: { path?: string | null; image?: SanityImageResult };
   };
   teasers?: {
     engraving?: SanityImageResult;
     wood?: SanityImageResult;
+  };
+  disciplineFitAdvisory?: {
+    eyebrow?: string;
+    heading?: string;
+    paragraphs?: string[];
+    chatPrompt?: string;
+    bullets?: Array<{ code?: string; label?: string; description?: string }>;
+  };
+  disciplineRailUi?: {
+    heading?: string;
+    subheading?: string;
+    backgroundImage?: { path?: string | null; image?: SanityImageResult };
+  };
+  gaugeSelectionAdvisory?: {
+    heading?: string;
+    intro?: string;
+    chatLabel?: string;
+    chatPrompt?: string;
+    linkLabel?: string;
+    linkHref?: string;
+    bullets?: string[];
+    closing?: string;
+  };
+  triggerChoiceAdvisory?: {
+    heading?: string;
+    intro?: string;
+    chatLabel?: string;
+    chatPrompt?: string;
+    linkLabel?: string;
+    linkHref?: string;
+    bullets?: string[];
+    closing?: string;
+  };
+  engravingCarouselUi?: {
+    heading?: string;
+    subheading?: string;
+    backgroundImage?: { path?: string | null; image?: SanityImageResult };
+    ctaLabel?: string;
+    categoryLabels?: string[];
   };
   disciplineHubs?: Array<{
     key?: string;
@@ -103,15 +157,64 @@ export interface ShotgunsLandingPayload {
     subheading?: string;
     background?: FactoryAsset;
   };
+  platformGridUi?: {
+    heading?: string;
+    subheading?: string;
+    background?: FactoryAsset;
+    chatLabelTemplate?: string;
+    chatPayloadTemplate?: string;
+    cardFooterTemplate?: string;
+  };
   triggerExplainer?: {
     title?: string;
+    subheading?: string;
     copyPortableText?: PortableTextBlock[];
     diagram?: FactoryAsset;
     links?: Array<{ label?: string; href?: string }>;
+    background?: FactoryAsset;
   };
   teasers?: {
     engraving?: FactoryAsset;
     wood?: FactoryAsset;
+  };
+  disciplineFitAdvisory?: {
+    eyebrow?: string;
+    heading?: string;
+    paragraphs?: string[];
+    chatPrompt?: string;
+    bullets?: Array<{ code?: string; label?: string; description?: string }>;
+  };
+  disciplineRailUi?: {
+    heading?: string;
+    subheading?: string;
+    background?: FactoryAsset;
+  };
+  gaugeSelectionAdvisory?: {
+    heading?: string;
+    intro?: string;
+    chatLabel?: string;
+    chatPrompt?: string;
+    linkLabel?: string;
+    linkHref?: string;
+    bullets?: string[];
+    closing?: string;
+  };
+  triggerChoiceAdvisory?: {
+    heading?: string;
+    intro?: string;
+    chatLabel?: string;
+    chatPrompt?: string;
+    linkLabel?: string;
+    linkHref?: string;
+    bullets?: string[];
+    closing?: string;
+  };
+  engravingCarouselUi?: {
+    heading?: string;
+    subheading?: string;
+    background?: FactoryAsset;
+    ctaLabel?: string;
+    categoryLabels?: string[];
   };
   disciplineHubs?: Array<{
     key?: string;
@@ -186,8 +289,20 @@ const shotgunsLandingQuery = groq`
         ${imageWithMetaFields}
       }
     },
+    platformGridUi{
+      heading,
+      subheading,
+      backgroundImage{
+        path,
+        image{ ${imageWithMetaFields} }
+      },
+      chatLabelTemplate,
+      chatPayloadTemplate,
+      cardFooterTemplate
+    },
     triggerExplainer{
       title,
+      subheading,
       copy,
       diagram{
         ${imageWithMetaFields}
@@ -195,11 +310,64 @@ const shotgunsLandingQuery = groq`
       links[]{
         label,
         href
+      },
+      backgroundImage{
+        path,
+        image{ ${imageWithMetaFields} }
       }
     },
     teasers{
       engraving{ ${imageWithMetaFields} },
       wood{ ${imageWithMetaFields} }
+    },
+    disciplineFitAdvisory{
+      eyebrow,
+      heading,
+      paragraphs,
+      chatPrompt,
+      bullets[]{
+        code,
+        label,
+        description
+      }
+    },
+    disciplineRailUi{
+      heading,
+      subheading,
+      backgroundImage{
+        path,
+        image{ ${imageWithMetaFields} }
+      }
+    },
+    gaugeSelectionAdvisory{
+      heading,
+      intro,
+      chatLabel,
+      chatPrompt,
+      linkLabel,
+      linkHref,
+      bullets,
+      closing
+    },
+    triggerChoiceAdvisory{
+      heading,
+      intro,
+      chatLabel,
+      chatPrompt,
+      linkLabel,
+      linkHref,
+      bullets,
+      closing
+    },
+    engravingCarouselUi{
+      heading,
+      subheading,
+      backgroundImage{
+        path,
+        image{ ${imageWithMetaFields} }
+      },
+      ctaLabel,
+      categoryLabels
     },
     disciplineHubs[]{
       key,
@@ -313,21 +481,102 @@ export async function getShotgunsLanding(): Promise<ShotgunsLandingPayload | nul
           background: mapImageResult(data.hero.background),
         }
       : undefined,
+    platformGridUi: data.platformGridUi
+      ? {
+          heading: data.platformGridUi.heading ?? undefined,
+          subheading: data.platformGridUi.subheading ?? undefined,
+          background: mapBackgroundImage(
+            data.platformGridUi.backgroundImage?.image,
+            data.platformGridUi.backgroundImage?.path,
+            platformGridBackgroundPath,
+            "Perazzi workshop background for platform section",
+          ),
+          chatLabelTemplate: data.platformGridUi.chatLabelTemplate ?? undefined,
+          chatPayloadTemplate: data.platformGridUi.chatPayloadTemplate ?? undefined,
+          cardFooterTemplate: data.platformGridUi.cardFooterTemplate ?? undefined,
+        }
+      : undefined,
     triggerExplainer: data.triggerExplainer
       ? {
           title: data.triggerExplainer.title ?? undefined,
+          subheading: data.triggerExplainer.subheading ?? undefined,
           copyPortableText: data.triggerExplainer.copy,
           diagram: mapImageResult(data.triggerExplainer.diagram ?? null),
           links: data.triggerExplainer.links?.map((link) => ({
             label: link.label ?? undefined,
             href: link.href ?? undefined,
           })),
+          background: mapBackgroundImage(
+            data.triggerExplainer.backgroundImage?.image,
+            data.triggerExplainer.backgroundImage?.path,
+            triggerExplainerBackgroundPath,
+            "Perazzi trigger workshop background",
+          ),
         }
       : undefined,
     teasers: data.teasers
       ? {
           engraving: mapImageResult(data.teasers.engraving ?? null),
           wood: mapImageResult(data.teasers.wood ?? null),
+        }
+      : undefined,
+    disciplineFitAdvisory: data.disciplineFitAdvisory
+      ? {
+          eyebrow: data.disciplineFitAdvisory.eyebrow ?? undefined,
+          heading: data.disciplineFitAdvisory.heading ?? undefined,
+          paragraphs: data.disciplineFitAdvisory.paragraphs ?? undefined,
+          chatPrompt: data.disciplineFitAdvisory.chatPrompt ?? undefined,
+          bullets: data.disciplineFitAdvisory.bullets ?? undefined,
+        }
+      : undefined,
+    disciplineRailUi: data.disciplineRailUi
+      ? {
+          heading: data.disciplineRailUi.heading ?? undefined,
+          subheading: data.disciplineRailUi.subheading ?? undefined,
+          background: mapBackgroundImage(
+            data.disciplineRailUi.backgroundImage?.image,
+            data.disciplineRailUi.backgroundImage?.path,
+            disciplineRailBackgroundPath,
+            "Perazzi discipline background",
+          ),
+        }
+      : undefined,
+    gaugeSelectionAdvisory: data.gaugeSelectionAdvisory
+      ? {
+          heading: data.gaugeSelectionAdvisory.heading ?? undefined,
+          intro: data.gaugeSelectionAdvisory.intro ?? undefined,
+          chatLabel: data.gaugeSelectionAdvisory.chatLabel ?? undefined,
+          chatPrompt: data.gaugeSelectionAdvisory.chatPrompt ?? undefined,
+          linkLabel: data.gaugeSelectionAdvisory.linkLabel ?? undefined,
+          linkHref: data.gaugeSelectionAdvisory.linkHref ?? undefined,
+          bullets: data.gaugeSelectionAdvisory.bullets ?? undefined,
+          closing: data.gaugeSelectionAdvisory.closing ?? undefined,
+        }
+      : undefined,
+    triggerChoiceAdvisory: data.triggerChoiceAdvisory
+      ? {
+          heading: data.triggerChoiceAdvisory.heading ?? undefined,
+          intro: data.triggerChoiceAdvisory.intro ?? undefined,
+          chatLabel: data.triggerChoiceAdvisory.chatLabel ?? undefined,
+          chatPrompt: data.triggerChoiceAdvisory.chatPrompt ?? undefined,
+          linkLabel: data.triggerChoiceAdvisory.linkLabel ?? undefined,
+          linkHref: data.triggerChoiceAdvisory.linkHref ?? undefined,
+          bullets: data.triggerChoiceAdvisory.bullets ?? undefined,
+          closing: data.triggerChoiceAdvisory.closing ?? undefined,
+        }
+      : undefined,
+    engravingCarouselUi: data.engravingCarouselUi
+      ? {
+          heading: data.engravingCarouselUi.heading ?? undefined,
+          subheading: data.engravingCarouselUi.subheading ?? undefined,
+          background: mapBackgroundImage(
+            data.engravingCarouselUi.backgroundImage?.image,
+            data.engravingCarouselUi.backgroundImage?.path,
+            engravingCarouselBackgroundPath,
+            "Perazzi engraving workshop background",
+          ),
+          ctaLabel: data.engravingCarouselUi.ctaLabel ?? undefined,
+          categoryLabels: data.engravingCarouselUi.categoryLabels ?? undefined,
         }
       : undefined,
     disciplineHubs: data.disciplineHubs?.map((hub) => ({
@@ -442,4 +691,28 @@ export async function getGrades(): Promise<ShotgunsGradePayload[]> {
         ?.map((asset) => mapImageResult(asset ?? null))
         .filter(Boolean) as FactoryAsset[] | undefined,
     }));
+}
+
+function mapBackgroundImage(
+  image: SanityImageResult | null | undefined,
+  path: string | null | undefined,
+  fallbackPath: string,
+  fallbackAlt: string,
+): FactoryAsset | undefined {
+  const mapped = mapImageResult(image ?? null);
+  if (mapped) return mapped;
+  if (path) {
+    return {
+      id: path,
+      kind: "image",
+      url: path,
+      alt: fallbackAlt,
+    };
+  }
+  return {
+    id: fallbackPath,
+    kind: "image",
+    url: fallbackPath,
+    alt: fallbackAlt,
+  };
 }

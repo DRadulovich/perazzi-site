@@ -154,14 +154,6 @@ export function HeritageEraSection({
               <p className="mt-2 text-[11px] sm:text-[0.7rem] uppercase tracking-[0.25em] text-neutral-500">
                 {era.startYear}–{era.endYear}
               </p>
-              <div className="mt-3">
-                <a
-                  href="#perazzi-heritage-heading"
-                  className="inline-flex items-center text-[11px] sm:text-xs uppercase tracking-[0.22em] text-neutral-500 underline-offset-4 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white hover:text-neutral-200"
-                >
-                  Back to timeline
-                </a>
-              </div>
             </header>
 
             <div className="mt-8 space-y-6">
@@ -233,14 +225,6 @@ export function HeritageEraSection({
             <p className="mt-2 text-[11px] sm:text-[0.7rem] uppercase tracking-[0.25em] text-neutral-500">
               {era.startYear}–{era.endYear}
             </p>
-            <div className="mt-3">
-              <a
-                href="#perazzi-heritage-heading"
-                className="inline-flex items-center text-[11px] sm:text-xs uppercase tracking-[0.22em] text-neutral-500 underline-offset-4 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white hover:text-neutral-200"
-              >
-                Back to timeline
-              </a>
-            </div>
           </header>
 
           <HeritageEventRail

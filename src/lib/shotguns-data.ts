@@ -69,13 +69,29 @@ function applyLanding(target: ShotgunsSectionData, landing?: ShotgunsLandingPayl
     warn("Shotguns landing hero background missing; using fixture image.");
   }
 
+  if (landing.platformGridUi) {
+    target.landing.platformGridUi = {
+      heading: landing.platformGridUi.heading ?? target.landing.platformGridUi?.heading,
+      subheading: landing.platformGridUi.subheading ?? target.landing.platformGridUi?.subheading,
+      background: landing.platformGridUi.background ?? target.landing.platformGridUi?.background,
+      chatLabelTemplate:
+        landing.platformGridUi.chatLabelTemplate ?? target.landing.platformGridUi?.chatLabelTemplate,
+      chatPayloadTemplate:
+        landing.platformGridUi.chatPayloadTemplate ?? target.landing.platformGridUi?.chatPayloadTemplate,
+      cardFooterTemplate:
+        landing.platformGridUi.cardFooterTemplate ?? target.landing.platformGridUi?.cardFooterTemplate,
+    };
+  }
+
   if (landing.triggerExplainer?.diagram) {
     target.landing.triggerExplainer = {
       title: landing.triggerExplainer.title ?? target.landing.triggerExplainer.title,
+      subheading: landing.triggerExplainer.subheading ?? target.landing.triggerExplainer.subheading,
       copyHtml:
         portableTextToHtml(landing.triggerExplainer.copyPortableText) ??
         target.landing.triggerExplainer.copyHtml,
       diagram: landing.triggerExplainer.diagram ?? target.landing.triggerExplainer.diagram,
+      background: landing.triggerExplainer.background ?? target.landing.triggerExplainer.background,
       links:
         landing.triggerExplainer.links?.map((link) => ({
           label: link.label ?? "Explore",
@@ -91,6 +107,76 @@ function applyLanding(target: ShotgunsSectionData, landing?: ShotgunsLandingPayl
   }
   if (landing.teasers?.wood) {
     target.landing.gradesTeaser.woodTile = landing.teasers.wood;
+  }
+
+  if (landing.disciplineFitAdvisory) {
+    target.landing.disciplineFitAdvisory = {
+      eyebrow: landing.disciplineFitAdvisory.eyebrow ?? target.landing.disciplineFitAdvisory?.eyebrow,
+      heading: landing.disciplineFitAdvisory.heading ?? target.landing.disciplineFitAdvisory?.heading,
+      paragraphs:
+        landing.disciplineFitAdvisory.paragraphs?.length
+          ? landing.disciplineFitAdvisory.paragraphs
+          : target.landing.disciplineFitAdvisory?.paragraphs,
+      chatPrompt:
+        landing.disciplineFitAdvisory.chatPrompt ?? target.landing.disciplineFitAdvisory?.chatPrompt,
+      bullets:
+        landing.disciplineFitAdvisory.bullets?.length
+          ? landing.disciplineFitAdvisory.bullets
+          : target.landing.disciplineFitAdvisory?.bullets,
+    };
+  }
+
+  if (landing.disciplineRailUi) {
+    target.landing.disciplineRailUi = {
+      heading: landing.disciplineRailUi.heading ?? target.landing.disciplineRailUi?.heading,
+      subheading: landing.disciplineRailUi.subheading ?? target.landing.disciplineRailUi?.subheading,
+      background: landing.disciplineRailUi.background ?? target.landing.disciplineRailUi?.background,
+    };
+  }
+
+  if (landing.gaugeSelectionAdvisory) {
+    const fallbackBullets = target.landing.gaugeSelectionAdvisory?.bullets ?? target.landing.gaugesTeaser.bullets;
+    target.landing.gaugeSelectionAdvisory = {
+      heading: landing.gaugeSelectionAdvisory.heading ?? target.landing.gaugeSelectionAdvisory?.heading,
+      intro: landing.gaugeSelectionAdvisory.intro ?? target.landing.gaugeSelectionAdvisory?.intro,
+      chatLabel: landing.gaugeSelectionAdvisory.chatLabel ?? target.landing.gaugeSelectionAdvisory?.chatLabel,
+      chatPrompt: landing.gaugeSelectionAdvisory.chatPrompt ?? target.landing.gaugeSelectionAdvisory?.chatPrompt,
+      linkLabel: landing.gaugeSelectionAdvisory.linkLabel ?? target.landing.gaugeSelectionAdvisory?.linkLabel,
+      linkHref: landing.gaugeSelectionAdvisory.linkHref ?? target.landing.gaugeSelectionAdvisory?.linkHref,
+      bullets: landing.gaugeSelectionAdvisory.bullets?.length
+        ? landing.gaugeSelectionAdvisory.bullets
+        : fallbackBullets,
+      closing: landing.gaugeSelectionAdvisory.closing ?? target.landing.gaugeSelectionAdvisory?.closing,
+    };
+  }
+
+  if (landing.triggerChoiceAdvisory) {
+    target.landing.triggerChoiceAdvisory = {
+      heading: landing.triggerChoiceAdvisory.heading ?? target.landing.triggerChoiceAdvisory?.heading,
+      intro: landing.triggerChoiceAdvisory.intro ?? target.landing.triggerChoiceAdvisory?.intro,
+      chatLabel: landing.triggerChoiceAdvisory.chatLabel ?? target.landing.triggerChoiceAdvisory?.chatLabel,
+      chatPrompt: landing.triggerChoiceAdvisory.chatPrompt ?? target.landing.triggerChoiceAdvisory?.chatPrompt,
+      linkLabel: landing.triggerChoiceAdvisory.linkLabel ?? target.landing.triggerChoiceAdvisory?.linkLabel,
+      linkHref: landing.triggerChoiceAdvisory.linkHref ?? target.landing.triggerChoiceAdvisory?.linkHref,
+      bullets:
+        landing.triggerChoiceAdvisory.bullets?.length
+          ? landing.triggerChoiceAdvisory.bullets
+          : target.landing.triggerChoiceAdvisory?.bullets,
+      closing: landing.triggerChoiceAdvisory.closing ?? target.landing.triggerChoiceAdvisory?.closing,
+    };
+  }
+
+  if (landing.engravingCarouselUi) {
+    target.landing.engravingCarouselUi = {
+      heading: landing.engravingCarouselUi.heading ?? target.landing.engravingCarouselUi?.heading,
+      subheading: landing.engravingCarouselUi.subheading ?? target.landing.engravingCarouselUi?.subheading,
+      background: landing.engravingCarouselUi.background ?? target.landing.engravingCarouselUi?.background,
+      ctaLabel: landing.engravingCarouselUi.ctaLabel ?? target.landing.engravingCarouselUi?.ctaLabel,
+      categoryLabels:
+        landing.engravingCarouselUi.categoryLabels?.length
+          ? landing.engravingCarouselUi.categoryLabels
+          : target.landing.engravingCarouselUi?.categoryLabels,
+    };
   }
 
   if (landing.disciplineHubs?.length) {

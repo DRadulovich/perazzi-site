@@ -19,6 +19,14 @@ const asset = (
   aspectRatio,
 });
 
+const staticAsset = (id: string, path: string, alt: string, aspectRatio = 16 / 9): FactoryAsset => ({
+  id,
+  kind: "image",
+  url: path,
+  alt,
+  aspectRatio,
+});
+
 const heroBackground = asset(
   "shotguns-landing-hero",
   "https://images.unsplash.com/photo-1600718370330-83c7fa23c6b4",
@@ -79,6 +87,20 @@ export const landing: ShotgunsLandingData = {
     subheading:
       "Each Perazzi frame is a family of balance, trigger geometry, and rib architecture tuned for specific disciplines.",
     background: heroBackground,
+  },
+  platformGridUi: {
+    heading: "Platforms & Lineages",
+    subheading:
+      "Explore the MX, HT, and TM Platforms and learn how each carry a different balance, design philosophy, and place on the line.",
+    background: staticAsset(
+      "platform-grid-bg",
+      "/redesign-photos/shotguns/pweb-shotguns-platformgrid-bg.jpg",
+      "Perazzi workshop background for platform section",
+    ),
+    chatLabelTemplate: "Ask about {platformName}",
+    chatPayloadTemplate:
+      "Help me understand the {platformName} platform and which model configurations I should start from.",
+    cardFooterTemplate: "Explore the {platformName} lineage",
   },
   platforms: [
     {
@@ -171,13 +193,59 @@ export const landing: ShotgunsLandingData = {
   ],
   triggerExplainer: {
     title: "Triggers, simply",
+    subheading: "Removable or fixed—choose by confidence and feel.",
     copyHtml:
-      "<p>Perazzi\u2019s drop-out (MX / High Tech) is trusted for speed and serviceability in competition. Fixed triggers (MX12 / HTS) embody serene simplicity for shooters who value continuity.</p><p>Both share the same soul\u2014choose by confidence and feel.</p>",
+      "<p>Perazzi's drop-out (MX / High Tech) is trusted for speed and serviceability in competition. Fixed triggers (MX12 / HTS) embody serene simplicity for shooters who value continuity.</p><p>Both share the same soul—choose by confidence and feel.</p>",
     diagram: highlightMedia.triggerDiagram,
+    background: staticAsset(
+      "trigger-explainer-bg",
+      "/redesign-photos/shotguns/pweb-shotguns-triggerexplainer-bg.jpg",
+      "Perazzi trigger workshop background",
+    ),
     links: [
       { label: "Explore MX12 (fixed)", href: "/shotguns/mx#fixed" },
       { label: "Explore HTS (fixed)", href: "/shotguns/ht#fixed" },
     ],
+  },
+  disciplineFitAdvisory: {
+    eyebrow: "Discipline fit",
+    heading: "The geometry of rhythm",
+    paragraphs: [
+      "Most shooters feel it long before they can explain it — why one gun feels effortless on Sporting, but out of step on Trap.",
+      "Perazzi can translate that feeling into geometry: rib height, stock line, point of impact, and the way a gun wants to move through space. Ask how your primary discipline — or the one you’re growing toward — should shape the way your Perazzi is built.",
+    ],
+    chatPrompt:
+      "Translate my main clay discipline into Perazzi geometry—rib height, stock line, point of impact, and swing speed—for Trap, Skeet, or Sporting/FITASC. Suggest where I should start.",
+    bullets: [
+      {
+        code: "trap",
+        label: "Trap",
+        description:
+          "steep, rising targets that reward an assertive, up-through-the-line move. Higher point of impact, more vertical bias, and a stock that lets you stay tall without lifting your head.",
+      },
+      {
+        code: "skeet",
+        label: "Skeet",
+        description:
+          "short, repeatable arcs where timing and pre-mount rhythm matter more than raw speed. Flatter rib, softer point of impact, and geometry that lets the gun glide instead of chase.",
+      },
+      {
+        code: "sporting",
+        label: "Sporting / FITASC",
+        description:
+          "unpredictable windows, long crossers, and targets that live above, below, and beyond your comfort zone. Neutral, balanced geometry that doesn’t fight you as the picture changes — it simply goes where you ask.",
+      },
+    ],
+  },
+  disciplineRailUi: {
+    heading: "Disciplines at a Glance",
+    subheading:
+      "Every discipline demands something unique from your platform, whether it's precision, speed, or adaptability.",
+    background: staticAsset(
+      "discipline-rail-bg",
+      "/redesign-photos/shotguns/pweb-shotguns-disciplinerail2-bg.jpg",
+      "Perazzi discipline background",
+    ),
   },
   disciplines: [
     {
@@ -250,6 +318,40 @@ export const landing: ShotgunsLandingData = {
       ".410 trains touch and tempo for precision rounds.",
     ],
   },
+  gaugeSelectionAdvisory: {
+    heading: "Gauge selection",
+    intro:
+      "Decode how 12, 20, and 28 gauge choices shape recoil feel, swing speed, and payload — and how to pair them with your platform and disciplines.",
+    chatLabel: "Ask about gauges",
+    chatPrompt:
+      "Help me choose between 12, 20, and 28 gauge for my Perazzi: recoil feel, payload options, swing speed, and how gauge pairs with MX vs HT platforms for my disciplines.",
+    linkLabel: "Explore gauges",
+    linkHref: "/shotguns/gauges",
+    bullets: [
+      "12 ga steadies sight picture for bunker targets.",
+      "20/28 ga favor agility and quick recovery on skeet crosses.",
+      ".410 trains touch and tempo for precision rounds.",
+    ],
+    closing:
+      "We’ll tailor gauge choice to your primary discipline, preferred swing, and how you like a gun to absorb recoil.",
+  },
+  triggerChoiceAdvisory: {
+    heading: "Trigger choice",
+    intro:
+      "Decide when to choose a fixed trigger group for simplicity, or a detachable set for quick swaps, varied pull weights, and service resilience.",
+    chatLabel: "Choose my trigger",
+    chatPrompt:
+      "Help me decide between a fixed trigger and a removable trigger group on my Perazzi: reliability, service, pull-weight options, and what matters for travel or competition timelines.",
+    linkLabel: "See trigger details",
+    linkHref: "#trigger-explainer-heading",
+    bullets: [
+      "Fixed group – lighter, fewer parts to manage, set-and-forget confidence.",
+      "Removable group – fast swaps for pull weight or service, keeps you running at events.",
+      "Support & travel – how you compete, who services your gun, and what spares you carry.",
+    ],
+    closing:
+      "We’ll align trigger choice to your platform, discipline rhythm, and how you like your release to feel under pressure.",
+  },
   gradesTeaser: {
     href: "/shotguns/grades",
     copy: "Explore engraving series and bespoke wood provenance from SC2 through SCO.",
@@ -265,5 +367,16 @@ export const landing: ShotgunsLandingData = {
       "Perazzi walnut blanks with rich figure awaiting carving",
       4 / 3,
     ),
+  },
+  engravingCarouselUi: {
+    heading: "Engraving Grades",
+    subheading: "Commission tiers & engraving houses",
+    background: staticAsset(
+      "engraving-carousel-bg",
+      "/redesign-photos/shotguns/pweb-shotguns-engravingsgradecarousel-bg.jpg",
+      "Perazzi engraving workshop background",
+    ),
+    ctaLabel: "View engraving",
+    categoryLabels: ["The Benchmark", "SC3 Grade", "SCO Grade", "Extra Grade"],
   },
 };

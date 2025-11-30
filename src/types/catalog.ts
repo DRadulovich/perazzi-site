@@ -102,12 +102,29 @@ export interface ShotgunsLandingData {
     subheading?: string;
     background: FactoryAsset;
   };
+  platformGridUi?: {
+    heading?: string;
+    subheading?: string;
+    background?: FactoryAsset;
+    chatLabelTemplate?: string;
+    chatPayloadTemplate?: string;
+    cardFooterTemplate?: string;
+  };
   platforms: Platform[];
   triggerExplainer: {
     title: string;
+    subheading?: string;
     copyHtml: string;
     diagram: FactoryAsset;
+    background?: FactoryAsset;
     links: Array<{ label: string; href: string }>;
+  };
+  disciplineFitAdvisory?: {
+    eyebrow?: string;
+    heading?: string;
+    paragraphs?: string[];
+    chatPrompt?: string;
+    bullets?: Array<{ code?: string; label?: string; description?: string }>;
   };
   disciplines: Array<
     Pick<
@@ -115,12 +132,44 @@ export interface ShotgunsLandingData {
       "id" | "name" | "overviewHtml" | "recommendedPlatforms" | "popularModels" | "champion" | "hero"
     >
   >;
+  disciplineRailUi?: {
+    heading?: string;
+    subheading?: string;
+    background?: FactoryAsset;
+  };
   gaugesTeaser: { href: string; copy: string; bullets: string[] };
+  gaugeSelectionAdvisory?: {
+    heading?: string;
+    intro?: string;
+    chatLabel?: string;
+    chatPrompt?: string;
+    linkLabel?: string;
+    linkHref?: string;
+    bullets?: string[];
+    closing?: string;
+  };
+  triggerChoiceAdvisory?: {
+    heading?: string;
+    intro?: string;
+    chatLabel?: string;
+    chatPrompt?: string;
+    linkLabel?: string;
+    linkHref?: string;
+    bullets?: string[];
+    closing?: string;
+  };
   gradesTeaser: {
     href: string;
     copy: string;
     engravingTile: FactoryAsset;
     woodTile: FactoryAsset;
+  };
+  engravingCarouselUi?: {
+    heading?: string;
+    subheading?: string;
+    background?: FactoryAsset;
+    ctaLabel?: string;
+    categoryLabels?: string[];
   };
 }
 

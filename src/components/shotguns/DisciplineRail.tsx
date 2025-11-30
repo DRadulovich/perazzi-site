@@ -31,6 +31,7 @@ type DisciplineRailProps = {
   platforms: Platform[];
   ariaPrevLabel?: string;
   ariaNextLabel?: string;
+  ui?: ShotgunsLandingData["disciplineRailUi"];
 };
 
 const DISCIPLINE_TABS = [
@@ -63,6 +64,7 @@ export function DisciplineRail({
   platforms,
   ariaPrevLabel = "Previous slide",
   ariaNextLabel = "Next slide",
+  ui,
 }: DisciplineRailProps) {
   const { theme } = useTheme();
   const isDarkTheme = theme === "dark";
@@ -144,6 +146,17 @@ export function DisciplineRail({
     disciplines[0] ??
     null;
 
+  const heading = ui?.heading ?? "Disciplines at a Glance";
+  const subheading =
+    ui?.subheading ??
+    "Every discipline demands something unique from your platform, whether it's precision, speed, or adaptability.";
+  const background = ui?.background ?? {
+    id: "discipline-rail-bg",
+    kind: "image",
+    url: "/redesign-photos/shotguns/pweb-shotguns-disciplinerail2-bg.jpg",
+    alt: "Perazzi discipline background",
+  };
+
   return (
     <section
       ref={railAnalyticsRef}
@@ -154,11 +167,11 @@ export function DisciplineRail({
         marginRight: "calc(50% - 50vw)",
       }}
       aria-labelledby="discipline-rail-heading"
-    >
+      >
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <Image
-          src="/redesign-photos/shotguns/pweb-shotguns-disciplinerail2-bg.jpg"
-          alt="Perazzi discipline background"
+          src={background.url}
+          alt={background.alt}
           fill
           sizes="100vw"
           className="object-cover"
@@ -181,13 +194,13 @@ export function DisciplineRail({
         <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
           <div className="space-y-3">
             <p className="text-2xl sm:text-3xl lg:text-4xl font-black italic uppercase tracking-[0.35em] text-ink">
-              Disciplines at a Glance
+              {heading}
             </p>
             <h2
               id="discipline-rail-heading"
               className="text-sm sm:text-base font-light italic text-ink-muted"
             >
-              Every discipline demands something unique from your platform, whether it's precision, speed, or adaptability.
+              {subheading}
             </h2>
           </div>
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">

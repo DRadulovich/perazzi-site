@@ -28,6 +28,7 @@ export const booking: BuildPageData["booking"] = {
       href: "/book/remote",
     },
   ],
+  whatToExpectHeading: "What to expect",
   whatToExpect: [
     {
       id: "bring",

@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Perazzi Editorial",
-    template: "%s · Perazzi Editorial",
+    default: "Perazzi USA - DRadulovich",
+    template: "%s · Perazzi USA - DRadulovich",
   },
   description:
     "Editorial experiences from Perazzi celebrating bespoke shotguns, heritage, and craft.",

@@ -15,6 +15,7 @@ export function LandingHero({ hero }: LandingHeroProps) {
       }}
       analyticsId="HeroSeen:shotguns-landing"
       fullBleed
+      hideCtas
     />
   );
 }

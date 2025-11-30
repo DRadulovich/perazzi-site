@@ -28,14 +28,47 @@ export interface Champion {
   };
 }
 
+export interface HomeGuidePlatform {
+  code: "ht" | "mx" | "tm";
+  name: string;
+  description: string;
+}
+
 export interface HomeData {
   hero: {
     tagline: string;
     subheading?: string;
     background: FactoryAsset;
   };
+  heroCtas: {
+    primaryLabel: string;
+    primaryPrompt: string;
+    secondaryLabel: string;
+    secondaryHref: string;
+  };
+  timelineFraming: {
+    title: string;
+    eyebrow: string;
+    instructions: string;
+    alternateTitle: string;
+    background: FactoryAsset;
+  };
+  guideSection: {
+    title: string;
+    intro: string;
+    chatLabel: string;
+    chatPrompt: string;
+    linkLabel: string;
+    linkHref: string;
+    platforms: HomeGuidePlatform[];
+    closing: string;
+  };
   stages: FittingStage[];
   champion: Champion;
+  marqueeUi: {
+    eyebrow: string;
+    background: FactoryAsset;
+  };
   finale: {
     text: string;
     ctaPrimary: { label: string; href: string };

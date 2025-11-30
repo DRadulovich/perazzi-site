@@ -12,6 +12,7 @@ import type { BuildPageData, BookingOption, WhatToExpectItem } from "@/types/bui
 
 type BookingOptionsProps = {
   booking: BuildPageData["booking"];
+  bookingSection?: BuildPageData["bookingSection"];
 };
 
 type BookingOptionCardProps = {
@@ -32,7 +33,7 @@ function BookingOptionCard({ option }: BookingOptionCardProps) {
           {option.title}
         </h3>
         <p className="text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink-muted">
-          {option.durationMins} minutes
+          {option.durationLabel ?? (option.durationMins ? `${option.durationMins} minutes` : "")}
         </p>
         <div
           className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg"
@@ -122,11 +123,46 @@ const scheduler = {
   fallback: "https://calendly.com/perazzi/bespoke-fitting",
 };
 
-export function BookingOptions({ booking }: BookingOptionsProps) {
+export function BookingOptions({ booking, bookingSection }: BookingOptionsProps) {
   const analyticsRef = useAnalyticsObserver("BookingOptionsSeen");
   const isDesktop = useMediaQuery("(min-width: 1024px)") ?? false;
   const prefersReducedMotion = useReducedMotion() ?? false;
   const [showScheduler, setShowScheduler] = useState(false);
+
+  const resolvedHeading = bookingSection?.heading ?? booking.headline;
+  const resolvedOptions = bookingSection?.options?.length
+    ? bookingSection.options.map((option, index) => {
+        const fallback = booking.options[index];
+        return {
+          id: fallback?.id ?? `booking-${index}`,
+          title: option.title ?? fallback?.title ?? "Booking option",
+          durationLabel: option.duration ?? fallback?.durationLabel ??
+            (fallback?.durationMins ? `${fallback.durationMins} minutes` : undefined),
+          durationMins: fallback?.durationMins,
+          descriptionHtml:
+            option.description
+              ? `<p>${option.description}</p>`
+              : fallback?.descriptionHtml ?? "",
+          href: option.href ?? fallback?.href ?? "#",
+        } satisfies BookingOption;
+      })
+    : booking.options;
+
+  const resolvedWhatToExpectHeading =
+    bookingSection?.whatToExpectHeading ?? booking.whatToExpectHeading ?? "What to expect";
+
+  const resolvedWhatToExpect = bookingSection?.whatToExpectItems?.length
+    ? bookingSection.whatToExpectItems.map((item, index) => {
+        const fallback = booking.whatToExpect[index];
+        return {
+          id: fallback?.id ?? `expect-${index}`,
+          title: fallback?.title ?? `What to expect ${index + 1}`,
+          bodyHtml: item ?? fallback?.bodyHtml ?? "",
+        } satisfies WhatToExpectItem;
+      })
+    : booking.whatToExpect;
+
+  const resolvedNote = bookingSection?.note ?? booking.note;
 
   return (
     <section
@@ -143,11 +179,11 @@ export function BookingOptions({ booking }: BookingOptionsProps) {
           id="booking-options-heading"
           className="text-2xl font-semibold text-ink"
         >
-          {booking.headline}
+          {resolvedHeading}
         </h2>
       </div>
       <div className="grid gap-6 md:grid-cols-3">
-        {booking.options.map((option) => (
+        {resolvedOptions.map((option) => (
           <BookingOptionCard key={option.id} option={option} />
         ))}
       </div>
@@ -156,10 +192,10 @@ export function BookingOptions({ booking }: BookingOptionsProps) {
         className="space-y-3 rounded-2xl border border-border/60 bg-card/40 p-4 shadow-sm md:space-y-4 md:p-8 md:rounded-3xl md:border-border/70 md:bg-card/60 lg:space-y-5 lg:p-10"
       >
         <h3 className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
-          What to expect
+          {resolvedWhatToExpectHeading}
         </h3>
         <div className="space-y-3 md:space-y-4 lg:space-y-5">
-          {booking.whatToExpect.map((item) => (
+          {resolvedWhatToExpect.map((item) => (
             <WhatToExpectCollapsible
               key={item.id}
               item={item}
@@ -203,8 +239,8 @@ export function BookingOptions({ booking }: BookingOptionsProps) {
           </a>
         </p>
       </div>
-      {booking.note ? (
-        <p className="text-[11px] sm:text-xs text-ink-muted">{booking.note}</p>
+      {resolvedNote ? (
+        <p className="text-[11px] sm:text-xs text-ink-muted">{resolvedNote}</p>
       ) : null}
     </section>
   );

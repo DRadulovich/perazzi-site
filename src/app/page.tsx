@@ -9,12 +9,19 @@ import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
 
 export default async function HomePage() {
   const homeData = await getHome();
+  const guidePlatforms = homeData.guideSection.platforms?.length
+    ? homeData.guideSection.platforms
+    : [
+        { code: "ht", name: "HT", description: "modern competition geometry for demanding sporting layouts." },
+        { code: "mx", name: "MX", description: "the classic lineage: balanced, adaptable, and endlessly configurable." },
+        { code: "tm", name: "TM", description: "purpose-built for American trap with a dedicated silhouette." },
+      ];
 
   return (
     <SiteShell mainClassName="flex-1 px-4 pb-12 pt-0 sm:px-8 lg:px-12">
       <div className="space-y-0">
-        <HeroBanner hero={homeData.hero} fullBleed />
-        <TimelineScroller stages={homeData.stages} />
+        <HeroBanner hero={homeData.hero} heroCtas={homeData.heroCtas} fullBleed />
+        <TimelineScroller stages={homeData.stages} framing={homeData.timelineFraming} />
         <section
           className="border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-10 sm:py-16"
           aria-labelledby="home-guide-heading"
@@ -25,26 +32,28 @@ export default async function HomePage() {
                 id="home-guide-heading"
                 className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
               >
-                Need a guide?
+                {homeData.guideSection.title ?? "Need a guide?"}
               </p>
               <p className="mb-8 text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
-                Ask how Perazzi links heritage, champions, and today’s platforms, then step into the catalog with a clearer sense of where you belong – whether that’s HT, MX, TM or beyond.
+                {homeData.guideSection.intro
+                  ?? "Ask how Perazzi links heritage, champions, and today’s platforms, then step into the catalog with a clearer sense of where you belong – whether that’s HT, MX, TM or beyond."}
               </p>
               <div className="flex flex-wrap gap-3 justify-start">
                 <ChatTriggerButton
-                  label="Ask about platforms"
+                  label={homeData.guideSection.chatLabel ?? "Ask about platforms"}
                   payload={{
                     question:
-                      "Connect Perazzi's heritage stories and champions to current platforms like High Tech and MX, and suggest the next pages I should explore on the site.",
+                      homeData.guideSection.chatPrompt
+                      ?? "Connect Perazzi's heritage stories and champions to current platforms like High Tech and MX, and suggest the next pages I should explore on the site.",
                     context: { pageUrl: "/" },
                   }}
                   variant="outline"
                 />
                 <Link
-                  href="/shotguns"
+                  href={homeData.guideSection.linkHref ?? "/shotguns"}
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
                 >
-                  Explore shotguns
+                  {homeData.guideSection.linkLabel ?? "Explore shotguns"}
                   <span aria-hidden="true">→</span>
                 </Link>
               </div>
@@ -55,23 +64,22 @@ export default async function HomePage() {
                 Three starting points most Perazzi shooters choose:
               </p>
               <ul className="space-y-2">
-                <li>
-                  <span className="text-base sm:text-lg font-black not-italic text-ink">HT</span> – modern competition geometry for demanding sporting layouts.
-                </li>
-                <li>
-                  <span className="text-base sm:text-lg font-black not-italic text-ink">MX</span> – the classic lineage: balanced, adaptable, and endlessly configurable.
-                </li>
-                <li>
-                  <span className="text-base sm:text-lg font-black not-italic text-ink">TM</span> – purpose-built for American trap with a dedicated silhouette.
-                </li>
+                {guidePlatforms.map((platform) => (
+                  <li key={platform.code}>
+                    <span className="text-base sm:text-lg font-black not-italic text-ink">{platform.name ?? platform.code?.toUpperCase()}</span>
+                    {" "}–{" "}
+                    {platform.description ?? ""}
+                  </li>
+                ))}
               </ul>
               <p className="text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
-                The concierge can map your disciplines, preferences, and ambitions to a starting platform and the right next pages to visit.
+                {homeData.guideSection.closing
+                  ?? "The concierge can map your disciplines, preferences, and ambitions to a starting platform and the right next pages to visit."}
               </p>
             </div>
           </div>
         </section>
-        <MarqueeFeature champion={homeData.champion} />
+        <MarqueeFeature champion={homeData.champion} ui={homeData.marqueeUi} />
         {homeData.finale ? (
           <CTASection finale={homeData.finale} />
         ) : (

@@ -2,17 +2,25 @@
 
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
-import type { Champion } from "@/types/content";
+import type { Champion, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 type MarqueeFeatureProps = {
   champion: Champion;
+  ui: HomeData["marqueeUi"];
 };
 
-export function MarqueeFeature({ champion }: MarqueeFeatureProps) {
+export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
   const analyticsRef = useAnalyticsObserver("ChampionStorySeen");
   const prefersReducedMotion = useReducedMotion();
   const ratio = champion.image.aspectRatio ?? 3 / 4;
+  const background = ui.background ?? {
+    id: "marquee-background-fallback",
+    kind: "image",
+    url: "/redesign-photos/homepage/marquee-feature/pweb-home-marqueefeature-bg.jpg",
+    alt: "Perazzi workshop background",
+  };
+  const eyebrow = ui.eyebrow ?? "Champion spotlight";
 
   return (
     <section
@@ -27,8 +35,8 @@ export function MarqueeFeature({ champion }: MarqueeFeatureProps) {
     >
       <div className="absolute inset-0 z-0 overflow-hidden">
         <Image
-          src="/redesign-photos/homepage/marquee-feature/pweb-home-marqueefeature-bg.jpg"
-          alt="Perazzi workshop background"
+          src={background.url}
+          alt={background.alt}
           fill
           sizes="100vw"
           className="object-cover"
@@ -78,7 +86,7 @@ export function MarqueeFeature({ champion }: MarqueeFeatureProps) {
             transition={{ duration: 0.6, delay: 0.1, ease: [0.33, 1, 0.68, 1] }}
           >
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
-              Champion spotlight
+              {eyebrow}
             </p>
             <h2
               id="champion-heading"

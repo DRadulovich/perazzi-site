@@ -11,11 +11,13 @@ import { ScrollIndicator } from "./scroll-indicator";
 
 type HeroBannerProps = {
   hero: HomeData["hero"];
+  heroCtas?: HomeData["heroCtas"];
   analyticsId?: string;
   fullBleed?: boolean;
+  hideCtas?: boolean;
 };
 
-export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerProps) {
+export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hideCtas = false }: HeroBannerProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -43,6 +45,19 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
 
   const heroHeading = hero.subheading ?? hero.tagline;
   const heroWords = useMemo(() => (heroHeading ?? "").split(/\s+/).filter(Boolean), [heroHeading]);
+  const fallbackCtas: HomeData["heroCtas"] = {
+    primaryLabel: "Ask the concierge",
+    primaryPrompt:
+      "Introduce me to Perazzi's bespoke philosophy and help me choose where to begin if I'm exploring my first build.",
+    secondaryLabel: "Explore shotguns",
+    secondaryHref: "/shotguns",
+  };
+
+  const ctas = heroCtas ?? fallbackCtas;
+  const primaryLabel = ctas.primaryLabel ?? fallbackCtas.primaryLabel;
+  const primaryPrompt = ctas.primaryPrompt ?? fallbackCtas.primaryPrompt;
+  const secondaryLabel = ctas.secondaryLabel ?? fallbackCtas.secondaryLabel;
+  const secondaryHref = ctas.secondaryHref ?? fallbackCtas.secondaryHref;
 
   useEffect(() => {
     setTouchedCount(0);
@@ -219,22 +234,23 @@ export function HeroBanner({ hero, analyticsId, fullBleed = false }: HeroBannerP
               {hero.background.caption}
             </p>
           ) : null}
-          <div className="mt-0 flex flex-wrap items-center justify-center gap-4">
-            <ChatTriggerButton
-              label="Ask the concierge"
-              payload={{
-                question:
-                  "Introduce me to Perazzi's bespoke philosophy and help me choose where to begin if I'm exploring my first build.",
-                context: { pageUrl: "/" },
-              }}
-            />
-            <Link
-              href="/shotguns"
-              className="inline-flex items-center justify-center rounded-full border border-white/40 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-white/80 hover:text-white hover:border-white focus-ring"
-            >
-              Explore shotguns
-            </Link>
-          </div>
+          {hideCtas ? null : (
+            <div className="mt-0 flex flex-wrap items-center justify-center gap-4">
+              <ChatTriggerButton
+                label={primaryLabel}
+                payload={{
+                  question: primaryPrompt,
+                  context: { pageUrl: "/" },
+                }}
+              />
+              <Link
+                href={secondaryHref}
+                className="inline-flex items-center justify-center rounded-full border border-white/40 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-white/80 hover:text-white hover:border-white focus-ring"
+              >
+                {secondaryLabel}
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 

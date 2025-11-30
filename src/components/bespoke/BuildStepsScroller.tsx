@@ -9,6 +9,12 @@ import { logAnalytics } from "@/lib/analytics";
 
 type BuildStepsScrollerProps = {
   steps: FittingStage[];
+  intro?: {
+    heading?: string;
+    subheading?: string;
+    ctaLabel?: string;
+    background?: { url: string; alt?: string; aspectRatio?: number };
+  };
   initialStepId?: string;
   onStepView?: (id: string) => void;
   onStepCta?: (id: string) => void;
@@ -19,6 +25,7 @@ type BuildStepsScrollerProps = {
 
 export function BuildStepsScroller({
   steps,
+  intro,
   initialStepId,
   onStepView,
   onStepCta,
@@ -73,6 +80,13 @@ export function BuildStepsScroller({
   };
 
   const totalSteps = mappedSteps.length;
+  const background = intro?.background ?? {
+    url: "/redesign-photos/bespoke/pweb-bespoke-buildstepscroller-bg.jpg",
+    alt: "Perazzi bespoke build steps background",
+  };
+  const heading = intro?.heading ?? "The journey";
+  const subheading = intro?.subheading ?? "Six moments that shape a bespoke Perazzi";
+  const ctaLabel = intro?.ctaLabel ?? "Begin the ritual";
 
   return (
     <section
@@ -88,8 +102,8 @@ export function BuildStepsScroller({
       {/* Static background & global scrim/gradient frame */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <NextImage
-          src="/redesign-photos/bespoke/pweb-bespoke-buildstepscroller-bg.jpg"
-          alt="Perazzi bespoke build steps background"
+          src={background.url}
+          alt={background.alt ?? "Perazzi bespoke build steps background"}
           fill
           sizes="100vw"
           className="object-cover"
@@ -117,13 +131,13 @@ export function BuildStepsScroller({
           {/* Intro block */}
           <div className="max-w-3xl space-y-3 shrink-0">
             <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-              The journey
+              {heading}
             </p>
             <h2
               id="build-steps-heading"
               className="text-sm sm:text-base font-light italic text-ink-muted"
             >
-              Six moments that shape a bespoke Perazzi
+              {subheading}
             </h2>
             <p className="max-w-xl text-sm sm:text-base leading-relaxed text-ink-muted">
               Scroll to move from moment to moment. Each step is a chapter in the
@@ -134,7 +148,7 @@ export function BuildStepsScroller({
                 href="#build-steps-sequence"
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-ink/60 px-4 py-2 text-[11px] sm:text-sm font-semibold uppercase tracking-[0.2em] text-ink hover:border-ink focus-ring"
               >
-                Begin the ritual
+                {ctaLabel}
                 <span aria-hidden="true">↓</span>
               </a>
               <a

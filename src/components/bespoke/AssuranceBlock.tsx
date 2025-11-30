@@ -7,6 +7,9 @@ type AssuranceBlockProps = {
 
 export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
   const { html, quote, media } = assurance;
+  const heading = assurance.heading;
+  const label = assurance.label;
+  const body = assurance.body ?? html;
   const ratio = media?.aspectRatio ?? 3 / 2;
 
   return (
@@ -15,11 +18,23 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
       aria-labelledby="assurance-heading"
     >
       <div className="space-y-6">
-        <div
-          id="assurance-heading"
-          className="prose prose-base max-w-none leading-relaxed text-ink md:prose-lg"
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
+        {heading ? (
+          <p
+            id="assurance-heading"
+            className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted"
+          >
+            {heading}
+          </p>
+        ) : null}
+        {label ? (
+          <p className="text-lg font-semibold text-ink">{label}</p>
+        ) : null}
+        {body ? (
+          <div
+            className="prose prose-base max-w-none leading-relaxed text-ink md:prose-lg"
+            dangerouslySetInnerHTML={{ __html: body }}
+          />
+        ) : null}
         {quote ? (
           <blockquote className="rounded-2xl border-l-4 border-perazzi-red/60 bg-card/40 px-5 py-4 text-[13px] sm:text-sm italic leading-relaxed text-ink">
             <p>“{quote.text}”</p>

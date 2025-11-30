@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import type { MouseEvent } from "react";
 import type { PickerItem } from "@/types/experience";
 import type { FAQItem } from "@/types/experience";
 import { FAQList } from "./FAQList";
@@ -17,8 +18,38 @@ type ExperiencePickerProps = {
 export function ExperiencePicker({ items, faqItems }: ExperiencePickerProps) {
   const prefersReducedMotion = useReducedMotion();
   const analyticsRef = useAnalyticsObserver<HTMLElement>("ExperiencePickerSeen");
+  const anchorMap: Record<string, string> = {
+    visit: "#experience-visit-planning",
+    fitting: "#experience-booking-guide",
+    demo: "#experience-travel-guide",
+  };
 
   if (!items.length) return null;
+
+  const handleCardClick = (
+    event: MouseEvent<HTMLAnchorElement>,
+    href: string,
+    itemId: string,
+  ) => {
+    logAnalytics(`PickerCardClick:${itemId}`);
+    const hashIndex = href.indexOf("#");
+    let hash = hashIndex === -1 ? undefined : href.slice(hashIndex);
+    if (!hash || hash === "#") {
+      hash = anchorMap[itemId];
+    }
+    if (!hash) return;
+
+    const target = typeof document !== "undefined"
+      ? document.getElementById(hash.replace(/^#/, ""))
+      : null;
+    if (!target) return;
+
+    event.preventDefault();
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (typeof window !== "undefined") {
+      history.replaceState(null, "", hash);
+    }
+  };
 
   return (
     <section
@@ -75,6 +106,7 @@ export function ExperiencePicker({ items, faqItems }: ExperiencePickerProps) {
               <ExperiencePickerCard
                 key={item.id}
                 item={item}
+                onAnchorClick={handleCardClick}
                 delay={prefersReducedMotion ? 0 : index * 0.08}
               />
             ))}
@@ -93,9 +125,15 @@ export function ExperiencePicker({ items, faqItems }: ExperiencePickerProps) {
 function ExperiencePickerCard({
   item,
   delay,
+  onAnchorClick,
 }: {
   item: PickerItem;
   delay: number;
+  onAnchorClick?: (
+    event: MouseEvent<HTMLAnchorElement>,
+    href: string,
+    itemId: string,
+  ) => void;
 }) {
   const aspect = 3 / 2;
   const microLabel = "Perazzi Experience";
@@ -111,7 +149,13 @@ function ExperiencePickerCard({
         href={item.href}
         className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border/75 bg-card/75 text-left shadow-sm focus-ring sm:rounded-3xl"
         data-analytics-id={`PickerCardClick:${item.id}`}
-        onClick={() => logAnalytics(`PickerCardClick:${item.id}`)}
+        onClick={(event) => {
+          if (onAnchorClick) {
+            onAnchorClick(event, item.href, item.id);
+          } else {
+            logAnalytics(`PickerCardClick:${item.id}`);
+          }
+        }}
       >
         <div
           className="relative"

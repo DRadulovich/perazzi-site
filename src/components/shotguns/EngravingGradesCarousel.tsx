@@ -4,13 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-import type { GradeSeries } from "@/types/catalog";
+import type { GradeSeries, ShotgunsLandingData } from "@/types/catalog";
 import { getGradeAnchorId } from "@/lib/grade-anchors";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 type EngravingGradesCarouselProps = {
   grades: GradeSeries[];
+  ui?: ShotgunsLandingData["engravingCarouselUi"];
 };
 
 const GRADE_TABS = [
@@ -35,11 +36,30 @@ const GRADE_TABS = [
 const normalize = (value?: string | null) =>
   value?.trim().toLowerCase() ?? "";
 
-export function EngravingGradesCarousel({ grades }: EngravingGradesCarouselProps) {
-  const [openCategory, setOpenCategory] = useState<string | null>(GRADE_TABS[0]?.label ?? null);
+export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselProps) {
+  const resolvedTabLabels =
+    ui?.categoryLabels?.length === GRADE_TABS.length
+      ? ui.categoryLabels
+      : GRADE_TABS.map((tab) => tab.label);
+  const tabs = GRADE_TABS.map((tab, index) => ({
+    ...tab,
+    label: resolvedTabLabels[index] ?? tab.label,
+  }));
+
+  const [openCategory, setOpenCategory] = useState<string | null>(tabs[0]?.label ?? null);
   const [activeGradeId, setActiveGradeId] = useState<string | null>(null);
 
   const analyticsRef = useAnalyticsObserver<HTMLElement>("EngravingGradesCarouselSeen");
+
+  const heading = ui?.heading ?? "Engraving Grades";
+  const subheading = ui?.subheading ?? "Commission tiers & engraving houses";
+  const background = ui?.background ?? {
+    id: "engraving-carousel-bg",
+    kind: "image",
+    url: "/redesign-photos/shotguns/pweb-shotguns-engravingsgradecarousel-bg.jpg",
+    alt: "Perazzi engraving workshop background",
+  };
+  const ctaLabel = ui?.ctaLabel ?? "View engraving";
 
   const gradeLookup = useMemo(() => {
     const map = new Map<string, GradeSeries>();
@@ -51,19 +71,19 @@ export function EngravingGradesCarousel({ grades }: EngravingGradesCarouselProps
   }, [grades]);
 
   const groupedGrades = useMemo(() => {
-    return GRADE_TABS.map((tab) =>
+    return tabs.map((tab) =>
       tab.order
         .map((name) => gradeLookup.get(normalize(name)))
         .filter((grade): grade is GradeSeries => Boolean(grade)),
     );
-  }, [gradeLookup]);
+  }, [gradeLookup, tabs]);
 
   const categories = useMemo(() => {
-    return GRADE_TABS.map((tab, index) => {
+    return tabs.map((tab, index) => {
       const resolved = groupedGrades[index] ?? [];
       return { label: tab.label, grades: resolved };
     }).filter((category) => category.grades.length);
-  }, [groupedGrades]);
+  }, [groupedGrades, tabs]);
 
   useEffect(() => {
     const firstCategory = categories[0];
@@ -92,8 +112,8 @@ export function EngravingGradesCarousel({ grades }: EngravingGradesCarouselProps
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <Image
-          src="/redesign-photos/shotguns/pweb-shotguns-engravingsgradecarousel-bg.jpg"
-          alt="Perazzi engraving workshop background"
+          src={background.url}
+          alt={background.alt}
           fill
           sizes="100vw"
           className="object-cover"
@@ -116,13 +136,13 @@ export function EngravingGradesCarousel({ grades }: EngravingGradesCarouselProps
         <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
           <div className="space-y-3">
             <p className="text-2xl sm:text-3xl lg:text-4xl font-black italic uppercase tracking-[0.35em] text-ink">
-              Engraving Grades
+              {heading}
             </p>
             <h2
               id="engraving-grades-heading"
               className="max-w-4xl text-sm sm:text-base font-light italic text-ink-muted"
             >
-              Commission tiers &amp; engraving houses
+              {subheading}
             </h2>
           </div>
 
@@ -196,7 +216,7 @@ export function EngravingGradesCarousel({ grades }: EngravingGradesCarouselProps
 
             <div className="min-h-[26rem]">
               {selectedGrade ? (
-                <GradeCard grade={selectedGrade} />
+                <GradeCard grade={selectedGrade} ctaLabel={ctaLabel} />
               ) : (
                 <p className="text-sm text-ink-muted">Select a grade to view details.</p>
               )}
@@ -208,7 +228,7 @@ export function EngravingGradesCarousel({ grades }: EngravingGradesCarouselProps
   );
 }
 
-function GradeCard({ grade }: { grade: GradeSeries }) {
+function GradeCard({ grade, ctaLabel }: { grade: GradeSeries; ctaLabel: string }) {
   const heroAsset = grade.gallery?.[0];
   const ratio = heroAsset?.aspectRatio ?? 3 / 2;
   const gradeAnchor = getGradeAnchorId(grade);
@@ -249,7 +269,7 @@ function GradeCard({ grade }: { grade: GradeSeries }) {
             href={`/engravings?grade=${gradeAnchor}`}
             className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
           >
-            View engraving
+            {ctaLabel}
             <span aria-hidden="true">→</span>
           </Link>
         </div>
