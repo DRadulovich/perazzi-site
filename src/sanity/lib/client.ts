@@ -6,5 +6,9 @@ export const client = createClient({
   projectId,
   dataset,
   apiVersion,
-  useCdn: true, // Set to false if statically generating pages, using ISR or tag-based revalidation
+  // Live / presentation overlays require uncached responses
+  useCdn: false,
+  stega: {
+    studioUrl: '/next-studio',
+  },
 })

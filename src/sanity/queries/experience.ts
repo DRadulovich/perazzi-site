@@ -4,7 +4,7 @@ import { groq } from "next-sanity";
 
 import type { FactoryAsset } from "@/types/content";
 import type { ConciergeBlock, ExperienceNetworkData } from "@/types/experience";
-import { sanityClient } from "../../../sanity/client";
+import { sanityFetch } from "../lib/live";
 import { imageFields, imageWithMetaFields, mapImageResult, type SanityImageResult } from "./utils";
 
 type ConciergeBlockResponse = {
@@ -377,7 +377,11 @@ function mapConciergeBlock(block?: ConciergeBlockResponse | null): ConciergeBloc
 }
 
 export async function getExperienceHome(): Promise<ExperienceHomePayload | null> {
-  const data = await sanityClient.fetch<ExperienceHomeResponse | null>(experienceHomeQuery).catch(() => null);
+  const { data } =
+    (await sanityFetch<ExperienceHomeResponse | null>({
+      query: experienceHomeQuery,
+      stega: true,
+    }).catch(() => ({ data: null }))) ?? {};
   if (!data) return null;
 
   return {
@@ -486,7 +490,11 @@ export async function getExperienceHome(): Promise<ExperienceHomePayload | null>
 }
 
 export async function getExperienceNetworkData(): Promise<ExperienceNetworkData> {
-  const data = await sanityClient.fetch<ExperienceNetworkResponse | null>(experienceNetworkQuery).catch(() => null);
+  const { data } =
+    (await sanityFetch<ExperienceNetworkResponse | null>({
+      query: experienceNetworkQuery,
+      stega: true,
+    }).catch(() => ({ data: null }))) ?? {};
 
   const scheduledEvents = (data?.scheduledEvents ?? [])
     .map((item) => {

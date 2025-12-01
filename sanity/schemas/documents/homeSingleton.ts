@@ -7,11 +7,11 @@ export const homeSingleton = defineType({
   type: 'document',
   icon: HomeIcon,
   fieldsets: [
-    {name: 'hero', title: 'Hero'},
-    {name: 'timeline', title: 'Timeline'},
-    {name: 'guide', title: 'Guide Section'},
-    {name: 'marquee', title: 'Champion Marquee'},
-    {name: 'finale', title: 'Final CTA'},
+    {name: 'hero', title: 'Hero overlay panel', options: {collapsible: true, collapsed: false}},
+    {name: 'timeline', title: 'Workshop timeline band', options: {collapsible: true, collapsed: true}},
+    {name: 'guide', title: 'Guide / utility cards', options: {collapsible: true, collapsed: true}},
+    {name: 'marquee', title: 'Champion narrative marquee', options: {collapsible: true, collapsed: true}},
+    {name: 'finale', title: 'Final utility CTA', options: {collapsible: true, collapsed: true}},
   ],
   fields: [
     defineField({
@@ -95,6 +95,7 @@ export const homeSingleton = defineType({
       name: 'timelineStages',
       title: 'Timeline Stages',
       type: 'array',
+      fieldset: 'timeline',
       of: [
         {
           type: 'object',

@@ -3,7 +3,7 @@ import "server-only";
 import { groq } from "next-sanity";
 
 import type { FactoryAsset } from "@/types/content";
-import { sanityClient } from "../../../sanity/client";
+import { sanityFetch } from "../lib/live";
 import {
   imageFields,
   imageWithMetaFields,
@@ -134,7 +134,11 @@ const authorBySlugQuery = groq`
 `;
 
 export async function getJournalLanding(): Promise<JournalLandingPayload | null> {
-  const data = await sanityClient.fetch<JournalLandingResponse | null>(journalLandingQuery).catch(() => null);
+  const { data } =
+    (await sanityFetch<JournalLandingResponse | null>({
+      query: journalLandingQuery,
+      stega: true,
+    }).catch(() => ({ data: null }))) ?? {};
   if (!data) return null;
 
   return {
@@ -158,9 +162,13 @@ export async function getJournalLanding(): Promise<JournalLandingPayload | null>
 }
 
 export async function getArticles(): Promise<JournalArticlePayload[]> {
-  const data = await sanityClient.fetch<JournalArticleResponse[]>(articlesQuery).catch(() => []);
+  const { data } =
+    (await sanityFetch<JournalArticleResponse[]>({
+      query: articlesQuery,
+      stega: true,
+    }).catch(() => ({ data: [] }))) ?? {};
 
-  return data
+  return (data ?? [])
     .filter((article): article is JournalArticleResponse & { _id: string } => Boolean(article?._id))
     .map((article) => ({
       id: article._id as string,
@@ -182,7 +190,12 @@ export async function getArticles(): Promise<JournalArticlePayload[]> {
 
 export async function getAuthor(slug: string): Promise<JournalAuthorPayload | null> {
   if (!slug) return null;
-  const data = await sanityClient.fetch<AuthorResponse | null>(authorBySlugQuery, { slug }).catch(() => null);
+  const { data } =
+    (await sanityFetch<AuthorResponse | null>({
+      query: authorBySlugQuery,
+      params: { slug },
+      stega: true,
+    }).catch(() => ({ data: null }))) ?? {};
   if (!data || !data._id) return null;
 
   return {

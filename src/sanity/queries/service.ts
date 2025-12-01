@@ -14,7 +14,7 @@ import type {
   ServiceOverviewSection,
   ServiceRequestBlock,
 } from "@/types/service";
-import { sanityClient } from "../../../sanity/client";
+import { sanityFetch } from "../lib/live";
 import { imageWithMetaFields, mapImageResult, type SanityImageResult } from "./utils";
 
 type ServiceHomeResponse = {
@@ -221,7 +221,11 @@ const recommendedServiceCentersQuery = groq`
 `;
 
 export async function getServiceHome(): Promise<ServiceHomePayload | null> {
-  const data = await sanityClient.fetch<ServiceHomeResponse | null>(serviceHomeQuery).catch(() => null);
+  const { data } =
+    (await sanityFetch<ServiceHomeResponse | null>({
+      query: serviceHomeQuery,
+      stega: true,
+    }).catch(() => ({ data: null }))) ?? {};
   if (!data) return null;
 
   return {
@@ -295,9 +299,11 @@ export async function getServiceHome(): Promise<ServiceHomePayload | null> {
 }
 
 export async function getRecommendedServiceCenters(): Promise<RecommendedServiceCenterPayload[]> {
-  const data = await sanityClient
-    .fetch<RecommendedServiceCenterResponse[] | null>(recommendedServiceCentersQuery)
-    .catch(() => null);
+  const { data } =
+    (await sanityFetch<RecommendedServiceCenterResponse[] | null>({
+      query: recommendedServiceCentersQuery,
+      stega: true,
+    }).catch(() => ({ data: null }))) ?? {};
 
   return (
     data

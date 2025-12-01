@@ -3,7 +3,7 @@ import "server-only";
 import { groq } from "next-sanity";
 
 import type { FactoryAsset } from "@/types/content";
-import { sanityClient } from "../../../sanity/client";
+import { sanityFetch } from "../lib/live";
 import {
   imageWithMetaFields,
   mapImageResult,
@@ -470,7 +470,11 @@ const gradesQuery = groq`
 `;
 
 export async function getShotgunsLanding(): Promise<ShotgunsLandingPayload | null> {
-  const data = await sanityClient.fetch<ShotgunsLandingResponse | null>(shotgunsLandingQuery).catch(() => null);
+  const { data } =
+    (await sanityFetch<ShotgunsLandingResponse | null>({
+      query: shotgunsLandingQuery,
+      stega: true,
+    }).catch(() => ({ data: null }))) ?? {};
   if (!data) return null;
 
   return {
@@ -589,9 +593,13 @@ export async function getShotgunsLanding(): Promise<ShotgunsLandingPayload | nul
 }
 
 export async function getPlatforms(): Promise<ShotgunsPlatformPayload[]> {
-  const data = await sanityClient.fetch<PlatformResponse[]>(platformsQuery).catch(() => []);
+  const { data } =
+    (await sanityFetch<PlatformResponse[]>({
+      query: platformsQuery,
+      stega: true,
+    }).catch(() => ({ data: [] }))) ?? {};
 
-  return data
+  return (data ?? [])
     .filter((platform): platform is PlatformResponse & { _id: string } => Boolean(platform?._id))
     .map((platform) => ({
       id: platform._id as string,
@@ -646,9 +654,13 @@ export async function getPlatforms(): Promise<ShotgunsPlatformPayload[]> {
 }
 
 export async function getDisciplines(): Promise<ShotgunsDisciplinePayload[]> {
-  const data = await sanityClient.fetch<DisciplineResponse[]>(disciplinesQuery).catch(() => []);
+  const { data } =
+    (await sanityFetch<DisciplineResponse[]>({
+      query: disciplinesQuery,
+      stega: true,
+    }).catch(() => ({ data: [] }))) ?? {};
 
-  return data
+  return (data ?? [])
     .filter((discipline): discipline is DisciplineResponse & { _id: string } => Boolean(discipline?._id))
     .map((discipline) => ({
       id: discipline._id as string,
@@ -675,9 +687,13 @@ export async function getDisciplines(): Promise<ShotgunsDisciplinePayload[]> {
 }
 
 export async function getGrades(): Promise<ShotgunsGradePayload[]> {
-  const data = await sanityClient.fetch<GradeResponse[]>(gradesQuery).catch(() => []);
+  const { data } =
+    (await sanityFetch<GradeResponse[]>({
+      query: gradesQuery,
+      stega: true,
+    }).catch(() => ({ data: [] }))) ?? {};
 
-  return data
+  return (data ?? [])
     .filter((grade): grade is GradeResponse & { _id: string } => Boolean(grade?._id))
     .map((grade) => ({
       id: grade._id as string,

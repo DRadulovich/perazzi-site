@@ -125,6 +125,61 @@ body {
   overflow-x: hidden;
 }
 
+/* Sanity Studio – Workshop surfaces */
+.perazzi-studio-root {
+  --card-bg-color: var(--surface-card);
+  --card-border-color: var(--border-color);
+  --body-text-color: var(--color-ink);
+  --muted-fg-color: var(--color-ink-muted);
+  background: var(--surface-canvas);
+  color: var(--color-ink);
+}
+
+.perazzi-studio-root .sanity-studio,
+.perazzi-studio-root [data-ui='PaneLayout'] {
+  background: var(--surface-canvas);
+  color: var(--color-ink);
+}
+
+.perazzi-studio-root [data-ui$='Pane'] {
+  background: var(--surface-card);
+  border: 1px solid var(--border-color);
+  box-shadow: none;
+}
+
+.perazzi-studio-root [data-ui='PaneHeader'],
+.perazzi-studio-root [data-ui='PaneFooter'] {
+  background: var(--surface-card);
+  border-color: var(--border-color);
+}
+
+.perazzi-studio-root [data-ui='PaneContent'] {
+  background: transparent;
+}
+
+.perazzi-studio-root [data-testid='document-pane'] {
+  background: var(--surface-card);
+  border: 1px solid var(--border-color);
+}
+
+.perazzi-studio-root [data-testid='document-panel-scroller'] {
+  max-width: 80rem;
+  margin-inline: auto;
+  padding: 1.5rem clamp(1.5rem, 2vw, 2.5rem) 2.25rem;
+}
+
+.perazzi-studio-root [data-testid='document-panel-scroller'] > * + * {
+  margin-top: 1.5rem;
+}
+
+.perazzi-studio-root [data-ui='PaneContent'] form > * + * {
+  margin-top: 1.5rem;
+}
+
+.perazzi-studio-root [data-ui='PaneContent'] form fieldset > * + * {
+  margin-top: 1rem;
+}
+
 /* Focus ring (Perazzi red) */
 .focus-ring {
   outline: none;

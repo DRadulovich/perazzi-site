@@ -7,17 +7,23 @@ export const shotgunsLanding = defineType({
   icon: TargetIcon,
   type: 'document',
   fieldsets: [
-    {name: 'platforms', title: 'Platforms'},
-    {name: 'disciplines', title: 'Disciplines'},
-    {name: 'gauges', title: 'Gauge Advisory'},
-    {name: 'triggers', title: 'Triggers'},
-    {name: 'engraving', title: 'Engraving'},
+    {name: 'hero', title: 'Hero overlay panel', options: {collapsible: true, collapsed: false}},
+    {name: 'platforms', title: 'Platform rail (Field)', options: {collapsible: true, collapsed: true}},
+    {
+      name: 'disciplines',
+      title: 'Discipline advisory (narrative cards)',
+      options: {collapsible: true, collapsed: true},
+    },
+    {name: 'gauges', title: 'Gauge advisory (utility)', options: {collapsible: true, collapsed: true}},
+    {name: 'triggers', title: 'Trigger explainer (workshop)', options: {collapsible: true, collapsed: true}},
+    {name: 'engraving', title: 'Engraving gallery', options: {collapsible: true, collapsed: true}},
   ],
   fields: [
     defineField({
       name: 'hero',
       title: 'Hero',
       type: 'object',
+      fieldset: 'hero',
       fields: [
         defineField({ name: 'title', type: 'string', validation: (Rule) => Rule.required() }),
         defineField({ name: 'subheading', type: 'text', rows: 3 }),
@@ -108,6 +114,7 @@ export const shotgunsLanding = defineType({
       name: 'teasers',
       title: 'Teasers',
       type: 'object',
+      fieldset: 'engraving',
       fields: [
         defineField({ name: 'engraving', type: 'imageWithMeta' }),
         defineField({ name: 'wood', type: 'imageWithMeta' }),
@@ -241,6 +248,7 @@ export const shotgunsLanding = defineType({
       name: 'disciplineHubs',
       title: 'Discipline Hubs',
       type: 'array',
+      fieldset: 'disciplines',
       of: [
         {
           type: 'object',

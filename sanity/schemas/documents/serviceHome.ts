@@ -6,11 +6,24 @@ export const serviceHome = defineType({
   title: 'Service Home',
   icon: WrenchIcon,
   type: 'document',
+  fieldsets: [
+    {name: 'hero', title: 'Hero overlay panel', options: {collapsible: true, collapsed: false}},
+    {name: 'overview', title: 'Service overview (matte panel)', options: {collapsible: true, collapsed: false}},
+    {name: 'guidance', title: 'Guidance & prep (utility cards)', options: {collapsible: true, collapsed: true}},
+    {name: 'network', title: 'Network finder', options: {collapsible: true, collapsed: true}},
+    {name: 'maintenance', title: 'Maintenance & repairs', options: {collapsible: true, collapsed: true}},
+    {name: 'parts', title: 'Parts editorial', options: {collapsible: true, collapsed: true}},
+    {name: 'integrity', title: 'Integrity advisory', options: {collapsible: true, collapsed: true}},
+    {name: 'requests', title: 'Service / parts requests', options: {collapsible: true, collapsed: true}},
+    {name: 'guides', title: 'Guides & downloads', options: {collapsible: true, collapsed: true}},
+    {name: 'faq', title: 'Service FAQ', options: {collapsible: true, collapsed: true}},
+  ],
   fields: [
     defineField({
       name: 'hero',
       title: 'Hero',
       type: 'object',
+      fieldset: 'hero',
       fields: [
         defineField({ name: 'title', type: 'string', validation: (Rule) => Rule.required() }),
         defineField({ name: 'subheading', type: 'text', rows: 3 }),
@@ -21,6 +34,7 @@ export const serviceHome = defineType({
       name: 'overviewSection',
       title: 'Service Overview Section',
       type: 'object',
+      fieldset: 'overview',
       fields: [
         defineField({ name: 'heading', title: 'Section Heading', type: 'string' }),
         defineField({ name: 'subheading', title: 'Subheading', type: 'text' }),
@@ -38,6 +52,7 @@ export const serviceHome = defineType({
       name: 'serviceGuidanceBlock',
       title: 'Service Guidance Block',
       type: 'object',
+      fieldset: 'guidance',
       fields: [
         defineField({ name: 'eyebrow', title: 'Eyebrow', type: 'string' }),
         defineField({ name: 'body', title: 'Body Copy', type: 'text' }),
@@ -49,6 +64,7 @@ export const serviceHome = defineType({
       name: 'shippingPrepBlock',
       title: 'Shipping Prep Block',
       type: 'object',
+      fieldset: 'guidance',
       fields: [
         defineField({ name: 'eyebrow', title: 'Eyebrow', type: 'string' }),
         defineField({ name: 'body', title: 'Body Copy', type: 'text' }),
@@ -60,6 +76,7 @@ export const serviceHome = defineType({
       name: 'networkFinderUi',
       title: 'Service Network Finder – UI',
       type: 'object',
+      fieldset: 'network',
       fields: [
         defineField({ name: 'heading', title: 'Section Heading', type: 'string' }),
         defineField({ name: 'subheading', title: 'Section Subheading', type: 'text' }),
@@ -72,6 +89,7 @@ export const serviceHome = defineType({
       name: 'maintenanceSection',
       title: 'Maintenance & Repairs Section',
       type: 'object',
+      fieldset: 'maintenance',
       fields: [
         defineField({ name: 'heading', title: 'Section Heading', type: 'string' }),
         defineField({ name: 'subheading', title: 'Subheading', type: 'text' }),
@@ -89,6 +107,7 @@ export const serviceHome = defineType({
       name: 'partsEditorialSection',
       title: 'Parts Editorial Section',
       type: 'object',
+      fieldset: 'parts',
       fields: [
         defineField({ name: 'heading', title: 'Section Heading', type: 'string' }),
         defineField({ name: 'intro', title: 'Intro / Subheading', type: 'text' }),
@@ -115,6 +134,7 @@ export const serviceHome = defineType({
       name: 'integrityAdvisory',
       title: 'Integrity Advisory',
       type: 'object',
+      fieldset: 'integrity',
       fields: [
         defineField({ name: 'heading', title: 'Heading', type: 'string' }),
         defineField({ name: 'body', title: 'Body Copy', type: 'text' }),
@@ -124,6 +144,7 @@ export const serviceHome = defineType({
       name: 'serviceRequestBlock',
       title: 'Service Request Block',
       type: 'object',
+      fieldset: 'requests',
       fields: [
         defineField({ name: 'title', title: 'Title', type: 'string' }),
         defineField({ name: 'description', title: 'Description', type: 'text' }),
@@ -136,6 +157,7 @@ export const serviceHome = defineType({
       name: 'partsRequestBlock',
       title: 'Parts Request Block',
       type: 'object',
+      fieldset: 'requests',
       fields: [
         defineField({ name: 'title', title: 'Title', type: 'string' }),
         defineField({ name: 'description', title: 'Description', type: 'text' }),
@@ -149,6 +171,7 @@ export const serviceHome = defineType({
       name: 'guidesSection',
       title: 'Care Guides & Downloads',
       type: 'object',
+      fieldset: 'guides',
       fields: [
         defineField({ name: 'heading', title: 'Section Heading', type: 'string' }),
         defineField({ name: 'careGuidesLabel', title: '"Care Guides" Label', type: 'string' }),
@@ -176,6 +199,7 @@ export const serviceHome = defineType({
       name: 'faqSection',
       title: 'Service FAQ Section',
       type: 'object',
+      fieldset: 'faq',
       fields: [
         defineField({ name: 'heading', title: 'Section Heading', type: 'string' }),
         defineField({ name: 'intro', title: 'Intro / Lead', type: 'text' }),

@@ -3,7 +3,7 @@ import "server-only";
 import { cache } from "react";
 import { groq } from "next-sanity";
 
-import { sanityClient } from "../../../sanity/client";
+import { sanityFetch } from "../lib/live";
 
 const manufactureYearQuery = groq`
   *[_type == "manufactureYear"] | order(year asc) {
@@ -52,8 +52,13 @@ export type ManufactureYearMatch = {
 };
 
 const fetchManufactureYears = cache(async () => {
-  const docs = await sanityClient.fetch<ManufactureYearDoc[] | null>(manufactureYearQuery).catch(() => null);
-  return (docs ?? []).filter((doc): doc is Required<Pick<ManufactureYearDoc, "year" | "primaryRange">> & ManufactureYearDoc =>
+  const { data } =
+    (await sanityFetch<ManufactureYearDoc[] | null>({
+      query: manufactureYearQuery,
+      stega: true,
+    }).catch(() => ({ data: null }))) ?? {};
+
+  return (data ?? []).filter((doc): doc is Required<Pick<ManufactureYearDoc, "year" | "primaryRange">> & ManufactureYearDoc =>
     typeof doc?.year === "number" && typeof doc?.primaryRange?.start === "number",
   );
 });
@@ -95,15 +100,17 @@ export async function getManufactureYearBySerial(serial: number, model?: string)
       };
     }
 
-    if (isWithinRange(serialNumber, doc.primaryRange?.start, doc.primaryRange?.end ?? undefined)) {
+    const primaryStart = doc.primaryRange?.start;
+    const primaryEnd = doc.primaryRange?.end;
+    if (isWithinRange(serialNumber, primaryStart, primaryEnd ?? undefined)) {
       return {
         id: doc._id ?? `manufactureYear-${doc.year}`,
         year: doc.year,
         proofCode: doc.proofCode ?? "",
         matchType: "primary",
         range: {
-          start: doc.primaryRange?.start!,
-          end: typeof doc.primaryRange?.end === "number" ? doc.primaryRange.end : undefined,
+          start: primaryStart as number,
+          end: typeof primaryEnd === "number" ? primaryEnd : undefined,
         },
       };
     }

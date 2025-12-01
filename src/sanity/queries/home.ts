@@ -14,7 +14,7 @@ import type {
   HomeData,
   HomeGuidePlatform,
 } from "@/types/content";
-import { sanityClient } from "../../../sanity/client";
+import { sanityFetch } from "../lib/live";
 import { imageFields, imageWithMetaFields, mapImageResult, type SanityImageResult } from "./utils";
 
 const timelineBackgroundPath = "/redesign-photos/homepage/timeline-scroller/pweb-home-timelinescroller-bg.jpg";
@@ -257,7 +257,11 @@ type HomeSanityResponse = {
 };
 
 export async function getHome(): Promise<HomeData> {
-  const data = await sanityClient.fetch<HomeSanityResponse | null>(homeQuery).catch(() => null);
+  const { data } =
+    (await sanityFetch<HomeSanityResponse | null>({
+      query: homeQuery,
+      stega: true,
+    }).catch(() => ({ data: null }))) ?? {};
 
   const hero = mapHero(data?.hero) ?? fallbackHero;
   const heroCtas = mapHeroCtas(data?.heroCtas);

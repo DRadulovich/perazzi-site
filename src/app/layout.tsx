@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { getLocale, getMessages } from "next-intl/server";
 import { Geist, Geist_Mono } from "next/font/google";
+import { draftMode } from "next/headers";
+import { VisualEditing } from "next-sanity/visual-editing";
 import "./globals.css";
 import Providers from "./providers";
+import { SanityLive } from "@/sanity/lib/live";
 import type { ThemeMode } from "@/components/theme/ThemeProvider";
 
 const geistSans = Geist({
@@ -33,6 +36,7 @@ export default async function RootLayout({
   const locale = await getLocale();
   const messages = await getMessages();
   const headerList = await headers();
+  const { isEnabled: isDraftMode } = await draftMode();
 
   const cookieTheme = getCookieValue(
     headerList.get("cookie"),
@@ -59,6 +63,8 @@ export default async function RootLayout({
           initialTheme={initialTheme}
         >
           {children}
+          <SanityLive />
+          {isDraftMode && <VisualEditing />}
         </Providers>
       </body>
     </html>

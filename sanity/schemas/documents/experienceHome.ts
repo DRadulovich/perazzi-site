@@ -6,11 +6,21 @@ export const experienceHome = defineType({
   title: 'Experience Home',
   icon: LaunchIcon,
   type: 'document',
+  fieldsets: [
+    {name: 'hero', title: 'Hero overlay panel', options: {collapsible: true, collapsed: false}},
+    {name: 'picker', title: 'Experience picker (narrative cards)', options: {collapsible: true, collapsed: false}},
+    {name: 'guides', title: 'Concierge guidance (utility cards)', options: {collapsible: true, collapsed: true}},
+    {name: 'visitFactory', title: 'Visit Botticino / factory strip', options: {collapsible: true, collapsed: true}},
+    {name: 'booking', title: 'Booking rail & scheduler', options: {collapsible: true, collapsed: true}},
+    {name: 'network', title: 'Travel network', options: {collapsible: true, collapsed: true}},
+    {name: 'mosaic', title: 'Mosaic gallery', options: {collapsible: true, collapsed: true}},
+  ],
   fields: [
     defineField({
       name: 'hero',
       title: 'Hero',
       type: 'object',
+      fieldset: 'hero',
       fields: [
         defineField({ name: 'title', type: 'string', validation: (Rule) => Rule.required() }),
         defineField({ name: 'subheading', type: 'text', rows: 3 }),
@@ -21,6 +31,7 @@ export const experienceHome = defineType({
       name: 'picker',
       title: 'Experience Picker',
       type: 'array',
+      fieldset: 'picker',
       of: [
         {
           type: 'object',
@@ -38,6 +49,7 @@ export const experienceHome = defineType({
       name: 'pickerUi',
       title: 'Experience Picker – UI',
       type: 'object',
+      fieldset: 'picker',
       fields: [
         defineField({ name: 'heading', title: 'Section Heading', type: 'string' }),
         defineField({ name: 'subheading', title: 'Section Subheading', type: 'text' }),
@@ -51,6 +63,7 @@ export const experienceHome = defineType({
       name: 'faqSection',
       title: 'FAQ Section',
       type: 'object',
+      fieldset: 'guides',
       fields: [
         defineField({ name: 'heading', title: 'Section Heading', type: 'string' }),
         defineField({ name: 'lead', title: 'Lead Text', type: 'string' }),
@@ -74,6 +87,7 @@ export const experienceHome = defineType({
       name: 'visitPlanningBlock',
       title: 'Visit Planning Block',
       type: 'object',
+      fieldset: 'guides',
       fields: [
         defineField({ name: 'heading', title: 'Heading', type: 'string' }),
         defineField({ name: 'intro', title: 'Intro Paragraph', type: 'text' }),
@@ -94,6 +108,7 @@ export const experienceHome = defineType({
       name: 'fittingGuidanceBlock',
       title: 'Fitting Guidance Block',
       type: 'object',
+      fieldset: 'guides',
       fields: [
         defineField({ name: 'heading', title: 'Heading', type: 'string' }),
         defineField({ name: 'intro', title: 'Intro Paragraph', type: 'text' }),
@@ -114,6 +129,7 @@ export const experienceHome = defineType({
       name: 'travelGuideBlock',
       title: 'Travel Guide CTA Block',
       type: 'object',
+      fieldset: 'guides',
       fields: [
         defineField({ name: 'heading', title: 'Heading', type: 'string' }),
         defineField({ name: 'intro', title: 'Intro Paragraph', type: 'text' }),
@@ -134,6 +150,7 @@ export const experienceHome = defineType({
       name: 'visitFactorySection',
       title: 'Visit Botticino / Factory Section',
       type: 'object',
+      fieldset: 'visitFactory',
       fields: [
         defineField({ name: 'heading', title: 'Section Heading', type: 'string' }),
         defineField({ name: 'subheading', title: 'Section Subheading', type: 'string' }),
@@ -158,6 +175,7 @@ export const experienceHome = defineType({
       name: 'bookingSection',
       title: 'Booking Options & Scheduler',
       type: 'object',
+      fieldset: 'booking',
       fields: [
         defineField({ name: 'heading', title: 'Section Heading', type: 'string' }),
         defineField({ name: 'subheading', title: 'Section Subheading', type: 'text' }),
@@ -198,6 +216,7 @@ export const experienceHome = defineType({
       name: 'travelNetworkUi',
       title: 'Travel Network – UI',
       type: 'object',
+      fieldset: 'network',
       fields: [
         defineField({ name: 'title', title: 'Section Title', type: 'string' }),
         defineField({ name: 'lead', title: 'Lead Text', type: 'string' }),
@@ -213,6 +232,7 @@ export const experienceHome = defineType({
       name: 'mosaicUi',
       title: 'Mosaic Gallery – UI',
       type: 'object',
+      fieldset: 'mosaic',
       fields: [
         defineField({ name: 'eyebrow', title: 'Section Eyebrow', type: 'string' }),
         defineField({ name: 'heading', title: 'Section Heading', type: 'string' }),
@@ -222,6 +242,7 @@ export const experienceHome = defineType({
       name: 'mosaic',
       title: 'Mosaic',
       type: 'array',
+      fieldset: 'mosaic',
       of: [{ type: 'imageWithMeta' }],
     }),
   ],

@@ -3,7 +3,7 @@ import "server-only";
 import { groq } from "next-sanity";
 
 import type { FactoryAsset } from "@/types/content";
-import { sanityClient } from "../../../sanity/client";
+import { sanityFetch } from "../lib/live";
 import { imageWithMetaFields, mapImageResult, type SanityImageResult } from "./utils";
 
 type BespokeHomeResponse = {
@@ -207,7 +207,11 @@ const bespokeHomeQuery = groq`
 `;
 
 export async function getBespokeHome(): Promise<BespokeHomePayload | null> {
-  const data = await sanityClient.fetch<BespokeHomeResponse | null>(bespokeHomeQuery).catch(() => null);
+  const { data } =
+    (await sanityFetch<BespokeHomeResponse | null>({
+      query: bespokeHomeQuery,
+      stega: true,
+    }).catch(() => ({ data: null }))) ?? {};
   if (!data) return null;
 
   return {

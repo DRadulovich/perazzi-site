@@ -14,7 +14,7 @@ import type {
   SerialLookupUi,
   WorkshopCta,
 } from "@/types/heritage";
-import { sanityClient } from "../../../sanity/client";
+import { sanityFetch } from "../lib/live";
 import {
   imageWithMetaFields,
   imageFields,
@@ -354,7 +354,11 @@ const championsQuery = groq`
 `;
 
 export async function getHeritageHome(): Promise<HeritageHomePayload | null> {
-  const data = await sanityClient.fetch<HeritageHomeResponse | null>(heritageHomeQuery).catch(() => null);
+  const { data } =
+    (await sanityFetch<HeritageHomeResponse | null>({
+      query: heritageHomeQuery,
+      stega: true,
+    }).catch(() => ({ data: null }))) ?? {};
   if (!data) return null;
 
   return {
@@ -449,9 +453,13 @@ export async function getHeritageHome(): Promise<HeritageHomePayload | null> {
 }
 
 export async function getHeritageEvents(): Promise<HeritageEventPayload[]> {
-  const data = await sanityClient.fetch<HeritageEventResponse[]>(heritageEventsQuery).catch(() => []);
+  const { data } =
+    (await sanityFetch<HeritageEventResponse[]>({
+      query: heritageEventsQuery,
+      stega: true,
+    }).catch(() => ({ data: [] }))) ?? {};
 
-  return data
+  return (data ?? [])
     .filter((event): event is HeritageEventResponse & { _id: string } => Boolean(event?._id))
     .map((event) => ({
       id: event._id as string,
@@ -476,9 +484,13 @@ export async function getHeritageEvents(): Promise<HeritageEventPayload[]> {
 }
 
 export async function getHeritageChampions(): Promise<ChampionPayload[]> {
-  const data = await sanityClient.fetch<ChampionResponse[]>(championsQuery).catch(() => []);
+  const { data } =
+    (await sanityFetch<ChampionResponse[]>({
+      query: championsQuery,
+      stega: true,
+    }).catch(() => ({ data: [] }))) ?? {};
 
-  return data
+  return (data ?? [])
     .filter((champion): champion is ChampionResponse & { _id: string } => Boolean(champion?._id))
     .map((champion) => {
       const article = champion.articles?.find((item) => item?._id);

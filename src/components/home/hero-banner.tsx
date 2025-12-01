@@ -3,8 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from "framer-motion";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
+import { CleanText } from "@/components/system/CleanText";
 import type { HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { ScrollIndicator } from "./scroll-indicator";
@@ -23,10 +24,10 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
   const [mediaLoaded, setMediaLoaded] = useState(false);
-  const [touchedCount, setTouchedCount] = useState(0);
   const [manifestoOpen, setManifestoOpen] = useState(false);
   const analyticsRef = useAnalyticsObserver(analyticsId ?? "HeroSeen");
   const prefersReducedMotion = useReducedMotion();
+  const heroHeading = hero.subheading ?? hero.tagline ?? "";
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -43,8 +44,6 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
     // no-op; required for Framer to track parallax
   });
 
-  const heroHeading = hero.subheading ?? hero.tagline;
-  const heroWords = useMemo(() => (heroHeading ?? "").split(/\s+/).filter(Boolean), [heroHeading]);
   const fallbackCtas: HomeData["heroCtas"] = {
     primaryLabel: "Ask the concierge",
     primaryPrompt:
@@ -59,11 +58,6 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
   const secondaryLabel = ctas.secondaryLabel ?? fallbackCtas.secondaryLabel;
   const secondaryHref = ctas.secondaryHref ?? fallbackCtas.secondaryHref;
 
-  useEffect(() => {
-    setTouchedCount(0);
-    setManifestoOpen(false);
-  }, [heroHeading]);
-
   const getFocusableElements = useCallback((container: HTMLElement) => {
     return Array.from(
       container.querySelectorAll<HTMLElement>(
@@ -74,7 +68,6 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
 
   const closeManifesto = useCallback(() => {
     setManifestoOpen(false);
-    setTouchedCount(0);
     const focusTarget = triggerRef.current ?? lastFocusedRef.current;
     if (focusTarget) {
       focusTarget.focus();
@@ -83,20 +76,8 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
 
   const openManifesto = useCallback(() => {
     lastFocusedRef.current = document.activeElement as HTMLElement | null;
-    setTouchedCount(heroWords.length);
     setManifestoOpen(true);
-  }, [heroWords.length]);
-
-  const handleWordTouch = (index: number) => {
-    if (manifestoOpen) return;
-    if (index === touchedCount) {
-      const next = index + 1;
-      setTouchedCount(next);
-      if (next === heroWords.length && heroWords.length > 0) {
-        openManifesto();
-      }
-    }
-  };
+  }, []);
 
   const setRefs = useCallback((node: HTMLElement | null) => {
     sectionRef.current = node;
@@ -209,25 +190,13 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
           </p>
           <h1
             id="home-hero-heading"
+            data-sanity-edit-target
             className={`mb-10 flex flex-wrap justify-center gap-2 text-balance text-2xl font-bold leading-[1.12] text-white transition-opacity duration-700 motion-reduce:transition-none sm:text-3xl lg:text-4xl ${
               mediaLoaded ? "opacity-100 delay-100" : "opacity-0"
             }`}
+            onClick={openManifesto}
           >
-            {heroWords.map((word, index) => {
-              const touched = index < touchedCount;
-              return (
-                <span
-                  key={`${word}-${index}`}
-                  className={`relative cursor-pointer transition-colors ${
-                    touched ? "underline decoration-perazzi-red/0 decoration-0 underline-offset-4" : "hover:text-perazzi-red/0"
-                  }`}
-                  onMouseEnter={() => handleWordTouch(index)}
-                  onTouchStart={() => handleWordTouch(index)}
-                >
-                  {word}
-                </span>
-              );
-            })}
+            <CleanText value={heroHeading} />
           </h1>
           {hero.background.caption ? (
             <p className="prose prose-base prose-invert italic font-light mx-auto mt-3 mb-3 max-w-2xl text-white/80 md:prose-lg md:max-w-4xl lg:max-w-4xl">

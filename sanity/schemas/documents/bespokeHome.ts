@@ -7,13 +7,13 @@ export const bespokeHome = defineType({
   icon: SparkleIcon,
   type: 'document',
   fieldsets: [
-    {name: 'hero', title: 'Hero'},
-    {name: 'journey', title: 'Journey / Steps'},
-    {name: 'guide', title: 'Guide Block'},
-    {name: 'cinematic', title: 'Cinematic Strips'},
-    {name: 'experts', title: 'Experts'},
-    {name: 'booking', title: 'Booking Options'},
-    {name: 'assurance', title: 'Assurance'},
+    {name: 'hero', title: 'Hero overlay panel', options: {collapsible: true, collapsed: false}},
+    {name: 'journey', title: 'Fitting journey (timeline band)', options: {collapsible: true, collapsed: false}},
+    {name: 'guide', title: 'Concierge guide (narrative cards)', options: {collapsible: true, collapsed: true}},
+    {name: 'cinematic', title: 'Cinematic strips', options: {collapsible: true, collapsed: true}},
+    {name: 'experts', title: 'Atelier experts', options: {collapsible: true, collapsed: true}},
+    {name: 'booking', title: 'Booking rail & options', options: {collapsible: true, collapsed: true}},
+    {name: 'assurance', title: 'Assurance / proof overlay', options: {collapsible: true, collapsed: true}},
   ],
   fields: [
     defineField({

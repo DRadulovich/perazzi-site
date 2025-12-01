@@ -22,11 +22,22 @@ export const heritageHome = defineType({
   title: 'Heritage Home',
   icon: BookIcon,
   type: 'document',
+  fieldsets: [
+    {name: 'hero', title: 'Hero overlay panel', options: {collapsible: true, collapsed: false}},
+    {name: 'intro', title: 'Archive intro narrative', options: {collapsible: true, collapsed: false}},
+    {name: 'eras', title: 'Heritage eras timeline', options: {collapsible: true, collapsed: true}},
+    {name: 'workshop', title: 'Workshop tools / lookup', options: {collapsible: true, collapsed: true}},
+    {name: 'champions', title: 'Champions narrative band', options: {collapsible: true, collapsed: true}},
+    {name: 'factory', title: 'Factory essay + photo strip', options: {collapsible: true, collapsed: true}},
+    {name: 'oralHistories', title: 'Oral histories', options: {collapsible: true, collapsed: true}},
+    {name: 'related', title: 'Related reading', options: {collapsible: true, collapsed: true}},
+  ],
   fields: [
     defineField({
       name: 'hero',
       title: 'Hero',
       type: 'object',
+      fieldset: 'hero',
       fields: [
         defineField({ name: 'title', type: 'string', validation: (Rule) => Rule.required() }),
         defineField({ name: 'subheading', type: 'text', rows: 3 }),
@@ -37,6 +48,7 @@ export const heritageHome = defineType({
       name: 'heritageIntro',
       title: 'Perazzi Heritage Intro Block',
       type: 'object',
+      fieldset: 'intro',
       fields: [
         defineField({ name: 'eyebrow', title: 'Section Eyebrow', type: 'string' }),
         defineField({ name: 'heading', title: 'Section Heading', type: 'string' }),
@@ -53,12 +65,14 @@ export const heritageHome = defineType({
       name: 'erasConfig',
       title: 'Heritage Eras Config',
       type: 'array',
+      fieldset: 'eras',
       of: [{ type: 'heritageEraConfig' }],
     }),
     defineField({
       name: 'workshopCta',
       title: 'Ask the Workshop CTA',
       type: 'object',
+      fieldset: 'workshop',
       fields: [
         defineField({ name: 'heading', title: 'Heading', type: 'string' }),
         defineField({ name: 'intro', title: 'Intro Paragraph', type: 'text' }),
@@ -79,6 +93,7 @@ export const heritageHome = defineType({
       name: 'serialLookupUi',
       title: 'Serial Lookup – UI Text',
       type: 'object',
+      fieldset: 'workshop',
       fields: [
         defineField({ name: 'heading', title: 'Section Heading', type: 'string' }),
         defineField({ name: 'subheading', title: 'Subheading', type: 'string' }),
@@ -92,6 +107,7 @@ export const heritageHome = defineType({
       name: 'championsIntro',
       title: 'Champions Intro Block',
       type: 'object',
+      fieldset: 'champions',
       fields: [
         defineField({ name: 'heading', title: 'Heading', type: 'string' }),
         defineField({ name: 'intro', title: 'Intro Paragraph', type: 'text' }),
@@ -110,6 +126,7 @@ export const heritageHome = defineType({
       name: 'championsGalleryUi',
       title: 'Champions Gallery – UI',
       type: 'object',
+      fieldset: 'champions',
       fields: [
         defineField({ name: 'heading', title: 'Section Title', type: 'string' }),
         defineField({ name: 'subheading', title: 'Section Subheading', type: 'string' }),
@@ -122,6 +139,7 @@ export const heritageHome = defineType({
       name: 'factoryIntroBlock',
       title: 'Factory Intro Block',
       type: 'object',
+      fieldset: 'factory',
       fields: [
         defineField({ name: 'heading', title: 'Intro Heading', type: 'string' }),
         defineField({ name: 'intro', title: 'Intro Paragraph', type: 'text' }),
@@ -140,16 +158,18 @@ export const heritageHome = defineType({
       name: 'factoryEssayUi',
       title: 'Factory Essay – UI',
       type: 'object',
+      fieldset: 'factory',
       fields: [
         defineField({ name: 'eyebrow', title: 'Section Eyebrow', type: 'string' }),
         defineField({ name: 'heading', title: 'Section Heading', type: 'string' }),
       ],
     }),
-    defineField({ name: 'factoryIntroBody', title: 'Factory Intro Body', type: 'text' }),
+    defineField({ name: 'factoryIntroBody', title: 'Factory Intro Body', type: 'text', fieldset: 'factory' }),
     defineField({
       name: 'oralHistoriesUi',
       title: 'Oral Histories – UI',
       type: 'object',
+      fieldset: 'oralHistories',
       fields: [
         defineField({ name: 'eyebrow', title: 'Section Eyebrow', type: 'string' }),
         defineField({ name: 'heading', title: 'Section Heading', type: 'string' }),
@@ -161,6 +181,7 @@ export const heritageHome = defineType({
       name: 'relatedSection',
       title: 'Related Reading Section',
       type: 'object',
+      fieldset: 'related',
       fields: [
         defineField({ name: 'heading', title: 'Section Heading', type: 'string' }),
         defineField({
@@ -183,12 +204,14 @@ export const heritageHome = defineType({
       name: 'photoEssay',
       title: 'Factory Photo Essay',
       type: 'array',
+      fieldset: 'factory',
       of: [{ type: 'imageWithMeta' }],
     }),
     defineField({
       name: 'oralHistories',
       title: 'Oral Histories',
       type: 'array',
+      fieldset: 'oralHistories',
       of: [
         {
           type: 'object',
