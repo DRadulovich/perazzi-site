@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import type { AuthorizedDealerEntry, ExperienceNetworkData, ScheduledEventEntry } from "@/types/experience";
+import type { AuthorizedDealerEntry, ExperienceNetworkData, ScheduledEventEntry, TravelNetworkUi } from "@/types/experience";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import Image from "next/image";
@@ -11,9 +11,10 @@ type TabKey = "schedule" | "dealers";
 
 type TravelNetworkProps = {
   data: ExperienceNetworkData;
+  ui: TravelNetworkUi;
 };
 
-export function TravelNetwork({ data }: TravelNetworkProps) {
+export function TravelNetwork({ data, ui }: TravelNetworkProps) {
   const analyticsRef = useAnalyticsObserver("TravelNetworkSeen");
   const [activeTab, setActiveTab] = useState<TabKey>("schedule");
 
@@ -21,17 +22,27 @@ export function TravelNetwork({ data }: TravelNetworkProps) {
     () => [
       {
         key: "schedule" as const,
-        label: "Our Travel Schedule",
+        label: ui.scheduleTabLabel ?? "Our Travel Schedule",
         count: data.scheduledEvents.length,
       },
       {
         key: "dealers" as const,
-        label: "Our Dealers",
+        label: ui.dealersTabLabel ?? "Our Dealers",
         count: data.dealers.length,
       },
     ],
-    [data.dealers.length, data.scheduledEvents.length],
+    [data.dealers.length, data.scheduledEvents.length, ui.dealersTabLabel, ui.scheduleTabLabel],
   );
+  const heading = ui.title ?? "Travel network";
+  const lead = ui.lead ?? "Meet us on the road";
+  const supporting =
+    ui.supporting ?? "Track our travel schedule or connect with a trusted Perazzi dealer closest to you.";
+  const backgroundSrc = ui.backgroundImage?.url
+    ?? "/redesign-photos/experience/pweb-experience-travelnetwork-bg.jpg";
+  const backgroundAlt = ui.backgroundImage?.alt ?? "Perazzi travel network background";
+  const emptyScheduleText =
+    ui.emptyScheduleText ?? "New travel stops are being confirmed. Check back shortly.";
+  const emptyDealersText = ui.emptyDealersText ?? "Dealer roster is being configured in Sanity.";
 
   return (
     <section
@@ -46,8 +57,8 @@ export function TravelNetwork({ data }: TravelNetworkProps) {
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <Image
-          src="/redesign-photos/experience/pweb-experience-travelnetwork-bg.jpg"
-          alt="Perazzi travel network background"
+          src={backgroundSrc}
+          alt={backgroundAlt}
           fill
           sizes="100vw"
           className="object-cover"
@@ -74,16 +85,16 @@ export function TravelNetwork({ data }: TravelNetworkProps) {
         <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
           <div className="space-y-3">
             <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-              Travel network
+              {heading}
             </p>
             <h2
               id="travel-network-heading"
               className="text-sm sm:text-base font-light italic leading-relaxed text-ink-muted"
             >
-              Meet us on the road
+              {lead}
             </h2>
             <p className="text-sm sm:text-base leading-relaxed text-ink-muted">
-              Track our travel schedule or connect with a trusted Perazzi dealer closest to you.
+              {supporting}
             </p>
           </div>
 
@@ -113,8 +124,12 @@ export function TravelNetwork({ data }: TravelNetworkProps) {
           </div>
 
           <div>
-            {activeTab === "schedule" && <ScheduleList events={data.scheduledEvents} />}
-            {activeTab === "dealers" && <DealerList dealers={data.dealers} />}
+            {activeTab === "schedule" && (
+              <ScheduleList events={data.scheduledEvents} emptyText={emptyScheduleText} />
+            )}
+            {activeTab === "dealers" && (
+              <DealerList dealers={data.dealers} emptyText={emptyDealersText} />
+            )}
           </div>
         </div>
       </div>
@@ -122,9 +137,9 @@ export function TravelNetwork({ data }: TravelNetworkProps) {
   );
 }
 
-function ScheduleList({ events }: { events: ScheduledEventEntry[] }) {
+function ScheduleList({ events, emptyText }: { events: ScheduledEventEntry[]; emptyText: string }) {
   if (!events.length) {
-    return <p className="text-sm leading-relaxed text-ink-muted">New travel stops are being confirmed. Check back shortly.</p>;
+    return <p className="text-sm leading-relaxed text-ink-muted">{emptyText}</p>;
   }
 
   return (
@@ -154,9 +169,9 @@ function ScheduleList({ events }: { events: ScheduledEventEntry[] }) {
   );
 }
 
-function DealerList({ dealers }: { dealers: AuthorizedDealerEntry[] }) {
+function DealerList({ dealers, emptyText }: { dealers: AuthorizedDealerEntry[]; emptyText: string }) {
   if (!dealers.length) {
-    return <p className="text-sm leading-relaxed text-ink-muted">Dealer roster is being configured in Sanity.</p>;
+    return <p className="text-sm leading-relaxed text-ink-muted">{emptyText}</p>;
   }
 
   return (

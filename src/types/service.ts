@@ -6,9 +6,13 @@ export interface ServiceHero {
   background: FactoryAsset;
 }
 
-export interface ServiceOverview {
+export interface ServiceOverviewSection {
+  heading?: string;
+  subheading?: string;
   introHtml: string;
-  checksHtml: string;
+  checksHeading?: string;
+  checksHtml?: string;
+  checks?: string[];
 }
 
 export type ServiceLocationType = "Factory" | "Service Center" | "Specialist";
@@ -39,7 +43,7 @@ export interface GuideDownload {
 export interface PartEditorial {
   name: string;
   purpose: string;
-  fitment: "factory" | "authorized" | "user";
+  fitment: string;
   notesHtml?: string;
 }
 
@@ -48,13 +52,84 @@ export interface FAQItem {
   aHtml: string;
 }
 
+export interface FAQSection {
+  heading?: string;
+  intro?: string;
+  items: FAQItem[];
+}
+
+export interface ServiceGuidanceBlock {
+  eyebrow?: string;
+  body?: string;
+  chatLabel?: string;
+  chatPrompt?: string;
+}
+
+export interface NetworkFinderUi {
+  heading?: string;
+  subheading?: string;
+  primaryButtonLabel?: string;
+  detailsButtonLabel?: string;
+  directionsButtonLabel?: string;
+}
+
+export interface MaintenanceSection {
+  heading?: string;
+  subheading?: string;
+  overviewHtml?: string;
+  columnLabels?: string[];
+}
+
+export interface PartsEditorialSection {
+  heading?: string;
+  intro?: string;
+  parts: PartEditorial[];
+}
+
+export interface IntegrityAdvisorySection {
+  heading?: string;
+  body?: string;
+}
+
+export interface ServiceRequestBlock {
+  title: string;
+  description?: string;
+  buttonLabel: string;
+  embedUrl: string;
+  fallbackUrl: string;
+}
+
+export interface PartsRequestBlock {
+  title: string;
+  description?: string;
+  primaryButtonLabel: string;
+  secondaryButtonLabel?: string;
+  embedUrl: string;
+  fallbackUrl: string;
+}
+
+export interface GuidesSection {
+  heading?: string;
+  careGuidesLabel?: string;
+  downloadsLabel?: string;
+  downloadButtonLabel?: string;
+  guides: GuideDownload[];
+}
+
 export interface ServicePageData {
   hero: ServiceHero;
-  overview: ServiceOverview;
+  overviewSection: ServiceOverviewSection;
+  serviceGuidanceBlock: ServiceGuidanceBlock;
+  shippingPrepBlock: ServiceGuidanceBlock;
+  networkFinderUi: NetworkFinderUi;
+  maintenanceSection: MaintenanceSection;
+  partsEditorialSection: PartsEditorialSection;
+  integrityAdvisory: IntegrityAdvisorySection;
+  serviceRequestBlock: ServiceRequestBlock;
+  partsRequestBlock: PartsRequestBlock;
+  guidesSection: GuidesSection;
+  faqSection: FAQSection;
   locations: ServiceLocation[];
-  maintenanceGuides: GuideDownload[];
-  partsEditorial: PartEditorial[];
-  faq: FAQItem[];
   finalCta: {
     primary: { label: string; href: string };
     secondary?: { label: string; href: string };

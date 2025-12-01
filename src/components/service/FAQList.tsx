@@ -8,12 +8,17 @@ import { logAnalytics } from "@/lib/analytics";
 
 type FAQListProps = {
   items: FAQItem[];
+  heading?: string;
+  intro?: string;
 };
 
-export function FAQList({ items }: FAQListProps) {
+export function FAQList({ items, heading, intro }: FAQListProps) {
   const analyticsRef = useAnalyticsObserver("ServiceFAQSeen");
 
   if (!items.length) return null;
+
+  const title = heading ?? "Service questions";
+  const lead = intro;
 
   return (
     <section
@@ -30,8 +35,13 @@ export function FAQList({ items }: FAQListProps) {
           id="service-faq-heading"
           className="text-2xl sm:text-3xl font-semibold text-ink"
         >
-          Service questions
+          {title}
         </h2>
+        {lead ? (
+          <p className="text-sm sm:text-base leading-relaxed text-ink-muted">
+            {lead}
+          </p>
+        ) : null}
       </div>
       <div className="space-y-4">
         {items.map((item, index) => (

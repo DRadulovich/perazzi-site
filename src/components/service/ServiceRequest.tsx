@@ -12,6 +12,7 @@ type RequestProps = {
   embedSrc: string;
   fallbackHref: string;
   analyticsOpenId: string;
+  fallbackLinkLabel?: string;
 };
 
 export function ServiceRequest({
@@ -21,6 +22,7 @@ export function ServiceRequest({
   embedSrc,
   fallbackHref,
   analyticsOpenId,
+  fallbackLinkLabel,
 }: RequestProps) {
   const analyticsRef = useAnalyticsObserver(`${analyticsOpenId}Seen`);
   const [open, setOpen] = useState(false);
@@ -88,7 +90,7 @@ export function ServiceRequest({
           rel="noreferrer"
           className="font-semibold text-perazzi-red focus-ring"
         >
-          Open the request form
+          {fallbackLinkLabel ?? "Open the request form"}
           <span className="sr-only"> (opens in a new tab)</span>
         </a>
       </p>

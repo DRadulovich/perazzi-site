@@ -56,12 +56,16 @@ export type HeritageEvent = {
 };
 
 export type HeritageEra = {
-  id: HeritageEraId;
+  id: HeritageEraId | string;
   label: string;
+  yearRangeLabel?: string;
   startYear: number;
   endYear: number;
   backgroundSrc: string;
   overlayColor: string;
+  overlayFrom?: string;
+  overlayTo?: string;
+  isOngoing?: boolean;
 };
 
 export type HeritageEraWithEvents = HeritageEra & {
@@ -77,6 +81,87 @@ export interface HeritageHero {
   title: string;
   subheading?: string;
   background: FactoryAsset;
+}
+
+export interface HeritageIntro {
+  eyebrow?: string;
+  heading?: string;
+  paragraphs?: string[];
+  backgroundImage?: FactoryAsset;
+}
+
+export interface HeritageEraConfig {
+  id: string;
+  label: string;
+  yearRangeLabel?: string;
+  startYear: number;
+  endYear: number;
+  backgroundImage?: FactoryAsset;
+  overlayFrom?: string;
+  overlayTo?: string;
+}
+
+export interface WorkshopCta {
+  heading?: string;
+  intro?: string;
+  bullets?: string[];
+  closing?: string;
+  primaryLabel?: string;
+  primaryHref?: string;
+  secondaryLabel?: string;
+  secondaryHref?: string;
+}
+
+export interface SerialLookupUi {
+  heading?: string;
+  subheading?: string;
+  instructions?: string;
+  primaryButtonLabel?: string;
+  emptyStateText?: string;
+  backgroundImage?: FactoryAsset;
+}
+
+export interface ChampionsIntro {
+  heading?: string;
+  intro?: string;
+  bullets?: string[];
+  closing?: string;
+  chatLabel?: string;
+  chatPrompt?: string;
+}
+
+export interface ChampionsGalleryUi {
+  heading?: string;
+  subheading?: string;
+  backgroundImage?: FactoryAsset;
+  championsLabel?: string;
+  cardCtaLabel?: string;
+}
+
+export interface FactoryIntroBlock {
+  heading?: string;
+  intro?: string;
+  bullets?: string[];
+  closing?: string;
+  chatLabel?: string;
+  chatPrompt?: string;
+}
+
+export interface FactoryEssayUi {
+  eyebrow?: string;
+  heading?: string;
+}
+
+export interface OralHistoriesUi {
+  eyebrow?: string;
+  heading?: string;
+  readLabel?: string;
+  hideLabel?: string;
+}
+
+export interface RelatedSection {
+  heading?: string;
+  items: ArticleRef[];
 }
 
 export interface FactoryEssayItem {
@@ -113,12 +198,21 @@ export interface ChampionEvergreen {
 
 export interface HeritagePageData {
   hero: HeritageHero;
+  heritageIntro: HeritageIntro;
+  erasConfig: HeritageEra[];
+  workshopCta: WorkshopCta;
+  serialLookupUi: SerialLookupUi;
+  championsIntro: ChampionsIntro;
+  championsGalleryUi: ChampionsGalleryUi;
+  factoryIntroBlock: FactoryIntroBlock;
+  factoryEssayUi: FactoryEssayUi;
+  factoryIntroBody?: string;
   timeline: HeritageEvent[];
   champions: ChampionEvergreen[];
-  factoryIntroHtml?: string;
   factoryEssay: FactoryEssayItem[];
   oralHistories?: OralHistory[];
-  related?: ArticleRef[];
+  oralHistoriesUi: OralHistoriesUi;
+  relatedSection: RelatedSection;
   finalCta: {
     text: string;
     primary: { label: string; href: string };

@@ -1,20 +1,21 @@
 "use client";
 
+import type { PartsRequestBlock } from "@/types/service";
 import { ServiceRequest } from "./ServiceRequest";
 
 type PartsRequestProps = {
-  embedSrc: string;
-  fallbackHref: string;
+  partsRequestBlock: PartsRequestBlock;
 };
 
-export function PartsRequest({ embedSrc, fallbackHref }: PartsRequestProps) {
+export function PartsRequest({ partsRequestBlock }: PartsRequestProps) {
   return (
     <ServiceRequest
-      title="Request parts advice"
-      description="Let us confirm availability, fitment, and installation guidance for factory parts."
-      buttonLabel="Open parts request"
-      embedSrc={embedSrc}
-      fallbackHref={fallbackHref}
+      title={partsRequestBlock.title}
+      description={partsRequestBlock.description ?? ""}
+      buttonLabel={partsRequestBlock.primaryButtonLabel}
+      embedSrc={partsRequestBlock.embedUrl}
+      fallbackHref={partsRequestBlock.fallbackUrl}
+      fallbackLinkLabel={partsRequestBlock.secondaryButtonLabel}
       analyticsOpenId="RequestPartsOpen"
     />
   );

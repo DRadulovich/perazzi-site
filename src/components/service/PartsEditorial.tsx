@@ -1,14 +1,17 @@
 "use client";
 
-import type { PartEditorial as PartEditorialType } from "@/types/service";
+import type { PartsEditorialSection } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 type PartsEditorialProps = {
-  parts: PartEditorialType[];
+  partsEditorialSection: PartsEditorialSection;
 };
 
-export function PartsEditorial({ parts }: PartsEditorialProps) {
+export function PartsEditorial({ partsEditorialSection }: PartsEditorialProps) {
   const analyticsRef = useAnalyticsObserver("PartsEditorialSeen");
+  const heading = partsEditorialSection.heading ?? "Parts guidance";
+  const intro = partsEditorialSection.intro ?? "Genuine components, fitted correctly";
+  const parts = partsEditorialSection.parts;
 
   if (!parts.length) return null;
 
@@ -21,13 +24,13 @@ export function PartsEditorial({ parts }: PartsEditorialProps) {
     >
       <div className="space-y-2">
         <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
-          Parts guidance
+          {heading}
         </p>
         <h2
           id="parts-editorial-heading"
           className="text-2xl sm:text-3xl font-semibold text-ink"
         >
-          Genuine components, fitted correctly
+          {intro}
         </h2>
       </div>
       <ul className="space-y-4">

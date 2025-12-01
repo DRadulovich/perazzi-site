@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
+import type { SerialLookupUi } from "@/types/heritage";
 
 export interface SerialLookupSuccess {
   serial: number;
@@ -34,13 +35,24 @@ const initialState: SerialLookupFormState = { status: "idle" };
 
 type SerialLookupProps = {
   lookupAction: SerialLookupAction;
+  ui: SerialLookupUi;
 };
 
-export function SerialLookup({ lookupAction }: SerialLookupProps) {
+export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
   const analyticsRef = useAnalyticsObserver("SerialLookupSeen");
   const [serial, setSerial] = useState("");
   const [state, formAction] = useActionState(lookupAction, initialState);
   const errorId = state.status === "error" ? "serial-lookup-error" : undefined;
+  const heading = ui.heading ?? "Heritage Record";
+  const subheading = ui.subheading ?? "Discover when your story began";
+  const instructions =
+    ui.instructions ??
+    "Enter the serial number engraved on your receiver. We'll consult the Perazzi archives and reveal the year your shotgun was born and the proof mark that sealed its place in history.";
+  const primaryButtonLabel = ui.primaryButtonLabel ?? "Reveal Record";
+  const emptyStateText =
+    ui.emptyStateText ?? "Your Perazzi's origin story will appear here when its number is entered.";
+  const backgroundSrc = ui.backgroundImage?.url ?? "/cinematic_background_photos/p-web-2.jpg";
+  const backgroundAlt = ui.backgroundImage?.alt ?? "Perazzi champions background";
 
   return (
     <section
@@ -56,8 +68,8 @@ export function SerialLookup({ lookupAction }: SerialLookupProps) {
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <Image
-          src="/cinematic_background_photos/p-web-2.jpg"
-          alt="Perazzi champions background"
+          src={backgroundSrc}
+          alt={backgroundAlt}
           fill
           sizes="100vw"
           className="object-cover"
@@ -83,16 +95,16 @@ export function SerialLookup({ lookupAction }: SerialLookupProps) {
         <div className="space-y-6 rounded-2xl border border-perazzi-black/50 bg-card/0 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-perazzi-black/50 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
           <div className="space-y-2">
             <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-white">
-              Heritage Record
+              {heading}
             </p>
             <h2
               id="serial-lookup-heading"
               className="text-sm sm:text-base font-light italic leading-relaxed text-white/70"
             >
-              Discover when your story began
+              {subheading}
             </h2>
             <p className="text-sm sm:text-base md:text-lg leading-relaxed text-white/70">
-              Enter the serial number engraved on your receiver. We'll consult the Perazzi archives and reveal the year your shotgun was born and the proof mark that sealed its place in history.
+              {instructions}
             </p>
           </div>
           <form action={formAction} className="space-y-4" noValidate>
@@ -113,14 +125,14 @@ export function SerialLookup({ lookupAction }: SerialLookupProps) {
                   aria-describedby={errorId}
                 />
               </label>
-              <LookupSubmitButton />
+              <LookupSubmitButton label={primaryButtonLabel} />
             </div>
             {state.status === "error" ? (
               <p id="serial-lookup-error" className="text-sm text-perazzi-red">
                 {state.message}
               </p>
             ) : null}
-            <LookupResult state={state} />
+            <LookupResult state={state} emptyStateText={emptyStateText} />
           </form>
         </div>
       </div>
@@ -128,16 +140,16 @@ export function SerialLookup({ lookupAction }: SerialLookupProps) {
   );
 }
 
-function LookupSubmitButton() {
+function LookupSubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" size="lg" disabled={pending}>
-      {pending ? "Tracing Lineage..." : "Reveal Record"}
+      {pending ? "Tracing Lineage..." : label}
     </Button>
   );
 }
 
-function LookupResult({ state }: { state: SerialLookupFormState }) {
+function LookupResult({ state, emptyStateText }: { state: SerialLookupFormState; emptyStateText: string }) {
   const { pending } = useFormStatus();
 
   if (pending) {
@@ -151,7 +163,7 @@ function LookupResult({ state }: { state: SerialLookupFormState }) {
   if (state.status === "idle") {
     return (
       <p className="text-sm text-white/70" aria-live="polite">
-        Your Perazzi's origin story will appear here when its number is entered.
+        {emptyStateText}
       </p>
     );
   }

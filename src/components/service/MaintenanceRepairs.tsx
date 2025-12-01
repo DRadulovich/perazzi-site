@@ -2,18 +2,22 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
-import type { GuideDownload, ServiceOverview } from "@/types/service";
+import type { GuideDownload, MaintenanceSection } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 
 type MaintenanceRepairsProps = {
-  overview: ServiceOverview;
+  maintenanceSection: MaintenanceSection;
   guide?: GuideDownload;
 };
 
-export function MaintenanceRepairs({ overview, guide }: MaintenanceRepairsProps) {
+export function MaintenanceRepairs({ maintenanceSection, guide }: MaintenanceRepairsProps) {
   const analyticsRef = useAnalyticsObserver("MaintenanceRepairsSeen");
   const [open, setOpen] = useState(false);
+  const heading = maintenanceSection.heading ?? "Maintenance & repairs";
+  const subheading = maintenanceSection.subheading ?? "How we service your Perazzi";
+  const overviewHtml = maintenanceSection.overviewHtml ?? "";
+  const beforeSendLabel = maintenanceSection.columnLabels?.[0] ?? "Before you send your gun";
 
   return (
     <section
@@ -24,18 +28,18 @@ export function MaintenanceRepairs({ overview, guide }: MaintenanceRepairsProps)
     >
       <div className="space-y-2">
         <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
-          Maintenance &amp; repairs
+          {heading}
         </p>
         <h2
           id="maintenance-heading"
           className="text-2xl sm:text-3xl font-semibold text-ink"
         >
-          How we service your Perazzi
+          {subheading}
         </h2>
       </div>
       <div
         className="prose prose-sm max-w-none leading-relaxed text-ink-muted md:prose-lg"
-        dangerouslySetInnerHTML={{ __html: overview.checksHtml }}
+        dangerouslySetInnerHTML={{ __html: overviewHtml }}
       />
       {guide ? (
         <a
@@ -58,7 +62,7 @@ export function MaintenanceRepairs({ overview, guide }: MaintenanceRepairsProps)
           aria-expanded={open}
           aria-controls="before-send-content"
         >
-          Before you send your gun
+          {beforeSendLabel}
           <span
             aria-hidden="true"
             className={`text-lg transition-transform ${open ? "rotate-45" : "rotate-0"}`}

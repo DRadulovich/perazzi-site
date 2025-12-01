@@ -4,21 +4,27 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useId, useState } from "react";
 import Image from "next/image";
 import { useReducedMotion } from "framer-motion";
-import type { OralHistory } from "@/types/heritage";
+import type { OralHistoriesUi, OralHistory } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 
 type OralHistoriesProps = {
   histories: OralHistory[];
+  ui: OralHistoriesUi;
 };
 
-export function OralHistories({ histories }: OralHistoriesProps) {
+export function OralHistories({ histories, ui }: OralHistoriesProps) {
   const sectionRef = useAnalyticsObserver<HTMLElement>("OralHistoriesSeen");
 
   if (!histories.length) {
     return null;
   }
+
+  const eyebrow = ui.eyebrow ?? "Oral histories";
+  const heading = ui.heading ?? "Voices from Botticino";
+  const readLabel = ui.readLabel ?? "Read transcript";
+  const hideLabel = ui.hideLabel ?? "Hide transcript";
 
   return (
     <section
@@ -29,18 +35,23 @@ export function OralHistories({ histories }: OralHistoriesProps) {
     >
       <div className="space-y-2">
         <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
-          Oral histories
+          {eyebrow}
         </p>
         <h2
           id="oral-histories-heading"
           className="text-2xl sm:text-3xl font-semibold text-ink"
         >
-          Voices from Botticino
+          {heading}
         </h2>
       </div>
       <div className="grid gap-6 md:grid-cols-2">
         {histories.map((history) => (
-          <OralHistoryCard key={history.id} history={history} />
+          <OralHistoryCard
+            key={history.id}
+            history={history}
+            readLabel={readLabel}
+            hideLabel={hideLabel}
+          />
         ))}
       </div>
     </section>
@@ -49,9 +60,11 @@ export function OralHistories({ histories }: OralHistoriesProps) {
 
 type OralHistoryCardProps = {
   history: OralHistory;
+  readLabel: string;
+  hideLabel: string;
 };
 
-function OralHistoryCard({ history }: OralHistoryCardProps) {
+function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps) {
   const analyticsRef = useAnalyticsObserver(`OralHistorySeen:${history.id}`, {
     threshold: 0.5,
   });
@@ -117,7 +130,7 @@ function OralHistoryCard({ history }: OralHistoryCardProps) {
             aria-expanded={open}
             aria-controls={contentId}
           >
-            {open ? "Hide transcript" : "Read transcript"}
+            {open ? hideLabel : readLabel}
             <span
               aria-hidden="true"
               className={cn(

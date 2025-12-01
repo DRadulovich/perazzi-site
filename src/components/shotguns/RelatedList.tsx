@@ -10,13 +10,16 @@ type RelatedArticle = {
 };
 
 type RelatedListProps = {
+  heading?: string;
   items?: RelatedArticle[];
 };
 
-export function RelatedList({ items }: RelatedListProps) {
+export function RelatedList({ heading, items }: RelatedListProps) {
   if (!items || items.length === 0) {
     return null;
   }
+
+  const title = heading ?? "Related reading";
 
   return (
     <section
@@ -27,7 +30,7 @@ export function RelatedList({ items }: RelatedListProps) {
         id="related-articles-heading"
         className="text-xl sm:text-2xl font-semibold text-ink"
       >
-        Related reading
+        {title}
       </h2>
       <ul className="space-y-2 text-sm sm:text-base leading-relaxed text-ink">
         {items.map((item) => (

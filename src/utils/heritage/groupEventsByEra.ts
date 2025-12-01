@@ -1,12 +1,12 @@
 import { HERITAGE_ERAS } from "@/config/heritage-eras";
-import { type HeritageEvent, type HeritageEraWithEvents } from "@/types/heritage";
+import { type HeritageEvent, type HeritageEra, type HeritageEraWithEvents } from "@/types/heritage";
 
 export type { HeritageEraWithEvents } from "@/types/heritage";
 
-export function groupEventsByEra(events: HeritageEvent[]): HeritageEraWithEvents[] {
+export function groupEventsByEra(events: HeritageEvent[], eras: HeritageEra[] = HERITAGE_ERAS): HeritageEraWithEvents[] {
   const eraBuckets: Record<string, HeritageEvent[]> = {};
 
-  for (const era of HERITAGE_ERAS) {
+  for (const era of eras) {
     eraBuckets[era.id] = [];
   }
 
@@ -22,9 +22,10 @@ export function groupEventsByEra(events: HeritageEvent[]): HeritageEraWithEvents
       continue;
     }
 
-    const era = HERITAGE_ERAS.find(
-      (entry) => year >= entry.startYear && year <= entry.endYear,
-    );
+    const era = eras.find((entry) => {
+      const cappedEnd = entry.isOngoing ? Number.MAX_SAFE_INTEGER : entry.endYear;
+      return year >= entry.startYear && year <= cappedEnd;
+    });
 
     if (!era) {
       if (process.env.NODE_ENV === "development") {
@@ -41,7 +42,7 @@ export function groupEventsByEra(events: HeritageEvent[]): HeritageEraWithEvents
     eraBuckets[era.id].push(event);
   }
 
-  return HERITAGE_ERAS.map((era): HeritageEraWithEvents => {
+  return eras.map((era): HeritageEraWithEvents => {
     const orderedEvents = [...(eraBuckets[era.id] ?? [])].sort((a, b) => {
       const yearA = parseInt(a.date, 10) || 0;
       const yearB = parseInt(b.date, 10) || 0;

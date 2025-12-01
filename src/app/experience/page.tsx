@@ -21,12 +21,17 @@ export default async function ExperiencePage() {
   const {
     hero,
     picker,
-    visit,
-    fittingOptions,
+    pickerUi,
+    faqSection,
+    visitPlanningBlock,
+    fittingGuidanceBlock,
+    travelGuideBlock,
+    visitFactorySection,
+    bookingSection,
+    travelNetworkUi,
+    mosaicUi,
     mosaic,
-    faq,
     finalCta,
-    bookingScheduler,
   } = pageData;
 
   const pickerAnchorsById: Record<string, string> = {
@@ -68,7 +73,71 @@ export default async function ExperiencePage() {
     return anchor ? { ...item, href: anchor } : item;
   });
 
-  const faqJsonLd = faq.length ? FAQ_SCHEMA(faq) : null;
+  const faqItems = faqSection.items ?? [];
+  const faqJsonLd = faqItems.length ? FAQ_SCHEMA(faqItems) : null;
+
+  const visitPlanningHeading = visitPlanningBlock.heading ?? "Visit planning";
+  const visitPlanningIntro =
+    visitPlanningBlock.intro ??
+    "Map out a Botticino factory visit or fitting day before you commit: what happens, who you'll meet, and how to arrive ready.";
+  const visitPlanningBullets = visitPlanningBlock.bullets?.length
+    ? visitPlanningBlock.bullets
+    : [
+        "Itinerary & fittings - timing for measurements, patterning, gunroom walkthroughs, and engraving consults if needed.",
+        "Travel & lodging - best airports, drivers or rentals, and partner hotels close to Botticino and Gardone.",
+        "Range-day add-ons - clays venues and coaching near the factory to test setups or confirm gunfit.",
+      ];
+  const visitPlanningClosing =
+    visitPlanningBlock.closing ??
+    "Share your dates, disciplines, and goals; our team will send a draft itinerary and the right next pages to review before you book.";
+  const visitPlanningChatLabel = visitPlanningBlock.chatLabel ?? "Plan my visit";
+  const visitPlanningChatPrompt =
+    visitPlanningBlock.chatPrompt ??
+    "Draft a plan for a Perazzi fitting or Botticino visit: outline the schedule, who I'll meet, what to bring, and travel or lodging options nearby.";
+  const visitPlanningLinkLabel = visitPlanningBlock.linkLabel ?? "See visit options";
+  const visitPlanningLinkHref = visitPlanningBlock.linkHref ?? "/experience/visit";
+
+  const fittingGuidanceHeading = fittingGuidanceBlock.heading ?? "Fitting guidance";
+  const fittingGuidanceIntro =
+    fittingGuidanceBlock.intro ??
+    "Not sure which fitting session to book? The concierge will match your goals to the right format and send a prep list before you reserve.";
+  const fittingGuidanceBullets = fittingGuidanceBlock.bullets?.length
+    ? fittingGuidanceBlock.bullets
+    : [
+        "Session match - align travel, timelines, and goals to virtual consults, local range days, or Botticino fittings.",
+        "Prep checklist - measurements, photos or video, gun history, and any disciplines to highlight before booking.",
+        "Next steps - which scheduler link to use, lead times, and what happens after your slot is confirmed.",
+      ];
+  const fittingGuidanceClosing =
+    fittingGuidanceBlock.closing ??
+    "Share your dates, preferred format, and competition calendar; we will point you to the right session and finalize the booking flow for you.";
+  const fittingGuidanceChatLabel = fittingGuidanceBlock.chatLabel ?? "Help me book";
+  const fittingGuidanceChatPrompt =
+    fittingGuidanceBlock.chatPrompt ??
+    "Help me pick the right Perazzi fitting option (virtual consult, range session, or Botticino visit) and list what I should prepare before scheduling.";
+  const fittingGuidanceLinkLabel = fittingGuidanceBlock.linkLabel ?? "View fitting sessions";
+  const fittingGuidanceLinkHref = fittingGuidanceBlock.linkHref ?? "/experience/fitting";
+
+  const travelHeading = travelGuideBlock.heading ?? "Meet us on the road";
+  const travelIntro =
+    travelGuideBlock.intro ??
+    "Connect with Perazzi when we travel or through trusted dealers. The concierge can point you to the closest stop and what to bring.";
+  const travelBullets = travelGuideBlock.bullets?.length
+    ? travelGuideBlock.bullets
+    : [
+        "Travel stops - confirm dates, cities, and which team members will be on-site for fittings or demos.",
+        "Dealer introductions - match you with a trusted Perazzi dealer nearby and set expectations for inventory or services.",
+        "What to bring - targets, disciplines, gun history, and measurements to make a road-stop session efficient.",
+      ];
+  const travelClosing =
+    travelGuideBlock.closing ??
+    "Share your location and dates; we will route you to the right stop or dealer and prep a checklist for your visit.";
+  const travelChatLabel = travelGuideBlock.chatLabel ?? "Plan my stop";
+  const travelChatPrompt =
+    travelGuideBlock.chatPrompt ??
+    "Find the best way to meet Perazzi near me: upcoming travel stops, nearby authorized dealers, and what I should bring to test guns or discuss a build.";
+  const travelLinkLabel = travelGuideBlock.linkLabel ?? "View schedule and dealers";
+  const travelLinkHref = travelGuideBlock.linkHref ?? "#travel-network-heading";
 
   return (
     <main className="space-y-12 sm:space-y-16">
@@ -88,7 +157,7 @@ export default async function ExperiencePage() {
           { label: "Experience", href: "/experience" },
         ]}
       />
-      <ExperiencePicker items={pickerItems} faqItems={faq} />
+      <ExperiencePicker items={pickerItems} faqSection={faqSection} pickerUi={pickerUi} />
       <section
         id="experience-visit-planning"
         className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-10 sm:py-16"
@@ -104,26 +173,25 @@ export default async function ExperiencePage() {
               id="experience-visit-planning-heading"
               className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
             >
-              Visit planning
+              {visitPlanningHeading}
             </h2>
             <p className="mb-8 text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
-              Map out a Botticino factory visit or fitting day before you commit: what happens, who you'll meet, and how to arrive ready.
+              {visitPlanningIntro}
             </p>
             <div className="flex flex-wrap justify-start gap-3">
               <ChatTriggerButton
-                label="Plan my visit"
+                label={visitPlanningChatLabel}
                 payload={{
-                  question:
-                    "Draft a plan for a Perazzi fitting or Botticino visit: outline the schedule, who I'll meet, what to bring, and travel or lodging options nearby.",
+                  question: visitPlanningChatPrompt,
                   context: { pageUrl: "/experience", mode: "prospect" },
                 }}
                 variant="outline"
               />
               <Link
-                href="/experience/visit"
+                href={visitPlanningLinkHref}
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
-                See visit options
+                {visitPlanningLinkLabel}
                 <span aria-hidden="true">→</span>
               </Link>
             </div>
@@ -134,29 +202,24 @@ export default async function ExperiencePage() {
               What the concierge can line up:
             </p>
             <ul className="space-y-2">
-              <li>
-                <span className="text-base sm:text-lg font-black not-italic text-ink">Itinerary & fittings</span>
-                {" "}-{" "}
-                  timing for measurements, patterning, gunroom walkthroughs, and engraving consults if needed.
-              </li>
-              <li>
-                <span className="text-base sm:text-lg font-black not-italic text-ink">Travel & lodging</span>
-                {" "}-{" "}
-                best airports, drivers or rentals, and partner hotels close to Botticino and Gardone.
-              </li>
-              <li>
-                <span className="text-base sm:text-lg font-black not-italic text-ink">Range-day add-ons</span>
-                {" "}-{" "}
-                clays venues and coaching near the factory to test setups or confirm gunfit.
-              </li>
+              {visitPlanningBullets.map((bullet) => {
+                const [label, ...rest] = bullet.split(" - ");
+                return (
+                  <li key={bullet}>
+                    <span className="text-base sm:text-lg font-black not-italic text-ink">{label}</span>
+                    {" "}-{" "}
+                    {rest.join(" - ")}
+                  </li>
+                );
+              })}
             </ul>
             <p className="text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
-              Share your dates, disciplines, and goals; our team will send a draft itinerary and the right next pages to review before you book.
+              {visitPlanningClosing}
             </p>
           </div>
         </div>
       </section>
-      <VisitFactory visit={visit} />
+      <VisitFactory visitFactorySection={visitFactorySection} />
       <section
         id="experience-booking-guide"
         className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-10 sm:py-16"
@@ -172,26 +235,25 @@ export default async function ExperiencePage() {
               id="experience-booking-guide-heading"
               className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
             >
-              Fitting guidance
+              {fittingGuidanceHeading}
             </h2>
             <p className="mb-8 text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
-              Not sure which fitting session to book? The concierge will match your goals to the right format and send a prep list before you reserve.
+              {fittingGuidanceIntro}
             </p>
             <div className="flex flex-wrap justify-start gap-3">
               <ChatTriggerButton
-                label="Help me book"
+                label={fittingGuidanceChatLabel}
                 payload={{
-                  question:
-                    "Help me pick the right Perazzi fitting option (virtual consult, range session, or Botticino visit) and list what I should prepare before scheduling.",
+                  question: fittingGuidanceChatPrompt,
                   context: { pageUrl: "/experience", mode: "prospect" },
                 }}
                 variant="outline"
               />
               <Link
-                href="/experience/fitting"
+                href={fittingGuidanceLinkHref}
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
-                View fitting sessions
+                {fittingGuidanceLinkLabel}
                 <span aria-hidden="true">→</span>
               </Link>
             </div>
@@ -202,29 +264,24 @@ export default async function ExperiencePage() {
               What the concierge can clarify:
             </p>
             <ul className="space-y-2">
-              <li>
-                <span className="text-base sm:text-lg font-black not-italic text-ink">Session match</span>
-                {" "}-{" "}
-                align travel, timelines, and goals to virtual consults, local range days, or Botticino fittings.
-              </li>
-              <li>
-                <span className="text-base sm:text-lg font-black not-italic text-ink">Prep checklist</span>
-                {" "}-{" "}
-                measurements, photos or video, gun history, and any disciplines to highlight before booking.
-              </li>
-              <li>
-                <span className="text-base sm:text-lg font-black not-italic text-ink">Next steps</span>
-                {" "}-{" "}
-                which scheduler link to use, lead times, and what happens after your slot is confirmed.
-              </li>
+              {fittingGuidanceBullets.map((bullet) => {
+                const [label, ...rest] = bullet.split(" - ");
+                return (
+                  <li key={bullet}>
+                    <span className="text-base sm:text-lg font-black not-italic text-ink">{label}</span>
+                    {" "}-{" "}
+                    {rest.join(" - ")}
+                  </li>
+                );
+              })}
             </ul>
             <p className="text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
-              Share your dates, preferred format, and competition calendar; we will point you to the right session and finalize the booking flow for you.
+              {fittingGuidanceClosing}
             </p>
           </div>
         </div>
       </section>
-      <BookingOptions options={fittingOptions} scheduler={bookingScheduler} />
+      <BookingOptions bookingSection={bookingSection} />
       <section
         id="experience-travel-guide"
         className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-10 sm:py-16"
@@ -240,26 +297,25 @@ export default async function ExperiencePage() {
               id="experience-travel-guide-heading"
               className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
             >
-              Meet us on the road
+              {travelHeading}
             </h2>
             <p className="mb-8 text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
-              Connect with Perazzi when we travel or through trusted dealers. The concierge can point you to the closest stop and what to bring.
+              {travelIntro}
             </p>
             <div className="flex flex-wrap justify-start gap-3">
               <ChatTriggerButton
-                label="Plan my stop"
+                label={travelChatLabel}
                 payload={{
-                  question:
-                    "Find the best way to meet Perazzi near me: upcoming travel stops, nearby authorized dealers, and what I should bring to test guns or discuss a build.",
+                  question: travelChatPrompt,
                   context: { pageUrl: "/experience", mode: "prospect" },
                 }}
                 variant="outline"
               />
               <Link
-                href="#travel-network-heading"
+                href={travelLinkHref}
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
-                View schedule and dealers
+                {travelLinkLabel}
                 <span aria-hidden="true">→</span>
               </Link>
             </div>
@@ -270,30 +326,25 @@ export default async function ExperiencePage() {
               What the concierge can organize:
             </p>
             <ul className="space-y-2">
-              <li>
-                <span className="text-base sm:text-lg font-black not-italic text-ink">Travel stops</span>
-                {" "}-{" "}
-                confirm dates, cities, and which team members will be on-site for fittings or demos.
-              </li>
-              <li>
-                <span className="text-base sm:text-lg font-black not-italic text-ink">Dealer introductions</span>
-                {" "}-{" "}
-                match you with a trusted Perazzi dealer nearby and set expectations for inventory or services.
-              </li>
-              <li>
-                <span className="text-base sm:text-lg font-black not-italic text-ink">What to bring</span>
-                {" "}-{" "}
-                targets, disciplines, gun history, and measurements to make a road-stop session efficient.
-              </li>
+              {travelBullets.map((bullet) => {
+                const [label, ...rest] = bullet.split(" - ");
+                return (
+                  <li key={bullet}>
+                    <span className="text-base sm:text-lg font-black not-italic text-ink">{label}</span>
+                    {" "}-{" "}
+                    {rest.join(" - ")}
+                  </li>
+                );
+              })}
             </ul>
             <p className="text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
-              Share your location and dates; we will route you to the right stop or dealer and prep a checklist for your visit.
+              {travelClosing}
             </p>
           </div>
         </div>
       </section>
-      <TravelNetwork data={networkData} />
-      <MosaicGallery assets={mosaic} />
+      <TravelNetwork data={networkData} ui={travelNetworkUi} />
+      <MosaicGallery assets={mosaic} mosaicUi={mosaicUi} />
       <CTASection
         dataAnalyticsId="FinalCTASeen"
         analyticsPrefix="FinalCTAClicked"

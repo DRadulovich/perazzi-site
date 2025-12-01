@@ -1,15 +1,20 @@
 "use client";
 
-import type { GuideDownload } from "@/types/service";
+import type { GuidesSection } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 
 type CareGuidesDownloadsProps = {
-  guides: GuideDownload[];
+  guidesSection: GuidesSection;
 };
 
-export function CareGuidesDownloads({ guides }: CareGuidesDownloadsProps) {
+export function CareGuidesDownloads({ guidesSection }: CareGuidesDownloadsProps) {
   const analyticsRef = useAnalyticsObserver("CareGuidesSeen");
+  const heading = guidesSection.heading ?? "Downloads & checklists";
+  const careGuidesLabel = guidesSection.careGuidesLabel ?? "Care guides";
+  const downloadButtonLabel = guidesSection.downloadButtonLabel ?? "Download";
+  const downloadsLabel = guidesSection.downloadsLabel;
+  const guides = guidesSection.guides;
 
   if (!guides.length) return null;
 
@@ -22,14 +27,19 @@ export function CareGuidesDownloads({ guides }: CareGuidesDownloadsProps) {
     >
       <div className="space-y-2">
         <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
-          Care guides
+          {careGuidesLabel}
         </p>
         <h2
           id="care-guides-heading"
           className="text-2xl sm:text-3xl font-semibold text-ink"
         >
-          Downloads & checklists
+          {heading}
         </h2>
+        {downloadsLabel ? (
+          <p className="text-sm sm:text-base leading-relaxed text-ink-muted">
+            {downloadsLabel}
+          </p>
+        ) : null}
       </div>
       <ul className="space-y-4">
         {guides.map((guide) => (
@@ -49,7 +59,7 @@ export function CareGuidesDownloads({ guides }: CareGuidesDownloadsProps) {
               className="mt-3 inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
               onClick={() => logAnalytics(`GuideDownload:${guide.id}`)}
             >
-              Download
+              {downloadButtonLabel}
               {guide.fileSize ? (
                 <span className="text-[11px] sm:text-xs text-ink-muted">
                   ({guide.fileSize})

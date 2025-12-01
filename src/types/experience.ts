@@ -26,6 +26,9 @@ export interface LocationBlock {
 }
 
 export interface VisitFactoryData {
+  heading?: string;
+  subheading?: string;
+  backgroundImage?: FactoryAsset;
   introHtml: string;
   location: LocationBlock;
   whatToExpectHtml?: string;
@@ -35,7 +38,8 @@ export interface VisitFactoryData {
 export interface FittingOption {
   id: string;
   title: string;
-  durationMins: number;
+  durationMins?: number;
+  durationLabel?: string;
   descriptionHtml: string;
   href: string;
 }
@@ -78,21 +82,82 @@ export interface FAQItem {
   aHtml: string;
 }
 
+export interface FAQSection {
+  heading?: string;
+  lead?: string;
+  items: FAQItem[];
+}
+
+export interface ConciergeBlock {
+  heading?: string;
+  intro?: string;
+  bullets?: string[];
+  closing?: string;
+  chatLabel?: string;
+  chatPrompt?: string;
+  linkLabel?: string;
+  linkHref?: string;
+}
+
+export interface PickerUi {
+  heading?: string;
+  subheading?: string;
+  microLabel?: string;
+  backgroundImage?: FactoryAsset;
+  defaultCtaLabel?: string;
+  defaultCtaHref?: string;
+}
+
+export interface BookingScheduler {
+  title: string;
+  helperText?: string;
+  toggleOpenLabel: string;
+  toggleCloseLabel: string;
+  src: string;
+  iframeTitle?: string;
+  fallbackHref: string;
+}
+
+export interface BookingSection {
+  heading: string;
+  subheading: string;
+  options: FittingOption[];
+  optionCtaLabel: string;
+  scheduler?: BookingScheduler;
+}
+
+export interface TravelNetworkUi {
+  title?: string;
+  lead?: string;
+  supporting?: string;
+  scheduleTabLabel?: string;
+  dealersTabLabel?: string;
+  emptyScheduleText?: string;
+  emptyDealersText?: string;
+  backgroundImage?: FactoryAsset;
+}
+
+export interface MosaicUi {
+  eyebrow?: string;
+  heading?: string;
+}
+
 export interface ExperiencePageData {
   hero: ExperienceHero;
   picker: PickerItem[];
-  visit: VisitFactoryData;
-  fittingOptions: FittingOption[];
+  pickerUi: PickerUi;
+  faqSection: FAQSection;
+  visitPlanningBlock: ConciergeBlock;
+  fittingGuidanceBlock: ConciergeBlock;
+  travelGuideBlock: ConciergeBlock;
+  visitFactorySection: VisitFactoryData;
+  bookingSection: BookingSection;
+  travelNetworkUi: TravelNetworkUi;
+  mosaicUi: MosaicUi;
   mosaic: FactoryAsset[];
-  faq: FAQItem[];
   finalCta: {
     text: string;
     primary: { label: string; href: string };
     secondary?: { label: string; href: string };
-  };
-  bookingScheduler?: {
-    title: string;
-    src: string;
-    fallbackHref: string;
   };
 }

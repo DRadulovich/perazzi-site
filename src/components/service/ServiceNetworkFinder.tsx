@@ -2,20 +2,21 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import type { ServiceLocation, ServiceLocationType } from "@/types/service";
+import type { NetworkFinderUi, ServiceLocation, ServiceLocationType } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 type ServiceNetworkFinderProps = {
   locations: ServiceLocation[];
+  ui: NetworkFinderUi;
 };
 
 const defaultMapSrc =
   "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d44746.87813164304!2d10.2902568!3d45.5199988!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47817776ebf93163%3A0x7b1471b5b8b3b944!2sPerazzi!5e0!3m2!1sen!2sit!4v1720000000000!5m2!1sen!2sit";
 const defaultMapLink = "https://maps.google.com/?q=Perazzi+service+network";
 
-export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
+export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProps) {
   const analyticsRef = useAnalyticsObserver("ServiceNetworkSeen");
   const [filter, setFilter] = useState<ServiceLocationType | "All">("All");
   const [search, setSearch] = useState("");
@@ -54,6 +55,10 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
 
   const mapSrc = activeLocation ? buildMapSrc(activeLocation) : defaultMapSrc;
   const mapLinkHref = activeLocation ? buildMapLink(activeLocation) : defaultMapLink;
+  const heading = ui.heading ?? "Authorized US Service Locations";
+  const subheading = ui.subheading;
+  const directionsLabel = ui.directionsButtonLabel ?? "Open in Maps";
+  const primaryLabel = ui.primaryButtonLabel ?? "Request service";
 
   return (
     <section
@@ -70,8 +75,11 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
           id="service-network-heading"
           className="text-2xl sm:text-3xl font-semibold text-ink"
         >
-          Authorized US Service Locations
+          {heading}
         </h2>
+        {subheading ? (
+          <p className="text-sm sm:text-base leading-relaxed text-ink-muted">{subheading}</p>
+        ) : null}
       </div>
       <form role="search" className="flex flex-col gap-3 md:flex-row md:items-end">
         <label className="flex w-full flex-col text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink">
@@ -204,7 +212,7 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
           >
-            Open in Maps
+            {directionsLabel}
             <span aria-hidden="true">→</span>
             <span className="sr-only"> (opens in a new tab)</span>
           </a>
@@ -213,7 +221,7 @@ export function ServiceNetworkFinder({ locations }: ServiceNetworkFinderProps) {
             className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
             onClick={() => logAnalytics("FinderResultClick:request")}
           >
-            Request service
+            {primaryLabel}
             <span aria-hidden="true">→</span>
           </a>
         </div>

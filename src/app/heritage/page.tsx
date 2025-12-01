@@ -8,7 +8,6 @@ import { SerialLookup, type SerialLookupFormState } from "@/components/heritage/
 import { OralHistories } from "@/components/heritage/OralHistories";
 import { RelatedList } from "@/components/shotguns/RelatedList";
 import { CTASection } from "@/components/shotguns/CTASection";
-import { CinematicImageStrip } from "@/components/shotguns/CinematicImageStrip";
 import { getHeritagePageData } from "@/lib/heritage-data";
 import { ScrollIndicator } from "@/components/home/scroll-indicator";
 import { getManufactureYearBySerial } from "@/sanity/queries/manufactureYear";
@@ -69,13 +68,93 @@ export default async function HeritagePage(): Promise<ReactElement> {
     hero,
     timeline,
     champions,
-    factoryIntroHtml,
+    heritageIntro,
+    erasConfig,
+    workshopCta,
+    serialLookupUi,
+    championsIntro,
+    championsGalleryUi,
+    factoryIntroBlock,
+    factoryEssayUi,
+    factoryIntroBody,
     factoryEssay,
     oralHistories,
-    related,
+    oralHistoriesUi,
+    relatedSection,
     finalCta,
   } = await getHeritagePageData();
-  const eraGroups = groupEventsByEra(timeline);
+  const eraGroups = groupEventsByEra(timeline, erasConfig);
+
+  const heritageIntroBackgroundSrc =
+    heritageIntro.backgroundImage?.url ?? "/redesign-photos/heritage/perazzi-legacy-lives-on.jpg";
+  const heritageIntroBackgroundAlt =
+    heritageIntro.backgroundImage?.alt ?? "Perazzi artisans and heritage imagery";
+  const heritageIntroHeading = heritageIntro.heading ?? "A living lineage of craft";
+  const heritageIntroEyebrow = heritageIntro.eyebrow ?? "Perazzi heritage";
+  const heritageIntroParagraphs =
+    heritageIntro.paragraphs?.length
+      ? heritageIntro.paragraphs
+      : [
+          "Every Perazzi era begins with a handful of engineers, engravers, and fitters gathered around the bench. As disciplines evolve - from Olympic trap to modern sporting - our makers redraw receivers, stocks, and lockwork to meet the next generation of champions.",
+          "Use the eras below to trace the silhouettes, medals, and workshop milestones that shaped today's guns. Each chapter links back to Botticino, where the same hands still test, measure, and sign every build that leaves the atelier.",
+        ];
+
+  const workshopHeading = workshopCta.heading ?? "Ask the workshop";
+  const workshopIntro =
+    workshopCta.intro ??
+    "Trace provenance, decode proof marks, or understand where your gun sits in Perazzi lineage before you dive into the archives.";
+  const workshopBullets = workshopCta.bullets?.length
+    ? workshopCta.bullets
+    : [
+        "Serial lineage - match your serial to proof codes, production year, and model family.",
+        "Proof marks & provenance - interpret stamps, engravings, and ownership clues for collectors.",
+        "Era context - connect your shotgun's year to champions, medals, and the right heritage stories.",
+      ];
+  const workshopClosing =
+    workshopCta.closing ??
+    "Share your serial, photos, and any history you know; we'll pull from the archives and point you to the best next pages to explore.";
+  const workshopPrimaryLabel = workshopCta.primaryLabel ?? "Immerse in the Perazzi Timeline";
+  const workshopPrimaryHref = workshopCta.primaryHref ?? "#perazzi-heritage";
+  const workshopSecondaryLabel = workshopCta.secondaryLabel ?? "Check serial record";
+  const workshopSecondaryHref = workshopCta.secondaryHref ?? "#heritage-serial-lookup";
+
+  const championsIntroHeading = championsIntro.heading ?? "Champions past and present";
+  const championsIntroText =
+    championsIntro.intro ??
+    "From Olympic podiums to modern sporting clays, Perazzi champions carry the same lineage you see in the gallery below - engraved receivers, bespoke stocks, and quiet routines that still shape the workshop today.";
+  const championsIntroBullets = championsIntro.bullets?.length
+    ? championsIntro.bullets
+    : [
+        "Generations on the line - medalists and contemporaries linked by the same Botticino craft.",
+        "Discipline stories - trap, skeet, and sporting specialists whose routines feed our fittings.",
+        "Design fingerprints - stock lines, rib profiles, and engraving styles that connect eras.",
+      ];
+  const championsIntroClosing =
+    championsIntro.closing ??
+    "Browse the champions, then step into the timeline or serial lookup to place your own gun in their company.";
+  const championsChatLabel = championsIntro.chatLabel ?? "Ask about Perazzi champions";
+  const championsChatPrompt =
+    championsIntro.chatPrompt ??
+    "Tell the history of Perazzi's most famous champions - from Olympic legends to modern sporting icons - and how their routines and feedback shaped the guns in the gallery.";
+
+  const factoryHeading = factoryIntroBlock.heading ?? "Inside the Botticino atelier";
+  const factoryIntro =
+    factoryIntroBlock.intro ??
+    "The Factory Essay below walks through the benches where blanks become stocks, receivers are hand-fit, and engravers finish the metal that champions and collectors carry.";
+  const factoryBullets = factoryIntroBlock.bullets?.length
+    ? factoryIntroBlock.bullets
+    : [
+        "Stock and fitting benches - selecting blanks, shaping try-guns, and measuring for bespoke builds.",
+        "Receivers and lockwork - machining, hand-fitting, and proofing the heart of each gun.",
+        "Engraving and finish - scrollwork, checkering, and oil finishes that tie heritage to the present.",
+      ];
+  const factoryClosing =
+    factoryIntroBlock.closing ??
+    "Scroll the essay to trace how Botticino craft shapes every Perazzi before it reaches a champion or collector.";
+  const factoryChatLabel = factoryIntroBlock.chatLabel ?? "Ask about the workshop";
+  const factoryChatPrompt =
+    factoryIntroBlock.chatPrompt ??
+    "Guide me through the Botticino factory steps: selecting and seasoning wood, machining and fitting receivers, hand-finishing, engraving, proofing, and how those processes shaped notable Perazzi builds.";
 
   return (
     <main className="space-y-16 sm:space-y-20">
@@ -101,17 +180,16 @@ export default async function HeritagePage(): Promise<ReactElement> {
         <div className="relative mx-auto flex max-w-6xl flex-col gap-8 px-6 text-white lg:flex-row lg:items-center lg:gap-12">
           <div className="flex-1 space-y-4">
             <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
-              Perazzi heritage
+              {heritageIntroEyebrow}
             </p>
             <h2 className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em]">
-              A living lineage of craft
+              {heritageIntroHeading}
             </h2>
-            <p className="text-sm sm:text-base leading-relaxed text-white/80">
-              Every Perazzi era begins with a handful of engineers, engravers, and fitters gathered around the bench. As disciplines evolve - from Olympic trap to modern sporting - our makers redraw receivers, stocks, and lockwork to meet the next generation of champions.
-            </p>
-            <p className="text-sm sm:text-base leading-relaxed text-white/80">
-              Use the eras below to trace the silhouettes, medals, and workshop milestones that shaped today's guns. Each chapter links back to Botticino, where the same hands still test, measure, and sign every build that leaves the atelier.
-            </p>
+            {heritageIntroParagraphs.map((paragraph, index) => (
+              <p key={index} className="text-sm sm:text-base leading-relaxed text-white/80">
+                {paragraph}
+              </p>
+            ))}
             <div className="hidden lg:flex lg:pt-2">
               <Link
                 href="#heritage-serial-lookup"
@@ -124,8 +202,8 @@ export default async function HeritagePage(): Promise<ReactElement> {
           <div className="flex-1">
             <div className="relative w-full overflow-hidden rounded-2xl border border-white/20 shadow-lg">
               <Image
-                src="/redesign-photos/heritage/perazzi-legacy-lives-on.jpg"
-                alt="Perazzi artisans and heritage imagery"
+                src={heritageIntroBackgroundSrc}
+                alt={heritageIntroBackgroundAlt}
                 width={1600}
                 height={900}
                 className="h-auto w-full object-contain"
@@ -160,25 +238,25 @@ export default async function HeritagePage(): Promise<ReactElement> {
               id="heritage-workshop-heading"
               className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em]"
             >
-              Ask the workshop
+              {workshopHeading}
             </p>
             <p className="mb-8 text-sm sm:text-base font-light italic text-gray-300 leading-relaxed">
-              Trace provenance, decode proof marks, or understand where your gun sits in Perazzi lineage before you dive into the archives.
+              {workshopIntro}
             </p>
             <div className="flex flex-wrap justify-start gap-3">
               <Link
-                href="#perazzi-heritage"
+                href={workshopPrimaryHref}
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-white/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-white hover:border-white hover:text-white focus-ring"
               >
                 <span aria-hidden="true" className="text-lg leading-none">^</span>
-                Immerse in the Perazzi Timeline
+                {workshopPrimaryLabel}
               </Link>
               <Link
-                href="#heritage-serial-lookup"
+                href={workshopSecondaryHref}
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/70 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 <span aria-hidden="true" className="text-lg leading-none">v</span>
-                Check serial record
+                {workshopSecondaryLabel}
               </Link>
             </div>
           </div>
@@ -188,29 +266,24 @@ export default async function HeritagePage(): Promise<ReactElement> {
               What the atelier can surface:
             </p>
             <ul className="space-y-2">
-              <li>
-                <span className="text-base sm:text-lg font-black not-italic text-white">Serial lineage</span>
-                {" "}-{" "}
-                match your serial to proof codes, production year, and model family.
-              </li>
-              <li>
-                <span className="text-base sm:text-lg font-black not-italic text-white">Proof marks & provenance</span>
-                {" "}-{" "}
-                interpret stamps, engravings, and ownership clues for collectors.
-              </li>
-              <li>
-                <span className="text-base sm:text-lg font-black not-italic text-white">Era context</span>
-                {" "}-{" "}
-                connect your shotgun's year to champions, medals, and the right heritage stories.
-              </li>
+              {workshopBullets.map((bullet) => {
+                const [label, ...rest] = bullet.split(" - ");
+                return (
+                  <li key={bullet}>
+                    <span className="text-base sm:text-lg font-black not-italic text-white">{label}</span>
+                    {" "}-{" "}
+                    {rest.join(" - ")}
+                  </li>
+                );
+              })}
             </ul>
             <p className="text-sm sm:text-base font-light italic text-gray-300 leading-relaxed">
-              Share your serial, photos, and any history you know; we'll pull from the archives and point you to the best next pages to explore.
+              {workshopClosing}
             </p>
           </div>
         </div>
       </section>
-      <SerialLookup lookupAction={serialLookupAction} />
+      <SerialLookup lookupAction={serialLookupAction} ui={serialLookupUi} />
       <section
         id="heritage-champions"
         tabIndex={-1}
@@ -234,16 +307,15 @@ export default async function HeritagePage(): Promise<ReactElement> {
                 id="heritage-champions-intro-heading"
                 className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em]"
               >
-                Champions past and present
+                {championsIntroHeading}
               </p>
               <p className="mb-8 text-sm sm:text-base font-light italic text-gray-300 leading-relaxed">
-                From Olympic podiums to modern sporting clays, Perazzi champions carry the same lineage you see in the gallery below - engraved receivers, bespoke stocks, and quiet routines that still shape the workshop today.
+                {championsIntroText}
               </p>
               <ChatTriggerButton
-                label="Ask about Perazzi champions"
+                label={championsChatLabel}
                 payload={{
-                  question:
-                  "Tell the history of Perazzi's most famous champions - from Olympic legends to modern sporting icons - and how their routines and feedback shaped the guns in the gallery.",
+                  question: championsChatPrompt,
                   context: { pageUrl: "/heritage", mode: "heritage" },
                 }}
                 variant="outline"
@@ -252,33 +324,28 @@ export default async function HeritagePage(): Promise<ReactElement> {
             </div>
 
             <div className="space-y-3 text-sm sm:text-base font-light italic text-gray-300">
-              <p className="text-sm sm:text-base font-semibold not-italic text-white">
-                What you'll see below:
-              </p>
-              <ul className="space-y-2">
-                <li>
-                  <span className="text-base sm:text-lg font-black not-italic text-white">Generations on the line</span>
-                  {" "}-{" "}
-                  medalists and contemporaries linked by the same Botticino craft.
-                </li>
-                <li>
-                  <span className="text-base sm:text-lg font-black not-italic text-white">Discipline stories</span>
-                  {" "}-{" "}
-                  trap, skeet, and sporting specialists whose routines feed our fittings.
-                </li>
-                <li>
-                  <span className="text-base sm:text-lg font-black not-italic text-white">Design fingerprints</span>
-                  {" "}-{" "}
-                  stock lines, rib profiles, and engraving styles that connect eras.
-                </li>
-              </ul>
-              <p className="text-sm sm:text-base font-light italic text-gray-300 leading-relaxed">
-                Browse the champions, then step into the timeline or serial lookup to place your own gun in their company.
-              </p>
-            </div>
+            <p className="text-sm sm:text-base font-semibold not-italic text-white">
+              What you'll see below:
+            </p>
+            <ul className="space-y-2">
+              {championsIntroBullets.map((bullet) => {
+                const [label, ...rest] = bullet.split(" - ");
+                return (
+                  <li key={bullet}>
+                    <span className="text-base sm:text-lg font-black not-italic text-white">{label}</span>
+                    {" "}-{" "}
+                    {rest.join(" - ")}
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="text-sm sm:text-base font-light italic text-gray-300 leading-relaxed">
+              {championsIntroClosing}
+            </p>
           </div>
-        </section>
-        <ChampionsGallery champions={champions} />
+        </div>
+      </section>
+        <ChampionsGallery champions={champions} ui={championsGalleryUi} />
         <section
           className="relative isolate z-0 w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 -mt-16 sm:-mt-16 -mb-16 sm:-mb-16 min-h-[60vh]"
           style={{
@@ -300,16 +367,15 @@ export default async function HeritagePage(): Promise<ReactElement> {
                 id="heritage-factory-intro-heading"
                 className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em]"
               >
-                Inside the Botticino atelier
+                {factoryHeading}
               </p>
               <p className="mb-8 text-sm sm:text-base font-light italic text-gray-300 leading-relaxed">
-                The Factory Essay below walks through the benches where blanks become stocks, receivers are hand-fit, and engravers finish the metal that champions and collectors carry.
+                {factoryIntro}
               </p>
               <ChatTriggerButton
-                label="Ask about the workshop"
+                label={factoryChatLabel}
                 payload={{
-                  question:
-                    "Guide me through the Botticino factory steps: selecting and seasoning wood, machining and fitting receivers, hand-finishing, engraving, proofing, and how those processes shaped notable Perazzi builds.",
+                  question: factoryChatPrompt,
                   context: { pageUrl: "/heritage", mode: "heritage" },
                 }}
                 variant="outline"
@@ -318,39 +384,34 @@ export default async function HeritagePage(): Promise<ReactElement> {
             </div>
 
             <div className="space-y-3 text-sm sm:text-base font-light italic text-gray-300">
-              <p className="text-sm sm:text-base font-semibold not-italic text-white">
-                What you'll see below:
-              </p>
-              <ul className="space-y-2">
-                <li>
-                  <span className="text-base sm:text-lg font-black not-italic text-white">Stock and fitting benches</span>
-                  {" "}-{" "}
-                  selecting blanks, shaping try-guns, and measuring for bespoke builds.
-                </li>
-                <li>
-                  <span className="text-base sm:text-lg font-black not-italic text-white">Receivers and lockwork</span>
-                  {" "}-{" "}
-                  machining, hand-fitting, and proofing the heart of each gun.
-                </li>
-                <li>
-                  <span className="text-base sm:text-lg font-black not-italic text-white">Engraving and finish</span>
-                  {" "}-{" "}
-                  scrollwork, checkering, and oil finishes that tie heritage to the present.
-                </li>
-              </ul>
-              <p className="text-sm sm:text-base font-light italic text-gray-300 leading-relaxed">
-                Scroll the essay to trace how Botticino craft shapes every Perazzi before it reaches a champion or collector.
-              </p>
-            </div>
+            <p className="text-sm sm:text-base font-semibold not-italic text-white">
+              What you'll see below:
+            </p>
+            <ul className="space-y-2">
+              {factoryBullets.map((bullet) => {
+                const [label, ...rest] = bullet.split(" - ");
+                return (
+                  <li key={bullet}>
+                    <span className="text-base sm:text-lg font-black not-italic text-white">{label}</span>
+                    {" "}-{" "}
+                    {rest.join(" - ")}
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="text-sm sm:text-base font-light italic text-gray-300 leading-relaxed">
+              {factoryClosing}
+            </p>
           </div>
-        </section>
+        </div>
+      </section>
         <div className="relative z-10">
-          <FactoryPhotoEssay items={factoryEssay} introHtml={factoryIntroHtml} />
+          <FactoryPhotoEssay items={factoryEssay} introHtml={factoryIntroBody} ui={factoryEssayUi} />
         </div>
         {oralHistories && oralHistories.length > 0 ? (
-          <OralHistories histories={oralHistories} />
+          <OralHistories histories={oralHistories} ui={oralHistoriesUi} />
         ) : null}
-        <RelatedList items={related} />
+        <RelatedList heading={relatedSection.heading} items={relatedSection.items} />
       </section>
       <CTASection
         dataAnalyticsId="FinalCTASeen"

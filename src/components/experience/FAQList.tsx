@@ -7,32 +7,40 @@ import type { FAQItem } from "@/types/experience";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
+import { faq as faqFixture } from "@/content/experience/faq";
 
 type FAQListProps = {
   items: FAQItem[];
   embedded?: boolean;
+  heading?: string;
+  lead?: string;
 };
 
-export function FAQList({ items, embedded = false }: FAQListProps) {
+export function FAQList({ items, embedded = false, heading, lead }: FAQListProps) {
   const analyticsRef = useAnalyticsObserver<HTMLDivElement>("ExperienceFAQSeen");
 
-  if (!items.length) return null;
+  const faqItems = items?.length ? items : faqFixture;
+
+  if (!faqItems.length) return null;
+
+  const title = heading ?? "FAQ";
+  const subtitle = lead ?? "Questions from future owners";
 
   const content = (
     <>
       <div className="space-y-2">
         <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-          FAQ
+          {title}
         </p>
         <h2
           id="experience-faq-heading"
           className="text-sm sm:text-base font-light italic leading-relaxed text-ink-muted"
         >
-          Questions from future owners
+          {subtitle}
         </h2>
       </div>
       <div className="space-y-4">
-        {items.map((item, index) => (
+        {faqItems.map((item, index) => (
           <FAQItemCard key={item.q} item={item} index={index} />
         ))}
       </div>

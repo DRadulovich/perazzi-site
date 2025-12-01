@@ -50,6 +50,7 @@ export function HeritageEraSection({
   const activeEventRef = React.useRef(0);
   const totalEvents = era.events.length;
   const lastProgressRef = React.useRef(0);
+  const yearRangeLabel = era.yearRangeLabel ?? `${era.startYear}–${era.isOngoing ? "Today" : era.endYear}`;
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
@@ -151,9 +152,9 @@ export function HeritageEraSection({
               >
                 {era.label}
               </h2>
-              <p className="mt-2 text-[11px] sm:text-[0.7rem] uppercase tracking-[0.25em] text-neutral-500">
-                {era.startYear}–{era.endYear}
-              </p>
+            <p className="mt-2 text-[11px] sm:text-[0.7rem] uppercase tracking-[0.25em] text-neutral-500">
+                {yearRangeLabel}
+            </p>
             </header>
 
             <div className="mt-8 space-y-6">
@@ -223,7 +224,7 @@ export function HeritageEraSection({
               {era.label}
             </h2>
             <p className="mt-2 text-[11px] sm:text-[0.7rem] uppercase tracking-[0.25em] text-neutral-500">
-              {era.startYear}–{era.endYear}
+              {yearRangeLabel}
             </p>
           </header>
 

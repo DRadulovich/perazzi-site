@@ -3,21 +3,24 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { useCallback, useMemo, useState } from "react";
 import Image from "next/image";
-import type { FactoryEssayItem } from "@/types/heritage";
+import type { FactoryEssayItem, FactoryEssayUi } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 
 type FactoryPhotoEssayProps = {
   items: FactoryEssayItem[];
   introHtml?: string;
+  ui: FactoryEssayUi;
 };
 
 const CARD_ASPECT_RATIO = 3 / 2;
 
-export function FactoryPhotoEssay({ items, introHtml }: FactoryPhotoEssayProps) {
+export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const hasItems = items.length > 0;
   const sectionRef = useAnalyticsObserver<HTMLElement>("FactoryPhotoEssaySeen");
+  const eyebrow = ui.eyebrow ?? "Factory essay";
+  const heading = ui.heading ?? "Inside the Botticino atelier";
 
   const handleOpen = useCallback(
     (index: number) => {
@@ -61,13 +64,13 @@ export function FactoryPhotoEssay({ items, introHtml }: FactoryPhotoEssayProps) 
     >
       <div className="space-y-2">
         <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
-          Factory essay
+          {eyebrow}
         </p>
         <h2
           id="factory-essay-heading"
           className="text-2xl sm:text-3xl font-semibold text-ink"
         >
-          Inside the Botticino atelier
+          {heading}
         </h2>
         {introHtml ? (
           <div

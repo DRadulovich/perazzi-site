@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import type { ChampionEvergreen } from "@/types/heritage";
+import type { ChampionEvergreen, ChampionsGalleryUi } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
@@ -10,9 +10,10 @@ import { AnimatePresence, motion } from "framer-motion";
 
 type ChampionsGalleryProps = {
   champions: ChampionEvergreen[];
+  ui: ChampionsGalleryUi;
 };
 
-export function ChampionsGallery({ champions }: ChampionsGalleryProps) {
+export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
   const verified = champions.filter((champion) => Boolean(champion?.name));
 
   const disciplines = useMemo(() => {
@@ -66,6 +67,13 @@ export function ChampionsGallery({ champions }: ChampionsGalleryProps) {
     filteredChampions[0] ??
     null;
 
+  const heading = ui.heading ?? "Perazzi Champions";
+  const subheading = ui.subheading ?? "The athletes who shaped our lineage";
+  const championsLabel = ui.championsLabel ?? "Champions";
+  const backgroundSrc = ui.backgroundImage?.url ?? "/redesign-photos/heritage/pweb-heritage-era-5-atelier.jpg";
+  const backgroundAlt = ui.backgroundImage?.alt ?? "Perazzi champions background";
+  const cardCtaLabel = ui.cardCtaLabel ?? "Read full interview";
+
   return (
     <section
       className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
@@ -78,8 +86,8 @@ export function ChampionsGallery({ champions }: ChampionsGalleryProps) {
       {/* Full-bleed background image with soft scrim */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <Image
-          src="/redesign-photos/heritage/pweb-heritage-era-5-atelier.jpg"
-          alt="Perazzi champions background"
+          src={backgroundSrc}
+          alt={backgroundAlt}
           fill
           sizes="100vw"
           className="object-cover"
@@ -106,13 +114,13 @@ export function ChampionsGallery({ champions }: ChampionsGalleryProps) {
         <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
           <div className="space-y-2">
             <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-              Perazzi Champions
+              {heading}
             </p>
             <h2
               id="heritage-champions-heading"
               className="mb-6 text-sm sm:text-base font-light italic leading-relaxed text-ink-muted"
             >
-              The athletes who shaped our lineage
+              {subheading}
             </h2>
           </div>
 
@@ -163,7 +171,7 @@ export function ChampionsGallery({ champions }: ChampionsGalleryProps) {
             {/* Left column – names list */}
             <div className="rounded-2xl bg-card/0 p-4 sm:rounded-3xl">
               <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
-                Champions
+                {championsLabel}
               </p>
 
               {filteredChampions.length ? (
@@ -203,7 +211,7 @@ export function ChampionsGallery({ champions }: ChampionsGalleryProps) {
                     transition={{ duration: 0.25, ease: "easeOut" }}
                     className="flex flex-col gap-6"
                   >
-                    <ChampionDetail champion={selectedChampion} />
+                    <ChampionDetail champion={selectedChampion} cardCtaLabel={cardCtaLabel} />
                   </motion.div>
                 ) : (
                   <motion.p
@@ -267,9 +275,10 @@ function ChampionNameItem({ champion, isActive, onSelect }: ChampionNameItemProp
 
 type ChampionDetailProps = {
   champion: ChampionEvergreen;
+  cardCtaLabel: string;
 };
 
-function ChampionDetail({ champion }: ChampionDetailProps) {
+function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
   const ratio = 3 / 2; // Force 3:2 aspect ratio for champion images
 
   return (
@@ -373,7 +382,7 @@ function ChampionDetail({ champion }: ChampionDetailProps) {
             href={`/${champion.article.slug}`}
             className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
           >
-            Read full interview
+            {cardCtaLabel}
             <span aria-hidden="true">→</span>
           </a>
         ) : null}

@@ -4,18 +4,22 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { useCallback, useMemo, useState } from "react";
 import Image from "next/image";
 import type { FactoryAsset } from "@/types/content";
+import type { MosaicUi } from "@/types/experience";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 
 type MosaicGalleryProps = {
   assets: FactoryAsset[];
+  mosaicUi: MosaicUi;
 };
 
-export function MosaicGallery({ assets }: MosaicGalleryProps) {
+export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const analyticsRef = useAnalyticsObserver("MosaicGallerySeen", {
     threshold: 0.3,
   });
+  const eyebrow = mosaicUi.eyebrow ?? "Atelier mosaic";
+  const heading = mosaicUi.heading ?? "Moments from the journey";
 
   const openLightbox = useCallback(
     (index: number) => {
@@ -61,13 +65,13 @@ export function MosaicGallery({ assets }: MosaicGalleryProps) {
     >
       <div className="space-y-2">
         <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
-          Atelier mosaic
+          {eyebrow}
         </p>
         <h2
           id="mosaic-gallery-heading"
           className="text-2xl sm:text-3xl font-semibold text-ink"
         >
-          Moments from the journey
+          {heading}
         </h2>
       </div>
       <ul

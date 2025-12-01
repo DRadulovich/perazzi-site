@@ -17,7 +17,7 @@ import { homeSingleton } from "./documents/homeSingleton";
 import { shotgunsLanding } from "./documents/shotgunsLanding";
 import { bespokeHome } from "./documents/bespokeHome";
 import { experienceHome } from "./documents/experienceHome";
-import { heritageHome } from "./documents/heritageHome";
+import { heritageEraConfig, heritageHome } from "./documents/heritageHome";
 import { serviceHome } from "./documents/serviceHome";
 import { journalLanding } from "./documents/journalLanding";
 import { author } from "./documents/author";
@@ -29,6 +29,7 @@ import { configuratorSidebarCard } from "./documents/configuratorSidebarCard";
 export const schemaTypes = [
   // Objects first so they’re available to documents
   imageWithMeta,
+  heritageEraConfig,
 
   // Existing documents
   blockContent,

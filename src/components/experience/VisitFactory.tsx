@@ -10,18 +10,24 @@ import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 
 type VisitFactoryProps = {
-  visit: VisitFactoryData;
+  visitFactorySection: VisitFactoryData;
 };
 
-export function VisitFactory({ visit }: VisitFactoryProps) {
+export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
   const analyticsRef = useAnalyticsObserver("VisitFactorySeen");
   const [mapOpen, setMapOpen] = useState(false);
   const [expectOpen, setExpectOpen] = useState(false);
   const mapPanelId = "visit-map-panel";
   const mapNoteId = "visit-map-note";
+  const visit = visitFactorySection;
+  const backgroundSrc = visit.backgroundImage?.url
+    ?? "/redesign-photos/experience/pweb-experience-visitfactory-bg.jpg";
+  const backgroundAlt = visit.backgroundImage?.alt ?? "Perazzi Botticino factory background";
   const mapHref =
     visit.location.mapLinkHref ??
     `https://maps.google.com/?q=${encodeURIComponent(visit.location.name)}`;
+  const heading = visit.heading ?? "Visit Botticino";
+  const subheading = visit.subheading ?? "See the factory in person";
 
   return (
     <section
@@ -36,8 +42,8 @@ export function VisitFactory({ visit }: VisitFactoryProps) {
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <Image
-          src="/redesign-photos/experience/pweb-experience-visitfactory-bg.jpg"
-          alt="Perazzi Botticino factory background"
+          src={backgroundSrc}
+          alt={backgroundAlt}
           fill
           sizes="100vw"
           className="object-cover"
@@ -64,13 +70,13 @@ export function VisitFactory({ visit }: VisitFactoryProps) {
         <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
           <div className="space-y-2">
             <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-              Visit Botticino
+              {heading}
             </p>
             <h2
               id="visit-factory-heading"
               className="mb-4 text-sm sm:text-base font-light italic leading-relaxed text-ink-muted"
             >
-              See the factory in person
+              {subheading}
             </h2>
             <div
               className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg md:max-w-3xl lg:max-w-4xl prose-headings:text-ink prose-strong:text-ink"

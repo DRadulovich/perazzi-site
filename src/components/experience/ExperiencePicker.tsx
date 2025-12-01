@@ -4,18 +4,22 @@ import { motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import type { MouseEvent } from "react";
-import type { PickerItem } from "@/types/experience";
-import type { FAQItem } from "@/types/experience";
+import type { FAQItem, PickerItem, PickerUi } from "@/types/experience";
 import { FAQList } from "./FAQList";
 import { logAnalytics } from "@/lib/analytics";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 type ExperiencePickerProps = {
   items: PickerItem[];
-  faqItems?: FAQItem[];
+  faqSection?: {
+    heading?: string;
+    lead?: string;
+    items?: FAQItem[];
+  };
+  pickerUi: PickerUi;
 };
 
-export function ExperiencePicker({ items, faqItems }: ExperiencePickerProps) {
+export function ExperiencePicker({ items, faqSection, pickerUi }: ExperiencePickerProps) {
   const prefersReducedMotion = useReducedMotion();
   const analyticsRef = useAnalyticsObserver<HTMLElement>("ExperiencePickerSeen");
   const anchorMap: Record<string, string> = {
@@ -51,6 +55,15 @@ export function ExperiencePicker({ items, faqItems }: ExperiencePickerProps) {
     }
   };
 
+  const faqItems = faqSection?.items ?? [];
+  const faqHeading = faqSection?.heading ?? "FAQ";
+  const faqLead = faqSection?.lead ?? "Questions from future owners";
+  const backgroundSrc = pickerUi.backgroundImage?.url
+    ?? "/redesign-photos/experience/pweb-experience-experiencepicker-bg.jpg";
+  const backgroundAlt = pickerUi.backgroundImage?.alt ?? "Perazzi experience background";
+  const heading = pickerUi.heading ?? "Choose your path";
+  const subheading = pickerUi.subheading ?? "Visit, fit, or demo with Perazzi";
+
   return (
     <section
       ref={analyticsRef}
@@ -64,8 +77,8 @@ export function ExperiencePicker({ items, faqItems }: ExperiencePickerProps) {
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <Image
-          src="/redesign-photos/experience/pweb-experience-experiencepicker-bg.jpg"
-          alt="Perazzi experience background"
+          src={backgroundSrc}
+          alt={backgroundAlt}
           fill
           sizes="100vw"
           className="object-cover"
@@ -91,13 +104,13 @@ export function ExperiencePicker({ items, faqItems }: ExperiencePickerProps) {
         <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
           <div className="space-y-2">
             <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-              Choose your path
+              {heading}
             </p>
             <h2
               id="experience-picker-heading"
               className="mb-4 text-sm sm:text-base font-light italic leading-relaxed text-ink-muted"
             >
-              Visit, fit, or demo with Perazzi
+              {subheading}
             </h2>
           </div>
 
@@ -107,13 +120,14 @@ export function ExperiencePicker({ items, faqItems }: ExperiencePickerProps) {
                 key={item.id}
                 item={item}
                 onAnchorClick={handleCardClick}
+                microLabel={pickerUi.microLabel ?? "Perazzi Experience"}
                 delay={prefersReducedMotion ? 0 : index * 0.08}
               />
             ))}
           </div>
           {faqItems?.length ? (
             <div className="pt-4">
-              <FAQList items={faqItems} embedded />
+              <FAQList items={faqItems} embedded heading={faqHeading} lead={faqLead} />
             </div>
           ) : null}
         </div>
@@ -125,10 +139,12 @@ export function ExperiencePicker({ items, faqItems }: ExperiencePickerProps) {
 function ExperiencePickerCard({
   item,
   delay,
+  microLabel,
   onAnchorClick,
 }: {
   item: PickerItem;
   delay: number;
+  microLabel: string;
   onAnchorClick?: (
     event: MouseEvent<HTMLAnchorElement>,
     href: string,
@@ -136,7 +152,6 @@ function ExperiencePickerCard({
   ) => void;
 }) {
   const aspect = 3 / 2;
-  const microLabel = "Perazzi Experience";
 
   return (
     <motion.article

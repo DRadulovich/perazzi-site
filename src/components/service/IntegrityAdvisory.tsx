@@ -1,9 +1,17 @@
 "use client";
 
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import type { IntegrityAdvisorySection } from "@/types/service";
 
-export function IntegrityAdvisory() {
+type IntegrityAdvisoryProps = {
+  integrityAdvisory: IntegrityAdvisorySection;
+};
+
+export function IntegrityAdvisory({ integrityAdvisory }: IntegrityAdvisoryProps) {
   const analyticsRef = useAnalyticsObserver("IntegrityAdvisorySeen");
+  const heading = integrityAdvisory.heading ?? "Protect your investment";
+  const body = integrityAdvisory.body ??
+    "Perazzi parts are serialised and fit by hand. Grey-market spares often compromise safety, timing, or regulation. Work only with the factory or authorised service centres; every shipment includes documentation so you can verify provenance.\n\nIf you are unsure, contact the concierge—send photos or serial numbers and we will confirm authenticity before you install any component.";
 
   return (
     <section
@@ -15,19 +23,12 @@ export function IntegrityAdvisory() {
         Authenticity & fitment
       </p>
       <h2 className="text-2xl sm:text-3xl font-semibold text-ink">
-        Protect your investment
+        {heading}
       </h2>
       <div className="prose prose-sm max-w-none leading-relaxed text-ink-muted md:prose-lg">
-        <p>
-          Perazzi parts are serialised and fit by hand. Grey-market spares often
-          compromise safety, timing, or regulation. Work only with the factory
-          or authorised service centres; every shipment includes documentation
-          so you can verify provenance.
-        </p>
-        <p>
-          If you are unsure, contact the concierge—send photos or serial numbers
-          and we will confirm authenticity before you install any component.
-        </p>
+        {body.split("\n\n").map((paragraph, index) => (
+          <p key={index}>{paragraph}</p>
+        ))}
       </div>
     </section>
   );
