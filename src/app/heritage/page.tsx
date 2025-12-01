@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import Link from "next/link";
 import { HeritageHero } from "@/components/heritage/HeritageHero";
 import { ChampionsGallery } from "@/components/heritage/ChampionsGallery";
@@ -60,7 +61,7 @@ async function serialLookupAction(
   }
 }
 
-export default async function HeritagePage(): Promise<JSX.Element> {
+export default async function HeritagePage(): Promise<ReactElement> {
   const {
     hero,
     timeline,
