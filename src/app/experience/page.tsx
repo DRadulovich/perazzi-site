@@ -71,7 +71,7 @@ export default async function ExperiencePage() {
   const faqJsonLd = faq.length ? FAQ_SCHEMA(faq) : null;
 
   return (
-    <div className="space-y-16">
+    <main className="space-y-12 sm:space-y-16">
       {faqJsonLd ? (
         <Script
           id="experience-faq-schema"
@@ -100,12 +100,12 @@ export default async function ExperiencePage() {
       >
         <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
           <div className="space-y-4 text-ink">
-            <p
+            <h2
               id="experience-visit-planning-heading"
               className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
             >
               Visit planning
-            </p>
+            </h2>
             <p className="mb-8 text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
               Map out a Botticino factory visit or fitting day before you commit: what happens, who you'll meet, and how to arrive ready.
             </p>
@@ -121,7 +121,7 @@ export default async function ExperiencePage() {
               />
               <Link
                 href="/experience/visit"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 See visit options
                 <span aria-hidden="true">→</span>
@@ -168,12 +168,12 @@ export default async function ExperiencePage() {
       >
         <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
           <div className="space-y-4 text-ink">
-            <p
+            <h2
               id="experience-booking-guide-heading"
               className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
             >
               Fitting guidance
-            </p>
+            </h2>
             <p className="mb-8 text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
               Not sure which fitting session to book? The concierge will match your goals to the right format and send a prep list before you reserve.
             </p>
@@ -189,7 +189,7 @@ export default async function ExperiencePage() {
               />
               <Link
                 href="/experience/fitting"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 View fitting sessions
                 <span aria-hidden="true">→</span>
@@ -236,12 +236,12 @@ export default async function ExperiencePage() {
       >
         <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
           <div className="space-y-4 text-ink">
-            <p
+            <h2
               id="experience-travel-guide-heading"
               className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
             >
               Meet us on the road
-            </p>
+            </h2>
             <p className="mb-8 text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
               Connect with Perazzi when we travel or through trusted dealers. The concierge can point you to the closest stop and what to bring.
             </p>
@@ -257,7 +257,7 @@ export default async function ExperiencePage() {
               />
               <Link
                 href="#travel-network-heading"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 View schedule and dealers
                 <span aria-hidden="true">→</span>
@@ -301,7 +301,7 @@ export default async function ExperiencePage() {
         primary={finalCta.primary}
         secondary={finalCta.secondary}
       />
-    </div>
+    </main>
   );
 }
 

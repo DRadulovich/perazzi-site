@@ -78,7 +78,7 @@ export function ChampionsGallery({ champions }: ChampionsGalleryProps) {
       {/* Full-bleed background image with soft scrim */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <Image
-          src="/redesign-photos/heritage/pweb-heritage-champions-bg.jpg"
+          src="/redesign-photos/heritage/pweb-heritage-era-5-atelier.jpg"
           alt="Perazzi champions background"
           fill
           sizes="100vw"

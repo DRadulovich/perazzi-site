@@ -78,7 +78,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
   const eraGroups = groupEventsByEra(timeline);
 
   return (
-    <div className="space-y-16">
+    <main className="space-y-16 sm:space-y-20">
       <HeritageHero
         hero={hero}
         breadcrumbs={[
@@ -115,7 +115,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
             <div className="hidden lg:flex lg:pt-2">
               <Link
                 href="#heritage-serial-lookup"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/70 px-6 py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/70 px-6 py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 Skip Perazzi Timeline
               </Link>
@@ -123,9 +123,11 @@ export default async function HeritagePage(): Promise<ReactElement> {
           </div>
           <div className="flex-1">
             <div className="relative w-full overflow-hidden rounded-2xl border border-white/20 shadow-lg">
-              <img
+              <Image
                 src="/redesign-photos/heritage/perazzi-legacy-lives-on.jpg"
                 alt="Perazzi artisans and heritage imagery"
+                width={1600}
+                height={900}
                 className="h-auto w-full object-contain"
                 loading="lazy"
               />
@@ -134,7 +136,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
             <div className="mt-6 flex justify-center lg:hidden">
               <Link
                 href="#heritage-serial-lookup"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/70 px-6 py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/70 px-6 py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 Skip Perazzi Timeline
               </Link>
@@ -166,14 +168,14 @@ export default async function HeritagePage(): Promise<ReactElement> {
             <div className="flex flex-wrap justify-start gap-3">
               <Link
                 href="#perazzi-heritage"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-white hover:border-white hover:text-white focus-ring"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-white/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-white hover:border-white hover:text-white focus-ring"
               >
                 <span aria-hidden="true" className="text-lg leading-none">^</span>
                 Immerse in the Perazzi Timeline
               </Link>
               <Link
                 href="#heritage-serial-lookup"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/70 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/70 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 <span aria-hidden="true" className="text-lg leading-none">v</span>
                 Check serial record
@@ -277,11 +279,74 @@ export default async function HeritagePage(): Promise<ReactElement> {
           </div>
         </section>
         <ChampionsGallery champions={champions} />
-        <CinematicImageStrip
-          src="/cinematic_background_photos/olympic-medals-1.jpg"
-          alt="Perazzi Olympic medals displayed in cinematic lighting"
-        />
-        <FactoryPhotoEssay items={factoryEssay} introHtml={factoryIntroHtml} />
+        <section
+          className="relative isolate z-0 w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 -mt-16 sm:-mt-16 -mb-16 sm:-mb-16 min-h-[60vh]"
+          style={{
+            marginLeft: "calc(50% - 50vw)",
+            marginRight: "calc(50% - 50vw)",
+          }}
+          aria-labelledby="heritage-factory-intro-heading"
+        >
+          <div
+            className="absolute inset-0 -z-10"
+            style={{
+              backgroundImage: "linear-gradient(to bottom, #000000 0%, var(--color-canvas) 100%)",
+            }}
+            aria-hidden="true"
+          />
+          <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 text-white lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10 min-h-[50vh]">
+            <div className="space-y-4">
+              <p
+                id="heritage-factory-intro-heading"
+                className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em]"
+              >
+                Inside the Botticino atelier
+              </p>
+              <p className="mb-8 text-sm sm:text-base font-light italic text-gray-300 leading-relaxed">
+                The Factory Essay below walks through the benches where blanks become stocks, receivers are hand-fit, and engravers finish the metal that champions and collectors carry.
+              </p>
+              <ChatTriggerButton
+                label="Ask about the workshop"
+                payload={{
+                  question:
+                    "Guide me through the Botticino factory steps: selecting and seasoning wood, machining and fitting receivers, hand-finishing, engraving, proofing, and how those processes shaped notable Perazzi builds.",
+                  context: { pageUrl: "/heritage", mode: "heritage" },
+                }}
+                variant="outline"
+                className="border-white/60 text-white hover:border-white hover:text-white"
+              />
+            </div>
+
+            <div className="space-y-3 text-sm sm:text-base font-light italic text-gray-300">
+              <p className="text-sm sm:text-base font-semibold not-italic text-white">
+                What you'll see below:
+              </p>
+              <ul className="space-y-2">
+                <li>
+                  <span className="text-base sm:text-lg font-black not-italic text-white">Stock and fitting benches</span>
+                  {" "}-{" "}
+                  selecting blanks, shaping try-guns, and measuring for bespoke builds.
+                </li>
+                <li>
+                  <span className="text-base sm:text-lg font-black not-italic text-white">Receivers and lockwork</span>
+                  {" "}-{" "}
+                  machining, hand-fitting, and proofing the heart of each gun.
+                </li>
+                <li>
+                  <span className="text-base sm:text-lg font-black not-italic text-white">Engraving and finish</span>
+                  {" "}-{" "}
+                  scrollwork, checkering, and oil finishes that tie heritage to the present.
+                </li>
+              </ul>
+              <p className="text-sm sm:text-base font-light italic text-gray-300 leading-relaxed">
+                Scroll the essay to trace how Botticino craft shapes every Perazzi before it reaches a champion or collector.
+              </p>
+            </div>
+          </div>
+        </section>
+        <div className="relative z-10">
+          <FactoryPhotoEssay items={factoryEssay} introHtml={factoryIntroHtml} />
+        </div>
         {oralHistories && oralHistories.length > 0 ? (
           <OralHistories histories={oralHistories} />
         ) : null}
@@ -294,6 +359,6 @@ export default async function HeritagePage(): Promise<ReactElement> {
         primary={finalCta.primary}
         secondary={finalCta.secondary}
       />
-    </div>
+    </main>
   );
 }
