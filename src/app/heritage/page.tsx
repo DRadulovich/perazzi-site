@@ -226,31 +226,6 @@ export default async function HeritagePage(): Promise<ReactElement> {
           }}
           aria-labelledby="heritage-champions-intro-heading"
         >
-          <div className="absolute inset-0 -z-10 overflow-hidden">
-            <Image
-              src="/redesign-photos/heritage/pweb-heritage-champions-bg.jpg"
-              alt="Perazzi champions background"
-              fill
-              sizes="100vw"
-              className="object-cover"
-              priority={false}
-              loading="lazy"
-            />
-            <div
-              className="absolute inset-0 bg-[color:var(--scrim-hard)]"
-              aria-hidden
-            />
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundImage:
-                  "linear-gradient(to right, color-mix(in srgb, var(--color-black) 24%, transparent) 0%, color-mix(in srgb, var(--color-black) 6%, transparent) 50%, color-mix(in srgb, var(--color-black) 24%, transparent) 100%), " +
-                  "linear-gradient(to bottom, color-mix(in srgb, var(--color-black) 100%, transparent) 0%, transparent 100%), " +
-                  "linear-gradient(to top, color-mix(in srgb, var(--color-black) 100%, transparent) 0%, transparent 25%)",
-              }}
-              aria-hidden
-            />
-          </div>
           <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 text-white lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10 min-h-[50vh]">
             <div className="space-y-4">
               <p
