@@ -209,7 +209,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
           </p>
           <h1
             id="home-hero-heading"
-            className={`mt-1 mb-5 flex flex-wrap justify-center gap-2 text-balance text-2xl font-bold leading-[1.12] text-white transition-opacity duration-700 motion-reduce:transition-none sm:text-3xl lg:text-4xl ${
+            className={`mb-10 flex flex-wrap justify-center gap-2 text-balance text-2xl font-bold leading-[1.12] text-white transition-opacity duration-700 motion-reduce:transition-none sm:text-3xl lg:text-4xl ${
               mediaLoaded ? "opacity-100 delay-100" : "opacity-0"
             }`}
           >
@@ -230,7 +230,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
             })}
           </h1>
           {hero.background.caption ? (
-            <p className="mt-0 w-full max-w-2xl text-balance text-xs sm:text-sm leading-relaxed text-white/75">
+            <p className="prose prose-base prose-invert italic font-light mx-auto mt-3 mb-3 max-w-2xl text-white/80 md:prose-lg md:max-w-4xl lg:max-w-4xl">
               {hero.background.caption}
             </p>
           ) : null}

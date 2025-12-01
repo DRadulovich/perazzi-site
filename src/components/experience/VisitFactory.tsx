@@ -79,7 +79,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
               {subheading}
             </h2>
             <div
-              className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg md:max-w-3xl lg:max-w-4xl prose-headings:text-ink prose-strong:text-ink"
+              className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg md:max-w-4xl lg:max-w-4xl prose-headings:text-ink prose-strong:text-ink"
               dangerouslySetInnerHTML={{ __html: visit.introHtml }}
             />
           </div>

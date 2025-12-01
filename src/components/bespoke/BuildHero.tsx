@@ -66,11 +66,11 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
         <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
           {hero.eyebrow}
         </p>
-        <h1 className="mt-4 text-balance text-2xl font-semibold leading-tight text-white sm:text-3xl lg:text-4xl">
+        <h1 className="mt-1 mb-10 flex flex-wrap justify-center gap-2 text-balance text-2xl font-bold leading-[1.12] text-white transition-opacity duration-700 motion-reduce:transition-none sm:text-3xl lg:text-4xl">
           {hero.title}
         </h1>
         <div
-          className="prose prose-base prose-invert mx-auto mt-6 max-w-none text-white/80 md:prose-lg md:max-w-3xl lg:max-w-4xl"
+          className="prose prose-base prose-invert italic font-light mx-auto mt-3 mb-3 max-w-2xl text-white/80 md:prose-lg md:max-w-4xl lg:max-w-4xl"
           dangerouslySetInnerHTML={{ __html: hero.introHtml }}
         />
       </motion.div>
