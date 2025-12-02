@@ -11,6 +11,7 @@ import {presentationTool} from 'sanity/presentation'
 
 // Go to https://www.sanity.io/docs/api-versioning to learn how API versioning works
 import {apiVersion, dataset, projectId} from './src/sanity/env'
+import {resolve as presentationResolve} from './src/sanity/presentation/resolve'
 import {schema} from './src/sanity/schemaTypes'
 import {structure} from './src/sanity/structure'
 import {perazziTheme} from './src/sanity/studioTheme'
@@ -49,61 +50,7 @@ export default defineConfig({
       },
       // Allow your site origins to connect overlays for Visual Editing/Presentation
       allowOrigins,
-      resolve: {
-        locations: {
-          homeSingleton: () => [
-            {
-              title: 'Home',
-              href: '/',
-            },
-          ],
-          shotgunsLanding: () => [
-            {
-              title: 'Shotguns',
-              href: '/shotguns',
-            },
-          ],
-          bespokeHome: () => [
-            {
-              title: 'Bespoke',
-              href: '/bespoke',
-            },
-          ],
-          experienceHome: () => [
-            {
-              title: 'Experience',
-              href: '/experience',
-            },
-          ],
-          heritageHome: () => [
-            {
-              title: 'Heritage',
-              href: '/heritage',
-            },
-          ],
-          serviceHome: () => [
-            {
-              title: 'Service',
-              href: '/service',
-            },
-          ],
-          journalLanding: () => [
-            {
-              title: 'Journal landing',
-              href: '/journal',
-            },
-          ],
-          article: (doc) =>
-            doc?.slug?.current
-              ? [
-                  {
-                    title: 'Journal article',
-                    href: `/journal/${doc.slug.current}`,
-                  },
-                ]
-              : [],
-        },
-      },
+      resolve: presentationResolve,
     }),
     // Vision is for querying with GROQ from inside the Studio
     // https://www.sanity.io/docs/the-vision-plugin
