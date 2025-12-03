@@ -28,10 +28,17 @@ const BLOCKED_RESPONSES: Record<string, string> = {
     "Perazzi can’t provide legal guidance. Please consult local authorities or qualified professionals for this topic.",
 };
 
-const OPENAI_MODEL = process.env.PERAZZI_COMPLETIONS_MODEL ?? "gpt-4.1-mini";
+const OPENAI_MODEL = process.env.PERAZZI_COMPLETIONS_MODEL ?? "gpt-4.1";
 const MAX_COMPLETION_TOKENS = Number(process.env.PERAZZI_MAX_COMPLETION_TOKENS ?? 3000);
 const PHASE_ONE_SPEC = fs.readFileSync(
-  path.join(process.cwd(), "docs", "assistant-spec.md"),
+  path.join(
+    process.cwd(),
+    "V2-PGPT",
+    "V2_PreBuild-Docs",
+    "V2_REDO_Docs",
+    "V2_REDO_Phase-1",
+    "V2_REDO_assistant-spec.md",
+  ),
   "utf8",
 );
 
@@ -91,6 +98,39 @@ function getLowConfidenceThreshold() {
   return Number.isFinite(value) ? value : 0;
 }
 
+const ALLOWED_ARCHETYPES = ["loyalist", "prestige", "analyst", "achiever", "legacy"] as const;
+type Archetype = (typeof ALLOWED_ARCHETYPES)[number];
+
+type PerazziAssistantResponseV2 = PerazziAssistantResponse & {
+  mode?: string;
+  archetype?: Archetype | null;
+};
+
+function normalizeArchetype(input: string): Archetype | null {
+  const cleaned = input.trim().toLowerCase();
+  if (!cleaned) return null;
+  const match = ALLOWED_ARCHETYPES.find((a) => a === cleaned);
+  return match ?? null;
+}
+
+/**
+ * Dev-only control phrase:
+ * "Please change my archetype to <Archetype>."
+ */
+function detectArchetypeOverridePhrase(latestUserContent: string | null): Archetype | null {
+  if (!latestUserContent) return null;
+  const text = latestUserContent.trim();
+  const regex = /^please\s+change\s+my\s+archetype\s+to\s+([a-z]+)\.?$/i;
+  const m = text.match(regex);
+  if (!m || !m[1]) return null;
+  return normalizeArchetype(m[1]);
+}
+
+function capitalize(input: string): string {
+  if (!input) return input;
+  return input.charAt(0).toUpperCase() + input.slice(1);
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as Partial<PerazziAssistantRequest>;
@@ -102,10 +142,54 @@ export async function POST(request: Request) {
     const sanitizedMessages = sanitizeMessages(body!.messages!);
     const latestQuestion = getLatestUserContent(sanitizedMessages);
     const hints = detectRetrievalHints(latestQuestion, body?.context);
+
+    // Dev feature: manual archetype override via phrase
+    const archetypeOverride = detectArchetypeOverridePhrase(latestQuestion);
+    const effectiveMode =
+      (hints as any)?.mode ?? body?.context?.mode ?? "prospect";
+    const effectiveArchetype: Archetype | null =
+      archetypeOverride ??
+      ((body?.context as any)?.archetype as Archetype | null) ??
+      null;
+
+    if (archetypeOverride) {
+      const answer = `Understood. I’ll answer from the perspective of a ${capitalize(
+        archetypeOverride,
+      )} from now on.`;
+      logInteraction(
+        body as PerazziAssistantRequest,
+        [],
+        0,
+        "ok",
+        undefined,
+        hints,
+        [],
+      );
+      return NextResponse.json<PerazziAssistantResponseV2>({
+        answer,
+        guardrail: { status: "ok", reason: null },
+        citations: [],
+        intents: hints.intents,
+        topics: hints.topics,
+        templates: [],
+        similarity: 0,
+        // v2 additions
+        mode: effectiveMode,
+        archetype: archetypeOverride,
+      });
+    }
+
     const guardrailBlock = detectBlockedIntent(sanitizedMessages);
     if (guardrailBlock) {
-      logInteraction(body!, [], 0, "blocked", guardrailBlock.reason, hints);
-      return NextResponse.json<PerazziAssistantResponse>({
+      logInteraction(
+        body as PerazziAssistantRequest,
+        [],
+        0,
+        "blocked",
+        guardrailBlock.reason,
+        hints,
+      );
+      return NextResponse.json<PerazziAssistantResponseV2>({
         answer: guardrailBlock.message,
         guardrail: { status: "blocked", reason: guardrailBlock.reason },
         citations: [],
@@ -113,6 +197,8 @@ export async function POST(request: Request) {
         topics: hints.topics,
         templates: [],
         similarity: 0,
+        mode: effectiveMode,
+        archetype: effectiveArchetype,
       });
     }
 
@@ -120,7 +206,7 @@ export async function POST(request: Request) {
     const retrieval = await retrievePerazziContext(body as PerazziAssistantRequest, hints);
     if (retrieval.maxScore < getLowConfidenceThreshold()) {
       logInteraction(
-        body!,
+        body as PerazziAssistantRequest,
         retrieval.chunks,
         retrieval.maxScore,
         "low_confidence",
@@ -128,7 +214,7 @@ export async function POST(request: Request) {
         hints,
         responseTemplates,
       );
-      return NextResponse.json<PerazziAssistantResponse>({
+      return NextResponse.json<PerazziAssistantResponseV2>({
         answer: LOW_CONFIDENCE_MESSAGE,
         guardrail: { status: "low_confidence", reason: "retrieval_low" },
         citations: [],
@@ -136,6 +222,8 @@ export async function POST(request: Request) {
         topics: hints.topics,
         templates: responseTemplates,
         similarity: retrieval.maxScore,
+        mode: effectiveMode,
+        archetype: effectiveArchetype,
       });
     }
 
@@ -146,8 +234,16 @@ export async function POST(request: Request) {
       responseTemplates,
     );
 
-    logInteraction(body!, retrieval.chunks, retrieval.maxScore, "ok", undefined, hints, responseTemplates);
-    return NextResponse.json<PerazziAssistantResponse>({
+    logInteraction(
+      body as PerazziAssistantRequest,
+      retrieval.chunks,
+      retrieval.maxScore,
+      "ok",
+      undefined,
+      hints,
+      responseTemplates,
+    );
+    return NextResponse.json<PerazziAssistantResponseV2>({
       answer,
       citations: retrieval.chunks.map(mapChunkToCitation),
       guardrail: { status: "ok", reason: null },
@@ -155,6 +251,8 @@ export async function POST(request: Request) {
       topics: hints.topics,
       templates: responseTemplates,
       similarity: retrieval.maxScore,
+      mode: effectiveMode,
+      archetype: effectiveArchetype,
     });
   } catch (error) {
     console.error("Perazzi assistant error", error);

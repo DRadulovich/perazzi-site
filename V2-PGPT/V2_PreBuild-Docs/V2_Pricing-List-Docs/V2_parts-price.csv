@@ -1,0 +1,712 @@
+MODEL OR GAUGE,TRIGGER TYPE,PART NUMBER,DESCRIPTION,PRICE
+12,REMOVABLE,103,Top lever,$489.44
+12,REMOVABLE,105,Safety,$151.32
+12,REMOVABLE,106,Link trigger release,$70.97
+12,REMOVABLE,107,Lock trigger plate,$58.92
+12,REMOVABLE,109,Right ejector trip rod,$58.92
+12,REMOVABLE,110,Left ejector trip rod,$58.92
+12,REMOVABLE,111,Locking piece top lever,$84.36
+12,REMOVABLE,112,Cocking bar,$171.40
+12,REMOVABLE,113,Top firing pin,$80.35
+12,REMOVABLE,114,Bottom firing pin,$80.35
+12,REMOVABLE,115,Pivot,$35.49
+12,REMOVABLE,116,Safety spring,$35.49
+12,REMOVABLE,117,Cocking bar spring,$8.97
+12,REMOVABLE,118,Firing pin return spring,$8.97
+12,REMOVABLE,119 R,Trigger plate lock pin,$8.97
+12,REMOVABLE,121,Top lever return spring,$8.97
+12,REMOVABLE,122,Trigger plate lock cap,$16.07
+12,REMOVABLE,123,Cocking bar screw check,$8.97
+12,REMOVABLE,124,Safety spring screw,$8.97
+12,REMOVABLE,126,Safety botton pin,$8.97
+12,REMOVABLE,127,Link pin,$8.97
+12,REMOVABLE,129,Plunger trip,$8.97
+12,REMOVABLE,132,Top lever release trip (old type),$24.37
+12,REMOVABLE,133,Top lever lock trip (old type),$24.37
+12,REMOVABLE,134,Top lever lock pin return spring,$8.97
+12,REMOVABLE,135,Top lever stop plate release pin,$29.46
+12,REMOVABLE,136,Top lever stop plate,$50.89
+12,REMOVABLE,137,Top lever stop plate rel. sp.plunger,$8.97
+12,REMOVABLE,145,Under safety,$8.03
+12,REMOVABLE,155,Trigger guard,$161.23
+12,REMOVABLE,156,Trigger,$200.19
+12,REMOVABLE,156 A,Anatomic trigger,$400.39
+12,REMOVABLE,156 U,Backward trigger,$400.39
+12,REMOVABLE,157,Right release,$97.75
+12,REMOVABLE,158,Connector,$113.82
+12,REMOVABLE,159,Right sear,$137.66
+12,REMOVABLE,160,Left sear,$137.66
+12,REMOVABLE,161,Right hammer for flat springs,$216.26
+12,REMOVABLE,162,Left hammer for flat springs,$216.26
+12,REMOVABLE,163,Bridle,$50.89
+12,REMOVABLE,164,Cocking foot,$70.97
+12,REMOVABLE,165,Right hammer flat spring,$64.95
+12,REMOVABLE,166,Left hammer flat spring,$64.95
+12,REMOVABLE,167,Connector spring,$8.97
+12,REMOVABLE,169,Right sear spring,$8.97
+12,REMOVABLE,170,Connector plunger,$8.97
+12,REMOVABLE,171,Connector pin,$12.72
+12,REMOVABLE,172,Connector post pin,$12.72
+12,REMOVABLE,173,Pivot sear trip - coil spring file pin rem. trigger group,$12.72
+12,REMOVABLE,174,Bridle pin,$12.72
+12,REMOVABLE,175,Sear retainer pin,$12.72
+12,REMOVABLE,176,Trigger guard pin,$12.72
+12,REMOVABLE,177,Sear retainer sleeve,$12.72
+12,REMOVABLE,178,Sear plunger,$12.72
+12,REMOVABLE,200,Barrels (see guns price list),
+12,REMOVABLE,203,Right ejector,$257.51
+12,REMOVABLE,204,Left ejector,$257.51
+12,REMOVABLE,205,Ejector spring plunger,$12.72
+12,REMOVABLE,206,Ejector spring,$8.97
+12,REMOVABLE,207,Ejector lock,$23.57
+12,REMOVABLE,307,Cocking bar cam,$64.95
+12,REMOVABLE,308,Right ejector sear,$50.89
+12,REMOVABLE,309,Ejector sear spring,$8.97
+12,REMOVABLE,313,Ejector sear plunger,$8.97
+12,REMOVABLE,314,Ejector sear pin,$8.97
+12,REMOVABLE,316,Ejector trip,$64.95
+12,REMOVABLE,317,Left ejector sear,$50.89
+12,REMOVABLE,321,Iron forend (see guns price list),
+12,REMOVABLE,322,Catch bolt,$50.89
+12,REMOVABLE,323,Cocking bar lock screw,$12.72
+12,REMOVABLE,324,Spring for catch bolt,$23.57
+12,REMOVABLE,326,Latch plate,$162.70
+12,REMOVABLE,327,Latch plate lever,$78.60
+12,REMOVABLE,328,Lock screw for latch pl.lev. sp.,$8.97
+12,REMOVABLE,329,Latch plate pin,$8.97
+12,REMOVABLE,330,Return spring latch pl. lever,$29.46
+12,REMOVABLE,331,Lock pin for latch plate lever,$8.97
+12,REMOVABLE,351,Stock (see guns price list),
+12,REMOVABLE,352,Stock bolt,$23.57
+12,REMOVABLE,353,Lock washer,$8.97
+12,REMOVABLE,354,Plain washer,$8.97
+12,REMOVABLE,355,Retainer guide,$16.74
+12,REMOVABLE,356,Recoil pad,$55.00
+12,REMOVABLE,357,Forend (see guns price list),
+12,REMOVABLE,358,Forend lock screw,$12.72
+12,REMOVABLE,359,Forend lock bolt,$31.47
+12,REMOVABLE,403,Adjustable trigger upper part,$161.23
+12,REMOVABLE,404,Adjustable trigger lower part,$161.23
+12,REMOVABLE,405,Adjustable trigger tab,$129.89
+12,REMOVABLE,407,Trigger guard for adj trigger,$161.23
+12,REMOVABLE,408,Sear trip pin,$43.25
+12,REMOVABLE,409,Adjustable trigger retaining pin,$12.72
+12,REMOVABLE,411,Adjustable trigger return spring,$8.84
+12,REMOVABLE,412,Selector pin spring (optional),$13.79
+12,REMOVABLE,414,Adjustable trigger tab pin,$12.72
+12,REMOVABLE,415,Adjustable trigger tab pin spring,$8.97
+12,REMOVABLE,419,Trigger for external selector,$171.40
+12,REMOVABLE,420,External selector tab,$137.66
+12,REMOVABLE,421,Connector for ext sel tab,$97.75
+12,REMOVABLE,422,Pin for external selector tab,$12.72
+12,REMOVABLE,456,Adjustable trigger upper part,$83.83
+12,REMOVABLE,458,Release for external selector,$100.43
+12,REMOVABLE,471,Connector pin for external selector,$16.74
+12,REMOVABLE,526,Pivot for adjustable rib,$28.12
+12,REMOVABLE,527,Lock for adj. Rib pivot,$2.68
+12,REMOVABLE,6104,Action bolt from ser nbr 153549,$216.26
+12,REMOVABLE,6161,Right hammer for coil springs,$216.26
+12,REMOVABLE,6162,Left hammer for coil springs,$216.26
+12,REMOVABLE,6166,Right and left hammer coil spring,$8.84
+12,REMOVABLE,6172,Sear trip pivot pin,$12.72
+12,REMOVABLE,6178,Link retainer pin,$16.74
+12,REMOVABLE,6193,Hammer sprimg plunger,$29.46
+12,REMOVABLE,21712,Choke tube,$140.00
+12,REMOVABLE,23190,Coil springs file,$182.79
+12,REMOVABLE,127 C,Pin to block pivot,$2.81
+12,REMOVABLE,128/12,Lock pin for top lev. and fir. pin,$12.72
+12,REMOVABLE,155B,Trigger guard for double trigger group,$161.23
+12,REMOVABLE,156BD,Right trigger for duoble trigger group,$171.00
+12,REMOVABLE,156BS,Left trigger for duoble trigger group,$171.00
+12,REMOVABLE,169/02,Left sear spring,$8.84
+12,REMOVABLE,175/03,Hammer pin,$9.37
+12,REMOVABLE,212/03,Front sight,$23.57
+12,REMOVABLE,212/06,Middle sight,$23.57
+12,REMOVABLE,419U,Backward trigger for selector,$400.39
+12,REMOVABLE,524/05,Adjustable rib tab 7x7,$41.11
+12,REMOVABLE,524/06,Adjustable rib tab 11x11,$41.11
+12,REMOVABLE,525/1,Spring for adj. Rib tab,$9.64
+12,REMOVABLE,6226/01,Choke wrench,$55.00
+20,REMOVABLE,106,Link trigger release,$70.97
+20,REMOVABLE,107,Lock trigger plate,$58.92
+20,REMOVABLE,111,Locking piece top lever,$84.36
+20,REMOVABLE,112,Cocking bar,$171.40
+20,REMOVABLE,115,Pivot,$35.49
+20,REMOVABLE,116,Safety spring,$35.49
+20,REMOVABLE,117,Cocking bar spring,$8.97
+20,REMOVABLE,118,Firing pin return spring,$8.97
+20,REMOVABLE,119 R,Trigger plate lock pin,$8.97
+20,REMOVABLE,121,Top lever return spring,$8.97
+20,REMOVABLE,122,Trigger plate lock cap,$16.07
+20,REMOVABLE,123,Cocking bar screw check,$8.97
+20,REMOVABLE,124,Safety spring screw,$8.97
+20,REMOVABLE,126,Safety botton pin and trigger plate lock pin,$8.97
+20,REMOVABLE,127,Link pin,$8.97
+20,REMOVABLE,129,Plunger trip,$8.97
+20,REMOVABLE,132,Top lever release trip (old type),$24.37
+20,REMOVABLE,133,Top lever lock trip (old type),$24.37
+20,REMOVABLE,134,Top lever lock pin return spring,$8.97
+20,REMOVABLE,135,Top lever stop plate release pin,$29.46
+20,REMOVABLE,137,Top lever stop plate rel. sp.plunger,$8.97
+20,REMOVABLE,145,Under safety,$8.03
+20,REMOVABLE,155,Trigger guard,$161.23
+20,REMOVABLE,156,Trigger,$200.19
+20,REMOVABLE,156 A,Anatomic trigger,$400.39
+20,REMOVABLE,156 U,Backward trigger,$400.39
+20,REMOVABLE,157,Right release,$97.75
+20,REMOVABLE,158,Connector,$113.82
+20,REMOVABLE,159,Right sear,$137.66
+20,REMOVABLE,160,Left sear,$137.66
+20,REMOVABLE,161,Right hammer for flat springs,$216.26
+20,REMOVABLE,162,Left hammer for flat springs,$216.26
+20,REMOVABLE,163,Bridle,$50.89
+20,REMOVABLE,164,Cocking foot,$70.97
+20,REMOVABLE,165,Right hammer flat spring,$64.95
+20,REMOVABLE,166,Left hammer flat spring,$64.95
+20,REMOVABLE,167,Connector spring,$8.97
+20,REMOVABLE,169,Right sear spring,$8.97
+20,REMOVABLE,170,Connector plunger,$8.97
+20,REMOVABLE,171,Connector pin,$12.72
+20,REMOVABLE,172,Connector post pin,$12.72
+20,REMOVABLE,173,Pivot sear trip - coil spring file pin rem. trigger group,$12.72
+20,REMOVABLE,174,Bridle pin,$12.72
+20,REMOVABLE,175,Sear retainer pin,$12.72
+20,REMOVABLE,176,Trigger guard pin,$12.72
+20,REMOVABLE,177,Sear retainer sleeve,$12.72
+20,REMOVABLE,178,Sear plunger,$12.72
+20,REMOVABLE,205,Ejector spring plunger,$12.72
+20,REMOVABLE,206,Ejector spring,$8.97
+20,REMOVABLE,207,Ejector lock,$23.57
+20,REMOVABLE,309,Ejector sear spring,$8.97
+20,REMOVABLE,313,Ejector sear plunger,$8.97
+20,REMOVABLE,314,Ejector sear pin,$8.97
+20,REMOVABLE,316,Ejector trip,$64.95
+20,REMOVABLE,322,Catch bolt,$50.89
+20,REMOVABLE,323,Cocking bar lock screw,$12.72
+20,REMOVABLE,324,Spring for catch bolt,$23.57
+20,REMOVABLE,326,Latch plate,$162.70
+20,REMOVABLE,327,Latch plate lever,$78.60
+20,REMOVABLE,328,Lock screw for latch pl. lev. sp.,$8.97
+20,REMOVABLE,329,Latch plate pin,$8.97
+20,REMOVABLE,330,Return sping latch pl. lever,$29.46
+20,REMOVABLE,331,Lock pin for latch plate lever,$8.97
+20,REMOVABLE,352,Stock bolt,$23.57
+20,REMOVABLE,353,Lock washer,$8.97
+20,REMOVABLE,354,Plain washer,$8.97
+20,REMOVABLE,355,Retainer guide,$16.74
+20,REMOVABLE,356,Recoil pad,$55.00
+20,REMOVABLE,358,Forend lock screw,$12.72
+20,REMOVABLE,359,Forend lock bolt,$31.47
+20,REMOVABLE,403,Adjustable trigger upper part,$161.23
+20,REMOVABLE,404,Adjustable trigger lower part,$161.23
+20,REMOVABLE,405,Adjustable trigger tab,$129.89
+20,REMOVABLE,407,Trigger guard for adjustable trigger,$161.23
+20,REMOVABLE,408,Sear trip pin,$43.25
+20,REMOVABLE,409,Adjustable trigger retaining pin,$12.72
+20,REMOVABLE,411,Adjustable trigger return spring,$8.84
+20,REMOVABLE,412,Selector pin spring (optional),$13.79
+20,REMOVABLE,414,Adjustable trigger tab pin,$12.72
+20,REMOVABLE,415,Adjustable trigger tab pin spring,$8.97
+20,REMOVABLE,419,Trigger for external selector,$171.40
+20,REMOVABLE,420,External selector tab,$137.66
+20,REMOVABLE,421,Connector for ext. selector tab,$97.75
+20,REMOVABLE,422,Pin for ext. selector tab,$12.72
+20,REMOVABLE,456,Adjustable trigger upper part,$83.83
+20,REMOVABLE,458,Release for ext. selector,$100.43
+20,REMOVABLE,471,Connector pin for external selector,$16.74
+20,REMOVABLE,526,Pivot for adjustable rib,$28.12
+20,REMOVABLE,527,Lock for adj. rib pivot,$2.68
+20,REMOVABLE,6161,Right hammer for coil springs,$216.26
+20,REMOVABLE,6162,Left hammer for coil springs,$216.26
+20,REMOVABLE,6166,Right and left hammer coil spring,$8.84
+20,REMOVABLE,6172,Sear trip pivot pin,$12.72
+20,REMOVABLE,6178,Link retainer pin,$16.74
+20,REMOVABLE,6193,Hammer spring plunger,$29.46
+20,REMOVABLE,21720,Choke tube,$140.00
+20,REMOVABLE,23103,Top lever,$489.44
+20,REMOVABLE,23104,Action bolt from ser nbr 153549,$216.26
+20,REMOVABLE,23109,Right ejector trip rod,$58.92
+20,REMOVABLE,23110,Left ejector trip rod,$58.92
+20,REMOVABLE,23113,Top firing pin,$80.35
+20,REMOVABLE,23114,Bottom firing pin,$80.35
+20,REMOVABLE,23190,Coil springs file,$182.79
+20,REMOVABLE,23200,Barrels (see guns price list),
+20,REMOVABLE,23203,Right ejector,$257.51
+20,REMOVABLE,23204,Left ejector,$257.51
+20,REMOVABLE,23307,Cocking bar cam,$64.95
+20,REMOVABLE,23308,Right ejector sear,$50.89
+20,REMOVABLE,23317,Left ejector sear,$50.89
+20,REMOVABLE,23321,Iron forend (see guns price list),
+20,REMOVABLE,24105,Safety,$151.32
+20,REMOVABLE,24136,Top lever stop plate,$50.89
+20,REMOVABLE,24351,Stock (see guns price list),
+20,REMOVABLE,24357,Forend (see guns price list),
+20,REMOVABLE,127 C,Pin to block pivot,$2.81
+20,REMOVABLE,128/20,Lock pin for top lev. and fir. pin,$12.72
+20,REMOVABLE,169/02,Left sear spring,$8.84
+20,REMOVABLE,175/03,Hammer pin,$9.37
+20,REMOVABLE,212/03,Front sight,$23.57
+20,REMOVABLE,212/06,Middle sight,$23.57
+20,REMOVABLE,524/05,Adjustable rib tab 7x7,$41.11
+20,REMOVABLE,524/06,Adjustable rib tab 11x11,$41.11
+20,REMOVABLE,525/1,Spring for adj. rib tab,$9.64
+20,REMOVABLE,6226/02,Choke wrench,$55.00
+12,NON REMOVABLE,103,Top lever,$489.44
+12,NON REMOVABLE,109,Right ejector trip rod,$58.92
+12,NON REMOVABLE,110,Left ejector trip rod,$58.92
+12,NON REMOVABLE,111,Locking piece top lever,$84.36
+12,NON REMOVABLE,112,Cocking bar,$171.40
+12,NON REMOVABLE,113,Top firing pin,$80.35
+12,NON REMOVABLE,114,Bottom firing pin,$80.35
+12,NON REMOVABLE,115,Pivot,$35.49
+12,NON REMOVABLE,117,Cocking bar spring,$8.97
+12,NON REMOVABLE,118,Firing pin return spring,$8.97
+12,NON REMOVABLE,121,Top lever return spring,$8.97
+12,NON REMOVABLE,123,Cocking bar screw check,$8.97
+12,NON REMOVABLE,126,Safety retaining pin,$8.97
+12,NON REMOVABLE,129,Plunger trip,$8.97
+12,NON REMOVABLE,132,Top lever release trip (old type),$24.37
+12,NON REMOVABLE,133,Top lever lock trip (old type),$24.37
+12,NON REMOVABLE,134,Top lever lock pin return spring,$8.97
+12,NON REMOVABLE,135,Top lever stop plate release pin,$29.46
+12,NON REMOVABLE,136,Top lever stop plate,$50.89
+12,NON REMOVABLE,137,Top lever stop plate rel. sp. plunger,$8.97
+12,NON REMOVABLE,159,Right sear,$137.66
+12,NON REMOVABLE,160,Left sear,$137.66
+12,NON REMOVABLE,164,Cocking foot,$70.97
+12,NON REMOVABLE,167,Connector spring,$8.97
+12,NON REMOVABLE,169,Right sear spring,$8.97
+12,NON REMOVABLE,176,Trigger guard pin,$12.72
+12,NON REMOVABLE,178,Sear plunger,$12.72
+12,NON REMOVABLE,200,Barrels (see guns price list),
+12,NON REMOVABLE,203,Right ejector,$257.51
+12,NON REMOVABLE,204,Left ejector,$257.51
+12,NON REMOVABLE,205,Ejector spring plunger,$12.72
+12,NON REMOVABLE,206,Ejector spring,$8.97
+12,NON REMOVABLE,207,Ejector lock,$23.57
+12,NON REMOVABLE,307,Cocking bar cam,$64.95
+12,NON REMOVABLE,308,Right ejector sear,$50.89
+12,NON REMOVABLE,309,Ejector sear spring,$8.97
+12,NON REMOVABLE,313,Ejector sear plunger,$8.97
+12,NON REMOVABLE,314,Ejector sear pin,$8.97
+12,NON REMOVABLE,316,Ejector trip,$64.95
+12,NON REMOVABLE,317,Left ejector sear,$50.89
+12,NON REMOVABLE,321,Iron forend (see guns price list),
+12,NON REMOVABLE,322,Catch bolt,$50.89
+12,NON REMOVABLE,323,Cocking bar lock screw,$12.72
+12,NON REMOVABLE,324,Spring for catch bolt,$23.57
+12,NON REMOVABLE,326,Latch plate,$162.70
+12,NON REMOVABLE,327,Latch plate lever,$78.60
+12,NON REMOVABLE,328,Lock screw for latch plate lev. sp.,$8.97
+12,NON REMOVABLE,329,Latch plate pin,$8.97
+12,NON REMOVABLE,330,Return spring latch plate lever,$29.46
+12,NON REMOVABLE,331,Lock pin for latch pl.lever,$8.97
+12,NON REMOVABLE,352,Stock bolt,$23.57
+12,NON REMOVABLE,353,Lockwasher,$8.97
+12,NON REMOVABLE,354,Plain washer,$8.97
+12,NON REMOVABLE,355,Retainer guide,$16.74
+12,NON REMOVABLE,356,Recoil pad,$55.00
+12,NON REMOVABLE,357,Forend (see guns price list),
+12,NON REMOVABLE,358,Forend lock screw,$12.72
+12,NON REMOVABLE,359,Forend lock bolt,$31.47
+12,NON REMOVABLE,409,Adjustable trigger retaining pin,$12.72
+12,NON REMOVABLE,411,Adjustable trigger return spring,$8.84
+12,NON REMOVABLE,526,Pivot for adjustable rib,$28.12
+12,NON REMOVABLE,527,Lock for adj. rib pivot,$2.68
+12,NON REMOVABLE,6104,Action bolt,$216.26
+12,NON REMOVABLE,6116,Safety spring,$35.49
+12,NON REMOVABLE,6120,steel under safety,$53.56
+12,NON REMOVABLE,6145,Under safety,$8.03
+12,NON REMOVABLE,6155,Trigger guard,$161.23
+12,NON REMOVABLE,6157,Sear trip,$97.75
+12,NON REMOVABLE,6158,Connector block,$161.23
+12,NON REMOVABLE,6161,Right hammer,$216.26
+12,NON REMOVABLE,6162,Left hammer,$216.26
+12,NON REMOVABLE,6166,Hammer spring,$8.84
+12,NON REMOVABLE,6170,Connector block plunger,$12.72
+12,NON REMOVABLE,6172,Sear trip pivot pin,$12.72
+12,NON REMOVABLE,6175,Trigger guard pin,$12.72
+12,NON REMOVABLE,6178,Hammer pin,$16.74
+12,NON REMOVABLE,6187,Sear trip pin,$47.14
+12,NON REMOVABLE,6193,Hammer spring plunger,$29.46
+12,NON REMOVABLE,6351,Stock (see guns price list),
+12,NON REMOVABLE,21105,Safety,$151.32
+12,NON REMOVABLE,21126,Locking pin for sel. lever (optional),$26.25
+12,NON REMOVABLE,21137,Lock bolt nut ret. screw,$29.59
+12,NON REMOVABLE,21171,Connector block pivot pin,$12.72
+12,NON REMOVABLE,21186,Pivot sear trip - coil spring file pin non rem. trigger group,$12.72
+12,NON REMOVABLE,21712,Choke tube,$140.40
+12,NON REMOVABLE,23156,Trigger,$200.19
+12,NON REMOVABLE,23156 A,Anatomic trigger,$400.39
+12,NON REMOVABLE,23156 U,Backward trigger,$400.39
+12,NON REMOVABLE,23190,Coil spring file,$182.79
+12,NON REMOVABLE,127 C,Pin to block pivot,$2.81
+12,NON REMOVABLE,128/12,Lock pin for top lever and firing pin,$12.72
+12,NON REMOVABLE,169/02,Left sear spring,$8.84
+12,NON REMOVABLE,175/03,Hammer pin,$9.37
+12,NON REMOVABLE,212/03,Front sight,$23.57
+12,NON REMOVABLE,212/06,Middle sight,$23.57
+12,NON REMOVABLE,524/05,Adjustable rib tab 7x7,$41.11
+12,NON REMOVABLE,524/06,Adjustable rib tab 11x11,$41.11
+12,NON REMOVABLE,525/1,Spring for adj. rib tab,$9.64
+12,NON REMOVABLE,6226/01,Choke wrench,$55.00
+20,NON REMOVABLE,111,Locking piece top lever,$84.36
+20,NON REMOVABLE,112,Cocking bar,$171.40
+20,NON REMOVABLE,115,Pivot,$35.49
+20,NON REMOVABLE,117,Cocking bar spring,$8.97
+20,NON REMOVABLE,118,Firing pin return spring,$8.97
+20,NON REMOVABLE,121,Top lever return spring,$8.97
+20,NON REMOVABLE,123,Cocking bar screw check,$8.97
+20,NON REMOVABLE,126,Safety botton pin,$8.97
+20,NON REMOVABLE,129,Plunger trip,$8.97
+20,NON REMOVABLE,134,Top lever lock pin return spring,$8.97
+20,NON REMOVABLE,135,Top lever stop plate release pin,$29.46
+20,NON REMOVABLE,137,Top lever stop plate rel. sp.plunger,$8.97
+20,NON REMOVABLE,159,Right sear,$137.66
+20,NON REMOVABLE,160,Left sear,$137.66
+20,NON REMOVABLE,164,Cocking foot,$70.97
+20,NON REMOVABLE,167,Connector spring,$8.97
+20,NON REMOVABLE,169,Right sear spring,$8.97
+20,NON REMOVABLE,176,Trigger guard pin,$12.72
+20,NON REMOVABLE,178,Sear plunger,$12.72
+20,NON REMOVABLE,205,Ejector spring plunger,$12.72
+20,NON REMOVABLE,206,Ejector spring,$8.97
+20,NON REMOVABLE,207,Ejector lock,$23.57
+20,NON REMOVABLE,309,Ejector sear spring,$8.97
+20,NON REMOVABLE,313,Ejector sear plunger,$8.97
+20,NON REMOVABLE,314,Ejector sear pin,$8.97
+20,NON REMOVABLE,316,Ejector trip,$64.95
+20,NON REMOVABLE,322,Catch bolt,$50.89
+20,NON REMOVABLE,323,Cocking bar lock screw,$12.72
+20,NON REMOVABLE,324,Spring for catch bolt,$23.57
+20,NON REMOVABLE,326,Latch plate,$162.70
+20,NON REMOVABLE,327,Latch plate lever,$78.60
+20,NON REMOVABLE,328,Lock screw for latch plate lev. sp.,$8.97
+20,NON REMOVABLE,329,Latch plate pin,$8.97
+20,NON REMOVABLE,330,Return spring latch plate lever,$29.46
+20,NON REMOVABLE,331,Lock pin for latch pl.lever,$8.97
+20,NON REMOVABLE,352,Stock bolt,$23.57
+20,NON REMOVABLE,353,Lock washer,$8.97
+20,NON REMOVABLE,354,Plain washer,$8.97
+20,NON REMOVABLE,355,Retainer guide,$16.74
+20,NON REMOVABLE,356,Recoil pad,$55.00
+20,NON REMOVABLE,358,Forend lock screw,$12.72
+20,NON REMOVABLE,359,Forend lock bolt,$31.47
+20,NON REMOVABLE,409,Adjustable trigger retaining pin,$12.72
+20,NON REMOVABLE,411,Adjustable trigger return spring,$8.84
+20,NON REMOVABLE,526,Pivot for adjustable rib,$28.12
+20,NON REMOVABLE,527,Lock for adj. rib pivot,$2.68
+20,NON REMOVABLE,6116,Safety spring,$35.49
+20,NON REMOVABLE,6120,steel under safety,$53.56
+20,NON REMOVABLE,6145,Under safety,$8.03
+20,NON REMOVABLE,6155,Trigger guard,$161.23
+20,NON REMOVABLE,6157,Sear trip,$97.75
+20,NON REMOVABLE,6161,Right hammer,$216.26
+20,NON REMOVABLE,6162,Left hammer,$216.26
+20,NON REMOVABLE,6166,Hammer spring,$8.84
+20,NON REMOVABLE,6170,Connector block plunger,$12.72
+20,NON REMOVABLE,6172,Sear trip pivot pin,$12.72
+20,NON REMOVABLE,6178,Link retainer pin,$16.74
+20,NON REMOVABLE,6187,Sear trip pin,$47.14
+20,NON REMOVABLE,6193,Hammer spring plunger,$29.46
+20,NON REMOVABLE,21126,Locking pin for sel. lever (optional),$26.25
+20,NON REMOVABLE,21137,Lock bolt nut ret. screw,$29.59
+20,NON REMOVABLE,21171,Connector block pivot pin,$12.72
+20,NON REMOVABLE,21186,Pivot sear trip - coil spring file pin non rem. trigger group,$12.72
+20,NON REMOVABLE,21720,Choke tube,$140.00
+20,NON REMOVABLE,23103,Top lever,$489.44
+20,NON REMOVABLE,23104,Action bolt,$216.26
+20,NON REMOVABLE,23105,Safety,$151.32
+20,NON REMOVABLE,23109,Right ejector trip rod,$58.92
+20,NON REMOVABLE,23110,Left ejector trip rod,$58.92
+20,NON REMOVABLE,23113,Top firing pin,$80.35
+20,NON REMOVABLE,23114,Bottom firing pin,$80.35
+20,NON REMOVABLE,23156,Trigger,$200.19
+20,NON REMOVABLE,23156 A,Anatomic trigger,$400.39
+20,NON REMOVABLE,23156 U,Backward trigger,$400.39
+20,NON REMOVABLE,23158,Connector,$161.23
+20,NON REMOVABLE,23175,Sear retainer pin,$12.72
+20,NON REMOVABLE,23190,Coil spring file,$182.79
+20,NON REMOVABLE,23200,Barrels (see guns price list),$0.00
+20,NON REMOVABLE,23203,Right ejector,$257.51
+20,NON REMOVABLE,23204,Left ejector,$257.51
+20,NON REMOVABLE,23307,Cocking bar cam,$64.95
+20,NON REMOVABLE,23308,Right ejector sear,$50.89
+20,NON REMOVABLE,23317,Left ejector sear,$50.89
+20,NON REMOVABLE,23321,Iron forend (see guns price list),
+20,NON REMOVABLE,23351,Stock (see guns price list),
+20,NON REMOVABLE,23357,Forend (see guns price list),
+20,NON REMOVABLE,24136,Top lever stop plate,$50.89
+20,NON REMOVABLE,128/20,Lock pin for top lev. and fir. pin,$12.72
+20,NON REMOVABLE,169/02,Left sear spring,$8.84
+20,NON REMOVABLE,175/03,Hammer pin,$9.37
+20,NON REMOVABLE,212/03,Front sight,$23.57
+20,NON REMOVABLE,212/06,Middle sight,$23.57
+20,NON REMOVABLE,524/05,Adjustable rib tab 7x7,$41.11
+20,NON REMOVABLE,524/06,Adjustable rib tab 11x11,$41.11
+20,NON REMOVABLE,525/1,Spring for adj. rib tab,$9.64
+20,NON REMOVABLE,6226/02,Choke wrench,$55.00
+28,NON REMOVABLE,117,Cocking bar spring,$8.97
+28,NON REMOVABLE,118,Firing pin return spring,$8.97
+28,NON REMOVABLE,123,Cocking bar screw check,$8.97
+28,NON REMOVABLE,126,Safety botton pin,$8.97
+28,NON REMOVABLE,129,Plunger trip,$8.97
+28,NON REMOVABLE,134,Top lever lock pin return spring,$8.97
+28,NON REMOVABLE,159,Right ssear,$137.66
+28,NON REMOVABLE,160,Left sear,$137.66
+28,NON REMOVABLE,167,Connector spring,$8.97
+28,NON REMOVABLE,169,Right sear spring,$8.97
+28,NON REMOVABLE,176,Trigger guard pin,$12.72
+28,NON REMOVABLE,178,Sear plunger,$12.72
+28,NON REMOVABLE,309,Ejector sear spring,$8.97
+28,NON REMOVABLE,313,Ejector sear plunger,$8.97
+28,NON REMOVABLE,314,Ejector sear pin,$8.97
+28,NON REMOVABLE,322,Catch bolt,$50.89
+28,NON REMOVABLE,323,Cocking bar lock screw,$12.72
+28,NON REMOVABLE,324,Spring for catch bolt,$23.57
+28,NON REMOVABLE,326,Latch plate,$162.70
+28,NON REMOVABLE,327,Latch plate lever,$78.60
+28,NON REMOVABLE,328,Lock screw for latch plate lev. sp.,$8.97
+28,NON REMOVABLE,329,Latch plate pin,$8.97
+28,NON REMOVABLE,330,Return spring latch plate lever,$29.46
+28,NON REMOVABLE,331,Lock pin for latch pl.lever,$8.97
+28,NON REMOVABLE,352,Stock bolt,$23.57
+28,NON REMOVABLE,353,Lock washer,$8.97
+28,NON REMOVABLE,354,Plain washer,$8.97
+28,NON REMOVABLE,355,Retainer guide,$16.74
+28,NON REMOVABLE,356,Recoil pad,$55.00
+28,NON REMOVABLE,358,Forend lock screw,$12.72
+28,NON REMOVABLE,359,Forend lock bolt,$31.47
+28,NON REMOVABLE,409,Adjustable trigger retaining pin,$12.72
+28,NON REMOVABLE,411,Adjustable trigger return spring,$8.84
+28,NON REMOVABLE,6116,Safety spring,$35.49
+28,NON REMOVABLE,6120,steel under safety,$53.56
+28,NON REMOVABLE,6145,Under safety,$8.03
+28,NON REMOVABLE,6172,Sear trip pivot pin,$12.72
+28,NON REMOVABLE,6178,Link retainer pin,$16.74
+28,NON REMOVABLE,6187,Sear trip pin,$47.14
+28,NON REMOVABLE,19212,Round front sight,$3.88
+28,NON REMOVABLE,21105,Safety,$151.32
+28,NON REMOVABLE,21126,Locking pin for sel. lever (optional),$26.25
+28,NON REMOVABLE,21186,Pivot sear trip - coil spring file pin non rem. trigger group,$12.72
+28,NON REMOVABLE,21728,Choke tube,$140.00
+28,NON REMOVABLE,23156,Trigger,$200.19
+28,NON REMOVABLE,23156 A,Anatomic trigger,$400.39
+28,NON REMOVABLE,23156 U,Backward trigger,$400.39
+28,NON REMOVABLE,23175,Sear retainer pin,$12.72
+28,NON REMOVABLE,28103,Top lever,$489.44
+28,NON REMOVABLE,28104,Action bolt,$216.26
+28,NON REMOVABLE,28109,Right ejector trip rod,$58.92
+28,NON REMOVABLE,28110,Left ejector trip rod,$58.92
+28,NON REMOVABLE,28111,Locking piece top lever,$84.36
+28,NON REMOVABLE,28112,Cocking bar,$171.40
+28,NON REMOVABLE,28113,Top firing pin,$80.35
+28,NON REMOVABLE,28114,Bottom firing pin,$80.35
+28,NON REMOVABLE,28115,Pivot,$35.49
+28,NON REMOVABLE,28121,Top lever return spring,$81.28
+28,NON REMOVABLE,28128,iring pin lock cam pin trip,$19.55
+28,NON REMOVABLE,28135,Top lever stop plate release pin,$34.14
+28,NON REMOVABLE,28136,Top lever stop plate,$50.89
+28,NON REMOVABLE,28137,Top lever stop plare rel. sp. plunger,$8.97
+28,NON REMOVABLE,28138,Lock bolt nut retainer screw,$29.46
+28,NON REMOVABLE,28139,Pin to block pivot,$2.01
+28,NON REMOVABLE,28155,Trigger guard,$161.23
+28,NON REMOVABLE,28157,Sear trip,$97.75
+28,NON REMOVABLE,28158,Connector,$161.23
+28,NON REMOVABLE,28161,Right hammer,$216.26
+28,NON REMOVABLE,28162,Left hammer,$216.26
+28,NON REMOVABLE,28164,Cocking foot,$70.97
+28,NON REMOVABLE,28166,Hammer spring,$8.97
+28,NON REMOVABLE,28170,Connector block plunger,$12.72
+28,NON REMOVABLE,28171,Connector block pivot pin,$12.72
+28,NON REMOVABLE,28190,Spring file,$182.79
+28,NON REMOVABLE,28193,Hammer spring plunger,$29.46
+28,NON REMOVABLE,28200,Barrels (see guns price list),$0.00
+28,NON REMOVABLE,28203,Right ejector,$257.51
+28,NON REMOVABLE,28204,Left ejector,$257.51
+28,NON REMOVABLE,28205,Ejector spring plunger,$16.61
+28,NON REMOVABLE,28206,Ejector spring,$8.97
+28,NON REMOVABLE,28207,Ejector lock,$23.57
+28,NON REMOVABLE,28307,Cocking bar cam,$64.95
+28,NON REMOVABLE,28308,Right ejector sear,$50.89
+28,NON REMOVABLE,28316,Ejector trip,$64.95
+28,NON REMOVABLE,28317,Left ejector sear,$50.89
+28,NON REMOVABLE,28321,Iron forend (see guns price list),
+28,NON REMOVABLE,28351,Stock (see guns price list),
+28,NON REMOVABLE,28357,Forend (see guns price list),
+28,NON REMOVABLE,169/02,Left sear spring,$8.84
+28,NON REMOVABLE,175/03,Hammer pin,$9.37
+28,NON REMOVABLE,212/06,Middle sight,$23.57
+28,NON REMOVABLE,6226/03,Choke wrench,$55.00
+410,NON REMOVABLE,117,Cocking bar spring,$8.97
+410,NON REMOVABLE,118,Firing pin return spring,$8.97
+410,NON REMOVABLE,123,Cocking bar screw check,$8.97
+410,NON REMOVABLE,126,Safety botton pin,$8.97
+410,NON REMOVABLE,129,Plunger trip,$8.97
+410,NON REMOVABLE,134,Top lever lock pin return spring,$8.97
+410,NON REMOVABLE,159,Right sear,$137.66
+410,NON REMOVABLE,160,Left sear,$137.66
+410,NON REMOVABLE,167,Connector spring,$8.97
+410,NON REMOVABLE,169,Right sear spring,$8.97
+410,NON REMOVABLE,176,Trigger guard pin,$12.72
+410,NON REMOVABLE,178,Sear plunger,$12.72
+410,NON REMOVABLE,309,Ejector sear spring,$8.97
+410,NON REMOVABLE,313,Ejector sear plunger,$8.97
+410,NON REMOVABLE,314,Ejector sear pin,$8.97
+410,NON REMOVABLE,322,Catch bolt,$50.89
+410,NON REMOVABLE,323,Cocking bar lock screw,$12.72
+410,NON REMOVABLE,324,Spring for catch bolt,$23.57
+410,NON REMOVABLE,326,Latch plate,$162.70
+410,NON REMOVABLE,327,Latch plate lever,$78.60
+410,NON REMOVABLE,328,Lock screw for latch plate lev. sp.,$8.97
+410,NON REMOVABLE,329,Latch plate pin,$8.97
+410,NON REMOVABLE,330,Return spring latch plate lever,$29.46
+410,NON REMOVABLE,331,Lock pin for latch pl.lever,$8.97
+410,NON REMOVABLE,352,Stock bolt,$23.57
+410,NON REMOVABLE,353,Lock washer,$8.97
+410,NON REMOVABLE,354,Plain washer,$8.97
+410,NON REMOVABLE,355,Retainer guide,$16.74
+410,NON REMOVABLE,356,Recoil pad,$55.00
+410,NON REMOVABLE,358,Forend lock screw,$12.72
+410,NON REMOVABLE,359,Forend lock bolt,$31.47
+410,NON REMOVABLE,409,Adjustable trigger retaining pin,$12.72
+410,NON REMOVABLE,411,Adjustable trigger return spring,$8.84
+410,NON REMOVABLE,6116,Safety spring,$35.49
+410,NON REMOVABLE,6120,steel under safety,$53.56
+410,NON REMOVABLE,6145,Under safety,$8.03
+410,NON REMOVABLE,6172,Sear trip pivot pin,$12.72
+410,NON REMOVABLE,6178,Link retainer pin,$16.74
+410,NON REMOVABLE,6187,Sear trip pin,$47.14
+410,NON REMOVABLE,19212,Round front sight,$3.88
+410,NON REMOVABLE,21105,Safety,$151.32
+410,NON REMOVABLE,21126,Locking pin for sel. lever (optional),$26.25
+410,NON REMOVABLE,21186,Pivot sear trip - coil spring file pin non rem. trigger group,$12.72
+410,NON REMOVABLE,23156,Trigger,$200.19
+410,NON REMOVABLE,23156 A,Anatomic trigger,$400.39
+410,NON REMOVABLE,23156 U,Backward trigger,$400.39
+410,NON REMOVABLE,23175,Sear retainer pin,$12.72
+410,NON REMOVABLE,28103,Top lever,$489.44
+410,NON REMOVABLE,28104,Action bolt,$216.26
+410,NON REMOVABLE,28109,Right ejector trip rod,$58.92
+410,NON REMOVABLE,28110,Left ejector trip rod,$58.92
+410,NON REMOVABLE,28111,Locking piece top lever,$84.36
+410,NON REMOVABLE,28113,Top firing pin,$80.35
+410,NON REMOVABLE,28114,Bottom firing pin,$80.35
+410,NON REMOVABLE,28115,Pivot,$35.49
+410,NON REMOVABLE,28121,Top lever return spring,$81.28
+410,NON REMOVABLE,28128,iring pin lock cam pin trip,$19.55
+410,NON REMOVABLE,28135,Top lever stop plate release pin,$34.14
+410,NON REMOVABLE,28136,Top lever stop plate,$50.89
+410,NON REMOVABLE,28137,Top lever stop plare rel. sp. plunger,$8.97
+410,NON REMOVABLE,28138,Lock bolt nut retainer screw,$29.46
+410,NON REMOVABLE,28139,Pin to block pivot,$2.01
+410,NON REMOVABLE,28155,Trigger guard,$161.23
+410,NON REMOVABLE,28157,Sear trip,$97.75
+410,NON REMOVABLE,28158,Connector,$161.23
+410,NON REMOVABLE,28161,Right hammer,$216.26
+410,NON REMOVABLE,28162,Left hammer,$216.26
+410,NON REMOVABLE,28166,Hammer spring,$8.97
+410,NON REMOVABLE,28170,Connector block plunger,$12.72
+410,NON REMOVABLE,28171,Connector block pivot pin,$12.72
+410,NON REMOVABLE,28190,Spring file,$182.79
+410,NON REMOVABLE,28193,Hammer spring plunger,$29.46
+410,NON REMOVABLE,28205,Ejector spring plunger,$16.61
+410,NON REMOVABLE,28206,Ejector spring,$8.97
+410,NON REMOVABLE,28207,Ejector lock,$23.57
+410,NON REMOVABLE,28316,Ejector trip,$64.95
+410,NON REMOVABLE,28321,Iron forend (see guns price list),
+410,NON REMOVABLE,28351,Stock (see guns price list),
+410,NON REMOVABLE,217410,Choke tube,$140.00
+410,NON REMOVABLE,410112,Cocking bar,$171.40
+410,NON REMOVABLE,410164,Cocking foot,$70.97
+410,NON REMOVABLE,410200,Barrels (see guns price list),
+410,NON REMOVABLE,410203,Right ejector,$257.51
+410,NON REMOVABLE,410204,Left ejector,$257.51
+410,NON REMOVABLE,410307,Cocking bar cam,$64.95
+410,NON REMOVABLE,410308,Right ejector sear,$50.89
+410,NON REMOVABLE,410317,Right ejector sear,$50.89
+410,NON REMOVABLE,410357,Forend (see guns price list),
+410,NON REMOVABLE,169/02,Left sear spring,$8.84
+410,NON REMOVABLE,175/03,Hammer pin,$9.37
+410,NON REMOVABLE,212/06,Middle sight,$23.57
+410,NON REMOVABLE,6226/04,Choke wrench,$55.00
+TM9 AND TM9X,REMOVABLE,106,Link trigger release,$70.97
+TM9 AND TM9X,REMOVABLE,107,Lock trigger plate,$58.92
+TM9 AND TM9X,REMOVABLE,116,Safety spring,$35.49
+TM9 AND TM9X,REMOVABLE,117,Cocking bar spring,$8.97
+TM9 AND TM9X,REMOVABLE,118,Firing pin return spring,$8.97
+TM9 AND TM9X,REMOVABLE,122,Trigger plate lock cap,$16.07
+TM9 AND TM9X,REMOVABLE,124,Safety spring screw,$8.97
+TM9 AND TM9X,REMOVABLE,126,Safety botton pin,$8.97
+TM9 AND TM9X,REMOVABLE,127,Link pin,$8.97
+TM9 AND TM9X,REMOVABLE,155,Trigger guard,$161.23
+TM9 AND TM9X,REMOVABLE,352,Stock bolt,$23.57
+TM9 AND TM9X,REMOVABLE,353,Lock washer,$8.97
+TM9 AND TM9X,REMOVABLE,354,Plain washer,$8.97
+TM9 AND TM9X,REMOVABLE,355,Retainer guide,$16.74
+TM9 AND TM9X,REMOVABLE,356,Recoil pad,$55.00
+TM9 AND TM9X,REMOVABLE,412,Selector pin spring (optional),$13.79
+TM9 AND TM9X,REMOVABLE,526,Pivot for adjustable rib,$28.12
+TM9 AND TM9X,REMOVABLE,527,Lock for adj. Rib pivot,$2.68
+TM9 AND TM9X,REMOVABLE,5104,Action bolt,$216.26
+TM9 AND TM9X,REMOVABLE,5108,Top lever release pin,$16.74
+TM9 AND TM9X,REMOVABLE,5109,Right ejector trip rod,$58.92
+TM9 AND TM9X,REMOVABLE,5110,Left ejector trip rod,$58.92
+TM9 AND TM9X,REMOVABLE,5111,Locking piece top lever,$84.36
+TM9 AND TM9X,REMOVABLE,5112,Cocking bar,$171.40
+TM9 AND TM9X,REMOVABLE,5113,Top firing pin,$80.35
+TM9 AND TM9X,REMOVABLE,5115,Pivot,$35.49
+TM9 AND TM9X,REMOVABLE,5121,Top lever return spring,$8.97
+TM9 AND TM9X,REMOVABLE,5123,Cocking bar screw check,$8.97
+TM9 AND TM9X,REMOVABLE,5128,Lock pin for top lev. and fir. pin,$12.72
+TM9 AND TM9X,REMOVABLE,5129,Plunger trip,$8.97
+TM9 AND TM9X,REMOVABLE,5130,Top lever spring,$8.84
+TM9 AND TM9X,REMOVABLE,5131,Ejector stop spring guide,$4.14
+TM9 AND TM9X,REMOVABLE,5132,Ejector trip,$24.37
+TM9 AND TM9X,REMOVABLE,5133,molle fermo inserto comando estrattor,$24.37
+TM9 AND TM9X,REMOVABLE,5135,Top lever stop plate release pin,$34.15
+TM9 AND TM9X,REMOVABLE,5136,Top lever stop plate,$50.89
+TM9 AND TM9X,REMOVABLE,5162,Left hammer for flat springs,$216.26
+TM9 AND TM9X,REMOVABLE,5164,Cocking foot,$70.97
+TM9 AND TM9X,REMOVABLE,5171,Connector pin,$12.72
+TM9 AND TM9X,REMOVABLE,5175,Sear retainer pin,$12.72
+TM9 AND TM9X,REMOVABLE,5176,Trigger guard pin,$12.72
+TM9 AND TM9X,REMOVABLE,5200,Barrels (see guns price list),
+TM9 AND TM9X,REMOVABLE,5210,Adjustable rib (see gun price list),
+TM9 AND TM9X,REMOVABLE,5203,Ejector,$257.51
+TM9 AND TM9X,REMOVABLE,5207,Ejector lock,$23.57
+TM9 AND TM9X,REMOVABLE,5208,Ejector retainer pin,$8.30
+TM9 AND TM9X,REMOVABLE,5301,Iron forend (see guns price list),
+TM9 AND TM9X,REMOVABLE,5304,Forend latch,$13.79
+TM9 AND TM9X,REMOVABLE,5305,Forend rod spring,$2.81
+TM9 AND TM9X,REMOVABLE,5307,Cocking bar cam,$64.95
+TM9 AND TM9X,REMOVABLE,5309,Ejector sear spring,$8.97
+TM9 AND TM9X,REMOVABLE,5311,Forend pin,$17.94
+TM9 AND TM9X,REMOVABLE,5312,Forend pin for eject.re.pl,$5.62
+TM9 AND TM9X,REMOVABLE,5313,Ejector sear plunger,$8.97
+TM9 AND TM9X,REMOVABLE,5317,Left ejector sear,$50.89
+TM9 AND TM9X,REMOVABLE,5318,Forend op. button guide,$34.55
+TM9 AND TM9X,REMOVABLE,5319,Forend opening button,$20.76
+TM9 AND TM9X,REMOVABLE,5320,Opening lock pin,$11.11
+TM9 AND TM9X,REMOVABLE,5321,Iron forend tension bushing,$2.81
+TM9 AND TM9X,REMOVABLE,5322,Catch bolt,$50.89
+TM9 AND TM9X,REMOVABLE,5325,Cocking bar spring,$8.84
+TM9 AND TM9X,REMOVABLE,5333,Iron forend lock bolt,$11.11
+TM9 AND TM9X,REMOVABLE,5351,stock (see gun price list),
+TM9 AND TM9X,REMOVABLE,5357,Forend (see guns price list),
+TM9 AND TM9X,REMOVABLE,6166,Hammer coil spring,$8.84
+TM9 AND TM9X,REMOVABLE,6193,Hammer spring plunger,$29.46
+TM9 AND TM9X,REMOVABLE,9103,Top lever,$489.44
+TM9 AND TM9X,REMOVABLE,9105,Safety,$151.32
+TM9 AND TM9X,REMOVABLE,9156,Trigger,$200.19
+TM9 AND TM9X,REMOVABLE,9160,Left sear,$137.66
+TM9 AND TM9X,REMOVABLE,9190,Coil springs file,$182.79
+TM9 AND TM9X,REMOVABLE,28205,Ejector spring plunger,$16.60
+TM9 AND TM9X,REMOVABLE,28206,Ejector spring,$8.97
+TM9 AND TM9X,REMOVABLE,119R,Trigger plate lock pin,$8.97
+TM9 AND TM9X,REMOVABLE,169/02,Left sear spring,$8.84
+TM9 AND TM9X,REMOVABLE,212/01,Front sight,$23.57
+TM9 AND TM9X,REMOVABLE,212/06,Middle sight,$23.57
+TM9 AND TM9X,REMOVABLE,524/05,Adjustable rib tab 7x7,$41.11
+TM9 AND TM9X,REMOVABLE,524/06,Adjustable rib tab 11x11,$41.11
+TM9 AND TM9X,REMOVABLE,525/1,Spring for adj. Rib tab,$9.64

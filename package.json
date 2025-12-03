@@ -11,7 +11,10 @@
     "ingest:validate": "tsx scripts/ingest.ts --dry-run --lint --strict",
     "lint:chunks": "tsx scripts/ingest.ts --dry-run --lint",
     "emit:chunks": "tsx scripts/ingest.ts --dry-run --emit-metadata",
-    "test": "vitest"
+    "test": "vitest",
+    "ingest:v2": "tsx scripts/ingest-v2.ts",
+    "ingest:v2:full": "tsx scripts/ingest-v2.ts --full",
+    "ingest:v2:dry-run": "tsx scripts/ingest-v2.ts --dry-run"
   },
   "dependencies": {
     "@dqbd/tiktoken": "^1.0.22",
@@ -55,13 +58,16 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@tailwindcss/typography": "^0.5.19",
+    "@types/minimist": "^1.2.5",
     "@types/node": "^20",
     "@types/node-fetch": "^2.6.13",
+    "@types/pg": "^8.11.10",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^4.0.10",
     "@vitest/ui": "^4.0.10",
     "babel-plugin-react-compiler": "1.0.0",
+    "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
     "tailwindcss": "^4",

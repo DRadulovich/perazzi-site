@@ -39,8 +39,12 @@ export interface PerazziAssistantResponse {
 
 export interface RetrievedChunk extends Citation {
   content: string;
-  baseScore?: number;
   score: number;
+  baseScore?: number;
+  documentPath?: string;
+  headingPath?: string | null;
+  category?: string | null;
+  docType?: string | null;
 }
 
 export type LegacyNotePayload = {

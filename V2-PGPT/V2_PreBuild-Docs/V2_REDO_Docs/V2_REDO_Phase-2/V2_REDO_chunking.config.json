@@ -1,0 +1,5 @@
+{
+  "_note": "Placeholder config for PerazziGPT v2 chunking overrides.",
+  "_status": "draft",
+  "_description": "Use this file in the future to define per-path chunking overrides for V2 documents."
+}

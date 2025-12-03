@@ -1,26 +1,21 @@
 import { Pool } from "pg";
-import { registerType, toSql } from "pgvector/pg";
+import { registerType } from "pgvector/pg";
 import OpenAI from "openai";
 import type { PerazziAssistantRequest, RetrievedChunk } from "@/types/perazzi-assistant";
 import type { RetrievalHints } from "@/lib/perazzi-intents";
 
-const EMBEDDING_MODEL = process.env.PERAZZI_EMBED_MODEL ?? "text-embedding-3-small";
-const CHUNKS_TABLE = sanitizeTableName(process.env.PGVECTOR_TABLE ?? "perazzi_chunks");
-const CHUNK_LIMIT = Number(process.env.PERAZZI_RETRIEVAL_LIMIT ?? 8);
-const MIN_SIMILARITY = Number(process.env.PERAZZI_MIN_SIMILARITY ?? 0.12);
+const EMBEDDING_MODEL = process.env.PERAZZI_EMBED_MODEL ?? "text-embedding-3-large";
+const CHUNK_LIMIT = Number(process.env.PERAZZI_RETRIEVAL_LIMIT ?? 12);
 
 let pgPool: Pool | null = null;
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-type QueryFilter = {
-  topics?: string[];
-  excludeChunkIds?: string[];
-};
 
 export async function retrievePerazziContext(
   body: PerazziAssistantRequest,
   hints?: RetrievalHints,
 ): Promise<{ chunks: RetrievedChunk[]; maxScore: number }> {
+  const _hints = hints;
+  void _hints;
   const question = extractLatestUserMessage(body.messages);
   if (!question) {
     return { chunks: [], maxScore: 0 };
@@ -43,54 +38,18 @@ export async function retrievePerazziContext(
     return { chunks: [], maxScore: 0 };
   }
 
-  const languages = buildLanguageFallbacks(body.context?.locale);
   const pool = await getPgPool();
   const client = await pool.connect();
 
   try {
-    const topicFilters = Array.from(new Set((hints?.topics ?? []).filter(Boolean)));
-    const targetedChunks =
-      topicFilters.length > 0
-        ? await fetchChunksForFilter({
-            client,
-            languages,
-            queryEmbedding,
-            context: body.context,
-            hints,
-            limit: CHUNK_LIMIT,
-            filter: { topics: topicFilters },
-          })
-        : [];
-
-    const excludeIds = targetedChunks.map((chunk) => chunk.chunkId);
-    const generalChunks = await fetchChunksForFilter({
+    const chunks = await fetchV2Chunks({
       client,
-      languages,
       queryEmbedding,
-      context: body.context,
+      limit: CHUNK_LIMIT,
       hints,
-      limit: CHUNK_LIMIT * 2,
-      filter: excludeIds.length ? { excludeChunkIds: excludeIds } : undefined,
     });
-
-    const combined = [...targetedChunks, ...generalChunks];
-    let deduped = dedupeChunks(combined)
-      .filter((chunk) => chunk.baseScore >= MIN_SIMILARITY)
-      .slice(0, CHUNK_LIMIT);
-
-    // Lexical fallback (simple ILIKE) when embeddings return nothing useful
-    if (!deduped.length) {
-      const lexical = await fetchLexicalFallback({
-        client,
-        languages,
-        question,
-        limit: Math.max(3, CHUNK_LIMIT / 2),
-      });
-      deduped = lexical.slice(0, CHUNK_LIMIT);
-    }
-
-    const maxScore = deduped[0]?.score ?? 0;
-    return { chunks: deduped, maxScore };
+    const maxScore = chunks.reduce((max, c) => (c.score > max ? c.score : max), 0);
+    return { chunks, maxScore };
   } finally {
     client.release();
   }
@@ -119,12 +78,12 @@ export function cosineSimilarity(a: number[], b: number[]): number {
 }
 
 export function computeBoost(
-  metadata: Record<string, any>,
+  metadata: Record<string, unknown>,
   context?: PerazziAssistantRequest["context"],
   hints?: RetrievalHints,
 ): number {
   let boost = 0;
-  const audience = (metadata.audience ?? metadata?.metadata?.audience ?? "")
+  const audience = (metadata.audience ?? (metadata as { metadata?: { audience?: unknown } })?.metadata?.audience ?? "")
     .toString()
     .toLowerCase();
   const mode = context?.mode?.toLowerCase();
@@ -136,8 +95,10 @@ export function computeBoost(
       .toString()
       .toLowerCase();
     const relatedEntities: Array<Record<string, string>> =
-      metadata.related_entities ?? [];
-    const entityIds: string[] = Array.isArray(metadata.entity_ids) ? metadata.entity_ids.map((id: any) => String(id).toLowerCase()) : [];
+      (metadata.related_entities as Array<Record<string, string>>) ?? [];
+    const entityIds: string[] = Array.isArray(metadata.entity_ids)
+      ? (metadata.entity_ids as unknown[]).map((id) => String(id).toLowerCase())
+      : [];
     if (
       relatedEntities.some(
         (entity) => entity.entity_id?.toLowerCase() === slug,
@@ -151,7 +112,7 @@ export function computeBoost(
 
   const contextPlatform = context?.platformSlug?.toLowerCase();
   const metadataPlatforms: string[] = Array.isArray(metadata.platform_tags)
-    ? metadata.platform_tags.map((value: any) => value.toString().toLowerCase())
+    ? (metadata.platform_tags as unknown[]).map((value) => value.toString().toLowerCase())
     : metadata.platform
       ? [metadata.platform.toString().toLowerCase()]
       : [];
@@ -169,7 +130,7 @@ export function computeBoost(
 
   if (hints?.topics?.length) {
     const chunkTopics: string[] = Array.isArray(metadata.topics)
-      ? metadata.topics.map((value: any) => value.toString().toLowerCase())
+      ? (metadata.topics as unknown[]).map((value) => value.toString().toLowerCase())
       : [];
     if (chunkTopics.some((topic) => hints.topics.includes(topic))) {
       boost += 0.12;
@@ -182,7 +143,7 @@ export function computeBoost(
       .filter((t) => t.startsWith("discipline_"))
       .map((t) => t.replace("discipline_", ""));
     const chunkDisciplines: string[] = Array.isArray(metadata.discipline_tags)
-      ? metadata.discipline_tags.map((d: any) => d.toString().toLowerCase())
+      ? (metadata.discipline_tags as unknown[]).map((d) => d.toString().toLowerCase())
       : [];
     if (hintDisciplines.some((d) => chunkDisciplines.includes(d))) {
       boost += 0.06;
@@ -193,7 +154,7 @@ export function computeBoost(
   if (hints?.topics?.length) {
     const hintGrades = hints.topics.filter((t) => t.startsWith("grade_"));
     const chunkTopics: string[] = Array.isArray(metadata.topics)
-      ? metadata.topics.map((value: any) => value.toString().toLowerCase())
+      ? (metadata.topics as unknown[]).map((value) => value.toString().toLowerCase())
       : [];
     if (hintGrades.some((g) => chunkTopics.includes(g))) {
       boost += 0.05;
@@ -203,7 +164,7 @@ export function computeBoost(
   // Rib alignment
   if (hints?.topics?.length) {
     const chunkTopics: string[] = Array.isArray(metadata.topics)
-      ? metadata.topics.map((value: any) => value.toString().toLowerCase())
+      ? (metadata.topics as unknown[]).map((value) => value.toString().toLowerCase())
       : [];
     if (hints.topics.includes("rib_adjustable") && chunkTopics.includes("rib_adjustable")) {
       boost += 0.05;
@@ -219,7 +180,7 @@ export function computeBoost(
 
   if (hints?.focusEntities?.length) {
     const entityIds: string[] = Array.isArray(metadata.entity_ids)
-      ? metadata.entity_ids.map((value: any) => value.toString().toLowerCase())
+      ? (metadata.entity_ids as unknown[]).map((value) => value.toString().toLowerCase())
       : [];
     if (entityIds.some((id) => hints.focusEntities!.includes(id))) {
       boost += 0.15;
@@ -249,174 +210,84 @@ export function computeBoost(
   return boost;
 }
 
-function mapRowToChunk(
-  row: any,
-  metadata: Record<string, any>,
-  baseScore: number,
-  score: number,
-): RetrievedChunk {
-  const title =
-    metadata.title ??
-    metadata.summary ??
-    metadata.type ??
-    "Perazzi Reference";
-  const sourcePath =
-    metadata.source_path ?? metadata.sourcePath ?? "PerazziGPT/unknown.md";
-  return {
-    chunkId: row.chunk_id,
-    title,
-    sourcePath,
-    content: row.content ?? "",
-    baseScore,
-    score,
-  };
-}
+type RetrievedRow = {
+  chunk_id: string;
+  content: string;
+  heading_path: string | null;
+  document_path: string;
+  document_title: string | null;
+  category: string | null;
+  doc_type: string | null;
+  distance: number;
+  score: number;
+};
 
-async function fetchChunksForFilter(opts: {
-  client: any;
-  languages: string[];
+async function fetchV2Chunks(opts: {
+  client: PoolClient;
   queryEmbedding: number[];
-  context?: PerazziAssistantRequest["context"];
+  limit: number;
   hints?: RetrievalHints;
-  limit: number;
-  filter?: QueryFilter;
 }): Promise<RetrievedChunk[]> {
-  const { client, languages, queryEmbedding, context, hints, limit, filter } = opts;
-  for (const language of languages) {
-    const rows = await client.query(
-      buildQuery(filter),
-      buildParams({ language, queryEmbedding, limit, filter }),
-    );
-    if (rows.rowCount) {
-      return rows.rows
-        .map((row: any) => {
-          const metadata = row.metadata ?? {};
-          const chunkEmbedding = Array.isArray(row.embedding)
-            ? (row.embedding as number[])
-            : null;
-          const baseScore = chunkEmbedding
-            ? cosineSimilarity(queryEmbedding, chunkEmbedding)
-            : 0;
-          const boostedScore = clampScore(baseScore + computeBoost(metadata, context, hints));
-          return mapRowToChunk(row, metadata, baseScore, boostedScore);
-        })
-        .sort((a: RetrievedChunk, b: RetrievedChunk) => b.score - a.score)
-        .slice(0, limit);
-    }
-  }
-  return [];
-}
+  const { client, queryEmbedding, limit, hints: _hints } = opts;
+  void _hints;
+  const embeddingParam = JSON.stringify(queryEmbedding);
 
-function clampScore(value: number) {
-  if (Number.isNaN(value)) return 0;
-  return Math.max(0, Math.min(1, value));
-}
-
-async function fetchLexicalFallback(opts: {
-  client: any;
-  languages: string[];
-  question: string;
-  limit: number;
-}): Promise<RetrievedChunk[]> {
-  const { client, languages, question, limit } = opts;
-  const terms = question
-    .split(/\s+/)
-    .map((word) => word.replace(/[^a-z0-9]/gi, "").toLowerCase())
-    .filter((word) => word.length > 3)
-    .slice(0, 4);
-  if (!terms.length) return [];
-
-  for (const language of languages) {
-    const rows = await client.query(
-      `
-        SELECT chunk_id, content, metadata, embedding
-        FROM ${CHUNKS_TABLE}
-        WHERE (metadata->>'language') = $1
-          AND (${terms.map((_, idx) => `content ILIKE $${idx + 2}`).join(" OR ")})
-        LIMIT $${terms.length + 2}
-      `,
-      [language, ...terms.map((term) => `%${term}%`), limit],
-    );
-
-    if (rows.rowCount) {
-      return rows.rows.map((row: any) => {
-        const metadata = row.metadata ?? {};
-        const baseScore = 0.15; // lexical fallback — treat as weak but acceptable
-        return mapRowToChunk(row, metadata, baseScore, clampScore(baseScore + 0.01));
-      });
-    }
-  }
-
-  return [];
-}
-
-function buildQuery(filter?: QueryFilter) {
-  let paramIndex = 4;
-  let topicClause = "";
-  let excludeClause = "";
-  if (filter?.topics?.length) {
-    topicClause = ` AND metadata->'topics' ?| $${paramIndex}`;
-    paramIndex += 1;
-  }
-  if (filter?.excludeChunkIds?.length) {
-    excludeClause = ` AND NOT (chunk_id = ANY($${paramIndex}))`;
-  }
-  return `
-    SELECT chunk_id, content, metadata, embedding
-    FROM ${CHUNKS_TABLE}
-    WHERE (metadata->>'language') = $1
-      AND COALESCE(metadata->>'pricing_sensitive', 'false') = 'false'
-      AND NOT EXISTS (
-        SELECT 1
-        FROM jsonb_array_elements_text(
-          COALESCE(metadata->'guardrail_flags', '[]'::jsonb)
-        ) AS flag(value)
-        WHERE flag.value LIKE 'contains_pricing%'
+  const { rows } = await client.query(
+    `
+      with ranked as (
+        select
+          c.id as chunk_id,
+          c.text as content,
+          c.heading_path,
+          d.path as document_path,
+          d.title as document_title,
+          d.category,
+          d.doc_type,
+          (e.embedding::halfvec(3072) <=> $1::halfvec(3072)) as distance
+        from public.embeddings e
+        join public.chunks c on c.id = e.chunk_id
+        join public.documents d on d.id = c.document_id
+        where d.status = 'active'
+          and coalesce(c.visibility, 'public') = 'public'
+        order by distance asc
+        limit $2
       )
-      ${topicClause}
-      ${excludeClause}
-    ORDER BY embedding <=> $2::vector
-    LIMIT $3;
-  `;
-}
+      select
+        chunk_id,
+        content,
+        heading_path,
+        document_path,
+        document_title,
+        category,
+        doc_type,
+        distance,
+        (1.0 - distance) as score
+      from ranked
+    `,
+    [embeddingParam, limit],
+  );
 
-function buildParams({
-  language,
-  queryEmbedding,
-  limit,
-  filter,
-}: {
-  language: string;
-  queryEmbedding: number[];
-  limit: number;
-  filter?: QueryFilter;
-}) {
-  const params: any[] = [language, toSql(queryEmbedding), limit];
-  if (filter?.topics?.length) {
-    params.push(filter.topics);
-  }
-  if (filter?.excludeChunkIds?.length) {
-    params.push(filter.excludeChunkIds);
-  }
-  return params;
-}
+  const typedRows = rows as RetrievedRow[];
 
-function dedupeChunks(chunks: RetrievedChunk[]): RetrievedChunk[] {
-  const seen = new Set<string>();
-  const perSourceCount = new Map<string, number>();
-  const result: RetrievedChunk[] = [];
-  chunks.forEach((chunk) => {
-    if (!seen.has(chunk.chunkId)) {
-      const source = chunk.sourcePath ?? "unknown";
-      const count = perSourceCount.get(source) ?? 0;
-      if (count < 2) {
-        perSourceCount.set(source, count + 1);
-        seen.add(chunk.chunkId);
-        result.push(chunk);
-      }
-    }
+  return typedRows.map((row) => {
+    const title =
+      row.document_title ??
+      row.document_path ??
+      "Perazzi Reference";
+
+    return {
+      chunkId: row.chunk_id,
+      title,
+      sourcePath: row.document_path ?? "V2-PGPT/unknown",
+      content: row.content ?? "",
+      baseScore: row.score ?? 0,
+      score: row.score ?? 0,
+      documentPath: row.document_path ?? undefined,
+      headingPath: row.heading_path ?? undefined,
+      category: row.category ?? null,
+      docType: row.doc_type ?? null,
+    };
   });
-  return result.sort((a, b) => b.score - a.score);
 }
 
 async function getPgPool(): Promise<Pool> {
@@ -447,19 +318,20 @@ function extractLatestUserMessage(messages: PerazziAssistantRequest["messages"])
   return null;
 }
 
-function sanitizeTableName(name: string): string {
-  if (!/^[a-zA-Z0-9_]+$/.test(name)) {
-    throw new Error("Invalid table name for pgvector chunks.");
-  }
-  return name;
-}
-
 export function isConnectionError(error: unknown) {
   if (typeof error !== "object" || error === null) return false;
-  const candidate = error as any;
+  const candidate = error as { cause?: unknown; code?: unknown; message?: unknown };
   const cause = candidate.cause;
-  const code = (cause && cause.code) || candidate.code;
-  const message = (candidate.message ?? cause?.message ?? "").toString().toLowerCase();
+  const causeCode =
+    typeof cause === "object" && cause !== null && "code" in cause
+      ? (cause as { code?: unknown }).code
+      : undefined;
+  const causeMessage =
+    typeof cause === "object" && cause !== null && "message" in cause
+      ? (cause as { message?: unknown }).message
+      : undefined;
+  const code = (causeCode as string | undefined) ?? (candidate.code as string | undefined);
+  const message = ((candidate.message ?? causeMessage) as string | undefined)?.toString().toLowerCase() ?? "";
   return (
     code === "ENOTFOUND" ||
     code === "ECONNREFUSED" ||

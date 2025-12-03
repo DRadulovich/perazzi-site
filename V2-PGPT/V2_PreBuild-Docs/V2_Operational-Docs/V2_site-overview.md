@@ -2,7 +2,7 @@
 
 ## 0. Metadata
 
-- Source: `docs/INTERNAL PERAZZIGPT/site-overview.md`
+- Source: `V2-PGPT/PreBuild-Docs/V2_site-overview.md`
 - Original format: Email-style overview from David Radulovich to CSG and Perazzi teams
 - Version: v1.0 (AI-refactored)
 - Last transformed by AI: 2025-12-01

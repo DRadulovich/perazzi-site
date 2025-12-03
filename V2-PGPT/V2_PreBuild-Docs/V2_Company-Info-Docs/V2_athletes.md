@@ -2,7 +2,7 @@
 
 ## 0. Metadata
 
-- Source: `docs/INTERNAL PERAZZIGPT/athletes.md`
+- Source: `V2-PGPT/V2_PreBuild-Docs/V2_Company-Info-Docs/V2_athletes.md`
 - Original title: “Perazzi USA Team Shooters”
 - Version: v1.0 (AI-refactored)
 - Last transformed by AI: 2025-12-01

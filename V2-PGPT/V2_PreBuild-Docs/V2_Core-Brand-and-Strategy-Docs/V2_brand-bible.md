@@ -1,7 +1,7 @@
 # Perazzi Brand Bible – AI Reference
 
 ## 0. Metadata
-- Source: `docs/INTERNAL PERAZZIGPT/Perazzi Brand Bible.md`
+- Source: `V2-PGPT/V2_PreBuild-Docs/V2_Core-Brand-and-Strategy-Docs/V2_brand-bible.md`
 - Version: v2.0 (AI-refactored)
 - Last transformed by AI: 2025-12-01
 - Intended use: AI knowledge base / RAG for PerazziGPT and related assistants.

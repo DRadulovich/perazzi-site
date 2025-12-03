@@ -1,7 +1,7 @@
 # Perazzi Brand Ethos & Personality – AI Reference
 
 ## 0. Metadata
-- Source: `docs/INTERNAL PERAZZIGPT/brand-ethos.md`
+- Source: `V2-PGPT/V2_PreBuild-Docs/V2_Core-Brand-and-Strategy-Docs/V2_brand-ethos.md`
 - Version: v1.0 (AI-refactored)
 - Last transformed by AI: 2025-12-01
 - Intended use: AI knowledge base / RAG for PerazziGPT and related assistants.

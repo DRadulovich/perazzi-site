@@ -2,7 +2,7 @@
 
 ## 0. Metadata
 
-- Source: `docs/INTERNAL PERAZZIGPT/marketing-plan.md`
+- Source: `V2-PGPT/V2_PreBuild-Docs/V2_Core-Brand-and-Strategy-Docs/V2_marketing-plan.md`
 - Original format: Narrative marketing proposal letter from David Radulovich to CSG / Perazzi
 - Version: v1.0 (AI-refactored)
 - Last transformed by AI: 2025-12-01
