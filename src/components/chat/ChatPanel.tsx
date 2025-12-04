@@ -1,5 +1,22 @@
 "use client";
 
+const ARCHETYPE_ORDER: { key: string; label: string }[] = [
+  { key: "loyalist", label: "Loyalist" },
+  { key: "prestige", label: "Prestige" },
+  { key: "analyst", label: "Analyst" },
+  { key: "achiever", label: "Achiever" },
+  { key: "legacy", label: "Legacy" },
+];
+
+function formatArchetypePercentages(vector: Record<string, number> | undefined) {
+  if (!vector) return [] as { label: string; percent: number }[];
+  return ARCHETYPE_ORDER.map(({ key, label }) => {
+    const raw = typeof vector[key] === "number" ? vector[key]! : 0;
+    const percent = Math.round(raw * 100);
+    return { label, percent };
+  });
+}
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
@@ -359,11 +376,32 @@ export function ChatPanel({
                       ) : (
                         msg.content
                       )}
+
+                      {isAssistant && msg.archetypeBreakdown && (
+                        <div className="mt-3 text-[11px] sm:text-xs text-ink-muted">
+                          {msg.archetypeBreakdown.primary && (
+                            <p className="font-semibold">
+                              Archetype profile: {msg.archetypeBreakdown.primary.charAt(0).toUpperCase()}
+                              {msg.archetypeBreakdown.primary.slice(1)}
+                            </p>
+                          )}
+                          <p className="mt-1">
+                            {formatArchetypePercentages(msg.archetypeBreakdown.vector).map((item, idx) => (
+                              <span key={item.label}>
+                                {item.label} {item.percent}%
+                                {idx < ARCHETYPE_ORDER.length - 1 ? " • " : ""}
+                              </span>
+                            ))}
+                          </p>
+                        </div>
+                      )}
+
                       {msg.similarity !== undefined && (
                         <p className="mt-2 text-[11px] sm:text-xs text-ink-muted">
                           Similarity: {(msg.similarity * 100).toFixed(1)}%
                         </p>
                       )}
+
                       {isAssistant && (
                         <div className="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em]">
                           <button

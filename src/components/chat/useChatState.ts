@@ -1,13 +1,25 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { Citation, PerazziAssistantResponse } from "@/types/perazzi-assistant";
+import type {
+  Citation,
+  PerazziAssistantResponse,
+  Archetype,
+  ArchetypeBreakdown,
+  ArchetypeVector,
+} from "@/types/perazzi-assistant";
 
 export type ChatEntry = {
   id: string;
   role: "system" | "assistant" | "user";
   content: string;
   similarity?: number;
+  /** Mode used by the assistant when generating this message (if any). */
+  mode?: string | null;
+  /** Primary archetype used for voice/tone on this message (if any). */
+  archetype?: Archetype | null;
+  /** Full archetype breakdown vector for this message (if any). */
+  archetypeBreakdown?: ArchetypeBreakdown;
 };
 
 export type ChatContextShape = {
@@ -16,6 +28,10 @@ export type ChatContextShape = {
   platformSlug?: string;
   mode?: string;
   locale?: string;
+  /** Sticky archetype hint from the last response. */
+  archetype?: Archetype | null;
+  /** Previous archetype vector from the last response, used for smoothing across turns. */
+  archetypeVector?: ArchetypeVector | null;
 };
 
 export type AssistantResponseMeta = {
@@ -25,6 +41,9 @@ export type AssistantResponseMeta = {
   intents?: string[];
   topics?: string[];
   templates?: string[];
+  mode?: PerazziAssistantResponse["mode"];
+  archetype?: PerazziAssistantResponse["archetype"];
+  archetypeBreakdown?: PerazziAssistantResponse["archetypeBreakdown"];
 };
 
 export type UseChatStateOptions = {
@@ -117,12 +136,21 @@ export function useChatState(
     setIsTyping(true);
     setError(null);
     try {
+      const resetRegex = /^please\s+clear\s+your\s+memory\s+of\s+my\s+archetype\.?$/i;
+      const isArchetypeReset = resetRegex.test(payload.question.trim());
+
       const effectiveContext: ChatContextShape = {
         pageUrl: payload.context?.pageUrl ?? context.pageUrl,
         locale: payload.context?.locale ?? context.locale,
         modelSlug: payload.context?.modelSlug ?? context.modelSlug,
         platformSlug: payload.context?.platformSlug ?? context.platformSlug,
         mode: payload.context?.mode ?? context.mode,
+        archetype: isArchetypeReset
+          ? null
+          : payload.context?.archetype ?? context.archetype ?? null,
+        archetypeVector: isArchetypeReset
+          ? null
+          : payload.context?.archetypeVector ?? context.archetypeVector ?? null,
       };
 
       setContext(effectiveContext);
@@ -152,14 +180,23 @@ export function useChatState(
         }
         throw new ConciergeRequestError(message, res.status);
       }
-      const data = await res.json();
+      const data: PerazziAssistantResponse = await res.json();
       const assistantEntry: ChatEntry = {
         id: crypto.randomUUID(),
         role: "assistant",
         content: data.answer,
         similarity: data.similarity,
+        mode: data.mode ?? null,
+        archetype: data.archetype ?? null,
+        archetypeBreakdown: data.archetypeBreakdown,
       };
       addMessage(assistantEntry);
+      setContext((prev) => ({
+        ...prev,
+        archetype: data.archetype ?? prev.archetype ?? null,
+        archetypeVector:
+          data.archetypeBreakdown?.vector ?? prev.archetypeVector ?? null,
+      }));
       options.onResponseMeta?.({
         citations: data.citations,
         guardrail: data.guardrail,
@@ -167,6 +204,9 @@ export function useChatState(
         intents: data.intents,
         topics: data.topics,
         templates: data.templates,
+        mode: data.mode,
+        archetype: data.archetype,
+        archetypeBreakdown: data.archetypeBreakdown,
       });
     } catch (err) {
       console.error(err);

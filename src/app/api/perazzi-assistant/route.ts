@@ -7,12 +7,21 @@ import type {
   PerazziAssistantRequest,
   PerazziAssistantResponse,
   RetrievedChunk,
+  Archetype,
+  PerazziMode,
+  ArchetypeVector,
 } from "@/types/perazzi-assistant";
 import {
   retrievePerazziContext,
   OpenAIConnectionError,
   isConnectionError,
 } from "@/lib/perazzi-retrieval";
+import {
+  computeArchetypeBreakdown,
+  type ArchetypeContext,
+  getModeArchetypeBridgeGuidance,
+  getNeutralArchetypeVector,
+} from "@/lib/perazzi-archetypes";
 import { detectRetrievalHints, buildResponseTemplates } from "@/lib/perazzi-intents";
 import type { RetrievalHints } from "@/lib/perazzi-intents";
 
@@ -26,7 +35,88 @@ const BLOCKED_RESPONSES: Record<string, string> = {
     "Technical modifications and repairs must be handled by authorized Perazzi experts. Let me connect you with the right service channel.",
   legal:
     "Perazzi can’t provide legal guidance. Please consult local authorities or qualified professionals for this topic.",
+  system_meta:
+    "There is internal guidance and infrastructure behind how I work, but that’s not something I can open up or walk through in detail. My job is to reflect how Perazzi thinks about its guns and owners, not to expose internal systems. Let’s bring this back to your shooting, your gun, or the decisions you’re trying to make, and I’ll stay with you there.",
 };
+
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 10; // 10 requests per IP per minute
+const MAX_INPUT_CHARS = 16000; // max total user message characters per latest user message
+
+type RateRecord = {
+  count: number;
+  windowStart: number;
+};
+
+const ipRateLimit = new Map<string, RateRecord>();
+
+function getClientIp(req: Request): string {
+  const xff = req.headers.get("x-forwarded-for");
+  if (xff) {
+    const [first] = xff.split(",");
+    if (first) return first.trim();
+  }
+  // Some runtimes attach `ip` to the request; fall back to a generic value if not present.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (req as any).ip ?? "unknown";
+}
+
+function checkRateLimit(req: Request): { ok: boolean; retryAfterMs?: number } {
+  const ip = getClientIp(req);
+  const now = Date.now();
+
+  const record = ipRateLimit.get(ip) ?? { count: 0, windowStart: now };
+
+  // Reset the window if it has expired.
+  if (now - record.windowStart > RATE_LIMIT_WINDOW_MS) {
+    record.count = 0;
+    record.windowStart = now;
+  }
+
+  record.count += 1;
+  ipRateLimit.set(ip, record);
+
+  if (record.count > RATE_LIMIT_MAX_REQUESTS) {
+    const retryAfterMs = RATE_LIMIT_WINDOW_MS - (now - record.windowStart);
+    return { ok: false, retryAfterMs };
+  }
+
+  return { ok: true };
+}
+
+const IS_DEV = process.env.NODE_ENV === "development";
+
+const allowedOriginHosts = (() => {
+  const hosts = new Set<string>(["localhost:3000", "127.0.0.1:3000"]);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (siteUrl) {
+    try {
+      hosts.add(new URL(siteUrl).host);
+    } catch {
+      // ignore invalid URL
+    }
+  }
+  return hosts;
+})();
+
+function isOriginAllowed(req: Request): { ok: boolean; originHost?: string } {
+  if (IS_DEV) {
+    // In development (including dev tunnels), allow all origins so preview links work.
+    return { ok: true };
+  }
+  const origin = req.headers.get("origin") ?? req.headers.get("referer");
+  if (!origin) {
+    // Likely server-side or same-origin without explicit headers; allow.
+    return { ok: true };
+  }
+  try {
+    const host = new URL(origin).host;
+    if (allowedOriginHosts.has(host)) return { ok: true };
+    return { ok: false, originHost: host };
+  } catch {
+    return { ok: false, originHost: origin };
+  }
+}
 
 const OPENAI_MODEL = process.env.PERAZZI_COMPLETIONS_MODEL ?? "gpt-4.1";
 const MAX_COMPLETION_TOKENS = Number(process.env.PERAZZI_MAX_COMPLETION_TOKENS ?? 3000);
@@ -98,13 +188,13 @@ function getLowConfidenceThreshold() {
   return Number.isFinite(value) ? value : 0;
 }
 
-const ALLOWED_ARCHETYPES = ["loyalist", "prestige", "analyst", "achiever", "legacy"] as const;
-type Archetype = (typeof ALLOWED_ARCHETYPES)[number];
-
-type PerazziAssistantResponseV2 = PerazziAssistantResponse & {
-  mode?: string;
-  archetype?: Archetype | null;
-};
+const ALLOWED_ARCHETYPES: Archetype[] = [
+  "loyalist",
+  "prestige",
+  "analyst",
+  "achiever",
+  "legacy",
+];
 
 function normalizeArchetype(input: string): Archetype | null {
   const cleaned = input.trim().toLowerCase();
@@ -126,12 +216,78 @@ function detectArchetypeOverridePhrase(latestUserContent: string | null): Archet
   return normalizeArchetype(m[1]);
 }
 
+/**
+ * Dev-only reset phrase:
+ * "Please clear your memory of my archetype."
+ */
+function detectArchetypeResetPhrase(latestUserContent: string | null): boolean {
+  if (!latestUserContent) return false;
+  const text = latestUserContent.trim();
+  const regex = /^please\s+clear\s+your\s+memory\s+of\s+my\s+archetype\.?$/i;
+  return regex.test(text);
+}
+
+/**
+ * Soft-meta origin question:
+ * e.g. "Who built you?", "Who designed you?", "Who created this assistant?"
+ */
+function detectAssistantOriginQuestion(latestUserContent: string | null): boolean {
+  if (!latestUserContent) return false;
+  const text = latestUserContent.toLowerCase().trim();
+
+  // Simple patterns for origin questions.
+  if (
+    text.includes("who built you") ||
+    text.includes("who created you") ||
+    text.includes("who designed you") ||
+    text.includes("who made you") ||
+    text.includes("who is the owner/designer of the assistant") ||
+    text.includes("who is the owner of this assistant") ||
+    text.includes("who designed this assistant") ||
+    text.includes("who built this assistant")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 function capitalize(input: string): string {
   if (!input) return input;
   return input.charAt(0).toUpperCase() + input.slice(1);
 }
 
 export async function POST(request: Request) {
+  // --- Rate limiting and CORS/origin guard ---
+  const rate = checkRateLimit(request);
+  if (!rate.ok) {
+    const retryAfterSeconds = Math.ceil(
+      (rate.retryAfterMs ?? RATE_LIMIT_WINDOW_MS) / 1000,
+    );
+    return NextResponse.json(
+      {
+        error: "Too many requests. Please slow down.",
+        retryAfterSeconds,
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(retryAfterSeconds),
+        },
+      },
+    );
+  }
+
+  const originCheck = isOriginAllowed(request);
+  if (!originCheck.ok) {
+    return NextResponse.json(
+      {
+        error: "Requests from this origin are not allowed.",
+      },
+      { status: 403 },
+    );
+  }
+  // -------------------------------------------
   try {
     const body = (await request.json()) as Partial<PerazziAssistantRequest>;
     const validationError = validateRequest(body);
@@ -139,18 +295,132 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
+    // --- Input length guard ---
+    const messages = body!.messages!;
+    const totalUserChars = messages
+      .filter((msg) => msg.role === "user" && typeof msg.content === "string")
+      .reduce((sum, msg) => sum + (msg.content?.length ?? 0), 0);
+
+    if (totalUserChars > MAX_INPUT_CHARS) {
+      return NextResponse.json(
+        {
+          error: "Message too long. Please shorten your question.",
+          maxLength: MAX_INPUT_CHARS,
+        },
+        { status: 413 },
+      );
+    }
+    // -------------------------
+
     const sanitizedMessages = sanitizeMessages(body!.messages!);
     const latestQuestion = getLatestUserContent(sanitizedMessages);
     const hints = detectRetrievalHints(latestQuestion, body?.context);
 
+    const effectiveMode: PerazziMode =
+      ((hints as any)?.mode ?? body?.context?.mode ?? "prospect") as PerazziMode;
+
+    // Soft-meta origin handler: answer who built/designed the assistant, without exposing internals.
+    if (detectAssistantOriginQuestion(latestQuestion)) {
+      const neutralVector = getNeutralArchetypeVector();
+      const archetypeBreakdown = {
+        primary: null,
+        vector: neutralVector,
+        reasoning:
+          "Archetype profile not used: assistant-origin meta question handled via fixed, brand-aligned narrative.",
+        signalsUsed: ["meta:assistant_origin"],
+      };
+
+      const answer = [
+        "I was designed by David Radulovich, one of Perazzi’s professional shooters, in collaboration with Perazzi USA.",
+        "",
+        "The idea is the same as with a bespoke Perazzi gun: it grows out of a conversation between the craftsmen who build it and the shooter who will live with it. David brought the perspective of the competitor and coach; Perazzi brought the heritage, craft, and standards.",
+        "",
+        "My job is to express that shared point of view in conversation and help you make good decisions about your gun and your journey with Perazzi. The important part is not my internal wiring, but that everything I say reflects how Perazzi thinks about its guns and its owners.",
+      ].join("\n");
+
+      logInteraction(
+        body as PerazziAssistantRequest,
+        [],
+        0,
+        "ok",
+        undefined,
+        hints,
+        [],
+      );
+
+      return NextResponse.json<PerazziAssistantResponse>({
+        answer,
+        guardrail: { status: "ok", reason: null },
+        citations: [],
+        intents: hints.intents,
+        topics: hints.topics,
+        templates: [],
+        similarity: 0,
+        mode: effectiveMode,
+        archetype: null,
+        archetypeBreakdown,
+      });
+    }
+
+    const resetRequested = detectArchetypeResetPhrase(latestQuestion);
+
+    if (resetRequested) {
+      const neutralVector = getNeutralArchetypeVector();
+      const archetypeBreakdown = {
+        primary: null,
+        vector: neutralVector,
+        reasoning:
+          'Archetype profile reset to neutral via dev reset phrase: "Please clear your memory of my archetype."',
+        signalsUsed: ["reset:neutral"],
+      };
+
+      const answer =
+        "Understood. I’ve cleared your archetype profile and will treat you neutrally again from here.";
+
+      logInteraction(
+        body as PerazziAssistantRequest,
+        [],
+        0,
+        "ok",
+        undefined,
+        hints,
+        [],
+      );
+
+      return NextResponse.json<PerazziAssistantResponse>({
+        answer,
+        guardrail: { status: "ok", reason: null },
+        citations: [],
+        intents: hints.intents,
+        topics: hints.topics,
+        templates: [],
+        similarity: 0,
+        mode: effectiveMode,
+        archetype: null,
+        archetypeBreakdown,
+      });
+    }
+
     // Dev feature: manual archetype override via phrase
     const archetypeOverride = detectArchetypeOverridePhrase(latestQuestion);
-    const effectiveMode =
-      (hints as any)?.mode ?? body?.context?.mode ?? "prospect";
-    const effectiveArchetype: Archetype | null =
-      archetypeOverride ??
-      ((body?.context as any)?.archetype as Archetype | null) ??
-      null;
+
+    const previousVector: ArchetypeVector | null =
+      (body?.context?.archetypeVector as ArchetypeVector | null | undefined) ?? null;
+
+    const archetypeContext: ArchetypeContext = {
+      mode: effectiveMode,
+      pageUrl: body?.context?.pageUrl ?? null,
+      modelSlug: body?.context?.modelSlug ?? null,
+      platformSlug: body?.context?.platformSlug ?? null,
+      userMessage: latestQuestion ?? "",
+      devOverrideArchetype: archetypeOverride,
+    };
+
+    const archetypeBreakdown = computeArchetypeBreakdown(
+      archetypeContext,
+      previousVector,
+    );
+    const effectiveArchetype = archetypeBreakdown.primary;
 
     if (archetypeOverride) {
       const answer = `Understood. I’ll answer from the perspective of a ${capitalize(
@@ -165,7 +435,7 @@ export async function POST(request: Request) {
         hints,
         [],
       );
-      return NextResponse.json<PerazziAssistantResponseV2>({
+      return NextResponse.json<PerazziAssistantResponse>({
         answer,
         guardrail: { status: "ok", reason: null },
         citations: [],
@@ -173,9 +443,9 @@ export async function POST(request: Request) {
         topics: hints.topics,
         templates: [],
         similarity: 0,
-        // v2 additions
         mode: effectiveMode,
-        archetype: archetypeOverride,
+        archetype: effectiveArchetype,
+        archetypeBreakdown,
       });
     }
 
@@ -189,7 +459,7 @@ export async function POST(request: Request) {
         guardrailBlock.reason,
         hints,
       );
-      return NextResponse.json<PerazziAssistantResponseV2>({
+      return NextResponse.json<PerazziAssistantResponse>({
         answer: guardrailBlock.message,
         guardrail: { status: "blocked", reason: guardrailBlock.reason },
         citations: [],
@@ -199,6 +469,7 @@ export async function POST(request: Request) {
         similarity: 0,
         mode: effectiveMode,
         archetype: effectiveArchetype,
+        archetypeBreakdown,
       });
     }
 
@@ -214,7 +485,7 @@ export async function POST(request: Request) {
         hints,
         responseTemplates,
       );
-      return NextResponse.json<PerazziAssistantResponseV2>({
+      return NextResponse.json<PerazziAssistantResponse>({
         answer: LOW_CONFIDENCE_MESSAGE,
         guardrail: { status: "low_confidence", reason: "retrieval_low" },
         citations: [],
@@ -224,6 +495,7 @@ export async function POST(request: Request) {
         similarity: retrieval.maxScore,
         mode: effectiveMode,
         archetype: effectiveArchetype,
+        archetypeBreakdown,
       });
     }
 
@@ -232,6 +504,8 @@ export async function POST(request: Request) {
       body?.context,
       retrieval.chunks,
       responseTemplates,
+      effectiveMode,
+      effectiveArchetype,
     );
 
     logInteraction(
@@ -243,7 +517,7 @@ export async function POST(request: Request) {
       hints,
       responseTemplates,
     );
-    return NextResponse.json<PerazziAssistantResponseV2>({
+    return NextResponse.json<PerazziAssistantResponse>({
       answer,
       citations: retrieval.chunks.map(mapChunkToCitation),
       guardrail: { status: "ok", reason: null },
@@ -253,6 +527,7 @@ export async function POST(request: Request) {
       similarity: retrieval.maxScore,
       mode: effectiveMode,
       archetype: effectiveArchetype,
+      archetypeBreakdown,
     });
   } catch (error) {
     console.error("Perazzi assistant error", error);
@@ -291,6 +566,25 @@ export function sanitizeMessages(messages: ChatMessage[]): ChatMessage[] {
 
 export function detectBlockedIntent(messages: ChatMessage[]) {
   const latestUser = getLatestUserContent(messages)?.toLowerCase() ?? "";
+
+  // System internals / implementation meta (do not expose internal docs, prompt assembly, or architecture).
+  if (
+    /\binternal (doc|docs|document|documents|file|files)\b/.test(latestUser) ||
+    /\bsystem[- ]manifest\b/.test(latestUser) ||
+    /\bassistant[- ]spec\b/.test(latestUser) ||
+    /\bprompt (assembly|construction|structure)\b/.test(latestUser) ||
+    /\brag (stack|pipeline|retrieval)\b/.test(latestUser) ||
+    /\bvector db\b/.test(latestUser) ||
+    /\bpgvector\b/.test(latestUser) ||
+    /\bknowledge base\b/.test(latestUser) ||
+    /\bembeddings?\b/.test(latestUser) ||
+    /\bmodel architecture\b/.test(latestUser) ||
+    /v2_redo_/i.test(latestUser) ||
+    /show me (an )?excerpt of\b/.test(latestUser)
+  ) {
+    return { reason: "system_meta", message: BLOCKED_RESPONSES.system_meta };
+  }
+
   if (/\b(price|pricing|cost|cheap|affordable)\b/.test(latestUser)) {
     return { reason: "pricing", message: BLOCKED_RESPONSES.pricing };
   }
@@ -317,8 +611,10 @@ async function generateAssistantAnswer(
   context: PerazziAssistantRequest["context"],
   chunks: RetrievedChunk[],
   templates: string[],
+  mode: string | null,
+  archetype: Archetype | null,
 ): Promise<string> {
-  const systemPrompt = buildSystemPrompt(context, chunks, templates);
+  const systemPrompt = buildSystemPrompt(context, chunks, templates, mode, archetype);
   const toneNudge =
     "Stay in the Perazzi concierge voice: quiet, reverent, concise, no slang, and avoid pricing or legal guidance. Keep responses focused on Perazzi heritage, platforms, service, and fittings.";
   const finalMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
@@ -349,6 +645,8 @@ export function buildSystemPrompt(
   context: PerazziAssistantRequest["context"],
   chunks: RetrievedChunk[],
   templates: string[] = [],
+  mode?: string | null,
+  archetype?: Archetype | null,
 ): string {
   const docSnippets = chunks
     .map(
@@ -357,7 +655,7 @@ export function buildSystemPrompt(
     )
     .join("\n\n");
   const contextSummary = [
-    context?.mode ? `Mode: ${context.mode}` : null,
+    mode ? `Mode: ${mode}` : context?.mode ? `Mode: ${context.mode}` : null,
     context?.modelSlug ? `Model: ${context.modelSlug}` : null,
     context?.pageUrl ? `Page URL: ${context.pageUrl}` : null,
   ]
@@ -370,6 +668,54 @@ export function buildSystemPrompt(
         .join("\n")}\n`
     : "";
 
+  const archetypeToneGuidance: Record<Archetype, string> = {
+    loyalist:
+      "Emphasize long-term ownership, trust, and the experience of living with the same gun over many seasons. Acknowledge emotional attachment and stability, but keep facts and safety unchanged.",
+    prestige:
+      "Emphasize craftsmanship, materials, aesthetics, engraving, and the ritual of ownership. Talk about how the gun presents itself and what it says about the owner, without exaggerating performance claims.",
+    analyst:
+      "Be especially clear about mechanics, specifications, tradeoffs, and the reasons behind any recommendation. Use structured explanations, concrete examples, and comparisons between platforms.",
+    achiever:
+      "Tie explanations to performance, consistency, and competition outcomes. Show how choices support training, match performance, and long days on demanding courses, without over-promising results.",
+    legacy:
+      "Frame decisions in terms of history, continuity, and what the gun will mean over time. Acknowledge heritage, passing the gun down, and preserving its story, while keeping technical details accurate and grounded.",
+  };
+
+  const archetypeGuidanceBlock = (() => {
+    if (!archetype) {
+      return `Archetype profile: none detected.\n\nTreat the user as a balanced mix of Loyalist, Prestige, Analyst, Achiever, and Legacy. Do not assume strong preferences; focus on clarity and neutrality of tone.`;
+    }
+    const prettyName = capitalize(archetype);
+    const extra = archetypeToneGuidance[archetype] ?? "";
+    return [
+      `Archetype profile for this user:`,
+      `- Primary archetype: ${prettyName} (${archetype})`,
+      "",
+      "Use this profile only to adjust tone, analogies, and which details you emphasize.",
+      "Do not change any facts, technical recommendations, safety behavior, or brand guardrails.",
+      extra ? "" : undefined,
+      extra ? `Additional tone guidance for this archetype: ${extra}` : undefined,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  })();
+
+  // --- Bridge guidance and relatability block additions ---
+  const bridgeGuidance = getModeArchetypeBridgeGuidance(
+    (mode as PerazziMode | null | undefined) ?? (context?.mode as PerazziMode | null | undefined),
+    archetype ?? null,
+  );
+
+  const relatabilityBlock = `
+Relatability and reframing guidelines:
+
+- Begin by briefly reflecting the user's concern or goal in their own terms (1–2 sentences).
+- Then reinterpret that concern through Perazzi's core pillars: long-term partnership with a fitted instrument, meticulous craftsmanship, and serious competition use.
+- Close with one concrete next step that keeps the relationship between the shooter and their gun at the center of the decision.
+- Keep empathy explicit, but do not mirror slang or hype; stay in the Perazzi voice described above.
+`.trim();
+  // -------------------------------------------------------
+
   return `${PHASE_ONE_SPEC}
 
 ${STYLE_EXEMPLARS}
@@ -379,7 +725,13 @@ Context: ${contextSummary || "General Perazzi concierge inquiry"}
 Use the following retrieved references when relevant:
 ${docSnippets || "(No additional references available for this request.)"}
 
-${templateGuidance}When composing responses:
+${templateGuidance}${
+  archetypeGuidanceBlock ? `\n${archetypeGuidanceBlock}\n` : ""
+}${
+  bridgeGuidance ? `\n${bridgeGuidance}\n` : ""
+}${
+  relatabilityBlock ? `\n${relatabilityBlock}\n` : ""
+}When composing responses:
 - Write in polished Markdown with short paragraphs separated by blank lines.
 - Use bold subheadings or bullet lists when outlining model comparisons, steps, or care tips.
 - Keep sentences concise and avoid filler; every line should feel written from the Perazzi workshop floor.

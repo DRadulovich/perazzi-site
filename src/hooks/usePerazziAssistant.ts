@@ -5,15 +5,24 @@ import {
   type UseChatStateOptions,
   useChatState,
 } from "@/components/chat/useChatState";
+import type {
+  PerazziMode,
+  Archetype,
+  ArchetypeVector,
+} from "@/types/perazzi-assistant";
 
 export type PlatformSlug = "mx" | "ht" | "tm" | "dc" | "sho";
 
 export type AssistantContext = {
   pageUrl?: string;
-  mode?: "prospect" | "owner" | "navigation" | "heritage";
+  mode?: PerazziMode | "heritage";
   platformSlug?: PlatformSlug;
   modelSlug?: string;
   locale?: string;
+  /** Sticky archetype hint from the last response. */
+  archetype?: Archetype | null;
+  /** Previous archetype vector from the last response, used for smoothing. */
+  archetypeVector?: ArchetypeVector | null;
 };
 
 export type UsePerazziAssistantOptions = {

@@ -1,0 +1,466 @@
+import {
+  Archetype,
+  ArchetypeBreakdown,
+  ArchetypeVector,
+  PerazziMode,
+} from "@/types/perazzi-assistant";
+
+export interface ArchetypeContext {
+  mode?: PerazziMode | null;
+  pageUrl?: string | null;
+  modelSlug?: string | null;
+  platformSlug?: string | null;
+  /** Latest user message content. */
+  userMessage: string;
+  /** If present, this wins over inferred primary archetype. */
+  devOverrideArchetype?: Archetype | null;
+}
+
+export const NEUTRAL_ARCHETYPE_VECTOR: ArchetypeVector = {
+  loyalist: 0.2,
+  prestige: 0.2,
+  analyst: 0.2,
+  achiever: 0.2,
+  legacy: 0.2,
+};
+
+const DEFAULT_SMOOTHING = 0.75; // 75% previous, 25% new per message
+
+export function getNeutralArchetypeVector(): ArchetypeVector {
+  return { ...NEUTRAL_ARCHETYPE_VECTOR };
+}
+
+export function normalizeArchetypeVector(vec: ArchetypeVector): ArchetypeVector {
+  const sum =
+    Object.values(vec).reduce((acc, value) => acc + (value || 0), 0) || 1;
+
+  const normalized: ArchetypeVector = { ...vec };
+  (Object.keys(vec) as Archetype[]).forEach((key) => {
+    normalized[key] = (vec[key] || 0) / sum;
+  });
+
+  return normalized;
+}
+
+export function smoothUpdateArchetypeVector(
+  previous: ArchetypeVector,
+  delta: ArchetypeVector,
+  smoothingFactor: number = DEFAULT_SMOOTHING
+): ArchetypeVector {
+  const updated: ArchetypeVector = { ...previous };
+
+  (Object.keys(previous) as Archetype[]).forEach((key) => {
+    const base = previous[key] || 0;
+    const adjustment = delta[key] || 0;
+    const raw = base + adjustment;
+
+    // Blend previous and new so we avoid whiplash in the profile.
+    updated[key] = smoothingFactor * base + (1 - smoothingFactor) * raw;
+  });
+
+  return normalizeArchetypeVector(updated);
+}
+
+export function pickPrimaryArchetype(
+  vec: ArchetypeVector
+): Archetype | null {
+  let best: Archetype | null = null;
+  let bestScore = 0;
+
+  (Object.keys(vec) as Archetype[]).forEach((key) => {
+    const score = vec[key] || 0;
+    if (score > bestScore) {
+      bestScore = score;
+      best = key;
+    }
+  });
+
+  return best;
+}
+
+function messageIncludesAny(text: string, words: string[]): boolean {
+  const lower = text.toLowerCase();
+  return words.some((word) => lower.includes(word.toLowerCase()));
+}
+
+function initZeroVector(): ArchetypeVector {
+  return {
+    loyalist: 0,
+    prestige: 0,
+    analyst: 0,
+    achiever: 0,
+    legacy: 0,
+  };
+}
+
+function applyModeSignals(
+  ctx: ArchetypeContext,
+  delta: ArchetypeVector,
+  signals: string[]
+) {
+  if (!ctx.mode) return;
+
+  switch (ctx.mode) {
+    case "prospect": {
+      delta.prestige += 0.3;
+      delta.analyst += 0.2;
+      delta.achiever += 0.1;
+      signals.push("mode:prospect");
+      break;
+    }
+    case "owner": {
+      delta.loyalist += 0.25;
+      delta.legacy += 0.2;
+      delta.analyst += 0.15;
+      signals.push("mode:owner");
+      break;
+    }
+    case "navigation": {
+      delta.analyst += 0.2;
+      signals.push("mode:navigation");
+      break;
+    }
+  }
+}
+
+function applyPageUrlSignals(
+  ctx: ArchetypeContext,
+  delta: ArchetypeVector,
+  signals: string[]
+) {
+  const url = ctx.pageUrl?.toLowerCase() || "";
+
+  if (!url) return;
+
+  if (url.includes("heritage") || url.includes("history")) {
+    delta.legacy += 0.3;
+    delta.loyalist += 0.2;
+    signals.push("page:heritage");
+  }
+
+  if (
+    url.includes("bespoke") ||
+    url.includes("custom") ||
+    url.includes("gallery")
+  ) {
+    delta.prestige += 0.3;
+    signals.push("page:bespoke");
+  }
+
+  if (
+    url.includes("shotguns") ||
+    url.includes("platform") ||
+    url.includes("technical") ||
+    url.includes("spec")
+  ) {
+    delta.analyst += 0.25;
+    signals.push("page:technical");
+  }
+
+  if (
+    url.includes("competition") ||
+    url.includes("events") ||
+    url.includes("athletes")
+  ) {
+    delta.achiever += 0.25;
+    signals.push("page:competition");
+  }
+}
+
+function applyModelSignals(
+  ctx: ArchetypeContext,
+  delta: ArchetypeVector,
+  signals: string[]
+) {
+  const modelSlug = ctx.modelSlug?.toLowerCase() || "";
+
+  if (!modelSlug) return;
+
+  // Very rough, heuristic mapping for now. This can be refined from real data later.
+  if (modelSlug.includes("sco") || modelSlug.includes("extra")) {
+    delta.prestige += 0.35;
+    signals.push("model:high-grade");
+  }
+
+  if (
+    modelSlug.includes("mx8") ||
+    modelSlug.includes("mx2000") ||
+    modelSlug.includes("high-tech") ||
+    modelSlug.includes("ht")
+  ) {
+    delta.achiever += 0.25;
+    delta.analyst += 0.15;
+    signals.push("model:competition-workhorse");
+  }
+
+  if (
+    modelSlug.includes("tm1") ||
+    modelSlug.includes("db81") ||
+    modelSlug.includes("mx3")
+  ) {
+    delta.legacy += 0.3;
+    signals.push("model:vintage-heritage");
+  }
+}
+
+function applyLanguageSignals(
+  ctx: ArchetypeContext,
+  delta: ArchetypeVector,
+  signals: string[]
+) {
+  const message = ctx.userMessage.toLowerCase();
+
+  if (!message) return;
+
+  // Prestige: aesthetics, luxury, status, craftsmanship.
+  if (
+    messageIncludesAny(message, [
+      "beautiful",
+      "engraving",
+      "engravings",
+      "wood",
+      "stock figure",
+      "aesthetic",
+      "aesthetics",
+      "finish",
+      "luxury",
+      "luxurious",
+      "bespoke",
+      "artisanal",
+      "craftsmanship",
+      "upgrade",
+      "presentation",
+    ])
+  ) {
+    delta.prestige += 0.4;
+    signals.push("language:prestige");
+  }
+
+  // Achiever: performance, scores, competition focus.
+  if (
+    messageIncludesAny(message, [
+      "score",
+      "scores",
+      "winning",
+      "nationals",
+      "world championship",
+      "competition",
+      "high score",
+      "performance",
+      "consistency",
+      "more consistent",
+      "tournament",
+      "major event",
+    ])
+  ) {
+    delta.achiever += 0.4;
+    signals.push("language:achiever");
+  }
+
+  // Analyst: specs, mechanics, comparison, technical language.
+  if (
+    messageIncludesAny(message, [
+      "point of impact",
+      "poi",
+      "trigger weight",
+      "rib height",
+      "barrel convergence",
+      "pattern",
+      "patterning",
+      "choke",
+      "chokes",
+      "length of pull",
+      "lop",
+      "drop at comb",
+      "drop at heel",
+      "cast",
+      "toe",
+      "pitch",
+      "balance",
+      "weight distribution",
+      "spec",
+      "specs",
+      "compare",
+      "comparison",
+    ])
+  ) {
+    delta.analyst += 0.45;
+    signals.push("language:analyst");
+  }
+
+  // Loyalist: emotional bond with brand/gun, long-term ownership.
+  if (
+    messageIncludesAny(message, [
+      "i've always",
+      "i have always",
+      "had this gun",
+      "my perazzi for",
+      "for years",
+      "for decades",
+      "love this gun",
+      "favorite gun",
+      "my dad's perazzi",
+      "my fathers perazzi",
+      "loyal",
+      "loyalty",
+    ])
+  ) {
+    delta.loyalist += 0.4;
+    signals.push("language:loyalist");
+  }
+
+  // Legacy: heirloom, passing down, multi-generational story.
+  if (
+    messageIncludesAny(message, [
+      "heirloom",
+      "pass it down",
+      "passing it down",
+      "my kids",
+      "my children",
+      "next generation",
+      "keep it original",
+      "preserve",
+      "preserving",
+      "history of this gun",
+      "family gun",
+    ])
+  ) {
+    delta.legacy += 0.4;
+    signals.push("language:legacy");
+  }
+
+  // General signal for long, structured questions -> slight analyst bias.
+  const wordCount = message.split(/\s+/).filter(Boolean).length;
+  if (wordCount > 40) {
+    delta.analyst += 0.1;
+    signals.push("language:long-form-analytic");
+  }
+}
+
+export function computeArchetypeBreakdown(
+  ctx: ArchetypeContext,
+  previousVector?: ArchetypeVector | null
+): ArchetypeBreakdown {
+  const startingVector = previousVector
+    ? { ...previousVector }
+    : getNeutralArchetypeVector();
+
+  const delta = initZeroVector();
+  const signalsUsed: string[] = [];
+  const reasoningParts: string[] = [];
+
+  applyModeSignals(ctx, delta, signalsUsed);
+  applyPageUrlSignals(ctx, delta, signalsUsed);
+  applyModelSignals(ctx, delta, signalsUsed);
+  applyLanguageSignals(ctx, delta, signalsUsed);
+
+  let updatedVector = smoothUpdateArchetypeVector(startingVector, delta);
+
+  let primary = pickPrimaryArchetype(updatedVector);
+
+  // Dev override wins and intentionally dominates the vector.
+  if (ctx.devOverrideArchetype) {
+    const override = ctx.devOverrideArchetype;
+
+    const overridden: ArchetypeVector = initZeroVector();
+    const dominantWeight = 0.7;
+    const remainder = 0.3;
+    const others = (Object.keys(overridden) as Archetype[]).filter(
+      (key) => key !== override
+    );
+
+    overridden[override] = dominantWeight;
+    const share = remainder / others.length;
+    others.forEach((key) => {
+      overridden[key] = share;
+    });
+
+    updatedVector = normalizeArchetypeVector(overridden);
+    primary = override;
+    signalsUsed.push(`override:${override}`);
+    reasoningParts.push(
+      `Archetype manually overridden to "${override}" via dev override phrase.`
+    );
+  }
+
+  if (!ctx.devOverrideArchetype) {
+    reasoningParts.push(
+      "Archetype inferred from mode, page context, model slug, and language heuristics."
+    );
+  }
+
+  return {
+    primary,
+    vector: updatedVector,
+    reasoning: reasoningParts.join(" "),
+    signalsUsed,
+  };
+}
+
+export type ModeArchetypeKey = `${PerazziMode}:${Archetype}`;
+
+const MODE_ARCHETYPE_BRIDGE: Partial<Record<ModeArchetypeKey, string>> = {
+  "prospect:analyst": `
+When a new prospective buyer has an Analyst profile:
+- Start by briefly reflecting their technical curiosity (POI, balance, platform logic).
+- Connect that curiosity to Perazzi's obsession with repeatable mechanics, serviceability, and long-term fitting.
+- Gently reframe decisions from "Which spec is best today?" to "Which spec best supports decades of growth with one instrument?".
+`,
+  "prospect:achiever": `
+When a new prospective buyer has an Achiever profile:
+- Acknowledge their drive for scores, consistency, and performing well at majors.
+- Connect that drive to Perazzi's view of a gun as a long-term performance partner, not a quick advantage.
+- Emphasize how stability, serviceability, and fitting protect performance over full seasons, not just a single event.
+`,
+  "prospect:prestige": `
+When a new prospective buyer has a Prestige profile:
+- Recognize that aesthetics, presentation, and how the gun "speaks" on the stand matter to them.
+- Connect that sensitivity to Perazzi's craftsmanship: wood, engraving, metalwork, and balance as a single artistic decision.
+- Reframe the decision as choosing an instrument they can grow into and carry with confidence for years, not just something that looks impressive now.
+`,
+  "owner:analyst": `
+When an existing owner has an Analyst profile:
+- Reflect their attention to detail in how the gun behaves now (recoil, POI, patterns, balance).
+- Tie adjustments and service back to Perazzi's philosophy of maintaining one fitted instrument over time.
+- Explain tradeoffs clearly so they can see how small changes preserve the core feel of their gun while solving specific problems.
+`,
+  "owner:achiever": `
+When an existing owner has an Achiever profile:
+- Acknowledge recent performance experiences (good or bad) without overreacting.
+- Frame any changes as refinements to a long-term partnership with the same gun, not wholesale resets.
+- Emphasize that stability, familiarity, and trust in the gun are part of how champions sustain results.
+`,
+  "owner:prestige": `
+When an existing owner has a Prestige profile:
+- Recognize the emotional and aesthetic relationship they already have with their gun.
+- Discuss upgrades, refinements, or service in terms of preserving and enhancing that instrument, not replacing its character.
+- Emphasize care, restoration, and continuity so they feel their gun is becoming "more itself" over time.
+`,
+  "owner:legacy": `
+When an existing owner has a Legacy profile:
+- Acknowledge the story tied to this gun: who it came from, where it has been shot, and who it may be passed to.
+- Frame decisions around preservation, safety, and keeping the gun mechanically healthy for the next chapter.
+- Emphasize Perazzi's role as a steward of that history through proper service and documentation.
+`,
+};
+
+const DEFAULT_BRIDGE_GUIDANCE = `
+Treat the user as a balanced mix of Loyalist, Prestige, Analyst, Achiever, and Legacy.
+
+Always:
+- Briefly reflect their concern in their own terms.
+- Then reinterpret that concern through Perazzi's core pillars: long-term partnership with one fitted instrument, meticulous craftsmanship, and serious competition use.
+- Close with a concrete next step that keeps the relationship between the shooter and their gun at the center.
+`;
+
+export function getModeArchetypeBridgeGuidance(
+  mode?: PerazziMode | null,
+  archetype?: Archetype | null,
+): string {
+  if (!mode || !archetype) {
+    return DEFAULT_BRIDGE_GUIDANCE;
+  }
+
+  const key = `${mode}:${archetype}` as ModeArchetypeKey;
+  return MODE_ARCHETYPE_BRIDGE[key] ?? DEFAULT_BRIDGE_GUIDANCE;
+}

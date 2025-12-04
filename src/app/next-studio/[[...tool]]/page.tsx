@@ -7,6 +7,7 @@
  * https://github.com/sanity-io/next-sanity
  */
 
+import { notFound } from 'next/navigation'
 import { NextStudio } from 'next-sanity/studio'
 import config from '../../../../sanity.config'
 
@@ -14,7 +15,13 @@ export const dynamic = 'force-static'
 
 export { metadata, viewport } from 'next-sanity/studio'
 
+const IS_DEV = process.env.NODE_ENV === 'development'
+
 export default function StudioPage() {
+  if (!IS_DEV) {
+    // Hide Studio completely in production environments.
+    notFound()
+  }
   return (
     <div className="perazzi-studio-root">
       <NextStudio config={config} />
