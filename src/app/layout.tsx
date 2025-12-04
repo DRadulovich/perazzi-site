@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { getLocale, getMessages } from "next-intl/server";
+import { getLocale } from "next-intl/server";
 import { Geist, Geist_Mono } from "next/font/google";
-import { draftMode } from "next/headers";
-import { VisualEditing } from "next-sanity/visual-editing";
+import type { ReactNode } from "react";
 import "./globals.css";
-import Providers from "./providers";
-import { SanityLive } from "@/sanity/lib/live";
-import type { ThemeMode } from "@/components/theme/ThemeProvider";
+import { resolveInitialTheme } from "@/lib/initial-theme";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,55 +28,19 @@ export const metadata: Metadata = {
 export default async function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   const locale = await getLocale();
-  const messages = await getMessages();
   const headerList = await headers();
-  const { isEnabled: isDraftMode } = await draftMode();
-
-  const cookieTheme = getCookieValue(
-    headerList.get("cookie"),
-    "theme",
-  );
-  const headerTheme =
-    headerList.get("sec-ch-prefers-color-scheme") ??
-    headerList.get("Sec-CH-Prefers-Color-Scheme");
-
-  const initialTheme: ThemeMode = isTheme(cookieTheme)
-    ? cookieTheme
-    : isTheme(headerTheme)
-      ? headerTheme
-      : "light";
+  const initialTheme = resolveInitialTheme(headerList);
 
   return (
     <html lang={locale} data-theme={initialTheme} suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased min-h-screen bg-canvas text-ink overflow-x-hidden`}
       >
-        <Providers
-          locale={locale}
-          messages={messages}
-          initialTheme={initialTheme}
-        >
-          {children}
-          <SanityLive />
-          {isDraftMode && <VisualEditing />}
-        </Providers>
+        {children}
       </body>
     </html>
   );
-}
-
-function isTheme(value: string | undefined | null): value is ThemeMode {
-  return value === "light" || value === "dark";
-}
-
-function getCookieValue(cookieHeader: string | null, key: string) {
-  if (!cookieHeader) return undefined;
-  return cookieHeader
-    .split(";")
-    .map((part) => part.trim())
-    .map((part) => part.split("="))
-    .find(([name]) => name === key)?.[1];
 }
