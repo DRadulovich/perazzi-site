@@ -3,7 +3,7 @@
 ## Roles & Stations: Wood Finishing
 
 ## 0. Metadata
-- Source: `V2-PGPT/V2_PreBuild-Docs/V2_Making-a-Perazzi-Docs/2-I_Roles-and-Stations_Wood-Finishing.md`
+- Source: Internal Perazzi USA Document - The Making of a Perazzi Over-Under Shotgun
 - Version: v1.0 (AI-refactored)
 - Last transformed by AI: 2025-12-02
 - Intended use: AI knowledge base / RAG for the “Making a Perazzi” factory handbook  

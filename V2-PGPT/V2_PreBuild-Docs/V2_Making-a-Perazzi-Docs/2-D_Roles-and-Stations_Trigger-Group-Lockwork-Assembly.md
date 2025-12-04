@@ -3,7 +3,7 @@
 ## Roles & Stations: Trigger Group & Lockwork Assembly
 
 ## 0. Metadata
-- Source: `V2-PGPT/V2_PreBuild-Docs/V2_Making-a-Perazzi-Docs/2-D_Roles-and-Stations_Trigger-Group-Lockwork-Assembly.md`
+- Source: Internal Perazzi USA Document - The Making of a Perazzi Over-Under Shotgun
 - Version: v1.0 (AI-refactored)
 - Last transformed by AI: 2025-12-02
 - Intended use: AI knowledge base / RAG for the “Making a Perazzi” factory handbook (Part II – Roles & Stations: Trigger Group & Lockwork Assembly)

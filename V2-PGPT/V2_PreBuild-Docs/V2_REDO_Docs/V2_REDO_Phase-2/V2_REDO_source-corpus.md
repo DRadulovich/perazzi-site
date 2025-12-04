@@ -99,7 +99,8 @@ These documents define Perazzi’s identity, tone, positioning, and key marketin
 |----------------------------------------------------------------------|--------------------------|---------------------|----------|-------------------|-------------|-------|
 | V2-PGPT/V2_PreBuild-Docs/V2_Core-Brand-and-Strategy-Docs/V2_brand-bible.md        | core-brand-and-strategy  | brand-strategy      | active   | false             | full        | Canonical brand pillars, values, positioning. |
 | V2-PGPT/V2_PreBuild-Docs/V2_Core-Brand-and-Strategy-Docs/V2_brand-ethos.md        | core-brand-and-strategy  | brand-ethos         | active   | false             | full        | High-level ethos, spirit of the brand. |
-| V2-PGPT/V2_PreBuild-Docs/V2_Core-Brand-and-Strategy-Docs/V2_marketing-plan.md     | core-brand-and-strategy  | audience-definition | active   | false             | full        | Includes audience segments (Loyalist, Prestige, etc.). |
+| V2-PGPT/V2_PreBuild-Docs/V2_Core-Brand-and-Strategy-Docs/V2_audience-psychology-and-archetypes.md | core-brand-and-strategy  | audience-psychology | active   | false             | full        | Motivational archetypes and how they relate to Perazzi. |
+| V2-PGPT/V2_PreBuild-Docs/V2_Core-Brand-and-Strategy-Docs/V2_marketing-plan.md     | core-brand-and-strategy  | audience-definition | active   | false             | ignore        | Includes audience segments (Loyalist, Prestige, etc.). |
 | V2-PGPT/V2_PreBuild-Docs/V2_Core-Brand-and-Strategy-Docs/V2_writing-tone.md       | core-brand-and-strategy  | tone-guidance       | active   | false             | full        | Detailed writing style guidance; complements voice calibration doc. |
 | V2-PGPT/V2_PreBuild-Docs/V2_Core-Brand-and-Strategy-Docs/README.md (if present)   | core-brand-and-strategy  | reference           | planned  | false             | full/ignore | Optional; clarify status if used. |
 
@@ -120,7 +121,7 @@ These documents describe Perazzi’s people, places, events, and official contac
 | V2-PGPT/V2_PreBuild-Docs/V2_Company-Info-Docs/V2_consumer-warning-notice.md | company-info      | safety-notice         | active   | false             | full      | Official safety/consumer warning; must never be contradicted. |
 | V2-PGPT/V2_PreBuild-Docs/V2_Company-Info-Docs/V2_olympic-medals.json        | company-info      | achievement-record    | active   | false             | full      | Structured data for Olympic/World titles; ingest as text summaries. |
 | V2-PGPT/V2_PreBuild-Docs/V2_Company-Info-Docs/V2_recommended-service-centers.md | company-info  | service-centers       | active   | false             | full      | List of service centers; used heavily in Owner mode. |
-| V2-PGPT/V2_PreBuild-Docs/V2_Company-Info-Docs/V2_scheduled-events.md        | company-info      | events                | planned  | false             | full      | Event schedules; time-sensitive, consider refresh strategy. |
+| V2-PGPT/V2_PreBuild-Docs/V2_Company-Info-Docs/V2_scheduled-events.md        | company-info      | events                | active  | false             | full      | Event schedules; time-sensitive, consider refresh strategy. |
 
 ---
 

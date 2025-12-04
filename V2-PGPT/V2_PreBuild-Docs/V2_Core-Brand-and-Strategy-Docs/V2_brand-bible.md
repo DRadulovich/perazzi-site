@@ -1,7 +1,7 @@
 # Perazzi Brand Bible – AI Reference
 
 ## 0. Metadata
-- Source: `V2-PGPT/V2_PreBuild-Docs/V2_Core-Brand-and-Strategy-Docs/V2_brand-bible.md`
+- Source: Internal Perazzi USA Document
 - Version: v2.0 (AI-refactored)
 - Last transformed by AI: 2025-12-01
 - Intended use: AI knowledge base / RAG for PerazziGPT and related assistants.
@@ -46,7 +46,7 @@ The document prioritizes **factual completeness, structural clarity, and canonic
 
 - **The Champions Network (TCN)**  
   - Canonical name: **The Champions Network**.  
-  - Aliases: **TCN**, **Perazzi Champions Network** (contextual).  
+  - Aliases: **TCN**. 
   - Description: Storytelling and content ecosystem focused on champions and aspirants using Perazzi shotguns. Used as a narrative and marketing vehicle (e.g., long-form proposals, phased campaigns, and potential events like the Perazzi Invitational).[53][58][65]
 
 ### 2.2 Platform Families & Model Prefixes
@@ -91,12 +91,12 @@ The document prioritizes **factual completeness, structural clarity, and canonic
   - Perazzi association: Major platform for Olympic success since 1964.
 
 - **Skeet**  
-  - Disciplines: Olympic skeet, national skeet variants.  
+  - Disciplines: Olympic skeet, national skeet models.  
   - Typical models: MX and High Tech sporting/skeet configurations.
 
 - **Sporting Clays / FITASC**  
   - Governing body: FITASC for international disciplines.  
-  - Typical models: MX8, MX2000, MXS, High Tech sporting builds, small-gauge variants.
+  - Typical models: MX8, MX2000, MXS, High Tech sporting builds, small-gauge models.
 
 - **Live Pigeon / Helice (ZZ)**  
   - Use case: High-reliability competition requiring heavy, tight-choked O/Us.
@@ -129,7 +129,7 @@ The document prioritizes **factual completeness, structural clarity, and canonic
 
 - **MX8**: Introduced for the **1968 Mexico City Olympics**, refined from the Mattarelli gun and named “MX8” for that Games.[4]  
 - The MX8 becomes the **archetypal Perazzi competition gun** and the mechanical foundation for nearly all later platform families.  
-- Through the late 1960s–1970s, MX8 variants are used by numerous Olympic and world champions, anchoring Perazzi’s reputation.
+- Through the late 1960s–1970s, MX8 models are used by numerous Olympic and world champions, anchoring Perazzi’s reputation.
 
 #### 3.1.3 Expansion into the U.S. and Discipline-Specific Models
 
@@ -201,8 +201,8 @@ The core philosophy: **one fundamental action geometry**, many configurations tu
 
 - **MX designation**: Covers most O/U competition guns from MX1 upwards.[16][17]
 - **MX8** – Archetypal removable-trigger 12-gauge O/U introduced in the 1960s, still a major benchmark.  
-- Small-gauge variants: **MX20** (20ga), **MX28** (28ga), **MX410** (.410).  
-- Variants like **MX3**, **MX3 Special**, **MX5**, **MX7**, and **MX9** represent different stock and barrel configurations, economy/fixed-trigger options, or era-specific tweaks.
+- Small-gauge models: **MX20** (20ga), **MX28** (28ga), **MX410** (.410).  
+- models like **MX3**, **MX3 Special**, **MX5**, **MX7**, and **MX9** represent different stock and barrel configurations, economy/fixed-trigger options, or era-specific tweaks.
 - **MX12** – Fixed-trigger derivative of MX8 using coil springs; marketed as simpler and slightly lighter while maintaining the same handling.[16]  
   - **MX2000S**: MX2000 styling with fixed trigger; often used in skeet and sporting.
 
@@ -215,7 +215,7 @@ Naming patterns are not strictly sequential. Some numbers (e.g. MX14, MX16) corr
   - Wider receiver for increased central mass and altered balance.  
   - Designed to keep more weight between the hands, reducing muzzle flip and perceived recoil.[18][19]  
   - Highly customizable cosmetics: colored logos, engraved side panels, flag inlays, and special editions (e.g. HT 2020, HT 2024).[88]
-- Variants include:  
+- models include:  
   - **HT 12** – Standard 12-gauge sporting/trap O/U.  
   - **HT RS** – Trap builds with high or adjustable ribs.  
   - **HT 2020 / HT 2024** – Limited-edition configurations with unique finishes and sometimes revised ergonomics.  
@@ -352,8 +352,9 @@ Perazzi has an unmatched record in Olympic and world-level shotgun sports.
 
 - **Kim Rhode (USA)**  
   - Six-time Olympic medalist; first gold at **Atlanta 1996** in Double Trap at age 17 with a Perazzi.[47]  
-  - Continued to win medals in Skeet/Trap using customized Perazzi guns (MX12/MX8 variants).  
+  - Continued to win medals in Skeet/Trap using customized Perazzi guns (MX12/MX8 models).  
   - Famous for her long-term attachment to a single Perazzi gun, which was stolen and later recovered.[47][48]
+  - No longer shoots a Perazzi.
 
 - **Michael Diamond (Australia)**  
   - Two-time Olympic Trap Gold medalist (1996, 2000), multiple world titles with MX-series guns.
@@ -375,10 +376,16 @@ Perazzi has an unmatched record in Olympic and world-level shotgun sports.
 
 - **George Digweed (UK)**  
   - Over 25 world titles in Sporting Clays and FITASC.  
-  - Won many major titles with Perazzi MX2000 and MX8 variants, reinforcing Perazzi’s status in sporting clays.[52]
+  - Won many major titles with Perazzi MX2000 and MX8 models, reinforcing Perazzi’s status in sporting clays.[52]
+
+- **David Radulovich (USA)**
+  - Multiple time World Cup and World Champion in FITASC.
+  - Won many major titles with Perazzi High Tech S.
+  - Top level sporting clays champion and highly respected coach.
 
 - **Wendell Cherry (USA)**  
-  - Top-level sporting clays champion and influential coach.  
+  - Won many major titles, influding 5 US Open titles and multiple National Titles with Perazzi MX2000.
+  - Top-level sporting clays champion and highly respected coach.  
   - Perazzi shooter and key figure in modern brand storytelling.
 
 #### 3.4.3 Medals Summary
@@ -420,7 +427,7 @@ Perazzi’s brand identity extends beyond engineering into legacy, exclusivity, 
 
 - Preferred tone: **quiet authority**, reverent but concrete, with minimal empty hype.[64]
 - Key themes: legacy, identity, pursuit of mastery, lineage of champions, artisan craftsmanship.  
-- Story arcs (used in TCN and proposals) often follow phases such as **initiation → immersion → revelation → culmination**.[65][66]
+- Story arcs (used in TCN) often follow phases such as **initiation → immersion → revelation → culmination**.[65][66]
 
 #### 3.5.3 The Champions Network (TCN)
 

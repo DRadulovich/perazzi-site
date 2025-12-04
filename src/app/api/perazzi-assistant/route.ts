@@ -252,6 +252,34 @@ function detectAssistantOriginQuestion(latestUserContent: string | null): boolea
   return false;
 }
 
+/**
+ * Knowledge-source / training question:
+ * e.g. "What are you trained on?", "Where do you get your information?"
+ */
+function detectKnowledgeSourceQuestion(latestUserContent: string | null): boolean {
+  if (!latestUserContent) return false;
+  const text = latestUserContent.toLowerCase().trim();
+
+  // Focus on questions about data, information, knowledge, or sources.
+  if (
+    text.includes("what are you trained on") ||
+    text.includes("what were you trained on") ||
+    text.includes("what data are you trained on") ||
+    text.includes("what is your training data") ||
+    text.includes("where do you get your information") ||
+    text.includes("where do you get your info") ||
+    text.includes("where do you get your knowledge") ||
+    text.includes("what is your knowledge base") ||
+    text.includes("what sources do you use") ||
+    text.includes("what is your source of information") ||
+    text.includes("what are your data sources")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 function capitalize(input: string): string {
   if (!input) return input;
   return input.charAt(0).toUpperCase() + input.slice(1);
@@ -336,6 +364,47 @@ export async function POST(request: Request) {
         "The idea is the same as with a bespoke Perazzi gun: it grows out of a conversation between the craftsmen who build it and the shooter who will live with it. David brought the perspective of the competitor and coach; Perazzi brought the heritage, craft, and standards.",
         "",
         "My job is to express that shared point of view in conversation and help you make good decisions about your gun and your journey with Perazzi. The important part is not my internal wiring, but that everything I say reflects how Perazzi thinks about its guns and its owners.",
+      ].join("\n");
+
+      logInteraction(
+        body as PerazziAssistantRequest,
+        [],
+        0,
+        "ok",
+        undefined,
+        hints,
+        [],
+      );
+
+      return NextResponse.json<PerazziAssistantResponse>({
+        answer,
+        guardrail: { status: "ok", reason: null },
+        citations: [],
+        intents: hints.intents,
+        topics: hints.topics,
+        templates: [],
+        similarity: 0,
+        mode: effectiveMode,
+        archetype: null,
+        archetypeBreakdown,
+      });
+    }
+
+    // Knowledge-source handler: explain curated Perazzi corpus without exposing internal docs or architecture.
+    if (detectKnowledgeSourceQuestion(latestQuestion)) {
+      const neutralVector = getNeutralArchetypeVector();
+      const archetypeBreakdown = {
+        primary: null,
+        vector: neutralVector,
+        reasoning:
+          "Archetype profile not used: knowledge-source meta question handled via fixed, brand-aligned narrative.",
+        signalsUsed: ["meta:knowledge_source"],
+      };
+
+      const answer = [
+        "I don’t search the open internet. I’m built on curated Perazzi-specific information: platform and product references, service and fitting guidance, heritage and history material, and internal references that capture how Perazzi thinks about ownership and competition.",
+        "",
+        "All of that is selected and maintained by Perazzi so that the conversation stays focused on the real Perazzi experience, rather than whatever happens to be online at the moment.",
       ].join("\n");
 
       logInteraction(
