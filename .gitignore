@@ -45,3 +45,9 @@ tmp/logs/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# internal (not for git)
+docs/META-PROMPTS/
+docs/GUIDES/
+docs/SanityMigration/
+docs/SECURITY/
