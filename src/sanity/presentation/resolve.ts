@@ -67,17 +67,14 @@ export const resolve: PresentationPluginOptions['resolve'] = {
         title: 'title',
         slug: 'slug.current',
       },
-      resolve: (doc) => ({
-        locations: [
-          doc?.slug
-            ? {
-                title: doc.title || 'Journal article',
-                href: `/journal/${doc.slug}`,
-              }
-            : null,
-          {title: 'Journal index', href: '/journal'},
-        ].filter(Boolean),
-      }),
+      resolve: (doc) => {
+        const articleLocations = doc?.slug
+          ? [{title: doc.title || 'Journal article', href: `/journal/${doc.slug}`}]
+          : [];
+        return {
+          locations: [...articleLocations, {title: 'Journal index', href: '/journal'}],
+        };
+      },
     }),
   },
 }

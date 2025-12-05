@@ -167,8 +167,11 @@ export const getBespokePageData = cache(async (): Promise<BuildPageData> => {
       data.assurance.label = cms.assuranceContent.label ?? data.assurance.label;
       data.assurance.body = cms.assuranceContent.body ?? data.assurance.body;
       if (cms.assuranceContent.quote) {
-        data.assurance.quote = data.assurance.quote ?? {};
-        data.assurance.quote.text = cms.assuranceContent.quote ?? data.assurance.quote?.text;
+        const existingQuote = data.assurance.quote;
+        data.assurance.quote = {
+          author: existingQuote?.author,
+          text: cms.assuranceContent.quote ?? existingQuote?.text ?? "",
+        };
       }
     }
   } catch (error) {

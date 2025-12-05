@@ -52,11 +52,11 @@ export type ManufactureYearMatch = {
 };
 
 const fetchManufactureYears = cache(async () => {
-  const { data } =
-    (await sanityFetch<ManufactureYearDoc[] | null>({
-      query: manufactureYearQuery,
-      stega: true,
-    }).catch(() => ({ data: null }))) ?? {};
+  const result = await sanityFetch({
+    query: manufactureYearQuery,
+    stega: true,
+  }).catch(() => ({ data: null }));
+  const data = (result?.data as ManufactureYearDoc[] | null) ?? null;
 
   return (data ?? []).filter((doc): doc is Required<Pick<ManufactureYearDoc, "year" | "primaryRange">> & ManufactureYearDoc =>
     typeof doc?.year === "number" && typeof doc?.primaryRange?.start === "number",

@@ -72,7 +72,7 @@ export const allModels = defineType({
           { title: "Side by Side", value: "side-by-side" },
           { title: "Other", value: "other" },
         ],
-        layout: "tags",
+        layout: "dropdown",
       },
     }),
     defineField({

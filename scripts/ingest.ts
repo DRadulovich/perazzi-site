@@ -12,7 +12,7 @@ import { parse as parseCsv } from "csv-parse/sync";
 import OpenAI from "openai";
 import { Pool } from "pg";
 import { registerType, toSql } from "pgvector/pg";
-import { encoding_for_model, get_encoding } from "@dqbd/tiktoken";
+import { encoding_for_model, get_encoding, type TiktokenModel } from "@dqbd/tiktoken";
 
 type ChunkRule = {
   glob: string;
@@ -980,7 +980,8 @@ async function main() {
 
   const encoding = (() => {
     try {
-      return encoding_for_model(process.env.PERAZZI_EMBED_MODEL ?? "text-embedding-3-large");
+      const embedModel = (process.env.PERAZZI_EMBED_MODEL as TiktokenModel | undefined) ?? "text-embedding-3-large";
+      return encoding_for_model(embedModel);
     } catch {
       return get_encoding("cl100k_base");
     }

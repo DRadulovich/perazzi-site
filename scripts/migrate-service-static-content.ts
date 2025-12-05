@@ -6,6 +6,7 @@ import { maintenanceGuides as guidesFixture } from "@/content/service/guides";
 import { partsEditorial as partsFixture } from "@/content/service/parts";
 import { faq as faqFixture } from "@/content/service/faq";
 import { serviceData } from "@/content/service";
+import type { PartEditorial } from "@/types/service";
 
 const client = createClient({
   projectId: process.env.SANITY_PROJECT_ID || process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -89,7 +90,7 @@ async function main() {
     applySection("partsEditorialSection", {
       heading: serviceData.partsEditorialSection.heading,
       intro: serviceData.partsEditorialSection.intro,
-      parts: (serviceHome.partsEditorialSection?.parts?.length ? serviceHome.partsEditorialSection.parts : partsFixture).map((part) => ({
+      parts: (serviceHome.partsEditorialSection?.parts?.length ? serviceHome.partsEditorialSection.parts : partsFixture).map((part: PartEditorial) => ({
         name: part.name,
         purpose: part.purpose,
         fitment: part.fitment,

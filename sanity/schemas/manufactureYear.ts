@@ -81,8 +81,12 @@ export const manufactureYear = defineType({
           ],
           validation: (rule) =>
             rule.custom((value) => {
-              if (!value) return true;
-              if (value.rangeEnd !== undefined && value.rangeEnd !== null && value.rangeEnd < value.rangeStart) {
+              if (!value || typeof value !== "object") return true;
+              const { rangeStart, rangeEnd } = value as {
+                rangeStart?: number;
+                rangeEnd?: number | null;
+              };
+              if (rangeEnd !== undefined && rangeEnd !== null && rangeStart !== undefined && rangeEnd < rangeStart) {
                 return "Range end must be greater than start.";
               }
               return true;

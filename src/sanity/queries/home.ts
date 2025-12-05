@@ -257,11 +257,11 @@ type HomeSanityResponse = {
 };
 
 export async function getHome(): Promise<HomeData> {
-  const { data } =
-    (await sanityFetch<HomeSanityResponse | null>({
-      query: homeQuery,
-      stega: true,
-    }).catch(() => ({ data: null }))) ?? {};
+  const result = await sanityFetch({
+    query: homeQuery,
+    stega: true,
+  }).catch(() => ({ data: null }));
+  const data = (result?.data as HomeSanityResponse | null) ?? null;
 
   const hero = mapHero(data?.hero) ?? fallbackHero;
   const heroCtas = mapHeroCtas(data?.heroCtas);

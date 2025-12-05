@@ -207,11 +207,11 @@ const bespokeHomeQuery = groq`
 `;
 
 export async function getBespokeHome(): Promise<BespokeHomePayload | null> {
-  const { data } =
-    (await sanityFetch<BespokeHomeResponse | null>({
-      query: bespokeHomeQuery,
-      stega: true,
-    }).catch(() => ({ data: null }))) ?? {};
+  const result = await sanityFetch({
+    query: bespokeHomeQuery,
+    stega: true,
+  }).catch(() => ({ data: null }));
+  const data = (result?.data as BespokeHomeResponse | null) ?? null;
   if (!data) return null;
 
   return {

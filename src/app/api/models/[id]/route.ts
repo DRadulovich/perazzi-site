@@ -5,9 +5,14 @@ import { groq } from "next-sanity";
 
 import { sanityClient } from "../../../../../sanity/client";
 
+const { projectId, dataset } = sanityClient.config();
+if (!projectId || !dataset) {
+  throw new Error("Sanity client is missing projectId or dataset");
+}
+
 const imageBuilder = imageUrlBuilder({
-  projectId: sanityClient.config().projectId,
-  dataset: sanityClient.config().dataset,
+  projectId,
+  dataset,
 });
 
 const urlFor = (source: SanityImageSource) => imageBuilder.image(source);

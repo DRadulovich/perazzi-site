@@ -8,9 +8,19 @@ export function buildDealerBriefRequest(
   messages: ChatMessage[],
   context: AssistantContext,
 ): PerazziAssistantRequest {
+  const sanitizedContext: PerazziAssistantRequest["context"] = {
+    pageUrl: context.pageUrl ?? null,
+    modelSlug: context.modelSlug ?? null,
+    platformSlug: context.platformSlug ?? null,
+    mode: context.mode && context.mode !== "heritage" ? context.mode : null,
+    locale: context.locale ?? null,
+    archetype: context.archetype ?? null,
+    archetypeVector: context.archetypeVector ?? null,
+  };
+
   return {
     messages: [...messages, { role: "user", content: DEALER_BRIEF_PROMPT }],
-    context,
+    context: sanitizedContext,
     summaryIntent: "dealer_brief",
   };
 }

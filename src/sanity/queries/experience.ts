@@ -377,11 +377,11 @@ function mapConciergeBlock(block?: ConciergeBlockResponse | null): ConciergeBloc
 }
 
 export async function getExperienceHome(): Promise<ExperienceHomePayload | null> {
-  const { data } =
-    (await sanityFetch<ExperienceHomeResponse | null>({
-      query: experienceHomeQuery,
-      stega: true,
-    }).catch(() => ({ data: null }))) ?? {};
+  const result = await sanityFetch({
+    query: experienceHomeQuery,
+    stega: true,
+  }).catch(() => ({ data: null }));
+  const data = (result?.data as ExperienceHomeResponse | null) ?? null;
   if (!data) return null;
 
   return {
@@ -490,11 +490,11 @@ export async function getExperienceHome(): Promise<ExperienceHomePayload | null>
 }
 
 export async function getExperienceNetworkData(): Promise<ExperienceNetworkData> {
-  const { data } =
-    (await sanityFetch<ExperienceNetworkResponse | null>({
-      query: experienceNetworkQuery,
-      stega: true,
-    }).catch(() => ({ data: null }))) ?? {};
+  const result = await sanityFetch({
+    query: experienceNetworkQuery,
+    stega: true,
+  }).catch(() => ({ data: null }));
+  const data = (result?.data as ExperienceNetworkResponse | null) ?? null;
 
   const scheduledEvents = (data?.scheduledEvents ?? [])
     .map((item) => {

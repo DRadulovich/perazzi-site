@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import type { PoolClient } from "pg";
 import { registerType } from "pgvector/pg";
 import OpenAI from "openai";
 import type { PerazziAssistantRequest, RetrievedChunk } from "@/types/perazzi-assistant";
@@ -83,17 +84,15 @@ export function computeBoost(
   hints?: RetrievalHints,
 ): number {
   let boost = 0;
-  const audience = (metadata.audience ?? (metadata as { metadata?: { audience?: unknown } })?.metadata?.audience ?? "")
-    .toString()
-    .toLowerCase();
+  const audience = String(
+    metadata.audience ?? (metadata as { metadata?: { audience?: unknown } })?.metadata?.audience ?? "",
+  ).toLowerCase();
   const mode = context?.mode?.toLowerCase();
   if (mode && audience === mode) boost += 0.05;
 
   const slug = context?.modelSlug?.toLowerCase();
   if (slug) {
-    const title = (metadata.title ?? metadata.summary ?? "")
-      .toString()
-      .toLowerCase();
+    const title = String(metadata.title ?? metadata.summary ?? "").toLowerCase();
     const relatedEntities: Array<Record<string, string>> =
       (metadata.related_entities as Array<Record<string, string>>) ?? [];
     const entityIds: string[] = Array.isArray(metadata.entity_ids)
@@ -112,9 +111,9 @@ export function computeBoost(
 
   const contextPlatform = context?.platformSlug?.toLowerCase();
   const metadataPlatforms: string[] = Array.isArray(metadata.platform_tags)
-    ? (metadata.platform_tags as unknown[]).map((value) => value.toString().toLowerCase())
+    ? (metadata.platform_tags as unknown[]).map((value) => String(value).toLowerCase())
     : metadata.platform
-      ? [metadata.platform.toString().toLowerCase()]
+      ? [String(metadata.platform).toLowerCase()]
       : [];
   if (contextPlatform && metadataPlatforms.includes(contextPlatform)) {
     boost += 0.1;
@@ -130,7 +129,7 @@ export function computeBoost(
 
   if (hints?.topics?.length) {
     const chunkTopics: string[] = Array.isArray(metadata.topics)
-      ? (metadata.topics as unknown[]).map((value) => value.toString().toLowerCase())
+      ? (metadata.topics as unknown[]).map((value) => String(value).toLowerCase())
       : [];
     if (chunkTopics.some((topic) => hints.topics.includes(topic))) {
       boost += 0.12;
@@ -143,7 +142,7 @@ export function computeBoost(
       .filter((t) => t.startsWith("discipline_"))
       .map((t) => t.replace("discipline_", ""));
     const chunkDisciplines: string[] = Array.isArray(metadata.discipline_tags)
-      ? (metadata.discipline_tags as unknown[]).map((d) => d.toString().toLowerCase())
+      ? (metadata.discipline_tags as unknown[]).map((d) => String(d).toLowerCase())
       : [];
     if (hintDisciplines.some((d) => chunkDisciplines.includes(d))) {
       boost += 0.06;
@@ -154,7 +153,7 @@ export function computeBoost(
   if (hints?.topics?.length) {
     const hintGrades = hints.topics.filter((t) => t.startsWith("grade_"));
     const chunkTopics: string[] = Array.isArray(metadata.topics)
-      ? (metadata.topics as unknown[]).map((value) => value.toString().toLowerCase())
+      ? (metadata.topics as unknown[]).map((value) => String(value).toLowerCase())
       : [];
     if (hintGrades.some((g) => chunkTopics.includes(g))) {
       boost += 0.05;
@@ -164,7 +163,7 @@ export function computeBoost(
   // Rib alignment
   if (hints?.topics?.length) {
     const chunkTopics: string[] = Array.isArray(metadata.topics)
-      ? (metadata.topics as unknown[]).map((value) => value.toString().toLowerCase())
+      ? (metadata.topics as unknown[]).map((value) => String(value).toLowerCase())
       : [];
     if (hints.topics.includes("rib_adjustable") && chunkTopics.includes("rib_adjustable")) {
       boost += 0.05;
@@ -180,7 +179,7 @@ export function computeBoost(
 
   if (hints?.focusEntities?.length) {
     const entityIds: string[] = Array.isArray(metadata.entity_ids)
-      ? (metadata.entity_ids as unknown[]).map((value) => value.toString().toLowerCase())
+      ? (metadata.entity_ids as unknown[]).map((value) => String(value).toLowerCase())
       : [];
     if (entityIds.some((id) => hints.focusEntities!.includes(id))) {
       boost += 0.15;
@@ -188,19 +187,15 @@ export function computeBoost(
   }
 
   if (hints?.keywords?.length) {
-    const haystack = [
-      metadata.title,
-      metadata.summary,
-      metadata.source_path,
-    ]
-      .map((value) => (value ?? "").toString().toLowerCase())
+    const haystack = [metadata.title, metadata.summary, metadata.source_path]
+      .map((value) => String(value ?? "").toLowerCase())
       .join(" ");
     if (hints.keywords.some((keyword) => haystack.includes(keyword))) {
       boost += 0.05;
     }
   }
 
-  const sourcePath = (metadata.source_path ?? metadata.sourcePath ?? "").toString().toLowerCase();
+  const sourcePath = String(metadata.source_path ?? metadata.sourcePath ?? "").toLowerCase();
   if (sourcePath.includes("pricing_and_models")) {
     boost += 0.08;
   }

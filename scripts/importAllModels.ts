@@ -1,6 +1,7 @@
+import type { IdentifiedSanityDocumentStub } from "@sanity/client";
 import fs from "node:fs";
 import path from "node:path";
-import sanityCli from "sanity/cli";
+import { getCliClient } from "sanity/cli";
 
 type ModelRecord = {
   id: string;
@@ -59,7 +60,7 @@ if (!token) {
   throw new Error("Missing Sanity write token (SANITY_WRITE_TOKEN or SANITY_AUTH_TOKEN)");
 }
 
-const client = sanityCli.getCliClient({
+const client = getCliClient({
   projectId,
   dataset,
   token,
@@ -164,7 +165,7 @@ async function run() {
 
     const safeId = row.id || toSlug(row.slug) || toSlug(row.name) || "";
     const docId = `allModels-${safeId}`;
-    const payload: Record<string, any> = {
+    const payload: IdentifiedSanityDocumentStub<Record<string, any>> = {
       _id: docId,
       _type: "allModels",
       name: row.name,

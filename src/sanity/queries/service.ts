@@ -29,6 +29,7 @@ type ServiceHomeResponse = {
     introHtml?: string;
     checksHeading?: string;
     checks?: string[];
+    checksHtml?: string;
   };
   serviceGuidanceBlock?: ServiceGuidanceBlock;
   shippingPrepBlock?: ServiceGuidanceBlock;
@@ -221,11 +222,11 @@ const recommendedServiceCentersQuery = groq`
 `;
 
 export async function getServiceHome(): Promise<ServiceHomePayload | null> {
-  const { data } =
-    (await sanityFetch<ServiceHomeResponse | null>({
-      query: serviceHomeQuery,
-      stega: true,
-    }).catch(() => ({ data: null }))) ?? {};
+  const result = await sanityFetch({
+    query: serviceHomeQuery,
+    stega: true,
+  }).catch(() => ({ data: null }));
+  const data = (result?.data as ServiceHomeResponse | null) ?? null;
   if (!data) return null;
 
   return {
@@ -240,7 +241,7 @@ export async function getServiceHome(): Promise<ServiceHomePayload | null> {
       ? {
           heading: data.overviewSection.heading ?? undefined,
           subheading: data.overviewSection.subheading ?? undefined,
-          introHtml: data.overviewSection.introHtml ?? undefined,
+          introHtml: data.overviewSection.introHtml ?? "",
           checksHeading: data.overviewSection.checksHeading ?? undefined,
           checks: data.overviewSection.checks ?? undefined,
           checksHtml: data.overviewSection.checksHtml ?? undefined,
@@ -299,11 +300,11 @@ export async function getServiceHome(): Promise<ServiceHomePayload | null> {
 }
 
 export async function getRecommendedServiceCenters(): Promise<RecommendedServiceCenterPayload[]> {
-  const { data } =
-    (await sanityFetch<RecommendedServiceCenterResponse[] | null>({
-      query: recommendedServiceCentersQuery,
-      stega: true,
-    }).catch(() => ({ data: null }))) ?? {};
+  const result = await sanityFetch({
+    query: recommendedServiceCentersQuery,
+    stega: true,
+  }).catch(() => ({ data: null }));
+  const data = (result?.data as RecommendedServiceCenterResponse[] | null) ?? null;
 
   return (
     data

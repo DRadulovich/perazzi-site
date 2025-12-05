@@ -354,11 +354,11 @@ const championsQuery = groq`
 `;
 
 export async function getHeritageHome(): Promise<HeritageHomePayload | null> {
-  const { data } =
-    (await sanityFetch<HeritageHomeResponse | null>({
-      query: heritageHomeQuery,
-      stega: true,
-    }).catch(() => ({ data: null }))) ?? {};
+  const result = await sanityFetch({
+    query: heritageHomeQuery,
+    stega: true,
+  }).catch(() => ({ data: null }));
+  const data = (result?.data as HeritageHomeResponse | null) ?? null;
   if (!data) return null;
 
   return {
@@ -453,11 +453,11 @@ export async function getHeritageHome(): Promise<HeritageHomePayload | null> {
 }
 
 export async function getHeritageEvents(): Promise<HeritageEventPayload[]> {
-  const { data } =
-    (await sanityFetch<HeritageEventResponse[]>({
-      query: heritageEventsQuery,
-      stega: true,
-    }).catch(() => ({ data: [] }))) ?? {};
+  const result = await sanityFetch({
+    query: heritageEventsQuery,
+    stega: true,
+  }).catch(() => ({ data: [] }));
+  const data = (result?.data as HeritageEventResponse[] | null) ?? null;
 
   return (data ?? [])
     .filter((event): event is HeritageEventResponse & { _id: string } => Boolean(event?._id))
@@ -484,11 +484,11 @@ export async function getHeritageEvents(): Promise<HeritageEventPayload[]> {
 }
 
 export async function getHeritageChampions(): Promise<ChampionPayload[]> {
-  const { data } =
-    (await sanityFetch<ChampionResponse[]>({
-      query: championsQuery,
-      stega: true,
-    }).catch(() => ({ data: [] }))) ?? {};
+  const result = await sanityFetch({
+    query: championsQuery,
+    stega: true,
+  }).catch(() => ({ data: [] }));
+  const data = (result?.data as ChampionResponse[] | null) ?? null;
 
   return (data ?? [])
     .filter((champion): champion is ChampionResponse & { _id: string } => Boolean(champion?._id))

@@ -470,11 +470,11 @@ const gradesQuery = groq`
 `;
 
 export async function getShotgunsLanding(): Promise<ShotgunsLandingPayload | null> {
-  const { data } =
-    (await sanityFetch<ShotgunsLandingResponse | null>({
-      query: shotgunsLandingQuery,
-      stega: true,
-    }).catch(() => ({ data: null }))) ?? {};
+  const result = await sanityFetch({
+    query: shotgunsLandingQuery,
+    stega: true,
+  }).catch(() => ({ data: null }));
+  const data = (result?.data as ShotgunsLandingResponse | null) ?? null;
   if (!data) return null;
 
   return {
@@ -593,11 +593,11 @@ export async function getShotgunsLanding(): Promise<ShotgunsLandingPayload | nul
 }
 
 export async function getPlatforms(): Promise<ShotgunsPlatformPayload[]> {
-  const { data } =
-    (await sanityFetch<PlatformResponse[]>({
-      query: platformsQuery,
-      stega: true,
-    }).catch(() => ({ data: [] }))) ?? {};
+  const result = await sanityFetch({
+    query: platformsQuery,
+    stega: true,
+  }).catch(() => ({ data: [] }));
+  const data = (result?.data as PlatformResponse[] | null) ?? null;
 
   return (data ?? [])
     .filter((platform): platform is PlatformResponse & { _id: string } => Boolean(platform?._id))
@@ -654,11 +654,11 @@ export async function getPlatforms(): Promise<ShotgunsPlatformPayload[]> {
 }
 
 export async function getDisciplines(): Promise<ShotgunsDisciplinePayload[]> {
-  const { data } =
-    (await sanityFetch<DisciplineResponse[]>({
-      query: disciplinesQuery,
-      stega: true,
-    }).catch(() => ({ data: [] }))) ?? {};
+  const result = await sanityFetch({
+    query: disciplinesQuery,
+    stega: true,
+  }).catch(() => ({ data: [] }));
+  const data = (result?.data as DisciplineResponse[] | null) ?? null;
 
   return (data ?? [])
     .filter((discipline): discipline is DisciplineResponse & { _id: string } => Boolean(discipline?._id))
@@ -687,11 +687,11 @@ export async function getDisciplines(): Promise<ShotgunsDisciplinePayload[]> {
 }
 
 export async function getGrades(): Promise<ShotgunsGradePayload[]> {
-  const { data } =
-    (await sanityFetch<GradeResponse[]>({
-      query: gradesQuery,
-      stega: true,
-    }).catch(() => ({ data: [] }))) ?? {};
+  const result = await sanityFetch({
+    query: gradesQuery,
+    stega: true,
+  }).catch(() => ({ data: [] }));
+  const data = (result?.data as GradeResponse[] | null) ?? null;
 
   return (data ?? [])
     .filter((grade): grade is GradeResponse & { _id: string } => Boolean(grade?._id))

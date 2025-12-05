@@ -3,6 +3,9 @@ import {randomUUID} from "node:crypto";
 import {createClient} from "@sanity/client";
 
 type WithBackground = { backgroundImage?: { path?: string | null; image?: unknown } | null };
+type PartialWithNulls<T> = {
+  [K in keyof T]?: (K extends "backgroundImage" ? WithBackground["backgroundImage"] : T[K]) | null;
+};
 
 type ShotgunsLandingDoc = {
   _id: string;
@@ -225,9 +228,9 @@ async function main() {
   console.log("New revision:", result._rev);
 }
 
-function mergeObjectWithBackground<T extends { backgroundImage?: { path?: string | null; image?: unknown } | null }>(
+function mergeObjectWithBackground<T extends WithBackground>(
   defaultsValue: T,
-  existing?: T | null,
+  existing?: PartialWithNulls<T> | null,
 ) {
   const hasBackground = Boolean(existing?.backgroundImage && (existing.backgroundImage.image || existing.backgroundImage.path));
 

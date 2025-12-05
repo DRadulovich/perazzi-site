@@ -8,6 +8,7 @@ import type { Platform, ShotgunsLandingData } from "@/types/catalog";
 import { PlatformCard } from "./PlatformCard";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
 import { buildPlatformPrompt } from "@/lib/platform-prompts";
+import type { ChatTriggerPayload } from "@/lib/chat-trigger";
 
 type PlatformGridProps = {
   platforms: Platform[];
@@ -103,14 +104,15 @@ export function PlatformGrid({ platforms, ui }: PlatformGridProps) {
   const formatTemplate = (template: string, platformName: string) =>
     template.replace(/{platformName}/g, platformName);
 
-  const buildPayload = (platform: Platform) => {
+  const buildPayload = (platform: Platform): ChatTriggerPayload => {
+    const basePayload = buildPlatformPrompt(platform.slug);
     if (chatPayloadTemplate && chatPayloadTemplate !== defaultChatPayloadTemplate) {
       return {
         question: formatTemplate(chatPayloadTemplate, platform.name),
-        context: { platformSlug: platform.slug },
+        context: basePayload.context,
       };
     }
-    return buildPlatformPrompt(platform.slug);
+    return basePayload;
   };
 
   return (
