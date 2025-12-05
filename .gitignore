@@ -51,3 +51,7 @@ docs/META-PROMPTS/
 docs/GUIDES/
 docs/SanityMigration/
 docs/SECURITY/
+
+
+#Ignore vscode AI rules
+.github/instructions/codacy.instructions.md
