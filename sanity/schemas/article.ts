@@ -43,6 +43,20 @@ export const article = defineType({
       options: { layout: "tags" },
     }),
     defineField({
+      name: "isBuildJourneyStep",
+      title: "Include in Build Journey?",
+      type: "boolean",
+      description:
+        "Enable this if this article is one of the factory build-journey steps.",
+    }),
+    defineField({
+      name: "buildStepOrder",
+      title: "Build Journey Order",
+      type: "number",
+      description:
+        "Lower numbers appear earlier in the build journey. Only used when Include in Build Journey is enabled.",
+    }),
+    defineField({
       name: "relations",
       type: "object",
       fields: [
