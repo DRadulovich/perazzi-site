@@ -59,6 +59,7 @@
 @theme inline {
   --font-sans: var(--font-geist-sans), "Inter", "Segoe UI", system-ui, sans-serif;
   --font-serif: "Playfair Display", Georgia, serif;
+  --font-artisan: "Cedarville Cursive", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: var(--font-geist-mono), "IBM Plex Mono", ui-monospace, monospace;
   --container-xs: 20rem;
   --container-sm: 24rem;

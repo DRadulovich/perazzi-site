@@ -41,64 +41,6 @@ export default async function BuildJourneyPage() {
     <main className="bg-canvas text-ink">
       <HeroSection />
       <BuildJourneyClient stations={stations} />
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            (function() {
-              if (typeof window === 'undefined') return;
-              var sections = document.querySelectorAll('[data-build-step]');
-              var links = document.querySelectorAll('[data-build-step-link]');
-              if (!sections.length || !links.length) return;
-              if (!('IntersectionObserver' in window)) return;
-
-              var linkByStep = {};
-              links.forEach(function(link) {
-                var step = link.getAttribute('data-build-step-link');
-                if (step) {
-                  linkByStep[step] = link;
-                }
-              });
-
-              function setActive(step) {
-                Object.keys(linkByStep).forEach(function(key) {
-                  var link = linkByStep[key];
-                  if (!link) return;
-                  if (key === step) {
-                    link.classList.add('opacity-100');
-                    link.classList.remove('opacity-60');
-                  } else {
-                    link.classList.add('opacity-60');
-                    link.classList.remove('opacity-100');
-                  }
-                });
-              }
-
-              var observer = new IntersectionObserver(function(entries) {
-                entries.forEach(function(entry) {
-                  if (entry.isIntersecting) {
-                    var step = entry.target.getAttribute('data-build-step');
-                    if (step) {
-                      setActive(step);
-                    }
-                  }
-                });
-              }, { threshold: 0.5 });
-
-              sections.forEach(function(section) {
-                observer.observe(section);
-              });
-
-              var first = sections[0];
-              if (first) {
-                var initialStep = first.getAttribute('data-build-step');
-                if (initialStep) {
-                  setActive(initialStep);
-                }
-              }
-            })();
-          `,
-        }}
-      />
     </main>
   );
 }
@@ -113,21 +55,20 @@ function HeroSection() {
           fill
           priority
           sizes="100vw"
-          className="object-cover opacity-60"
+          className="object-cover opacity-100"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/80 to-black" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[color:var(--color-black)]/100 via-[color:var(--color-black)]/50 to-[color:var(--color-black)]/100" />
       </div>
       <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16 lg:py-24">
-        <header className="max-w-xl space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ink-muted">
+        <header className="max-w-2l space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/75">
             Inside the Perazzi Factory
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight text-ink lg:text-5xl">
-            Why a Perazzi Has a Soul
+          <h1 className="text-3xl font-semibold tracking-tight text-white lg:text-5xl">
+            The Soul of a Perazzi Shotgun
           </h1>
-          <p className="text-sm leading-relaxed text-ink-muted lg:text-base">
-            A single gun moves station by station through the hands of craftsmen. This page stitches
-            those moments into one continuous build journey.
+          <p className="text-sm leading-relaxed text-white/75 lg:text-base">
+            Every Perazzi is born the same way: one frame of steel and walnut moving bench by bench through the same circle of hands, whether it’s a bespoke order or a gun you find on a dealer’s shelf. This page stitches those stations into one continuous build journey, following a single gun as it collects their decisions.
           </p>
         </header>
       </div>

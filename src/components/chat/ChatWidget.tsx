@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
 import { CHAT_TRIGGER_EVENT } from "@/lib/chat-trigger";
@@ -16,6 +17,8 @@ export function ChatWidget() {
   const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
   const [pendingPrompt, setPendingPrompt] = useState<ChatTriggerPayload | null>(null);
+  const pathname = usePathname();
+  const hideTrigger = pathname?.startsWith("/the-build/why-a-perazzi-has-a-soul");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -196,7 +199,7 @@ export function ChatWidget() {
               />
             </aside>
           )}
-          {!isOpen && (
+          {!isOpen && !hideTrigger && (
             <button
               type="button"
               aria-label="Open Perazzi Concierge"

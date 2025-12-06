@@ -36,6 +36,12 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} data-theme={initialTheme} suppressHydrationWarning>
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Cedarville+Cursive&display=swap"
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased min-h-screen bg-canvas text-ink overflow-x-hidden`}
       >
