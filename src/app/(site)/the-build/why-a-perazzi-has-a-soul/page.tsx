@@ -1,8 +1,8 @@
+import Image from "next/image";
 import { groq } from "next-sanity";
 
-import { PortableBody } from "@/components/journal/PortableBody";
+import { BuildJourneyClient, type BuildJourneyArticle } from "./BuildJourneyClient";
 import { client } from "@/sanity/lib/client";
-import type { PortableBlock } from "@/types/journal";
 
 const BUILD_JOURNEY_QUERY = groq`
   *[_type == "article" && isBuildJourneyStep == true] | order(buildStepOrder asc, title asc) {
@@ -11,6 +11,7 @@ const BUILD_JOURNEY_QUERY = groq`
     slug,
     excerpt,
     body,
+    soulQuestion,
     heroImage{
       alt,
       "asset": asset->{
@@ -22,30 +23,14 @@ const BUILD_JOURNEY_QUERY = groq`
   }
 `;
 
-type BuildJourneyArticle = {
-  _id: string;
-  title?: string;
-  slug?: { current?: string };
-  excerpt?: string;
-  body?: PortableBlock[];
-  heroImage?: {
-    asset?: {
-      _id?: string;
-      url?: string;
-    } | null;
-    alt?: string | null;
-  } | null;
-  buildStepOrder?: number | null;
-};
-
 export default async function BuildJourneyPage() {
   const stations = await client.fetch<BuildJourneyArticle[]>(BUILD_JOURNEY_QUERY);
 
   if (!stations || stations.length === 0) {
     return (
-      <main>
-        <section>
-          <h1>Why a Perazzi Has a Soul</h1>
+      <main className="bg-canvas text-ink">
+        <HeroSection />
+        <section className="px-4 py-16 sm:px-6">
           <p>No build-journey steps are configured yet in Sanity.</p>
         </section>
       </main>
@@ -53,124 +38,99 @@ export default async function BuildJourneyPage() {
   }
 
   return (
-    <main className="bg-black text-neutral-100">
+    <main className="bg-canvas text-ink">
       <HeroSection />
-      <section className="border-t border-white/10">
-        <div className="mx-auto flex max-w-6xl flex-col gap-12 px-6 py-16 lg:grid lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)] lg:gap-16 lg:py-20">
-          <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
-            <JourneyProgress stations={stations} />
-          </aside>
-          <div className="space-y-24">
-            <JourneyChapters stations={stations} />
-          </div>
-        </div>
-      </section>
+      <BuildJourneyClient stations={stations} />
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            (function() {
+              if (typeof window === 'undefined') return;
+              var sections = document.querySelectorAll('[data-build-step]');
+              var links = document.querySelectorAll('[data-build-step-link]');
+              if (!sections.length || !links.length) return;
+              if (!('IntersectionObserver' in window)) return;
+
+              var linkByStep = {};
+              links.forEach(function(link) {
+                var step = link.getAttribute('data-build-step-link');
+                if (step) {
+                  linkByStep[step] = link;
+                }
+              });
+
+              function setActive(step) {
+                Object.keys(linkByStep).forEach(function(key) {
+                  var link = linkByStep[key];
+                  if (!link) return;
+                  if (key === step) {
+                    link.classList.add('opacity-100');
+                    link.classList.remove('opacity-60');
+                  } else {
+                    link.classList.add('opacity-60');
+                    link.classList.remove('opacity-100');
+                  }
+                });
+              }
+
+              var observer = new IntersectionObserver(function(entries) {
+                entries.forEach(function(entry) {
+                  if (entry.isIntersecting) {
+                    var step = entry.target.getAttribute('data-build-step');
+                    if (step) {
+                      setActive(step);
+                    }
+                  }
+                });
+              }, { threshold: 0.5 });
+
+              sections.forEach(function(section) {
+                observer.observe(section);
+              });
+
+              var first = sections[0];
+              if (first) {
+                var initialStep = first.getAttribute('data-build-step');
+                if (initialStep) {
+                  setActive(initialStep);
+                }
+              }
+            })();
+          `,
+        }}
+      />
     </main>
   );
 }
 
 function HeroSection() {
   return (
-    <section className="bg-black">
-      <div className="mx-auto max-w-6xl px-6 py-16 lg:py-24">
-        <header className="max-w-2xl space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-400">
+    <section className="relative bg-canvas">
+      <div className="absolute inset-0">
+        <Image
+          src="/redesign-photos/heritage/pweb-heritage-era-4-bespoke.jpg"
+          alt="Bespoke Perazzi shotgun in the heritage workshop"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover opacity-60"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/80 to-black" />
+      </div>
+      <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16 lg:py-24">
+        <header className="max-w-xl space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ink-muted">
             Inside the Perazzi Factory
           </p>
-          <h1 className="text-3xl font-semibold tracking-tight text-neutral-50 lg:text-5xl">
+          <h1 className="text-3xl font-semibold tracking-tight text-ink lg:text-5xl">
             Why a Perazzi Has a Soul
           </h1>
-          <p className="text-sm leading-relaxed text-neutral-300 lg:text-base">
+          <p className="text-sm leading-relaxed text-ink-muted lg:text-base">
             A single gun moves station by station through the hands of craftsmen. This page stitches
             those moments into one continuous build journey.
           </p>
         </header>
       </div>
     </section>
-  );
-}
-
-type JourneyProgressProps = {
-  stations: BuildJourneyArticle[];
-};
-
-function JourneyProgress({ stations }: JourneyProgressProps) {
-  return (
-    <nav aria-label="Build journey progress" className="text-sm">
-      <p className="mb-4 text-xs font-semibold uppercase tracking-[0.22em] text-neutral-400">
-        Build journey
-      </p>
-      <ol className="space-y-3">
-        {stations.map((station, index) => {
-          const stepLabel = (index + 1).toString().padStart(2, "0");
-
-          return (
-            <li key={station._id} className="flex flex-col">
-              <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-neutral-500">
-                Step {stepLabel}
-              </span>
-              <span className="text-sm text-neutral-100">
-                {station.title ?? "Untitled step"}
-              </span>
-            </li>
-          );
-        })}
-      </ol>
-    </nav>
-  );
-}
-
-type JourneyChaptersProps = {
-  stations: BuildJourneyArticle[];
-};
-
-function JourneyChapters({ stations }: JourneyChaptersProps) {
-  return (
-    <>
-      {stations.map((station, index) => {
-        const stepNumber = index + 1;
-        const bodyBlocks = station.body ?? [];
-        const heroUrl = station.heroImage?.asset?.url;
-        const stepLabel = stepNumber.toString().padStart(2, "0");
-
-        return (
-          <section
-            key={station._id}
-            id={station.slug?.current ?? `step-${stepNumber}`}
-            className="scroll-mt-24 space-y-6"
-          >
-            <header className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-neutral-400">
-                Step {stepLabel}
-              </p>
-              <h2 className="text-xl font-semibold text-neutral-50 lg:text-2xl">
-                {station.title ?? "Untitled step"}
-              </h2>
-              {station.excerpt ? (
-                <p className="max-w-prose text-sm leading-relaxed text-neutral-300">
-                  {station.excerpt}
-                </p>
-              ) : null}
-            </header>
-
-            {heroUrl ? (
-              <figure className="overflow-hidden rounded-lg bg-neutral-900">
-                <img
-                  src={heroUrl}
-                  alt={station.heroImage?.alt ?? station.title ?? "Build journey image"}
-                  className="h-auto w-full object-cover"
-                />
-              </figure>
-            ) : null}
-
-            {bodyBlocks.length ? (
-              <div className="prose prose-invert prose-sm max-w-none lg:prose-base">
-                <PortableBody blocks={bodyBlocks} />
-              </div>
-            ) : null}
-          </section>
-        );
-      })}
-    </>
   );
 }

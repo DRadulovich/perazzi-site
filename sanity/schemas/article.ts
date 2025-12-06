@@ -22,6 +22,14 @@ export const article = defineType({
       rows: 3,
     }),
     defineField({
+      name: "soulQuestion",
+      title: "Soul Question",
+      type: "text",
+      rows: 3,
+      description:
+        "Reflection question shown after this step in the build journey (for the personalized Step 12).",
+    }),
+    defineField({
       name: "body",
       type: "blockContent",
     }),
