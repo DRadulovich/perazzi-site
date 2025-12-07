@@ -2,7 +2,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import Image from "next/image";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import type { FactoryAsset } from "@/types/content";
 
@@ -13,6 +13,12 @@ type PortableGalleryProps = {
 export function PortableGallery({ items }: PortableGalleryProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const prefersReducedMotion = useReducedMotion();
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  // Ensure SSR/CSR markup stays aligned before honoring reduced motion.
+  useEffect(() => {
+    setReduceMotion(Boolean(prefersReducedMotion));
+  }, [prefersReducedMotion]);
   const currentAsset = useMemo(
     () => (openIndex !== null ? items[openIndex] : undefined),
     [items, openIndex],
@@ -76,7 +82,7 @@ export function PortableGallery({ items }: PortableGalleryProps) {
         <Dialog.Portal>
           <Dialog.Overlay
             className={`fixed inset-0 bg-black/70 backdrop-blur-sm ${
-              prefersReducedMotion ? "" : "data-[state=open]:animate-fade-in"
+              reduceMotion ? "" : "data-[state=open]:animate-fade-in"
             }`}
           />
           {currentAsset ? (

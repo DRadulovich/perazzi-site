@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import type { Champion, HomeData } from "@/types/content";
@@ -13,6 +14,13 @@ type MarqueeFeatureProps = {
 export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
   const analyticsRef = useAnalyticsObserver("ChampionStorySeen");
   const prefersReducedMotion = useReducedMotion();
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    setReduceMotion(Boolean(prefersReducedMotion));
+  }, [prefersReducedMotion]);
+
+  const motionEnabled = !reduceMotion;
   const ratio = champion.image.aspectRatio ?? 3 / 4;
   const background = ui.background ?? {
     id: "marquee-background-fallback",
@@ -58,8 +66,8 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
         <div className="rounded-2xl border border-[color:var(--border-color)] bg-[color:var(--color-canvas)]/30 p-4 text-ink shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-[color:var(--color-canvas)]/40 sm:p-6 sm:shadow-elevated lg:p-8 md:grid md:grid-cols-[minmax(260px,1fr)_minmax(0,1.4fr)] md:items-center md:gap-10">
           <motion.div
-            initial={prefersReducedMotion ? false : { opacity: 0, x: -30 }}
-            whileInView={prefersReducedMotion ? undefined : { opacity: 1, x: 0 }}
+            initial={motionEnabled ? { opacity: 0, x: -30 } : false}
+            whileInView={motionEnabled ? { opacity: 1, x: 0 } : undefined}
             viewport={{ once: true, amount: 0.4 }}
             transition={{ duration: 0.6, ease: [0.33, 1, 0.68, 1] }}
           >
@@ -80,8 +88,8 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
 
           <motion.div
             className="mt-8 space-y-4 md:mt-0"
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
-            whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+            initial={motionEnabled ? { opacity: 0, y: 20 } : false}
+            whileInView={motionEnabled ? { opacity: 1, y: 0 } : undefined}
             viewport={{ once: true, amount: 0.4 }}
             transition={{ duration: 0.6, delay: 0.1, ease: [0.33, 1, 0.68, 1] }}
           >

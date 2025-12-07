@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { HomeData } from "@/types/content";
 import { Button } from "@/components/ui/button";
@@ -13,14 +14,22 @@ type CTASectionProps = {
 export function CTASection({ finale }: CTASectionProps) {
   const analyticsRef = useAnalyticsObserver("FinalCTASeen");
   const prefersReducedMotion = useReducedMotion();
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  // Align SSR/CSR markup, then respect reduced motion after hydration.
+  useEffect(() => {
+    setReduceMotion(Boolean(prefersReducedMotion));
+  }, [prefersReducedMotion]);
+
+  const motionEnabled = !reduceMotion;
 
   return (
     <motion.section
       ref={analyticsRef}
       data-analytics-id="FinalCTASeen"
       className="rounded-2xl bg-perazzi-black px-4 py-8 text-white sm:px-8 sm:py-10"
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 30 }}
-      whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+      initial={motionEnabled ? { opacity: 0, y: 30 } : false}
+      whileInView={motionEnabled ? { opacity: 1, y: 0 } : undefined}
       viewport={{ once: true, amount: 0.6 }}
       transition={{ duration: 0.6, ease: [0.33, 1, 0.68, 1] }}
       aria-labelledby="final-cta-heading"

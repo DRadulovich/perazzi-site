@@ -27,6 +27,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
   const [manifestoOpen, setManifestoOpen] = useState(false);
   const analyticsRef = useAnalyticsObserver(analyticsId ?? "HeroSeen");
   const prefersReducedMotion = useReducedMotion();
+  const [reduceMotion, setReduceMotion] = useState(false);
   const heroHeading = hero.subheading ?? hero.tagline ?? "";
 
   const { scrollYProgress } = useScroll({
@@ -39,6 +40,10 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
     [0, 1],
     ["0%", "15%"],
   );
+
+  useEffect(() => {
+    setReduceMotion(Boolean(prefersReducedMotion));
+  }, [prefersReducedMotion]);
 
   useMotionValueEvent(scrollYProgress, "change", () => {
     // no-op; required for Framer to track parallax
@@ -164,7 +169,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
       <motion.div
         className="absolute inset-0"
         style={{
-          y: prefersReducedMotion ? "0%" : parallaxY,
+          y: reduceMotion ? "0%" : parallaxY,
         }}
       >
         <Image

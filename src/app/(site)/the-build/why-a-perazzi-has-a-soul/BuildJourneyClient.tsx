@@ -44,13 +44,86 @@ type JourneyChaptersProps = {
 type JourneyChapterBarProps = {
   stations: BuildJourneyArticle[];
   activeStepIndex: number;
+  isNavVisible: boolean;
 };
+
+const SOUL_JOURNEY_STORAGE_KEY = "perazzi_soul_journey_v1";
 
 export function BuildJourneyClient({ stations }: BuildJourneyClientProps) {
   const [answers, setAnswers] = useState<Record<StepKey, string>>({});
   const [artisanParagraphs, setArtisanParagraphs] = useState<Record<StepKey, string>>({});
   const [isSubmitting, setIsSubmitting] = useState<Record<StepKey, boolean>>({});
   const [activeStepIndex, setActiveStepIndex] = useState(0);
+  const [isNavVisible, setIsNavVisible] = useState(true);
+
+  // Hydrate answers and artisan paragraphs from localStorage (if present)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const raw = window.localStorage.getItem(SOUL_JOURNEY_STORAGE_KEY);
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw) as {
+        answers?: Record<StepKey, string>;
+        artisanParagraphs?: Record<StepKey, string>;
+      };
+
+      if (parsed.answers && typeof parsed.answers === "object") {
+        setAnswers(parsed.answers);
+      }
+      if (parsed.artisanParagraphs && typeof parsed.artisanParagraphs === "object") {
+        setArtisanParagraphs(parsed.artisanParagraphs);
+      }
+    } catch (error) {
+      console.error("[SoulJourney] Failed to load saved state from localStorage:", error);
+    }
+  }, []);
+
+  // Persist answers and artisan paragraphs to localStorage on changes
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const payload = JSON.stringify({
+        answers,
+        artisanParagraphs,
+      });
+      window.localStorage.setItem(SOUL_JOURNEY_STORAGE_KEY, payload);
+    } catch (error) {
+      console.error("[SoulJourney] Failed to save state to localStorage:", error);
+    }
+  }, [answers, artisanParagraphs]);
+  useEffect(() => {
+    let lastY = window.scrollY;
+
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      const delta = currentY - lastY;
+
+      // Always show near the very top of the page
+      if (currentY < 80) {
+        setIsNavVisible(true);
+      } else {
+        // Scrolling down more than a small threshold -> hide on mobile
+        if (delta > 5) {
+          setIsNavVisible(false);
+        }
+        // Scrolling up more than a small threshold -> show
+        else if (delta < -5) {
+          setIsNavVisible(true);
+        }
+      }
+
+      lastY = currentY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   const totalSteps = stations.length;
   const completedSteps = stations.reduce((count, _station, index) => {
@@ -110,7 +183,11 @@ export function BuildJourneyClient({ stations }: BuildJourneyClientProps) {
         allComplete={allComplete}
         activeStepIndex={activeStepIndex}
       />
-      <JourneyChapterBar stations={stations} activeStepIndex={activeStepIndex} />
+      <JourneyChapterBar
+        stations={stations}
+        activeStepIndex={activeStepIndex}
+        isNavVisible={isNavVisible}
+      />
     </>
   );
 }
@@ -181,11 +258,6 @@ function JourneyChapters({
                     <h2 className="text-xl font-semibold text-ink lg:text-2xl">
                       {station.title ?? "Untitled step"}
                     </h2>
-                    {station.excerpt ? (
-                      <p className="max-w-prose text-sm leading-relaxed text-ink-muted">
-                        {station.excerpt}
-                      </p>
-                    ) : null}
                   </header>
 
                   {hasHero ? (
@@ -263,7 +335,7 @@ function JourneyChapters({
                         <button
                           type="submit"
                           disabled={submitting || !answer.trim()}
-                          className="inline-flex items-center rounded-full border border-border/60 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em]"
+                          className="inline-flex items-center rounded-full border border-border/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em]"
                         >
                           {submitting ? "Saving..." : "Send to the artisan"}
                         </button>
@@ -278,19 +350,22 @@ function JourneyChapters({
               </div>
             </section>
 
-            {/* Transition section: fullscreen parallax image of the article just read,
+            {/* Transition section: fullscreen image of the article just read,
                 with a quote block previewing the next step's excerpt */}
             {hasHero && index < stations.length - 1 ? (
-            <section className="relative min-h-screen" aria-hidden="true">
-              <div
-                className="absolute inset-0 bg-cover bg-center bg-fixed"
-                style={{ backgroundImage: `url(${heroUrl})` }}
+              <section
+                className="relative min-h-[50vh] sm:min-h-[60vh] lg:min-h-screen"
+                aria-hidden="true"
               >
-                <div className="absolute inset-0 bg-gradient-to-b from-[color:var(--color-perazzi-black)]/100 via-[color:var(--color-perazzi-black)]/60 to-[color:var(--color-perazzi-black)]/100" />
-              </div>
-                <div className="relative flex min-h-screen w-full items-center justify-center px-4 py-16 sm:py-24">
+                <div
+                  className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                  style={{ backgroundImage: `url(${heroUrl})` }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-b from-[color:var(--color-perazzi-black)]/100 via-[color:var(--color-perazzi-black)]/60 to-[color:var(--color-perazzi-black)]/100" />
+                </div>
+                <div className="relative flex min-h-[50vh] sm:min-h-[60vh] lg:min-h-screen w-full items-center justify-center px-4 py-16 sm:py-24">
                   {stations[index + 1]?.excerpt ? (
-                    <div className="max-w-2xl text-center space-y-4">
+                    <div className="max-w-2xl space-y-4 text-center">
                       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/80">
                         Up next • Step {(index + 2).toString().padStart(2, "0")} — {stations[index + 1].title}
                       </p>
@@ -327,7 +402,7 @@ function JourneyChapters({
           </div>
         )}
 
-        <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20">
+        <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16 lg:py-20">
           <div
             className={
               allComplete
@@ -402,7 +477,7 @@ function JourneyChapters({
   );
 }
 
-function JourneyChapterBar({ stations, activeStepIndex }: JourneyChapterBarProps) {
+function JourneyChapterBar({ stations, activeStepIndex, isNavVisible }: JourneyChapterBarProps) {
   if (!stations.length) return null;
 
   const total = stations.length;
@@ -423,7 +498,9 @@ function JourneyChapterBar({ stations, activeStepIndex }: JourneyChapterBarProps
 
   return (
     <div
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-muted bg-ink/50 text-xs text-white shadow-sm backdrop-blur-lg sm:text-sm"
+      className={`fixed inset-x-0 bottom-0 z-30 border-t border-perazzi-black/50 bg-perazzi-black/85 text-xs text-white shadow-sm backdrop-blur-none sm:backdrop-blur-lg sm:text-sm transition-transform duration-300 ${
+        isNavVisible ? "translate-y-0" : "translate-y-full sm:translate-y-0"
+      }`}
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2">
@@ -439,7 +516,7 @@ function JourneyChapterBar({ stations, activeStepIndex }: JourneyChapterBarProps
           {prevTargetId ? (
             <a
               href={`#${prevTargetId}`}
-              className="rounded-full border border-white/60 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white hover:bg-card/10"
+              className="rounded-full border border-white/60 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white hover:bg-card/10"
             >
               Previous
             </a>
@@ -447,7 +524,7 @@ function JourneyChapterBar({ stations, activeStepIndex }: JourneyChapterBarProps
           {nextTargetId ? (
             <a
               href={`#${nextTargetId}`}
-              className="rounded-full border border-white/60 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white hover:bg-card/10"
+              className="rounded-full border border-white/60 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white hover:bg-card/10"
             >
               Next
             </a>

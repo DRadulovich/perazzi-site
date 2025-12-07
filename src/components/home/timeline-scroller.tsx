@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FittingStage, HomeData } from "@/types/content";
@@ -8,6 +9,7 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { TimelineItem } from "./timeline-item";
 
 type TimelineScrollerProps = {
@@ -220,6 +222,18 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                   </div>
                 </div>
               )}
+              <div className="pt-2 sm:pt-4">
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="lg"
+                  className="w-full border border-border bg-transparent text-ink hover:bg-ink/5 focus-visible:bg-ink/5"
+                >
+                  <Link href="/the-build/why-a-perazzi-has-a-soul">
+                    See the full build story
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         </div>

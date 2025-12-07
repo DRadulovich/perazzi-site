@@ -65,7 +65,7 @@ function HeroSection() {
             Inside the Perazzi Factory
           </p>
           <h1 className="text-3xl font-semibold tracking-tight text-white lg:text-5xl">
-            The Soul of a Perazzi Shotgun
+            Through the Eyes of the Makers
           </h1>
           <p className="text-sm leading-relaxed text-white/75 lg:text-base">
             Every Perazzi is born the same way: one frame of steel and walnut moving bench by bench through the same circle of hands, whether it’s a bespoke order or a gun you find on a dealer’s shelf. This page stitches those stations into one continuous build journey, following a single gun as it collects their decisions.

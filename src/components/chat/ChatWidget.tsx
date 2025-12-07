@@ -147,7 +147,7 @@ export function ChatWidget() {
     <>
       {isMobile ? (
         <>
-          {!isOpen && (
+          {!isOpen && !hideTrigger && (
             <button
               type="button"
               aria-label="Open Perazzi Concierge"
