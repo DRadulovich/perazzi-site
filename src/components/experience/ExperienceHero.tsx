@@ -8,13 +8,13 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import type { ExperienceHero } from "@/types/experience";
 
 type Breadcrumb = {
-  label: string;
-  href: string;
+  readonly label: string;
+  readonly href: string;
 };
 
 type ExperienceHeroProps = {
-  hero: ExperienceHero;
-  breadcrumbs?: Breadcrumb[];
+  readonly hero: ExperienceHero;
+  readonly breadcrumbs?: readonly Breadcrumb[];
 };
 
 export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {

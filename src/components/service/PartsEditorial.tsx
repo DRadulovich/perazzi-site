@@ -3,9 +3,9 @@
 import type { PartsEditorialSection } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
-type PartsEditorialProps = {
+type PartsEditorialProps = Readonly<{
   partsEditorialSection: PartsEditorialSection;
-};
+}>;
 
 export function PartsEditorial({ partsEditorialSection }: PartsEditorialProps) {
   const analyticsRef = useAnalyticsObserver("PartsEditorialSeen");

@@ -6,10 +6,10 @@ import { motion, useReducedMotion } from "framer-motion";
 import type { Champion, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
-type MarqueeFeatureProps = {
+type MarqueeFeatureProps = Readonly<{
   champion: Champion;
   ui: HomeData["marqueeUi"];
-};
+}>;
 
 export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
   const analyticsRef = useAnalyticsObserver("ChampionStorySeen");

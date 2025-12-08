@@ -3,14 +3,13 @@
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-import { promisify } from "node:util";
 import { execSync } from "node:child_process";
 import minimist from "minimist";
 import fg from "fast-glob";
 import { Minimatch } from "minimatch";
 import { parse as parseCsv } from "csv-parse/sync";
 import OpenAI from "openai";
-import { Pool } from "pg";
+import { Pool, type PoolConfig } from "pg";
 import { registerType, toSql } from "pgvector/pg";
 import { encoding_for_model, get_encoding, type TiktokenModel } from "@dqbd/tiktoken";
 
@@ -174,8 +173,8 @@ function loadSanityLookups(): SanityLookups {
 
 function slugify(input: string): string {
   return input
-    .replace(/[^a-zA-Z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
+    .replaceAll(/[^a-zA-Z0-9]+/g, "-")
+    .replaceAll(/(^-+|-+$)/g, "")
     .toLowerCase();
 }
 
@@ -251,7 +250,7 @@ function dedupeExact(values?: Array<string | null | undefined>, fallback: string
 }
 
 function inferTopicsFromPath(filePath: string): string[] {
-  const normalized = filePath.replace(/\\/g, "/");
+  const normalized = filePath.replaceAll("\\", "/");
   if (normalized.includes("Phase_1_Documents")) return ["policies", "guardrails"];
   if (normalized.includes("Brand_Info")) return ["heritage", "history"];
   if (normalized.includes("Live_Site_Narratives")) return ["heritage", "storytelling"];
@@ -297,8 +296,8 @@ function looksLikeHeading(text: string): boolean {
 
 function splitParagraphs(text: string): string[] {
   const normalized = text
-    .replace(/([:.])\s+-\s+/g, "$1\n- ")
-    .replace(/\s+(?=\[\d+\])/g, "\n");
+    .replaceAll(/([:.])\s+-\s+/g, "$1\n- ")
+    .replaceAll(/\s+(?=\[\d+\])/g, "\n");
   const lines = normalized.split(/\r?\n/);
   const paragraphs: string[] = [];
   let buffer: string[] = [];
@@ -341,7 +340,7 @@ function breakParagraph(paragraph: string, maxWords: number): string[] {
       .filter(Boolean)
       .flatMap((entry) => {
         if (countWords(entry) > maxWords) {
-          const clean = entry.replace(/^[-*•]\s*/, "");
+          const clean = entry.replaceAll(/^[-*•]\s*/g, "");
           return breakParagraph(clean, maxWords).map((frag) => `- ${frag}`);
         }
         return [entry];
@@ -527,11 +526,11 @@ function chunkJson(filePath: string, text: string, rule: ChunkRule): ChunkDef[] 
 }
 
 function chunkCsv(filePath: string, text: string, rule: ChunkRule) {
-  const records = parseCsv(text, {
+  const records = parseCsv<Record<string, string>>(text, {
     columns: true,
     skip_empty_lines: true,
     trim: true,
-  }) as Record<string, string>[];
+  });
   if (!records.length) {
     return [];
   }
@@ -576,84 +575,131 @@ function chunkCsv(filePath: string, text: string, rule: ChunkRule) {
   return chunks;
 }
 
-function chunkModelDetails(filePath: string, text: string): ChunkDef[] {
+function normalizeLowerList(value: any): string[] {
+  return Array.isArray(value)
+    ? value.map((item) => (item ?? "").toString().toLowerCase()).filter(Boolean)
+    : [];
+}
+
+function normalizeOptionalLower(value: any): string | undefined {
+  if (value === undefined || value === null) return undefined;
+  const text = value.toString().trim();
+  return text ? text.toLowerCase() : undefined;
+}
+
+function extractRibNotch(record: any): number | null {
+  const rawNotch = record.rib?.adjustableNotch;
+  if (rawNotch === undefined || rawNotch === null) return null;
+  const notch = Number(rawNotch);
+  return Number.isNaN(notch) ? null : notch;
+}
+
+function buildModelTextBody(record: any, name: string, platform?: string): string {
+  const specText: string = record.specText ?? "";
+  if (specText) return specText;
+  const details = [
+    name ? `Model name: ${name}` : "",
+    platform ? `Platform: ${platform}` : "",
+    record.category ? `Category: ${record.category}` : "",
+    record.disciplines ? `Disciplines: ${(record.disciplines as any[]).join(", ")}` : "",
+    record.gauges ? `Gauges: ${(record.gauges as any[]).join(", ")}` : "",
+    record.barrelConfig ? `Barrel: ${record.barrelConfig}` : "",
+  ].filter(Boolean);
+  return details.join(" | ");
+}
+
+function collectModelEntityIds(record: any, slug?: string): string[] {
+  const ids: string[] = [];
+  const recordId = record.id ? String(record.id) : "";
+  if (slug) ids.push(slug);
+  if (recordId && recordId !== slug) ids.push(recordId);
+  if (record.baseModel) ids.push(String(record.baseModel));
+  return ids;
+}
+
+function buildModelTopicTags(params: {
+  topics: string[];
+  disciplines: string[];
+  platform?: string;
+  grade?: string;
+  ribType?: string;
+  ribNotch: number | null;
+  triggerType?: string;
+  springs: string[];
+}): string[] {
+  const topicTags = new Set<string>(["models", "specs", ...params.topics]);
+  params.disciplines.forEach((discipline) => topicTags.add(`discipline_${discipline}`));
+  if (params.platform) topicTags.add(`platform_${params.platform}`);
+  if (params.grade) topicTags.add(`grade_${slugify(params.grade)}`);
+  if (params.ribType) topicTags.add(`rib_${params.ribType}`);
+  if (params.ribNotch && Number.isFinite(params.ribNotch)) topicTags.add(`rib_notch_${params.ribNotch}`);
+  if (params.triggerType) topicTags.add(`trigger_${params.triggerType}`);
+  params.springs.forEach((spring) => topicTags.add(`trigger_spring_${spring}`));
+  return Array.from(topicTags);
+}
+
+function buildModelStructuredRef(record: any, meta: { slug?: string; name: string; platform?: string; disciplines: string[] }) {
+  return {
+    type: "model_spec",
+    slug: meta.slug,
+    name: meta.name,
+    platform: meta.platform,
+    baseModel: record.baseModel ?? null,
+    category: record.category ?? null,
+    disciplines: meta.disciplines,
+    gauges: record.gauges ?? [],
+    barrelConfig: record.barrelConfig ?? null,
+    trigger: record.trigger ?? null,
+    rib: record.rib ?? null,
+    grade: record.grade ?? null,
+  };
+}
+
+function getModelBasics(record: any) {
+  const name: string = record.name ?? record.slug ?? record.id ?? "Perazzi Model";
+  const slug: string | undefined = record.slug ?? record.id ?? undefined;
+  const platform: string | undefined = record.platform ?? record.platformSlug ?? undefined;
+  return { name, slug, platform };
+}
+
+function buildModelChunk(record: any): ChunkDef {
+  const { name, slug, platform } = getModelBasics(record);
+  const disciplines = normalizeLowerList(record.disciplines);
+  const topics = normalizeLowerList(record.topics);
+  const grade = normalizeOptionalLower(record.grade);
+  const ribType = normalizeOptionalLower(record.rib?.type);
+  const ribNotch = extractRibNotch(record);
+  const triggerType = normalizeOptionalLower(record.trigger?.type);
+  const springs = normalizeLowerList(record.trigger?.springs);
+  const textBody = buildModelTextBody(record, name, platform);
+  const entityIds = collectModelEntityIds(record, slug);
+  const topicTags = buildModelTopicTags({
+    topics,
+    disciplines,
+    platform,
+    grade,
+    ribType,
+    ribNotch,
+    triggerType,
+    springs,
+  });
+  const structuredRefs = [buildModelStructuredRef(record, { slug, name, platform, disciplines })];
+  return {
+    text: textBody,
+    words: countWords(textBody),
+    headings: [`### ${name}`],
+    topics: topicTags,
+    disciplines,
+    platforms: platform ? [platform] : [],
+    entityIds,
+    structuredRefs,
+  };
+}
+
+function chunkModelDetails(_filePath: string, text: string): ChunkDef[] {
   const records: any[] = JSON.parse(text);
   if (!Array.isArray(records) || !records.length) return [];
-  const chunks: ChunkDef[] = [];
-  records.forEach((record) => {
-    const name: string = record.name ?? record.slug ?? record.id ?? "Perazzi Model";
-    const slug: string | undefined = record.slug ?? record.id ?? undefined;
-    const platform: string | undefined = record.platform ?? record.platformSlug ?? undefined;
-    const disciplines: string[] = Array.isArray(record.disciplines)
-      ? record.disciplines.map((d: any) => (d ?? "").toString().toLowerCase()).filter(Boolean)
-      : [];
-    const topics: string[] = Array.isArray(record.topics)
-      ? record.topics.map((t: any) => (t ?? "").toString().toLowerCase()).filter(Boolean)
-      : [];
-    const grade: string | undefined = record.grade ? record.grade.toString().toLowerCase() : undefined;
-    const ribType: string | undefined = record.rib?.type ? record.rib.type.toString().toLowerCase() : undefined;
-    const ribNotch: number | null =
-      record.rib?.adjustableNotch !== undefined && record.rib?.adjustableNotch !== null
-        ? Number(record.rib.adjustableNotch)
-        : null;
-    const triggerType: string | undefined = record.trigger?.type ? record.trigger.type.toString().toLowerCase() : undefined;
-    const springs: string[] = Array.isArray(record.trigger?.springs)
-      ? record.trigger.springs.map((s: any) => (s ?? "").toString().toLowerCase()).filter(Boolean)
-      : [];
-    const specText: string = record.specText || "";
-    const textBody =
-      specText ||
-      [
-        name ? `Model name: ${name}` : "",
-        platform ? `Platform: ${platform}` : "",
-        record.category ? `Category: ${record.category}` : "",
-        record.disciplines ? `Disciplines: ${(record.disciplines as any[]).join(", ")}` : "",
-        record.gauges ? `Gauges: ${(record.gauges as any[]).join(", ")}` : "",
-        record.barrelConfig ? `Barrel: ${record.barrelConfig}` : "",
-      ]
-        .filter(Boolean)
-        .join(" | ");
-    const words = countWords(textBody);
-    const entityIds: string[] = [];
-    if (slug) entityIds.push(slug);
-    if (record.id && record.id !== slug) entityIds.push(String(record.id));
-    if (record.baseModel) entityIds.push(String(record.baseModel));
-    const topicTags = new Set<string>(["models", "specs", ...topics]);
-    disciplines.forEach((d) => topicTags.add(`discipline_${d}`));
-    if (platform) topicTags.add(`platform_${platform}`);
-    if (grade) topicTags.add(`grade_${slugify(grade)}`);
-    if (ribType) topicTags.add(`rib_${ribType}`);
-    if (ribNotch && Number.isFinite(ribNotch)) topicTags.add(`rib_notch_${ribNotch}`);
-    if (triggerType) topicTags.add(`trigger_${triggerType}`);
-    springs.forEach((s) => topicTags.add(`trigger_spring_${s}`));
-    const structuredRefs = [
-      {
-        type: "model_spec",
-        slug,
-        name,
-        platform,
-        baseModel: record.baseModel ?? null,
-        category: record.category ?? null,
-        disciplines,
-        gauges: record.gauges ?? [],
-        barrelConfig: record.barrelConfig ?? null,
-        trigger: record.trigger ?? null,
-        rib: record.rib ?? null,
-        grade: record.grade ?? null,
-      },
-    ];
-    chunks.push({
-      text: textBody,
-      words,
-      headings: [`### ${name}`],
-      topics: Array.from(topicTags),
-      disciplines,
-      platforms: platform ? [platform] : [],
-      entityIds,
-      structuredRefs,
-    });
-  });
-  return chunks;
+  return records.map((record) => buildModelChunk(record));
 }
 
 function chunkSanityModels(filePath: string, text: string): ChunkDef[] {
@@ -846,7 +892,7 @@ function extractHeadings(text: string): string[] {
 }
 
 function firstHeadingOrFallback(text: string, fallback: string) {
-  const match = text.match(/^#{1,6}\s(.+)$/m);
+  const match = /^#{1,6}\s(.+)$/m.exec(text);
   return match ? match[1].trim() : fallback;
 }
 
@@ -958,15 +1004,259 @@ function buildMetadata(opts: {
   return baseMetadata;
 }
 
-async function main() {
+function createEncoding() {
+  try {
+    const embedModel = (process.env.PERAZZI_EMBED_MODEL as TiktokenModel | undefined) ?? "text-embedding-3-large";
+    return encoding_for_model(embedModel);
+  } catch {
+    return get_encoding("cl100k_base");
+  }
+}
+
+async function resolveInputFiles(): Promise<string[]> {
   const patterns = config.rules.map((r) => r.glob);
-  let files: string[];
   if (DOC_FILTER) {
     const candidate = path.isAbsolute(DOC_FILTER) ? DOC_FILTER : path.join(PROJECT_ROOT, DOC_FILTER);
-    files = [candidate];
-  } else {
-    files = await fg(patterns, { cwd: PROJECT_ROOT, dot: true, absolute: true });
+    return [candidate];
   }
+  return fg(patterns, { cwd: PROJECT_ROOT, dot: true, absolute: true });
+}
+
+function selectChunkDefs(filePath: string, text: string, rule: ChunkRule, relPath: string, ext: string): ChunkDef[] {
+  if (ext === ".json") {
+    if (relPath.endsWith("PerazziGPT/DEVELOPER/corpus_models_details.json")) {
+      return chunkModelDetails(filePath, text);
+    }
+    if (relPath.endsWith("Sanity_Info/models.json")) return chunkSanityModels(filePath, text);
+    if (relPath.endsWith("Sanity_Info/authorizedDealer.json")) return chunkSanityDealers(filePath, text);
+    if (relPath.endsWith("Company_Info/Olympic_Medals.json")) return chunkOlympicMedals(filePath, text);
+    return chunkJson(filePath, text, rule);
+  }
+  if (ext === ".csv") return chunkCsv(filePath, text, rule);
+  return chunkMarkdown(filePath, text, rule);
+}
+
+function validateChunkLimits(
+  chunkDef: ChunkDef,
+  rule: ChunkRule,
+  tokens: number,
+  filePath: string,
+  lintErrors: string[],
+  chunkIndex: number,
+) {
+  if (rule.allow_overflow) return;
+  const wordLimit =
+    (rule.max_words ?? config.defaults.max_words) +
+    (rule.overlap_words ?? config.defaults.overlap_words ?? 0) +
+    (config.defaults.max_overlap_delta ?? 0);
+  if (chunkDef.words > wordLimit) {
+    lintErrors.push(
+      `Chunk ${chunkIndex + 1} exceeds max_words in ${path.relative(PROJECT_ROOT, filePath)} (${chunkDef.words})`,
+    );
+  }
+  const tokenLimit =
+    (rule.max_tokens ?? config.defaults.max_tokens) +
+    (rule.overlap_words ?? config.defaults.overlap_words ?? 0) +
+    (config.defaults.max_overlap_delta ?? 0);
+  if (tokens > tokenLimit) {
+    lintErrors.push(
+      `Chunk ${chunkIndex + 1} exceeds max_tokens in ${path.relative(PROJECT_ROOT, filePath)} (${tokens})`,
+    );
+  }
+}
+
+function addChunkRecord(params: {
+  chunkDef: ChunkDef;
+  idx: number;
+  chunkCount: number;
+  rule: ChunkRule;
+  filePath: string;
+  docId: string;
+  type: string;
+  audience: string;
+  statsMtime: Date;
+  encoding: ReturnType<typeof createEncoding>;
+  lintErrors: string[];
+  chunkRecords: ChunkRecord[];
+  debugDoc: string;
+}) {
+  const {
+    chunkDef,
+    idx,
+    chunkCount,
+    rule,
+    filePath,
+    docId,
+    type,
+    audience,
+    statsMtime,
+    encoding,
+    lintErrors,
+    chunkRecords,
+    debugDoc,
+  } = params;
+  const tokens = encoding.encode(chunkDef.text).length;
+  validateChunkLimits(chunkDef, rule, tokens, filePath, lintErrors, idx);
+  const metadata = buildMetadata({
+    filePath,
+    chunkText: chunkDef.text,
+    chunkIndex: idx,
+    chunkCount,
+    tokens,
+    audience,
+    docId,
+    type,
+    lastUpdated: statsMtime,
+    rule,
+    guardrailFlags: chunkDef.guardrailFlags ?? inferGuardrailFlags(filePath, chunkDef.text, rule),
+    topics: chunkDef.topics,
+    disciplines: chunkDef.disciplines,
+    platforms: chunkDef.platforms,
+    geo: chunkDef.geo,
+    entityIds: chunkDef.entityIds,
+    structuredRefs: chunkDef.structuredRefs,
+  });
+  chunkRecords.push({
+    docId,
+    chunkId: metadata.chunk_id,
+    text: chunkDef.text,
+    metadata,
+    tokens,
+    words: chunkDef.words,
+    headingCoverage: chunkDef.headings,
+  });
+  if (debugDoc && docId.includes(debugDoc)) {
+    console.log(
+      `[debug] ${metadata.chunk_id} words=${chunkDef.words} tokens=${tokens} summary="${metadata.summary.slice(0, 60)}"`,
+    );
+  }
+}
+
+function ensureHeadingCoverage(
+  headings: string[],
+  headingSet: Set<string>,
+  relPath: string,
+  lintErrors: string[],
+  lintWarnings: string[],
+) {
+  headings.forEach((head) => {
+    if (!headingSet.has(head.trim())) {
+      const msg = `Heading "${head}" from ${relPath} missing in chunks`;
+      if (STRICT) {
+        lintErrors.push(msg);
+      } else {
+        lintWarnings.push(msg);
+      }
+    }
+  });
+}
+
+function buildCoverageEntry(
+  chunkDefs: ChunkDef[],
+  filePath: string,
+  lastUpdated: Date,
+  encoding: ReturnType<typeof createEncoding>,
+): CoverageEntry {
+  const guardFlagsDoc = filePath.includes("Pricing_And_Models") ? ["contains_pricing_fields"] : [];
+  return {
+    doc_id: fileToDocId(filePath),
+    path: path.relative(PROJECT_ROOT, filePath),
+    chunk_count: chunkDefs.length,
+    total_tokens: chunkDefs.reduce((sum, d) => sum + encoding.encode(d.text).length, 0),
+    last_updated: lastUpdated.toISOString(),
+    guardrail_flags: guardFlagsDoc,
+  };
+}
+
+function emitMetadataIfNeeded(chunkRecords: ChunkRecord[]) {
+  if (!EMIT_METADATA) return;
+  console.log(JSON.stringify(chunkRecords.map((c) => c.metadata), null, 2));
+}
+
+function handleLintResults(lintErrors: string[], lintWarnings: string[]) {
+  if (!RUN_LINT) return;
+  if (lintWarnings.length) {
+    console.warn("Lint warnings:");
+    lintWarnings.forEach((w) => console.warn(`  • ${w}`));
+  }
+  if (lintErrors.length) {
+    console.error("Lint errors:");
+    lintErrors.forEach((e) => console.error(`  • ${e}`));
+    process.exit(1);
+  }
+}
+
+function writeReport(coverage: CoverageEntry[], totalChunks: number) {
+  const reportDir = path.join(PROJECT_ROOT, "tmp", "ingestion-reports");
+  fs.mkdirSync(reportDir, { recursive: true });
+  const timestamp = new Date().toISOString();
+  const reportPath = path.join(reportDir, `${timestamp.replaceAll(/[:.]/g, "-")}.json`);
+  fs.writeFileSync(
+    reportPath,
+    JSON.stringify(
+      {
+        generated_at: timestamp,
+        total_chunks: totalChunks,
+        documents: coverage,
+      },
+      null,
+      2,
+    ),
+  );
+  return reportPath;
+}
+
+function processFile(params: {
+  filePath: string;
+  encoding: ReturnType<typeof createEncoding>;
+  lintErrors: string[];
+  lintWarnings: string[];
+  chunkRecords: ChunkRecord[];
+  coverage: CoverageEntry[];
+  debugDoc: string;
+}) {
+  const { filePath, encoding, lintErrors, lintWarnings, chunkRecords, coverage, debugDoc } = params;
+  const text = fs.readFileSync(filePath, "utf8");
+  const rule = getRuleForFile(filePath);
+  const ext = path.extname(filePath).toLowerCase();
+  const relPath = path.relative(PROJECT_ROOT, filePath).replaceAll("\\", "/");
+  const chunkDefs = selectChunkDefs(filePath, text, rule, relPath, ext);
+  if (!chunkDefs.length) {
+    lintErrors.push(`No chunks produced for ${path.relative(PROJECT_ROOT, filePath)}`);
+    return;
+  }
+  const docId = fileToDocId(filePath);
+  const type = fileToType(filePath);
+  const audience = inferAudience(filePath);
+  const headings = extractHeadings(text);
+  const stats = fs.statSync(filePath);
+  const headingSet = new Set<string>();
+
+  chunkDefs.forEach((chunkDef, idx) => {
+    addChunkRecord({
+      chunkDef,
+      idx,
+      chunkCount: chunkDefs.length,
+      rule,
+      filePath,
+      docId,
+      type,
+      audience,
+      statsMtime: stats.mtime,
+      encoding,
+      lintErrors,
+      chunkRecords,
+      debugDoc,
+    });
+    chunkDef.headings.forEach((h) => headingSet.add(h.trim()));
+  });
+
+  ensureHeadingCoverage(headings, headingSet, relPath, lintErrors, lintWarnings);
+  coverage.push(buildCoverageEntry(chunkDefs, filePath, stats.mtime, encoding));
+}
+
+async function main() {
+  const files = await resolveInputFiles();
   if (!files.length) {
     console.log("No files matched chunking configuration.");
     return;
@@ -977,166 +1267,17 @@ async function main() {
   const lintErrors: string[] = [];
   const lintWarnings: string[] = [];
   const debugDoc = process.env.DEBUG_CHUNK_DOC ?? "";
+  const encoding = createEncoding();
 
-  const encoding = (() => {
-    try {
-      const embedModel = (process.env.PERAZZI_EMBED_MODEL as TiktokenModel | undefined) ?? "text-embedding-3-large";
-      return encoding_for_model(embedModel);
-    } catch {
-      return get_encoding("cl100k_base");
-    }
-  })();
-
-  for (const filePath of files) {
-    const text = fs.readFileSync(filePath, "utf8");
-    const rule = getRuleForFile(filePath);
-    const ext = path.extname(filePath).toLowerCase();
-    const relPath = path.relative(PROJECT_ROOT, filePath).replace(/\\/g, "/");
-    let chunkDefs: ChunkDef[] = [];
-    if (ext === ".json") {
-      if (relPath.endsWith("PerazziGPT/DEVELOPER/corpus_models_details.json")) {
-        chunkDefs = chunkModelDetails(filePath, text);
-      } else if (relPath.endsWith("Sanity_Info/models.json")) {
-        chunkDefs = chunkSanityModels(filePath, text);
-      } else if (relPath.endsWith("Sanity_Info/authorizedDealer.json")) {
-        chunkDefs = chunkSanityDealers(filePath, text);
-      } else if (relPath.endsWith("Company_Info/Olympic_Medals.json")) {
-        chunkDefs = chunkOlympicMedals(filePath, text);
-      } else {
-        chunkDefs = chunkJson(filePath, text, rule);
-      }
-    } else if (ext === ".csv") {
-      chunkDefs = chunkCsv(filePath, text, rule);
-    } else {
-      chunkDefs = chunkMarkdown(filePath, text, rule);
-    }
-    if (!chunkDefs.length) {
-      lintErrors.push(`No chunks produced for ${path.relative(PROJECT_ROOT, filePath)}`);
-      continue;
-    }
-    const docId = fileToDocId(filePath);
-    const type = fileToType(filePath);
-    const audience = inferAudience(filePath);
-    const headings = extractHeadings(text);
-    const stats = fs.statSync(filePath);
-    chunkDefs.forEach((chunkDef, idx) => {
-      const tokens = encoding.encode(chunkDef.text).length;
-      if (!rule.allow_overflow) {
-        const wordLimit =
-          (rule.max_words ?? config.defaults.max_words) +
-          (rule.overlap_words ?? config.defaults.overlap_words ?? 0) +
-          (config.defaults.max_overlap_delta ?? 0);
-        if (chunkDef.words > wordLimit) {
-          lintErrors.push(
-            `Chunk ${idx + 1} in ${path.relative(PROJECT_ROOT, filePath)} exceeds max_words (${chunkDef.words})`
-          );
-        }
-        const tokenLimit =
-          (rule.max_tokens ?? config.defaults.max_tokens) +
-          (rule.overlap_words ?? config.defaults.overlap_words ?? 0) +
-          (config.defaults.max_overlap_delta ?? 0);
-        if (tokens > tokenLimit) {
-          lintErrors.push(
-            `Chunk ${idx + 1} in ${path.relative(PROJECT_ROOT, filePath)} exceeds max_tokens (${tokens})`
-          );
-        }
-      }
-      const metadata = buildMetadata({
-        filePath,
-        chunkText: chunkDef.text,
-        chunkIndex: idx,
-        chunkCount: chunkDefs.length,
-        tokens,
-        audience,
-        docId,
-        type,
-        lastUpdated: stats.mtime,
-        rule,
-        guardrailFlags: chunkDef.guardrailFlags ?? inferGuardrailFlags(filePath, chunkDef.text, rule),
-        topics: chunkDef.topics,
-        disciplines: chunkDef.disciplines,
-        platforms: chunkDef.platforms,
-        geo: chunkDef.geo,
-        entityIds: chunkDef.entityIds,
-        structuredRefs: chunkDef.structuredRefs,
-      });
-      chunkRecords.push({
-        docId,
-        chunkId: metadata.chunk_id,
-        text: chunkDef.text,
-        metadata,
-        tokens,
-        words: chunkDef.words,
-        headingCoverage: chunkDef.headings,
-      });
-      if (debugDoc && docId.includes(debugDoc)) {
-        console.log(
-          `[debug] ${metadata.chunk_id} words=${chunkDef.words} tokens=${tokens} summary="${metadata.summary.slice(
-            0,
-            60
-          )}"`
-        );
-      }
-    });
-    const headingSet = new Set<string>();
-    chunkDefs.forEach((chunk) => {
-      chunk.headings.forEach((h) => headingSet.add(h.trim()));
-    });
-    headings.forEach((head) => {
-      if (!headingSet.has(head.trim())) {
-        const msg = `Heading "${head}" from ${path.relative(PROJECT_ROOT, filePath)} missing in chunks`;
-        if (STRICT) {
-          lintErrors.push(msg);
-        } else {
-          lintWarnings.push(msg);
-        }
-      }
-    });
-    const guardFlagsDoc = filePath.includes("Pricing_And_Models") ? ["contains_pricing_fields"] : [];
-    coverage.push({
-      doc_id: docId,
-      path: path.relative(PROJECT_ROOT, filePath),
-      chunk_count: chunkDefs.length,
-      total_tokens: chunkDefs.reduce((sum, d) => sum + encoding.encode(d.text).length, 0),
-      last_updated: stats.mtime.toISOString(),
-      guardrail_flags: guardFlagsDoc,
-    });
-  }
+  files.forEach((filePath) => {
+    processFile({ filePath, encoding, lintErrors, lintWarnings, chunkRecords, coverage, debugDoc });
+  });
 
   encoding.free();
+  handleLintResults(lintErrors, lintWarnings);
+  emitMetadataIfNeeded(chunkRecords);
 
-  if (RUN_LINT) {
-    if (lintWarnings.length) {
-      console.warn("Lint warnings:");
-      lintWarnings.forEach((w) => console.warn(`  • ${w}`));
-    }
-    if (lintErrors.length) {
-      console.error("Lint errors:");
-      lintErrors.forEach((e) => console.error(`  • ${e}`));
-      process.exit(1);
-    }
-  }
-
-  if (EMIT_METADATA) {
-    console.log(JSON.stringify(chunkRecords.map((c) => c.metadata), null, 2));
-  }
-
-  const reportDir = path.join(PROJECT_ROOT, "tmp", "ingestion-reports");
-  fs.mkdirSync(reportDir, { recursive: true });
-  const reportPath = path.join(reportDir, `${new Date().toISOString().replace(/[:.]/g, "-")}.json`);
-  fs.writeFileSync(
-    reportPath,
-    JSON.stringify(
-      {
-        generated_at: new Date().toISOString(),
-        total_chunks: chunkRecords.length,
-        documents: coverage,
-      },
-      null,
-      2
-    )
-  );
-
+  const reportPath = writeReport(coverage, chunkRecords.length);
   if (DRY_RUN) {
     console.log(`Dry run complete – ${chunkRecords.length} chunks prepared.`);
     console.log(`Report written to ${path.relative(PROJECT_ROOT, reportPath)}`);
@@ -1148,7 +1289,18 @@ async function main() {
   console.log(`Report written to ${path.relative(PROJECT_ROOT, reportPath)}`);
 }
 
-async function ingestChunks(chunks: ChunkRecord[]) {
+type IngestConfig = {
+  apiKey: string;
+  dbUrl: string;
+  model: string;
+  batchSize: number;
+  tableName: string;
+  dimension: number;
+  opClass: string;
+  ssl: PoolConfig["ssl"];
+};
+
+function loadIngestConfig(): IngestConfig {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error("OPENAI_API_KEY is required");
@@ -1157,87 +1309,123 @@ async function ingestChunks(chunks: ChunkRecord[]) {
   if (!dbUrl) {
     throw new Error("DATABASE_URL is required");
   }
-  const model = process.env.PERAZZI_EMBED_MODEL ?? "text-embedding-3-large";
-  const batchSize = Number(process.env.EMBED_BATCH_SIZE ?? 32);
-  const tableName = process.env.PGVECTOR_TABLE ?? "perazzi_chunks";
-  const dimension = Number(process.env.PGVECTOR_DIM ?? 1536);
-
-  const openai = new OpenAI({ apiKey });
-  const pool = new Pool({
-    connectionString: dbUrl,
-    max: 5,
+  return {
+    apiKey,
+    dbUrl,
+    model: process.env.PERAZZI_EMBED_MODEL ?? "text-embedding-3-large",
+    batchSize: Number(process.env.EMBED_BATCH_SIZE ?? 32),
+    tableName: process.env.PGVECTOR_TABLE ?? "perazzi_chunks",
+    dimension: Number(process.env.PGVECTOR_DIM ?? 1536),
+    opClass: process.env.PGVECTOR_OP_CLASS ?? "vector_l2_ops",
     ssl: process.env.PGSSL_MODE === "require" ? { rejectUnauthorized: false } : undefined,
-  });
+  };
+}
+
+async function registerVectorTypes(pool: Pool) {
   const typeClient = await pool.connect();
   await registerType(typeClient);
   typeClient.release();
+}
 
+async function ensureEmbeddingIndex(pool: Pool, config: IngestConfig) {
+  if (config.dimension <= 2000) {
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS ${config.tableName}_embedding_idx ON ${config.tableName} USING ivfflat (embedding ${config.opClass}) WITH (lists = 100);`,
+    );
+    return;
+  }
+  try {
+    await pool.query(
+      `CREATE INDEX IF NOT EXISTS ${config.tableName}_embedding_hnsw_idx ON ${config.tableName} USING hnsw (embedding ${config.opClass}) WITH (m = 32, ef_construction = 64);`,
+    );
+  } catch (error) {
+    console.warn(
+      `HNSW index creation failed (dimension ${config.dimension}). Falling back to sequential scan queries.`,
+      error instanceof Error ? error.message : error,
+    );
+  }
+}
+
+async function prepareDatabase(pool: Pool, config: IngestConfig) {
   await pool.query("CREATE EXTENSION IF NOT EXISTS vector;");
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS ${tableName} (
+    CREATE TABLE IF NOT EXISTS ${config.tableName} (
       chunk_id TEXT PRIMARY KEY,
       doc_id TEXT NOT NULL,
       content TEXT NOT NULL,
       metadata JSONB NOT NULL,
-      embedding VECTOR(${dimension}) NOT NULL,
+      embedding VECTOR(${config.dimension}) NOT NULL,
       created_at TIMESTAMPTZ DEFAULT now(),
       updated_at TIMESTAMPTZ DEFAULT now()
     );
   `);
-  await pool.query(`CREATE INDEX IF NOT EXISTS ${tableName}_doc_id_idx ON ${tableName} (doc_id);`);
-  await pool.query(`CREATE INDEX IF NOT EXISTS ${tableName}_metadata_idx ON ${tableName} USING GIN (metadata);`);
-  const opClass = process.env.PGVECTOR_OP_CLASS ?? "vector_l2_ops";
-  if (dimension <= 2000) {
-    await pool.query(
-      `CREATE INDEX IF NOT EXISTS ${tableName}_embedding_idx ON ${tableName} USING ivfflat (embedding ${opClass}) WITH (lists = 100);`
-    );
-  } else {
-    try {
-      await pool.query(
-        `CREATE INDEX IF NOT EXISTS ${tableName}_embedding_hnsw_idx ON ${tableName} USING hnsw (embedding ${opClass}) WITH (m = 32, ef_construction = 64);`
-      );
-    } catch (error) {
-      console.warn(
-        `HNSW index creation failed (dimension ${dimension}). Falling back to sequential scan queries.`,
-        error instanceof Error ? error.message : error
-      );
+  await pool.query(`CREATE INDEX IF NOT EXISTS ${config.tableName}_doc_id_idx ON ${config.tableName} (doc_id);`);
+  await pool.query(
+    `CREATE INDEX IF NOT EXISTS ${config.tableName}_metadata_idx ON ${config.tableName} USING GIN (metadata);`,
+  );
+  await ensureEmbeddingIndex(pool, config);
+}
+
+function computeEmbeddingNorm(vector: number[]): number {
+  return Math.sqrt(vector.reduce((sum, val) => sum + val * val, 0));
+}
+
+async function upsertChunk(pool: Pool, tableName: string, record: ChunkRecord, vector: number[]) {
+  await pool.query(
+    `
+      INSERT INTO ${tableName} (chunk_id, doc_id, content, metadata, embedding)
+      VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (chunk_id)
+      DO UPDATE SET content = EXCLUDED.content, metadata = EXCLUDED.metadata, embedding = EXCLUDED.embedding, updated_at = now();
+    `,
+    [record.chunkId, record.docId, record.text, record.metadata, toSql(vector)],
+  );
+}
+
+async function ingestBatch(openai: OpenAI, pool: Pool, config: IngestConfig, slice: ChunkRecord[]) {
+  const response = await openai.embeddings.create({
+    model: config.model,
+    input: slice.map((chunk) => chunk.text),
+  });
+  if (response.data.length !== slice.length) {
+    throw new Error("Embedding response size mismatch");
+  }
+  const vectors = response.data;
+  for (let j = 0; j < slice.length; j++) {
+    const record = slice[j];
+    const vector = vectors[j].embedding;
+    const norm = computeEmbeddingNorm(vector);
+    record.metadata.embedding_norm = norm;
+    await upsertChunk(pool, config.tableName, record, vector);
+    if (norm < 0.5 || norm > 1.5) {
+      console.warn(`Embedding norm out of range for ${record.chunkId}: ${norm.toFixed(4)}`);
     }
   }
+}
 
-  for (let i = 0; i < chunks.length; i += batchSize) {
-    const slice = chunks.slice(i, i + batchSize);
-    const response = await openai.embeddings.create({
-      model,
-      input: slice.map((chunk) => chunk.text),
-    });
-    if (response.data.length !== slice.length) {
-      throw new Error("Embedding response size mismatch");
-    }
-    const vectors = response.data;
-    for (let j = 0; j < slice.length; j++) {
-      const record = slice[j];
-      const vector = vectors[j].embedding;
-      const norm = Math.sqrt(vector.reduce((sum, val) => sum + val * val, 0));
-      record.metadata.embedding_norm = norm;
-      await pool.query(
-        `
-        INSERT INTO ${tableName} (chunk_id, doc_id, content, metadata, embedding)
-        VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT (chunk_id)
-        DO UPDATE SET content = EXCLUDED.content, metadata = EXCLUDED.metadata, embedding = EXCLUDED.embedding, updated_at = now();
-      `,
-        [record.chunkId, record.docId, record.text, record.metadata, toSql(vector)]
-      );
-      if (norm < 0.5 || norm > 1.5) {
-        console.warn(`Embedding norm out of range for ${record.chunkId}: ${norm.toFixed(4)}`);
-      }
-    }
+async function ingestChunks(chunks: ChunkRecord[]) {
+  const config = loadIngestConfig();
+  const openai = new OpenAI({ apiKey: config.apiKey });
+  const pool = new Pool({
+    connectionString: config.dbUrl,
+    max: 5,
+    ssl: config.ssl,
+  });
+
+  await registerVectorTypes(pool);
+  await prepareDatabase(pool, config);
+
+  for (let i = 0; i < chunks.length; i += config.batchSize) {
+    const slice = chunks.slice(i, i + config.batchSize);
+    await ingestBatch(openai, pool, config, slice);
   }
 
   await pool.end();
 }
 
-main().catch((error) => {
+try {
+  await main();
+} catch (error) {
   console.error(error);
   process.exit(1);
-});
+}

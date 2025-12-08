@@ -4,10 +4,10 @@ import { useState } from "react";
 import type { TagRef } from "@/types/journal";
 import { logAnalytics } from "@/lib/analytics";
 
-type TagChipsProps = {
+type TagChipsProps = Readonly<{
   tags: TagRef[];
   onChange?: (selected: string[]) => void;
-};
+}>;
 
 export function TagChips({ tags, onChange }: TagChipsProps) {
   const [selected, setSelected] = useState<string[]>([]);

@@ -5,7 +5,7 @@ import type { PlatformHighlight } from "@/types/catalog";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 type EngHighlightsGridProps = {
-  highlights: PlatformHighlight[];
+  readonly highlights: readonly PlatformHighlight[];
 };
 
 export function EngHighlightsGrid({ highlights }: EngHighlightsGridProps) {

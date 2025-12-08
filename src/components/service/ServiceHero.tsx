@@ -7,11 +7,11 @@ import Link from "next/link";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import type { ServiceHero } from "@/types/service";
 
-type Breadcrumb = { label: string; href: string };
+type Breadcrumb = { readonly label: string; readonly href: string };
 
 type ServiceHeroProps = {
-  hero: ServiceHero;
-  breadcrumbs?: Breadcrumb[];
+  readonly hero: ServiceHero;
+  readonly breadcrumbs?: readonly Breadcrumb[];
 };
 
 export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {

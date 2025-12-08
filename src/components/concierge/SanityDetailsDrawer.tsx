@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import clsx from "clsx";
-import { useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 
 type InfoCard = {
   id: string;
@@ -19,18 +19,18 @@ type InfoCard = {
   optionValue?: string;
 };
 
-type SanityDetailsDrawerProps = {
+type SanityDetailsDrawerProps = Readonly<{
   open: boolean;
-  cards: InfoCard[];
+  cards: readonly InfoCard[];
   selectedCard?: InfoCard | null;
   loading?: boolean;
   error?: string | null;
   onSelect?: (card: InfoCard) => void;
   onClose?: () => void;
-};
+}>;
 
 export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error, onSelect, onClose }: SanityDetailsDrawerProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDialogElement | null>(null);
   const backdropRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
@@ -40,15 +40,76 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
   }, [open]);
 
   useEffect(() => {
-    if (!open) return;
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose?.();
-      }
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
+    if (open) {
+      const handleKey = (event: KeyboardEvent) => {
+        if (event.key === "Escape") {
+          onClose?.();
+        }
+      };
+      const target = typeof globalThis === "undefined" ? undefined : globalThis;
+      target?.addEventListener("keydown", handleKey);
+      return () => target?.removeEventListener("keydown", handleKey);
+    }
+    return undefined;
   }, [open, onClose]);
+
+  let content: ReactNode;
+  if (error) {
+    content = <p className="text-sm sm:text-base leading-relaxed text-red-600">{error}</p>;
+  } else if (loading) {
+    content = <p className="text-sm sm:text-base leading-relaxed text-ink-muted">Loading details…</p>;
+  } else if (cards.length === 0) {
+    content = <p className="text-sm sm:text-base leading-relaxed text-ink-muted">No details available.</p>;
+  } else {
+    content = (
+      <div className="space-y-3">
+        {cards.map((card) => (
+          <button
+            key={`${card.id}-${card.optionValue ?? ""}`}
+            type="button"
+            onClick={() => onSelect?.(card)}
+            className={clsx(
+              "w-full text-left transition",
+              selectedCard?.id === card.id ? "border-ink bg-subtle/50" : "border-subtle/60 hover:border-ink",
+              "flex flex-col rounded-2xl border bg-card p-3 text-sm sm:text-base text-ink shadow-sm focus-ring",
+            )}
+          >
+            {card.imageUrl ? (
+              <Image
+                src={card.imageUrl}
+                alt={card.title}
+                width={400}
+                height={240}
+                className="h-32 w-full rounded-xl object-cover"
+              />
+            ) : null}
+            <div className="mt-2 space-y-1">
+              <div className="flex items-center justify-between">
+                <p className="text-base font-semibold">{card.title}</p>
+                <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-perazzi-red">
+                  View more
+                </span>
+              </div>
+              {card.description ? (
+                <p className="text-sm sm:text-base leading-relaxed text-ink-muted line-clamp-3">{card.description}</p>
+              ) : null}
+              {card.platform ? (
+                <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">Platform: {card.platform}</p>
+              ) : null}
+              {card.grade ? (
+                <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">Grade: {card.grade}</p>
+              ) : null}
+              {card.gauges?.length ? (
+                <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+                  Gauges: {card.gauges.join(", ")}
+                </p>
+              ) : null}
+            </div>
+          </button>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -63,7 +124,7 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
         aria-hidden="true"
         onClick={() => onClose?.()}
       />
-      <div
+      <dialog
         ref={containerRef}
         className={clsx(
           "fixed inset-y-0 right-0 z-40 flex w-full max-w-xl flex-col border-l border-subtle bg-card shadow-2xl transition-transform duration-300",
@@ -71,8 +132,9 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
         )}
         aria-hidden={!open}
         tabIndex={-1}
-        role="dialog"
         aria-label="Sanity Data"
+        aria-modal="true"
+        open={open}
       >
         <div className="flex items-center justify-between border-b border-subtle px-4 py-3 sm:px-6">
           <div>
@@ -90,68 +152,9 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
           ) : null}
         </div>
         <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
-          {error ? (
-            <p className="text-sm sm:text-base leading-relaxed text-red-600">{error}</p>
-          ) : loading ? (
-            <p className="text-sm sm:text-base leading-relaxed text-ink-muted">Loading details…</p>
-          ) : cards.length === 0 ? (
-            <p className="text-sm sm:text-base leading-relaxed text-ink-muted">No details available.</p>
-          ) : (
-            <div className="space-y-3">
-              {cards.map((card) => (
-                <button
-                  key={`${card.id}-${card.optionValue ?? ""}`}
-                  type="button"
-                  onClick={() => onSelect?.(card)}
-                  className={clsx(
-                    "w-full text-left transition",
-                    selectedCard?.id === card.id ? "border-ink bg-subtle/50" : "border-subtle/60 hover:border-ink",
-                    "flex flex-col rounded-2xl border bg-card p-3 text-sm sm:text-base text-ink shadow-sm focus-ring",
-                  )}
-                >
-                  {card.imageUrl ? (
-                    <Image
-                      src={card.imageUrl}
-                      alt={card.title}
-                      width={400}
-                      height={240}
-                      className="h-32 w-full rounded-xl object-cover"
-                    />
-                  ) : null}
-                  <div className="mt-2 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-base font-semibold">{card.title}</p>
-                      <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-perazzi-red">
-                        View more
-                      </span>
-                    </div>
-                    {card.description ? (
-                      <p className="text-sm sm:text-base leading-relaxed text-ink-muted line-clamp-3">
-                        {card.description}
-                      </p>
-                    ) : null}
-                    {card.platform ? (
-                      <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
-                        Platform: {card.platform}
-                      </p>
-                    ) : null}
-                    {card.grade ? (
-                      <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
-                        Grade: {card.grade}
-                      </p>
-                    ) : null}
-                    {card.gauges?.length ? (
-                      <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
-                        Gauges: {card.gauges.join(", ")}
-                      </p>
-                    ) : null}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
+          {content}
         </div>
-      </div>
+      </dialog>
     </>
   );
 }

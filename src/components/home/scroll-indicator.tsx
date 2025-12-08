@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
-type ScrollIndicatorProps = {
+type ScrollIndicatorProps = Readonly<{
   className?: string;
-};
+}>;
 
 export function ScrollIndicator({ className }: ScrollIndicatorProps) {
   const prefersReducedMotion = useReducedMotion();

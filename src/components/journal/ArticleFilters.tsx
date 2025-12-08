@@ -7,13 +7,13 @@ import type { JournalFilterState } from "@/lib/journal/filters";
 import { JOURNAL_SORTS } from "@/lib/journal/filters";
 import { logAnalytics } from "@/lib/analytics";
 
-type ArticleFiltersProps = {
-  tags: TagRef[];
-  authors: string[];
+type ArticleFiltersProps = Readonly<{
+  tags: readonly TagRef[];
+  authors: readonly string[];
   value: JournalFilterState;
   basePath: string;
   categoryKey: string;
-};
+}>;
 
 export function ArticleFilters({
   tags,
@@ -50,7 +50,7 @@ export function ArticleFilters({
       className="grid gap-3 rounded-3xl border border-border/70 bg-card/70 p-4 md:grid-cols-3"
     >
       <label className="flex flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">
-        Sort by
+        <span>Sort by</span>
         <select
           className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 text-sm text-ink focus-ring"
           value={value.sort}
@@ -64,7 +64,7 @@ export function ArticleFilters({
         </select>
       </label>
       <label className="flex flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">
-        Filter tags
+        <span>Filter tags</span>
         <select
           className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 text-sm text-ink focus-ring"
           value={value.tag}
@@ -79,7 +79,7 @@ export function ArticleFilters({
         </select>
       </label>
       <label className="flex flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">
-        Author
+        <span>Author</span>
         <select
           className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 text-sm text-ink focus-ring"
           value={value.author}

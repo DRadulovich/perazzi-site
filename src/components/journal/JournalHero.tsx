@@ -7,10 +7,10 @@ import Link from "next/link";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import type { JournalLandingData } from "@/types/journal";
 
-type JournalHeroProps = {
+type JournalHeroProps = Readonly<{
   hero: JournalLandingData["hero"];
-  breadcrumbs?: { label: string; href: string }[];
-};
+  breadcrumbs?: ReadonlyArray<Readonly<{ label: string; href: string }>>;
+}>;
 
 export function JournalHero({ hero, breadcrumbs }: JournalHeroProps) {
   const analyticsRef = useAnalyticsObserver("HeroSeen:journal");

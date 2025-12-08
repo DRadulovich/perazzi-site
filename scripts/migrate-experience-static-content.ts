@@ -16,8 +16,10 @@ const client = createClient({
   token: process.env.SANITY_WRITE_TOKEN || process.env.SANITY_TOKEN,
 });
 
+type AnyRecord = Record<string, unknown>;
+
 const stripHtml = (value?: string) =>
-  value?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  value?.replaceAll(/<[^>]+>/g, " ").replaceAll(/\s+/g, " ").trim();
 
 const extractListItems = (html?: string) => {
   if (!html) return [];
@@ -102,6 +104,33 @@ const defaults = {
   },
 };
 
+const isMissingValue = (value: unknown) => {
+  if (Array.isArray(value)) return value.length === 0;
+  return value === undefined || value === null || value === "";
+};
+
+const mergeWithExisting = (existing: AnyRecord | undefined, patch: AnyRecord) =>
+  existing ? { ...existing, ...patch } : { ...patch };
+
+const createPatch = (current: AnyRecord | undefined, defaultsMap: AnyRecord) =>
+  Object.entries(defaultsMap).reduce<AnyRecord>((acc, [field, defaultValue]) => {
+    const currentValue = current?.[field];
+    if (isMissingValue(currentValue)) acc[field] = defaultValue;
+    return acc;
+  }, {});
+
+const applySectionDefaults = (
+  sectionKey: string,
+  current: AnyRecord | undefined,
+  defaultsMap: AnyRecord,
+  apply: (key: string, value: AnyRecord) => void,
+) => {
+  const sectionPatch = createPatch(current, defaultsMap);
+  if (Object.keys(sectionPatch).length) {
+    apply(sectionKey, mergeWithExisting(current, sectionPatch));
+  }
+};
+
 async function main() {
   const experienceHome = await client.fetch<Record<string, any> | null>(`*[_type == "experienceHome"][0]`);
 
@@ -110,126 +139,114 @@ async function main() {
     process.exit(1);
   }
 
-  const patch: Record<string, unknown> = {};
+  const patch: AnyRecord = {};
   const seeded: string[] = [];
 
-  const applySection = (key: string, value: Record<string, unknown>) => {
+  const applySection = (key: string, value: AnyRecord) => {
     patch[key] = value;
     seeded.push(key);
   };
 
-  const pickerUiPatch: Record<string, unknown> = {};
-  if (!experienceHome.pickerUi?.heading) pickerUiPatch.heading = defaults.pickerUi.heading;
-  if (!experienceHome.pickerUi?.subheading) pickerUiPatch.subheading = defaults.pickerUi.subheading;
-  if (!experienceHome.pickerUi?.microLabel) pickerUiPatch.microLabel = defaults.pickerUi.microLabel;
-  if (!experienceHome.pickerUi?.defaultCtaLabel) pickerUiPatch.defaultCtaLabel = defaults.pickerUi.defaultCtaLabel;
-  if (!experienceHome.pickerUi?.defaultCtaHref) pickerUiPatch.defaultCtaHref = defaults.pickerUi.defaultCtaHref;
-  if (Object.keys(pickerUiPatch).length) {
-    applySection("pickerUi", { ...(experienceHome.pickerUi ?? {}), ...pickerUiPatch });
-  }
+  const applyDefaults = (sectionKey: string, current: AnyRecord | undefined, defaultsMap: AnyRecord) =>
+    applySectionDefaults(sectionKey, current, defaultsMap, applySection);
 
-  const faqPatch: Record<string, unknown> = {};
-  if (!experienceHome.faqSection?.heading) faqPatch.heading = defaults.faqSection.heading;
-  if (!experienceHome.faqSection?.lead) faqPatch.lead = defaults.faqSection.lead;
-  if (!experienceHome.faqSection?.items?.length) faqPatch.items = defaults.faqSection.items;
-  if (Object.keys(faqPatch).length) {
-    applySection("faqSection", { ...(experienceHome.faqSection ?? {}), ...faqPatch });
-  }
+  applyDefaults("pickerUi", experienceHome.pickerUi, {
+    heading: defaults.pickerUi.heading,
+    subheading: defaults.pickerUi.subheading,
+    microLabel: defaults.pickerUi.microLabel,
+    defaultCtaLabel: defaults.pickerUi.defaultCtaLabel,
+    defaultCtaHref: defaults.pickerUi.defaultCtaHref,
+  });
 
-  const visitPlanningPatch: Record<string, unknown> = {};
-  if (!experienceHome.visitPlanningBlock?.heading) visitPlanningPatch.heading = defaults.visitPlanningBlock.heading;
-  if (!experienceHome.visitPlanningBlock?.intro) visitPlanningPatch.intro = defaults.visitPlanningBlock.intro;
-  if (!experienceHome.visitPlanningBlock?.bullets?.length) visitPlanningPatch.bullets = defaults.visitPlanningBlock.bullets;
-  if (!experienceHome.visitPlanningBlock?.closing) visitPlanningPatch.closing = defaults.visitPlanningBlock.closing;
-  if (!experienceHome.visitPlanningBlock?.chatLabel) visitPlanningPatch.chatLabel = defaults.visitPlanningBlock.chatLabel;
-  if (!experienceHome.visitPlanningBlock?.chatPrompt) visitPlanningPatch.chatPrompt = defaults.visitPlanningBlock.chatPrompt;
-  if (!experienceHome.visitPlanningBlock?.linkLabel) visitPlanningPatch.linkLabel = defaults.visitPlanningBlock.linkLabel;
-  if (!experienceHome.visitPlanningBlock?.linkHref) visitPlanningPatch.linkHref = defaults.visitPlanningBlock.linkHref;
-  if (Object.keys(visitPlanningPatch).length) {
-    applySection("visitPlanningBlock", { ...(experienceHome.visitPlanningBlock ?? {}), ...visitPlanningPatch });
-  }
+  applyDefaults("faqSection", experienceHome.faqSection, {
+    heading: defaults.faqSection.heading,
+    lead: defaults.faqSection.lead,
+    items: defaults.faqSection.items,
+  });
 
-  const fittingGuidancePatch: Record<string, unknown> = {};
-  if (!experienceHome.fittingGuidanceBlock?.heading) fittingGuidancePatch.heading = defaults.fittingGuidanceBlock.heading;
-  if (!experienceHome.fittingGuidanceBlock?.intro) fittingGuidancePatch.intro = defaults.fittingGuidanceBlock.intro;
-  if (!experienceHome.fittingGuidanceBlock?.bullets?.length) fittingGuidancePatch.bullets = defaults.fittingGuidanceBlock.bullets;
-  if (!experienceHome.fittingGuidanceBlock?.closing) fittingGuidancePatch.closing = defaults.fittingGuidanceBlock.closing;
-  if (!experienceHome.fittingGuidanceBlock?.chatLabel) fittingGuidancePatch.chatLabel = defaults.fittingGuidanceBlock.chatLabel;
-  if (!experienceHome.fittingGuidanceBlock?.chatPrompt) fittingGuidancePatch.chatPrompt = defaults.fittingGuidanceBlock.chatPrompt;
-  if (!experienceHome.fittingGuidanceBlock?.linkLabel) fittingGuidancePatch.linkLabel = defaults.fittingGuidanceBlock.linkLabel;
-  if (!experienceHome.fittingGuidanceBlock?.linkHref) fittingGuidancePatch.linkHref = defaults.fittingGuidanceBlock.linkHref;
-  if (Object.keys(fittingGuidancePatch).length) {
-    applySection("fittingGuidanceBlock", { ...(experienceHome.fittingGuidanceBlock ?? {}), ...fittingGuidancePatch });
-  }
+  applyDefaults("visitPlanningBlock", experienceHome.visitPlanningBlock, {
+    heading: defaults.visitPlanningBlock.heading,
+    intro: defaults.visitPlanningBlock.intro,
+    bullets: defaults.visitPlanningBlock.bullets,
+    closing: defaults.visitPlanningBlock.closing,
+    chatLabel: defaults.visitPlanningBlock.chatLabel,
+    chatPrompt: defaults.visitPlanningBlock.chatPrompt,
+    linkLabel: defaults.visitPlanningBlock.linkLabel,
+    linkHref: defaults.visitPlanningBlock.linkHref,
+  });
 
-  const travelGuidePatch: Record<string, unknown> = {};
-  if (!experienceHome.travelGuideBlock?.heading) travelGuidePatch.heading = defaults.travelGuideBlock.heading;
-  if (!experienceHome.travelGuideBlock?.intro) travelGuidePatch.intro = defaults.travelGuideBlock.intro;
-  if (!experienceHome.travelGuideBlock?.bullets?.length) travelGuidePatch.bullets = defaults.travelGuideBlock.bullets;
-  if (!experienceHome.travelGuideBlock?.closing) travelGuidePatch.closing = defaults.travelGuideBlock.closing;
-  if (!experienceHome.travelGuideBlock?.chatLabel) travelGuidePatch.chatLabel = defaults.travelGuideBlock.chatLabel;
-  if (!experienceHome.travelGuideBlock?.chatPrompt) travelGuidePatch.chatPrompt = defaults.travelGuideBlock.chatPrompt;
-  if (!experienceHome.travelGuideBlock?.linkLabel) travelGuidePatch.linkLabel = defaults.travelGuideBlock.linkLabel;
-  if (!experienceHome.travelGuideBlock?.linkHref) travelGuidePatch.linkHref = defaults.travelGuideBlock.linkHref;
-  if (Object.keys(travelGuidePatch).length) {
-    applySection("travelGuideBlock", { ...(experienceHome.travelGuideBlock ?? {}), ...travelGuidePatch });
-  }
+  applyDefaults("fittingGuidanceBlock", experienceHome.fittingGuidanceBlock, {
+    heading: defaults.fittingGuidanceBlock.heading,
+    intro: defaults.fittingGuidanceBlock.intro,
+    bullets: defaults.fittingGuidanceBlock.bullets,
+    closing: defaults.fittingGuidanceBlock.closing,
+    chatLabel: defaults.fittingGuidanceBlock.chatLabel,
+    chatPrompt: defaults.fittingGuidanceBlock.chatPrompt,
+    linkLabel: defaults.fittingGuidanceBlock.linkLabel,
+    linkHref: defaults.fittingGuidanceBlock.linkHref,
+  });
 
-  const visitFactoryPatch: Record<string, unknown> = {};
-  if (!experienceHome.visitFactorySection?.heading) visitFactoryPatch.heading = defaults.visitFactorySection.heading;
-  if (!experienceHome.visitFactorySection?.subheading) visitFactoryPatch.subheading = defaults.visitFactorySection.subheading;
-  if (!experienceHome.visitFactorySection?.introHtml) visitFactoryPatch.introHtml = defaults.visitFactorySection.introHtml;
-  if (!experienceHome.visitFactorySection?.locationName) visitFactoryPatch.locationName = defaults.visitFactorySection.locationName;
-  if (!experienceHome.visitFactorySection?.address) visitFactoryPatch.address = defaults.visitFactorySection.address;
-  if (!experienceHome.visitFactorySection?.hours) visitFactoryPatch.hours = defaults.visitFactorySection.hours;
-  if (!experienceHome.visitFactorySection?.notes) visitFactoryPatch.notes = defaults.visitFactorySection.notes;
-  if (!experienceHome.visitFactorySection?.mapEmbedHtml) visitFactoryPatch.mapEmbedHtml = defaults.visitFactorySection.mapEmbedHtml;
-  if (!experienceHome.visitFactorySection?.whatToExpect?.length) visitFactoryPatch.whatToExpect = defaults.visitFactorySection.whatToExpect;
-  if (!experienceHome.visitFactorySection?.ctaLabel) visitFactoryPatch.ctaLabel = defaults.visitFactorySection.ctaLabel;
-  if (!experienceHome.visitFactorySection?.ctaHref) visitFactoryPatch.ctaHref = defaults.visitFactorySection.ctaHref;
-  if (Object.keys(visitFactoryPatch).length) {
-    applySection("visitFactorySection", { ...(experienceHome.visitFactorySection ?? {}), ...visitFactoryPatch });
-  }
+  applyDefaults("travelGuideBlock", experienceHome.travelGuideBlock, {
+    heading: defaults.travelGuideBlock.heading,
+    intro: defaults.travelGuideBlock.intro,
+    bullets: defaults.travelGuideBlock.bullets,
+    closing: defaults.travelGuideBlock.closing,
+    chatLabel: defaults.travelGuideBlock.chatLabel,
+    chatPrompt: defaults.travelGuideBlock.chatPrompt,
+    linkLabel: defaults.travelGuideBlock.linkLabel,
+    linkHref: defaults.travelGuideBlock.linkHref,
+  });
 
-  const bookingPatch: Record<string, unknown> = {};
-  if (!experienceHome.bookingSection?.heading) bookingPatch.heading = defaults.bookingSection.heading;
-  if (!experienceHome.bookingSection?.subheading) bookingPatch.subheading = defaults.bookingSection.subheading;
-  if (!experienceHome.bookingSection?.options?.length) bookingPatch.options = defaults.bookingSection.options;
-  if (!experienceHome.bookingSection?.optionCtaLabel) bookingPatch.optionCtaLabel = defaults.bookingSection.optionCtaLabel;
-  const schedulerPatch: Record<string, unknown> = {};
-  const currentScheduler = experienceHome.bookingSection?.scheduler;
-  if (!currentScheduler?.title) schedulerPatch.title = defaults.bookingSection.scheduler.title;
-  if (!currentScheduler?.helperText) schedulerPatch.helperText = defaults.bookingSection.scheduler.helperText;
-  if (!currentScheduler?.toggleOpenLabel) schedulerPatch.toggleOpenLabel = defaults.bookingSection.scheduler.toggleOpenLabel;
-  if (!currentScheduler?.toggleCloseLabel) schedulerPatch.toggleCloseLabel = defaults.bookingSection.scheduler.toggleCloseLabel;
-  if (!currentScheduler?.iframeSrc) schedulerPatch.iframeSrc = defaults.bookingSection.scheduler.iframeSrc;
-  if (!currentScheduler?.iframeTitle) schedulerPatch.iframeTitle = defaults.bookingSection.scheduler.iframeTitle;
-  if (!currentScheduler?.fallbackHref) schedulerPatch.fallbackHref = defaults.bookingSection.scheduler.fallbackHref;
+  applyDefaults("visitFactorySection", experienceHome.visitFactorySection, {
+    heading: defaults.visitFactorySection.heading,
+    subheading: defaults.visitFactorySection.subheading,
+    introHtml: defaults.visitFactorySection.introHtml,
+    locationName: defaults.visitFactorySection.locationName,
+    address: defaults.visitFactorySection.address,
+    hours: defaults.visitFactorySection.hours,
+    notes: defaults.visitFactorySection.notes,
+    mapEmbedHtml: defaults.visitFactorySection.mapEmbedHtml,
+    whatToExpect: defaults.visitFactorySection.whatToExpect,
+    ctaLabel: defaults.visitFactorySection.ctaLabel,
+    ctaHref: defaults.visitFactorySection.ctaHref,
+  });
+
+  const bookingPatch = createPatch(experienceHome.bookingSection, {
+    heading: defaults.bookingSection.heading,
+    subheading: defaults.bookingSection.subheading,
+    options: defaults.bookingSection.options,
+    optionCtaLabel: defaults.bookingSection.optionCtaLabel,
+  });
+  const schedulerPatch = createPatch(experienceHome.bookingSection?.scheduler, {
+    title: defaults.bookingSection.scheduler.title,
+    helperText: defaults.bookingSection.scheduler.helperText,
+    toggleOpenLabel: defaults.bookingSection.scheduler.toggleOpenLabel,
+    toggleCloseLabel: defaults.bookingSection.scheduler.toggleCloseLabel,
+    iframeSrc: defaults.bookingSection.scheduler.iframeSrc,
+    iframeTitle: defaults.bookingSection.scheduler.iframeTitle,
+    fallbackHref: defaults.bookingSection.scheduler.fallbackHref,
+  });
   if (Object.keys(schedulerPatch).length) {
-    bookingPatch.scheduler = { ...(currentScheduler ?? {}), ...schedulerPatch };
+    bookingPatch.scheduler = mergeWithExisting(experienceHome.bookingSection?.scheduler, schedulerPatch);
   }
   if (Object.keys(bookingPatch).length) {
-    applySection("bookingSection", { ...(experienceHome.bookingSection ?? {}), ...bookingPatch });
+    applySection("bookingSection", mergeWithExisting(experienceHome.bookingSection, bookingPatch));
   }
 
-  const travelUiPatch: Record<string, unknown> = {};
-  if (!experienceHome.travelNetworkUi?.title) travelUiPatch.title = defaults.travelNetworkUi.title;
-  if (!experienceHome.travelNetworkUi?.lead) travelUiPatch.lead = defaults.travelNetworkUi.lead;
-  if (!experienceHome.travelNetworkUi?.supporting) travelUiPatch.supporting = defaults.travelNetworkUi.supporting;
-  if (!experienceHome.travelNetworkUi?.scheduleTabLabel) travelUiPatch.scheduleTabLabel = defaults.travelNetworkUi.scheduleTabLabel;
-  if (!experienceHome.travelNetworkUi?.dealersTabLabel) travelUiPatch.dealersTabLabel = defaults.travelNetworkUi.dealersTabLabel;
-  if (!experienceHome.travelNetworkUi?.emptyScheduleText) travelUiPatch.emptyScheduleText = defaults.travelNetworkUi.emptyScheduleText;
-  if (!experienceHome.travelNetworkUi?.emptyDealersText) travelUiPatch.emptyDealersText = defaults.travelNetworkUi.emptyDealersText;
-  if (Object.keys(travelUiPatch).length) {
-    applySection("travelNetworkUi", { ...(experienceHome.travelNetworkUi ?? {}), ...travelUiPatch });
-  }
+  applyDefaults("travelNetworkUi", experienceHome.travelNetworkUi, {
+    title: defaults.travelNetworkUi.title,
+    lead: defaults.travelNetworkUi.lead,
+    supporting: defaults.travelNetworkUi.supporting,
+    scheduleTabLabel: defaults.travelNetworkUi.scheduleTabLabel,
+    dealersTabLabel: defaults.travelNetworkUi.dealersTabLabel,
+    emptyScheduleText: defaults.travelNetworkUi.emptyScheduleText,
+    emptyDealersText: defaults.travelNetworkUi.emptyDealersText,
+  });
 
-  const mosaicUiPatch: Record<string, unknown> = {};
-  if (!experienceHome.mosaicUi?.eyebrow) mosaicUiPatch.eyebrow = defaults.mosaicUi.eyebrow;
-  if (!experienceHome.mosaicUi?.heading) mosaicUiPatch.heading = defaults.mosaicUi.heading;
-  if (Object.keys(mosaicUiPatch).length) {
-    applySection("mosaicUi", { ...(experienceHome.mosaicUi ?? {}), ...mosaicUiPatch });
-  }
+  applyDefaults("mosaicUi", experienceHome.mosaicUi, {
+    eyebrow: defaults.mosaicUi.eyebrow,
+    heading: defaults.mosaicUi.heading,
+  });
 
   if (seeded.length === 0) {
     console.log("experienceHome already has picker UI, FAQ, concierge blocks, visit factory, booking, travel network, and mosaic UI populated. No changes written.");
@@ -242,7 +259,9 @@ async function main() {
   console.log("New revision:", result._rev);
 }
 
-main().catch((error) => {
+try {
+  await main();
+} catch (error) {
   console.error(error);
   process.exit(1);
-});
+}

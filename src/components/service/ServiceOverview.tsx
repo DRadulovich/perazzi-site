@@ -4,7 +4,7 @@ import type { ServiceOverviewSection } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 type ServiceOverviewProps = {
-  overview: ServiceOverviewSection;
+  readonly overview: ServiceOverviewSection;
 };
 
 export function ServiceOverview({ overview }: ServiceOverviewProps) {
@@ -12,9 +12,11 @@ export function ServiceOverview({ overview }: ServiceOverviewProps) {
   const heading = overview.heading ?? "Overview";
   const subheading = overview.subheading ?? "Factory-level care, wherever you are";
   const checksHeading = overview.checksHeading ?? "Standard checks";
+  const checkItems =
+    overview.checks?.map((item) => `<li>${item}</li>`).join("") ?? "";
   const checksContent =
-    overview.checks?.length && !overview.checksHtml
-      ? `<ul>${overview.checks.map((item) => `<li>${item}</li>`).join("")}</ul>`
+    checkItems && !overview.checksHtml
+      ? `<ul>${checkItems}</ul>`
       : overview.checksHtml ?? "";
 
   return (

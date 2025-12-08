@@ -8,7 +8,7 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 
 type CTASectionProps = {
-  finale: HomeData["finale"];
+  readonly finale: HomeData["finale"];
 };
 
 export function CTASection({ finale }: CTASectionProps) {

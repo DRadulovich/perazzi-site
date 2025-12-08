@@ -254,7 +254,9 @@ function mergeMarqueeUi(existing: HomeSingletonDoc["marqueeUi"]) {
   return {value, changed};
 }
 
-main().catch((error) => {
+try {
+  await main();
+} catch (error) {
   console.error(error);
   process.exit(1);
-});
+}

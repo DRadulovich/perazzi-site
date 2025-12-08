@@ -4,7 +4,7 @@ import type { PartsRequestBlock } from "@/types/service";
 import { ServiceRequest } from "./ServiceRequest";
 
 type PartsRequestProps = {
-  partsRequestBlock: PartsRequestBlock;
+  readonly partsRequestBlock: PartsRequestBlock;
 };
 
 export function PartsRequest({ partsRequestBlock }: PartsRequestProps) {

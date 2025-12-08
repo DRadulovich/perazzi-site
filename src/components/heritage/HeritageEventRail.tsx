@@ -8,13 +8,13 @@ import { HeritageEventSlide } from "./HeritageEventSlide";
 import { heritageMotion } from "@/lib/motionConfig";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
-export type HeritageEventRailProps = {
-  events: HeritageEvent[];
+export type HeritageEventRailProps = Readonly<{
+  events: readonly HeritageEvent[];
   className?: string;
   scrollProgress?: MotionValue<number>;
   activeEventIndex?: number;
   prefersReducedMotion?: boolean;
-};
+}>;
 
 export function HeritageEventRail({
   events,
@@ -23,11 +23,6 @@ export function HeritageEventRail({
   activeEventIndex = 0,
   prefersReducedMotion = false,
 }: HeritageEventRailProps) {
-  if (!events || events.length === 0) {
-    return null;
-  }
-
-  const isSingle = events.length === 1;
   const analyticsRef = useAnalyticsObserver<HTMLDivElement>("HeritageEventRailSeen");
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const trackRef = React.useRef<HTMLDivElement | null>(null);
@@ -64,6 +59,12 @@ export function HeritageEventRail({
     [0, -maxOffset],
   );
   const x = useSpring(rawX, heritageMotion.railSpring);
+
+  if (!events || events.length === 0) {
+    return null;
+  }
+
+  const isSingle = events.length === 1;
 
   return (
     <div

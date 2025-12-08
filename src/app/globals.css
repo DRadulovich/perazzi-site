@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@plugin "@tailwindcss/typography";
+@plugin "@tailwindcss/typography"; /* NOSONAR: Tailwind CSS plugin directive */
 
 /* ---------- Brand Tokens (Perazzi) ---------- */
 :root {
@@ -125,94 +125,6 @@ body {
   transition: padding-right 0.2s ease;
   overflow-x: hidden;
 }
-
-/* DEBUG: temporarily disable all Studio-specific styling to restore editing
-
-.perazzi-studio-root {
-  --card-bg-color: var(--surface-card);
-  --card-border-color: #2A2A2B;
-  --body-text-color: var(--color-ink);
-  --muted-fg-color: var(--color-ink-muted);
-  background: var(--surface-canvas);
-  color: var(--color-ink);
-}
-
-.perazzi-studio-root .sanity-studio,
-.perazzi-studio-root [data-ui='PaneLayout'] {
-  background: var(--surface-canvas);
-  color: var(--color-ink);
-}
-
-.perazzi-studio-root [data-ui$='Pane'],
-.perazzi-studio-root .sanity-default-layout__pane {
-  background: var(--surface-card);
-  border-width: 1px;
-  border-style: solid;
-  border-color: #2A2A2B; 
-  box-shadow: none;
-}
-
-.perazzi-studio-root [data-ui='PaneHeader'],
-.perazzi-studio-root [data-ui='PaneFooter'] {
-  background: var(--surface-card);
-  border-color: #2A2A2B;
-}
-
-.perazzi-studio-root [data-ui='PaneContent'] {
-  background: transparent;
-}
-
-.perazzi-studio-root [data-testid='document-pane'] {
-  background: var(--surface-card);
-  border: 1px solid #2A2A2B;
-}
-
-.perazzi-studio-root [data-ui='PaneItem'] [data-ui='Card'] {
-  border-width: 1px;
-  border-style: solid;
-  border-color: #2A2A2B; 
-}
-
-.perazzi-studio-root [data-ui='PaneHeader'] [data-ui='Card'] {
-  border: none;
-}
-
-.perazzi-studio-root [data-ui='TextInput'] input,
-.perazzi-studio-root [data-ui='TextArea'] textarea {
-  background-color: #1A1A1B; 
-  color: #F5F5F5; 
-  caret-color: currentColor;
-}
-
-.perazzi-studio-root [data-ui='TextInput'] input::placeholder,
-.perazzi-studio-root [data-ui='TextArea'] textarea::placeholder {
-  color: #B9B9B9; 
-}
-
-.perazzi-studio-root [data-ui='Button'] button,
-.perazzi-studio-root button[data-ui='Button'] {
-  color: #FFFFFF; 
-}
-
-.perazzi-studio-root [data-testid='document-panel-scroller'] {
-  max-width: 80rem;
-  margin-inline: auto;
-  padding: 1.5rem clamp(1.5rem, 2vw, 2.5rem) 2.25rem;
-}
-
-.perazzi-studio-root [data-testid='document-panel-scroller'] > * + * {
-  margin-top: 1.5rem;
-}
-
-.perazzi-studio-root [data-ui='PaneContent'] form > * + * {
-  margin-top: 1.5rem;
-}
-
-.perazzi-studio-root [data-ui='PaneContent'] form fieldset > * + * {
-  margin-top: 1rem;
-}
-
-*/
 
 /* Focus ring (Perazzi red) */
 .focus-ring {

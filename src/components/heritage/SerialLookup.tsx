@@ -34,8 +34,8 @@ export type SerialLookupAction = (
 const initialState: SerialLookupFormState = { status: "idle" };
 
 type SerialLookupProps = {
-  lookupAction: SerialLookupAction;
-  ui: SerialLookupUi;
+  readonly lookupAction: SerialLookupAction;
+  readonly ui: SerialLookupUi;
 };
 
 export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
@@ -110,7 +110,7 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
           <form action={formAction} className="space-y-4" noValidate>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
               <label className="flex-1 text-sm font-medium text-white" htmlFor="serial-input">
-                Serial Number
+                <span className="block">Serial Number</span>
                 <input
                   id="serial-input"
                   name="serial"
@@ -140,7 +140,7 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
   );
 }
 
-function LookupSubmitButton({ label }: { label: string }) {
+function LookupSubmitButton({ label }: Readonly<{ label: string }>) {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" size="lg" disabled={pending}>
@@ -149,7 +149,7 @@ function LookupSubmitButton({ label }: { label: string }) {
   );
 }
 
-function LookupResult({ state, emptyStateText }: { state: SerialLookupFormState; emptyStateText: string }) {
+function LookupResult({ state, emptyStateText }: Readonly<{ state: SerialLookupFormState; emptyStateText: string }>) {
   const { pending } = useFormStatus();
 
   if (pending) {

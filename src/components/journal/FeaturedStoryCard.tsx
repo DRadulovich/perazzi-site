@@ -6,11 +6,11 @@ import type { ArticleRef } from "@/types/journal";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 
-type FeaturedStoryCardProps = {
+type FeaturedStoryCardProps = Readonly<{
   article: ArticleRef;
-  hero: { url: string; alt: string; aspectRatio?: number };
+  hero: Readonly<{ url: string; alt: string; aspectRatio?: number }>;
   summary?: string;
-};
+}>;
 
 export function FeaturedStoryCard({ article, hero, summary }: FeaturedStoryCardProps) {
   const analyticsRef = useAnalyticsObserver("FeaturedStorySeen");

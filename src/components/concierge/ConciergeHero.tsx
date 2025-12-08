@@ -6,12 +6,12 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import type { FactoryAsset } from "@/types/content";
 
 type ConciergeHeroProps = {
-  hero: {
-    eyebrow: string;
-    title: string;
-    subheading: string;
-    background: FactoryAsset;
-    bullets: Array<{ title: string; body: string }>;
+  readonly hero: {
+    readonly eyebrow: string;
+    readonly title: string;
+    readonly subheading: string;
+    readonly background: FactoryAsset;
+    readonly bullets: ReadonlyArray<{ readonly title: string; readonly body: string }>;
   };
 };
 
@@ -97,8 +97,7 @@ export function ConciergeHero({ hero }: ConciergeHeroProps) {
               Workshop snapshot
             </p>
             <span className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/80">
-              <span className="h-2 w-2 rounded-full bg-perazzi-red" aria-hidden="true" />
-              Live
+              <span className="h-2 w-2 rounded-full bg-perazzi-red" aria-hidden="true" /><span>Live</span>
             </span>
           </div>
           <p className="text-sm sm:text-base leading-relaxed text-white/80">

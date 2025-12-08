@@ -7,11 +7,11 @@ import type { FactoryEssayItem, FactoryEssayUi } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 
-type FactoryPhotoEssayProps = {
-  items: FactoryEssayItem[];
-  introHtml?: string;
-  ui: FactoryEssayUi;
-};
+type FactoryPhotoEssayProps = Readonly<{
+  readonly items: readonly FactoryEssayItem[];
+  readonly introHtml?: string;
+  readonly ui: FactoryEssayUi;
+}>;
 
 const CARD_ASPECT_RATIO = 3 / 2;
 
@@ -50,10 +50,12 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
     [items],
   );
 
-  const currentItem = useMemo(
-    () => (openIndex !== null ? items[openIndex] : undefined),
-    [items, openIndex],
-  );
+  const currentItem = useMemo(() => {
+    if (openIndex === null) {
+      return undefined;
+    }
+    return items[openIndex];
+  }, [items, openIndex]);
 
   return (
     <section
@@ -79,10 +81,7 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
           />
         ) : null}
       </div>
-      <ul
-        role="list"
-        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-      >
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((item, index) => (
           <li key={item.id}>
             <PhotoCard item={item} onOpen={() => handleOpen(index)} />
@@ -93,7 +92,10 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
         <Dialog.Root
           open={openIndex !== null}
           onOpenChange={(next) => {
-            if (!next) close();
+            if (next) {
+              return;
+            }
+            close();
           }}
         >
           <Dialog.Portal>
@@ -167,10 +169,10 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
   );
 }
 
-type PhotoCardProps = {
-  item: FactoryEssayItem;
-  onOpen: () => void;
-};
+type PhotoCardProps = Readonly<{
+  readonly item: FactoryEssayItem;
+  readonly onOpen: () => void;
+}>;
 
 function PhotoCard({ item, onOpen }: PhotoCardProps) {
   const analyticsRef = useAnalyticsObserver<HTMLDivElement>(`FactoryEssaySeen:${item.image.id}`, {

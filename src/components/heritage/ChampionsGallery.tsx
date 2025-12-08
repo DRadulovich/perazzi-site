@@ -8,10 +8,10 @@ import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 
-type ChampionsGalleryProps = {
+type ChampionsGalleryProps = Readonly<{
   champions: ChampionEvergreen[];
   ui: ChampionsGalleryUi;
-};
+}>;
 
 export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
   const verified = champions.filter((champion) => Boolean(champion?.name));
@@ -125,11 +125,11 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
           </div>
 
           {disciplines.length ? (
-            <div
-              className="flex flex-wrap gap-2"
-              role="group"
+            <fieldset
+              className="flex flex-wrap gap-2 border-0 p-0"
               aria-label="Filter champions by discipline"
             >
+              <legend className="sr-only">Filter champions by discipline</legend>
               <button
                 type="button"
                 aria-pressed={activeDiscipline === null}
@@ -163,7 +163,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
                   {discipline}
                 </button>
               ))}
-            </div>
+            </fieldset>
           ) : null}
 
           {/* Two-column layout: left = list of names, right = selected champion detail */}
@@ -175,11 +175,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
               </p>
 
               {filteredChampions.length ? (
-                <ul
-                  role="list"
-                  className="space-y-1"
-                  aria-label="Select a champion to view their profile"
-                >
+                <ul className="space-y-1" aria-label="Select a champion to view their profile">
                   {filteredChampions.map((champion) => (
                     <ChampionNameItem
                       key={champion.id}
@@ -232,11 +228,11 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
   );
 }
 
-type ChampionNameItemProps = {
+type ChampionNameItemProps = Readonly<{
   champion: ChampionEvergreen;
   isActive: boolean;
   onSelect: () => void;
-};
+}>;
 
 function ChampionNameItem({ champion, isActive, onSelect }: ChampionNameItemProps) {
   const analyticsRef = useAnalyticsObserver<HTMLLIElement>(
@@ -273,10 +269,10 @@ function ChampionNameItem({ champion, isActive, onSelect }: ChampionNameItemProp
   );
 }
 
-type ChampionDetailProps = {
+type ChampionDetailProps = Readonly<{
   champion: ChampionEvergreen;
   cardCtaLabel: string;
-};
+}>;
 
 function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
   const ratio = 3 / 2; // Force 3:2 aspect ratio for champion images

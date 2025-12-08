@@ -1,7 +1,7 @@
 import type { GaugeInfo } from "@/types/catalog";
 
 type GaugeCardProps = {
-  gauge: GaugeInfo;
+  readonly gauge: GaugeInfo;
 };
 
 export function GaugeCard({ gauge }: GaugeCardProps) {

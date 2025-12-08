@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 
 type VisitFactoryProps = {
-  visitFactorySection: VisitFactoryData;
+  readonly visitFactorySection: VisitFactoryData;
 };
 
 export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
@@ -162,8 +162,8 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
                 >
-                  Open in Maps
-                  <span className="sr-only"> (opens in a new tab)</span>
+                  Open in Maps{" "}
+                  <span className="sr-only">(opens in a new tab)</span>
                 </a>
               </div>
             </article>
@@ -176,7 +176,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                     aria-expanded={expectOpen}
                     aria-controls="visit-expect-content"
                   >
-                    What to expect
+                    What to expect{" "}
                     <span
                       aria-hidden="true"
                       className={cn(

@@ -5,7 +5,7 @@ import { getManufactureYearBySerial } from "@/sanity/queries/manufactureYear";
 const parseSerial = (value: unknown) => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string") {
-    const cleaned = value.replace(/[^0-9]/g, "");
+    const cleaned = value.replaceAll(/\D/g, "");
     if (!cleaned) return null;
     return Number(cleaned);
   }

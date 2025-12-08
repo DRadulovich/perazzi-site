@@ -4,9 +4,9 @@ import type { GuidesSection } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 
-type CareGuidesDownloadsProps = {
+type CareGuidesDownloadsProps = Readonly<{
   guidesSection: GuidesSection;
-};
+}>;
 
 export function CareGuidesDownloads({ guidesSection }: CareGuidesDownloadsProps) {
   const analyticsRef = useAnalyticsObserver("CareGuidesSeen");

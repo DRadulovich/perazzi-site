@@ -9,14 +9,14 @@ import type { JournalFilterState } from "@/lib/journal/filters";
 import { logAnalytics } from "@/lib/analytics";
 
 type ArticleGridProps = {
-  items: JournalCategoryData["items"];
-  pagination: { page: number; pageCount: number };
-  totalItems: number;
-  basePath: string;
-  filters: JournalFilterState;
-  categoryKey: string;
-  pageStart: number;
-  pageEnd: number;
+  readonly items: JournalCategoryData["items"];
+  readonly pagination: Readonly<{ page: number; pageCount: number }>;
+  readonly totalItems: number;
+  readonly basePath: string;
+  readonly filters: Readonly<JournalFilterState>;
+  readonly categoryKey: string;
+  readonly pageStart: number;
+  readonly pageEnd: number;
 };
 
 const buildQuery = (filters: JournalFilterState, page: number) => {

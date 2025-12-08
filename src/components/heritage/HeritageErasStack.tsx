@@ -3,20 +3,27 @@
 import * as React from "react";
 import type { HeritageEraWithEvents } from "@/types/heritage";
 import { cn } from "@/lib/utils";
-import { HeritageEraSection } from "./HeritageEraSection";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { HeritageEraSection } from "./HeritageEraSection";
 
-export type HeritageErasStackProps = {
-  eras: HeritageEraWithEvents[];
-  className?: string;
-  registerEraRef?: (eraId: string, el: HTMLElement | null) => void;
-  registerEraFocusRef?: (eraId: string, el: HTMLAnchorElement | null) => void;
-  onActiveEventChange?: (eraId: string, eventIndex: number) => void;
-  onEraInView?: (eraId: string, index: number) => void;
-  onEraScrollProgress?: (eraId: string, index: number, progress: number) => void;
-  prefersReducedMotion?: boolean;
-  headerOffset?: number;
-};
+export type HeritageErasStackProps = Readonly<{
+  readonly eras: readonly HeritageEraWithEvents[];
+  readonly className?: string;
+  readonly registerEraRef?: (eraId: string, el: HTMLElement | null) => void;
+  readonly registerEraFocusRef?: (
+    eraId: string,
+    el: HTMLAnchorElement | null
+  ) => void;
+  readonly onActiveEventChange?: (eraId: string, eventIndex: number) => void;
+  readonly onEraInView?: (eraId: string, index: number) => void;
+  readonly onEraScrollProgress?: (
+    eraId: string,
+    index: number,
+    progress: number
+  ) => void;
+  readonly prefersReducedMotion?: boolean;
+  readonly headerOffset?: number;
+}>;
 
 function HeritageErasStackBase({
   eras,
@@ -29,9 +36,9 @@ function HeritageErasStackBase({
   prefersReducedMotion,
   headerOffset,
 }: HeritageErasStackProps) {
-  if (!eras || eras.length === 0) return null;
-
   const analyticsRef = useAnalyticsObserver<HTMLDivElement>("HeritageErasStackSeen");
+
+  if (!eras || eras.length === 0) return null;
 
   return (
     <div

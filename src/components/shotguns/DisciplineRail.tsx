@@ -26,13 +26,13 @@ type ModelDetail = {
   imageAlt?: string;
 };
 
-type DisciplineRailProps = {
-  disciplines: DisciplineCard[];
-  platforms: Platform[];
+type DisciplineRailProps = Readonly<{
+  disciplines: readonly DisciplineCard[];
+  platforms: readonly Platform[];
   ariaPrevLabel?: string;
   ariaNextLabel?: string;
   ui?: ShotgunsLandingData["disciplineRailUi"];
-};
+}>;
 
 const DISCIPLINE_TABS = [
   {
@@ -105,8 +105,11 @@ export function DisciplineRail({
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setModelModalOpen(false);
     };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
+    if (typeof globalThis.addEventListener !== "function" || typeof globalThis.removeEventListener !== "function") {
+      return;
+    }
+    globalThis.addEventListener("keydown", handleKey);
+    return () => globalThis.removeEventListener("keydown", handleKey);
   }, [modelModalOpen]);
 
   const disciplineLookup = useMemo(() => {
@@ -127,7 +130,7 @@ export function DisciplineRail({
           }
           return undefined;
         })
-        .filter((item): item is DisciplineCard => Boolean(item));
+        .filter((item): item is DisciplineCard => item !== undefined);
       return { label: tab.label, disciplines: resolved };
     }).filter((category) => category.disciplines.length);
   }, [disciplineLookup]);
@@ -259,7 +262,7 @@ export function DisciplineRail({
                                       {discipline.name}
                                     </span>
                                     <span className="mt-0.5 block text-[11px] uppercase tracking-[0.25em] text-ink-muted group-hover:text-ink-muted/90">
-                                      {discipline.id.replace(/-/g, " ")}
+                                      {discipline.id.replaceAll("-", " ")}
                                     </span>
                                   </button>
                                 </li>
@@ -295,16 +298,18 @@ export function DisciplineRail({
         </div>
 
         {modelModalOpen && selectedModel ? (
-          <div
+          <dialog
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur"
-            role="dialog"
+            open
             aria-modal="true"
-            onClick={() => setModelModalOpen(false)}
           >
-            <div
-              className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]"
-              onClick={(event) => event.stopPropagation()}
-            >
+            <button
+              type="button"
+              className="absolute inset-0 cursor-default bg-transparent border-none"
+              aria-label="Close modal"
+              onClick={() => setModelModalOpen(false)}
+            />
+            <div className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]">
               <button
                 type="button"
                 className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 py-1 text-xs uppercase tracking-widest text-black transition hover:border-black hover:bg-white sm:right-5 sm:top-5 sm:text-sm"
@@ -348,20 +353,20 @@ export function DisciplineRail({
                 </div>
               </div>
             </div>
-          </div>
+          </dialog>
         ) : null}
 
         {modelError ? (
-          <p className="text-center text-sm text-red-500" role="status">
+          <output className="block text-center text-sm text-red-500" aria-live="polite">
             {modelError}
-          </p>
+          </output>
         ) : null}
       </div>
     </section>
   );
 }
 
-type DisciplineCardProps = {
+type DisciplineCardProps = Readonly<{
   discipline: ShotgunsLandingData["disciplines"][number];
   index: number;
   total: number;
@@ -369,7 +374,7 @@ type DisciplineCardProps = {
   isDarkTheme: boolean;
   onSelectModel: (id: string) => void;
   loadingModelId: string | null;
-};
+}>;
 
 function DisciplineCard({
   discipline,
@@ -438,22 +443,11 @@ function DisciplineCard({
             </h3>
             <div className="flex flex-col gap-3">
               {discipline.popularModels.map((model) => (
-                <figure
+                <button
+                  type="button"
                   key={model.idLegacy ?? model.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    onSelectModel(model.idLegacy ?? model.id);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      onSelectModel(model.idLegacy ?? model.id);
-                    }
-                  }}
-                  className="group relative w-full cursor-pointer overflow-hidden rounded-2xl border border-border/70 bg-card/75 focus:outline-none focus:ring-2 focus:ring-perazzi-red"
+                  onClick={() => onSelectModel(model.idLegacy ?? model.id)}
+                  className="group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card/75 focus:outline-none focus:ring-2 focus:ring-perazzi-red"
                 >
                   {model.hero ? (
                     <Image
@@ -466,15 +460,14 @@ function DisciplineCard({
                     />
                   ) : null}
                   <div className="pointer-events-none absolute inset-0 bg-perazzi-black/75 transition duration-500 group-hover:bg-perazzi-black/60" />
-                  <figcaption
+                  <span
                     className={cn(
-                      "absolute inset-0 flex items-center justify-center p-2 text-center text-md font-bold uppercase tracking-[0.3em] transition-opacity duration-500 group-hover:opacity-0",
-                      isDarkTheme ? "text-white" : "text-white",
+                      "absolute inset-0 flex items-center justify-center p-2 text-center text-md font-bold uppercase tracking-[0.3em] text-white transition-opacity duration-500 group-hover:opacity-0",
                     )}
                   >
                     {loadingModelId === model.id ? "Loading…" : model.name || "Untitled"}
-                  </figcaption>
-                </figure>
+                  </span>
+                </button>
               ))}
             </div>
           </div>
@@ -484,7 +477,7 @@ function DisciplineCard({
   );
 }
 
-function Detail({ label, value }: { label: string; value?: string }) {
+function Detail({ label, value }: Readonly<{ label: string; value?: string }>) {
   return (
     <div>
       <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-perazzi-red">{label}</p>

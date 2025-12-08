@@ -9,8 +9,8 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 
 type MosaicGalleryProps = {
-  assets: FactoryAsset[];
-  mosaicUi: MosaicUi;
+  readonly assets: readonly FactoryAsset[];
+  readonly mosaicUi: MosaicUi;
 };
 
 export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
@@ -49,12 +49,12 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
     [assets],
   );
 
-  const currentAsset = useMemo(
-    () => (openIndex !== null ? assets[openIndex] : undefined),
-    [assets, openIndex],
-  );
+  const currentAsset = useMemo(() => {
+    if (openIndex === null) return undefined;
+    return assets[openIndex];
+  }, [assets, openIndex]);
 
-  if (!assets.length) return null;
+  if (assets.length === 0) return null;
 
   return (
     <section
@@ -74,10 +74,7 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
           {heading}
         </h2>
       </div>
-      <ul
-        role="list"
-        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-      >
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {assets.map((asset, index) => (
           <li key={asset.id}>
             <button
@@ -101,10 +98,9 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
       </ul>
       <Dialog.Root
         open={openIndex !== null}
-        onOpenChange={(next) => {
-          if (!next) {
-            closeLightbox();
-          }
+        onOpenChange={(nextOpen) => {
+          if (nextOpen) return;
+          closeLightbox();
         }}
       >
         <Dialog.Portal>

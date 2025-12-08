@@ -7,10 +7,10 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import type { HeritageEvent, HeritageEventLink } from "@/types/heritage";
 import { createPortal } from "react-dom";
 
-export type HeritageEventSlideProps = {
+export type HeritageEventSlideProps = Readonly<{
   event: HeritageEvent;
   className?: string;
-};
+}>;
 
 export function HeritageEventSlide({
   event,
@@ -143,11 +143,12 @@ export function HeritageEventSlide({
               />
 
               {/* Dialog */}
-              <div
-                role="dialog"
+              <dialog
+                open
                 aria-modal="true"
                 aria-labelledby={`heritage-event-modal-${event.id}`}
-                className="relative z-10 flex h-full w-full items-end justify-center p-4"
+                onCancel={() => setIsModalOpen(false)}
+                className="relative z-10 m-0 flex h-full w-full items-end justify-center bg-transparent p-4"
               >
                 <div className="max-h-[80vh] w-full max-w-lg overflow-hidden rounded-2xl bg-black text-neutral-100 shadow-lg">
                   <div className="flex items-center justify-between border-b border-white/15 px-4 py-3">
@@ -177,7 +178,7 @@ export function HeritageEventSlide({
                     ) : null}
                   </div>
                 </div>
-              </div>
+              </dialog>
             </div>,
             document.body,
           )

@@ -10,25 +10,25 @@ import { logAnalytics } from "@/lib/analytics";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 type ExperiencePickerProps = {
-  items: PickerItem[];
-  faqSection?: {
-    heading?: string;
-    lead?: string;
-    items?: FAQItem[];
+  readonly items: PickerItem[];
+  readonly faqSection?: {
+    readonly heading?: string;
+    readonly lead?: string;
+    readonly items?: FAQItem[];
   };
-  pickerUi: PickerUi;
+  readonly pickerUi: PickerUi;
 };
 
-export function ExperiencePicker({ items, faqSection, pickerUi }: ExperiencePickerProps) {
+export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<ExperiencePickerProps>) {
   const prefersReducedMotion = useReducedMotion();
   const analyticsRef = useAnalyticsObserver<HTMLElement>("ExperiencePickerSeen");
-  const anchorMap: Record<string, string> = {
+  const anchorMap: Record<string, string | undefined> = {
     visit: "#experience-visit-planning",
     fitting: "#experience-booking-guide",
     demo: "#experience-travel-guide",
   };
 
-  if (!items.length) return null;
+  if (items.length === 0) return null;
 
   const handleCardClick = (
     event: MouseEvent<HTMLAnchorElement>,
@@ -37,20 +37,23 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: ExperiencePick
   ) => {
     logAnalytics(`PickerCardClick:${itemId}`);
     const hashIndex = href.indexOf("#");
-    let hash = hashIndex === -1 ? undefined : href.slice(hashIndex);
-    if (!hash || hash === "#") {
-      hash = anchorMap[itemId];
-    }
-    if (!hash) return;
+    const rawHash = hashIndex === -1 ? undefined : href.slice(hashIndex);
+    const hash = rawHash === undefined || rawHash === "#"
+      ? anchorMap[itemId]
+      : rawHash;
+    if (hash === undefined) return;
 
-    const target = typeof document !== "undefined"
-      ? document.getElementById(hash.replace(/^#/, ""))
-      : null;
-    if (!target) return;
+    const doc = globalThis.document;
+    if (doc === undefined) return;
+
+    const target = doc.getElementById(hash.replace(/^#/, ""));
+    if (target === null) return;
 
     event.preventDefault();
     target.scrollIntoView({ behavior: "smooth", block: "start" });
-    if (typeof window !== "undefined") {
+
+    const history = globalThis.history;
+    if (history !== undefined) {
       history.replaceState(null, "", hash);
     }
   };
@@ -136,21 +139,23 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: ExperiencePick
   );
 }
 
+type ExperiencePickerCardProps = Readonly<{
+  readonly item: PickerItem;
+  readonly delay: number;
+  readonly microLabel: string;
+  readonly onAnchorClick?: (
+    event: MouseEvent<HTMLAnchorElement>,
+    href: string,
+    itemId: string,
+  ) => void;
+}>;
+
 function ExperiencePickerCard({
   item,
   delay,
   microLabel,
   onAnchorClick,
-}: {
-  item: PickerItem;
-  delay: number;
-  microLabel: string;
-  onAnchorClick?: (
-    event: MouseEvent<HTMLAnchorElement>,
-    href: string,
-    itemId: string,
-  ) => void;
-}) {
+}: ExperiencePickerCardProps) {
   const aspect = 3 / 2;
 
   return (

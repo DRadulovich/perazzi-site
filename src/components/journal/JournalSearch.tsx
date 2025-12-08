@@ -23,7 +23,7 @@ export function JournalSearch() {
       }}
     >
       <label className="flex w-full flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">
-        Search the journal
+        <span>Search the journal</span>
         <input
           type="search"
           value={term}

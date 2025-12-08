@@ -7,10 +7,10 @@ import type { GradeSeries } from "@/types/catalog";
 import { logAnalytics } from "@/lib/analytics";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
-type EngravingGalleryProps = {
+type EngravingGalleryProps = Readonly<{
   gallery: GradeSeries["gallery"];
   title?: string;
-};
+}>;
 
 export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
@@ -19,7 +19,7 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
   if (gallery.length === 0) return null;
 
   const currentAsset =
-    openIndex !== null ? gallery[openIndex] ?? gallery[0] : undefined;
+    openIndex === null ? undefined : gallery[openIndex] ?? gallery[0];
 
   const showPrev = () => {
     if (openIndex === null) return;

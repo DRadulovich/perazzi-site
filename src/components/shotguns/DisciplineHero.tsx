@@ -4,10 +4,10 @@ import Image from "next/image";
 import type { DisciplineSummary } from "@/types/catalog";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
-type DisciplineHeroProps = {
+type DisciplineHeroProps = Readonly<{
   hero?: DisciplineSummary["hero"];
   name: string;
-};
+}>;
 
 export function DisciplineHero({ hero, name }: DisciplineHeroProps) {
   const analyticsRef = useAnalyticsObserver<HTMLElement>("HeroSeen:discipline");

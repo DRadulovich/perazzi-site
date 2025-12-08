@@ -3,9 +3,9 @@
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import type { IntegrityAdvisorySection } from "@/types/service";
 
-type IntegrityAdvisoryProps = {
+type IntegrityAdvisoryProps = Readonly<{
   integrityAdvisory: IntegrityAdvisorySection;
-};
+}>;
 
 export function IntegrityAdvisory({ integrityAdvisory }: IntegrityAdvisoryProps) {
   const analyticsRef = useAnalyticsObserver("IntegrityAdvisorySeen");
@@ -26,8 +26,8 @@ export function IntegrityAdvisory({ integrityAdvisory }: IntegrityAdvisoryProps)
         {heading}
       </h2>
       <div className="prose prose-sm max-w-none leading-relaxed text-ink-muted md:prose-lg">
-        {body.split("\n\n").map((paragraph, index) => (
-          <p key={index}>{paragraph}</p>
+        {body.split("\n\n").map((paragraph) => (
+          <p key={paragraph}>{paragraph}</p>
         ))}
       </div>
     </section>

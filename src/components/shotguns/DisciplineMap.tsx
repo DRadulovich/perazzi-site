@@ -1,9 +1,9 @@
 import type { ShotgunsSeriesEntry, DisciplineSummary } from "@/types/catalog";
 
-type DisciplineMapProps = {
+type DisciplineMapProps = Readonly<{
   items: ShotgunsSeriesEntry["disciplineMap"];
   disciplines: Record<string, DisciplineSummary>;
-};
+}>;
 
 export function DisciplineMap({ items, disciplines }: DisciplineMapProps) {
   return (

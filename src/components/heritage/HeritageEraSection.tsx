@@ -8,7 +8,7 @@ import { EraBackgroundLayer } from "./EraBackgroundLayer";
 import { HeritageEventSlide } from "./HeritageEventSlide";
 import { HeritageEventRail } from "./HeritageEventRail";
 
-export type HeritageEraSectionProps = {
+export type HeritageEraSectionProps = Readonly<{
   era: HeritageEraWithEvents;
   index: number;
   className?: string;
@@ -19,7 +19,7 @@ export type HeritageEraSectionProps = {
   onEraScrollProgress?: (eraId: string, index: number, progress: number) => void;
   prefersReducedMotion?: boolean;
   headerOffset?: number;
-};
+}>;
 
 export function HeritageEraSection({
   era,
@@ -53,16 +53,17 @@ export function HeritageEraSection({
   const yearRangeLabel = era.yearRangeLabel ?? `${era.startYear}–${era.isOngoing ? "Today" : era.endYear}`;
 
   React.useEffect(() => {
-    if (typeof window === "undefined") return;
+    const win = globalThis.window;
+    if (!win) return;
 
     const handle = () => {
-      setIsShortViewport(window.innerHeight < 600);
+      setIsShortViewport(win.innerHeight < 600);
     };
 
     handle();
-    window.addEventListener("resize", handle);
+    win.addEventListener("resize", handle);
     return () => {
-      window.removeEventListener("resize", handle);
+      win.removeEventListener("resize", handle);
     };
   }, []);
 
@@ -105,14 +106,10 @@ export function HeritageEraSection({
       activeEventRef.current = nextIndex;
       setActiveEventIndex(nextIndex);
       onActiveEventChange?.(era.id, nextIndex);
-      return;
-    }
-
-    if (eventPosition < currentIndex - (1 - backwardThreshold) && prevIndex !== currentIndex) {
+    } else if (eventPosition < currentIndex - (1 - backwardThreshold) && prevIndex !== currentIndex) {
       activeEventRef.current = prevIndex;
       setActiveEventIndex(prevIndex);
       onActiveEventChange?.(era.id, prevIndex);
-      return;
     }
   });
 

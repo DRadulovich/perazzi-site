@@ -10,17 +10,17 @@ import type { HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { ScrollIndicator } from "./scroll-indicator";
 
-type HeroBannerProps = {
+type HeroBannerProps = Readonly<{
   hero: HomeData["hero"];
   heroCtas?: HomeData["heroCtas"];
   analyticsId?: string;
   fullBleed?: boolean;
   hideCtas?: boolean;
-};
+}>;
 
 export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hideCtas = false }: HeroBannerProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
-  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
   const [mediaLoaded, setMediaLoaded] = useState(false);
@@ -114,7 +114,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
       }
 
       const firstEl = currentFocusable[0];
-      const lastEl = currentFocusable[currentFocusable.length - 1];
+      const lastEl = currentFocusable.at(-1) ?? firstEl;
       const activeEl = document.activeElement;
 
       if (event.shiftKey) {
@@ -196,12 +196,18 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
           <h1
             id="home-hero-heading"
             data-sanity-edit-target
-            className={`mb-10 flex flex-wrap justify-center gap-2 text-balance text-2xl font-bold leading-[1.12] text-white transition-opacity duration-700 motion-reduce:transition-none sm:text-3xl lg:text-4xl ${
+            className={`mb-10 transition-opacity duration-700 motion-reduce:transition-none ${
               mediaLoaded ? "opacity-100 delay-100" : "opacity-0"
             }`}
-            onClick={openManifesto}
           >
-            <CleanText value={heroHeading} />
+            <button
+              type="button"
+              ref={triggerRef}
+              onClick={openManifesto}
+              className="flex flex-wrap justify-center gap-2 bg-transparent text-balance text-2xl font-bold leading-[1.12] text-white outline-none sm:text-3xl lg:text-4xl focus-ring cursor-pointer border-0 p-0"
+            >
+              <CleanText value={heroHeading} />
+            </button>
           </h1>
           {hero.background.caption ? (
             <p className="prose prose-base prose-invert italic font-light mx-auto mt-3 mb-3 max-w-2xl text-white/80 md:prose-lg md:max-w-4xl lg:max-w-4xl">
@@ -231,14 +237,16 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
       <ScrollIndicator className="bottom-10" />
 
       {manifestoOpen && (
-        <motion.div
+        <motion.dialog
+          ref={dialogRef}
+          open
           initial={{ opacity: prefersReducedMotion ? 1 : 0 }}
           animate={{ opacity: 1 }}
           transition={overlayTransition}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6 text-center text-text"
-          role="dialog"
-          aria-modal="true"
           aria-labelledby="manifesto-title"
+          aria-modal="true"
+          tabIndex={-1}
           onClick={(event) => {
             if (event.target === event.currentTarget) {
               closeManifesto();
@@ -246,12 +254,10 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
           }}
         >
           <motion.div
-            ref={dialogRef}
             initial={prefersReducedMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={panelTransition}
             className="max-w-2xl space-y-6 rounded-3xl bg-black/50 p-8 shadow-2xl ring-1 ring-white/10 backdrop-blur"
-            tabIndex={-1}
           >
             <h2 id="manifesto-title" className="sr-only">
               Perazzi Manifesto
@@ -288,7 +294,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
               Close – return to the surface
             </motion.button>
           </motion.div>
-        </motion.div>
+        </motion.dialog>
       )}
     </section>
   );

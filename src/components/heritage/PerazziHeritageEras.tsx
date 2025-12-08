@@ -3,17 +3,17 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import type { PerazziHeritageErasProps } from "@/types/heritage";
+import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
 import { HeritageErasStack } from "./HeritageErasStack";
-import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
-export function PerazziHeritageEras({ eras, className }: PerazziHeritageErasProps) {
+export function PerazziHeritageEras({ eras, className }: Readonly<PerazziHeritageErasProps>) {
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const analyticsRef = useAnalyticsObserver<HTMLElement>("PerazziHeritageErasSeen");
+
   if (!eras || eras.length === 0) {
     return null;
   }
-
-  const prefersReducedMotion = usePrefersReducedMotion();
-  const analyticsRef = useAnalyticsObserver<HTMLElement>("PerazziHeritageErasSeen");
 
   return (
     <section

@@ -9,12 +9,12 @@ const ERA_CANVAS_OVERLAY_GRADIENT =
   "linear-gradient(to bottom, color-mix(in srgb, var(--color-black) 100%, transparent) 0%, transparent 30%), " +
   "linear-gradient(to top, color-mix(in srgb, var(--color-black) 100%, transparent) 0%, transparent 30%)";
 
-export type EraBackgroundLayerProps = {
+export type EraBackgroundLayerProps = Readonly<{
   src: string;
   overlayColor: string;
   alt?: string;
   className?: string;
-};
+}>;
 
 export function EraBackgroundLayer({
   src,

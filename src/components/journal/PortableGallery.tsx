@@ -7,7 +7,7 @@ import { useReducedMotion } from "framer-motion";
 import type { FactoryAsset } from "@/types/content";
 
 type PortableGalleryProps = {
-  items: FactoryAsset[];
+  readonly items: readonly FactoryAsset[];
 };
 
 export function PortableGallery({ items }: PortableGalleryProps) {
@@ -19,10 +19,10 @@ export function PortableGallery({ items }: PortableGalleryProps) {
   useEffect(() => {
     setReduceMotion(Boolean(prefersReducedMotion));
   }, [prefersReducedMotion]);
-  const currentAsset = useMemo(
-    () => (openIndex !== null ? items[openIndex] : undefined),
-    [items, openIndex],
-  );
+  const currentAsset = useMemo(() => {
+    if (openIndex === null) return undefined;
+    return items[openIndex];
+  }, [items, openIndex]);
 
   const length = items.length;
 
@@ -42,7 +42,7 @@ export function PortableGallery({ items }: PortableGalleryProps) {
     [length],
   );
 
-  if (!items.length) return null;
+  if (items.length === 0) return null;
 
   return (
     <div className="my-8 space-y-4">

@@ -6,11 +6,11 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 
-type FAQListProps = {
-  items: FAQItem[];
+type FAQListProps = Readonly<{
+  items: readonly FAQItem[];
   heading?: string;
   intro?: string;
-};
+}>;
 
 export function FAQList({ items, heading, intro }: FAQListProps) {
   const analyticsRef = useAnalyticsObserver("ServiceFAQSeen");
@@ -52,7 +52,10 @@ export function FAQList({ items, heading, intro }: FAQListProps) {
   );
 }
 
-function FAQItemCard({ item, index }: { item: FAQItem; index: number }) {
+function FAQItemCard({
+  item,
+  index,
+}: Readonly<{ item: FAQItem; index: number }>) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {

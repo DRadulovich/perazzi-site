@@ -1,13 +1,13 @@
-type FAQItem = {
+type FAQItem = Readonly<{
   q: string;
   a: string;
-};
+}>;
 
-type FAQListProps = {
-  items: FAQItem[];
+type FAQListProps = Readonly<{
+  items: readonly FAQItem[];
   schemaName?: string;
   scriptId?: string;
-};
+}>;
 
 export function FAQList({
   items,

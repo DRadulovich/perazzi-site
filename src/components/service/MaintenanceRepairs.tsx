@@ -7,8 +7,8 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 
 type MaintenanceRepairsProps = {
-  maintenanceSection: MaintenanceSection;
-  guide?: GuideDownload;
+  readonly maintenanceSection: MaintenanceSection;
+  readonly guide?: GuideDownload;
 };
 
 export function MaintenanceRepairs({ maintenanceSection, guide }: MaintenanceRepairsProps) {

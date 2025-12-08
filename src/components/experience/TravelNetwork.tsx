@@ -9,10 +9,20 @@ import Image from "next/image";
 
 type TabKey = "schedule" | "dealers";
 
-type TravelNetworkProps = {
+type TravelNetworkProps = Readonly<{
   data: ExperienceNetworkData;
   ui: TravelNetworkUi;
-};
+}>;
+
+type ScheduleListProps = Readonly<{
+  events: readonly ScheduledEventEntry[];
+  emptyText: string;
+}>;
+
+type DealerListProps = Readonly<{
+  dealers: readonly AuthorizedDealerEntry[];
+  emptyText: string;
+}>;
 
 export function TravelNetwork({ data, ui }: TravelNetworkProps) {
   const analyticsRef = useAnalyticsObserver("TravelNetworkSeen");
@@ -137,7 +147,7 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
   );
 }
 
-function ScheduleList({ events, emptyText }: { events: ScheduledEventEntry[]; emptyText: string }) {
+function ScheduleList({ events, emptyText }: ScheduleListProps) {
   if (!events.length) {
     return <p className="text-sm leading-relaxed text-ink-muted">{emptyText}</p>;
   }
@@ -169,7 +179,7 @@ function ScheduleList({ events, emptyText }: { events: ScheduledEventEntry[]; em
   );
 }
 
-function DealerList({ dealers, emptyText }: { dealers: AuthorizedDealerEntry[]; emptyText: string }) {
+function DealerList({ dealers, emptyText }: DealerListProps) {
   if (!dealers.length) {
     return <p className="text-sm leading-relaxed text-ink-muted">{emptyText}</p>;
   }

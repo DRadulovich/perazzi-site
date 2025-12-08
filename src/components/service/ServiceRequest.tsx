@@ -6,13 +6,13 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 
 type RequestProps = {
-  title: string;
-  description: string;
-  buttonLabel: string;
-  embedSrc: string;
-  fallbackHref: string;
-  analyticsOpenId: string;
-  fallbackLinkLabel?: string;
+  readonly title: string;
+  readonly description: string;
+  readonly buttonLabel: string;
+  readonly embedSrc: string;
+  readonly fallbackHref: string;
+  readonly analyticsOpenId: string;
+  readonly fallbackLinkLabel?: string;
 };
 
 export function ServiceRequest({
@@ -51,7 +51,7 @@ export function ServiceRequest({
           className="space-y-3"
           onSubmit={(event) => {
             event.preventDefault();
-            if (!email || !email.includes("@")) {
+            if (!email?.includes("@")) {
               setError("Enter a valid email so we can reply.");
               return;
             }
@@ -61,7 +61,7 @@ export function ServiceRequest({
           }}
         >
           <label className="flex flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">
-            Contact email
+            <span>Contact email</span>
             <input
               type="email"
               value={email}
@@ -73,13 +73,9 @@ export function ServiceRequest({
           <Button type="submit" variant="primary">
             {buttonLabel}
           </Button>
-          <p
-            className="text-xs text-perazzi-red"
-            role="status"
-            aria-live="polite"
-          >
+          <output className="text-xs text-perazzi-red" aria-live="polite">
             {error}
-          </p>
+          </output>
         </form>
       )}
       <p className="text-xs text-ink-muted">

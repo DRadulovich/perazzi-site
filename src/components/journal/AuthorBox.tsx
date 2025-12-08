@@ -1,9 +1,9 @@
 import Image from "next/image";
 import type { Author } from "@/types/journal";
 
-type AuthorBoxProps = {
+type AuthorBoxProps = Readonly<{
   author?: Author;
-};
+}>;
 
 export function AuthorBox({ author }: AuthorBoxProps) {
   if (!author) return null;

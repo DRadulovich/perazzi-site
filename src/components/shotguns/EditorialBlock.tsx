@@ -1,6 +1,6 @@
-type EditorialBlockProps = {
+type EditorialBlockProps = Readonly<{
   html: string;
-};
+}>;
 
 export function EditorialBlock({ html }: EditorialBlockProps) {
   return (

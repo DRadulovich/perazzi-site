@@ -1,8 +1,8 @@
 import type { ShotgunsSeriesEntry } from "@/types/catalog";
 
-type AtAGlanceStripProps = {
+type AtAGlanceStripProps = Readonly<{
   data: ShotgunsSeriesEntry["atAGlance"];
-};
+}>;
 
 export function AtAGlanceStrip({ data }: AtAGlanceStripProps) {
   return (

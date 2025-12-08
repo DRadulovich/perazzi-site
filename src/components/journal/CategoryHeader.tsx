@@ -1,9 +1,9 @@
 import Link from "next/link";
 import type { JournalCategoryData } from "@/types/journal";
 
-type CategoryHeaderProps = {
+type CategoryHeaderProps = Readonly<{
   header: JournalCategoryData["header"];
-};
+}>;
 
 export function CategoryHeader({ header }: CategoryHeaderProps) {
   return (

@@ -78,11 +78,11 @@ const defaults = {
     options: bookingFixture.options.map((option) => ({
       title: option.title,
       duration: `${option.durationMins} minutes`,
-      description: option.descriptionHtml.replace(/<[^>]+>/g, "").trim(),
+      description: option.descriptionHtml.replaceAll(/<[^>]+>/g, "").trim(),
       href: option.href,
     })),
     whatToExpectHeading: bookingFixture.whatToExpectHeading ?? "What to expect",
-    whatToExpectItems: bookingFixture.whatToExpect.map((item) => item.bodyHtml.replace(/<[^>]+>/g, "").trim()),
+    whatToExpectItems: bookingFixture.whatToExpect.map((item) => item.bodyHtml.replaceAll(/<[^>]+>/g, "").trim()),
     note: bookingFixture.note,
   },
   assuranceContent: {
@@ -90,7 +90,7 @@ const defaults = {
     label: assuranceFixture.label ?? "Atelier guarantee",
     body:
       assuranceFixture.body ??
-      assuranceFixture.html?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() ??
+      assuranceFixture.html?.replaceAll(/<[^>]+>/g, " ").replaceAll(/\s+/g, " ").trim() ??
       "Every bespoke Perazzi is delivered with lifelong fitting assurance.",
     quote: assuranceFixture.quote?.text ?? "A bespoke gun is never finished—only in harmony with the shooter today.",
   },
@@ -158,7 +158,9 @@ async function main() {
   console.log("New revision:", result._rev);
 }
 
-main().catch((error) => {
+try {
+  await main();
+} catch (error) {
   console.error(error);
   process.exit(1);
-});
+}

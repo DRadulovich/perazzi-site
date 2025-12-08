@@ -7,9 +7,9 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import type { BookingSection } from "@/types/experience";
 
-type BookingOptionsProps = {
+type BookingOptionsProps = Readonly<{
   bookingSection: BookingSection;
-};
+}>;
 
 export function BookingOptions({ bookingSection }: BookingOptionsProps) {
   const analyticsRef = useAnalyticsObserver("ExperienceBookingSeen");
@@ -154,7 +154,6 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
                     className={`h-[480px] w-full rounded-2xl border border-border ${schedulerOpen ? "" : "hidden"}`}
                     loading="lazy"
                     aria-hidden={!schedulerOpen}
-                    tabIndex={schedulerOpen ? 0 : -1}
                   />
                 ) : (
                   <div className="flex h-[320px] w-full items-center justify-center rounded-2xl border border-dashed border-border/60 text-sm sm:text-base text-ink-muted">
@@ -170,7 +169,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
                   rel="noopener noreferrer"
                   className="font-semibold text-perazzi-red focus-ring"
                 >
-                  Open booking in a new tab
+                  Open booking in a new tab{" "}
                   <span className="sr-only"> (opens in a new tab)</span>
                 </a>
               </p>

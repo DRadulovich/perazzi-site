@@ -7,6 +7,17 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import type { FittingStage } from "@/types/build";
 
+const swallowPlayError = () => {};
+
+const buildCaptionTrackSrc = (media: FittingStage["media"]) => {
+  const caption = media.caption ?? media.alt;
+  const vtt = caption
+    ? `WEBVTT\n\n00:00.000 --> 99:59.000\n${caption}`
+    : "WEBVTT";
+
+  return `data:text/vtt,${encodeURIComponent(vtt)}`;
+};
+
 type BuildStepItemProps = Readonly<{
   step: FittingStage;
   index: number;
@@ -34,18 +45,18 @@ export function BuildStepItem({
     if (step.media.kind !== "video") return;
     const video = videoRef.current;
     if (!video) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            video.play().catch(() => {});
-          } else {
-            video.pause();
-          }
-        });
-      },
-      { threshold: 0.5 },
-    );
+
+    const handleIntersection: IntersectionObserverCallback = (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          video.play().catch(swallowPlayError);
+        } else {
+          video.pause();
+        }
+      }
+    };
+
+    const observer = new IntersectionObserver(handleIntersection, { threshold: 0.5 });
     observer.observe(video);
     return () => {
       observer.disconnect();
@@ -69,6 +80,12 @@ export function BuildStepItem({
           playsInline
           className="h-full w-full object-cover"
         >
+          <track
+            kind="captions"
+            label="Captions"
+            src={buildCaptionTrackSrc(step.media)}
+            default
+          />
           Sorry, your browser does not support embedded videos.
         </video>
       ) : (

@@ -9,12 +9,12 @@ import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 import { faq as faqFixture } from "@/content/experience/faq";
 
-type FAQListProps = {
+type FAQListProps = Readonly<{
   items: FAQItem[];
   embedded?: boolean;
   heading?: string;
   lead?: string;
-};
+}>;
 
 export function FAQList({ items, embedded = false, heading, lead }: FAQListProps) {
   const analyticsRef = useAnalyticsObserver<HTMLDivElement>("ExperienceFAQSeen");
@@ -108,10 +108,10 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
   );
 }
 
-type FAQItemCardProps = {
+type FAQItemCardProps = Readonly<{
   item: FAQItem;
   index: number;
-};
+}>;
 
 function FAQItemCard({ item, index }: FAQItemCardProps) {
   const [open, setOpen] = useState(false);

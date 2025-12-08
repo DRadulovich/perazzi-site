@@ -10,7 +10,7 @@ type PortableTextChild = {
 };
 
 type PortableBodyProps = {
-  blocks: PortableBlock[];
+  readonly blocks: ReadonlyArray<PortableBlock>;
 };
 
 export function PortableBody({ blocks }: PortableBodyProps) {
@@ -50,7 +50,7 @@ export function PortableBody({ blocks }: PortableBodyProps) {
   );
 }
 
-function getHeadingEntries(blocks: PortableBlock[]) {
+function getHeadingEntries(blocks: ReadonlyArray<PortableBlock>) {
   const entries: { id: string; text: string; index: number }[] = [];
   blocks.forEach((block, index) => {
     if (block._type === "block" && (block.style === "h2" || block.style === "h3")) {
@@ -65,7 +65,7 @@ function renderBlock(block: PortableBlock, id: string) {
     const style = block.style ?? "normal";
     const text = getText(block);
     if (style === "h2" || style === "h3") {
-      const Tag = style as "h2" | "h3";
+      const Tag = style;
       return (
         <Tag key={id} id={id}>
           {text}

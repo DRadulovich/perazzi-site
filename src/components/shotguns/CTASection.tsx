@@ -6,11 +6,11 @@ import { motion, useReducedMotion } from "framer-motion";
 import { logAnalytics } from "@/lib/analytics";
 
 type CTASectionProps = {
-  text: string;
-  primary: { label: string; href: string };
-  secondary?: { label: string; href: string };
-  dataAnalyticsId?: string;
-  analyticsPrefix?: string;
+  readonly text: string;
+  readonly primary: { readonly label: string; readonly href: string };
+  readonly secondary?: { readonly label: string; readonly href: string };
+  readonly dataAnalyticsId?: string;
+  readonly analyticsPrefix?: string;
 };
 
 export function CTASection({

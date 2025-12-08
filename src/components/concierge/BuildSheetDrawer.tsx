@@ -23,16 +23,127 @@ export type SavedBuild = {
   timestamp: number;
 };
 
-type BuildSheetDrawerProps = {
+type EntryWithDetails = BuildSheetEntry & { details?: BuildSheetDetails };
+
+type BuildSheetDrawerProps = Readonly<{
   open: boolean;
-  entries: Array<BuildSheetEntry & { details?: BuildSheetDetails }>;
+  entries: ReadonlyArray<EntryWithDetails>;
   onClose?: () => void;
   onRevisit?: (fieldId: string) => void;
   onSave?: () => void;
-  savedBuilds?: SavedBuild[];
+  savedBuilds?: ReadonlyArray<SavedBuild>;
   onLoadSaved?: (id: string) => void;
   onDeleteSaved?: (id: string) => void;
+}>;
+
+type BuildSheetEntryCardProps = Readonly<{
+  entry: EntryWithDetails;
+  editMode: boolean;
+  isCollapsed: boolean;
+  onToggle: (id: string) => void;
+  onClose?: () => void;
+  onRevisit?: (fieldId: string) => void;
+}>;
+
+type DetailLine = { id: string; text: string; label?: string; isDescription?: boolean };
+
+const formatDetailLines = (details?: BuildSheetDetails): DetailLine[] => {
+  if (!details) return [];
+
+  const labeledLines = [
+    { id: "platform", label: "Platform", value: details.platform },
+    { id: "grade", label: "Grade", value: details.grade },
+    { id: "gauges", label: "Gauges", value: details.gauges?.join(", ") },
+    { id: "triggerTypes", label: "Trigger types", value: details.triggerTypes?.join(", ") },
+    { id: "recommendedPlatforms", label: "Recommended platforms", value: details.recommendedPlatforms?.join(", ") },
+    { id: "popularModels", label: "Popular models", value: details.popularModels?.join(", ") },
+  ].filter((line) => Boolean(line.value));
+
+  const detailLines = labeledLines.map(
+    (line) => ({ id: line.id, label: line.label, text: line.value as string }) satisfies DetailLine,
+  );
+
+  return details.description
+    ? [{ id: "description", text: details.description, isDescription: true }, ...detailLines]
+    : detailLines;
 };
+
+function BuildSheetEntryCard({
+  entry,
+  editMode,
+  isCollapsed,
+  onToggle,
+  onClose,
+  onRevisit,
+}: BuildSheetEntryCardProps) {
+  const hasDetails = Boolean(entry.details);
+  const isExpanded = hasDetails && !isCollapsed;
+  const handleClick = () => {
+    if (editMode && onRevisit) {
+      onRevisit(entry.id);
+      onClose?.();
+      return;
+    }
+    if (hasDetails) {
+      onToggle(entry.id);
+    }
+  };
+
+  const imageUrl = entry.details?.fullImageUrl ?? entry.details?.imageUrl;
+  const detailLines = formatDetailLines(entry.details);
+
+  return (
+    <li>
+      <button
+        type="button"
+        className={clsx(
+          "w-full rounded-2xl border border-subtle/60 bg-card px-3 py-2 text-left transition focus-ring",
+          editMode ? "cursor-pointer hover:border-ink hover:shadow-sm" : "",
+        )}
+        onClick={handleClick}
+        aria-expanded={hasDetails ? isExpanded : undefined}
+      >
+        <div className="flex flex-col gap-1">
+          <div className="flex items-start justify-between gap-3">
+            <span className="font-semibold">{entry.label}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-ink-muted">{entry.value}</span>
+              {hasDetails ? (
+                <FiChevronUp
+                  className={clsx(
+                    "text-perazzi-red transition-transform",
+                    isExpanded ? "rotate-0" : "rotate-180",
+                  )}
+                  aria-hidden="true"
+                />
+              ) : null}
+            </div>
+          </div>
+          {isExpanded ? (
+            <div className="space-y-2">
+              {imageUrl ? (
+                <img src={imageUrl} alt={entry.label} className="w-full max-h-48 rounded-lg object-cover" />
+              ) : null}
+              <div className="space-y-1 text-[11px] sm:text-xs leading-relaxed text-ink">
+                {detailLines.map((detail) =>
+                  detail.isDescription ? (
+                    <p key={detail.id} className="text-ink">
+                      {detail.text}
+                    </p>
+                  ) : (
+                    <p key={detail.id} className="text-ink-muted">
+                      {detail.label ? `${detail.label}: ${detail.text}` : detail.text}
+                    </p>
+                  ),
+                )}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </button>
+    </li>
+  );
+}
 
 export function BuildSheetDrawer({
   open,
@@ -44,7 +155,7 @@ export function BuildSheetDrawer({
   onLoadSaved,
   onDeleteSaved,
 }: BuildSheetDrawerProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDialogElement | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
@@ -68,8 +179,8 @@ export function BuildSheetDrawer({
         onClose?.();
       }
     };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
+    globalThis.addEventListener("keydown", handleKey);
+    return () => globalThis.removeEventListener("keydown", handleKey);
   }, [open, onClose]);
 
   const entriesWithDetails = entries.filter((entry) => entry.details);
@@ -79,10 +190,15 @@ export function BuildSheetDrawer({
 
   const handleToggleAll = () => {
     const next: Record<string, boolean> = {};
+    const shouldCollapse = !allCollapsed;
     entriesWithDetails.forEach((entry) => {
-      next[entry.id] = !allCollapsed ? true : false;
+      next[entry.id] = shouldCollapse;
     });
     setCollapsed((prev) => ({ ...prev, ...next }));
+  };
+
+  const handleEntryToggle = (entryId: string) => {
+    setCollapsed((prev) => ({ ...prev, [entryId]: !prev[entryId] }));
   };
 
   return (
@@ -93,19 +209,19 @@ export function BuildSheetDrawer({
           "fixed inset-0 z-40 h-full w-full bg-black/30 transition-opacity duration-300",
           open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         )}
-        aria-hidden="true"
+        aria-label="Close build sheet"
         onClick={() => onClose?.()}
       />
-      <div
+      <dialog
         ref={containerRef}
         className={clsx(
           "fixed inset-y-0 left-0 z-50 flex w-full max-w-xl flex-col border-r border-subtle bg-card shadow-2xl transition-transform duration-300",
           open ? "translate-x-0" : "-translate-x-full",
         )}
         tabIndex={-1}
-        role="dialog"
         aria-label="Current build sheet"
-        aria-hidden={!open}
+        aria-modal="true"
+        open={open}
       >
         <div className="flex flex-col gap-2 border-b border-subtle px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between">
@@ -198,78 +314,20 @@ export function BuildSheetDrawer({
           ) : (
             <ul className="space-y-2 text-sm sm:text-base text-ink">
               {entries.map((entry) => (
-                <li
+                <BuildSheetEntryCard
                   key={entry.id}
-                  className={clsx(
-                    "rounded-2xl border border-subtle/60 bg-card px-3 py-2 transition",
-                    editMode ? "cursor-pointer hover:border-ink hover:shadow-sm" : "",
-                  )}
-                  onClick={() => {
-                    if (editMode && onRevisit) {
-                      onRevisit(entry.id);
-                      onClose?.();
-                      return;
-                    }
-                    if (entry.details) {
-                      setCollapsed((prev) => ({ ...prev, [entry.id]: !prev[entry.id] }));
-                    }
-                  }}
-                >
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-start justify-between gap-3">
-                      <span className="font-semibold">{entry.label}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-ink-muted">{entry.value}</span>
-                        {entry.details ? (
-                          <FiChevronUp
-                            className={clsx(
-                              "text-perazzi-red transition-transform",
-                              collapsed[entry.id] ? "rotate-180" : "rotate-0",
-                            )}
-                            aria-hidden
-                          />
-                        ) : null}
-                      </div>
-                    </div>
-                    {entry.details && !collapsed[entry.id] ? (
-                      <div className="space-y-2">
-                        {entry.details.fullImageUrl || entry.details.imageUrl ? (
-                          <img
-                            src={entry.details.fullImageUrl ?? entry.details.imageUrl ?? ""}
-                            alt={entry.label}
-                            className="w-full max-h-48 rounded-lg object-cover"
-                          />
-                        ) : null}
-                        <div className="space-y-1 text-[11px] sm:text-xs leading-relaxed text-ink">
-                          {entry.details.description ? <p className="text-ink">{entry.details.description}</p> : null}
-                          {entry.details.platform ? (
-                            <p className="text-ink-muted">Platform: {entry.details.platform}</p>
-                          ) : null}
-                          {entry.details.grade ? <p className="text-ink-muted">Grade: {entry.details.grade}</p> : null}
-                          {entry.details.gauges?.length ? (
-                            <p className="text-ink-muted">Gauges: {entry.details.gauges.join(", ")}</p>
-                          ) : null}
-                          {entry.details.triggerTypes?.length ? (
-                            <p className="text-ink-muted">Trigger types: {entry.details.triggerTypes.join(", ")}</p>
-                          ) : null}
-                          {entry.details.recommendedPlatforms?.length ? (
-                            <p className="text-ink-muted">
-                              Recommended platforms: {entry.details.recommendedPlatforms.join(", ")}
-                            </p>
-                          ) : null}
-                          {entry.details.popularModels?.length ? (
-                            <p className="text-ink-muted">Popular models: {entry.details.popularModels.join(", ")}</p>
-                          ) : null}
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                </li>
+                  entry={entry}
+                  editMode={editMode}
+                  isCollapsed={Boolean(collapsed[entry.id])}
+                  onToggle={handleEntryToggle}
+                  onClose={onClose}
+                  onRevisit={onRevisit}
+                />
               ))}
             </ul>
           )}
         </div>
-      </div>
+      </dialog>
     </>
   );
 }

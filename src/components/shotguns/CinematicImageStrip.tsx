@@ -4,11 +4,11 @@ import { useRef } from "react";
 import Image from "next/image";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 
-type CinematicImageStripProps = {
+type CinematicImageStripProps = Readonly<{
   src?: string;
-  image?: { url: string; alt?: string };
+  image?: Readonly<{ url: string; alt?: string }>;
   alt?: string;
-};
+}>;
 
 // Full-bleed cinematic band for the shotguns landing; breaks out of the SiteShell container without adding new content.
 export function CinematicImageStrip({ src, image, alt }: CinematicImageStripProps) {

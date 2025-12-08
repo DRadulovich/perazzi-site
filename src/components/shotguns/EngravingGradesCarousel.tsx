@@ -9,10 +9,10 @@ import { getGradeAnchorId } from "@/lib/grade-anchors";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
-type EngravingGradesCarouselProps = {
-  grades: GradeSeries[];
+type EngravingGradesCarouselProps = Readonly<{
+  grades: readonly GradeSeries[];
   ui?: ShotgunsLandingData["engravingCarouselUi"];
-};
+}>;
 
 const GRADE_TABS = [
   {
@@ -70,11 +70,12 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
     return map;
   }, [grades]);
 
-  const groupedGrades = useMemo(() => {
+  const groupedGrades = useMemo<GradeSeries[][]>(() => {
     return tabs.map((tab) =>
-      tab.order
+      tab
+        .order
         .map((name) => gradeLookup.get(normalize(name)))
-        .filter((grade): grade is GradeSeries => Boolean(grade)),
+        .filter(Boolean) as GradeSeries[],
     );
   }, [gradeLookup, tabs]);
 
@@ -228,7 +229,12 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
   );
 }
 
-function GradeCard({ grade, ctaLabel }: { grade: GradeSeries; ctaLabel: string }) {
+type GradeCardProps = Readonly<{
+  grade: GradeSeries;
+  ctaLabel: string;
+}>;
+
+function GradeCard({ grade, ctaLabel }: GradeCardProps) {
   const heroAsset = grade.gallery?.[0];
   const ratio = heroAsset?.aspectRatio ?? 3 / 2;
   const gradeAnchor = getGradeAnchorId(grade);

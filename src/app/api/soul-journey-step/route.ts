@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     }
 
     const trimmedAnswer = userAnswer.trim();
-    const prompt = template.replace(/{{USER_ANSWER}}/g, trimmedAnswer);
+    const prompt = template.replaceAll("{{USER_ANSWER}}", trimmedAnswer);
     const titleLine = title && typeof title === "string" ? `Step title: ${title}\n\n` : "";
 
     const completion = await openai.chat.completions.create({

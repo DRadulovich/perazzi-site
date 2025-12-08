@@ -9,10 +9,34 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 
-type OralHistoriesProps = {
-  histories: OralHistory[];
+const FALLBACK_TRACK_SRC = `data:text/vtt;charset=utf-8,${encodeURIComponent(
+  "WEBVTT\n\n00:00:00.000 --> 00:00:01.000\nCaptions not available.",
+)}`;
+
+type OralHistoriesProps = Readonly<{
+  histories: readonly OralHistory[];
   ui: OralHistoriesUi;
-};
+}>;
+
+type OralHistoryCardProps = Readonly<{
+  history: OralHistory;
+  readLabel: string;
+  hideLabel: string;
+}>;
+
+function buildTranscriptTrack(transcriptHtml: string) {
+  const plainText = transcriptHtml
+    .replaceAll(/<[^>]+>/g, " ")
+    .replaceAll(/\s+/g, " ")
+    .trim();
+
+  if (!plainText) {
+    return FALLBACK_TRACK_SRC;
+  }
+
+  const vtt = `WEBVTT\n\n00:00:00.000 --> 99:59:59.000\n${plainText}`;
+  return `data:text/vtt;charset=utf-8,${encodeURIComponent(vtt)}`;
+}
 
 export function OralHistories({ histories, ui }: OralHistoriesProps) {
   const sectionRef = useAnalyticsObserver<HTMLElement>("OralHistoriesSeen");
@@ -57,12 +81,6 @@ export function OralHistories({ histories, ui }: OralHistoriesProps) {
     </section>
   );
 }
-
-type OralHistoryCardProps = {
-  history: OralHistory;
-  readLabel: string;
-  hideLabel: string;
-};
 
 function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps) {
   const analyticsRef = useAnalyticsObserver(`OralHistorySeen:${history.id}`, {
@@ -120,6 +138,16 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
           }
         >
           <source src={history.audioSrc} type="audio/mpeg" />
+          <track
+            kind="captions"
+            label={`${history.title} transcript`}
+            srcLang="en"
+            src={
+              history.transcriptHtml
+                ? buildTranscriptTrack(history.transcriptHtml)
+                : FALLBACK_TRACK_SRC
+            }
+          />
           Your browser does not support the audio element.
         </audio>
       ) : null}

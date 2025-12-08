@@ -8,13 +8,14 @@ import { stripHtml } from "@/utils/text";
 import { logAnalytics } from "@/lib/analytics";
 
 type HubProps = {
-  category: keyof JournalLandingData["hubs"];
-  data: JournalLandingData["hubs"][keyof JournalLandingData["hubs"]];
+  readonly category: keyof JournalLandingData["hubs"];
+  readonly data: JournalLandingData["hubs"][keyof JournalLandingData["hubs"]];
 };
 
 export function CategoryHub({ category, data }: HubProps) {
   const [visibleCount, setVisibleCount] = useState(2);
   const items = data.items.slice(0, visibleCount);
+  const heading = getCategoryHeading(category);
 
   return (
     <section className="space-y-4" aria-labelledby={`category-${category}`}>
@@ -24,11 +25,7 @@ export function CategoryHub({ category, data }: HubProps) {
             {category.replace(/^[a-z]/, (c) => c.toUpperCase())}
           </p>
           <h2 id={`category-${category}`} className="text-2xl font-semibold text-ink">
-            {category === "craft"
-              ? "Stories of Craft"
-              : category === "interviews"
-              ? "Champion Interviews"
-              : "News"}
+            {heading}
           </h2>
           {data.headerHtml ? (
             <div
@@ -93,4 +90,10 @@ export function CategoryHub({ category, data }: HubProps) {
       ) : null}
     </section>
   );
+}
+
+function getCategoryHeading(category: HubProps["category"]) {
+  if (category === "craft") return "Stories of Craft";
+  if (category === "interviews") return "Champion Interviews";
+  return "News";
 }

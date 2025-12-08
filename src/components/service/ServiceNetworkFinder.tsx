@@ -7,10 +7,10 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
-type ServiceNetworkFinderProps = {
+type ServiceNetworkFinderProps = Readonly<{
   locations: ServiceLocation[];
   ui: NetworkFinderUi;
-};
+}>;
 
 const defaultMapSrc =
   "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d44746.87813164304!2d10.2902568!3d45.5199988!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47817776ebf93163%3A0x7b1471b5b8b3b944!2sPerazzi!5e0!3m2!1sen!2sit!4v1720000000000!5m2!1sen!2sit";
@@ -83,7 +83,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
       </div>
       <form role="search" className="flex flex-col gap-3 md:flex-row md:items-end">
         <label className="flex w-full flex-col text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink">
-          Location type
+          <span>Location type</span>
           <select
             className="mt-1 min-h-10 rounded-2xl border border-border/60 bg-card px-3 py-2 text-sm sm:text-base text-ink focus-ring sm:border-border/70"
             value={filter}
@@ -100,7 +100,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
           </select>
         </label>
         <label className="flex w-full flex-col text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink">
-          Search by State or Name
+          <span>Search by State or Name</span>
           <input
             type="search"
             className="mt-1 min-h-10 rounded-2xl border border-border/60 bg-card px-3 py-2 text-sm sm:text-base text-ink focus-ring sm:border-border/70"
@@ -110,11 +110,11 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
           />
         </label>
       </form>
-      <p className="text-[11px] sm:text-xs leading-relaxed text-ink-muted" aria-live="polite" role="status">
+      <output className="block text-[11px] sm:text-xs leading-relaxed text-ink-muted" aria-live="polite">
         {filteredLocations.length} locations available.
-      </p>
+      </output>
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <ul role="list" className="space-y-4">
+        <ul className="space-y-4">
           {filteredLocations.length === 0 ? (
             <li className="rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted sm:bg-card/70 sm:border-border/70">
               No locations match your filters. Try clearing the search or selecting a different type.
@@ -124,9 +124,8 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
               const isActive = activeLocation?.id === location.id;
               return (
                 <li key={location.id}>
-                  <div
-                    role="button"
-                    tabIndex={0}
+                  <button
+                    type="button"
                     aria-pressed={isActive}
                     className={cn(
                       "flex flex-col gap-2 rounded-2xl border p-4 transition-colors focus-ring",
@@ -137,13 +136,6 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
                     onClick={() => {
                       setActiveLocationId(location.id);
                       logAnalytics(`FinderResultClick:${location.id}`);
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        setActiveLocationId(location.id);
-                        logAnalytics(`FinderResultClick:${location.id}`);
-                      }
                     }}
                   >
                     <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
@@ -187,7 +179,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
                         dangerouslySetInnerHTML={{ __html: location.notesHtml }}
                       />
                     ) : null}
-                  </div>
+                  </button>
                 </li>
               );
             })
@@ -232,7 +224,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
 
 function stripHtml(value?: string) {
   if (!value) return "";
-  return value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return value.replaceAll(/<[^>]+>/g, " ").replaceAll(/\s+/g, " ").trim();
 }
 
 function buildMapQuery(location: ServiceLocation) {

@@ -1,9 +1,9 @@
 import Image from "next/image";
 import type { Article } from "@/types/journal";
 
-type ArticleHeroProps = {
+type ArticleHeroProps = Readonly<{
   article: Article;
-};
+}>;
 
 export function ArticleHero({ article }: ArticleHeroProps) {
   const ratio = article.hero.aspectRatio ?? 16 / 9;

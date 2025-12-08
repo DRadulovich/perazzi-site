@@ -7,15 +7,15 @@ import Link from "next/link";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import type { HeritageHero } from "@/types/heritage";
 
-type Breadcrumb = {
+type Breadcrumb = Readonly<{
   label: string;
   href: string;
-};
+}>;
 
-type HeritageHeroProps = {
+type HeritageHeroProps = Readonly<{
   hero: HeritageHero;
   breadcrumbs?: Breadcrumb[];
-};
+}>;
 
 export function HeritageHero({ hero, breadcrumbs }: HeritageHeroProps) {
   const HEADER_OFFSET = 80;

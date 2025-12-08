@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FittingStage, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -13,8 +13,8 @@ import { Button } from "@/components/ui/button";
 import { TimelineItem } from "./timeline-item";
 
 type TimelineScrollerProps = {
-  stages: FittingStage[];
-  framing: HomeData["timelineFraming"];
+  readonly stages: readonly FittingStage[];
+  readonly framing: HomeData["timelineFraming"];
 };
 
 export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
@@ -44,12 +44,6 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
       logAnalytics(`CraftTimeline.StageSeen:${currentStage.id}`);
     }
   }, [activeStage, stages]);
-
-  const focusSkipTarget = useCallback(() => {
-    if (typeof document === "undefined") return;
-    const anchor = document.getElementById(skipTargetId);
-    anchor?.focus();
-  }, [skipTargetId]);
 
   return (
     <>
@@ -243,11 +237,11 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
 }
 
 type ControlButtonProps = {
-  label: string;
-  order: number;
-  active: boolean;
-  onSelect: () => void;
-  animationsEnabled: boolean;
+  readonly label: string;
+  readonly order: number;
+  readonly active: boolean;
+  readonly onSelect: () => void;
+  readonly animationsEnabled: boolean;
 };
 
 function TimelineControlButton({
@@ -293,9 +287,9 @@ function TimelineControlButton({
 }
 
 type PinnedStageProps = {
-  stage: FittingStage;
-  active: boolean;
-  animationsEnabled: boolean;
+  readonly stage: FittingStage;
+  readonly active: boolean;
+  readonly animationsEnabled: boolean;
 };
 
 function PinnedStagePanel({

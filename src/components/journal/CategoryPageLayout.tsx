@@ -9,12 +9,12 @@ import {
   sanitizeCategoryFilters,
 } from "@/lib/journal/category";
 
-type CategoryPageLayoutProps = {
+type CategoryPageLayoutProps = Readonly<{
   data: JournalCategoryData;
   categoryKey: CategoryKey;
   basePath: string;
   searchParams?: Record<string, string | string[] | undefined>;
-};
+}>;
 
 export function CategoryPageLayout({
   data,
