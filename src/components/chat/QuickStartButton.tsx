@@ -1,9 +1,9 @@
-interface QuickStartButtonProps {
+interface QuickStartButtonProps extends Readonly<{
   label: string;
   prompt: string;
   disabled?: boolean;
   onSelect: (prompt: string) => void;
-}
+}> {}
 
 export function QuickStartButton({ label, prompt, disabled, onSelect }: QuickStartButtonProps) {
   return (

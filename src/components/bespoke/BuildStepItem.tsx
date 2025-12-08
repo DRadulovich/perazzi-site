@@ -7,12 +7,12 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import type { FittingStage } from "@/types/build";
 
-type BuildStepItemProps = {
+type BuildStepItemProps = Readonly<{
   step: FittingStage;
   index: number;
   onCtaClick?: (id: string) => void;
   layout?: "stacked" | "pinned";
-};
+}>;
 
 export function BuildStepItem({
   step,

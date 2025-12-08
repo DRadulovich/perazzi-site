@@ -91,9 +91,9 @@ export function useChatState(
   );
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!("localStorage" in globalThis)) return;
     try {
-      const stored = window.localStorage.getItem(storageKey);
+      const stored = globalThis.localStorage.getItem(storageKey);
       if (stored) {
         const parsed = JSON.parse(stored) as {
           messages?: ChatEntry[];
@@ -104,7 +104,7 @@ export function useChatState(
         }
         if (parsed?.context) {
           setContext((prev) => ({
-            ...(options.initialContext ?? {}),
+            ...options.initialContext,
             ...prev,
             ...parsed.context,
           }));
@@ -222,13 +222,13 @@ export function useChatState(
   };
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!("localStorage" in globalThis)) return;
     try {
       const payload = JSON.stringify({
         messages,
         context,
       });
-      window.localStorage.setItem(storageKey, payload);
+      globalThis.localStorage.setItem(storageKey, payload);
     } catch (error) {
       console.warn("Failed to persist chat history", error);
     }
@@ -241,9 +241,9 @@ export function useChatState(
   const clearConversation = useCallback(() => {
     setMessages([]);
     setError(null);
-    if (typeof window !== "undefined") {
+    if ("localStorage" in globalThis) {
       try {
-        window.localStorage.removeItem(storageKey);
+        globalThis.localStorage.removeItem(storageKey);
       } catch (err) {
         console.warn("Failed to clear stored chat history", err);
       }

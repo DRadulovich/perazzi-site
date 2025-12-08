@@ -4,9 +4,9 @@ import { motion, useReducedMotion } from "framer-motion";
 import type { JourneyOverviewData } from "@/types/build";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
-type JourneyOverviewProps = {
+type JourneyOverviewProps = Readonly<{
   journey: JourneyOverviewData;
-};
+}>;
 
 export function JourneyOverview({ journey }: JourneyOverviewProps) {
   const prefersReducedMotion = useReducedMotion();

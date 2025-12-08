@@ -1,9 +1,9 @@
 import Image from "next/image";
 import type { AssuranceContent } from "@/types/build";
 
-type AssuranceBlockProps = {
+type AssuranceBlockProps = Readonly<{
   assurance: AssuranceContent;
-};
+}>;
 
 export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
   const { html, quote, media } = assurance;

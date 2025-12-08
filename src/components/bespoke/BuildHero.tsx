@@ -5,10 +5,10 @@ import Image from "next/image";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import type { BuildHero } from "@/types/build";
 
-type BuildHeroProps = {
+type BuildHeroProps = Readonly<{
   hero: BuildHero;
   fullBleed?: boolean;
-};
+}>;
 
 export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
   const containerRef = useAnalyticsObserver("HeroSeen:bespoke");
@@ -79,7 +79,7 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
         aria-hidden="true"
       >
         <span className="inline-flex items-center gap-2 rounded-full border border-white/40 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-white/80">
-          Scroll
+          <span>Scroll</span>
           <span className="text-lg leading-none">↓</span>
         </span>
       </div>

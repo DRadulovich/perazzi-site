@@ -11,7 +11,7 @@ const ARCHETYPE_ORDER: { key: string; label: string }[] = [
 function formatArchetypePercentages(vector: Record<string, number> | undefined) {
   if (!vector) return [] as { label: string; percent: number }[];
   return ARCHETYPE_ORDER.map(({ key, label }) => {
-    const raw = typeof vector[key] === "number" ? vector[key]! : 0;
+    const raw = typeof vector[key] === "number" ? vector[key] : 0;
     const percent = Math.round(raw * 100);
     return { label, percent };
   });
@@ -44,12 +44,12 @@ const QUICK_STARTS = [
 ];
 
 type ChatPanelProps = {
-  open: boolean;
-  onClose?: () => void;
-  variant?: "rail" | "sheet";
-  className?: string;
-  pendingPrompt?: ChatTriggerPayload | null;
-  onPromptConsumed?: () => void;
+  readonly open: boolean;
+  readonly onClose?: () => void;
+  readonly variant?: "rail" | "sheet";
+  readonly className?: string;
+  readonly pendingPrompt?: ChatTriggerPayload | null;
+  readonly onPromptConsumed?: () => void;
 };
 
 const markdownComponents = {
@@ -68,11 +68,17 @@ const markdownComponents = {
   strong: (props: React.HTMLAttributes<HTMLElement>) => (
     <strong className="font-semibold" {...props} />
   ),
-  table: (props: React.TableHTMLAttributes<HTMLTableElement>) => (
-    <div className="my-4 overflow-x-auto">
-      <table className="w-full border-collapse text-left text-sm" {...props} />
-    </div>
-  ),
+  table: (props: React.TableHTMLAttributes<HTMLTableElement>) => {
+    const { children, ...rest } = props;
+    return (
+      <div className="my-4 overflow-x-auto">
+        <table className="w-full border-collapse text-left text-sm" {...rest}>
+          <caption className="sr-only">Assistant response table</caption>
+          {children}
+        </table>
+      </div>
+    );
+  },
   thead: (props: React.HTMLAttributes<HTMLTableSectionElement>) => (
     <thead className="bg-subtle text-xs uppercase tracking-[0.2em] text-ink-muted" {...props} />
   ),
@@ -156,7 +162,7 @@ export function ChatPanel({
     try {
       await navigator.clipboard.writeText(content);
       setCopiedId(id);
-      window.setTimeout(() => {
+      globalThis.setTimeout(() => {
         setCopiedId((current) => (current === id ? null : current));
       }, 2000);
     } catch (error) {
@@ -226,7 +232,7 @@ export function ChatPanel({
     sendMessage({
       question,
       context: {
-        pageUrl: window.location.pathname,
+        pageUrl: globalThis.location.pathname,
         locale: navigator.language,
         ...context,
       },
@@ -259,7 +265,6 @@ export function ChatPanel({
       {legacyOverlay}
       <div
         id="perazzi-chat-panel"
-        role="dialog"
         aria-label="Perazzi Concierge"
         tabIndex={-1}
         ref={(node) => {
@@ -326,7 +331,7 @@ export function ChatPanel({
                         onClick={() =>
                           sendMessage({
                             question: qs.prompt,
-                            context: { pageUrl: window.location.pathname, locale: navigator.language, ...context },
+                            context: { pageUrl: globalThis.location.pathname, locale: navigator.language, ...context },
                           })
                         }
                         disabled={pending}

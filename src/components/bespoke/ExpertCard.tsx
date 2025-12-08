@@ -6,9 +6,9 @@ import { useState } from "react";
 import type { Expert } from "@/types/build";
 import { logAnalytics } from "@/lib/analytics";
 
-type ExpertCardProps = {
+type ExpertCardProps = Readonly<{
   expert: Expert;
-};
+}>;
 
 export function ExpertCard({ expert }: ExpertCardProps) {
   const ratio = expert.headshot.aspectRatio ?? 3 / 4;

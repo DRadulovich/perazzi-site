@@ -2,10 +2,10 @@
 
 import { FormEvent, useState } from "react";
 
-interface ChatInputProps {
+interface ChatInputProps extends Readonly<{
   onSend: (question: string) => void;
   pending: boolean;
-}
+}> {}
 
 export function ChatInput({ onSend, pending }: ChatInputProps) {
   const [value, setValue] = useState("");

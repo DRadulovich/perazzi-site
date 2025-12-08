@@ -7,5 +7,9 @@
   ],
   "less.customData": [
     ".vscode/tailwindcss-custom-data.json"
-  ]
+  ],
+  "sonarlint.connectedMode.project": {
+    "connectionId": "dradulovich",
+    "projectKey": "DRadulovich_perazzi-site"
+  }
 }

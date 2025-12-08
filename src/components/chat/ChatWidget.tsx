@@ -21,19 +21,15 @@ export function ChatWidget() {
   const hideTrigger = pathname?.startsWith("/the-build/why-a-perazzi-has-a-soul");
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const query = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
+    if (typeof globalThis.matchMedia !== "function") return;
+    const query = globalThis.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`);
     const updateMatch = (event: MediaQueryListEvent | MediaQueryList) => {
       setIsMobile(event.matches);
     };
     updateMatch(query);
     const listener = (event: MediaQueryListEvent) => updateMatch(event);
-    if (typeof query.addEventListener === "function") {
-      query.addEventListener("change", listener);
-      return () => query.removeEventListener("change", listener);
-    }
-    query.addListener(listener);
-    return () => query.removeListener(listener);
+    query.addEventListener("change", listener);
+    return () => query.removeEventListener("change", listener);
   }, []);
 
   useEffect(() => {
@@ -56,23 +52,24 @@ export function ChatWidget() {
 
   useEffect(() => {
     if (!isResizing) return;
+    if (!("innerWidth" in globalThis)) return;
 
     const handleMouseMove = (event: MouseEvent) => {
-      const calculated = window.innerWidth - event.clientX;
+      const calculated = globalThis.innerWidth - event.clientX;
       const clamped = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, calculated));
       setPanelWidth(clamped);
     };
 
     const stopResizing = () => setIsResizing(false);
 
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", stopResizing);
+    globalThis.addEventListener("mousemove", handleMouseMove);
+    globalThis.addEventListener("mouseup", stopResizing);
     document.body.style.userSelect = "none";
     document.body.style.cursor = "col-resize";
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", stopResizing);
+      globalThis.removeEventListener("mousemove", handleMouseMove);
+      globalThis.removeEventListener("mouseup", stopResizing);
       document.body.style.userSelect = "";
       document.body.style.cursor = "";
     };
@@ -80,8 +77,10 @@ export function ChatWidget() {
 
   const bodyLocked = isMobile && isOpen;
   useEffect(() => {
-    if (!bodyLocked || typeof document === "undefined") return;
-    const scrollY = window.scrollY;
+    if (!bodyLocked || !("document" in globalThis)) return;
+    if (!("scrollY" in globalThis) || typeof globalThis.scrollTo !== "function") return;
+
+    const scrollY = globalThis.scrollY;
     const originalHtmlOverflow = document.documentElement.style.overflow;
     const originalBodyOverflow = document.body.style.overflow;
     const originalBodyPosition = document.body.style.position;
@@ -100,28 +99,32 @@ export function ChatWidget() {
       document.body.style.position = originalBodyPosition;
       document.body.style.width = originalBodyWidth;
       document.body.style.top = originalBodyTop;
-      window.scrollTo(0, scrollY);
+      globalThis.scrollTo(0, scrollY);
     };
   }, [bodyLocked]);
 
   useEffect(() => {
-    if (!isMobile || !isOpen || typeof window === "undefined") return;
+    if (!isMobile || !isOpen) return;
+    if (!("visualViewport" in globalThis)) return;
+
     const updateViewportVars = () => {
-      const viewport = window.visualViewport;
-      const height = viewport?.height ?? window.innerHeight;
+      const viewport = globalThis.visualViewport;
+      const height = viewport?.height ?? globalThis.innerHeight;
       const offset = viewport?.offsetTop ?? 0;
       document.documentElement.style.setProperty("--chat-sheet-height", `${height}px`);
       document.documentElement.style.setProperty("--chat-sheet-offset", `${offset}px`);
     };
+
     updateViewportVars();
-    const viewport = window.visualViewport;
+    const viewport = globalThis.visualViewport;
     viewport?.addEventListener("resize", updateViewportVars);
     viewport?.addEventListener("scroll", updateViewportVars);
-    window.addEventListener("resize", updateViewportVars);
+    globalThis.addEventListener("resize", updateViewportVars);
+
     return () => {
       viewport?.removeEventListener("resize", updateViewportVars);
       viewport?.removeEventListener("scroll", updateViewportVars);
-      window.removeEventListener("resize", updateViewportVars);
+      globalThis.removeEventListener("resize", updateViewportVars);
       document.documentElement.style.removeProperty("--chat-sheet-height");
       document.documentElement.style.removeProperty("--chat-sheet-offset");
     };
@@ -132,13 +135,16 @@ export function ChatWidget() {
   };
 
   useEffect(() => {
+    if (typeof globalThis.addEventListener !== "function") return;
+
     const handler = (event: Event) => {
       const detail = (event as CustomEvent<ChatTriggerPayload>).detail ?? {};
       setPendingPrompt(detail);
       setIsOpen(true);
     };
-    window.addEventListener(CHAT_TRIGGER_EVENT, handler as EventListener);
-    return () => window.removeEventListener(CHAT_TRIGGER_EVENT, handler as EventListener);
+
+    globalThis.addEventListener(CHAT_TRIGGER_EVENT, handler as EventListener);
+    return () => globalThis.removeEventListener(CHAT_TRIGGER_EVENT, handler as EventListener);
   }, []);
 
   const consumePrompt = () => setPendingPrompt(null);
@@ -186,8 +192,6 @@ export function ChatWidget() {
               <div
                 className="absolute left-0 top-0 z-50 h-full w-2 cursor-col-resize border-l border-transparent transition hover:border-l-subtle"
                 onMouseDown={() => setIsResizing(true)}
-                role="separator"
-                aria-orientation="vertical"
                 aria-hidden="true"
               />
               <ChatPanel

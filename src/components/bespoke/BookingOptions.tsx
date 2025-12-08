@@ -10,14 +10,14 @@ import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 import type { BuildPageData, BookingOption, WhatToExpectItem } from "@/types/build";
 
-type BookingOptionsProps = {
+type BookingOptionsProps = Readonly<{
   booking: BuildPageData["booking"];
   bookingSection?: BuildPageData["bookingSection"];
-};
+}>;
 
-type BookingOptionCardProps = {
+type BookingOptionCardProps = Readonly<{
   option: BookingOption;
-};
+}>;
 
 function BookingOptionCard({ option }: BookingOptionCardProps) {
   const optionRef = useAnalyticsObserver(`BookingOptionSeen:${option.id}`);
@@ -56,11 +56,11 @@ function BookingOptionCard({ option }: BookingOptionCardProps) {
   );
 }
 
-type WhatToExpectProps = {
+type WhatToExpectProps = Readonly<{
   item: WhatToExpectItem;
   defaultOpen: boolean;
   reducedMotion: boolean;
-};
+}>;
 
 function WhatToExpectCollapsible({
   item,

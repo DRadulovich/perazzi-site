@@ -2,12 +2,12 @@
 
 import NextImage from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type MouseEvent } from "react";
 import type { FittingStage } from "@/types/build";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 
-type BuildStepsScrollerProps = {
+type BuildStepsScrollerProps = Readonly<{
   steps: FittingStage[];
   intro?: {
     heading?: string;
@@ -21,7 +21,7 @@ type BuildStepsScrollerProps = {
   pinnedBreakpoint?: "lg" | "xl";
   reduceMotion?: boolean;
   skipTargetId?: string;
-};
+}>;
 
 export function BuildStepsScroller({
   steps,
@@ -47,7 +47,7 @@ export function BuildStepsScroller({
   );
   const [openStepId, setOpenStepId] = useState<string | undefined>(undefined);
 
-  void pinnedBreakpoint;
+  // pinnedBreakpoint is accepted for future layout variants but not yet used
 
   const handleStepEnter = (stepId: string) => {
     setActiveStepId((prev) => (prev === stepId ? prev : stepId));
@@ -77,6 +77,17 @@ export function BuildStepsScroller({
 
   const toggleStepOpen = (stepId: string) => {
     setOpenStepId((prev) => (prev === stepId ? undefined : stepId));
+  };
+
+  const handleMobileDotClick = (
+    event: MouseEvent<HTMLButtonElement>,
+    stepId: string,
+  ) => {
+    event.stopPropagation();
+    const targetIndex = mappedSteps.findIndex((ms) => ms.id === stepId);
+    if (targetIndex !== -1) {
+      handleRailClick(targetIndex);
+    }
   };
 
   const totalSteps = mappedSteps.length;
@@ -148,14 +159,14 @@ export function BuildStepsScroller({
                 href="#build-steps-sequence"
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-ink/60 px-4 py-2 text-[11px] sm:text-sm font-semibold uppercase tracking-[0.2em] text-ink hover:border-ink focus-ring"
               >
-                {ctaLabel}
+                <span>{ctaLabel}</span>
                 <span aria-hidden="true">↓</span>
               </a>
               <a
                 href={`#${skipTargetId}`}
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
-                Skip step-by-step
+                <span>Skip step-by-step</span>
                 <span aria-hidden="true">→</span>
               </a>
             </div>
@@ -205,10 +216,8 @@ export function BuildStepsScroller({
                   style={{ height: "80vh" }}
                 >
                   {mappedSteps.map((step, index) => {
-                    const isActive = step.id === activeStepId;
-
                     const isImage =
-                      step.media && step.media.kind === "image" && step.media.url;
+                      step.media?.kind === "image" && step.media.url;
 
                     return (
                       <motion.article
@@ -260,20 +269,13 @@ export function BuildStepsScroller({
 
                           {/* Foreground content */}
                           <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-10 sm:px-8 lg:px-12 lg:py-16">
-                            <div
-                              className="mx-auto max-w-3xl rounded-2xl border border-border/75 bg-card/75 p-5 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:p-6"
-                              role="button"
-                              tabIndex={0}
-                              aria-expanded={openStepId === step.id}
-                              onClick={() => toggleStepOpen(step.id)}
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter" || event.key === " ") {
-                                  event.preventDefault();
-                                  toggleStepOpen(step.id);
-                                }
-                              }}
-                            >
-                              <div className="flex w-full flex-col items-start gap-3 text-left">
+                            <div className="mx-auto max-w-3xl rounded-2xl border border-border/75 bg-card/75 p-5 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:p-6">
+                              <button
+                                type="button"
+                                className="flex w-full flex-col items-start gap-3 text-left"
+                                aria-expanded={openStepId === step.id}
+                                onClick={() => toggleStepOpen(step.id)}
+                              >
                                 <div className="w-full space-y-1">
                                   <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
                                     Step {index + 1} of {totalSteps}
@@ -288,7 +290,7 @@ export function BuildStepsScroller({
                                 <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red/70">
                                   {openStepId === step.id ? "Collapse" : "Read More"}
                                 </span>
-                              </div>
+                              </button>
 
                               <AnimatePresence initial={false}>
                                 {openStepId === step.id ? (
@@ -336,15 +338,9 @@ export function BuildStepsScroller({
                                               <button
                                                 key={s.id}
                                                 type="button"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  const targetIndex = mappedSteps.findIndex(
-                                                    (ms) => ms.id === s.id
-                                                  );
-                                                  if (targetIndex !== -1) {
-                                                    handleRailClick(targetIndex);
-                                                  }
-                                                }}
+                                                onClick={(event) =>
+                                                  handleMobileDotClick(event, s.id)
+                                                }
                                                 aria-label={`Go to step ${
                                                   mappedSteps.findIndex(
                                                     (ms) => ms.id === s.id

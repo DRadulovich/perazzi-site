@@ -4,12 +4,12 @@ import clsx from "clsx";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
 import { triggerChat } from "@/lib/chat-trigger";
 
-type ChatTriggerButtonProps = {
+type ChatTriggerButtonProps = Readonly<{
   label: string;
   payload: ChatTriggerPayload;
   variant?: "solid" | "outline";
   className?: string;
-};
+}>;
 
 export function ChatTriggerButton({
   label,
