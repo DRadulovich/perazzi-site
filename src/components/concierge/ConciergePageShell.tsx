@@ -951,49 +951,53 @@ export function ConciergePageShell() {
           </div>
         </div>
       ) : null}
-      <SanityDetailsDrawer
-        open={detailsDrawerOpen}
-        cards={infoCards}
-        selectedCard={selectedInfoCard}
-        loading={infoLoading}
-        error={infoError}
-        onSelect={(card) => setSelectedInfoCard(card)}
-        onClose={() => setDetailsDrawerOpen(false)}
-      />
-      <BuildSheetDrawer
-        open={buildSheetDrawerOpen}
-        entries={fieldOrder
-          .filter((fid) => buildState[fid])
-          .map((fid) => {
-            const val = buildState[fid];
-            const info = selectedInfoByField[fid] ?? infoByOption[val] ?? [];
-            const first = info[0];
-            return {
-              id: fid,
-              label: getFieldLabel(fid),
-              value: val,
-              details: first
-                ? {
-                    description: first.description,
-                    platform: first.platform ?? null,
-                    grade: first.grade ?? null,
-                    gauges: first.gauges ?? [],
-                    triggerTypes: first.triggerTypes ?? [],
-                    recommendedPlatforms: first.recommendedPlatforms ?? [],
-                    popularModels: first.popularModels ?? [],
-                    imageUrl: first.imageUrl ?? null,
-                    fullImageUrl: first.fullImageUrl ?? null,
-                  }
-                : undefined,
-            };
-          })}
-        onClose={() => setBuildSheetDrawerOpen(false)}
-        onRevisit={(fid) => handleRevisitField(fid)}
-        onSave={handleSaveBuild}
-        savedBuilds={savedBuilds}
-        onLoadSaved={handleLoadSaved}
-        onDeleteSaved={handleDeleteSaved}
-      />
+      {detailsDrawerOpen && (
+        <SanityDetailsDrawer
+          open={detailsDrawerOpen}
+          cards={infoCards}
+          selectedCard={selectedInfoCard}
+          loading={infoLoading}
+          error={infoError}
+          onSelect={(card) => setSelectedInfoCard(card)}
+          onClose={() => setDetailsDrawerOpen(false)}
+        />
+      )}
+      {buildSheetDrawerOpen && (
+        <BuildSheetDrawer
+          open={buildSheetDrawerOpen}
+          entries={fieldOrder
+            .filter((fid) => buildState[fid])
+            .map((fid) => {
+              const val = buildState[fid];
+              const info = selectedInfoByField[fid] ?? infoByOption[val] ?? [];
+              const first = info[0];
+              return {
+                id: fid,
+                label: getFieldLabel(fid),
+                value: val,
+                details: first
+                  ? {
+                      description: first.description,
+                      platform: first.platform ?? null,
+                      grade: first.grade ?? null,
+                      gauges: first.gauges ?? [],
+                      triggerTypes: first.triggerTypes ?? [],
+                      recommendedPlatforms: first.recommendedPlatforms ?? [],
+                      popularModels: first.popularModels ?? [],
+                      imageUrl: first.imageUrl ?? null,
+                      fullImageUrl: first.fullImageUrl ?? null,
+                    }
+                  : undefined,
+              };
+            })}
+          onClose={() => setBuildSheetDrawerOpen(false)}
+          onRevisit={(fid) => handleRevisitField(fid)}
+          onSave={handleSaveBuild}
+          savedBuilds={savedBuilds}
+          onLoadSaved={handleLoadSaved}
+          onDeleteSaved={handleDeleteSaved}
+        />
+      )}
     </div>
   );
 }

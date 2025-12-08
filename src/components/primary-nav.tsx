@@ -109,10 +109,6 @@ const NavLink = ({ item, pathname }: { item: NavItem; pathname: string }) => {
     <div
       ref={triggerRef}
       className="relative"
-      role={hasFlyout ? "menuitem" : undefined}
-      tabIndex={hasFlyout ? 0 : undefined}
-      aria-haspopup={hasFlyout ? "menu" : undefined}
-      aria-expanded={hasFlyout ? showFlyout : undefined}
       {...interactiveHandlers}
     >
       <Link
@@ -120,6 +116,8 @@ const NavLink = ({ item, pathname }: { item: NavItem; pathname: string }) => {
         className={`relative text-sm font-semibold transition-colors ${
           isActive ? "text-white" : "text-white/70 hover:text-white"
         }`}
+        aria-haspopup={hasFlyout ? "menu" : undefined}
+        aria-expanded={hasFlyout ? showFlyout : undefined}
       >
         {item.text}
         <span

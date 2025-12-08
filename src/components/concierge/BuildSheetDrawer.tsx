@@ -155,7 +155,7 @@ export function BuildSheetDrawer({
   onLoadSaved,
   onDeleteSaved,
 }: BuildSheetDrawerProps) {
-  const containerRef = useRef<HTMLDialogElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
@@ -212,16 +212,16 @@ export function BuildSheetDrawer({
         aria-label="Close build sheet"
         onClick={() => onClose?.()}
       />
-      <dialog
+      <div
         ref={containerRef}
         className={clsx(
-          "fixed inset-y-0 left-0 z-50 flex w-full max-w-xl flex-col border-r border-subtle bg-card shadow-2xl transition-transform duration-300",
+          "fixed inset-y-0 left-0 z-50 flex h-full w-full max-w-xl flex-col border-r border-subtle bg-card shadow-2xl transition-transform duration-300",
           open ? "translate-x-0" : "-translate-x-full",
         )}
         tabIndex={-1}
         aria-label="Current build sheet"
         aria-modal="true"
-        open={open}
+        role="dialog"
       >
         <div className="flex flex-col gap-2 border-b border-subtle px-4 py-3 sm:px-6">
           <div className="flex items-center justify-between">
@@ -327,7 +327,7 @@ export function BuildSheetDrawer({
             </ul>
           )}
         </div>
-      </dialog>
+      </div>
     </>
   );
 }

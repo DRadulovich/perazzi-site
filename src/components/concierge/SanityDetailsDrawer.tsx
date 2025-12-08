@@ -30,7 +30,7 @@ type SanityDetailsDrawerProps = Readonly<{
 }>;
 
 export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error, onSelect, onClose }: SanityDetailsDrawerProps) {
-  const containerRef = useRef<HTMLDialogElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const backdropRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
@@ -124,7 +124,7 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
         aria-hidden="true"
         onClick={() => onClose?.()}
       />
-      <dialog
+      <div
         ref={containerRef}
         className={clsx(
           "fixed inset-y-0 right-0 z-40 flex w-full max-w-xl flex-col border-l border-subtle bg-card shadow-2xl transition-transform duration-300",
@@ -134,7 +134,7 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
         tabIndex={-1}
         aria-label="Sanity Data"
         aria-modal="true"
-        open={open}
+        role="dialog"
       >
         <div className="flex items-center justify-between border-b border-subtle px-4 py-3 sm:px-6">
           <div>
@@ -154,7 +154,7 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
         <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
           {content}
         </div>
-      </dialog>
+      </div>
     </>
   );
 }
