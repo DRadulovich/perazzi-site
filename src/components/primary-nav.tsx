@@ -4,8 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
-import type { Dispatch, ReactElement, ReactNode, SetStateAction } from "react";
-import { useState } from "react";
+import type { Dispatch, FocusEvent, ReactElement, SetStateAction } from "react";
+import { useRef, useState } from "react";
 import { FiArrowRight, FiChevronDown, FiMenu, FiX } from "react-icons/fi";
 import { FaUserCircle } from "react-icons/fa";
 import useMeasure from "react-use-measure";
@@ -19,9 +19,9 @@ type NavItem = {
   component?: FlyoutRenderer;
 };
 
-type PrimaryNavProps = {
+type PrimaryNavProps = Readonly<{
   brandLabel: string;
-};
+}>;
 
 export function PrimaryNav({ brandLabel }: PrimaryNavProps) {
   const pathname = usePathname();
@@ -78,17 +78,42 @@ const Links = ({ pathname }: { pathname: string }) => (
 
 const NavLink = ({ item, pathname }: { item: NavItem; pathname: string }) => {
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
   const FlyoutContent = item.component;
+  const hasFlyout = Boolean(FlyoutContent);
   const showFlyout = Boolean(FlyoutContent && open);
   const isActive = item.href === "/"
     ? pathname === "/"
     : pathname === item.href || pathname.startsWith(`${item.href}/`);
+  const handleOpen = () => {
+    if (hasFlyout) {
+      setOpen(true);
+    }
+  };
+  const handleClose = () => setOpen(false);
+  const handleBlur = (event: FocusEvent<HTMLDivElement>) => {
+    if (!triggerRef.current?.contains(event.relatedTarget as Node | null)) {
+      handleClose();
+    }
+  };
+  const interactiveHandlers = hasFlyout
+    ? {
+        onMouseEnter: handleOpen,
+        onMouseLeave: handleClose,
+        onFocus: handleOpen,
+        onBlur: handleBlur,
+      }
+    : {};
 
   return (
     <div
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+      ref={triggerRef}
       className="relative"
+      role={hasFlyout ? "menuitem" : undefined}
+      tabIndex={hasFlyout ? 0 : undefined}
+      aria-haspopup={hasFlyout ? "menu" : undefined}
+      aria-expanded={hasFlyout ? showFlyout : undefined}
+      {...interactiveHandlers}
     >
       <Link
         href={item.href}

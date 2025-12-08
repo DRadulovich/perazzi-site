@@ -19,12 +19,12 @@ const warn = (message: string) => {
 };
 
 function cloneHeritage(): HeritagePageData {
-  return JSON.parse(JSON.stringify(heritageData));
+  return structuredClone(heritageData);
 }
 
 const extractYear = (value?: string | null) => {
   if (!value) return null;
-  const match = value.match(/\d{4}/);
+  const match = /\d{4}/.exec(value);
   if (match) {
     const year = Number(match[0]);
     return Number.isFinite(year) ? year : null;
@@ -35,18 +35,18 @@ const extractYear = (value?: string | null) => {
 
 const escapeHtml = (value: string) =>
   value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 
 const textToHtml = (value?: string) => {
   if (!value) return undefined;
   if (value.includes("<")) return value;
   const escaped = escapeHtml(value.trim());
   if (!escaped) return undefined;
-  return `<p>${escaped.replace(/\n+/g, "<br/>")}</p>`;
+  return `<p>${escaped.replaceAll(/\n+/g, "<br/>")}</p>`;
 };
 
 const compareEventsByYear = (a: HeritageEvent, b: HeritageEvent) => {

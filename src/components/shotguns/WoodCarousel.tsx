@@ -2,15 +2,15 @@
 
 import Image from "next/image";
 import { useRef } from "react";
-import type { GradeSeries } from "@/types/catalog";
 import { logAnalytics } from "@/lib/analytics";
+import type { GradeSeries } from "@/types/catalog";
 
 type WoodCarouselProps = {
-  grades: GradeSeries[];
+  readonly grades: readonly GradeSeries[];
 };
 
 export function WoodCarousel({ grades }: WoodCarouselProps) {
-  const railRef = useRef<HTMLDivElement | null>(null);
+  const railRef = useRef<HTMLElement | null>(null);
 
   const scrollBy = (direction: "prev" | "next") => {
     const node = railRef.current;
@@ -48,13 +48,11 @@ export function WoodCarousel({ grades }: WoodCarouselProps) {
           </button>
         </div>
       </div>
-      <div
+      <section
         ref={railRef}
-        role="region"
-        aria-live="polite"
         aria-label="Perazzi grade wood carousel"
+        aria-live="polite"
         className="flex gap-4 overflow-x-auto scroll-px-6 pb-2"
-        tabIndex={0}
       >
         {grades.map((grade) => {
           const asset = grade.gallery[1] ?? grade.gallery[0];
@@ -86,7 +84,7 @@ export function WoodCarousel({ grades }: WoodCarouselProps) {
             </div>
           );
         })}
-      </div>
+      </section>
     </section>
   );
 }

@@ -1,14 +1,22 @@
-import { useEffect, useRef, useState } from "react";
+import { Children, isValidElement, useEffect, useRef, useState } from "react";
+import type { ReactElement, ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import type { ChatEntry } from "@/components/chat/useChatState";
 
 interface ConversationViewProps {
-  messages: ChatEntry[];
-  isTyping?: boolean;
-  pending?: boolean;
+  readonly messages: ReadonlyArray<ChatEntry>;
+  readonly isTyping?: boolean;
+  readonly pending?: boolean;
 }
+
+type ElementWithChildren = ReactElement<{ children?: ReactNode }>;
+
+const isElementWithChildren = (node: ReactNode): node is ElementWithChildren =>
+  isValidElement<{ children?: ReactNode }>(node);
+
+const childrenToArray = (node?: ReactNode) => Children.toArray(node);
 
 const markdownComponents = {
   p: (props: React.HTMLAttributes<HTMLParagraphElement>) => (
@@ -26,11 +34,65 @@ const markdownComponents = {
   strong: (props: React.HTMLAttributes<HTMLElement>) => (
     <strong className="font-semibold" {...props} />
   ),
-  table: (props: React.TableHTMLAttributes<HTMLTableElement>) => (
-    <div className="my-4 overflow-x-auto">
-      <table className="w-full border-collapse text-left text-sm" {...props} />
-    </div>
-  ),
+  table: ({ children, ...props }: React.TableHTMLAttributes<HTMLTableElement>) => {
+    // Provide an accessible header row even when Markdown content omits one.
+    const childArray = Children.toArray(children);
+    const hasHeader = childArray.some((child) => {
+      if (!isElementWithChildren(child)) return false;
+      if (child.type === "thead") return true;
+      if (child.type === "tr") {
+        return childrenToArray(child.props.children).some(
+          (cell) => isElementWithChildren(cell) && cell.type === "th",
+        );
+      }
+      return false;
+    });
+
+    const columnCount =
+      childArray.reduce<number>((count, child) => {
+        if (!isElementWithChildren(child)) return count;
+        if (child.type === "thead" || child.type === "tbody") {
+          const row = childrenToArray(child.props.children).find(
+            (rowChild): rowChild is ElementWithChildren =>
+              isElementWithChildren(rowChild) && rowChild.type === "tr",
+          );
+          if (row) {
+            const cells = childrenToArray(row.props.children).filter(
+              (cell): cell is ElementWithChildren =>
+                isElementWithChildren(cell) && (cell.type === "td" || cell.type === "th"),
+            );
+            return Math.max(count, cells.length);
+          }
+        }
+        if (child.type === "tr") {
+          const cells = childrenToArray(child.props.children).filter(
+            (cell): cell is ElementWithChildren =>
+              isElementWithChildren(cell) && (cell.type === "td" || cell.type === "th"),
+          );
+          return Math.max(count, cells.length);
+        }
+        return count;
+      }, 0) || 1;
+
+    return (
+      <div className="my-4 overflow-x-auto">
+        <table className="w-full border-collapse text-left text-sm" {...props}>
+          {!hasHeader && (
+            <thead className="sr-only">
+              <tr>
+                {Array.from({ length: columnCount }, (_, index) => (
+                  <th key={index} scope="col">
+                    Column {index + 1}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+          )}
+          {children}
+        </table>
+      </div>
+    );
+  },
   thead: (props: React.HTMLAttributes<HTMLTableSectionElement>) => (
     <thead className="bg-subtle text-xs uppercase tracking-[0.2em] text-ink-muted" {...props} />
   ),
@@ -71,7 +133,7 @@ export function ConversationView({ messages, isTyping, pending }: ConversationVi
     try {
       await navigator.clipboard.writeText(content);
       setCopiedId(id);
-      window.setTimeout(() => {
+      globalThis.setTimeout(() => {
         setCopiedId((current) => (current === id ? null : current));
       }, 2000);
     } catch {

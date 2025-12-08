@@ -32,11 +32,11 @@ const buildDisciplineMap = (
         label,
         href: discipline ? `/shotguns/disciplines/${discipline.id}` : `/shotguns/disciplines`,
         rationale: discipline?.overviewHtml
-          ? discipline.overviewHtml.replace(/<[^>]+>/g, "").slice(0, 160).concat("…")
+          ? discipline.overviewHtml.replaceAll(/<[^>]+>/g, "").slice(0, 160).concat("…")
           : `Optimized for ${label}.`,
       };
     })
-    .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
+    .filter((entry): entry is NonNullable<typeof entry> => entry != null);
 };
 
 export const platformToSeriesEntry = (

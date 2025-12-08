@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import { createClient } from "@sanity/client";
 
 import sanityConfig from "../sanity.config";
@@ -26,11 +26,14 @@ function parseSoulQuestionsFromMarkdown(mdPath: string): SoulQuestionEntry[] {
   const sections = raw.split(/^##\s+/m).filter((block) => block.trim().length > 0);
 
   const entries: SoulQuestionEntry[] = [];
+  const headingRegex = /^(\d{2})\s+–\s+(.+?)\s*$/;
+  const soulQuestionRegex =
+    /###\s+SoulQuestion\s+([\s\S]*?)\n###\s+ArtisanPromptTemplate/;
 
   for (const section of sections) {
     // section starts with something like: "01 – Action & Receiver Machining\n\n### SoulQuestion\n..."
     const [headingLine, ...rest] = section.split("\n");
-    const headingMatch = headingLine.match(/^(\d{2})\s+–\s+(.+?)\s*$/);
+    const headingMatch = headingRegex.exec(headingLine);
 
     if (!headingMatch) {
       console.warn("Skipping section with unrecognized heading:", headingLine);
@@ -43,9 +46,7 @@ function parseSoulQuestionsFromMarkdown(mdPath: string): SoulQuestionEntry[] {
     const block = rest.join("\n");
 
     // Extract the SoulQuestion block between "### SoulQuestion" and "### ArtisanPromptTemplate"
-    const soulQuestionMatch = block.match(
-      /###\s+SoulQuestion\s+([\s\S]*?)\n###\s+ArtisanPromptTemplate/,
-    );
+    const soulQuestionMatch = soulQuestionRegex.exec(block);
 
     if (!soulQuestionMatch) {
       console.warn("No SoulQuestion found for heading:", headingLine);
@@ -55,7 +56,7 @@ function parseSoulQuestionsFromMarkdown(mdPath: string): SoulQuestionEntry[] {
     const soulQuestionRaw = soulQuestionMatch[1].trim();
 
     // SoulQuestion text might be one or more lines; collapse into a single paragraph
-    const soulQuestion = soulQuestionRaw.replace(/\s*\n\s*/g, " ").trim();
+    const soulQuestion = soulQuestionRaw.replaceAll(/\s*\n\s*/g, " ").trim();
 
     entries.push({
       stepNumber,
@@ -110,10 +111,12 @@ async function run() {
   console.log("\nDone updating soulQuestion for all matched articles.");
 }
 
-run().catch((err) => {
+try {
+  await run();
+} catch (err) {
   console.error(err);
   process.exit(1);
-});
+}
 
 // To run this script:
 // 1. Ensure SANITY_WRITE_TOKEN is set in your environment with write access.

@@ -1,13 +1,13 @@
 import Image from "next/image";
 import type { FactoryAsset } from "@/types/content";
 
-type TeaserBlockProps = {
+type TeaserBlockProps = Readonly<{
   copy: string;
   href: string;
   title?: string;
   engravingTile: FactoryAsset;
   woodTile: FactoryAsset;
-};
+}>;
 
 export function TeaserBlock({
   copy,
@@ -76,7 +76,7 @@ export function TeaserBlock({
             href={href}
             className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-white/40 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-white focus-ring"
           >
-            View grades
+            <span>View grades</span>
             <span aria-hidden="true">→</span>
           </a>
         </div>

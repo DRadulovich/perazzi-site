@@ -2,7 +2,7 @@
 
 import type { PerazziAssistantResponse } from "@/types/perazzi-assistant";
 
-type GuardrailStatus = PerazziAssistantResponse["guardrail"]["status"] | undefined | null;
+export type GuardrailStatus = PerazziAssistantResponse["guardrail"]["status"] | undefined | null;
 
 type GuardrailNoticeProps = Readonly<{
   status?: GuardrailStatus;

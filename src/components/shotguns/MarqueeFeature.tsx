@@ -4,19 +4,19 @@ import Image from "next/image";
 import type { FactoryAsset } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
-type ChampionData = {
+type ChampionData = Readonly<{
   id: string;
   name?: string;
   title?: string;
   quote: string;
   image: FactoryAsset;
   href?: string;
-};
+}>;
 
-type MarqueeFeatureProps = {
+type MarqueeFeatureProps = Readonly<{
   champion?: ChampionData;
   fallbackText?: string;
-};
+}>;
 
 export function MarqueeFeature({ champion, fallbackText }: MarqueeFeatureProps) {
   const analyticsRef = useAnalyticsObserver<HTMLElement>("MarqueeFeatureSeen");
@@ -80,7 +80,7 @@ export function MarqueeFeature({ champion, fallbackText }: MarqueeFeatureProps) 
             href={champion.href}
             className="inline-flex min-h-10 items-center justify-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-perazzi-red focus-ring"
           >
-            Meet the champions
+            <span>Meet the champions</span>
             <span aria-hidden="true">→</span>
           </a>
         ) : null}

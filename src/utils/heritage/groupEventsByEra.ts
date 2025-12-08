@@ -13,7 +13,7 @@ export function groupEventsByEra(events: HeritageEvent[], eras: HeritageEra[] = 
   for (const event of events) {
     if (!event) continue;
 
-    const year = parseInt(event.date, 10);
+    const year = Number.parseInt(event.date, 10);
 
     if (Number.isNaN(year)) {
       if (process.env.NODE_ENV === "development") {
@@ -44,8 +44,8 @@ export function groupEventsByEra(events: HeritageEvent[], eras: HeritageEra[] = 
 
   return eras.map((era): HeritageEraWithEvents => {
     const orderedEvents = [...(eraBuckets[era.id] ?? [])].sort((a, b) => {
-      const yearA = parseInt(a.date, 10) || 0;
-      const yearB = parseInt(b.date, 10) || 0;
+      const yearA = Number.parseInt(a.date, 10) || 0;
+      const yearB = Number.parseInt(b.date, 10) || 0;
 
       if (yearA !== yearB) return yearA - yearB;
       return a.title.localeCompare(b.title);

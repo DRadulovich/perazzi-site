@@ -5,12 +5,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale } from "next-intl";
 import { ConversationView } from "@/components/chat/ConversationView";
 import { usePerazziAssistant } from "@/hooks/usePerazziAssistant";
-import type { PlatformSlug } from "@/hooks/usePerazziAssistant";
 import { GuardrailNotice } from "@/components/concierge/GuardrailNotice";
+import type { GuardrailStatus } from "@/components/concierge/GuardrailNotice";
 import { SanityDetailsDrawer } from "@/components/concierge/SanityDetailsDrawer";
 import { BuildSheetDrawer } from "@/components/concierge/BuildSheetDrawer";
-import { derivePanels, type AssistantMeta } from "@/lib/perazzi-derivation";
-import { buildDealerBriefRequest } from "@/lib/dealer-brief";
 import {
   getFieldOrder,
   getNextField,
@@ -21,7 +19,6 @@ import {
   gunOrderConfig,
 } from "@/lib/gun-config";
 import { mergeOptionResults } from "@/lib/build-info-cache";
-import type { ChatMessage, PerazziAssistantRequest } from "@/types/perazzi-assistant";
 import Image from "next/image";
 import { getSanityImageUrl } from "@/lib/sanityImage";
 import clsx from "clsx";
@@ -39,6 +36,15 @@ type InfoCard = {
   recommendedPlatforms?: string[];
   popularModels?: string[];
   optionValue?: string;
+};
+
+type EngravingResult = {
+  _id: string;
+  engravingId: string;
+  engravingSide: string;
+  gradeName?: string | null;
+  image?: unknown;
+  imageAlt?: string;
 };
 
 type SavedBuild = {
@@ -138,30 +144,13 @@ const MODES = [
   { label: "Navigation / visit", value: "navigation" as const },
 ];
 
-const PLATFORM_LABELS: Record<PlatformSlug, string> = {
-  mx: "MX",
-  ht: "High Tech",
-  tm: "TM",
-  dc: "DC",
-  sho: "SHO",
-};
-
 export function ConciergePageShell() {
   const locale = useLocale();
   const [draft, setDraft] = useState("");
-  const [latestMeta, setLatestMeta] = useState<AssistantMeta | null>(null);
-  const [latestGuardrail, setLatestGuardrail] = useState<string | undefined>(undefined);
-  const [expandedCitations, setExpandedCitations] = useState<Set<string>>(new Set());
-  const [dealerBrief, setDealerBrief] = useState<string | null>(null);
-  const [dealerBriefPending, setDealerBriefPending] = useState(false);
-  const [dealerBriefError, setDealerBriefError] = useState<string | null>(null);
+  const [latestGuardrail, setLatestGuardrail] = useState<GuardrailStatus | undefined>(undefined);
   const [buildState, setBuildState] = useState<BuildState>({});
   const [buildError, setBuildError] = useState<string | null>(null);
-  const [editBuildMode, setEditBuildMode] = useState(false);
-  const [engravingQuery, setEngravingQuery] = useState("");
-  const [engravingResults, setEngravingResults] = useState<
-    Array<{ _id: string; engravingId: string; engravingSide: string; gradeName: string; image?: any; imageAlt?: string }>
-  >([]);
+  const [engravingResults, setEngravingResults] = useState<EngravingResult[]>([]);
   const [engravingLoading, setEngravingLoading] = useState(false);
   const [engravingError, setEngravingError] = useState<string | null>(null);
   const [highlightedOption, setHighlightedOption] = useState<{ fieldId: string; value: string } | null>(null);
@@ -189,12 +178,6 @@ export function ConciergePageShell() {
     storageKey: "perazzi-assistant-concierge",
     initialContext: { pageUrl: "/concierge", mode: "prospect" },
     onResponseMeta: (meta) => {
-      setLatestMeta({
-        intents: meta.intents ?? [],
-        topics: meta.topics ?? [],
-        citations: meta.citations ?? [],
-        templates: meta.templates ?? [],
-      });
       setLatestGuardrail(meta.guardrail?.status);
     },
   });
@@ -207,10 +190,12 @@ export function ConciergePageShell() {
 
   useEffect(() => {
     try {
-      const raw = typeof window !== "undefined" ? window.localStorage.getItem(SAVES_KEY) : null;
-      if (raw) {
-        const parsed = JSON.parse(raw) as SavedBuild[];
-        setSavedBuilds(parsed);
+      if ("localStorage" in globalThis) {
+        const raw = globalThis.localStorage.getItem(SAVES_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw) as SavedBuild[];
+          setSavedBuilds(parsed);
+        }
       }
     } catch {
       // ignore
@@ -219,8 +204,8 @@ export function ConciergePageShell() {
 
   const persistSaves = (saves: SavedBuild[]) => {
     try {
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(SAVES_KEY, JSON.stringify(saves));
+      if ("localStorage" in globalThis) {
+        globalThis.localStorage.setItem(SAVES_KEY, JSON.stringify(saves));
       }
     } catch {
       // ignore persistence failures
@@ -231,11 +216,6 @@ export function ConciergePageShell() {
     () => MODES.find((mode) => mode.value === context.mode)?.value ?? "prospect",
     [context.mode],
   );
-
-  const derivedPanels = useMemo(() => {
-    const normalizedMessages = messages.map(({ role, content }) => ({ role, content })) as ChatMessage[];
-    return derivePanels(normalizedMessages, latestMeta);
-  }, [messages, latestMeta]);
 
   const nextField = useMemo(() => getNextField(buildState), [buildState]);
   const nextFieldOptions = useMemo(
@@ -303,7 +283,10 @@ export function ConciergePageShell() {
   };
 
   const handleClearChat = () => {
-    const confirmed = typeof window === "undefined" ? true : window.confirm("Clear chat history for this session?");
+    let confirmed = true;
+    if ("confirm" in globalThis && typeof globalThis.confirm === "function") {
+      confirmed = globalThis.confirm("Clear chat history for this session?");
+    }
     if (confirmed) {
       clearConversation();
     }
@@ -316,27 +299,9 @@ export function ConciergePageShell() {
     }
   };
 
-  const handleModeChange = (mode: (typeof MODES)[number]["value"]) => {
-    updateContext({ mode });
-  };
-
-  const handlePlatformSelect = async (slug: PlatformSlug) => {
-    updateContext({ platformSlug: slug });
-    await sendMessage({
-      question: `I’m particularly interested in the ${PLATFORM_LABELS[slug]} platform. Explain how it fits someone like me and what the next steps would be.`,
-      context: {
-        ...context,
-        platformSlug: slug,
-        pageUrl: "/concierge",
-        mode: activeMode,
-        locale,
-      },
-    });
-  };
-
   const handleFieldSelection = (fieldId: string, value: string) => {
     const field = gunOrderConfig.fields.find((f) => f.id === fieldId);
-    const hasStructuredOptions = field && field.options.length > 0;
+    const hasStructuredOptions = (field?.options.length ?? 0) > 0;
     if (hasStructuredOptions) {
       const validation = validateSelection(fieldId, value, buildState);
       if (!validation.valid) {
@@ -346,11 +311,10 @@ export function ConciergePageShell() {
     }
     setBuildError(null);
     const matchedInfo = infoByOption[value] ?? infoCards.filter((card) => card.optionValue === value);
-    if (matchedInfo && matchedInfo.length) {
+    if (matchedInfo?.length) {
       setSelectedInfoByField((prev) => ({ ...prev, [fieldId]: matchedInfo }));
     }
     setBuildState((prev) => ({ ...prev, [fieldId]: value }));
-    setEditBuildMode(false);
   };
   const handleSelectHighlighted = () => {
     if (!nextField || !highlightedOption || highlightedOption.fieldId !== nextField.id) return;
@@ -365,7 +329,10 @@ export function ConciergePageShell() {
   };
 
   const handleSaveBuild = () => {
-    const name = typeof window !== "undefined" ? window.prompt("Name this build:") : "";
+    let name = "";
+    if ("prompt" in globalThis && typeof globalThis.prompt === "function") {
+      name = globalThis.prompt("Name this build:") ?? "";
+    }
     if (!name) return;
     const newSave: SavedBuild = {
       id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}`,
@@ -388,19 +355,22 @@ export function ConciergePageShell() {
   const handleLoadSaved = (id: string) => {
     const target = savedBuilds.find((b) => b.id === id);
     if (!target) return;
-    const confirmed =
-      typeof window === "undefined" ? true : window.confirm("Load this saved build? Current selections will be replaced.");
+    let confirmed = true;
+    if ("confirm" in globalThis && typeof globalThis.confirm === "function") {
+      confirmed = globalThis.confirm("Load this saved build? Current selections will be replaced.");
+    }
     if (!confirmed) return;
     setBuildState(target.buildState || {});
     setSelectedInfoByField(target.selectedInfoByField || {});
-    setEditBuildMode(false);
     setBuildError(null);
     setBuildSheetDrawerOpen(false);
   };
 
   const handleDeleteSaved = (id: string) => {
-    const confirmed =
-      typeof window === "undefined" ? true : window.confirm("Delete this saved build?");
+    let confirmed = true;
+    if ("confirm" in globalThis && typeof globalThis.confirm === "function") {
+      confirmed = globalThis.confirm("Delete this saved build?");
+    }
     if (!confirmed) return;
     const next = savedBuilds.filter((b) => b.id !== id);
     persistSaves(next);
@@ -555,7 +525,6 @@ export function ConciergePageShell() {
     });
     setBuildError(null);
     setBuildState(nextState);
-    setEditBuildMode(false);
   };
 
   const handleBuildReview = async () => {
@@ -583,7 +552,7 @@ export function ConciergePageShell() {
           const res = await fetch(`/api/engravings?id=${encodeURIComponent(idPart)}`);
           if (!res.ok) return [];
           const data = await res.json();
-          return (data.engravings ?? []).map((engraving: any) => ({
+          return (data.engravings ?? []).map((engraving: EngravingResult) => ({
             id: engraving._id,
             title: `${engraving.engravingId} · ${engraving.engravingSide}`,
             description: engraving.gradeName ? `Grade: ${engraving.gradeName}` : "",
@@ -625,7 +594,7 @@ export function ConciergePageShell() {
       for (const fid of missing) {
         const val = buildState[fid];
         const cached = infoByOption[val];
-        if (cached && cached.length) {
+        if (cached?.length) {
           updates[fid] = cached;
           continue;
         }
@@ -643,66 +612,56 @@ export function ConciergePageShell() {
     return () => controller.abort();
   }, [buildSheetDrawerOpen, fieldOrder, buildState, infoByOption, selectedInfoByField, fetchInfoForSelection]);
 
-  const handleNextStep = async (intent: string) => {
-    const intentCopy: Record<string, string> = {
-      contact_dealer: "Help me find an authorized dealer and outline what information to bring.",
-      service_plan: "Outline a concise service and care plan for my situation.",
-      learn_platforms: "Give me a concise comparison of Perazzi platforms and where to start.",
-      learn_bespoke_process: "Explain the bespoke build process and what decisions I should prepare.",
-    };
-    const question = intentCopy[intent] ?? "Guide me on the next step based on our conversation.";
-    await sendMessage({
-      question,
-      context: {
-        ...context,
-        pageUrl: "/concierge",
-        mode: activeMode,
-        locale,
-      },
-    });
-  };
-
-  const toggleCitation = (chunkId: string) => {
-    setExpandedCitations((prev) => {
-      const next = new Set(prev);
-      if (next.has(chunkId)) {
-        next.delete(chunkId);
-      } else {
-        next.add(chunkId);
-      }
-      return next;
-    });
-  };
-
-  const handleDealerBrief = async () => {
-    setDealerBriefPending(true);
-    setDealerBriefError(null);
-    try {
-      const summaryPrompt =
-        "Summarize this conversation as a brief for an authorized Perazzi dealer. Include shooter’s disciplines, experience level, preferences, discussed platforms, and suggested next steps in a short, dealer-friendly format. Use clear section labels.";
-      const sanitizedMessages = messages.map(({ role, content }) => ({ role, content })) as PerazziAssistantRequest["messages"];
-      const response = await fetch("/api/perazzi-assistant", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [...sanitizedMessages, { role: "user" as const, content: summaryPrompt }],
-          context: { ...context, pageUrl: "/concierge", locale, mode: activeMode },
-          summaryIntent: "dealer_brief",
-        }),
-      });
-      if (!response.ok) {
-        setDealerBriefError("Unable to generate dealer brief. Please try again.");
-        return;
-      }
-      const data = await response.json();
-      setDealerBrief(data.answer);
-    } catch (err) {
-      console.error(err);
-      setDealerBriefError("Unable to generate dealer brief. Please try again.");
-    } finally {
-      setDealerBriefPending(false);
+  let engravingStatusMessage: React.ReactNode = null;
+  if (nextField?.id === "ENGRAVING" && !displayOptions.length) {
+    if (!buildState.GRADE) {
+      engravingStatusMessage = (
+        <p className="text-sm text-ink-muted">
+          Choose a grade first and we’ll load engravings for that grade here.
+        </p>
+      );
+    } else if (engravingLoading) {
+      engravingStatusMessage = <p className="text-sm text-ink-muted">Loading engravings…</p>;
+    } else if (engravingError) {
+      engravingStatusMessage = <p className="text-xs text-red-600">{engravingError}</p>;
+    } else {
+      engravingStatusMessage = (
+        <p className="text-sm text-ink-muted">
+          No engravings found for grade {buildState.GRADE}.
+        </p>
+      );
     }
-  };
+  }
+
+  let nextStepContent: React.ReactNode = null;
+  if (nextFieldAfterCurrent) {
+    nextStepContent = (
+      <>
+        <p className="text-sm font-semibold text-ink">{getFieldLabel(nextFieldAfterCurrent.id)}</p>
+        {FIELD_DESCRIPTIONS[nextFieldAfterCurrent.id] ? (
+          <p className="text-sm text-ink-muted">
+            {FIELD_DESCRIPTIONS[nextFieldAfterCurrent.id]}
+          </p>
+        ) : null}
+      </>
+    );
+  } else if (nextField) {
+    nextStepContent = <p className="text-sm text-ink-muted">Depends on your current selection.</p>;
+  } else {
+    nextStepContent = (
+      <div className="space-y-2">
+        <p className="text-sm text-ink-muted">All steps satisfied.</p>
+        <button
+          type="button"
+          onClick={handleBuildReview}
+          className="w-full rounded-full bg-brand px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+          disabled={!Object.keys(buildState).length}
+        >
+          Send build for review
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8" id="concierge-workshop" tabIndex={-1}>
@@ -791,11 +750,15 @@ export function ConciergePageShell() {
                 Something went wrong reaching the concierge. Please try again.
               </p>
             ) : null}
-            <label className="block text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted">
+            <label
+              htmlFor="concierge-question"
+              className="block text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted"
+            >
               Ask the workshop
             </label>
             <div className="flex flex-col gap-3 sm:flex-row">
               <textarea
+                id="concierge-question"
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={handleKeyDown}
@@ -907,27 +870,7 @@ export function ConciergePageShell() {
                     </>
                   ) : (
                     <div className="space-y-2">
-                      {nextField.id === "ENGRAVING" ? (
-                        <>
-                          {!buildState.GRADE ? (
-                            <p className="text-sm text-ink-muted">
-                              Choose a grade first and we’ll load engravings for that grade here.
-                            </p>
-                          ) : (
-                            <>
-                              {engravingLoading ? (
-                                <p className="text-sm text-ink-muted">Loading engravings…</p>
-                              ) : engravingError ? (
-                                <p className="text-xs text-red-600">{engravingError}</p>
-                              ) : (
-                                <p className="text-sm text-ink-muted">
-                                  No engravings found for grade {buildState.GRADE}.
-                                </p>
-                              )}
-                            </>
-                          )}
-                        </>
-                      ) : (
+                      {engravingStatusMessage ?? (
                         <p className="text-sm text-ink-muted">
                           No valid options available based on current selections.
                         </p>
@@ -950,30 +893,7 @@ export function ConciergePageShell() {
                 </button>
                 <div className="space-y-2 rounded-2xl border border-subtle px-3 py-3">
                   <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Next step</p>
-                  {nextFieldAfterCurrent ? (
-                    <>
-                      <p className="text-sm font-semibold text-ink">{getFieldLabel(nextFieldAfterCurrent.id)}</p>
-                      {FIELD_DESCRIPTIONS[nextFieldAfterCurrent.id] ? (
-                        <p className="text-sm text-ink-muted">
-                          {FIELD_DESCRIPTIONS[nextFieldAfterCurrent.id]}
-                        </p>
-                      ) : null}
-                    </>
-                  ) : nextField ? (
-                    <p className="text-sm text-ink-muted">Depends on your current selection.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="text-sm text-ink-muted">All steps satisfied.</p>
-                      <button
-                        type="button"
-                        onClick={handleBuildReview}
-                        className="w-full rounded-full bg-brand px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
-                        disabled={!Object.keys(buildState).length}
-                      >
-                        Send build for review
-                      </button>
-                    </div>
-                  )}
+                  {nextStepContent}
                 </div>
               </div>
           </div>

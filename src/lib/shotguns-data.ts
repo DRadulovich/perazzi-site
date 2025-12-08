@@ -30,8 +30,12 @@ const warn = (message: string) => {
 const isNonEmptyString = (value?: string | null): value is string =>
   typeof value === "string" && value.length > 0;
 
+function isDefined<T>(value: T | null | undefined): value is T {
+  return value != null;
+}
+
 export const getShotgunsSectionData = cache(async (): Promise<ShotgunsSectionData> => {
-  const cloned: ShotgunsSectionData = JSON.parse(JSON.stringify(FALLBACK));
+  const cloned: ShotgunsSectionData = structuredClone(FALLBACK);
 
   try {
     const [landing, platforms, disciplines, grades] = await Promise.all([
@@ -59,30 +63,48 @@ function applyLanding(target: ShotgunsSectionData, landing?: ShotgunsLandingPayl
     return;
   }
 
+  applyLandingHero(target, landing);
+  applyPlatformGridUi(target, landing);
+  applyTriggerExplainer(target, landing);
+  applyLandingTeasers(target, landing);
+  applyDisciplineFitAdvisory(target, landing);
+  applyDisciplineRailUi(target, landing);
+  applyGaugeSelectionAdvisory(target, landing);
+  applyTriggerChoiceAdvisory(target, landing);
+  applyEngravingCarouselUi(target, landing);
+  applyDisciplineHubs(target, landing);
+}
+
+function applyLandingHero(target: ShotgunsSectionData, landing: ShotgunsLandingPayload) {
   if (landing.hero?.background) {
     target.landing.hero = {
       title: landing.hero.title ?? target.landing.hero.title,
       subheading: landing.hero.subheading ?? target.landing.hero.subheading,
       background: landing.hero.background,
     };
-  } else {
-    warn("Shotguns landing hero background missing; using fixture image.");
+    return;
   }
 
-  if (landing.platformGridUi) {
-    target.landing.platformGridUi = {
-      heading: landing.platformGridUi.heading ?? target.landing.platformGridUi?.heading,
-      subheading: landing.platformGridUi.subheading ?? target.landing.platformGridUi?.subheading,
-      background: landing.platformGridUi.background ?? target.landing.platformGridUi?.background,
-      chatLabelTemplate:
-        landing.platformGridUi.chatLabelTemplate ?? target.landing.platformGridUi?.chatLabelTemplate,
-      chatPayloadTemplate:
-        landing.platformGridUi.chatPayloadTemplate ?? target.landing.platformGridUi?.chatPayloadTemplate,
-      cardFooterTemplate:
-        landing.platformGridUi.cardFooterTemplate ?? target.landing.platformGridUi?.cardFooterTemplate,
-    };
-  }
+  warn("Shotguns landing hero background missing; using fixture image.");
+}
 
+function applyPlatformGridUi(target: ShotgunsSectionData, landing: ShotgunsLandingPayload) {
+  if (!landing.platformGridUi) return;
+
+  target.landing.platformGridUi = {
+    heading: landing.platformGridUi.heading ?? target.landing.platformGridUi?.heading,
+    subheading: landing.platformGridUi.subheading ?? target.landing.platformGridUi?.subheading,
+    background: landing.platformGridUi.background ?? target.landing.platformGridUi?.background,
+    chatLabelTemplate:
+      landing.platformGridUi.chatLabelTemplate ?? target.landing.platformGridUi?.chatLabelTemplate,
+    chatPayloadTemplate:
+      landing.platformGridUi.chatPayloadTemplate ?? target.landing.platformGridUi?.chatPayloadTemplate,
+    cardFooterTemplate:
+      landing.platformGridUi.cardFooterTemplate ?? target.landing.platformGridUi?.cardFooterTemplate,
+  };
+}
+
+function applyTriggerExplainer(target: ShotgunsSectionData, landing: ShotgunsLandingPayload) {
   if (landing.triggerExplainer?.diagram) {
     target.landing.triggerExplainer = {
       title: landing.triggerExplainer.title ?? target.landing.triggerExplainer.title,
@@ -98,105 +120,125 @@ function applyLanding(target: ShotgunsSectionData, landing?: ShotgunsLandingPayl
           href: link.href ?? "#",
         })) ?? target.landing.triggerExplainer.links,
     };
-  } else {
-    warn("Shotguns trigger explainer missing diagram; using fixtures.");
+    return;
   }
 
+  warn("Shotguns trigger explainer missing diagram; using fixtures.");
+}
+
+function applyLandingTeasers(target: ShotgunsSectionData, landing: ShotgunsLandingPayload) {
   if (landing.teasers?.engraving) {
     target.landing.gradesTeaser.engravingTile = landing.teasers.engraving;
   }
   if (landing.teasers?.wood) {
     target.landing.gradesTeaser.woodTile = landing.teasers.wood;
   }
+}
 
-  if (landing.disciplineFitAdvisory) {
-    target.landing.disciplineFitAdvisory = {
-      eyebrow: landing.disciplineFitAdvisory.eyebrow ?? target.landing.disciplineFitAdvisory?.eyebrow,
-      heading: landing.disciplineFitAdvisory.heading ?? target.landing.disciplineFitAdvisory?.heading,
-      paragraphs:
-        landing.disciplineFitAdvisory.paragraphs?.length
-          ? landing.disciplineFitAdvisory.paragraphs
-          : target.landing.disciplineFitAdvisory?.paragraphs,
-      chatPrompt:
-        landing.disciplineFitAdvisory.chatPrompt ?? target.landing.disciplineFitAdvisory?.chatPrompt,
-      bullets:
-        landing.disciplineFitAdvisory.bullets?.length
-          ? landing.disciplineFitAdvisory.bullets
-          : target.landing.disciplineFitAdvisory?.bullets,
-    };
-  }
+function applyDisciplineFitAdvisory(target: ShotgunsSectionData, landing: ShotgunsLandingPayload) {
+  if (!landing.disciplineFitAdvisory) return;
 
-  if (landing.disciplineRailUi) {
-    target.landing.disciplineRailUi = {
-      heading: landing.disciplineRailUi.heading ?? target.landing.disciplineRailUi?.heading,
-      subheading: landing.disciplineRailUi.subheading ?? target.landing.disciplineRailUi?.subheading,
-      background: landing.disciplineRailUi.background ?? target.landing.disciplineRailUi?.background,
-    };
-  }
+  target.landing.disciplineFitAdvisory = {
+    eyebrow: landing.disciplineFitAdvisory.eyebrow ?? target.landing.disciplineFitAdvisory?.eyebrow,
+    heading: landing.disciplineFitAdvisory.heading ?? target.landing.disciplineFitAdvisory?.heading,
+    paragraphs:
+      landing.disciplineFitAdvisory.paragraphs?.length
+        ? landing.disciplineFitAdvisory.paragraphs
+        : target.landing.disciplineFitAdvisory?.paragraphs,
+    chatPrompt:
+      landing.disciplineFitAdvisory.chatPrompt ?? target.landing.disciplineFitAdvisory?.chatPrompt,
+    bullets:
+      landing.disciplineFitAdvisory.bullets?.length
+        ? landing.disciplineFitAdvisory.bullets
+        : target.landing.disciplineFitAdvisory?.bullets,
+  };
+}
 
-  if (landing.gaugeSelectionAdvisory) {
-    const fallbackBullets = target.landing.gaugeSelectionAdvisory?.bullets ?? target.landing.gaugesTeaser.bullets;
-    target.landing.gaugeSelectionAdvisory = {
-      heading: landing.gaugeSelectionAdvisory.heading ?? target.landing.gaugeSelectionAdvisory?.heading,
-      intro: landing.gaugeSelectionAdvisory.intro ?? target.landing.gaugeSelectionAdvisory?.intro,
-      chatLabel: landing.gaugeSelectionAdvisory.chatLabel ?? target.landing.gaugeSelectionAdvisory?.chatLabel,
-      chatPrompt: landing.gaugeSelectionAdvisory.chatPrompt ?? target.landing.gaugeSelectionAdvisory?.chatPrompt,
-      linkLabel: landing.gaugeSelectionAdvisory.linkLabel ?? target.landing.gaugeSelectionAdvisory?.linkLabel,
-      linkHref: landing.gaugeSelectionAdvisory.linkHref ?? target.landing.gaugeSelectionAdvisory?.linkHref,
-      bullets: landing.gaugeSelectionAdvisory.bullets?.length
-        ? landing.gaugeSelectionAdvisory.bullets
-        : fallbackBullets,
-      closing: landing.gaugeSelectionAdvisory.closing ?? target.landing.gaugeSelectionAdvisory?.closing,
-    };
-  }
+function applyDisciplineRailUi(target: ShotgunsSectionData, landing: ShotgunsLandingPayload) {
+  if (!landing.disciplineRailUi) return;
 
-  if (landing.triggerChoiceAdvisory) {
-    target.landing.triggerChoiceAdvisory = {
-      heading: landing.triggerChoiceAdvisory.heading ?? target.landing.triggerChoiceAdvisory?.heading,
-      intro: landing.triggerChoiceAdvisory.intro ?? target.landing.triggerChoiceAdvisory?.intro,
-      chatLabel: landing.triggerChoiceAdvisory.chatLabel ?? target.landing.triggerChoiceAdvisory?.chatLabel,
-      chatPrompt: landing.triggerChoiceAdvisory.chatPrompt ?? target.landing.triggerChoiceAdvisory?.chatPrompt,
-      linkLabel: landing.triggerChoiceAdvisory.linkLabel ?? target.landing.triggerChoiceAdvisory?.linkLabel,
-      linkHref: landing.triggerChoiceAdvisory.linkHref ?? target.landing.triggerChoiceAdvisory?.linkHref,
-      bullets:
-        landing.triggerChoiceAdvisory.bullets?.length
-          ? landing.triggerChoiceAdvisory.bullets
-          : target.landing.triggerChoiceAdvisory?.bullets,
-      closing: landing.triggerChoiceAdvisory.closing ?? target.landing.triggerChoiceAdvisory?.closing,
-    };
-  }
+  target.landing.disciplineRailUi = {
+    heading: landing.disciplineRailUi.heading ?? target.landing.disciplineRailUi?.heading,
+    subheading: landing.disciplineRailUi.subheading ?? target.landing.disciplineRailUi?.subheading,
+    background: landing.disciplineRailUi.background ?? target.landing.disciplineRailUi?.background,
+  };
+}
 
-  if (landing.engravingCarouselUi) {
-    target.landing.engravingCarouselUi = {
-      heading: landing.engravingCarouselUi.heading ?? target.landing.engravingCarouselUi?.heading,
-      subheading: landing.engravingCarouselUi.subheading ?? target.landing.engravingCarouselUi?.subheading,
-      background: landing.engravingCarouselUi.background ?? target.landing.engravingCarouselUi?.background,
-      ctaLabel: landing.engravingCarouselUi.ctaLabel ?? target.landing.engravingCarouselUi?.ctaLabel,
-      categoryLabels:
-        landing.engravingCarouselUi.categoryLabels?.length
-          ? landing.engravingCarouselUi.categoryLabels
-          : target.landing.engravingCarouselUi?.categoryLabels,
-    };
-  }
+function applyGaugeSelectionAdvisory(
+  target: ShotgunsSectionData,
+  landing: ShotgunsLandingPayload,
+) {
+  if (!landing.gaugeSelectionAdvisory) return;
 
-  if (landing.disciplineHubs?.length) {
-    const hubEntries = landing.disciplineHubs
-      .filter(
-        (hub): hub is NonNullable<(typeof landing.disciplineHubs)[number]> & { key: string } =>
-          Boolean(hub?.key),
-      )
-      .map((hub) => [hub.key, hub] as const);
+  const fallbackBullets =
+    target.landing.gaugeSelectionAdvisory?.bullets ?? target.landing.gaugesTeaser.bullets;
 
-    const hubMap = new Map(hubEntries);
+  target.landing.gaugeSelectionAdvisory = {
+    heading: landing.gaugeSelectionAdvisory.heading ?? target.landing.gaugeSelectionAdvisory?.heading,
+    intro: landing.gaugeSelectionAdvisory.intro ?? target.landing.gaugeSelectionAdvisory?.intro,
+    chatLabel: landing.gaugeSelectionAdvisory.chatLabel ?? target.landing.gaugeSelectionAdvisory?.chatLabel,
+    chatPrompt: landing.gaugeSelectionAdvisory.chatPrompt ?? target.landing.gaugeSelectionAdvisory?.chatPrompt,
+    linkLabel: landing.gaugeSelectionAdvisory.linkLabel ?? target.landing.gaugeSelectionAdvisory?.linkLabel,
+    linkHref: landing.gaugeSelectionAdvisory.linkHref ?? target.landing.gaugeSelectionAdvisory?.linkHref,
+    bullets: landing.gaugeSelectionAdvisory.bullets?.length
+      ? landing.gaugeSelectionAdvisory.bullets
+      : fallbackBullets,
+    closing: landing.gaugeSelectionAdvisory.closing ?? target.landing.gaugeSelectionAdvisory?.closing,
+  };
+}
 
-    target.landing.disciplines = target.landing.disciplines.map((discipline) => {
-      const hub = hubMap.get(discipline.id);
-      if (hub?.championImage && discipline.champion) {
-        discipline.champion.image = hub.championImage;
-      }
-      return discipline;
-    });
-  }
+function applyTriggerChoiceAdvisory(target: ShotgunsSectionData, landing: ShotgunsLandingPayload) {
+  if (!landing.triggerChoiceAdvisory) return;
+
+  target.landing.triggerChoiceAdvisory = {
+    heading: landing.triggerChoiceAdvisory.heading ?? target.landing.triggerChoiceAdvisory?.heading,
+    intro: landing.triggerChoiceAdvisory.intro ?? target.landing.triggerChoiceAdvisory?.intro,
+    chatLabel: landing.triggerChoiceAdvisory.chatLabel ?? target.landing.triggerChoiceAdvisory?.chatLabel,
+    chatPrompt: landing.triggerChoiceAdvisory.chatPrompt ?? target.landing.triggerChoiceAdvisory?.chatPrompt,
+    linkLabel: landing.triggerChoiceAdvisory.linkLabel ?? target.landing.triggerChoiceAdvisory?.linkLabel,
+    linkHref: landing.triggerChoiceAdvisory.linkHref ?? target.landing.triggerChoiceAdvisory?.linkHref,
+    bullets:
+      landing.triggerChoiceAdvisory.bullets?.length
+        ? landing.triggerChoiceAdvisory.bullets
+        : target.landing.triggerChoiceAdvisory?.bullets,
+    closing: landing.triggerChoiceAdvisory.closing ?? target.landing.triggerChoiceAdvisory?.closing,
+  };
+}
+
+function applyEngravingCarouselUi(target: ShotgunsSectionData, landing: ShotgunsLandingPayload) {
+  if (!landing.engravingCarouselUi) return;
+
+  target.landing.engravingCarouselUi = {
+    heading: landing.engravingCarouselUi.heading ?? target.landing.engravingCarouselUi?.heading,
+    subheading: landing.engravingCarouselUi.subheading ?? target.landing.engravingCarouselUi?.subheading,
+    background: landing.engravingCarouselUi.background ?? target.landing.engravingCarouselUi?.background,
+    ctaLabel: landing.engravingCarouselUi.ctaLabel ?? target.landing.engravingCarouselUi?.ctaLabel,
+    categoryLabels:
+      landing.engravingCarouselUi.categoryLabels?.length
+        ? landing.engravingCarouselUi.categoryLabels
+        : target.landing.engravingCarouselUi?.categoryLabels,
+  };
+}
+
+function applyDisciplineHubs(target: ShotgunsSectionData, landing: ShotgunsLandingPayload) {
+  if (!landing.disciplineHubs?.length) return;
+
+  const hubEntries = landing.disciplineHubs
+    .filter(
+      (hub): hub is NonNullable<(typeof landing.disciplineHubs)[number]> & { key: string } =>
+        Boolean(hub?.key),
+    )
+    .map((hub) => [hub.key, hub] as const);
+
+  const hubMap = new Map(hubEntries);
+
+  target.landing.disciplines = target.landing.disciplines.map((discipline) => {
+    const hub = hubMap.get(discipline.id);
+    if (hub?.championImage && discipline.champion) {
+      discipline.champion.image = hub.championImage;
+    }
+    return discipline;
+  });
 }
 
 function applyPlatforms(target: ShotgunsSectionData, platforms?: ShotgunsPlatformPayload[]) {
@@ -207,16 +249,16 @@ function applyPlatforms(target: ShotgunsSectionData, platforms?: ShotgunsPlatfor
 
   target.landing.platforms = platforms
     .map(mapPlatformFromCms)
-    .filter((platform): platform is Platform => Boolean(platform));
+    .filter(isDefined);
 }
 
 const cleanSlug = (value?: string | null) => {
   if (!value) return undefined;
   return value
     .toLowerCase()
-    .replace(/^platform-/, "")
-    .replace(/-platform$/, "")
-    .replace(/[^a-z0-9-]/g, "");
+    .replaceAll(/^platform-/g, "")
+    .replaceAll(/-platform$/g, "")
+    .replaceAll(/[^a-z0-9-]/g, "");
 };
 
 function mapPlatformFromCms(platform: ShotgunsPlatformPayload): Platform | undefined {
@@ -366,7 +408,7 @@ function syncSeriesWithPlatforms(target: ShotgunsSectionData) {
           label,
           href: discipline ? `/shotguns/disciplines/${discipline.id}` : "/shotguns/disciplines",
           rationale: discipline?.overviewHtml
-            ? discipline.overviewHtml.replace(/<[^>]+>/g, "").slice(0, 140).concat("…")
+            ? discipline.overviewHtml.replaceAll(/<[^>]+>/g, "").slice(0, 140).concat("…")
             : `Optimized for ${label}.`,
         };
       }) ?? [];

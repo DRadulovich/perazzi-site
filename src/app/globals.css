@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@plugin "@tailwindcss/typography"; /* NOSONAR: Tailwind CSS plugin directive */
+@plugin "@tailwindcss/typography";
 
 /* ---------- Brand Tokens (Perazzi) ---------- */
 :root {

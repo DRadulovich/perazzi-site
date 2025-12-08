@@ -3,13 +3,13 @@
 import clsx from "clsx";
 import Image from "next/image";
 import { SanityImageSource } from "@sanity/image-url/lib/types/types";
-import type { ReactNode } from "react";
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 import { getSanityImageUrl } from "@/lib/sanityImage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
-type SpecList = string[] | undefined;
+type SpecList = readonly string[] | undefined;
 
 export type ModelSearchRow = {
   _id: string;
@@ -31,8 +31,18 @@ export type ModelSearchRow = {
 };
 
 type ModelShowcaseProps = {
-  models: ModelSearchRow[];
+  readonly models: readonly ModelSearchRow[];
 };
+
+type FilterOption = Readonly<{ value: string; count: number }>;
+type FilterGroupProps = Readonly<{
+  label: string;
+  options: ReadonlyArray<FilterOption>;
+  values: readonly string[];
+  onToggle: (value: string) => void;
+}>;
+type FilterChipProps = Readonly<{ label: string; active: boolean; onClick: () => void }>;
+type SpecProps = Readonly<{ label: string; value?: string }>;
 
 const PAGE_SIZE = 9;
 const FILTER_PANEL_CLASS =
@@ -43,6 +53,12 @@ const SPEC_PANEL_CLASS =
   "grid gap-4 border-t border-white/10 bg-black/40 px-4 py-4 text-xs text-neutral-200 sm:grid-cols-2 sm:px-6 sm:py-5 sm:text-sm";
 const DETAIL_PANEL_CLASS =
   "flex-1 space-y-4 rounded-2xl border border-white/10 bg-black/40 p-4 sm:rounded-3xl sm:p-5";
+
+function resolveFilterValues(value: string, current: string[]) {
+  if (value === "__reset__") return [];
+  if (current.includes(value)) return current.filter((entry) => entry !== value);
+  return [...current, value];
+}
 
 export function ModelSearchTable({ models }: ModelShowcaseProps) {
   const [query, setQuery] = useState("");
@@ -57,21 +73,22 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const detailButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [lastFocusedId, setLastFocusedId] = useState<string | null>(null);
-  const modalRef = useRef<HTMLDivElement | null>(null);
+  const modalRef = useRef<HTMLDialogElement | null>(null);
   const [heroLoaded, setHeroLoaded] = useState(false);
   const analyticsRef = useAnalyticsObserver<HTMLElement>("ModelSearchTableSeen");
+  const resetVisibleCount = useCallback(() => setVisibleCount(PAGE_SIZE), []);
   const closeModal = useCallback(() => {
     setSelectedModel(null);
     setHeroLoaded(false);
   }, []);
 
   useEffect(() => {
-    if (!selectedModel) return;
+    if (!selectedModel || typeof globalThis.addEventListener !== "function") return;
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") closeModal();
     };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
+    globalThis.addEventListener("keydown", handleKey);
+    return () => globalThis.removeEventListener("keydown", handleKey);
   }, [selectedModel, closeModal]);
 
   useEffect(() => {
@@ -88,13 +105,14 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
     ];
     const focusables = Array.from(
       modalNode.querySelectorAll<HTMLElement>(focusableSelectors.join(",")),
-    );
+    ).filter((node) => node.dataset.modalBackdrop === undefined);
     focusables[0]?.focus();
 
     const handleTrap = (event: KeyboardEvent) => {
       if (event.key !== "Tab" || focusables.length === 0) return;
       const first = focusables[0];
-      const last = focusables[focusables.length - 1];
+      const last = focusables.at(-1);
+      if (!first || !last) return;
       if (event.shiftKey) {
         if (document.activeElement === first) {
           event.preventDefault();
@@ -197,57 +215,47 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
       const matchesRib =
         !ribTypeFilters.length || (model.ribTypes || []).some((r) => ribTypeFilters.includes(r));
 
-      if (!matchesPlatform) return false;
-      if (!matchesUse) return false;
-      if (!matchesGauge) return false;
-      if (!matchesTrigger) return false;
-      if (!matchesRib) return false;
-      return true;
+      return matchesPlatform && matchesUse && matchesGauge && matchesTrigger && matchesRib;
     });
   }, [searchFiltered, platformFilters, useFilters, gaugeFilters, triggerTypeFilters, ribTypeFilters]);
+
+  const incrementVisibleCount = useCallback(() => {
+    setVisibleCount((prev) => {
+      if (prev >= filteredModels.length) return prev;
+      return prev + PAGE_SIZE;
+    });
+  }, [filteredModels.length]);
 
   useEffect(() => {
     const node = loadMoreRef.current;
     if (!node) return undefined;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setVisibleCount((prev) => {
-              if (prev >= filteredModels.length) return prev;
-              return prev + PAGE_SIZE;
-            });
-          }
-        });
-      },
-      { threshold: 0.25 },
-    );
+    const handleIntersection: IntersectionObserverCallback = (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          incrementVisibleCount();
+          break;
+        }
+      }
+    };
+
+    const observer = new IntersectionObserver(handleIntersection, { threshold: 0.25 });
 
     observer.observe(node);
     return () => observer.disconnect();
-  }, [filteredModels.length]);
+  }, [incrementVisibleCount]);
 
   const handleQueryChange = (value: string) => {
     startTransition(() => {
       setQuery(value);
-      setVisibleCount(PAGE_SIZE);
+      resetVisibleCount();
     });
   };
 
-  const handleMultiFilterChange = (
-    current: string[],
-    setter: (value: string[]) => void,
-  ) => (value: string) => {
+  const toggleFilter = (value: string, setter: Dispatch<SetStateAction<string[]>>) => {
     startTransition(() => {
-      if (value === "__reset__") {
-        setter([]);
-      } else if (current.includes(value)) {
-        setter(current.filter((entry) => entry !== value));
-      } else {
-        setter([...current, value]);
-      }
-      setVisibleCount(PAGE_SIZE);
+      setter((current) => resolveFilterValues(value, current));
+      resetVisibleCount();
     });
   };
 
@@ -256,7 +264,9 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
       setPlatformFilters([]);
       setGaugeFilters([]);
       setUseFilters([]);
-      setVisibleCount(PAGE_SIZE);
+      setTriggerTypeFilters([]);
+      setRibTypeFilters([]);
+      resetVisibleCount();
     });
   };
 
@@ -277,14 +287,35 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
     target.style.setProperty("--parallax-y", "0px");
   }, []);
 
+  const hasActiveFilters = useMemo(
+    () =>
+      platformFilters.length > 0 ||
+      gaugeFilters.length > 0 ||
+      useFilters.length > 0 ||
+      triggerTypeFilters.length > 0 ||
+      ribTypeFilters.length > 0,
+    [
+      gaugeFilters.length,
+      platformFilters.length,
+      ribTypeFilters.length,
+      triggerTypeFilters.length,
+      useFilters.length,
+    ],
+  );
+
   const displayModels = filteredModels.slice(0, visibleCount);
   const showSkeletons = isPending && models.length > 0;
-  const hasMore = visibleCount < filteredModels.length;
-  const renderItems: (ModelSearchRow | null)[] = showSkeletons
-    ? Array.from(
+  const skeletonPlaceholders = useMemo(
+    () =>
+      Array.from(
         { length: Math.max(3, Math.min(PAGE_SIZE, models.length || PAGE_SIZE)) },
-        () => null,
-      )
+        (_, idx) => `skeleton-${models.length}-${idx}`,
+      ),
+    [models.length],
+  );
+  const hasMore = visibleCount < filteredModels.length;
+  const renderItems: Array<ModelSearchRow | string> = showSkeletons
+    ? skeletonPlaceholders
     : displayModels;
   const modalImageUrl = selectedModel
     ? getSanityImageUrl(selectedModel.image, { width: 3200, quality: 95 }) ||
@@ -311,8 +342,8 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
             />
           </label>
           <p className="text-sm text-neutral-400" aria-live="polite" aria-atomic="true">
-            Showing <span className="font-semibold text-white">{filteredModels.length}</span> of
-            <span className="font-semibold text-white"> {models.length}</span>
+            Showing <span className="font-semibold text-white">{filteredModels.length}</span>{" "}
+            of <span className="font-semibold text-white">{models.length}</span>
           </p>
         </div>
 
@@ -321,37 +352,33 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
             label="Platform"
             options={platformOptions}
             values={platformFilters}
-            onToggle={handleMultiFilterChange(platformFilters, setPlatformFilters)}
+            onToggle={(value) => toggleFilter(value, setPlatformFilters)}
           />
           <FilterGroup
             label="Gauge"
             options={gaugeOptions}
             values={gaugeFilters}
-            onToggle={handleMultiFilterChange(gaugeFilters, setGaugeFilters)}
+            onToggle={(value) => toggleFilter(value, setGaugeFilters)}
           />
           <FilterGroup
             label="Use"
             options={useOptions}
             values={useFilters}
-            onToggle={handleMultiFilterChange(useFilters, setUseFilters)}
+            onToggle={(value) => toggleFilter(value, setUseFilters)}
           />
           <FilterGroup
             label="Trigger"
             options={triggerTypeOptions}
             values={triggerTypeFilters}
-            onToggle={handleMultiFilterChange(triggerTypeFilters, setTriggerTypeFilters)}
+            onToggle={(value) => toggleFilter(value, setTriggerTypeFilters)}
           />
           <FilterGroup
             label="Rib"
             options={ribTypeOptions}
             values={ribTypeFilters}
-            onToggle={handleMultiFilterChange(ribTypeFilters, setRibTypeFilters)}
+            onToggle={(value) => toggleFilter(value, setRibTypeFilters)}
           />
-          {(platformFilters.length ||
-            gaugeFilters.length ||
-            useFilters.length ||
-            triggerTypeFilters.length ||
-            ribTypeFilters.length) && (
+          {hasActiveFilters && (
             <button
               type="button"
               onClick={clearFilters}
@@ -364,12 +391,15 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
       </div>
 
       <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-        {renderItems.map((model, index) => {
-          if (!model) {
-            return <CardSkeleton key={`skeleton-${index}`} />;
+        {renderItems.map((item) => {
+          if (typeof item === "string") {
+            return <CardSkeleton key={item} />;
           }
+          const model = item;
           const cardImageUrl =
-            getSanityImageUrl(model.image, { width: 2400, quality: 90 }) || model.imageFallbackUrl || null;
+            getSanityImageUrl(model.image, { width: 2400, quality: 90 }) ||
+            model.imageFallbackUrl ||
+            null;
           return (
             <article
               key={model._id}
@@ -461,17 +491,20 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
       )}
 
       {selectedModel ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 sm:p-4 md:p-6 backdrop-blur"
-          role="dialog"
+        <dialog
+          ref={modalRef}
+          open
+          className="fixed inset-0 z-50 flex max-h-screen w-full items-center justify-center bg-black/80 p-3 backdrop-blur sm:p-4 md:p-6"
           aria-modal="true"
-          onClick={closeModal}
         >
-          <div
-            ref={modalRef}
-            className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]"
-            onClick={(event) => event.stopPropagation()}
-          >
+          <button
+            type="button"
+            data-modal-backdrop="true"
+            aria-label="Close dialog"
+            className="absolute inset-0 h-full w-full bg-transparent"
+            onClick={closeModal}
+          />
+          <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]">
             <button
               type="button"
               className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-widest text-black transition hover:border-black hover:bg-white sm:right-5 sm:top-5"
@@ -543,7 +576,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
               </div>
             </div>
           </div>
-        </div>
+        </dialog>
       ) : null}
     </section>
   );
@@ -557,8 +590,8 @@ function CardSkeleton() {
         <div className="h-4 w-1/3 rounded bg-white/10" />
         <div className="h-6 w-2/3 rounded bg-white/10" />
         <div className="grid gap-3 sm:grid-cols-2">
-          {Array.from({ length: 6 }).map((_, idx) => (
-            <div key={idx} className="h-4 rounded bg-white/10" />
+          {["trigger", "springs", "rib", "rib-style", "notch", "height"].map((placeholder) => (
+            <div key={placeholder} className="h-4 rounded bg-white/10" />
           ))}
         </div>
       </div>
@@ -571,14 +604,8 @@ function FilterGroup({
   options,
   values,
   onToggle,
-}: {
-  label: string;
-  options: Array<{ value: string; count: number }>;
-  values: string[];
-  onToggle: (value: string) => void;
-}) {
+}: FilterGroupProps) {
   if (!options.length) return null;
-  const total = options.reduce((sum, option) => sum + option.count, 0);
   const handleAll = () => {
     onToggle("__reset__");
   };
@@ -602,11 +629,11 @@ function FilterGroup({
 
 function humanizeValue(value?: string | null) {
   if (!value) return undefined;
-  const mmMatch = value.match(/^(\d+(?:\.\d+)?)\s*mm$/i);
+  const mmMatch = /^(\d+(?:\.\d+)?)\s*mm$/i.exec(value);
   if (mmMatch) {
     return `${mmMatch[1]}mm`;
   }
-  const cleaned = value.replace(/[_-]+/g, " ").trim();
+  const cleaned = value.replaceAll(/[_-]+/g, " ").trim();
   return cleaned
     .split(" ")
     .map((word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : ""))
@@ -618,11 +645,7 @@ function FilterChip({
   label,
   active,
   onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
+}: FilterChipProps) {
   return (
     <button
       type="button"
@@ -639,7 +662,7 @@ function FilterChip({
   );
 }
 
-function Spec({ label, value }: { label: string; value?: string }) {
+function Spec({ label, value }: SpecProps) {
   const display = humanizeValue(value) ?? value;
   return (
     <div>
@@ -651,7 +674,7 @@ function Spec({ label, value }: { label: string; value?: string }) {
   );
 }
 
-function DetailGrid({ label, value }: { label: string; value?: string }) {
+function DetailGrid({ label, value }: SpecProps) {
   const display = humanizeValue(value) ?? value;
   return (
     <div>
@@ -664,25 +687,36 @@ function DetailGrid({ label, value }: { label: string; value?: string }) {
 }
 
 function renderList(list: SpecList) {
-  if (!list || !list.length) return undefined;
-  const mapped = list
-    .map((entry) => humanizeValue(entry) ?? entry)
-    .filter(Boolean) as string[];
+  if (!list?.length) return undefined;
+  const mapped = list.flatMap((entry) => {
+    const display = humanizeValue(entry) ?? entry;
+    return display ? [display] : [];
+  });
   if (!mapped.length) return undefined;
   return mapped.join(", ");
 }
 
+function escapeRegExp(value: string) {
+  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+}
+
 function highlightText(text: string, needle: string): ReactNode {
   if (!needle.trim()) return text;
-  const regex = new RegExp(`(${needle.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")})`, "ig");
+  const lowerNeedle = needle.toLowerCase();
+  const regex = new RegExp(`(${escapeRegExp(needle)})`, "ig");
   const parts = text.split(regex);
-  return parts.map((part, index) =>
-    part.toLowerCase() === needle.toLowerCase() ? (
-      <mark key={index} className="bg-transparent text-perazzi-red">
-        {part}
-      </mark>
-    ) : (
-      <span key={index}>{part}</span>
-    ),
-  );
+  let cursor = 0;
+
+  return parts.map((part) => {
+    cursor += part.length + 1;
+    const key = `${part}-${cursor}`;
+    if (part.toLowerCase() === lowerNeedle) {
+      return (
+        <mark key={key} className="bg-transparent text-perazzi-red">
+          {part}
+        </mark>
+      );
+    }
+    return <span key={key}>{part}</span>;
+  });
 }

@@ -3,11 +3,14 @@
 import { useEffect, useRef } from "react";
 import { logAnalytics } from "@/lib/analytics";
 
+const defaultObserverOptions: IntersectionObserverInit = { threshold: 0.5 };
+
 export function useAnalyticsObserver<T extends HTMLElement = HTMLElement>(
   analyticsId: string,
-  options: IntersectionObserverInit = { threshold: 0.5 },
+  options?: IntersectionObserverInit,
 ) {
   const ref = useRef<T | null>(null);
+  const observerOptions = options ?? defaultObserverOptions;
 
   useEffect(() => {
     const node = ref.current;
@@ -24,14 +27,14 @@ export function useAnalyticsObserver<T extends HTMLElement = HTMLElement>(
           observer.disconnect();
         }
       });
-    }, options);
+    }, observerOptions);
 
     observer.observe(node);
 
     return () => {
       observer.disconnect();
     };
-  }, [analyticsId, options]);
+  }, [analyticsId, observerOptions]);
 
   return ref;
 }

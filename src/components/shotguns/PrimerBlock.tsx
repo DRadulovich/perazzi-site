@@ -1,7 +1,7 @@
 type PrimerBlockProps = {
-  copy: string;
-  href: string;
-  bullets: string[];
+  readonly copy: string;
+  readonly href: string;
+  readonly bullets: readonly string[];
 };
 
 export function PrimerBlock({ copy, href, bullets }: PrimerBlockProps) {
@@ -25,6 +25,7 @@ export function PrimerBlock({ copy, href, bullets }: PrimerBlockProps) {
           className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-perazzi-red focus-ring"
         >
           Explore gauges
+          {' '}
           <span aria-hidden="true">→</span>
         </a>
       </div>

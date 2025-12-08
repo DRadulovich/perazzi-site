@@ -24,7 +24,7 @@ const INTENT_DEFINITIONS: Array<{
   },
   {
     name: "platform_tm",
-    pattern: /\btm\s?(1|x)?\b/i,
+    pattern: /\btm\s?[1x]?\b/i,
     topics: ["platforms", "platform_tm", "models"],
   },
   {
@@ -163,7 +163,7 @@ export function detectRetrievalHints(
   const modelMatches = lowerQuestion.match(/\b(mx\d{1,3}[a-z]?|tm1|tmx|high\s*tech|hts)\b/g);
   if (modelMatches) {
     modelMatches.forEach((match) => {
-      const clean = match.replace(/\s+/g, "-");
+      const clean = match.replaceAll(/\s+/g, "-");
       keywords.add(clean);
       focusEntities.add(slugify(clean));
     });
@@ -190,7 +190,7 @@ export function detectRetrievalHints(
     topics.add(`platform_${context.platformSlug.toLowerCase()}`);
   }
 
-  const notchMatch = lowerQuestion.match(/(\d+)\s*(?:-?\s*)?notch/);
+  const notchMatch = /(\d+)(?:\s*-|\s+)\s*notch/.exec(lowerQuestion);
   if (notchMatch) {
     keywords.add(`rib_notch_${notchMatch[1]}`);
     topics.add(`rib_notch_${notchMatch[1]}`);
@@ -213,8 +213,8 @@ export function detectRetrievalHints(
 function slugify(input: string) {
   return input
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replaceAll(/[^a-z0-9]+/g, "-")
+    .replaceAll(/(?:^-+|-+$)/g, "");
 }
 
 export function buildResponseTemplates(hints: RetrievalHints): string[] {

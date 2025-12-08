@@ -4,9 +4,9 @@ export const getGradeAnchorId = (grade: { id?: string; name?: string }) => {
     .trim()
     .toLowerCase();
   const slug = source
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
+    .replaceAll(/[^a-z0-9]+/g, "-")
+    .replaceAll(/-+/g, "-")
+    .replaceAll(/(^-)|(-$)/g, "");
 
   return `grade-${slug || "series"}`;
 };

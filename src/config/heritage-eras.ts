@@ -102,7 +102,7 @@ export function getEraIdForYear(year: number): HeritageEraId | null {
 }
 
 export function getEraForEvent(event: HeritageEvent): HeritageEra | null {
-  const year = parseInt(event.date, 10);
+  const year = Number.parseInt(event.date, 10);
   return getEraForYear(year);
 }
 

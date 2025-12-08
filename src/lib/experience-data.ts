@@ -22,7 +22,7 @@ const warn = (message: string) => {
 };
 
 function cloneExperience(): ExperiencePageData {
-  return JSON.parse(JSON.stringify(experienceData));
+  return structuredClone(experienceData);
 }
 
 type PickerInput = Partial<Omit<PickerItem, "id">> & { id?: string };
@@ -62,19 +62,20 @@ function mergeFaqSection(
   fallbackSection: ExperiencePageData["faqSection"],
   cmsSection?: ExperienceHomePayload["faqSection"],
 ): ExperiencePageData["faqSection"] {
-  const items: FAQItem[] = cmsSection?.items?.length
-    ? cmsSection.items
-        .map((item) => {
-          if (!item?.question && !item?.answerHtml) return null;
-          return {
-            q: item.question ?? "",
-            aHtml: item.answerHtml ?? "",
-          };
-        })
-        .filter(Boolean) as FAQItem[]
-    : fallbackSection.items?.length
-      ? fallbackSection.items
-      : faqFixture;
+  let items: FAQItem[] = faqFixture;
+
+  if (cmsSection?.items?.length) {
+    items = cmsSection.items.reduce<FAQItem[]>((acc, item) => {
+      if (!item?.question && !item?.answerHtml) return acc;
+      acc.push({
+        q: item.question ?? "",
+        aHtml: item.answerHtml ?? "",
+      });
+      return acc;
+    }, []);
+  } else if (fallbackSection.items?.length) {
+    items = fallbackSection.items;
+  }
 
   return {
     heading: cmsSection?.heading ?? fallbackSection.heading ?? "FAQ",
@@ -101,26 +102,30 @@ function mergeConciergeBlock(
 
 const escapeHtml = (value: string) =>
   value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 
 const textToHtml = (value?: string) => {
   if (!value) return undefined;
   const escaped = escapeHtml(value.trim());
   if (!escaped) return undefined;
-  return `<p>${escaped.replace(/\n+/g, "<br/>")}</p>`;
+  return `<p>${escaped.replaceAll(/\n+/g, "<br/>")}</p>`;
 };
 
-const listToHtml = (items: string[]) =>
-  `<ul>${items.map((item) => `<li>${escapeHtml(item.trim())}</li>`).join("")}</ul>`;
+const listToHtml = (items: string[]) => {
+  const listItems = items.map((item) => `<li>${escapeHtml(item.trim())}</li>`).join("");
+  return `<ul>${listItems}</ul>`;
+};
+
+const SRC_ATTR_REGEX = /src=["']([^"']+)["']/i;
 
 const extractIframeSrc = (value?: string) => {
   if (!value) return undefined;
   const trimmed = value.trim();
-  const match = trimmed.match(/src=["']([^"']+)["']/i);
+  const match = SRC_ATTR_REGEX.exec(trimmed);
   if (match?.[1]) return match[1];
   if (/^https?:\/\//.test(trimmed)) return trimmed;
   return undefined;
@@ -341,7 +346,7 @@ export const getExperiencePageData = cache(async (): Promise<ExperiencePageData>
     data.mosaicUi = mergeMosaicUi(data.mosaicUi, cms?.mosaicUi);
 
     if (cms?.mosaic?.length) {
-      data.mosaic = cms.mosaic.filter(Boolean) as ExperiencePageData["mosaic"];
+      data.mosaic = cms.mosaic.filter(Boolean);
     }
   } catch (error) {
     warn((error as Error).message);
