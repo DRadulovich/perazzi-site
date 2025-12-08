@@ -1,9 +1,9 @@
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
-import { createHash, randomUUID } from "crypto";
-import { readFile } from "fs/promises";
-import path from "path";
-import process from "process";
+import { createHash, randomUUID } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import process from "node:process";
 import minimist from "minimist";
 import OpenAI from "openai";
 import { Pool, PoolClient } from "pg";
@@ -66,17 +66,17 @@ function slugify(value: string | undefined): string | undefined {
   if (!value) return undefined;
   return value
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || undefined;
+    .replaceAll(/[^a-z0-9]+/g, "-")
+    .replaceAll(/(?:^-+|-+$)/g, "") || undefined;
 }
 
 function sanitizePricingText(text: string): string {
-  return text.replace(/[$€£]?\d[\d,]*(\.\d+)?/g, "<NUM>");
+  return text.replaceAll(/[$€£]?\d[\d,]*(\.\d+)?/g, "<NUM>");
 }
 
 function preprocessForEmbedding(text: string, pricingSensitive: boolean): string {
-  let cleaned = text.replace(/```[\s\S]*?```/g, "");
-  cleaned = cleaned.replace(/\s+/g, " ").trim();
+  let cleaned = text.replaceAll(/```[\s\S]*?```/g, "");
+  cleaned = cleaned.replaceAll(/\s+/g, " ").trim();
   if (pricingSensitive) {
     cleaned = sanitizePricingText(cleaned);
   }
@@ -135,7 +135,7 @@ async function readDocumentFile(
 
 function extractSection(rawText: string, heading: RegExp): string | null {
   const match = heading.exec(rawText);
-  if (!match || match.index === undefined) return null;
+  if (!match?.index) return null;
 
   const start = match.index;
   const rest = rawText.slice(start + match[0].length);
@@ -154,7 +154,7 @@ function parseListValue(value: string | undefined): string[] | null {
 
 function parseDocumentMetadata(rawText: string): Partial<DocumentMetadata> {
   const meta: Partial<DocumentMetadata> = {};
-  const titleMatch = rawText.match(/^#\s+(.+)$/m);
+  const titleMatch = /^#\s+(.+)$/m.exec(rawText);
   if (titleMatch) {
     meta.title = titleMatch[1].trim();
   }
@@ -249,7 +249,7 @@ async function upsertDocumentRow(
   }
 
   if (!isChanged) {
-    return { documentId: documentId!, isNew, isChanged };
+    return { documentId, isNew, isChanged };
   }
 
   const query = `
@@ -438,7 +438,7 @@ function chunkOlympicMedalsV2(rawText: string): ChunkInput[] {
     if (Array.isArray(entry.Sources) && entry.Sources.length) {
       lines.push("**Sources:**");
       entry.Sources.forEach((source: string) => {
-        if (source && source.toString().trim()) {
+        if (source?.toString().trim()) {
           lines.push(`- ${source.toString().trim()}`);
         }
       });
@@ -468,87 +468,129 @@ function chunkOlympicMedalsV2(rawText: string): ChunkInput[] {
   return chunks;
 }
 
-function chunkMarkdownLike(doc: ActiveDoc, rawText: string): ChunkInput[] {
+interface Section {
+  heading?: string;
+  headingPath?: string;
+  content: string[];
+}
+
+function parseSections(rawText: string): Section[] {
   const lines = rawText.split(/\r?\n/);
   const stack: { level: number; text: string }[] = [];
-  const sections: { heading?: string; headingPath?: string; content: string[] }[] =
-    [{ heading: undefined, headingPath: undefined, content: [] }];
+  const sections: Section[] = [
+    { heading: undefined, headingPath: undefined, content: [] },
+  ];
 
   for (const line of lines) {
     const headingMatch = /^(#{1,6})\s+(.*)$/.exec(line.trim());
     if (headingMatch) {
       const level = headingMatch[1].length;
       const text = headingMatch[2].trim();
-      while (stack.length && stack[stack.length - 1].level >= level) {
+      while (stack.length && stack.at(-1)!.level >= level) {
         stack.pop();
       }
       stack.push({ level, text });
       const headingPath = stack.map((h) => h.text).join(" > ");
       sections.push({ heading: text, headingPath, content: [] });
     } else {
-      sections[sections.length - 1].content.push(line);
+      sections.at(-1)!.content.push(line);
     }
   }
 
+  return sections;
+}
+
+function createChunkFromBuffer(
+  buffer: string[],
+  chunkIndex: number,
+  section: Section,
+  primaryModes: string[],
+  archetypeBias: string[],
+): ChunkInput | null {
+  if (!buffer.length) return null;
+  const text = buffer.join("\n\n").trim();
+  if (!text) return null;
+
+  const labels = section.heading
+    ? [slugify(section.heading), slugify(section.headingPath)].filter(Boolean)
+    : undefined;
+
+  return {
+    text,
+    chunkIndex,
+    heading: section.heading,
+    headingPath: section.headingPath,
+    sectionLabels: labels as string[] | undefined,
+    primaryModes,
+    archetypeBias,
+  };
+}
+
+function processSectionIntoParagraphChunks(
+  section: Section,
+  primaryModes: string[],
+  archetypeBias: string[],
+  startChunkIndex: number,
+): ChunkInput[] {
+  const sectionText = section.content.join("\n").trim();
+  if (!sectionText) return [];
+
+  const paragraphs = sectionText.split(/\n{2,}/);
+  const chunks: ChunkInput[] = [];
+  let buffer: string[] = [];
+  let bufferTokens = 0;
+  let chunkIndex = startChunkIndex;
+
+  const flushBuffer = () => {
+    const chunk = createChunkFromBuffer(
+      buffer,
+      chunkIndex,
+      section,
+      primaryModes,
+      archetypeBias,
+    );
+    if (chunk) {
+      chunks.push(chunk);
+      chunkIndex += 1;
+    }
+    buffer = [];
+    bufferTokens = 0;
+  };
+
+  for (const para of paragraphs) {
+    const paraText = para.trim();
+    if (!paraText) continue;
+    const paraTokens = estimateTokens(paraText);
+    if (bufferTokens + paraTokens > MAX_TOKENS && bufferTokens > TARGET_TOKENS) {
+      flushBuffer();
+    }
+    buffer.push(paraText);
+    bufferTokens += paraTokens;
+    if (bufferTokens >= TARGET_TOKENS) {
+      flushBuffer();
+    }
+  }
+
+  flushBuffer();
+  return chunks;
+}
+
+function chunkMarkdownLike(doc: ActiveDoc, rawText: string): ChunkInput[] {
+  const sections = parseSections(rawText);
   const chunks: ChunkInput[] = [];
   let chunkIndex = 0;
   const primaryModes = defaultModesForCategory(doc.category);
   const archetypeBias = defaultArchetypes();
 
   for (const section of sections) {
-    const sectionText = section.content.join("\n").trim();
-    if (!sectionText) continue;
-
-    const paragraphs = sectionText.split(/\n{2,}/);
-    let buffer: string[] = [];
-    let bufferTokens = 0;
-
-    const flushBuffer = () => {
-      if (!buffer.length) return;
-      const text = buffer.join("\n\n").trim();
-      if (!text) {
-        buffer = [];
-        bufferTokens = 0;
-        return;
-      }
-      const labels = section.heading
-        ? [slugify(section.heading), slugify(section.headingPath)].filter(
-            Boolean,
-          )
-        : undefined;
-
-      chunks.push({
-        text,
-        chunkIndex,
-        heading: section.heading,
-        headingPath: section.headingPath,
-        sectionLabels: labels as string[] | undefined,
-        primaryModes,
-        archetypeBias,
-      });
-      chunkIndex += 1;
-      buffer = [];
-      bufferTokens = 0;
-    };
-
-    for (const para of paragraphs) {
-      const paraText = para.trim();
-      if (!paraText) continue;
-      const paraTokens = estimateTokens(paraText);
-      if (
-        bufferTokens + paraTokens > MAX_TOKENS &&
-        bufferTokens > TARGET_TOKENS
-      ) {
-        flushBuffer();
-      }
-      buffer.push(paraText);
-      bufferTokens += paraTokens;
-      if (bufferTokens >= TARGET_TOKENS) {
-        flushBuffer();
-      }
-    }
-
-    flushBuffer();
+    const sectionChunks = processSectionIntoParagraphChunks(
+      section,
+      primaryModes,
+      archetypeBias,
+      chunkIndex,
+    );
+    chunks.push(...sectionChunks);
+    chunkIndex += sectionChunks.length;
   }
 
   return chunks;
@@ -687,111 +729,175 @@ async function embedChunks(
   }
 }
 
+interface IngestStats {
+  scanned: number;
+  newCount: number;
+  updated: number;
+  skipped: number;
+  chunksWritten: number;
+}
+
+async function handleDryRunDocument(
+  doc: ActiveDoc,
+  hasRow: boolean,
+  checksumChanged: boolean,
+  stats: IngestStats,
+): Promise<void> {
+  let statusLabel: string;
+  if (hasRow && checksumChanged) {
+    statusLabel = "UPDATED";
+    stats.updated += 1;
+  } else if (hasRow) {
+    statusLabel = "SKIPPED";
+    stats.skipped += 1;
+  } else {
+    statusLabel = "NEW";
+    stats.newCount += 1;
+  }
+  console.log(`[dry-run] ${statusLabel} ${doc.path}`);
+}
+
+async function processDocumentChunks(
+  pool: Pool,
+  openai: OpenAI,
+  doc: ActiveDoc,
+  rawText: string,
+  upsertResult: { documentId: string; isNew: boolean; isChanged: boolean },
+  opts: IngestOptions,
+): Promise<number> {
+  if (doc.embedMode === "metadata-only") {
+    console.log(
+      `[info] Metadata-only doc, skipping chunking: ${doc.path}`,
+    );
+    return 0;
+  }
+
+  let status: string;
+  if (upsertResult.isNew) {
+    status = "new";
+  } else if (upsertResult.isChanged) {
+    status = "updated";
+  } else {
+    status = "skipped";
+  }
+  
+  if (status === "skipped") {
+    return 0;
+  }
+
+  const chunkInputs = chunkDocument(doc, rawText);
+  await replaceChunksAndEmbeddings(
+    pool,
+    openai,
+    upsertResult.documentId,
+    doc,
+    chunkInputs,
+    { dryRun: opts.dryRun },
+  );
+  console.log(
+    `[ok] Ingested ${chunkInputs.length} chunks for ${doc.path}`,
+  );
+  return chunkInputs.length;
+}
+
+async function processDocument(
+  pool: Pool,
+  openai: OpenAI,
+  doc: ActiveDoc,
+  opts: IngestOptions,
+  stats: IngestStats,
+): Promise<void> {
+  stats.scanned += 1;
+  
+  let rawText: string;
+  let checksum: string;
+  try {
+    const res = await readDocumentFile(doc);
+    rawText = res.rawText;
+    checksum = res.checksum;
+  } catch (err) {
+    console.error(`Error reading ${doc.path}:`, err);
+    return;
+  }
+
+  const existing = await pool.query<{
+    id: string;
+    source_checksum: string | null;
+  }>("select id, source_checksum from public.documents where path = $1", [
+    doc.path,
+  ]);
+
+  const rowCount = existing.rowCount ?? 0;
+  const hasRow = rowCount > 0;
+  const checksumChanged =
+    opts.full || !hasRow || existing.rows[0].source_checksum !== checksum;
+
+  if (opts.dryRun) {
+    await handleDryRunDocument(doc, hasRow, checksumChanged, stats);
+    return;
+  }
+
+  const meta = parseDocumentMetadata(rawText);
+  const upsertResult = await upsertDocumentRow(
+    pool,
+    doc,
+    checksum,
+    meta,
+    { forceUpdate: opts.full },
+  );
+
+  if (upsertResult.isNew) {
+    stats.newCount += 1;
+  } else if (upsertResult.isChanged) {
+    stats.updated += 1;
+  } else {
+    stats.skipped += 1;
+  }
+
+  const chunksCount = await processDocumentChunks(
+    pool,
+    openai,
+    doc,
+    rawText,
+    upsertResult,
+    opts,
+  );
+  stats.chunksWritten += chunksCount;
+}
+
+function printIngestSummary(stats: IngestStats): void {
+  console.log("---- Ingest Summary ----");
+  console.log(`Docs scanned: ${stats.scanned}`);
+  console.log(`Docs new: ${stats.newCount}`);
+  console.log(`Docs updated: ${stats.updated}`);
+  console.log(`Docs skipped: ${stats.skipped}`);
+  console.log(`Chunks written: ${stats.chunksWritten}`);
+}
+
 async function runIngest(
   pool: Pool,
   openai: OpenAI,
   opts: IngestOptions,
 ): Promise<void> {
   const docs = await parseSourceCorpus();
-  let scanned = 0;
-  let newCount = 0;
-  let updated = 0;
-  let skipped = 0;
-  let chunksWritten = 0;
+  const stats: IngestStats = {
+    scanned: 0,
+    newCount: 0,
+    updated: 0,
+    skipped: 0,
+    chunksWritten: 0,
+  };
 
   for (const doc of docs) {
-    scanned += 1;
-    let rawText: string;
-    let checksum: string;
     try {
-      const res = await readDocumentFile(doc);
-      rawText = res.rawText;
-      checksum = res.checksum;
-    } catch (err) {
-      console.error(`Error reading ${doc.path}:`, err);
-      continue;
-    }
-
-    const existing = await pool.query<{
-      id: string;
-      source_checksum: string | null;
-    }>("select id, source_checksum from public.documents where path = $1", [
-      doc.path,
-    ]);
-
-    const rowCount = existing.rowCount ?? 0;
-    const hasRow = rowCount > 0;
-    const checksumChanged =
-      opts.full || !hasRow || existing.rows[0].source_checksum !== checksum;
-
-    if (opts.dryRun) {
-      const statusLabel = !hasRow
-        ? "NEW"
-        : checksumChanged
-          ? "UPDATED"
-          : "SKIPPED";
-      console.log(`[dry-run] ${statusLabel} ${doc.path}`);
-      if (!checksumChanged) skipped += 1;
-      else if (!hasRow) newCount += 1;
-      else updated += 1;
-      continue;
-    }
-
-    try {
-      const meta = parseDocumentMetadata(rawText);
-      const upsertResult = await upsertDocumentRow(
-        pool,
-        doc,
-        checksum,
-        meta,
-        { forceUpdate: opts.full },
-      );
-
-      let status: "new" | "updated" | "skipped";
-      if (upsertResult.isNew) status = "new";
-      else if (upsertResult.isChanged) status = "updated";
-      else status = "skipped";
-
-      if (status === "new") newCount += 1;
-      else if (status === "updated") updated += 1;
-      else skipped += 1;
-
-      if (doc.embedMode === "metadata-only") {
-        console.log(
-          `[info] Metadata-only doc, skipping chunking: ${doc.path}`,
-        );
-        continue;
-      }
-
-      if (status === "skipped") {
-        continue;
-      }
-
-      const chunkInputs = chunkDocument(doc, rawText);
-      chunksWritten += chunkInputs.length;
-      await replaceChunksAndEmbeddings(
-        pool,
-        openai,
-        upsertResult.documentId,
-        doc,
-        chunkInputs,
-        { dryRun: opts.dryRun },
-      );
-      console.log(
-        `[ok] Ingested ${chunkInputs.length} chunks for ${doc.path}`,
-      );
+      await processDocument(pool, openai, doc, opts, stats);
     } catch (err) {
       console.error(`Error processing ${doc.path}:`, err);
       throw err;
     }
   }
 
-  console.log("---- Ingest Summary ----");
-  console.log(`Docs scanned: ${scanned}`);
-  console.log(`Docs new: ${newCount}`);
-  console.log(`Docs updated: ${updated}`);
-  console.log(`Docs skipped: ${skipped}`);
-  console.log(`Chunks written: ${chunksWritten}`);
+  printIngestSummary(stats);
 }
 
 function assertEnv() {
@@ -835,7 +941,9 @@ async function main() {
   }
 }
 
-main().catch((err) => {
+try {
+  await main();
+} catch (err) {
   console.error(err);
   process.exit(1);
-});
+}

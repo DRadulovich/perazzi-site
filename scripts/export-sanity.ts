@@ -26,7 +26,9 @@ async function exportSchema(schema: string) {
   console.log(`Exported ${docs.length} ${schema} docs to ${outPath}`);
 }
 
-exportSchema(argv.schema).catch((error) => {
+try {
+  await exportSchema(argv.schema);
+} catch (error) {
   console.error(error);
   process.exit(1);
-});
+}

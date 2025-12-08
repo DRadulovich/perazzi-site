@@ -40,7 +40,7 @@ function loadEnv(filePath: string) {
     if (!line || line.trim().startsWith("#") || !line.includes("=")) continue;
     const [rawKey, ...rest] = line.split("=");
     const key = rawKey.trim();
-    const value = rest.join("=").trim().replace(/^"|"$/g, "");
+    const value = rest.join("=").trim().replaceAll(/(^")|("$)/g, "");
     if (key && !(key in process.env)) {
       process.env[key] = value;
     }
@@ -71,7 +71,12 @@ const DATA_PATH = path.resolve("PerazziGPT/DEVELOPER/corpus_models_sanity.json")
 
 function toSlug(value: string | null): string | undefined {
   if (!value) return undefined;
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || undefined;
+  return (
+    value
+      .toLowerCase()
+      .replaceAll(/[^a-z0-9]+/g, "-")
+      .replaceAll(/(^-+)|(-+$)/g, "") || undefined
+  );
 }
 
 async function buildGradeMap() {
@@ -113,6 +118,97 @@ async function uploadImage(localPath: string, alt: string) {
   return asset?._id ?? null;
 }
 
+async function processRow(
+  row: ModelRecord,
+  maps: {
+    gradeMap: Map<string, string>;
+    platformMap: Map<string, string>;
+  },
+  counters: {
+    createdOrUpdated: number;
+    skippedPlatform: number;
+    missingImages: number;
+  },
+): Promise<void> {
+  if (!row.name || !row.slug) {
+    console.warn(`Skipping row without name/slug: ${JSON.stringify(row)}`);
+    return;
+  }
+
+  const platformId = row.platform ? maps.platformMap.get(row.platform.toLowerCase()) : undefined;
+  if (!platformId) {
+    counters.skippedPlatform += 1;
+    console.warn(`Skipping ${row.name}: platform "${row.platform}" not found.`);
+    return;
+  }
+
+  let gradeRef: { _type: "reference"; _ref: string } | undefined;
+  if (row.grade) {
+    const gradeId =
+      maps.gradeMap.get(row.grade) || maps.gradeMap.get(row.grade.toLowerCase());
+    if (gradeId) {
+      gradeRef = { _type: "reference", _ref: gradeId };
+    } else {
+      console.warn(`Grade "${row.grade}" not found for ${row.name}; leaving grade empty.`);
+    }
+  }
+
+  let imageAssetId: string | null = null;
+  if (row.images?.localPath) {
+    imageAssetId = await uploadImage(row.images.localPath, `${row.name} image`);
+    if (!imageAssetId) {
+      counters.missingImages += 1;
+    }
+  }
+
+  const safeId = row.id || toSlug(row.slug) || toSlug(row.name) || "";
+  const docId = `allModels-${safeId}`;
+  const payload: IdentifiedSanityDocumentStub<Record<string, any>> = {
+    _id: docId,
+    _type: "allModels",
+    name: row.name,
+    slug: { _type: "slug", current: safeId },
+    platform: { _type: "reference", _ref: platformId },
+    baseModel: row.baseModel || undefined,
+    category: row.category || undefined,
+    disciplines: row.disciplines || [],
+    gauges: row.gauges || [],
+    barrelConfig: row.barrelConfig || undefined,
+    combo: row.combo,
+    comboType: row.comboType || undefined,
+    trigger: {
+      type: row.trigger?.type || undefined,
+      springs: row.trigger?.springs || [],
+    },
+    rib: {
+      type: row.rib?.type || undefined,
+      adjustableNotch: row.rib?.adjustableNotch ?? undefined,
+      heightMm: row.rib?.heightMm ?? undefined,
+      styles: row.rib?.styles || [],
+    },
+    imageFallbackUrl: row.images?.fallbackUrl || undefined,
+    sourceUrl: row.sourceUrl || undefined,
+    grade: gradeRef,
+    idLegacy: row.id,
+  };
+
+  if (imageAssetId) {
+    payload.image = {
+      _type: "imageWithMeta",
+      alt: `${row.name} image`,
+      decorative: false,
+      asset: {
+        _type: "image",
+        asset: { _type: "reference", _ref: imageAssetId },
+      },
+    };
+  }
+
+  await client.createOrReplace(payload);
+  counters.createdOrUpdated += 1;
+  console.log(`Imported ${row.name} (${row.slug})`);
+}
+
 async function run() {
   if (!fs.existsSync(DATA_PATH)) {
     console.error(`Data file not found at ${DATA_PATH}`);
@@ -128,97 +224,26 @@ async function run() {
   const gradeMap = await buildGradeMap();
   const platformMap = await buildPlatformMap();
 
-  let createdOrUpdated = 0;
-  let skippedPlatform = 0;
-  let missingImages = 0;
+  const counters = {
+    createdOrUpdated: 0,
+    skippedPlatform: 0,
+    missingImages: 0,
+  };
 
   for (const row of rows) {
-    if (!row.name || !row.slug) {
-      console.warn(`Skipping row without name/slug: ${JSON.stringify(row)}`);
-      continue;
-    }
-
-    const platformId = row.platform ? platformMap.get(row.platform.toLowerCase()) : undefined;
-    if (!platformId) {
-      skippedPlatform += 1;
-      console.warn(`Skipping ${row.name}: platform "${row.platform}" not found.`);
-      continue;
-    }
-
-    let gradeRef: { _type: "reference"; _ref: string } | undefined;
-    if (row.grade) {
-      const gradeId = gradeMap.get(row.grade) || gradeMap.get(row.grade.toLowerCase());
-      if (gradeId) {
-        gradeRef = { _type: "reference", _ref: gradeId };
-      } else {
-        console.warn(`Grade "${row.grade}" not found for ${row.name}; leaving grade empty.`);
-      }
-    }
-
-    let imageAssetId: string | null = null;
-    if (row.images?.localPath) {
-      imageAssetId = await uploadImage(row.images.localPath, `${row.name} image`);
-      if (!imageAssetId) {
-        missingImages += 1;
-      }
-    }
-
-    const safeId = row.id || toSlug(row.slug) || toSlug(row.name) || "";
-    const docId = `allModels-${safeId}`;
-    const payload: IdentifiedSanityDocumentStub<Record<string, any>> = {
-      _id: docId,
-      _type: "allModels",
-      name: row.name,
-      slug: { _type: "slug", current: safeId },
-      platform: { _type: "reference", _ref: platformId },
-      baseModel: row.baseModel || undefined,
-      category: row.category || undefined,
-      disciplines: row.disciplines || [],
-      gauges: row.gauges || [],
-      barrelConfig: row.barrelConfig || undefined,
-      combo: row.combo,
-      comboType: row.comboType || undefined,
-      trigger: {
-        type: row.trigger?.type || undefined,
-        springs: row.trigger?.springs || [],
-      },
-      rib: {
-        type: row.rib?.type || undefined,
-        adjustableNotch: row.rib?.adjustableNotch ?? undefined,
-        heightMm: row.rib?.heightMm ?? undefined,
-        styles: row.rib?.styles || [],
-      },
-      imageFallbackUrl: row.images?.fallbackUrl || undefined,
-      sourceUrl: row.sourceUrl || undefined,
-      grade: gradeRef,
-      idLegacy: row.id,
-    };
-
-    if (imageAssetId) {
-      payload.image = {
-        _type: "imageWithMeta",
-        alt: `${row.name} image`,
-        decorative: false,
-        asset: {
-          _type: "image",
-          asset: { _type: "reference", _ref: imageAssetId },
-        },
-      };
-    }
-
-    await client.createOrReplace(payload);
-    createdOrUpdated += 1;
-    console.log(`Imported ${row.name} (${row.slug})`);
+    await processRow(row, { gradeMap, platformMap }, counters);
   }
 
   console.log("Import complete:", {
-    createdOrUpdated,
-    skippedPlatform,
-    missingImages,
+    createdOrUpdated: counters.createdOrUpdated,
+    skippedPlatform: counters.skippedPlatform,
+    missingImages: counters.missingImages,
   });
 }
 
-run().catch((error) => {
+try {
+  await run();
+} catch (error) {
   console.error(error);
   process.exit(1);
-});
+}

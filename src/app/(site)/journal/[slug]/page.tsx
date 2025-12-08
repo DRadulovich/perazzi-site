@@ -57,7 +57,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
           We&apos;re shaping this story now. Check back shortly or explore other Journal features.
         </p>
         <a href="/journal" className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring">
-          Return to Journal
+          Return to Journal{" "}
           <span aria-hidden="true">→</span>
         </a>
       </div>

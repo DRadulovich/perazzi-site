@@ -9,7 +9,6 @@ import type {
   RetrievedChunk,
   Archetype,
   PerazziMode,
-  ArchetypeVector,
 } from "@/types/perazzi-assistant";
 import {
   retrievePerazziContext,
@@ -211,9 +210,10 @@ function detectArchetypeOverridePhrase(latestUserContent: string | null): Archet
   if (!latestUserContent) return null;
   const text = latestUserContent.trim();
   const regex = /^please\s+change\s+my\s+archetype\s+to\s+([a-z]+)\.?$/i;
-  const m = text.match(regex);
-  if (!m || !m[1]) return null;
-  return normalizeArchetype(m[1]);
+  const match = regex.exec(text);
+  const archetype = match?.[1];
+  if (!archetype) return null;
+  return normalizeArchetype(archetype);
 }
 
 /**
@@ -317,14 +317,16 @@ export async function POST(request: Request) {
   }
   // -------------------------------------------
   try {
-    const body = (await request.json()) as Partial<PerazziAssistantRequest>;
+    const body: Partial<PerazziAssistantRequest> = await request.json();
     const validationError = validateRequest(body);
     if (validationError) {
       return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
+    const fullBody = body as PerazziAssistantRequest;
+
     // --- Input length guard ---
-    const messages = body!.messages!;
+    const messages = fullBody.messages;
     const totalUserChars = messages
       .filter((msg) => msg.role === "user" && typeof msg.content === "string")
       .reduce((sum, msg) => sum + (msg.content?.length ?? 0), 0);
@@ -340,12 +342,12 @@ export async function POST(request: Request) {
     }
     // -------------------------
 
-    const sanitizedMessages = sanitizeMessages(body!.messages!);
+    const sanitizedMessages = sanitizeMessages(fullBody.messages);
     const latestQuestion = getLatestUserContent(sanitizedMessages);
-    const hints = detectRetrievalHints(latestQuestion, body?.context);
+    const hints: any = detectRetrievalHints(latestQuestion, body?.context);
 
     const effectiveMode: PerazziMode =
-      ((hints as any)?.mode ?? body?.context?.mode ?? "prospect") as PerazziMode;
+      hints?.mode ?? body?.context?.mode ?? "prospect";
 
     // Soft-meta origin handler: answer who built/designed the assistant, without exposing internals.
     if (detectAssistantOriginQuestion(latestQuestion)) {
@@ -367,7 +369,7 @@ export async function POST(request: Request) {
       ].join("\n");
 
       logInteraction(
-        body as PerazziAssistantRequest,
+        fullBody,
         [],
         0,
         "ok",
@@ -408,7 +410,7 @@ export async function POST(request: Request) {
       ].join("\n");
 
       logInteraction(
-        body as PerazziAssistantRequest,
+        fullBody,
         [],
         0,
         "ok",
@@ -447,7 +449,7 @@ export async function POST(request: Request) {
         "Understood. I’ve cleared your archetype profile and will treat you neutrally again from here.";
 
       logInteraction(
-        body as PerazziAssistantRequest,
+        fullBody,
         [],
         0,
         "ok",
@@ -473,8 +475,8 @@ export async function POST(request: Request) {
     // Dev feature: manual archetype override via phrase
     const archetypeOverride = detectArchetypeOverridePhrase(latestQuestion);
 
-    const previousVector: ArchetypeVector | null =
-      (body?.context?.archetypeVector as ArchetypeVector | null | undefined) ?? null;
+    const previousVector =
+      body?.context?.archetypeVector ?? null;
 
     const archetypeContext: ArchetypeContext = {
       mode: effectiveMode,
@@ -496,7 +498,7 @@ export async function POST(request: Request) {
         archetypeOverride,
       )} from now on.`;
       logInteraction(
-        body as PerazziAssistantRequest,
+        fullBody,
         [],
         0,
         "ok",
@@ -521,7 +523,7 @@ export async function POST(request: Request) {
     const guardrailBlock = detectBlockedIntent(sanitizedMessages);
     if (guardrailBlock) {
       logInteraction(
-        body as PerazziAssistantRequest,
+        fullBody,
         [],
         0,
         "blocked",
@@ -543,10 +545,10 @@ export async function POST(request: Request) {
     }
 
     const responseTemplates = buildResponseTemplates(hints);
-    const retrieval = await retrievePerazziContext(body as PerazziAssistantRequest, hints);
+    const retrieval = await retrievePerazziContext(fullBody, hints);
     if (retrieval.maxScore < getLowConfidenceThreshold()) {
       logInteraction(
-        body as PerazziAssistantRequest,
+        fullBody,
         retrieval.chunks,
         retrieval.maxScore,
         "low_confidence",
@@ -578,7 +580,7 @@ export async function POST(request: Request) {
     );
 
     logInteraction(
-      body as PerazziAssistantRequest,
+      fullBody,
       retrieval.chunks,
       retrieval.maxScore,
       "ok",
@@ -680,7 +682,7 @@ async function generateAssistantAnswer(
   context: PerazziAssistantRequest["context"],
   chunks: RetrievedChunk[],
   templates: string[],
-  mode: string | null,
+  mode: PerazziMode | null,
   archetype: Archetype | null,
 ): Promise<string> {
   const systemPrompt = buildSystemPrompt(context, chunks, templates, mode, archetype);
@@ -714,7 +716,7 @@ export function buildSystemPrompt(
   context: PerazziAssistantRequest["context"],
   chunks: RetrievedChunk[],
   templates: string[] = [],
-  mode?: string | null,
+  mode?: PerazziMode | null,
   archetype?: Archetype | null,
 ): string {
   const docSnippets = chunks
@@ -723,8 +725,15 @@ export function buildSystemPrompt(
         `[${chunk.chunkId}] ${chunk.content}\nSource: ${chunk.title} (${chunk.sourcePath})`,
     )
     .join("\n\n");
+  let modeLabel: string | null = null;
+  if (mode) {
+    modeLabel = `Mode: ${mode}`;
+  } else if (context?.mode) {
+    modeLabel = `Mode: ${context.mode}`;
+  }
+
   const contextSummary = [
-    mode ? `Mode: ${mode}` : context?.mode ? `Mode: ${context.mode}` : null,
+    modeLabel,
     context?.modelSlug ? `Model: ${context.modelSlug}` : null,
     context?.pageUrl ? `Page URL: ${context.pageUrl}` : null,
   ]
@@ -771,7 +780,7 @@ export function buildSystemPrompt(
 
   // --- Bridge guidance and relatability block additions ---
   const bridgeGuidance = getModeArchetypeBridgeGuidance(
-    (mode as PerazziMode | null | undefined) ?? (context?.mode as PerazziMode | null | undefined),
+    mode ?? context?.mode ?? null,
     archetype ?? null,
   );
 
@@ -809,7 +818,7 @@ ${templateGuidance}${
 
 function buildExcerpt(content: string, limit = 320): string {
   if (!content) return "";
-  const clean = content.replace(/\s+/g, " ").trim();
+  const clean = content.replaceAll(/\s+/g, " ").trim();
   if (clean.length <= limit) return clean;
   const truncated = clean.slice(0, limit);
   const lastSentence = truncated.lastIndexOf(".");

@@ -23,7 +23,7 @@ async function serialLookupAction(
 
   const serialInput = formData.get("serial");
   const cleanedSerial =
-    typeof serialInput === "string" ? serialInput.replace(/[^0-9]/g, "") : "";
+    typeof serialInput === "string" ? serialInput.replaceAll(/\D/g, "") : "";
 
   if (!cleanedSerial) {
     return { status: "error", message: "Enter a serial number." };
@@ -185,8 +185,8 @@ export default async function HeritagePage(): Promise<ReactElement> {
             <h2 className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em]">
               {heritageIntroHeading}
             </h2>
-            {heritageIntroParagraphs.map((paragraph, index) => (
-              <p key={index} className="text-sm sm:text-base leading-relaxed text-white/80">
+            {heritageIntroParagraphs.map((paragraph) => (
+              <p key={paragraph} className="text-sm sm:text-base leading-relaxed text-white/80">
                 {paragraph}
               </p>
             ))}

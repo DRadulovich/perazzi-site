@@ -259,8 +259,8 @@ function mapResult(rows: any[]) {
 function buildTerms(rawValue: string) {
   const trimmed = rawValue.trim();
   const lower = trimmed.toLowerCase();
-  const altTerm = `${lower.replace(/[^a-z0-9]+/g, " ").trim()}*`;
-  const compactTerm = `${lower.replace(/[^a-z0-9]+/g, "")}*`;
+  const altTerm = `${lower.replaceAll(/[^a-z0-9]+/g, " ").trim()}*`;
+  const compactTerm = `${lower.replaceAll(/[^a-z0-9]+/g, "")}*`;
   const term = `${trimmed}*`;
   const looseTerm = `*${lower}*`;
   return { term, altTerm, compactTerm, looseTerm };
@@ -293,95 +293,230 @@ async function fetchConfiguratorItems(client: any, field: string, value: string)
   }));
 }
 
-export async function GET(request: NextRequest) {
-  // Use API (non-CDN) client to avoid DNS/cache issues when resolving fresh data.
-  const client = baseClient.withConfig({ useCdn: false });
+function parseSearchParams(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const field = (searchParams.get("field") ?? "").trim().toUpperCase();
   const rawValue = (searchParams.get("value") ?? "").trim();
   const rawModel = (searchParams.get("model") ?? "").trim();
   const normalizedValue = field === "PLATFORM" ? rawValue : normalizeValue(field, rawValue);
+  return { field, rawValue, rawModel, normalizedValue };
+}
+
+function buildSearchContext(normalizedValue: string) {
+  const { term, altTerm, compactTerm, looseTerm } = buildTerms(normalizedValue);
+  const lowerValue = normalizedValue.toLowerCase();
+  return { term, altTerm, compactTerm, looseTerm, lowerValue };
+}
+
+async function tryConfiguratorShortcut(
+  client: any,
+  field: string,
+  rawValue: string,
+  normalizedValue: string,
+): Promise<NextResponse | null> {
+  if (skipFields.has(field)) {
+    return NextResponse.json({ items: [] });
+  }
+
+  if (field === "PLATFORM") {
+    const configuratorItems = await fetchConfiguratorItems(client, field, rawValue);
+    return NextResponse.json({ items: configuratorItems });
+  }
+
+  const configuratorItems = await fetchConfiguratorItems(client, field, normalizedValue);
+  if (configuratorItems.length) {
+    return NextResponse.json({ items: configuratorItems });
+  }
+
+  return null;
+}
+
+// Helper functions for each field-specific query branch
+async function fetchPlatformRows(
+  client: any,
+  search: {
+    term: string;
+    altTerm: string;
+    compactTerm: string;
+    looseTerm: string;
+  },
+): Promise<any[]> {
+  const { term, altTerm, compactTerm, looseTerm } = search;
+  let rows = await client.fetch(platformQuery, { term, altTerm, compactTerm, looseTerm });
+  if (!rows.length) {
+    rows = await client.fetch(platformFallback);
+  }
+  return rows;
+}
+
+async function fetchModelRows(
+  client: any,
+  search: {
+    term: string;
+    altTerm: string;
+    compactTerm: string;
+    looseTerm: string;
+    lowerValue: string;
+  },
+): Promise<any[]> {
+  const { term, altTerm, compactTerm, looseTerm, lowerValue } = search;
+  let rows = await client.fetch(modelQuery, { term, altTerm, compactTerm, looseTerm });
+  if (!rows.length) {
+    rows = await client.fetch(modelFallback, { lowerValue, looseTerm });
+  }
+  return rows;
+}
+
+async function fetchDisciplineRows(
+  client: any,
+  search: {
+    term: string;
+    altTerm: string;
+    compactTerm: string;
+    looseTerm: string;
+    lowerValue: string;
+  },
+): Promise<any[]> {
+  const { term, altTerm, compactTerm, looseTerm, lowerValue } = search;
+  let rows = await client.fetch(disciplineQuery, { term, altTerm, compactTerm, looseTerm });
+  if (!rows.length) {
+    rows = await client.fetch(disciplineFallback, { lowerValue, looseTerm });
+  }
+  return rows;
+}
+
+async function fetchGaugeRows(
+  client: any,
+  search: {
+    term: string;
+    altTerm: string;
+    compactTerm: string;
+    looseTerm: string;
+    lowerValue: string;
+  },
+): Promise<any[]> {
+  const { term, altTerm, compactTerm, looseTerm, lowerValue } = search;
+  let rows = await client.fetch(gaugeQuery, { term, altTerm, compactTerm, looseTerm });
+  if (!rows.length) {
+    rows = await client.fetch(gaugeFallback, { lowerValue, looseTerm });
+  }
+  return rows;
+}
+
+async function fetchGradeRows(
+  client: any,
+  search: {
+    term: string;
+    altTerm: string;
+    compactTerm: string;
+    looseTerm: string;
+    lowerValue: string;
+  },
+  rawModel: string,
+): Promise<any[]> {
+  const { term, altTerm, compactTerm, looseTerm, lowerValue } = search;
+  let rows: any[] = [];
+
+  if (rawModel) {
+    const {
+      term: modelTerm,
+      altTerm: altModelTerm,
+      compactTerm: compactModelTerm,
+      looseTerm: looseModelTerm,
+    } = buildTerms(rawModel);
+    const modelGradeRows = await client.fetch(modelGradeQuery, {
+      modelTerm,
+      altModelTerm,
+      compactModelTerm,
+      looseModelTerm,
+    });
+    const modelGradeNames = new Set(
+      (modelGradeRows ?? [])
+        .map((row: any) => String(row.grade ?? "").toLowerCase())
+        .filter(Boolean),
+    );
+    if (modelGradeNames.size && modelGradeNames.has(lowerValue)) {
+      rows = await client.fetch(gradeQuery, { term, altTerm, compactTerm, looseTerm });
+    }
+  }
+
+  if (!rows.length) {
+    rows = await client.fetch(gradeQuery, { term, altTerm, compactTerm, looseTerm });
+  }
+
+  if (!rows.length) {
+    rows = await client.fetch(gradeFallback, { lowerValue, looseTerm });
+  }
+
+  return rows;
+}
+
+async function fetchTriggerTypeRows(
+  client: any,
+  search: {
+    term: string;
+    altTerm: string;
+    compactTerm: string;
+    looseTerm: string;
+    lowerValue: string;
+  },
+): Promise<any[]> {
+  const { term, altTerm, compactTerm, looseTerm, lowerValue } = search;
+  let rows = await client.fetch(triggerTypeQuery, { term, altTerm, compactTerm, looseTerm });
+  if (!rows.length) {
+    rows = await client.fetch(modelFallback, { lowerValue, looseTerm });
+  }
+  return rows;
+}
+
+async function fetchRowsForField(
+  client: any,
+  field: string,
+  search: {
+    term: string;
+    altTerm: string;
+    compactTerm: string;
+    looseTerm: string;
+    lowerValue: string;
+  },
+  rawModel: string,
+): Promise<any[]> {
+  switch (field) {
+    case "PLATFORM":
+      return fetchPlatformRows(client, search);
+    case "MODEL":
+      return fetchModelRows(client, search);
+    case "DISCIPLINE":
+      return fetchDisciplineRows(client, search);
+    case "GAUGE":
+      return fetchGaugeRows(client, search);
+    case "GRADE":
+      return fetchGradeRows(client, search, rawModel);
+    case "TRIGGER_TYPE":
+      return fetchTriggerTypeRows(client, search);
+    default:
+      return [];
+  }
+}
+
+export async function GET(request: NextRequest) {
+  // Use API (non-CDN) client to avoid DNS/cache issues when resolving fresh data.
+  const client = baseClient.withConfig({ useCdn: false });
+  const { field, rawValue, rawModel, normalizedValue } = parseSearchParams(request);
+
   if (!field || !normalizedValue) {
     return NextResponse.json({ error: "Missing field or value" }, { status: 400 });
   }
-  const { term, altTerm, compactTerm, looseTerm } = buildTerms(normalizedValue);
-  const lowerValue = normalizedValue.toLowerCase();
+
+  const search = buildSearchContext(normalizedValue);
+
   try {
-    let rows: any[] = [];
-    // For most fields, try to serve from buildConfigurator first (except engraving and skipped taper fields).
-    if (field === "ENGRAVING") {
-      // handled later in switch
-    } else if (skipFields.has(field)) {
-      return NextResponse.json({ items: [] });
-    } else if (field === "PLATFORM") {
-      const configuratorItems = await fetchConfiguratorItems(client, field, rawValue);
-      return NextResponse.json({ items: configuratorItems });
-    } else {
-      const configuratorItems = await fetchConfiguratorItems(client, field, normalizedValue);
-      if (configuratorItems.length) {
-        return NextResponse.json({ items: configuratorItems });
-      }
+    const shortcutResponse = await tryConfiguratorShortcut(client, field, rawValue, normalizedValue);
+    if (shortcutResponse) {
+      return shortcutResponse;
     }
-    switch (field) {
-      case "PLATFORM":
-        rows = await client.fetch(platformQuery, { term, altTerm, compactTerm, looseTerm });
-        if (!rows.length) {
-          rows = await client.fetch(platformFallback);
-        }
-        break;
-      case "MODEL":
-        rows = await client.fetch(modelQuery, { term, altTerm, compactTerm, looseTerm });
-        if (!rows.length) {
-          rows = await client.fetch(modelFallback, { lowerValue, looseTerm });
-        }
-        break;
-      case "DISCIPLINE":
-        rows = await client.fetch(disciplineQuery, { term, altTerm, compactTerm, looseTerm });
-        if (!rows.length) {
-          rows = await client.fetch(disciplineFallback, { lowerValue, looseTerm });
-        }
-        break;
-      case "GAUGE":
-        rows = await client.fetch(gaugeQuery, { term, altTerm, compactTerm, looseTerm });
-        if (!rows.length) {
-          rows = await client.fetch(gaugeFallback, { lowerValue, looseTerm });
-        }
-        break;
-      case "GRADE":
-        if (rawModel) {
-          const { term: modelTerm, altTerm: altModelTerm, compactTerm: compactModelTerm, looseTerm: looseModelTerm } =
-            buildTerms(rawModel);
-          const modelGradeRows = await client.fetch(modelGradeQuery, {
-            modelTerm,
-            altModelTerm,
-            compactModelTerm,
-            looseModelTerm,
-          });
-          const modelGradeNames = new Set(
-            (modelGradeRows ?? [])
-              .map((row: any) => String(row.grade ?? "").toLowerCase())
-              .filter(Boolean),
-          );
-          if (modelGradeNames.size && modelGradeNames.has(lowerValue)) {
-            rows = await client.fetch(gradeQuery, { term, altTerm, compactTerm, looseTerm });
-          }
-        }
-        if (!rows.length) {
-          rows = await client.fetch(gradeQuery, { term, altTerm, compactTerm, looseTerm });
-        }
-        if (!rows.length) {
-          rows = await client.fetch(gradeFallback, { lowerValue, looseTerm });
-        }
-        break;
-      case "TRIGGER_TYPE":
-        rows = await client.fetch(triggerTypeQuery, { term, altTerm, compactTerm, looseTerm });
-        if (!rows.length) {
-          rows = await client.fetch(modelFallback, { lowerValue, looseTerm });
-        }
-        break;
-      default:
-        rows = [];
-    }
+
+    const rows = await fetchRowsForField(client, field, search, rawModel);
     return NextResponse.json({ items: mapResult(rows) });
   } catch (error) {
     console.error("Failed to fetch build info", error);

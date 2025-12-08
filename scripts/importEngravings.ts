@@ -8,7 +8,7 @@ function loadEnv(filePath: string) {
     if (!line || line.trim().startsWith("#") || !line.includes("=")) continue;
     const [rawKey, ...rest] = line.split("=");
     const key = rawKey.trim();
-    const value = rest.join("=").trim().replace(/^"|"$/g, "");
+    const value = rest.join("=").trim().replaceAll(/^"$/g, "");
     if (key && !(key in process.env)) {
       process.env[key] = value;
     }
@@ -46,8 +46,8 @@ const DATA_PATH = path.resolve("Photos/JSON_DATABASES/Engraving_Database_List.js
 function slugify(value: string) {
   return value
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replaceAll(/[^a-z0-9]+/g, "-")
+    .replaceAll(/(?:^-+|-+$)/g, "");
 }
 
 async function run() {
@@ -138,7 +138,9 @@ async function run() {
   console.table(summary);
 }
 
-run().catch((error) => {
+try {
+  await run();
+} catch (error) {
   console.error(error);
   process.exit(1);
-});
+}
