@@ -585,6 +585,7 @@ function applyGrades(target: ShotgunsSectionData, grades?: ShotgunsGradePayload[
     const galleryFromCms = [
       ...(cms.hero ? [cms.hero] : []),
       ...(cms.engravingGallery ?? []),
+      ...(cms.woodImages ?? []),
     ];
 
     const updated: GradeSeries = {
@@ -602,6 +603,7 @@ function applyGrades(target: ShotgunsSectionData, grades?: ShotgunsGradePayload[
     const gallery = [
       ...(cms.hero ? [cms.hero] : []),
       ...(cms.engravingGallery ?? []),
+      ...(cms.woodImages ?? []),
     ];
     merged.push({
       id: cms.id ?? key,

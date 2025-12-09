@@ -17,24 +17,28 @@ type EngravingGradesCarouselProps = Readonly<{
 const GRADE_TABS = [
   {
     label: "The Benchmark",
-    order: ["standard", "lusso", "sc2"],
+    order: ["Standard", "Lusso", "SC2"],
   },
   {
-    label: "SC3 Grade",
-    order: ["sc3", "sc3 sideplates"],
+    label: "SC3",
+    order: ["SC3", "SC3 Sideplates"],
   },
   {
-    label: "SCO Grade",
-    order: ["sco", "sco gold", "sco sideplates", "sco gold sideplates"],
+    label: "SCO",
+    order: ["SCO", "SCO Gold", "SCO Sideplates", "SCO Gold Sideplates"],
   },
   {
-    label: "Extra Grade",
-    order: ["extra", "extra gold", "extra super"],
+    label: "Extra",
+    order: ["Extra", "Extra Gold", "Extra Super"],
   },
 ] as const;
 
 const normalize = (value?: string | null) =>
-  value?.trim().toLowerCase() ?? "";
+  value
+    ?.trim()
+    .toLowerCase()
+    .replaceAll(/[^a-z0-9]+/g, "-")
+    .replaceAll(/(^-)|(-$)/g, "") ?? "";
 
 export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselProps) {
   const resolvedTabLabels =

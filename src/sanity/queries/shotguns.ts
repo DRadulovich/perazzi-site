@@ -148,6 +148,7 @@ type GradeResponse = {
   description?: string;
   hero?: SanityImageResult;
   engravingGallery?: SanityImageResult[];
+  engravingLibrary?: Array<{ engraving_photo?: SanityImageResult }>;
   woodImages?: SanityImageResult[];
 };
 
@@ -463,6 +464,11 @@ const gradesQuery = groq`
     engravingGallery[]{
       ${imageWithMetaFields}
     },
+    "engravingLibrary": *[_type == "engravings" && references(^._id)] | order(engraving_grade->name asc, engraving_id asc, engraving_side asc)[0...12]{
+      engraving_photo{
+        ${imageWithMetaFields}
+      }
+    },
     woodImages[]{
       ${imageWithMetaFields}
     }
@@ -693,15 +699,28 @@ export async function getGrades(): Promise<ShotgunsGradePayload[]> {
   }).catch(() => ({ data: [] }));
   const data = (result?.data as GradeResponse[] | null) ?? null;
 
+  const slugifyGradeId = (value?: string | null, fallback?: string) => {
+    const base = value?.trim().toLowerCase();
+    if (base) {
+      const slug = base.replaceAll(/[^a-z0-9]+/g, "-").replaceAll(/(^-)|(-$)/g, "");
+      if (slug) return slug;
+    }
+    return fallback;
+  };
+
   return (data ?? [])
     .filter((grade): grade is GradeResponse & { _id: string } => Boolean(grade?._id))
     .map((grade) => ({
-      id: grade._id as string,
+      id: slugifyGradeId(grade.name, grade._id as string) as string,
       name: grade.name ?? undefined,
       description: grade.description ?? undefined,
       hero: mapImageResult(grade.hero ?? null),
-      engravingGallery: grade.engravingGallery
-        ?.map((asset) => mapImageResult(asset ?? null))
+      engravingGallery: (
+        grade.engravingGallery?.length
+          ? grade.engravingGallery
+          : grade.engravingLibrary?.map((entry) => entry?.engraving_photo) ?? []
+      )
+        .map((asset) => mapImageResult(asset ?? null))
         .filter(Boolean) as FactoryAsset[] | undefined,
       woodImages: grade.woodImages
         ?.map((asset) => mapImageResult(asset ?? null))
