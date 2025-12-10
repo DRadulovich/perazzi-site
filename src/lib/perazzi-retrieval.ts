@@ -286,21 +286,55 @@ async function fetchV2Chunks(opts: {
 }
 
 async function getPgPool(): Promise<Pool> {
-  if (!process.env.DATABASE_URL) {
+  if (pgPool) return pgPool;
+
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    console.error(
+      JSON.stringify({
+        type: "perazzi-db-debug",
+        error: "MISSING_DATABASE_URL",
+        nodeEnv: process.env.NODE_ENV ?? "unset",
+        vercelEnv: process.env.VERCEL_ENV ?? "unset",
+      }),
+    );
     throw new Error("DATABASE_URL is required for retrieval.");
   }
-  if (!pgPool) {
-    pgPool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: process.env.PGSSL_MODE === "require" ? { rejectUnauthorized: false } : undefined,
-    });
-    const client = await pgPool.connect();
-    try {
-      await registerType(client);
-    } finally {
-      client.release();
-    }
+
+  // Safe debug: log only the hostname, never credentials
+  try {
+    const url = new URL(connectionString);
+    console.info(
+      JSON.stringify({
+        type: "perazzi-db-debug",
+        dbHost: url.hostname,
+        nodeEnv: process.env.NODE_ENV ?? "unset",
+        vercelEnv: process.env.VERCEL_ENV ?? "unset",
+      }),
+    );
+  } catch {
+    console.info(
+      JSON.stringify({
+        type: "perazzi-db-debug",
+        error: "DB_URL_PARSE_ERROR",
+        nodeEnv: process.env.NODE_ENV ?? "unset",
+        vercelEnv: process.env.VERCEL_ENV ?? "unset",
+      }),
+    );
   }
+
+  pgPool = new Pool({
+    connectionString,
+    ssl: process.env.PGSSL_MODE === "require" ? { rejectUnauthorized: false } : undefined,
+  });
+
+  const client = await pgPool.connect();
+  try {
+    await registerType(client);
+  } finally {
+    client.release();
+  }
+
   return pgPool;
 }
 
