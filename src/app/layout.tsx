@@ -4,6 +4,7 @@ import { getLocale } from "next-intl/server";
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { resolveInitialTheme } from "@/lib/initial-theme";
 
@@ -48,6 +49,7 @@ export default async function RootLayout({
       >
         {children}
         <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
