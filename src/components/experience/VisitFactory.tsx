@@ -15,7 +15,6 @@ type VisitFactoryProps = {
 
 export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
   const analyticsRef = useAnalyticsObserver("VisitFactorySeen");
-  const [mapOpen, setMapOpen] = useState(false);
   const [expectOpen, setExpectOpen] = useState(false);
   const mapPanelId = "visit-map-panel";
   const mapNoteId = "visit-map-note";
@@ -118,7 +117,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                   style={{ aspectRatio: visit.location.staticMap.aspectRatio ?? 3 / 2 }}
                   aria-live="polite"
                 >
-                  {mapOpen && visit.location.mapEmbedSrc ? (
+                  {visit.location.mapEmbedSrc ? (
                     <iframe
                       src={visit.location.mapEmbedSrc}
                       title={`Map to ${visit.location.name}`}
@@ -140,22 +139,6 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                     aria-hidden
                   />
                 </div>
-                {!mapOpen && visit.location.mapEmbedSrc ? (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    aria-controls={mapPanelId}
-                    aria-describedby={mapNoteId}
-                    aria-expanded={mapOpen}
-                    onClick={() => {
-                      setMapOpen(true);
-                      logAnalytics("VisitMapOpen");
-                    }}
-                    className="rounded-full border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em]"
-                  >
-                    Open map
-                  </Button>
-                ) : null}
                 <a
                   href={mapHref}
                   target="_blank"

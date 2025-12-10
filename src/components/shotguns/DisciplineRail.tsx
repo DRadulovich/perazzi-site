@@ -298,9 +298,9 @@ export function DisciplineRail({
         </div>
 
         {modelModalOpen && selectedModel ? (
-          <dialog
+          <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur"
-            open
+            role="dialog"
             aria-modal="true"
           >
             <button
@@ -353,7 +353,7 @@ export function DisciplineRail({
                 </div>
               </div>
             </div>
-          </dialog>
+          </div>
         ) : null}
 
         {modelError ? (
