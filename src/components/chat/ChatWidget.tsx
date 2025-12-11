@@ -186,7 +186,7 @@ export function ChatWidget() {
         <>
           {isOpen && (
             <aside
-              className="fixed right-0 top-0 z-40 flex h-full flex-col bg-transparent"
+              className="fixed right-0 top-0 z-50 flex h-full flex-col bg-transparent"
               style={{ width: panelWidth }}
             >
               <div

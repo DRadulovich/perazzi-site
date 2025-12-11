@@ -45,7 +45,7 @@ export async function SiteShell({
   return (
     <div className="flex min-h-screen flex-col bg-canvas text-ink">
       <SkipToContent />
-      <header className="sticky top-0 z-40 border-b border-subtle bg-card px-0 py-0 shadow-sm">
+      <header className="sticky top-0 z-50 border-b border-subtle bg-card px-0 py-0 shadow-sm">
         <PrimaryNav brandLabel={t("brand")} />
       </header>
       <main

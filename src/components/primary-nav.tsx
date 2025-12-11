@@ -388,7 +388,7 @@ const MobileMenu = ({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col bg-perazzi-black text-white shadow-2xl"
+            className="fixed inset-y-0 right-0 z-[60] flex w-full max-w-sm flex-col bg-perazzi-black text-white shadow-2xl"
           >
             <div className="flex items-center justify-between border-b border-border px-6 py-4">
               <Logo label={brandLabel} />
