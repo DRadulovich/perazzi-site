@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
 import fs from "node:fs";
 import path from "node:path";
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import type {
   ChatMessage,
   PerazziAssistantRequest,
@@ -23,6 +23,7 @@ import {
 } from "@/lib/perazzi-archetypes";
 import { detectRetrievalHints, buildResponseTemplates } from "@/lib/perazzi-intents";
 import type { RetrievalHints } from "@/lib/perazzi-intents";
+import { runChatCompletion } from "@/lib/aiClient";
 
 const LOW_CONFIDENCE_THRESHOLD = Number(process.env.PERAZZI_LOW_CONF_THRESHOLD ?? 0.1);
 const LOW_CONFIDENCE_MESSAGE =
@@ -171,9 +172,6 @@ From the beginning, the company has been occupied with a narrower question: how 
 If you’re standing between different options, I can help you understand the Perazzi side of the decision – the way the platforms are built, the logic behind the detachable trigger, the fitting and bespoke build process, the relationship with the craftsmen and dealers who stand behind the gun. The rest of the comparison belongs to you, your shoulder, and your own sense of what feels right.
 If you share how and where you shoot, I can stay on that path with you and help you see which Perazzi platforms are most likely to feel like home.`;
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 const ENABLE_FILE_LOG = process.env.PERAZZI_ENABLE_FILE_LOG === "true";
 const CONVERSATION_LOG_PATH = path.join(
   process.cwd(),
@@ -688,7 +686,7 @@ async function generateAssistantAnswer(
   const systemPrompt = buildSystemPrompt(context, chunks, templates, mode, archetype);
   const toneNudge =
     "Stay in the Perazzi concierge voice: quiet, reverent, concise, no slang, and avoid pricing or legal guidance. Keep responses focused on Perazzi heritage, platforms, service, and fittings.";
-  const finalMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+  const finalMessages: ChatCompletionMessageParam[] = [
     { role: "system", content: systemPrompt },
     { role: "system", content: toneNudge },
     ...sanitizedMessages,
@@ -696,7 +694,7 @@ async function generateAssistantAnswer(
 
   let completion;
   try {
-    completion = await openai.chat.completions.create({
+    completion = await runChatCompletion({
       model: OPENAI_MODEL,
       temperature: 0.4,
       max_completion_tokens: MAX_COMPLETION_TOKENS,

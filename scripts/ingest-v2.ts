@@ -5,8 +5,8 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import minimist from "minimist";
-import OpenAI from "openai";
 import { Pool, PoolClient } from "pg";
+import { createEmbeddings } from "@/lib/aiClient";
 
 type Status = "active" | "planned" | "deprecated";
 type EmbedMode = "full" | "metadata-only" | "ignore";
@@ -56,7 +56,7 @@ const TARGET_TOKENS = 1000;
 const MAX_TOKENS = 1600;
 const TOKEN_ESTIMATE_DIVISOR = 4; // rough characters-to-tokens approximation
 
-const REQUIRED_ENV = ["DATABASE_URL", "OPENAI_API_KEY"] as const;
+const REQUIRED_ENV = ["DATABASE_URL"] as const;
 
 function estimateTokens(text: string): number {
   return Math.max(1, Math.ceil(text.length / TOKEN_ESTIMATE_DIVISOR));
@@ -618,7 +618,6 @@ function chunkDocument(doc: ActiveDoc, rawText: string): ChunkInput[] {
 
 async function replaceChunksAndEmbeddings(
   pool: Pool,
-  openai: OpenAI,
   documentId: string,
   doc: ActiveDoc,
   chunks: ChunkInput[],
@@ -677,7 +676,7 @@ async function replaceChunksAndEmbeddings(
     }
 
     await client.query("commit");
-    await embedChunks(openai, client, insertedChunks, doc, options);
+    await embedChunks(client, insertedChunks, doc, options);
   } catch (err) {
     await client.query("rollback");
     throw err;
@@ -687,7 +686,6 @@ async function replaceChunksAndEmbeddings(
 }
 
 async function embedChunks(
-  openai: OpenAI,
   client: PoolClient,
   chunks: { id: string; text: string }[],
   doc: ActiveDoc,
@@ -706,7 +704,7 @@ async function embedChunks(
     const inputs = batch.map((c) =>
       preprocessForEmbedding(c.text, doc.pricingSensitive),
     );
-    const response = await openai.embeddings.create({
+    const response = await createEmbeddings({
       model: embedModel,
       input: inputs,
     });
@@ -759,7 +757,6 @@ async function handleDryRunDocument(
 
 async function processDocumentChunks(
   pool: Pool,
-  openai: OpenAI,
   doc: ActiveDoc,
   rawText: string,
   upsertResult: { documentId: string; isNew: boolean; isChanged: boolean },
@@ -788,7 +785,6 @@ async function processDocumentChunks(
   const chunkInputs = chunkDocument(doc, rawText);
   await replaceChunksAndEmbeddings(
     pool,
-    openai,
     upsertResult.documentId,
     doc,
     chunkInputs,
@@ -802,7 +798,6 @@ async function processDocumentChunks(
 
 async function processDocument(
   pool: Pool,
-  openai: OpenAI,
   doc: ActiveDoc,
   opts: IngestOptions,
   stats: IngestStats,
@@ -856,7 +851,6 @@ async function processDocument(
 
   const chunksCount = await processDocumentChunks(
     pool,
-    openai,
     doc,
     rawText,
     upsertResult,
@@ -876,7 +870,6 @@ function printIngestSummary(stats: IngestStats): void {
 
 async function runIngest(
   pool: Pool,
-  openai: OpenAI,
   opts: IngestOptions,
 ): Promise<void> {
   const docs = await parseSourceCorpus();
@@ -890,7 +883,7 @@ async function runIngest(
 
   for (const doc of docs) {
     try {
-      await processDocument(pool, openai, doc, opts, stats);
+      await processDocument(pool, doc, opts, stats);
     } catch (err) {
       console.error(`Error processing ${doc.path}:`, err);
       throw err;
@@ -929,10 +922,9 @@ async function main() {
   assertEnv();
 
   const pool = createPool();
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   try {
-    await runIngest(pool, openai, { full, dryRun });
+    await runIngest(pool, { full, dryRun });
   } catch (err) {
     console.error("Fatal ingest error:", err);
     process.exitCode = 1;

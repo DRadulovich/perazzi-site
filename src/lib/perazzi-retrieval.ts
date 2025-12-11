@@ -1,7 +1,7 @@
 import { Pool } from "pg";
 import type { PoolClient } from "pg";
 import { registerType } from "pgvector/pg";
-import OpenAI from "openai";
+import { createEmbeddings } from "@/lib/aiClient";
 import type { PerazziAssistantRequest, RetrievedChunk } from "@/types/perazzi-assistant";
 import type { RetrievalHints } from "@/lib/perazzi-intents";
 
@@ -9,7 +9,6 @@ const EMBEDDING_MODEL = process.env.PERAZZI_EMBED_MODEL ?? "text-embedding-3-lar
 const CHUNK_LIMIT = Number(process.env.PERAZZI_RETRIEVAL_LIMIT ?? 12);
 
 let pgPool: Pool | null = null;
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function retrievePerazziContext(
   body: PerazziAssistantRequest,
@@ -24,7 +23,7 @@ export async function retrievePerazziContext(
 
   let embeddingResponse;
   try {
-    embeddingResponse = await openai.embeddings.create({
+    embeddingResponse = await createEmbeddings({
       model: EMBEDDING_MODEL,
       input: question,
     });

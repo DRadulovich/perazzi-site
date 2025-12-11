@@ -8,10 +8,10 @@ import minimist from "minimist";
 import fg from "fast-glob";
 import { Minimatch } from "minimatch";
 import { parse as parseCsv } from "csv-parse/sync";
-import OpenAI from "openai";
 import { Pool, type PoolConfig } from "pg";
 import { registerType, toSql } from "pgvector/pg";
 import { encoding_for_model, get_encoding, type TiktokenModel } from "@dqbd/tiktoken";
+import { createEmbeddings } from "@/lib/aiClient";
 
 type ChunkRule = {
   glob: string;
@@ -1290,7 +1290,6 @@ async function main() {
 }
 
 type IngestConfig = {
-  apiKey: string;
   dbUrl: string;
   model: string;
   batchSize: number;
@@ -1301,16 +1300,11 @@ type IngestConfig = {
 };
 
 function loadIngestConfig(): IngestConfig {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error("OPENAI_API_KEY is required");
-  }
   const dbUrl = process.env.DATABASE_URL;
   if (!dbUrl) {
     throw new Error("DATABASE_URL is required");
   }
   return {
-    apiKey,
     dbUrl,
     model: process.env.PERAZZI_EMBED_MODEL ?? "text-embedding-3-large",
     batchSize: Number(process.env.EMBED_BATCH_SIZE ?? 32),
@@ -1382,8 +1376,8 @@ async function upsertChunk(pool: Pool, tableName: string, record: ChunkRecord, v
   );
 }
 
-async function ingestBatch(openai: OpenAI, pool: Pool, config: IngestConfig, slice: ChunkRecord[]) {
-  const response = await openai.embeddings.create({
+async function ingestBatch(pool: Pool, config: IngestConfig, slice: ChunkRecord[]) {
+  const response = await createEmbeddings({
     model: config.model,
     input: slice.map((chunk) => chunk.text),
   });
@@ -1405,7 +1399,6 @@ async function ingestBatch(openai: OpenAI, pool: Pool, config: IngestConfig, sli
 
 async function ingestChunks(chunks: ChunkRecord[]) {
   const config = loadIngestConfig();
-  const openai = new OpenAI({ apiKey: config.apiKey });
   const pool = new Pool({
     connectionString: config.dbUrl,
     max: 5,
@@ -1417,7 +1410,7 @@ async function ingestChunks(chunks: ChunkRecord[]) {
 
   for (let i = 0; i < chunks.length; i += config.batchSize) {
     const slice = chunks.slice(i, i + config.batchSize);
-    await ingestBatch(openai, pool, config, slice);
+    await ingestBatch(pool, config, slice);
   }
 
   await pool.end();
