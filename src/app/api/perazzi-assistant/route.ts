@@ -24,6 +24,7 @@ import {
 import { detectRetrievalHints, buildResponseTemplates } from "@/lib/perazzi-intents";
 import type { RetrievalHints } from "@/lib/perazzi-intents";
 import { runChatCompletion } from "@/lib/aiClient";
+import type { AiInteractionContext } from "@/lib/aiLogging";
 
 const LOW_CONFIDENCE_THRESHOLD = Number(process.env.PERAZZI_LOW_CONF_THRESHOLD ?? 0.1);
 const LOW_CONFIDENCE_MESSAGE =
@@ -575,6 +576,7 @@ export async function POST(request: Request) {
       responseTemplates,
       effectiveMode,
       effectiveArchetype,
+      hints,
     );
 
     logInteraction(
@@ -682,6 +684,7 @@ async function generateAssistantAnswer(
   templates: string[],
   mode: PerazziMode | null,
   archetype: Archetype | null,
+  hints?: RetrievalHints,
 ): Promise<string> {
   const systemPrompt = buildSystemPrompt(context, chunks, templates, mode, archetype);
   const toneNudge =
@@ -692,6 +695,22 @@ async function generateAssistantAnswer(
     ...sanitizedMessages,
   ];
 
+  const env = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local";
+  const interactionContext: AiInteractionContext = {
+    env,
+    endpoint: "assistant",
+    pageUrl: context?.pageUrl ?? undefined,
+    archetype: archetype ?? null,
+    sessionId: context?.sessionId ?? null,
+    userId: context?.userId ?? null,
+    lowConfidence: false,
+    intents: hints?.intents,
+    topics: hints?.topics,
+    metadata: {
+      mode: mode ?? context?.mode ?? null,
+    },
+  };
+
   let completion;
   try {
     completion = await runChatCompletion({
@@ -699,6 +718,7 @@ async function generateAssistantAnswer(
       temperature: 0.4,
       max_completion_tokens: MAX_COMPLETION_TOKENS,
       messages: finalMessages,
+      context: interactionContext,
     });
   } catch (error) {
     if (isConnectionError(error)) {

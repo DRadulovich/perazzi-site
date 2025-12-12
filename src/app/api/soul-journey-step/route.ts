@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { AiInteractionContext } from "@/lib/aiLogging";
 import { runChatCompletion } from "@/lib/aiClient";
 import { getSoulArtisanPromptForStep } from "@/lib/soulJourneyPrompts";
 
@@ -25,6 +26,21 @@ export async function POST(req: Request) {
     const prompt = template.replaceAll("{{USER_ANSWER}}", trimmedAnswer);
     const titleLine = title && typeof title === "string" ? `Step title: ${title}\n\n` : "";
 
+    const env = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local";
+    const context: AiInteractionContext = {
+      env,
+      endpoint: "soul_journey",
+      pageUrl: "/the-build/why-a-perazzi-has-a-soul",
+      archetype: null,
+      sessionId: null,
+      userId: null,
+      lowConfidence: false,
+      metadata: {
+        step,
+        title: title && typeof title === "string" ? title : undefined,
+      },
+    };
+
     const completion = await runChatCompletion({
       model: OPENAI_MODEL,
       temperature: 0.6,
@@ -37,6 +53,7 @@ export async function POST(req: Request) {
         },
         { role: "user", content: `${titleLine}${prompt}` },
       ],
+      context,
     });
 
     const paragraph = completion.choices[0]?.message?.content?.trim();

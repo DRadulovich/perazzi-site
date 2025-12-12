@@ -1,32 +1,28 @@
 import OpenAI from "openai";
-
-type RequestContext = {
-  requestId?: string;
-  userId?: string;
-  archetype?: string;
-  [key: string]: unknown;
-};
+import { logAiInteraction, type AiInteractionContext } from "@/lib/aiLogging";
 
 type OpenAIConfig = {
   apiKey: string;
   baseURL?: string;
+  usedGateway: boolean;
 };
 
 export type RunChatCompletionParams = OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming & {
   maxCompletionTokens?: number;
-  context?: RequestContext;
+  context?: AiInteractionContext;
   [key: string]: unknown;
 };
 
 export type CreateEmbeddingsParams = {
   model: string;
   input: string | string[];
-  context?: RequestContext;
+  context?: AiInteractionContext;
 } & Omit<OpenAI.Embeddings.EmbeddingCreateParams, "model" | "input"> & {
   [key: string]: unknown;
 };
 
 let client: OpenAI | null = null;
+let usingGateway = false;
 
 function resolveOpenAIConfig(): OpenAIConfig {
   const forceDirect = process.env.AI_FORCE_DIRECT === "true";
@@ -38,15 +34,15 @@ function resolveOpenAIConfig(): OpenAIConfig {
     if (!apiKey) {
       throw new Error("AI_FORCE_DIRECT is true but OPENAI_API_KEY is missing");
     }
-    return { apiKey };
+    return { apiKey, usedGateway: false };
   }
 
   if (gatewayUrl && gatewayToken) {
-    return { apiKey: gatewayToken, baseURL: gatewayUrl };
+    return { apiKey: gatewayToken, baseURL: gatewayUrl, usedGateway: true };
   }
 
   if (apiKey) {
-    return { apiKey };
+    return { apiKey, usedGateway: false };
   }
 
   throw new Error("Missing OpenAI API key or Gateway token");
@@ -55,7 +51,8 @@ function resolveOpenAIConfig(): OpenAIConfig {
 function getOpenAIClient(): OpenAI {
   if (client) return client;
 
-  const { apiKey, baseURL } = resolveOpenAIConfig();
+  const { apiKey, baseURL, usedGateway } = resolveOpenAIConfig();
+  usingGateway = usedGateway;
   client = baseURL ? new OpenAI({ apiKey, baseURL }) : new OpenAI({ apiKey });
   return client;
 }
@@ -63,8 +60,7 @@ function getOpenAIClient(): OpenAI {
 export async function runChatCompletion(
   params: RunChatCompletionParams,
 ): Promise<OpenAI.Chat.Completions.ChatCompletion> {
-  const { model, messages, maxCompletionTokens, context: _context, ...rest } = params;
-  void _context;
+  const { model, messages, maxCompletionTokens, context, ...rest } = params;
 
   const completionParams: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming = {
     model,
@@ -74,7 +70,43 @@ export async function runChatCompletion(
   };
 
   const clientInstance = getOpenAIClient();
-  return clientInstance.chat.completions.create(completionParams);
+  const completion = await clientInstance.chat.completions.create(completionParams);
+
+  if (context) {
+    const defaultEnv = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local";
+    const contextForLog: AiInteractionContext = {
+      ...context,
+      env: context.env ?? defaultEnv,
+    };
+
+    const userMessages = (messages ?? []).filter((msg) => msg.role === "user");
+    const lastUserMessages = userMessages.slice(-3);
+
+    const prompt = lastUserMessages
+      .map((msg) => normalizeMessageContent(msg.content))
+      .filter(Boolean)
+      .join("\n\n");
+
+    const responseText = normalizeMessageContent(completion.choices?.[0]?.message?.content);
+    const promptTokens = completion.usage?.prompt_tokens ?? undefined;
+    const completionTokens = completion.usage?.completion_tokens ?? undefined;
+
+    try {
+      await logAiInteraction({
+        context: contextForLog,
+        model,
+        usedGateway: usingGateway,
+        prompt,
+        response: responseText,
+        promptTokens,
+        completionTokens,
+      });
+    } catch (error) {
+      console.error("logAiInteraction failed", error);
+    }
+  }
+
+  return completion;
 }
 
 export async function createEmbeddings(
@@ -91,4 +123,21 @@ export async function createEmbeddings(
 
   const clientInstance = getOpenAIClient();
   return clientInstance.embeddings.create(embeddingParams);
+}
+
+function normalizeMessageContent(
+  content: OpenAI.Chat.Completions.ChatCompletionMessageParam["content"] | OpenAI.Chat.Completions.ChatCompletionMessage["content"],
+): string {
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === "string") return part;
+        if ("text" in part && typeof part.text === "string") return part.text;
+        return "";
+      })
+      .filter(Boolean)
+      .join("\n");
+  }
+  return "";
 }
