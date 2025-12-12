@@ -24,7 +24,7 @@ import {
 import { detectRetrievalHints, buildResponseTemplates } from "@/lib/perazzi-intents";
 import type { RetrievalHints } from "@/lib/perazzi-intents";
 import { runChatCompletion } from "@/lib/aiClient";
-import type { AiInteractionContext } from "@/lib/aiLogging";
+import { logAiInteraction, type AiInteractionContext } from "@/lib/aiLogging";
 
 const LOW_CONFIDENCE_THRESHOLD = Number(process.env.PERAZZI_LOW_CONF_THRESHOLD ?? 0.1);
 const LOW_CONFIDENCE_MESSAGE =
@@ -529,6 +529,42 @@ export async function POST(request: Request) {
         guardrailBlock.reason,
         hints,
       );
+
+      const env = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local";
+      const promptForLog = sanitizedMessages
+        .filter((msg) => msg.role === "user")
+        .map((msg) => msg.content ?? "")
+        .filter(Boolean)
+        .slice(-3)
+        .join("\n\n");
+
+      try {
+        await logAiInteraction({
+          context: {
+            env,
+            endpoint: "assistant",
+            pageUrl: body?.context?.pageUrl ?? undefined,
+            archetype: effectiveArchetype ?? null,
+            sessionId: fullBody.sessionId ?? null,
+            userId: null,
+            lowConfidence: false,
+            intents: hints?.intents,
+            topics: hints?.topics,
+            metadata: {
+              mode: effectiveMode ?? null,
+              guardrailStatus: "blocked",
+              guardrailReason: guardrailBlock.reason ?? null,
+            },
+          },
+          model: OPENAI_MODEL,
+          usedGateway: false,
+          prompt: promptForLog,
+          response: guardrailBlock.message,
+        });
+      } catch (error) {
+        console.error("logAiInteraction guardrail block failed", error);
+      }
+
       return NextResponse.json<PerazziAssistantResponse>({
         answer: guardrailBlock.message,
         guardrail: { status: "blocked", reason: guardrailBlock.reason },
@@ -542,6 +578,8 @@ export async function POST(request: Request) {
         archetypeBreakdown,
       });
     }
+
+    const guardrail = { status: "ok" as const, reason: null as string | null };
 
     const responseTemplates = buildResponseTemplates(hints);
     const retrieval = await retrievePerazziContext(fullBody, hints);
@@ -576,6 +614,8 @@ export async function POST(request: Request) {
       responseTemplates,
       effectiveMode,
       effectiveArchetype,
+      retrieval.maxScore,
+      guardrail,
       hints,
       fullBody.sessionId ?? null,
     );
@@ -685,6 +725,8 @@ async function generateAssistantAnswer(
   templates: string[],
   mode: PerazziMode | null,
   archetype: Archetype | null,
+  maxScore?: number,
+  guardrail?: { status: "ok" | "blocked"; reason: string | null },
   hints?: RetrievalHints,
   sessionId?: string | null,
 ): Promise<string> {
@@ -698,6 +740,22 @@ async function generateAssistantAnswer(
   ];
 
   const env = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local";
+  const guardrailInfo = guardrail ?? { status: "ok", reason: null as string | null };
+  const metadata: Record<string, unknown> = {
+    mode: mode ?? context?.mode ?? null,
+    guardrailStatus: guardrailInfo.status,
+    guardrailReason: guardrailInfo.reason ?? null,
+  };
+  if (typeof maxScore === "number") {
+    metadata.maxScore = maxScore;
+  }
+  if (chunks.length > 0) {
+    metadata.retrievedChunks = chunks.map((chunk) => ({
+      chunkId: chunk.chunkId,
+      score: chunk.score,
+    }));
+  }
+
   const interactionContext: AiInteractionContext = {
     env,
     endpoint: "assistant",
@@ -708,9 +766,7 @@ async function generateAssistantAnswer(
     lowConfidence: false,
     intents: hints?.intents,
     topics: hints?.topics,
-    metadata: {
-      mode: mode ?? context?.mode ?? null,
-    },
+    metadata,
   };
 
   let completion;

@@ -70,7 +70,9 @@ export async function runChatCompletion(
   };
 
   const clientInstance = getOpenAIClient();
+  const start = Date.now();
   const completion = await clientInstance.chat.completions.create(completionParams);
+  const latencyMs = Date.now() - start;
 
   if (context) {
     const defaultEnv = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local";
@@ -80,7 +82,7 @@ export async function runChatCompletion(
     };
 
     const userMessages = (messages ?? []).filter((msg) => msg.role === "user");
-    const lastUserMessages = userMessages.slice(-3);
+    const lastUserMessages = userMessages.slice(-1);
 
     const fallbackPrompt = lastUserMessages
       .map((msg) => normalizeMessageContent(msg.content))
@@ -99,9 +101,15 @@ export async function runChatCompletion(
     const promptTokens = completion.usage?.prompt_tokens ?? undefined;
     const completionTokens = completion.usage?.completion_tokens ?? undefined;
 
+    const baseMetadata = (contextForLog.metadata ?? {}) as Record<string, unknown>;
+    const metadataWithLatency = {
+      ...baseMetadata,
+      latencyMs,
+    };
+
     try {
       await logAiInteraction({
-        context: contextForLog,
+        context: { ...contextForLog, metadata: metadataWithLatency },
         model,
         usedGateway: usingGateway,
         prompt,
