@@ -260,6 +260,18 @@ async function fetchV2Chunks(opts: {
     `,
     [embeddingParam, limit],
   );
+  console.info(
+    JSON.stringify({
+      type: "perazzi-retrieval-debug",
+      rowsCount: rows.length,
+      firstRow: rows[0]
+        ? {
+            distance: (rows[0] as any).distance ?? null,
+            score: (rows[0] as any).score ?? null,
+          }
+        : null,
+    }),
+  );
 
   const typedRows = rows as RetrievedRow[];
 
