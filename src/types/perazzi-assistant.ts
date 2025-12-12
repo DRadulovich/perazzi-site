@@ -29,6 +29,7 @@ export interface ChatMessage {
 
 export interface PerazziAssistantRequest {
   messages: ChatMessage[];
+  sessionId?: string;
   context?: {
     pageUrl?: string | null;
     modelSlug?: string | null;

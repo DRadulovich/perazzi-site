@@ -8,7 +8,7 @@ const MAX_COMPLETION_TOKENS = Number(process.env.PERAZZI_MAX_COMPLETION_TOKENS ?
 
 export async function POST(req: Request) {
   try {
-    const { step, userAnswer, title } = await req.json();
+    const { step, userAnswer, title, sessionId } = await req.json();
 
     if (!step || typeof step !== "string") {
       return NextResponse.json({ error: "Missing or invalid step" }, { status: 400 });
@@ -26,18 +26,19 @@ export async function POST(req: Request) {
     const prompt = template.replaceAll("{{USER_ANSWER}}", trimmedAnswer);
     const titleLine = title && typeof title === "string" ? `Step title: ${title}\n\n` : "";
 
-    const env = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local";
-    const context: AiInteractionContext = {
-      env,
-      endpoint: "soul_journey",
-      pageUrl: "/the-build/why-a-perazzi-has-a-soul",
-      archetype: null,
-      sessionId: null,
-      userId: null,
-      lowConfidence: false,
-      metadata: {
-        step,
-        title: title && typeof title === "string" ? title : undefined,
+  const env = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local";
+  const context: AiInteractionContext = {
+    env,
+    endpoint: "soul_journey",
+    pageUrl: "/the-build/why-a-perazzi-has-a-soul",
+    archetype: null,
+    sessionId: sessionId ?? null,
+    userId: null,
+    lowConfidence: false,
+    metadata: {
+      step,
+      title: title && typeof title === "string" ? title : undefined,
+      loggedPrompt: trimmedAnswer,
       },
     };
 

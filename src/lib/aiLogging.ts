@@ -6,7 +6,7 @@ export type AiInteractionContext = {
   pageUrl?: string;
   archetype?: string | null;
   sessionId?: string | null;
-  userId?: string | null;
+  userId?: null;
   lowConfidence?: boolean;
   intents?: string[];
   topics?: string[];

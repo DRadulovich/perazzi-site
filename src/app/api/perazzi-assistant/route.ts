@@ -577,6 +577,7 @@ export async function POST(request: Request) {
       effectiveMode,
       effectiveArchetype,
       hints,
+      fullBody.sessionId ?? null,
     );
 
     logInteraction(
@@ -685,6 +686,7 @@ async function generateAssistantAnswer(
   mode: PerazziMode | null,
   archetype: Archetype | null,
   hints?: RetrievalHints,
+  sessionId?: string | null,
 ): Promise<string> {
   const systemPrompt = buildSystemPrompt(context, chunks, templates, mode, archetype);
   const toneNudge =
@@ -701,8 +703,8 @@ async function generateAssistantAnswer(
     endpoint: "assistant",
     pageUrl: context?.pageUrl ?? undefined,
     archetype: archetype ?? null,
-    sessionId: context?.sessionId ?? null,
-    userId: context?.userId ?? null,
+    sessionId: sessionId ?? null,
+    userId: null,
     lowConfidence: false,
     intents: hints?.intents,
     topics: hints?.topics,

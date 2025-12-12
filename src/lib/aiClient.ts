@@ -82,10 +82,18 @@ export async function runChatCompletion(
     const userMessages = (messages ?? []).filter((msg) => msg.role === "user");
     const lastUserMessages = userMessages.slice(-3);
 
-    const prompt = lastUserMessages
+    const fallbackPrompt = lastUserMessages
       .map((msg) => normalizeMessageContent(msg.content))
       .filter(Boolean)
       .join("\n\n");
+
+    let overridePrompt: string | undefined;
+    const metadata = contextForLog.metadata as { loggedPrompt?: unknown } | undefined;
+    if (metadata && typeof metadata.loggedPrompt === "string") {
+      overridePrompt = metadata.loggedPrompt;
+    }
+
+    const prompt = overridePrompt ?? fallbackPrompt;
 
     const responseText = normalizeMessageContent(completion.choices?.[0]?.message?.content);
     const promptTokens = completion.usage?.prompt_tokens ?? undefined;

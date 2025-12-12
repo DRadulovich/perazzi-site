@@ -8,6 +8,7 @@ import type {
   ArchetypeBreakdown,
   ArchetypeVector,
 } from "@/types/perazzi-assistant";
+import { getOrCreateSessionId } from "@/lib/session";
 
 export type ChatEntry = {
   id: string;
@@ -156,6 +157,7 @@ export function useChatState(
       setContext(effectiveContext);
 
       const fullHistory = [...messages, userEntry].map(({ role, content }) => ({ role, content }));
+      const sessionId = getOrCreateSessionId();
 
       const res = await fetch("/api/perazzi-assistant", {
         method: "POST",
@@ -163,6 +165,7 @@ export function useChatState(
         body: JSON.stringify({
           messages: fullHistory,
           context: effectiveContext,
+          sessionId,
         }),
       });
       if (!res.ok) {

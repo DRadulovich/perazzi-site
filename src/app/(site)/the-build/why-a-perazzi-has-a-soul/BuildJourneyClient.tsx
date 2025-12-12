@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import { PortableBody } from "@/components/journal/PortableBody";
 import type { PortableBlock } from "@/types/journal";
+import { getOrCreateSessionId } from "@/lib/session";
 
 export type BuildJourneyArticle = {
   _id: string;
@@ -294,6 +295,7 @@ function JourneyChapters({
 
                           setIsSubmitting((prev) => ({ ...prev, [stepKey]: true }));
                           try {
+                            const sessionId = getOrCreateSessionId();
                             const res = await fetch("/api/soul-journey-step", {
                               method: "POST",
                               headers: { "Content-Type": "application/json" },
@@ -301,6 +303,7 @@ function JourneyChapters({
                                 step: stepKey,
                                 title: station.title,
                                 userAnswer: trimmed,
+                                sessionId,
                               }),
                             });
 
