@@ -17,6 +17,9 @@ type PerazziLogRow = {
   intents: string[] | null;
   topics: string[] | null;
   max_score: string | null;
+
+  guardrail_status: string | null;
+  guardrail_reason: string | null;
 };
 
 type RagSummary = {
@@ -91,12 +94,132 @@ type AvgMetricsRow = {
 };
 
 const LOW_SCORE_THRESHOLD = 0.25;
+const LOGS_PAGE_SIZE = 50;
+const DEFAULT_DAYS_WINDOW = 30;
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
-async function fetchLogs(envFilter?: string, endpointFilter?: string): Promise<PerazziLogRow[]> {
+function Chevron() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      aria-hidden="true"
+      className="h-4 w-4 text-muted-foreground transition-transform group-open:rotate-90"
+    >
+      <path
+        fillRule="evenodd"
+        d="M7.21 14.77a.75.75 0 0 1 0-1.06L10.94 10 7.21 6.29a.75.75 0 1 1 1.06-1.06l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0Z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+
+function ChipRow({ items, max = 4 }: { items?: string[] | null; max?: number }) {
+  if (!items || items.length === 0) return null;
+  const shown = items.slice(0, max);
+  const remaining = items.length - shown.length;
+
+  return (
+    <div className="flex max-w-[260px] flex-wrap gap-1">
+      {shown.map((item, idx) => (
+        <span
+          key={`${item}-${idx}`}
+          className="inline-flex items-center rounded-full border border-border bg-background px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground"
+        >
+          {item}
+        </span>
+      ))}
+      {remaining > 0 && (
+        <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+          +{remaining}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function truncate(text: string, length = 200) {
+  if (!text) return "";
+  return text.length > length ? `${text.slice(0, length)}...` : text;
+}
+
+function formatScore(value: number | null) {
+  if (value === null || Number.isNaN(value)) return "—";
+  return value.toFixed(3);
+}
+
+function formatRate(value: number | null) {
+  if (value === null || Number.isNaN(value)) return "—";
+  return `${(value * 100).toFixed(1)}%`;
+}
+
+function formatCompactNumber(value: number | null) {
+  if (value === null || Number.isNaN(value)) return "—";
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1).replace(/\.0$/, "")}B`;
+  if (abs >= 1_000_000) return `${(value / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  if (abs >= 1_000) return `${(value / 1_000).toFixed(1).replace(/\.0$/, "")}k`;
+  return String(Math.round(value));
+}
+
+function formatDurationMs(value: number | null) {
+  if (value === null || Number.isNaN(value)) return "—";
+  if (value >= 1000) return `${(value / 1000).toFixed(2)}s`;
+  return `${Math.round(value)}ms`;
+}
+
+function parseScore(score: string | null): number | null {
+  if (!score) return null;
+  const n = Number(score);
+  return Number.isFinite(n) ? n : null;
+}
+
+function logRowToneClass(log: PerazziLogRow): string {
+  // Priority:
+  // 1) guardrail blocked
+  // 2) low confidence
+  // 3) low maxScore (assistant)
+  if (log.guardrail_status === "blocked") return "bg-red-500/5";
+  if (log.low_confidence === true) return "bg-amber-500/5";
+
+  const s = parseScore(log.max_score);
+  if (log.endpoint === "assistant" && s !== null && s < LOW_SCORE_THRESHOLD) return "bg-yellow-500/5";
+
+  return "";
+}
+
+function buildInsightsHref(params: {
+  env?: string;
+  endpoint?: string;
+  days?: string;
+  q?: string;
+  page?: string;
+}): string {
+  const sp = new URLSearchParams();
+  if (params.env) sp.set("env", params.env);
+  if (params.endpoint) sp.set("endpoint", params.endpoint);
+  if (params.days) sp.set("days", params.days);
+  if (params.q) sp.set("q", params.q);
+  if (params.page) sp.set("page", params.page);
+
+  const qs = sp.toString();
+  return qs ? `/admin/pgpt-insights?${qs}` : "/admin/pgpt-insights";
+}
+
+async function fetchLogs(args: {
+  envFilter?: string;
+  endpointFilter?: string;
+  daysFilter?: number;
+  q?: string;
+  limit: number;
+  offset: number;
+}): Promise<PerazziLogRow[]> {
+  const { envFilter, endpointFilter, daysFilter, q, limit, offset } = args;
+
   const conditions: string[] = [];
-  const values: (string | boolean)[] = [];
+  const values: (string | number | boolean)[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -109,7 +232,24 @@ async function fetchLogs(envFilter?: string, endpointFilter?: string): Promise<P
     values.push(endpointFilter);
   }
 
+  if (daysFilter) {
+    conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
+    values.push(daysFilter);
+  }
+
+  if (q && q.trim().length > 0) {
+    conditions.push(`(prompt ILIKE $${idx} OR response ILIKE $${idx})`);
+    values.push(`%${q.trim()}%`);
+    idx += 1;
+  }
+
   const whereClause = conditions.length ? `where ${conditions.join(" and ")}` : "";
+
+  const limitParamIndex = idx++;
+  values.push(limit);
+
+  const offsetParamIndex = idx++;
+  values.push(offset);
 
   const query = `
     select
@@ -126,11 +266,14 @@ async function fetchLogs(envFilter?: string, endpointFilter?: string): Promise<P
       low_confidence,
       intents,
       topics,
-      metadata->>'maxScore' as max_score
+      metadata->>'maxScore' as max_score,
+      metadata->>'guardrailStatus' as guardrail_status,
+      metadata->>'guardrailReason' as guardrail_reason
     from perazzi_conversation_logs
     ${whereClause}
     order by created_at desc
-    limit 100;
+    limit $${limitParamIndex}
+    offset $${offsetParamIndex};
   `;
 
   const { rows } = await pool.query<PerazziLogRow>(query, values);
@@ -232,7 +375,9 @@ async function fetchLowScoreLogs(
       low_confidence,
       intents,
       topics,
-      metadata->>'maxScore' as max_score
+      metadata->>'maxScore' as max_score,
+      metadata->>'guardrailStatus' as guardrail_status,
+      metadata->>'guardrailReason' as guardrail_reason
     from perazzi_conversation_logs
     where ${conditionSql}
     order by created_at desc
@@ -279,10 +424,7 @@ async function fetchTopChunks(envFilter?: string, limit = 20, daysFilter?: numbe
 }
 
 async function fetchGuardrailStats(envFilter?: string, daysFilter?: number): Promise<GuardrailStatRow[]> {
-  const conditions: string[] = [
-    "endpoint = 'assistant'",
-    "metadata->>'guardrailStatus' = 'blocked'",
-  ];
+  const conditions: string[] = ["endpoint = 'assistant'", "metadata->>'guardrailStatus' = 'blocked'"];
   const params: (string | number)[] = [];
   let idx = 1;
 
@@ -316,10 +458,7 @@ async function fetchGuardrailStats(envFilter?: string, daysFilter?: number): Pro
 }
 
 async function fetchGuardrailByArchetype(envFilter?: string, daysFilter?: number): Promise<GuardrailByArchetypeRow[]> {
-  const conditions: string[] = [
-    "endpoint = 'assistant'",
-    "metadata->>'guardrailStatus' = 'blocked'",
-  ];
+  const conditions: string[] = ["endpoint = 'assistant'", "metadata->>'guardrailStatus' = 'blocked'"];
   const params: (string | number)[] = [];
   let idx = 1;
 
@@ -350,6 +489,7 @@ async function fetchGuardrailByArchetype(envFilter?: string, daysFilter?: number
     archetype: string | null;
     hits: string | number;
   }>(query, params);
+
   return rows.map((row) => ({
     guardrail_reason: row.guardrail_reason,
     archetype: row.archetype,
@@ -362,10 +502,7 @@ async function fetchRecentGuardrailBlocks(
   limit = 20,
   daysFilter?: number,
 ): Promise<GuardrailLogRow[]> {
-  const conditions: string[] = [
-    "endpoint = 'assistant'",
-    "metadata->>'guardrailStatus' = 'blocked'",
-  ];
+  const conditions: string[] = ["endpoint = 'assistant'", "metadata->>'guardrailStatus' = 'blocked'"];
   const params: (string | number)[] = [];
   let idx = 1;
 
@@ -403,10 +540,7 @@ async function fetchRecentGuardrailBlocks(
   return rows;
 }
 
-async function fetchArchetypeIntentStats(
-  envFilter?: string,
-  daysFilter?: number,
-): Promise<ArchetypeIntentRow[]> {
+async function fetchArchetypeIntentStats(envFilter?: string, daysFilter?: number): Promise<ArchetypeIntentRow[]> {
   const conditions: string[] = ["endpoint = 'assistant'", "archetype is not null", "intents is not null"];
   const params: (string | number)[] = [];
   let idx = 1;
@@ -444,10 +578,7 @@ async function fetchArchetypeIntentStats(
   }));
 }
 
-async function fetchArchetypeSummary(
-  envFilter?: string,
-  daysFilter?: number,
-): Promise<ArchetypeSummaryRow[]> {
+async function fetchArchetypeSummary(envFilter?: string, daysFilter?: number): Promise<ArchetypeSummaryRow[]> {
   const conditions: string[] = ["endpoint = 'assistant'", "archetype is not null"];
   const params: (string | number)[] = [];
   let idx = 1;
@@ -496,17 +627,12 @@ async function fetchArchetypeSummary(
         ? null
         : Number(row.guardrail_block_rate),
     low_confidence_rate:
-      row.low_confidence_rate === null || row.low_confidence_rate === undefined
-        ? null
-        : Number(row.low_confidence_rate),
+      row.low_confidence_rate === null || row.low_confidence_rate === undefined ? null : Number(row.low_confidence_rate),
     total: Number(row.total),
   }));
 }
 
-async function fetchDailyTokenUsage(
-  envFilter?: string,
-  daysFilter?: number,
-): Promise<DailyTokenUsageRow[]> {
+async function fetchDailyTokenUsage(envFilter?: string, daysFilter?: number): Promise<DailyTokenUsageRow[]> {
   const conditions: string[] = ["endpoint in ('assistant', 'soul_journey')"];
   const params: (string | number)[] = [];
   let idx = 1;
@@ -610,27 +736,25 @@ async function fetchAvgMetrics(envFilter?: string, daysFilter?: number): Promise
   }));
 }
 
-function truncate(text: string, length = 200) {
-  if (!text) return "";
-  return text.length > length ? `${text.slice(0, length)}...` : text;
-}
-
-function formatScore(value: number | null) {
-  if (value === null || Number.isNaN(value)) return "—";
-  return value.toFixed(3);
-}
-
-function formatRate(value: number | null) {
-  if (value === null || Number.isNaN(value)) return "—";
-  return `${(value * 100).toFixed(1)}%`;
+async function fetchOpenQaFlagCount(): Promise<number> {
+  try {
+    const { rows } = await pool.query<{ open_count: string | number }>(
+      `select count(*) as open_count from qa_flags where status = 'open';`,
+    );
+    return Number(rows[0]?.open_count ?? 0);
+  } catch (error) {
+    console.error("[pgpt-insights] Failed to fetch open QA flag count", error);
+    return 0;
+  }
 }
 
 export default async function PgptInsightsPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ env?: string; endpoint?: string; days?: string }>;
+  searchParams?: Promise<{ env?: string; endpoint?: string; days?: string; q?: string; page?: string }>;
 }) {
   const resolvedSearchParams = (await searchParams) ?? {};
+
   const env = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "development";
   const allowInProd = process.env.PGPT_INSIGHTS_ALLOW_PROD === "true";
   if (env === "production" && !allowInProd) {
@@ -638,21 +762,27 @@ export default async function PgptInsightsPage({
   }
 
   const envFilter =
-    resolvedSearchParams.env && resolvedSearchParams.env !== "all"
-      ? resolvedSearchParams.env
-      : undefined;
+    resolvedSearchParams.env && resolvedSearchParams.env !== "all" ? resolvedSearchParams.env : undefined;
+
   const endpointFilter =
     resolvedSearchParams.endpoint && resolvedSearchParams.endpoint !== "all"
       ? resolvedSearchParams.endpoint
       : undefined;
+
+  // Default behavior: last 30 days, unless explicitly "all"
   const daysParam = resolvedSearchParams.days;
   const daysFilter =
-    daysParam && daysParam !== "all"
-      ? Number.parseInt(daysParam, 10) || undefined
-      : undefined;
+    daysParam === "all"
+      ? undefined
+      : Number.parseInt(daysParam ?? String(DEFAULT_DAYS_WINDOW), 10) || DEFAULT_DAYS_WINDOW;
+
+  const qRaw = (resolvedSearchParams.q ?? "").trim();
+  const q = qRaw.length > 0 ? qRaw.slice(0, 500) : "";
+  const page = Math.max(1, Number.parseInt(resolvedSearchParams.page ?? "1", 10) || 1);
+  const offset = (page - 1) * LOGS_PAGE_SIZE;
 
   const [
-    logs,
+    logsMaybeMore,
     ragSummary,
     lowScoreLogs,
     topChunks,
@@ -663,32 +793,106 @@ export default async function PgptInsightsPage({
     archetypeSummaries,
     dailyTokenUsage,
     avgMetrics,
-  ] =
-    await Promise.all([
-      fetchLogs(envFilter, endpointFilter),
-      fetchRagSummary(envFilter, daysFilter),
-      fetchLowScoreLogs(envFilter, LOW_SCORE_THRESHOLD, daysFilter),
-      fetchTopChunks(envFilter, 20, daysFilter),
-      fetchGuardrailStats(envFilter, daysFilter),
-      fetchGuardrailByArchetype(envFilter, daysFilter),
-      fetchRecentGuardrailBlocks(envFilter, 20, daysFilter),
-      fetchArchetypeIntentStats(envFilter, daysFilter),
-      fetchArchetypeSummary(envFilter, daysFilter),
-      fetchDailyTokenUsage(envFilter, daysFilter),
-      fetchAvgMetrics(envFilter, daysFilter),
-    ]);
+    qaOpenFlagCount,
+  ] = await Promise.all([
+    fetchLogs({
+      envFilter,
+      endpointFilter,
+      daysFilter,
+      q: q.length ? q : undefined,
+      limit: LOGS_PAGE_SIZE + 1,
+      offset,
+    }),
+    fetchRagSummary(envFilter, daysFilter),
+    fetchLowScoreLogs(envFilter, LOW_SCORE_THRESHOLD, daysFilter),
+    fetchTopChunks(envFilter, 20, daysFilter),
+    fetchGuardrailStats(envFilter, daysFilter),
+    fetchGuardrailByArchetype(envFilter, daysFilter),
+    fetchRecentGuardrailBlocks(envFilter, 20, daysFilter),
+    fetchArchetypeIntentStats(envFilter, daysFilter),
+    fetchArchetypeSummary(envFilter, daysFilter),
+    fetchDailyTokenUsage(envFilter, daysFilter),
+    fetchAvgMetrics(envFilter, daysFilter),
+    fetchOpenQaFlagCount(),
+  ]);
+
+  const hasNextPage = logsMaybeMore.length > LOGS_PAGE_SIZE;
+  const logs = logsMaybeMore.slice(0, LOGS_PAGE_SIZE);
+
+  const totalRequests = dailyTokenUsage.reduce((sum, row) => sum + row.request_count, 0);
+  const totalPromptTokens = dailyTokenUsage.reduce((sum, row) => sum + row.total_prompt_tokens, 0);
+  const totalCompletionTokens = dailyTokenUsage.reduce((sum, row) => sum + row.total_completion_tokens, 0);
+  const totalTokens = totalPromptTokens + totalCompletionTokens;
+  const avgTokensPerRequest = totalRequests > 0 ? totalTokens / totalRequests : null;
+
+  const guardrailBlockedCount = guardrailStats.reduce((sum, row) => sum + row.hits, 0);
+
+  const latencyRollup = avgMetrics.reduce(
+    (acc, row) => {
+      if (row.avg_latency_ms === null || Number.isNaN(row.avg_latency_ms) || row.request_count <= 0) return acc;
+      acc.numerator += row.avg_latency_ms * row.request_count;
+      acc.denominator += row.request_count;
+      return acc;
+    },
+    { numerator: 0, denominator: 0 },
+  );
+
+  const avgLatencyMs = latencyRollup.denominator > 0 ? latencyRollup.numerator / latencyRollup.denominator : null;
+
+  const scopeSummary = [
+    envFilter ? `env: ${envFilter}` : "env: all",
+    endpointFilter ? `endpoint: ${endpointFilter}` : "endpoint: all",
+    daysFilter ? `last ${daysFilter} days` : "all time",
+  ].join(" · ");
+
+  const qaCountLabel = qaOpenFlagCount > 0 ? ` (${qaOpenFlagCount})` : "";
+
+  const prevHref =
+    page > 1
+      ? buildInsightsHref({
+          env: resolvedSearchParams.env,
+          endpoint: resolvedSearchParams.endpoint,
+          days: resolvedSearchParams.days,
+          q: q.length ? q : undefined,
+          page: String(page - 1),
+        })
+      : null;
+
+  const nextHref =
+    hasNextPage
+      ? buildInsightsHref({
+          env: resolvedSearchParams.env,
+          endpoint: resolvedSearchParams.endpoint,
+          days: resolvedSearchParams.days,
+          q: q.length ? q : undefined,
+          page: String(page + 1),
+        })
+      : null;
 
   return (
     <div className="min-h-screen bg-canvas text-ink">
-      <main className="mx-auto max-w-6xl px-6 py-10 space-y-8">
-        <header className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
-          <h1 className="text-xl font-semibold tracking-tight">PerazziGPT Insights</h1>
-          <span className="text-xs uppercase text-muted-foreground">Workshop · Internal</span>
+      <main className="mx-auto max-w-6xl px-6 py-12 md:py-14 space-y-10">
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-1">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Perazzi · Workshop</p>
+            <h1 className="text-2xl font-semibold tracking-tight">PerazziGPT Insights</h1>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-xs uppercase text-muted-foreground">Internal</span>
+            <Link href="/admin/pgpt-insights/qa" className="text-xs text-blue-600 underline">
+              QA Review{qaCountLabel}
+            </Link>
+          </div>
         </header>
 
-        <section className="rounded-xl border bg-card/80 backdrop-blur-sm p-4 sm:p-5 space-y-3">
+        <section id="filters" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6 space-y-3">
           <h2 className="text-sm font-semibold tracking-wide text-foreground">Filters</h2>
-          <form className="flex flex-col gap-3 sm:flex-row sm:items-end" method="GET">
+          <p className="text-xs text-muted-foreground">
+            Scope the analytics sections by env/endpoint/time window. The search field only affects the Recent Interactions
+            list.
+          </p>
+
+          <form className="flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap" method="GET">
             <label className="text-sm">
               Env:
               <select
@@ -702,6 +906,7 @@ export default async function PgptInsightsPage({
                 <option value="production">production</option>
               </select>
             </label>
+
             <label className="text-sm">
               Endpoint:
               <select
@@ -714,11 +919,12 @@ export default async function PgptInsightsPage({
                 <option value="soul_journey">soul_journey</option>
               </select>
             </label>
+
             <label className="text-sm">
               Time window:
               <select
                 name="days"
-                defaultValue={resolvedSearchParams.days ?? "30"}
+                defaultValue={resolvedSearchParams.days ?? String(DEFAULT_DAYS_WINDOW)}
                 className="ml-2 rounded-md border bg-background px-2 py-1 text-sm"
               >
                 <option value="7">last 7 days</option>
@@ -727,6 +933,17 @@ export default async function PgptInsightsPage({
                 <option value="all">all time</option>
               </select>
             </label>
+
+            <label className="text-sm">
+              Search logs:
+              <input
+                name="q"
+                defaultValue={resolvedSearchParams.q ?? ""}
+                placeholder="Search prompts/responses…"
+                className="ml-2 w-[260px] max-w-full rounded-md border bg-background px-2 py-1 text-sm"
+              />
+            </label>
+
             <button
               type="submit"
               className="inline-flex items-center rounded-md bg-foreground px-3 py-1 text-xs font-medium text-background"
@@ -736,148 +953,127 @@ export default async function PgptInsightsPage({
           </form>
         </section>
 
-        <section className="rounded-xl border bg-card/80 backdrop-blur-sm p-4 sm:p-5 space-y-3">
-          <div className="space-y-1">
-            <h2 className="text-sm font-semibold tracking-wide text-foreground">RAG Health (assistant)</h2>
-            <p className="text-xs text-muted-foreground">Retrieval quality overview from assistant maxScore signals.</p>
+        <section id="overview" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6 space-y-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
+            <div className="space-y-1">
+              <h2 className="text-sm font-semibold tracking-wide text-foreground">Overview</h2>
+              <p className="text-xs text-muted-foreground">High-level signals for the current scope.</p>
+            </div>
+            <p className="text-xs text-muted-foreground">{scopeSummary}</p>
           </div>
-          {!ragSummary ? (
-            <p className="text-xs text-muted-foreground">No maxScore data yet for the current filters.</p>
-          ) : (
-            <div className="flex flex-wrap gap-3 text-xs">
-              <div>Avg maxScore: {formatScore(ragSummary.avg_max_score)}</div>
-              <div>Min maxScore: {formatScore(ragSummary.min_max_score)}</div>
-              <div>Max maxScore: {formatScore(ragSummary.max_max_score)}</div>
-              <div>Total: {ragSummary.total}</div>
-              <div>
-                Low-score (&lt; {ragSummary.threshold}): {ragSummary.low_count}
-              </div>
-            </div>
-          )}
 
-          {lowScoreLogs.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold">
-                Low-score interactions (maxScore &lt; {LOW_SCORE_THRESHOLD})
-              </h3>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-xs">
-                  <thead className="border-b bg-muted/40">
-                    <tr>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">created_at</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">env</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">session_id</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">prompt</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">response</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">maxScore</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {lowScoreLogs.map((log) => (
-                      <tr key={`low-${log.id}`}>
-                        <td className="px-2 py-1 whitespace-nowrap">{String(log.created_at)}</td>
-                        <td className="px-2 py-1">{log.env}</td>
-                        <td className="px-2 py-1">
-                          {log.session_id ? (
-                            <Link
-                              href={`/admin/pgpt-insights/session/${encodeURIComponent(log.session_id)}`}
-                              className="text-blue-600 underline"
-                            >
-                              {log.session_id}
-                            </Link>
-                          ) : (
-                            ""
-                          )}
-                        </td>
-                        <td className="px-2 py-1 align-top whitespace-pre-wrap leading-snug">{truncate(log.prompt ?? "", 160)}</td>
-                        <td className="px-2 py-1 align-top whitespace-pre-wrap leading-snug">{truncate(log.response ?? "", 160)}</td>
-                        <td className="px-2 py-1">{log.max_score ?? ""}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="rounded-xl border border-border bg-background p-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Requests</div>
+              <div className="mt-1 text-base font-semibold">{formatCompactNumber(totalRequests)}</div>
+              <div className="mt-1 text-xs text-muted-foreground">in window</div>
             </div>
-          )}
 
-          {topChunks.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold">Top retrieved chunks</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-xs">
-                  <thead className="border-b bg-muted/40">
-                    <tr>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">chunk_id</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">hits</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {topChunks.map((chunk) => (
-                      <tr key={chunk.chunk_id}>
-                        <td className="px-2 py-1">{chunk.chunk_id}</td>
-                        <td className="px-2 py-1">{chunk.hits}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div className="rounded-xl border border-border bg-background p-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Tokens</div>
+              <div className="mt-1 text-base font-semibold">{formatCompactNumber(totalTokens)}</div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {avgTokensPerRequest === null ? "—" : `~${Math.round(avgTokensPerRequest)} / req`}
               </div>
             </div>
-          )}
+
+            <div className="rounded-xl border border-border bg-background p-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Avg latency</div>
+              <div className="mt-1 text-base font-semibold">{formatDurationMs(avgLatencyMs)}</div>
+              <div className="mt-1 text-xs text-muted-foreground">weighted</div>
+            </div>
+
+            <div className="rounded-xl border border-border bg-background p-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Retrieval avg</div>
+              <div className="mt-1 text-base font-semibold">
+                {ragSummary ? formatScore(ragSummary.avg_max_score) : "—"}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">assistant maxScore</div>
+            </div>
+
+            <div className="rounded-xl border border-border bg-background p-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Low-score</div>
+              <div className="mt-1 text-base font-semibold">
+                {ragSummary ? formatCompactNumber(ragSummary.low_count) : "—"}
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">{`< ${LOW_SCORE_THRESHOLD}`}</div>
+            </div>
+
+            <div className="rounded-xl border border-border bg-background p-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Guardrail blocks</div>
+              <div className="mt-1 text-base font-semibold">{formatCompactNumber(guardrailBlockedCount)}</div>
+              <div className="mt-1 text-xs text-muted-foreground">assistant</div>
+            </div>
+          </div>
         </section>
 
-        <section className="rounded-xl border bg-card/80 backdrop-blur-sm p-4 sm:p-5 space-y-3">
-          <div className="space-y-1">
-            <h2 className="text-sm font-semibold tracking-wide text-foreground">Guardrail Analytics (assistant)</h2>
-            <p className="text-xs text-muted-foreground">Block reasons, environments, and archetypes for assistant requests.</p>
-          </div>
-          {guardrailStats.length === 0 && guardrailByArchetype.length === 0 && recentGuardrailBlocks.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No guardrail blocks for the current filters.</p>
-          ) : (
-            <>
-              {guardrailStats.length > 0 && (
-                <div className="space-y-2">
-                  <h3 className="text-xs font-semibold">Guardrail hits by reason and env</h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse text-xs">
-                      <thead className="border-b bg-muted/40">
-                        <tr>
-                          <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">reason</th>
-                          <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">env</th>
-                          <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">hits</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y">
-                        {guardrailStats.map((row, idx) => (
-                          <tr key={`${row.guardrail_reason ?? "none"}-${row.env}-${idx}`}>
-                            <td className="px-2 py-1">{row.guardrail_reason ?? "(none)"}</td>
-                            <td className="px-2 py-1">{row.env}</td>
-                            <td className="px-2 py-1">{row.hits}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+        <nav className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+          <a href="#rag" className="underline underline-offset-4 hover:text-foreground">
+            RAG
+          </a>
+          <a href="#guardrails" className="underline underline-offset-4 hover:text-foreground">
+            Guardrails
+          </a>
+          <a href="#archetypes" className="underline underline-offset-4 hover:text-foreground">
+            Archetypes
+          </a>
+          <a href="#metrics" className="underline underline-offset-4 hover:text-foreground">
+            Metrics
+          </a>
+          <a href="#logs" className="underline underline-offset-4 hover:text-foreground">
+            Logs
+          </a>
+          <Link href="/admin/pgpt-insights/qa" className="underline underline-offset-4 hover:text-foreground">
+            QA{qaCountLabel}
+          </Link>
+        </nav>
+
+        {/* RAG */}
+        <section id="rag" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6">
+          <details open className="group">
+            <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <h2 className="text-sm font-semibold tracking-wide text-foreground">RAG Health (assistant)</h2>
+                  <p className="text-xs text-muted-foreground">Retrieval quality overview from assistant maxScore signals.</p>
+                </div>
+                <Chevron />
+              </div>
+            </summary>
+
+            <div className="mt-4 space-y-3">
+              {!ragSummary ? (
+                <p className="text-xs text-muted-foreground">No maxScore data yet for the current filters.</p>
+              ) : (
+                <div className="flex flex-wrap gap-3 text-xs">
+                  <div>Avg maxScore: {formatScore(ragSummary.avg_max_score)}</div>
+                  <div>Min maxScore: {formatScore(ragSummary.min_max_score)}</div>
+                  <div>Max maxScore: {formatScore(ragSummary.max_max_score)}</div>
+                  <div>Total: {ragSummary.total}</div>
+                  <div>
+                    Low-score (&lt; {ragSummary.threshold}): {ragSummary.low_count}
                   </div>
                 </div>
               )}
 
-              {recentGuardrailBlocks.length > 0 && (
+              {lowScoreLogs.length > 0 && (
                 <div className="space-y-2">
-                  <h3 className="text-xs font-semibold">Recent guardrail blocks</h3>
+                  <h3 className="text-xs font-semibold">Low-score interactions (maxScore &lt; {LOW_SCORE_THRESHOLD})</h3>
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse text-xs">
                       <thead className="border-b bg-muted/40">
                         <tr>
-                          <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">created_at</th>
-                          <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">env</th>
-                          <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">session_id</th>
-                          <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">reason</th>
-                          <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">prompt</th>
-                          <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">response</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">created_at</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">env</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">session_id</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">prompt</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">response</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">maxScore</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
-                        {recentGuardrailBlocks.map((log) => (
-                          <tr key={`guardrail-${log.id}`}>
+                        {lowScoreLogs.map((log) => (
+                          <tr key={`low-${log.id}`}>
                             <td className="px-2 py-1 whitespace-nowrap">{String(log.created_at)}</td>
                             <td className="px-2 py-1">{log.env}</td>
                             <td className="px-2 py-1">
@@ -892,9 +1088,13 @@ export default async function PgptInsightsPage({
                                 ""
                               )}
                             </td>
-                            <td className="px-2 py-1">{log.guardrail_reason ?? "(none)"}</td>
-                            <td className="px-2 py-1 align-top whitespace-pre-wrap leading-snug">{truncate(log.prompt ?? "", 160)}</td>
-                            <td className="px-2 py-1 align-top whitespace-pre-wrap leading-snug">{truncate(log.response ?? "", 160)}</td>
+                            <td className="px-2 py-1 align-top whitespace-pre-wrap leading-snug">
+                              {truncate(log.prompt ?? "", 160)}
+                            </td>
+                            <td className="px-2 py-1 align-top whitespace-pre-wrap leading-snug">
+                              {truncate(log.response ?? "", 160)}
+                            </td>
+                            <td className="px-2 py-1">{log.max_score ?? ""}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -903,23 +1103,190 @@ export default async function PgptInsightsPage({
                 </div>
               )}
 
-              {guardrailByArchetype.length > 0 && (
+              {topChunks.length > 0 && (
                 <div className="space-y-2">
-                  <h3 className="text-xs font-semibold">Guardrail hits by reason and archetype</h3>
+                  <h3 className="text-xs font-semibold">Top retrieved chunks</h3>
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse text-xs">
                       <thead className="border-b bg-muted/40">
                         <tr>
-                          <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">reason</th>
-                          <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">archetype</th>
-                          <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">hits</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">chunk_id</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">hits</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
-                        {guardrailByArchetype.map((row, idx) => (
-                          <tr key={`${row.guardrail_reason ?? "none"}-${row.archetype ?? "unknown"}-${idx}`}>
-                            <td className="px-2 py-1">{row.guardrail_reason ?? "(none)"}</td>
+                        {topChunks.map((chunk) => (
+                          <tr key={chunk.chunk_id}>
+                            <td className="px-2 py-1">{chunk.chunk_id}</td>
+                            <td className="px-2 py-1">{chunk.hits}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          </details>
+        </section>
+
+        {/* Guardrails */}
+        <section id="guardrails" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6">
+          <details open className="group">
+            <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <h2 className="text-sm font-semibold tracking-wide text-foreground">Guardrail Analytics (assistant)</h2>
+                  <p className="text-xs text-muted-foreground">Block reasons, environments, and archetypes.</p>
+                </div>
+                <Chevron />
+              </div>
+            </summary>
+
+            <div className="mt-4 space-y-3">
+              {guardrailStats.length === 0 &&
+              guardrailByArchetype.length === 0 &&
+              recentGuardrailBlocks.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No guardrail blocks for the current filters.</p>
+              ) : (
+                <>
+                  {guardrailStats.length > 0 && (
+                    <div className="space-y-2">
+                      <h3 className="text-xs font-semibold">Guardrail hits by reason and env</h3>
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse text-xs">
+                          <thead className="border-b bg-muted/40">
+                            <tr>
+                              <th className="px-2 py-1 text-left font-medium text-muted-foreground">reason</th>
+                              <th className="px-2 py-1 text-left font-medium text-muted-foreground">env</th>
+                              <th className="px-2 py-1 text-left font-medium text-muted-foreground">hits</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y">
+                            {guardrailStats.map((row, idx) => (
+                              <tr key={`${row.guardrail_reason ?? "none"}-${row.env}-${idx}`}>
+                                <td className="px-2 py-1">{row.guardrail_reason ?? "(none)"}</td>
+                                <td className="px-2 py-1">{row.env}</td>
+                                <td className="px-2 py-1">{row.hits}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {recentGuardrailBlocks.length > 0 && (
+                    <div className="space-y-2">
+                      <h3 className="text-xs font-semibold">Recent guardrail blocks</h3>
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse text-xs">
+                          <thead className="border-b bg-muted/40">
+                            <tr>
+                              <th className="px-2 py-1 text-left font-medium text-muted-foreground">created_at</th>
+                              <th className="px-2 py-1 text-left font-medium text-muted-foreground">env</th>
+                              <th className="px-2 py-1 text-left font-medium text-muted-foreground">session_id</th>
+                              <th className="px-2 py-1 text-left font-medium text-muted-foreground">reason</th>
+                              <th className="px-2 py-1 text-left font-medium text-muted-foreground">prompt</th>
+                              <th className="px-2 py-1 text-left font-medium text-muted-foreground">response</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y">
+                            {recentGuardrailBlocks.map((log) => (
+                              <tr key={`guardrail-${log.id}`} className="bg-red-500/5">
+                                <td className="px-2 py-1 whitespace-nowrap">{String(log.created_at)}</td>
+                                <td className="px-2 py-1">{log.env}</td>
+                                <td className="px-2 py-1">
+                                  {log.session_id ? (
+                                    <Link
+                                      href={`/admin/pgpt-insights/session/${encodeURIComponent(log.session_id)}`}
+                                      className="text-blue-600 underline"
+                                    >
+                                      {log.session_id}
+                                    </Link>
+                                  ) : (
+                                    ""
+                                  )}
+                                </td>
+                                <td className="px-2 py-1">{log.guardrail_reason ?? "(none)"}</td>
+                                <td className="px-2 py-1 align-top whitespace-pre-wrap leading-snug">
+                                  {truncate(log.prompt ?? "", 160)}
+                                </td>
+                                <td className="px-2 py-1 align-top whitespace-pre-wrap leading-snug">
+                                  {truncate(log.response ?? "", 160)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {guardrailByArchetype.length > 0 && (
+                    <div className="space-y-2">
+                      <h3 className="text-xs font-semibold">Guardrail hits by reason and archetype</h3>
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse text-xs">
+                          <thead className="border-b bg-muted/40">
+                            <tr>
+                              <th className="px-2 py-1 text-left font-medium text-muted-foreground">reason</th>
+                              <th className="px-2 py-1 text-left font-medium text-muted-foreground">archetype</th>
+                              <th className="px-2 py-1 text-left font-medium text-muted-foreground">hits</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y">
+                            {guardrailByArchetype.map((row, idx) => (
+                              <tr key={`${row.guardrail_reason ?? "none"}-${row.archetype ?? "unknown"}-${idx}`}>
+                                <td className="px-2 py-1">{row.guardrail_reason ?? "(none)"}</td>
+                                <td className="px-2 py-1">{row.archetype ?? "(unknown)"}</td>
+                                <td className="px-2 py-1">{row.hits}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </details>
+        </section>
+
+        {/* Archetypes */}
+        <section id="archetypes" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6">
+          <details open className="group">
+            <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <h2 className="text-sm font-semibold tracking-wide text-foreground">Archetype &amp; Intent Analytics</h2>
+                  <p className="text-xs text-muted-foreground">Volume by archetype/intent plus summary health.</p>
+                </div>
+                <Chevron />
+              </div>
+            </summary>
+
+            <div className="mt-4 space-y-3">
+              {archetypeIntentStats.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No archetype/intent data for the current filters.</p>
+              ) : (
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold">Interactions by archetype and intent</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse text-xs">
+                      <thead className="border-b bg-muted/40">
+                        <tr>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">archetype</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">intent</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">hits</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {archetypeIntentStats.map((row, idx) => (
+                          <tr key={`${row.archetype ?? "unknown"}-${row.intent ?? "none"}-${idx}`}>
                             <td className="px-2 py-1">{row.archetype ?? "(unknown)"}</td>
+                            <td className="px-2 py-1">{row.intent ?? "(none)"}</td>
                             <td className="px-2 py-1">{row.hits}</td>
                           </tr>
                         ))}
@@ -928,231 +1295,296 @@ export default async function PgptInsightsPage({
                   </div>
                 </div>
               )}
-            </>
-          )}
+
+              {archetypeSummaries.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold">Archetype summary metrics</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse text-xs">
+                      <thead className="border-b bg-muted/40">
+                        <tr>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">archetype</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">avg maxScore</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">guardrail block rate</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">low-confidence rate</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">total</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {archetypeSummaries.map((row, idx) => (
+                          <tr key={`${row.archetype ?? "unknown"}-${idx}`}>
+                            <td className="px-2 py-1">{row.archetype ?? "(unknown)"}</td>
+                            <td className="px-2 py-1">{formatScore(row.avg_max_score)}</td>
+                            <td className="px-2 py-1">{formatRate(row.guardrail_block_rate)}</td>
+                            <td className="px-2 py-1">{formatRate(row.low_confidence_rate)}</td>
+                            <td className="px-2 py-1">{row.total}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          </details>
         </section>
 
-        <section className="rounded-xl border bg-card/80 backdrop-blur-sm p-4 sm:p-5 space-y-3">
-          <div className="space-y-1">
-            <h2 className="text-sm font-semibold tracking-wide text-foreground">Archetype &amp; Intent Analytics</h2>
-            <p className="text-xs text-muted-foreground">Volume by archetype/intent plus summary health for each persona.</p>
-          </div>
-
-          {archetypeIntentStats.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No archetype/intent data for the current filters.</p>
-          ) : (
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold">Interactions by archetype and intent</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-xs">
-                  <thead className="border-b bg-muted/40">
-                    <tr>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">archetype</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">intent</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">hits</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {archetypeIntentStats.map((row, idx) => (
-                      <tr key={`${row.archetype ?? "unknown"}-${row.intent ?? "none"}-${idx}`}>
-                        <td className="px-2 py-1">{row.archetype ?? "(unknown)"}</td>
-                        <td className="px-2 py-1">{row.intent ?? "(none)"}</td>
-                        <td className="px-2 py-1">{row.hits}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+        {/* Metrics */}
+        <section id="metrics" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6">
+          <details open className="group">
+            <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <h2 className="text-sm font-semibold tracking-wide text-foreground">Metrics (Tokens &amp; Latency)</h2>
+                  <p className="text-xs text-muted-foreground">Cost and responsiveness signals.</p>
+                </div>
+                <Chevron />
               </div>
-            </div>
-          )}
+            </summary>
 
-          {archetypeSummaries.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold">Archetype summary metrics</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-xs">
-                  <thead className="border-b bg-muted/40">
-                    <tr>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">archetype</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">avg maxScore</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">guardrail block rate</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">low-confidence rate</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">total</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {archetypeSummaries.map((row, idx) => (
-                      <tr key={`${row.archetype ?? "unknown"}-${idx}`}>
-                        <td className="px-2 py-1">{row.archetype ?? "(unknown)"}</td>
-                        <td className="px-2 py-1">{formatScore(row.avg_max_score)}</td>
-                        <td className="px-2 py-1">{formatRate(row.guardrail_block_rate)}</td>
-                        <td className="px-2 py-1">{formatRate(row.low_confidence_rate)}</td>
-                        <td className="px-2 py-1">{row.total}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="mt-4 space-y-3">
+              {dailyTokenUsage.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No token usage data for the current filters.</p>
+              ) : (
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold">Daily token usage</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse text-xs">
+                      <thead className="border-b bg-muted/40">
+                        <tr>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">day</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">env</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">endpoint</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">model</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">prompt tokens</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">completion tokens</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">requests</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {dailyTokenUsage.map((row, idx) => (
+                          <tr key={`${row.day}-${row.env}-${row.endpoint}-${row.model ?? "unknown"}-${idx}`}>
+                            <td className="px-2 py-1">{String(row.day)}</td>
+                            <td className="px-2 py-1">{row.env}</td>
+                            <td className="px-2 py-1">{row.endpoint}</td>
+                            <td className="px-2 py-1">{row.model ?? "(unknown)"}</td>
+                            <td className="px-2 py-1">{row.total_prompt_tokens}</td>
+                            <td className="px-2 py-1">{row.total_completion_tokens}</td>
+                            <td className="px-2 py-1">{row.request_count}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {avgMetrics.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold">Average tokens &amp; latency per request</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse text-xs">
+                      <thead className="border-b bg-muted/40">
+                        <tr>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">env</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">endpoint</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">model</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">avg prompt tokens</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">avg completion tokens</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">avg latency (ms)</th>
+                          <th className="px-2 py-1 text-left font-medium text-muted-foreground">requests</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {avgMetrics.map((row, idx) => (
+                          <tr key={`${row.env}-${row.endpoint}-${row.model ?? "unknown"}-${idx}`}>
+                            <td className="px-2 py-1">{row.env}</td>
+                            <td className="px-2 py-1">{row.endpoint}</td>
+                            <td className="px-2 py-1">{row.model ?? "(unknown)"}</td>
+                            <td className="px-2 py-1">
+                              {row.avg_prompt_tokens === null ? "—" : row.avg_prompt_tokens.toFixed(1)}
+                            </td>
+                            <td className="px-2 py-1">
+                              {row.avg_completion_tokens === null ? "—" : row.avg_completion_tokens.toFixed(1)}
+                            </td>
+                            <td className="px-2 py-1">
+                              {row.avg_latency_ms === null ? "—" : Math.round(row.avg_latency_ms)}
+                            </td>
+                            <td className="px-2 py-1">{row.request_count}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </details>
         </section>
 
-        <section className="rounded-xl border bg-card/80 backdrop-blur-sm p-4 sm:p-5 space-y-3">
-          <div className="space-y-1">
-            <h2 className="text-sm font-semibold tracking-wide text-foreground">Metrics (Tokens &amp; Latency)</h2>
-            <p className="text-xs text-muted-foreground">Cost and responsiveness signals by day, env, endpoint, and model.</p>
-          </div>
-          {dailyTokenUsage.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No token usage data for the current filters.</p>
-          ) : (
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold">Daily token usage</h3>
+        {/* Logs */}
+        <section id="logs" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6">
+          <details open className="group">
+            <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <h2 className="text-sm font-semibold tracking-wide text-foreground">Recent Interactions</h2>
+                  <p className="text-xs text-muted-foreground">
+                    Paginated log viewer (search applies only here). Rows are tinted for fast triage.
+                  </p>
+                </div>
+                <Chevron />
+              </div>
+            </summary>
+
+            <div className="mt-4 space-y-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div className="text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">Page {page}</span>
+                  {q ? (
+                    <>
+                      {" "}
+                      · Search: <span className="font-medium text-foreground">“{q}”</span>
+                    </>
+                  ) : null}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {prevHref ? (
+                    <Link href={prevHref} className="rounded-md border px-2 py-1 text-xs hover:bg-muted">
+                      Previous
+                    </Link>
+                  ) : (
+                    <span className="rounded-md border px-2 py-1 text-xs text-muted-foreground opacity-60">Previous</span>
+                  )}
+
+                  {nextHref ? (
+                    <Link href={nextHref} className="rounded-md border px-2 py-1 text-xs hover:bg-muted">
+                      Next
+                    </Link>
+                  ) : (
+                    <span className="rounded-md border px-2 py-1 text-xs text-muted-foreground opacity-60">Next</span>
+                  )}
+
+                  <Link href="/admin/pgpt-insights/qa" className="ml-2 text-xs text-blue-600 underline">
+                    QA Review{qaCountLabel}
+                  </Link>
+                </div>
+              </div>
+
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-xs">
                   <thead className="border-b bg-muted/40">
                     <tr>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">day</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">env</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">endpoint</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">model</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">prompt tokens</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">completion tokens</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">requests</th>
+                      <th className="px-2 py-1 text-left font-medium text-muted-foreground">created_at</th>
+                      <th className="px-2 py-1 text-left font-medium text-muted-foreground">env</th>
+                      <th className="px-2 py-1 text-left font-medium text-muted-foreground">endpoint</th>
+                      <th className="px-2 py-1 text-left font-medium text-muted-foreground">session_id</th>
+                      <th className="px-2 py-1 text-left font-medium text-muted-foreground">prompt</th>
+                      <th className="px-2 py-1 text-left font-medium text-muted-foreground">response</th>
+                      <th className="px-2 py-1 text-left font-medium text-muted-foreground">maxScore</th>
+                      <th className="px-2 py-1 text-left font-medium text-muted-foreground">low_confidence</th>
+                      <th className="px-2 py-1 text-left font-medium text-muted-foreground">intents</th>
+                      <th className="px-2 py-1 text-left font-medium text-muted-foreground">topics</th>
+                      <th className="px-2 py-1 text-left font-medium text-muted-foreground">QA</th>
                     </tr>
                   </thead>
+
                   <tbody className="divide-y">
-                    {dailyTokenUsage.map((row, idx) => (
-                      <tr key={`${row.day}-${row.env}-${row.endpoint}-${row.model ?? "unknown"}-${idx}`}>
-                        <td className="px-2 py-1">{String(row.day)}</td>
-                        <td className="px-2 py-1">{row.env}</td>
-                        <td className="px-2 py-1">{row.endpoint}</td>
-                        <td className="px-2 py-1">{row.model ?? "(unknown)"}</td>
-                        <td className="px-2 py-1">{row.total_prompt_tokens}</td>
-                        <td className="px-2 py-1">{row.total_completion_tokens}</td>
-                        <td className="px-2 py-1">{row.request_count}</td>
+                    {logs.map((log) => {
+                      const tone = logRowToneClass(log);
+                      const score = parseScore(log.max_score);
+
+                      const hover = "hover:bg-muted/30";
+                      const rowClassName = [tone, hover].filter(Boolean).join(" ");
+
+                      return (
+                        <tr key={log.id} className={rowClassName}>
+                          <td className="px-2 py-1 whitespace-nowrap">{String(log.created_at)}</td>
+                          <td className="px-2 py-1">{log.env}</td>
+                          <td className="px-2 py-1">{log.endpoint}</td>
+                          <td className="px-2 py-1">
+                            {log.session_id ? (
+                              <Link
+                                href={`/admin/pgpt-insights/session/${encodeURIComponent(log.session_id)}`}
+                                className="text-blue-600 underline"
+                              >
+                                {log.session_id}
+                              </Link>
+                            ) : (
+                              ""
+                            )}
+                          </td>
+                          <td className="px-2 py-1 align-top whitespace-pre-wrap leading-snug">
+                            {truncate(log.prompt ?? "", 200)}
+                          </td>
+                          <td className="px-2 py-1 align-top whitespace-pre-wrap leading-snug">
+                            {truncate(log.response ?? "", 200)}
+                          </td>
+                          <td className="px-2 py-1">
+                            {score === null ? "" : score.toFixed(3)}
+                            {log.guardrail_status === "blocked" && log.guardrail_reason ? (
+                              <div className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                                blocked: {log.guardrail_reason}
+                              </div>
+                            ) : null}
+                          </td>
+                          <td className="px-2 py-1">{log.low_confidence === null ? "" : String(log.low_confidence)}</td>
+                          <td className="px-2 py-1 align-top">
+                            <ChipRow items={log.intents} />
+                          </td>
+                          <td className="px-2 py-1 align-top">
+                            <ChipRow items={log.topics} />
+                          </td>
+                          <td className="px-2 py-1">
+                            <form method="POST" action="/admin/pgpt-insights/qa/flag" className="inline-flex">
+                              <input type="hidden" name="interactionId" value={log.id} />
+                              <button
+                                type="submit"
+                                className="inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-muted"
+                              >
+                                Flag
+                              </button>
+                            </form>
+                          </td>
+                        </tr>
+                      );
+                    })}
+
+                    {logs.length === 0 && (
+                      <tr>
+                        <td colSpan={11} className="px-2 py-3 text-center text-xs text-muted-foreground">
+                          No results for the selected filters.
+                        </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
-            </div>
-          )}
 
-          {avgMetrics.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold">Average tokens &amp; latency per request</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-xs">
-                  <thead className="border-b bg-muted/40">
-                    <tr>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">env</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">endpoint</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">model</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">avg prompt tokens</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">avg completion tokens</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">avg latency (ms)</th>
-                      <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">requests</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {avgMetrics.map((row, idx) => (
-                      <tr key={`${row.env}-${row.endpoint}-${row.model ?? "unknown"}-${idx}`}>
-                        <td className="px-2 py-1">{row.env}</td>
-                        <td className="px-2 py-1">{row.endpoint}</td>
-                        <td className="px-2 py-1">{row.model ?? "(unknown)"}</td>
-                        <td className="px-2 py-1">
-                          {row.avg_prompt_tokens === null ? "—" : row.avg_prompt_tokens.toFixed(1)}
-                        </td>
-                        <td className="px-2 py-1">
-                          {row.avg_completion_tokens === null ? "—" : row.avg_completion_tokens.toFixed(1)}
-                        </td>
-                        <td className="px-2 py-1">
-                          {row.avg_latency_ms === null ? "—" : Math.round(row.avg_latency_ms)}
-                        </td>
-                        <td className="px-2 py-1">{row.request_count}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="flex items-center justify-between pt-2 text-xs text-muted-foreground">
+                <div>
+                  Showing <span className="font-medium text-foreground">{logs.length}</span> results on this page.
+                </div>
+                <div className="flex items-center gap-2">
+                  {prevHref ? (
+                    <Link href={prevHref} className="rounded-md border px-2 py-1 hover:bg-muted">
+                      Previous
+                    </Link>
+                  ) : (
+                    <span className="rounded-md border px-2 py-1 opacity-60">Previous</span>
+                  )}
+                  {nextHref ? (
+                    <Link href={nextHref} className="rounded-md border px-2 py-1 hover:bg-muted">
+                      Next
+                    </Link>
+                  ) : (
+                    <span className="rounded-md border px-2 py-1 opacity-60">Next</span>
+                  )}
+                </div>
               </div>
             </div>
-          )}
-        </section>
-
-        <section className="rounded-xl border bg-card/80 backdrop-blur-sm p-4 sm:p-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h2 className="text-sm font-semibold tracking-wide text-foreground">Recent Interactions</h2>
-              <p className="text-xs text-muted-foreground">Latest assistant and soul_journey exchanges for quick triage.</p>
-            </div>
-            <Link href="/admin/pgpt-insights/qa" className="text-xs text-blue-600 underline">
-              QA Review
-            </Link>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-xs">
-              <thead className="border-b bg-muted/40">
-                <tr>
-                  <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">created_at</th>
-                  <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">env</th>
-                  <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">endpoint</th>
-                  <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">session_id</th>
-                  <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">prompt</th>
-                  <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">response</th>
-                  <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">maxScore</th>
-                  <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">low_confidence</th>
-                  <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">intents</th>
-                  <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">topics</th>
-                  <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">QA</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {logs.map((log) => (
-                  <tr key={log.id}>
-                    <td className="px-2 py-1 whitespace-nowrap">{String(log.created_at)}</td>
-                    <td className="px-2 py-1">{log.env}</td>
-                    <td className="px-2 py-1">{log.endpoint}</td>
-                    <td className="px-2 py-1">
-                      {log.session_id ? (
-                        <Link
-                          href={`/admin/pgpt-insights/session/${encodeURIComponent(log.session_id)}`}
-                          className="text-blue-600 underline"
-                        >
-                          {log.session_id}
-                        </Link>
-                      ) : (
-                        ""
-                      )}
-                    </td>
-                    <td className="px-2 py-1 align-top whitespace-pre-wrap leading-snug">{truncate(log.prompt ?? "", 200)}</td>
-                    <td className="px-2 py-1 align-top whitespace-pre-wrap leading-snug">{truncate(log.response ?? "", 200)}</td>
-                    <td className="px-2 py-1">{log.max_score ?? ""}</td>
-                    <td className="px-2 py-1">{log.low_confidence === null ? "" : String(log.low_confidence)}</td>
-                    <td className="px-2 py-1">{log.intents ? log.intents.join(", ") : ""}</td>
-                    <td className="px-2 py-1">{log.topics ? log.topics.join(", ") : ""}</td>
-                    <td className="px-2 py-1">
-                      <form method="POST" action="/admin/pgpt-insights/qa/flag" className="inline-flex">
-                        <input type="hidden" name="interactionId" value={log.id} />
-                        <button
-                          type="submit"
-                          className="inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-muted"
-                        >
-                          Flag
-                        </button>
-                      </form>
-                    </td>
-                  </tr>
-                ))}
-                {logs.length === 0 && (
-                  <tr>
-                    <td colSpan={11} className="px-2 py-3 text-center text-xs text-muted-foreground">
-                      No results for the selected filters.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          </details>
         </section>
       </main>
     </div>
