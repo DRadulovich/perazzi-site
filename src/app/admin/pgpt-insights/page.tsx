@@ -157,11 +157,11 @@ function MiniBar({
   value,
   max,
   label,
-}: Readonly<{
+}: {
   value: number;
   max: number;
   label?: string;
-}>) {
+}) {
   const w = barWidthPct(value, max);
 
   return (

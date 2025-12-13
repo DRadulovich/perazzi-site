@@ -1,137 +1,668 @@
+import type { JSX } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pool } from "pg";
 
-type QaFlagRow = {
-  id: string;
-  created_at: Date;
+type QaRow = {
+  flag_id: string;
+  flag_created_at: string;
+  flag_status: string;
+  flag_reason: string | null;
+  flag_notes: string | null;
   interaction_id: string;
-  status: string;
-  reason: string | null;
-  notes: string | null;
+
+  interaction_created_at: string;
   env: string;
   endpoint: string;
+  archetype: string | null;
   session_id: string | null;
-  model: string | null;
   prompt: string;
   response: string;
+
   max_score: string | null;
   guardrail_status: string | null;
   guardrail_reason: string | null;
+  low_confidence: boolean | null;
 };
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
-async function fetchOpenFlags(): Promise<QaFlagRow[]> {
+function truncate(text: string, length = 220) {
+  if (!text) return "";
+  return text.length > length ? `${text.slice(0, length)}...` : text;
+}
+
+function parseScore(score: string | null): number | null {
+  if (!score) return null;
+  const n = Number(score);
+  return Number.isFinite(n) ? n : null;
+}
+
+function formatScore(value: number | null) {
+  if (value === null || Number.isNaN(value)) return "—";
+  return value.toFixed(3);
+}
+
+// --- Minimal Markdown renderer ---
+function isSafeHref(href: string): boolean {
+  const trimmed = href.trim();
+  return (
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("mailto:")
+  );
+}
+
+function renderInlineMarkdown(text: string): Array<string | JSX.Element> {
+  // Minimal inline support: links, bold, inline code, underscores italic.
+  // No raw HTML is ever rendered.
+  const out: Array<string | JSX.Element> = [];
+  let remaining = text;
+  let key = 0;
+
+  const patterns: Array<{ type: "link" | "code" | "bold" | "italic"; re: RegExp }> = [
+    { type: "link", re: /\[([^\]]+)\]\(([^)]+)\)/ },
+    { type: "code", re: /`([^`]+)`/ },
+    { type: "bold", re: /\*\*([^*]+)\*\*/ },
+    { type: "italic", re: /_([^_]+)_/ },
+  ];
+
+  while (remaining.length > 0) {
+    let earliest:
+      | {
+          type: "link" | "code" | "bold" | "italic";
+          match: RegExpMatchArray;
+          index: number;
+        }
+      | null = null;
+
+    for (const p of patterns) {
+      const m = p.re.exec(remaining);
+      if (!m || m.index === undefined) continue;
+      if (!earliest || m.index < earliest.index) {
+        earliest = { type: p.type, match: m, index: m.index };
+      }
+    }
+
+    if (!earliest) {
+      out.push(remaining);
+      break;
+    }
+
+    if (earliest.index > 0) {
+      out.push(remaining.slice(0, earliest.index));
+    }
+
+    const full = earliest.match[0] ?? "";
+
+    if (earliest.type === "link") {
+      const label = earliest.match[1] ?? "";
+      const href = earliest.match[2] ?? "";
+      if (isSafeHref(href)) {
+        out.push(
+          <a
+            key={`md-link-${key++}`}
+            href={href}
+            className="text-blue-600 underline underline-offset-4 hover:text-blue-700"
+            target={href.startsWith("http") ? "_blank" : undefined}
+            rel={href.startsWith("http") ? "noreferrer" : undefined}
+          >
+            {label}
+          </a>,
+        );
+      } else {
+        out.push(label);
+      }
+    } else if (earliest.type === "code") {
+      const code = earliest.match[1] ?? "";
+      out.push(
+        <code
+          key={`md-code-${key++}`}
+          className="rounded border border-border bg-muted/30 px-1 py-0.5 font-mono text-[11px] text-foreground"
+        >
+          {code}
+        </code>,
+      );
+    } else if (earliest.type === "bold") {
+      const content = earliest.match[1] ?? "";
+      out.push(
+        <strong key={`md-bold-${key++}`} className="font-semibold text-foreground">
+          {content}
+        </strong>,
+      );
+    } else if (earliest.type === "italic") {
+      const content = earliest.match[1] ?? "";
+      out.push(
+        <em key={`md-italic-${key++}`} className="italic text-foreground">
+          {content}
+        </em>,
+      );
+    }
+
+    remaining = remaining.slice(earliest.index + full.length);
+  }
+
+  // Preserve explicit newlines inside paragraphs.
+  const withBreaks: Array<string | JSX.Element> = [];
+  for (const node of out) {
+    if (typeof node !== "string") {
+      withBreaks.push(node);
+      continue;
+    }
+    const parts = node.split("\n");
+    parts.forEach((part, idx) => {
+      if (part) withBreaks.push(part);
+      if (idx < parts.length - 1) withBreaks.push(<br key={`md-br-${key++}`} />);
+    });
+  }
+
+  return withBreaks;
+}
+
+type MarkdownBlock =
+  | { type: "heading"; level: number; text: string }
+  | { type: "paragraph"; text: string }
+  | { type: "code"; lang: string | null; code: string }
+  | { type: "ul"; items: string[] }
+  | { type: "ol"; items: string[] };
+
+function parseMarkdownBlocks(markdown: string): MarkdownBlock[] {
+  const src = String(markdown ?? "").replaceAll("\r\n", "\n");
+  const lines = src.split("\n");
+
+  const blocks: MarkdownBlock[] = [];
+  let para: string[] = [];
+
+  let inFence = false;
+  let fenceLang: string | null = null;
+  let fenceLines: string[] = [];
+
+  const flushPara = () => {
+    const text = para.join("\n").trim();
+    if (text) blocks.push({ type: "paragraph", text });
+    para = [];
+  };
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i] ?? "";
+
+    const fenceMatch = /^```\s*(\w+)?\s*$/.exec(line);
+    if (fenceMatch) {
+      if (inFence) {
+        blocks.push({ type: "code", lang: fenceLang, code: fenceLines.join("\n") });
+        inFence = false;
+        fenceLang = null;
+        fenceLines = [];
+      } else {
+        flushPara();
+        inFence = true;
+        fenceLang = fenceMatch[1] ?? null;
+        fenceLines = [];
+      }
+      i += 1;
+      continue;
+    }
+
+    if (inFence) {
+      fenceLines.push(line);
+      i += 1;
+      continue;
+    }
+
+    // Headings
+    const headingMatch = /^(#{1,6})\s+(.*)$/.exec(line);
+    if (headingMatch) {
+      flushPara();
+      const level = Math.min(6, headingMatch[1]?.length ?? 1);
+      blocks.push({ type: "heading", level, text: headingMatch[2] ?? "" });
+      i += 1;
+      continue;
+    }
+
+    // Unordered list
+    if (/^\s*[-*]\s+/.test(line)) {
+      flushPara();
+      const items: string[] = [];
+      while (i < lines.length && /^\s*[-*]\s+/.test(lines[i] ?? "")) {
+        items.push(String(lines[i]).replace(/^\s*[-*]\s+/, "").trim());
+        i += 1;
+      }
+      blocks.push({ type: "ul", items });
+      continue;
+    }
+
+    // Ordered list
+    if (/^\s*\d+\.\s+/.test(line)) {
+      flushPara();
+      const items: string[] = [];
+      while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i] ?? "")) {
+        items.push(String(lines[i]).replace(/^\s*\d+\.\s+/, "").trim());
+        i += 1;
+      }
+      blocks.push({ type: "ol", items });
+      continue;
+    }
+
+    // Blank line -> paragraph break
+    if (line.trim() === "") {
+      flushPara();
+      i += 1;
+      continue;
+    }
+
+    para.push(line);
+    i += 1;
+  }
+
+  if (inFence) {
+    // Unclosed fence: treat as code.
+    blocks.push({ type: "code", lang: fenceLang, code: fenceLines.join("\n") });
+  }
+
+  flushPara();
+  return blocks;
+}
+
+function stableHash(input: string): string {
+  // Deterministic, non-cryptographic hash for React keys.
+  let hash = 0;
+
+  let i = 0;
+  while (i < input.length) {
+    const codePoint = input.codePointAt(i) ?? 0;
+    hash = (hash << 5) - hash + codePoint;
+    hash = Math.trunc(hash);
+    i += codePoint > 0xffff ? 2 : 1;
+  }
+
+  return (hash >>> 0).toString(36);
+}
+
+function markdownBlockKeyString(b: MarkdownBlock): string {
+  if (b.type === "heading") return `heading:${b.level}:${b.text}`;
+  if (b.type === "paragraph") return `paragraph:${b.text}`;
+  if (b.type === "code") return `code:${b.lang ?? ""}:${b.code}`;
+  if (b.type === "ul") return `ul:${b.items.join("\n")}`;
+  return `ol:${b.items.join("\n")}`;
+}
+
+function MarkdownView({ markdown }: Readonly<{ markdown: string }>) {
+  const blocks = parseMarkdownBlocks(markdown);
+
+  if (blocks.length === 0) {
+    return <div className="text-muted-foreground">(empty)</div>;
+  }
+
+  const blockKeyCounts = new Map<string, number>();
+  const nextBlockKey = (base: string) => {
+    const next = (blockKeyCounts.get(base) ?? 0) + 1;
+    blockKeyCounts.set(base, next);
+    return `${base}-${next}`;
+  };
+
+  const makeNextItemKey = (parentKey: string) => {
+    const itemKeyCounts = new Map<string, number>();
+    return (item: string) => {
+      const base = `${parentKey}-item-${stableHash(item)}`;
+      const next = (itemKeyCounts.get(base) ?? 0) + 1;
+      itemKeyCounts.set(base, next);
+      return `${base}-${next}`;
+    };
+  };
+
+  return (
+    <div className="space-y-3">
+      {blocks.map((b) => {
+        const keyBase = `md-${b.type}-${stableHash(markdownBlockKeyString(b))}`;
+        const blockKey = nextBlockKey(keyBase);
+
+        if (b.type === "heading") {
+          const base =
+            b.level <= 2
+              ? "text-sm font-semibold"
+              : b.level === 3
+                ? "text-xs font-semibold"
+                : "text-xs font-medium";
+          return (
+            <div key={blockKey} className={`${base} text-foreground`}>
+              {renderInlineMarkdown(b.text)}
+            </div>
+          );
+        }
+
+        if (b.type === "code") {
+          return (
+            <pre
+              key={blockKey}
+              className="overflow-x-auto rounded-lg border border-border bg-muted/30 p-3 text-[11px] leading-snug text-foreground"
+            >
+              <code className="font-mono">{b.code}</code>
+            </pre>
+          );
+        }
+
+        if (b.type === "ul") {
+          const nextItemKey = makeNextItemKey(blockKey);
+
+          return (
+            <ul key={blockKey} className="list-disc space-y-1 pl-5 text-xs leading-relaxed text-foreground">
+              {b.items.map((it) => (
+                <li key={nextItemKey(it)}>{renderInlineMarkdown(it)}</li>
+              ))}
+            </ul>
+          );
+        }
+
+        if (b.type === "ol") {
+          const nextItemKey = makeNextItemKey(blockKey);
+
+          return (
+            <ol key={blockKey} className="list-decimal space-y-1 pl-5 text-xs leading-relaxed text-foreground">
+              {b.items.map((it) => (
+                <li key={nextItemKey(it)}>{renderInlineMarkdown(it)}</li>
+              ))}
+            </ol>
+          );
+        }
+
+        // paragraph
+        return (
+          <p key={blockKey} className="text-xs leading-relaxed text-foreground">
+            {renderInlineMarkdown(b.text)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+async function fetchOpenCount(): Promise<number> {
+  const { rows } = await pool.query<{ open_count: string | number }>(
+    `select count(*) as open_count from qa_flags where status = 'open';`,
+  );
+  return Number(rows[0]?.open_count ?? 0);
+}
+
+async function fetchQaFlags(args: { status?: string; q?: string; limit: number }): Promise<QaRow[]> {
+  const conditions: string[] = [];
+  const params: (string | number)[] = [];
+  let idx = 1;
+
+  if (args.status && args.status !== "all") {
+    conditions.push(`f.status = $${idx++}`);
+    params.push(args.status);
+  }
+
+  if (args.q && args.q.trim().length > 0) {
+    const q = `%${args.q.trim()}%`;
+    conditions.push(
+      `(f.reason ILIKE $${idx} OR f.notes ILIKE $${idx} OR l.prompt ILIKE $${idx} OR l.response ILIKE $${idx})`,
+    );
+    params.push(q);
+    idx += 1;
+  }
+
+  const whereClause = conditions.length ? `where ${conditions.join(" and ")}` : "";
+
+  params.push(args.limit);
+  const limitParamIndex = idx;
+
   const query = `
     select
-      f.id,
-      f.created_at,
-      f.interaction_id,
-      f.status,
-      f.reason,
-      f.notes,
+      f.id as flag_id,
+      f.created_at as flag_created_at,
+      f.status as flag_status,
+      f.reason as flag_reason,
+      f.notes as flag_notes,
+      f.interaction_id::text as interaction_id,
+
+      l.created_at as interaction_created_at,
       l.env,
       l.endpoint,
+      l.archetype,
       l.session_id,
-      l.model,
       l.prompt,
       l.response,
+      l.low_confidence,
       l.metadata->>'maxScore' as max_score,
       l.metadata->>'guardrailStatus' as guardrail_status,
       l.metadata->>'guardrailReason' as guardrail_reason
     from qa_flags f
-    join perazzi_conversation_logs l
-      on f.interaction_id = l.id
-    where f.status = 'open'
-    order by f.created_at desc
-    limit 100;
+    join perazzi_conversation_logs l on l.id = f.interaction_id
+    ${whereClause}
+    order by (case when f.status = 'open' then 0 else 1 end), f.created_at desc
+    limit $${limitParamIndex};
   `;
-  const { rows } = await pool.query<QaFlagRow>(query);
+
+  const { rows } = await pool.query<QaRow>(query, params);
   return rows;
 }
 
-export default async function QaReviewPage() {
+export default async function PgptInsightsQaPage({
+  searchParams,
+}: Readonly<{
+  searchParams?: Promise<{ status?: string; q?: string }>;
+}>) {
+  const resolvedSearchParams = (await searchParams) ?? {};
+
   const env = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "development";
   const allowInProd = process.env.PGPT_INSIGHTS_ALLOW_PROD === "true";
   if (env === "production" && !allowInProd) {
     notFound();
   }
 
-  const flags = await fetchOpenFlags();
+  const statusRaw = (resolvedSearchParams.status ?? "open").trim();
+  const status = statusRaw === "open" || statusRaw === "resolved" || statusRaw === "all" ? statusRaw : "open";
+
+  const qRaw = (resolvedSearchParams.q ?? "").trim();
+  const q = qRaw.length > 0 ? qRaw.slice(0, 200) : "";
+
+  const [openCount, rows] = await Promise.all([
+    fetchOpenCount(),
+    fetchQaFlags({ status, q: q.length ? q : undefined, limit: 250 }),
+  ]);
+
+  const qaCountLabel = openCount > 0 ? ` (${openCount})` : "";
+
+  const currentHrefParams = new URLSearchParams();
+  if (status) currentHrefParams.set("status", status);
+  if (q) currentHrefParams.set("q", q);
+  const currentHref = currentHrefParams.toString()
+    ? `/admin/pgpt-insights/qa?${currentHrefParams.toString()}`
+    : "/admin/pgpt-insights/qa";
 
   return (
     <div className="min-h-screen bg-canvas text-ink">
-      <main className="mx-auto max-w-6xl px-6 py-10 space-y-8">
-        <header className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
-          <h1 className="text-xl font-semibold tracking-tight">QA Review</h1>
-          <Link href="/admin/pgpt-insights" className="text-xs text-blue-600 underline">
-            Back to insights
-          </Link>
+      <main className="mx-auto max-w-6xl px-6 py-12 md:py-14 space-y-8">
+        <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-1">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Perazzi · Workshop</p>
+            <h1 className="text-2xl font-semibold tracking-tight">QA Review{qaCountLabel}</h1>
+            <p className="text-xs text-muted-foreground">Flagged interactions with reason + notes.</p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Link href="/admin/pgpt-insights" className="rounded-md border px-3 py-1 text-xs hover:bg-muted">
+              Back to Insights
+            </Link>
+          </div>
         </header>
 
-        {flags.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No open QA flags.</p>
-        ) : (
-          <section className="rounded-xl border bg-card/80 backdrop-blur-sm p-4 sm:p-5 space-y-3">
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-sm font-semibold tracking-wide text-foreground">Open QA flags</h2>
-              <p className="text-xs text-muted-foreground">Resolve flagged interactions to close the loop.</p>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-xs">
-                <thead className="border-b bg-muted/40">
-                  <tr>
-                    <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">Created</th>
-                    <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">Env</th>
-                    <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">Endpoint</th>
-                    <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">Prompt</th>
-                    <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">Response</th>
-                    <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">maxScore</th>
-                    <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">Guardrail</th>
-                    <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">Reason</th>
-                    <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">Notes</th>
-                    <th className="px-2 py-1 text-left text-xs font-medium text-muted-foreground">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {flags.map((flag) => (
-                    <tr key={flag.id}>
-                      <td className="px-2 py-1 whitespace-nowrap">{String(flag.created_at)}</td>
-                      <td className="px-2 py-1">{flag.env}</td>
-                      <td className="px-2 py-1">{flag.endpoint}</td>
-                      <td className="px-2 py-1 align-top whitespace-pre-wrap leading-snug">
-                        {flag.prompt.length > 160 ? `${flag.prompt.slice(0, 160)}...` : flag.prompt}
+        <section className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6 space-y-3">
+          <h2 className="text-sm font-semibold tracking-wide text-foreground">Filters</h2>
+
+          <form method="GET" className="flex flex-col gap-3 sm:flex-row sm:items-end sm:flex-wrap">
+            <label className="text-sm">
+              <span>Status:</span>
+              <select name="status" defaultValue={status} className="ml-2 h-9 rounded-md border bg-background px-2 text-sm">
+                <option value="open">open</option>
+                <option value="resolved">resolved</option>
+                <option value="all">all</option>
+              </select>
+            </label>
+
+            <label className="text-sm">
+              <span>Search:</span>
+              <input
+                name="q"
+                defaultValue={q}
+                placeholder="Reason, notes, prompt, response…"
+                className="ml-2 h-9 w-[360px] max-w-full rounded-md border bg-background px-3 text-sm"
+              />
+            </label>
+
+            <button
+              type="submit"
+              className="inline-flex h-9 items-center rounded-md bg-foreground px-4 text-xs font-medium text-background"
+            >
+              Apply
+            </button>
+          </form>
+        </section>
+
+        <section className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6">
+          <div className="overflow-x-auto rounded-xl border border-border">
+            <table className="w-full min-w-[1280px] table-fixed border-collapse text-xs">
+              <colgroup>
+                <col className="w-[240px]" />
+                <col className="w-[90px]" />
+                <col className="w-[150px]" />
+                <col className="w-[220px]" />
+                <col className="w-[120px]" />
+                <col className="w-[120px]" />
+                <col className="w-[210px]" />
+                <col className="w-[320px]" />
+                <col className="w-[360px]" />
+                <col className="w-[180px]" />
+                <col className="w-[120px]" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">flagged_at</th>
+                  <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">status</th>
+                  <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">reason</th>
+                  <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">notes</th>
+                  <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">env</th>
+                  <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">endpoint</th>
+                  <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">session</th>
+                  <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">prompt</th>
+                  <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">response</th>
+                  <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">signals</th>
+                  <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">actions</th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-border/60">
+                {rows.map((row) => {
+                  const score = parseScore(row.max_score);
+                  const isOpen = row.flag_status === "open";
+                  const rowTone = isOpen
+                    ? "border-l-4 border-red-500/50 bg-red-500/5"
+                    : row.flag_status === "resolved"
+                      ? "border-l-4 border-emerald-500/30"
+                      : "border-l-4 border-transparent";
+                  const anchorId = `flag-${row.flag_id}`;
+
+                  return (
+                    <tr key={row.flag_id} id={anchorId} className={`${rowTone} scroll-mt-24 hover:bg-muted/20`}>
+                      <td className="px-3 py-2 whitespace-normal break-words leading-snug">{String(row.flag_created_at)}</td>
+                      <td className="px-3 py-2">
+                        {isOpen ? (
+                          <span className="inline-flex items-center rounded-full border border-red-500/20 bg-red-500/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-red-700">
+                            open
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-emerald-700">
+                            resolved
+                          </span>
+                        )}
                       </td>
-                      <td className="px-2 py-1 align-top whitespace-pre-wrap leading-snug">
-                        {flag.response.length > 160 ? `${flag.response.slice(0, 160)}...` : flag.response}
-                      </td>
-                      <td className="px-2 py-1">{flag.max_score ?? ""}</td>
-                      <td className="px-2 py-1">
-                        {flag.guardrail_status
-                          ? `${flag.guardrail_status}${flag.guardrail_reason ? ` (${flag.guardrail_reason})` : ""}`
-                          : ""}
-                      </td>
-                      <td className="px-2 py-1">{flag.reason ?? ""}</td>
-                      <td className="px-2 py-1">{flag.notes ?? ""}</td>
-                      <td className="px-2 py-1">
-                        <form method="POST" action="/admin/pgpt-insights/qa/resolve" className="inline-flex">
-                          <input type="hidden" name="flagId" value={flag.id} />
-                          <button
-                            type="submit"
-                            className="inline-flex items-center rounded-md bg-foreground px-2 py-1 text-xs font-medium text-background"
+                      <td className="px-3 py-2">{row.flag_reason ?? "(none)"}</td>
+                      <td className="px-3 py-2 break-words">{row.flag_notes ? truncate(row.flag_notes, 120) : ""}</td>
+                      <td className="px-3 py-2">{row.env}</td>
+                      <td className="px-3 py-2">{row.endpoint}</td>
+                      <td className="px-3 py-2">
+                        {row.session_id ? (
+                          <Link
+                            href={`/admin/pgpt-insights/session/${encodeURIComponent(row.session_id)}#interaction-${encodeURIComponent(row.interaction_id)}`}
+                            className="text-blue-600 underline"
                           >
-                            Mark resolved
-                          </button>
-                        </form>
+                            {row.session_id}
+                          </Link>
+                        ) : (
+                          ""
+                        )}
+                      </td>
+                      <td className="px-3 py-2 align-top">
+                        <details className="group">
+                          <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                            <div className="break-words text-xs leading-snug text-foreground">
+                              {truncate(row.prompt ?? "", 180)}
+                            </div>
+                            <div className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground group-open:hidden">
+                              expand
+                            </div>
+                          </summary>
+                          <pre className="mt-2 whitespace-pre-wrap rounded-lg border border-border bg-background p-2 text-xs leading-snug text-foreground">
+                            {row.prompt ?? ""}
+                          </pre>
+                        </details>
+                      </td>
+                      <td className="px-3 py-2 align-top">
+                        <details className="group">
+                          <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                            <div className="break-words text-xs leading-snug text-foreground">
+                              {truncate(row.response ?? "", 180)}
+                            </div>
+                            <div className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground group-open:hidden">
+                              expand
+                            </div>
+                          </summary>
+                          <div className="mt-2 max-h-[480px] overflow-auto rounded-lg border border-border bg-background p-3 text-xs text-foreground">
+                            <MarkdownView markdown={row.response ?? ""} />
+                          </div>
+                        </details>
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="space-y-1 text-[11px]">
+                          <div>maxScore: {score === null ? "—" : score.toFixed(3)}</div>
+                          {row.low_confidence === true ? <div className="text-amber-700">low_confidence</div> : null}
+                          {row.guardrail_status === "blocked" ? (
+                            <div className="text-red-700">{`blocked${row.guardrail_reason ? `: ${row.guardrail_reason}` : ""}`}</div>
+                          ) : null}
+                          {row.archetype ? <div>archetype: {row.archetype}</div> : null}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2">
+                        {isOpen ? (
+                          <form method="POST" action="/admin/pgpt-insights/qa/resolve" className="inline-flex"><input type="hidden" name="flagId" value={row.flag_id} /><input type="hidden" name="returnTo" value={currentHref} />
+                            <button
+                              type="submit"
+                              className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1 text-[11px] text-muted-foreground hover:bg-muted"
+                            >
+                              Resolve
+                            </button>
+                          </form>
+                        ) : (
+                          <span className="text-[11px] text-muted-foreground">—</span>
+                        )}
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        )}
+                  );
+                })}
+
+                {rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={11} className="px-3 py-4 text-center text-xs text-muted-foreground">
+                      No QA flags for the current filter.
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </section>
       </main>
     </div>
   );
