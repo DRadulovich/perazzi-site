@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Pool } from "pg";
+import type { ReactNode } from "react";
 
 type PerazziLogRow = {
   id: string;
@@ -108,8 +109,8 @@ function isSafeHref(href: string): boolean {
   return trimmed.startsWith("https://") || trimmed.startsWith("http://") || trimmed.startsWith("mailto:");
 }
 
-function renderInlineMarkdown(text: string): Array<string | JSX.Element> {
-  const out: Array<string | JSX.Element> = [];
+function renderInlineMarkdown(text: string): ReactNode[] {
+  const out: ReactNode[] = [];
   let remaining = text;
   let key = 0;
 
@@ -191,7 +192,7 @@ function renderInlineMarkdown(text: string): Array<string | JSX.Element> {
     remaining = remaining.slice(earliest.index + full.length);
   }
 
-  const withBreaks: Array<string | JSX.Element> = [];
+  const withBreaks: ReactNode[] = [];
   for (const node of out) {
     if (typeof node !== "string") {
       withBreaks.push(node);
