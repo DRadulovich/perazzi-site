@@ -43,6 +43,22 @@ const QUICK_STARTS = [
   },
 ];
 
+const SESSION_STORAGE_KEY = "perazzi_session_id";
+
+const normalizeLabel = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9-_]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const createRandomId = () => {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+};
+
 type ChatPanelProps = {
   readonly open: boolean;
   readonly onClose?: () => void;
@@ -50,6 +66,7 @@ type ChatPanelProps = {
   readonly className?: string;
   readonly pendingPrompt?: ChatTriggerPayload | null;
   readonly onPromptConsumed?: () => void;
+  readonly showResetButton?: boolean;
 };
 
 const markdownComponents = {
@@ -100,11 +117,22 @@ export function ChatPanel({
   className,
   pendingPrompt,
   onPromptConsumed,
+  showResetButton = false,
 }: ChatPanelProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
   const analyticsRef = useAnalyticsObserver<HTMLDivElement>("ChatPanelSeen");
-  const { messages, pending, isTyping, error, sendMessage, context, updateContext, appendLocal } =
-    usePerazziAssistant();
+  const {
+    messages,
+    pending,
+    isTyping,
+    error,
+    sendMessage,
+    context,
+    updateContext,
+    appendLocal,
+    clearConversation,
+    setContext,
+  } = usePerazziAssistant();
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [showQuickStarts, setShowQuickStarts] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -113,6 +141,9 @@ export function ChatPanel({
   const [legacyStep, setLegacyStep] = useState(0);
   const [legacyAnswers, setLegacyAnswers] = useState<string[]>([]);
   const [legacyTriggerSeen, setLegacyTriggerSeen] = useState(false);
+  const [sessionPromptOpen, setSessionPromptOpen] = useState(false);
+  const [sessionLabel, setSessionLabel] = useState("");
+  const sessionInputRef = useRef<HTMLInputElement | null>(null);
 
   const legacyQuestions = useMemo(
     () => [
@@ -122,6 +153,13 @@ export function ChatPanel({
     ],
     [],
   );
+
+  useEffect(() => {
+    if (sessionPromptOpen && sessionInputRef.current) {
+      sessionInputRef.current.focus();
+      sessionInputRef.current.select();
+    }
+  }, [sessionPromptOpen]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -192,6 +230,71 @@ export function ChatPanel({
     setLegacyMode(false);
     setLegacyStep(0);
     setLegacyAnswers([]);
+  };
+
+  const handleSessionIdConfirm = () => {
+    if (typeof window === "undefined") return;
+    const normalizedLabel = normalizeLabel(sessionLabel);
+    const randomId = createRandomId();
+    const combined = normalizedLabel ? `${normalizedLabel}_${randomId}` : randomId;
+
+    try {
+      window.localStorage.setItem(SESSION_STORAGE_KEY, combined);
+    } catch {
+      // ignore storage errors
+    }
+    setSessionPromptOpen(false);
+    setSessionLabel("");
+  };
+
+  const handleSessionPromptCancel = () => {
+    setSessionPromptOpen(false);
+    setSessionLabel("");
+  };
+
+  const handleResetVisitor = () => {
+    const confirmed = typeof globalThis.confirm === "function"
+      ? globalThis.confirm("Reset the concierge and clear all stored data for this site?")
+      : true;
+    if (!confirmed) return;
+
+    // Clear in-memory chat and context state.
+    clearConversation();
+    setContext({});
+    setShowQuickStarts(true);
+    exitLegacyMode();
+    setLegacyTriggerSeen(false);
+    lastPromptRef.current = null;
+    setCopiedId(null);
+
+    // Clear browser storage to simulate a new visitor.
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.clear();
+      } catch {
+        // ignore
+      }
+      try {
+        window.sessionStorage.clear();
+      } catch {
+        // ignore
+      }
+    }
+    if (typeof document !== "undefined") {
+      try {
+        const cookies = document.cookie.split(";");
+        cookies.forEach((cookie) => {
+          const [name] = cookie.split("=");
+          if (!name) return;
+          document.cookie = `${name.trim()}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+        });
+      } catch {
+        // ignore cookie clear errors
+      }
+    }
+
+    setSessionLabel("");
+    setSessionPromptOpen(true);
   };
 
   const handleLegacyAnswer = (answer: string) => {
@@ -272,9 +375,54 @@ export function ChatPanel({
           analyticsRef.current = node;
         }}
         data-analytics-id="ChatPanelSeen"
-        className={`${rootClasses} z-40`}
+        className={`${rootClasses} z-40 relative`}
         style={{ minWidth: variant === "rail" ? "320px" : undefined }}
       >
+      {sessionPromptOpen && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-2xl border border-subtle bg-card p-5 shadow-elevated">
+            <h3 className="text-lg font-semibold text-ink">Input New Session ID</h3>
+            <p className="mt-2 text-sm text-ink-muted">
+              We&apos;ll prepend this to a fresh random ID to reduce collisions (example: label_uuid).
+            </p>
+            <div className="mt-4 space-y-3">
+              <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted">
+                Session label
+                <input
+                  ref={sessionInputRef}
+                  type="text"
+                  value={sessionLabel}
+                  onChange={(event) => setSessionLabel(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      handleSessionIdConfirm();
+                    }
+                  }}
+                  className="mt-2 w-full rounded-xl border border-subtle bg-card px-3 py-2 text-sm text-ink outline-none focus:border-ink focus-ring"
+                  placeholder="e.g., dealer-demo"
+                />
+              </label>
+              <div className="flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  className="rounded-full border border-subtle px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+                  onClick={handleSessionPromptCancel}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="rounded-full bg-ink px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-card transition hover:bg-ink-muted disabled:cursor-not-allowed disabled:bg-subtle disabled:text-ink-muted"
+                  onClick={handleSessionIdConfirm}
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="space-y-3 border-b border-subtle px-6 py-5">
         <div className="flex items-center justify-between">
           <div>
@@ -284,6 +432,15 @@ export function ChatPanel({
             <h2 className="text-xl font-semibold">Where shall we begin?</h2>
           </div>
           <div className="flex items-center gap-2">
+            {showResetButton && (
+              <button
+                type="button"
+                className="rounded-full border border-subtle px-3 py-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted transition hover:border-ink hover:text-ink"
+                onClick={handleResetVisitor}
+              >
+                Reset visitor
+              </button>
+            )}
             {legacyMode && (
               <button
                 type="button"

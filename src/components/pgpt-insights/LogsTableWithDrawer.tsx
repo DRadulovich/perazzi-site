@@ -1,16 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { LOW_SCORE_THRESHOLD } from "../../lib/pgpt-insights/constants";
 import type { PerazziLogPreviewRow, PgptLogDetailResponse } from "../../lib/pgpt-insights/types";
 
+import { CopyButton } from "./CopyButton";
+import { ArchetypeStackedBar, computeWinnerAndRunner } from "./archetype/ArchetypeStackedBar";
 import { formatCompactNumber, formatDurationMs, formatScore, formatTimestampShort } from "./format";
 import { MarkdownViewClient } from "./MarkdownViewClient";
 
 type TabKey = "summary" | "prompt" | "response" | "retrieval" | "qa";
+
+const QA_REASON_OPTIONS = [
+  "hallucination",
+  "bad_tone",
+  "wrong_retrieval",
+  "guardrail_false_positive",
+  "guardrail_false_negative",
+  "other",
+] as const;
 
 function cn(...parts: Array<string | null | undefined | false>) {
   return parts.filter(Boolean).join(" ");
@@ -36,17 +46,14 @@ function parseScore(score: string | null | undefined): number | null {
 }
 
 function rowToneClass(log: PerazziLogPreviewRow): string {
-  // Priority:
-  // 1) guardrail blocked
-  // 2) low confidence
-  // 3) low maxScore (assistant)
-  if (log.guardrail_status === "blocked") return "border-l-4 border-red-500/50 bg-red-500/5";
-  if (log.low_confidence === true) return "border-l-4 border-amber-500/50 bg-amber-500/5";
+  if (log.guardrail_status === "blocked")
+    return "border-l-4 border-red-500/50 bg-red-500/5 dark:border-red-500/60 dark:bg-red-500/15";
+  if (log.low_confidence === true)
+    return "border-l-4 border-amber-500/50 bg-amber-500/5 dark:border-amber-500/60 dark:bg-amber-500/15";
 
   const s = parseScore(log.max_score);
-  if (log.endpoint === "assistant" && s !== null && s < LOW_SCORE_THRESHOLD) {
-    return "border-l-4 border-yellow-500/50 bg-yellow-500/5";
-  }
+  if (log.endpoint === "assistant" && s !== null && s < LOW_SCORE_THRESHOLD)
+    return "border-l-4 border-yellow-500/50 bg-yellow-500/5 dark:border-yellow-500/60 dark:bg-yellow-500/15";
 
   return "border-l-4 border-transparent";
 }
@@ -56,21 +63,21 @@ function Badge({
   tone = "default",
   title,
 }: {
-  children: ReactNode;
+  children: React.ReactNode;
   tone?: "default" | "red" | "amber" | "yellow" | "blue" | "purple";
   title?: string;
 }) {
   const toneClass =
     tone === "red"
-      ? "border-red-500/30 bg-red-500/10 text-red-700"
+      ? "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300"
       : tone === "amber"
-        ? "border-amber-500/30 bg-amber-500/10 text-amber-700"
+        ? "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
         : tone === "yellow"
-          ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-700"
+          ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300"
           : tone === "blue"
-            ? "border-blue-500/30 bg-blue-500/10 text-blue-700"
+            ? "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300"
             : tone === "purple"
-              ? "border-purple-500/30 bg-purple-500/10 text-purple-700"
+              ? "border-purple-500/30 bg-purple-500/10 text-purple-700 dark:text-purple-300"
               : "border-border bg-background text-muted-foreground";
 
   return (
@@ -86,30 +93,6 @@ function Badge({
   );
 }
 
-function CopyButton({ value, label = "Copy" }: { value: string; label?: string }) {
-  const [copied, setCopied] = useState(false);
-
-  async function onCopy() {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 900);
-    } catch {
-      // ignore
-    }
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={onCopy}
-      className="rounded-md border border-border bg-background px-2 py-1 text-[11px] text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-    >
-      {copied ? "Copied" : label}
-    </button>
-  );
-}
-
 function DrawerSkeleton() {
   return (
     <div className="animate-pulse space-y-4">
@@ -119,6 +102,19 @@ function DrawerSkeleton() {
       <div className="h-24 w-full rounded bg-muted/30" />
     </div>
   );
+}
+
+function getFocusable(container: HTMLElement): HTMLElement[] {
+  const selectors = [
+    "a[href]",
+    "button:not([disabled])",
+    "textarea:not([disabled])",
+    "input:not([disabled])",
+    "select:not([disabled])",
+    "[tabindex]:not([tabindex='-1'])",
+  ].join(",");
+
+  return Array.from(container.querySelectorAll(selectors)).filter((el): el is HTMLElement => el instanceof HTMLElement);
 }
 
 export function LogsTableWithDrawer({
@@ -143,6 +139,12 @@ export function LogsTableWithDrawer({
   const [error, setError] = useState<string | null>(null);
   const [detail, setDetail] = useState<PgptLogDetailResponse | null>(null);
 
+  const drawerRef = useRef<HTMLDivElement | null>(null);
+  const closeBtnRef = useRef<HTMLButtonElement | null>(null);
+  const lastFocusRef = useRef<HTMLElement | null>(null);
+
+  const [qaReturnTo, setQaReturnTo] = useState<string>("");
+
   const selectedPreview = useMemo(() => {
     if (!selectedId) return null;
     return logs.find((l) => l.id === selectedId) ?? null;
@@ -159,6 +161,15 @@ export function LogsTableWithDrawer({
     setOpen(true);
   }
 
+  // Build returnTo for QA actions while drawer is open
+  useEffect(() => {
+    if (!open) return;
+    try {
+      const base = window.location.href.split("#")[0];
+      setQaReturnTo(`${base}#logs`);
+    } catch {}
+  }, [open, selectedId]);
+
   // Lock body scroll while drawer is open
   useEffect(() => {
     if (!open) return;
@@ -169,7 +180,23 @@ export function LogsTableWithDrawer({
     };
   }, [open]);
 
-  // Escape to close
+  // Focus capture + restore
+  useEffect(() => {
+    if (!open) return;
+
+    lastFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+    const t = window.setTimeout(() => {
+      closeBtnRef.current?.focus();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(t);
+      lastFocusRef.current?.focus?.();
+    };
+  }, [open]);
+
+  // Escape to close (global)
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -177,6 +204,35 @@ export function LogsTableWithDrawer({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  // Focus trap (inside drawer)
+  useEffect(() => {
+    if (!open) return;
+    const el = drawerRef.current;
+    if (!el) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+
+      const focusables = getFocusable(el);
+      if (focusables.length === 0) return;
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+
+      if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      } else if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      }
+    };
+
+    el.addEventListener("keydown", onKeyDown);
+    return () => el.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
   // Fetch detail on-demand with in-component cache
@@ -198,10 +254,7 @@ export function LogsTableWithDrawer({
     setError(null);
     setDetail(null);
 
-    fetch(`/api/admin/pgpt-insights/log/${encodeURIComponent(selectedId)}`, {
-      method: "GET",
-      signal: controller.signal,
-    })
+    fetch(`/api/admin/pgpt-insights/log/${encodeURIComponent(selectedId)}`, { method: "GET", signal: controller.signal })
       .then(async (res) => {
         if (!res.ok) throw new Error(`Failed to load interaction (${res.status})`);
         return (await res.json()) as PgptLogDetailResponse;
@@ -240,20 +293,20 @@ export function LogsTableWithDrawer({
           </colgroup>
           <thead>
             <tr>
-              <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
+              <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
                 created_at
               </th>
-              <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
+              <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
                 env
               </th>
-              <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
+              <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
                 endpoint
               </th>
-              <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
+              <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
                 session_id
               </th>
-              <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                triage (click row to inspect)
+              <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
+                triage (Enter/Space to inspect)
               </th>
             </tr>
           </thead>
@@ -261,8 +314,10 @@ export function LogsTableWithDrawer({
           <tbody className="divide-y divide-border/60">
             {logs.map((log) => {
               const tone = rowToneClass(log);
-              const hover = "hover:bg-muted/30";
-              const rowClassName = cn(tone, hover, "cursor-pointer");
+              const rowClassName = cn(
+                tone,
+                "hover:bg-muted/30 cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring/40",
+              );
 
               const scoreNum = parseScore(log.max_score);
               const isLowScore = log.endpoint === "assistant" && scoreNum !== null && scoreNum < LOW_SCORE_THRESHOLD;
@@ -282,10 +337,19 @@ export function LogsTableWithDrawer({
                 <tr
                   key={log.id}
                   className={rowClassName}
+                  tabIndex={0}
+                  role="button"
+                  aria-label="Open interaction inspector"
                   onClick={(e) => {
                     const target = e.target as HTMLElement | null;
                     if (target?.closest("a,button,input,select,textarea")) return;
                     openDrawer(log.id);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      openDrawer(log.id);
+                    }
                   }}
                 >
                   <td className="px-3 py-2 whitespace-normal break-words leading-snug">
@@ -309,7 +373,7 @@ export function LogsTableWithDrawer({
                     )}
                   </td>
                   <td className="px-3 py-2 align-top">
-                    <div className={cn("space-y-2", isCompact ? "py-0" : "py-0")}>
+                    <div className="space-y-2">
                       <div className="space-y-1">
                         <div className="text-xs text-muted-foreground">
                           <span className="font-medium text-foreground">P:</span>{" "}
@@ -328,7 +392,20 @@ export function LogsTableWithDrawer({
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2">
-                        {log.archetype ? <Badge>{log.archetype}</Badge> : null}
+                        {log.archetype ? (
+                          <Badge
+                            title={
+                              log.archetype_confidence !== null && log.archetype_confidence !== undefined
+                                ? `margin ${(log.archetype_confidence * 100).toFixed(0)}pp`
+                                : undefined
+                            }
+                          >
+                            {log.archetype}
+                            {typeof log.archetype_confidence === "number" ? (
+                              <> · +{Math.round(log.archetype_confidence * 100)}pp</>
+                            ) : null}
+                          </Badge>
+                        ) : null}
                         {log.model ? <Badge tone="blue">{log.model}</Badge> : null}
                         {log.used_gateway ? <Badge>gateway</Badge> : null}
 
@@ -350,15 +427,11 @@ export function LogsTableWithDrawer({
                         {topicCount > 0 ? <Badge>topics {formatCompactNumber(topicCount)}</Badge> : null}
 
                         {log.qa_flag_status ? (
-                          <Badge tone={log.qa_flag_status === "open" ? "purple" : "default"}>
-                            QA {log.qa_flag_status}
-                          </Badge>
+                          <Badge tone={log.qa_flag_status === "open" ? "purple" : "default"}>QA {log.qa_flag_status}</Badge>
                         ) : null}
                       </div>
 
-                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                        Inspect →
-                      </div>
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Inspect →</div>
                     </div>
                   </td>
                 </tr>
@@ -372,12 +445,18 @@ export function LogsTableWithDrawer({
         <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/50" onClick={closeDrawer} aria-hidden="true" />
 
-          <div className="absolute inset-y-0 right-0 flex w-full max-w-[760px] flex-col border-l border-border bg-card shadow-2xl">
+          <div
+            ref={drawerRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pgpt-drawer-title"
+            className="absolute inset-y-0 right-0 flex w-full max-w-[760px] flex-col border-l border-border bg-card shadow-2xl"
+          >
             {/* Header */}
             <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
               <div className="space-y-1">
                 <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Interaction</div>
-                <div className="text-sm font-semibold text-foreground">
+                <div id="pgpt-drawer-title" className="text-sm font-semibold text-foreground">
                   {detail?.log?.session_id ? detail.log.session_id : selectedId}
                 </div>
                 <div className="text-xs text-muted-foreground">
@@ -390,8 +469,12 @@ export function LogsTableWithDrawer({
               </div>
 
               <div className="flex items-center gap-2">
-                {selectedId ? <CopyButton value={selectedId} label="Copy id" /> : null}
+                {selectedId ? <CopyButton value={selectedId} label="Copy id" ariaLabel="Copy interaction id" /> : null}
+                {detail?.log?.session_id ? (
+                  <CopyButton value={detail.log.session_id} label="Copy session" ariaLabel="Copy session id" />
+                ) : null}
                 <button
+                  ref={closeBtnRef}
                   type="button"
                   onClick={closeDrawer}
                   className="rounded-md border border-border bg-background px-2 py-1 text-xs text-muted-foreground hover:bg-muted/30 hover:text-foreground"
@@ -463,9 +546,7 @@ export function LogsTableWithDrawer({
               {loading ? <DrawerSkeleton /> : null}
 
               {!loading && error ? (
-                <div className="rounded-xl border border-border bg-background p-4 text-xs text-muted-foreground">
-                  {error}
-                </div>
+                <div className="rounded-xl border border-border bg-background p-4 text-xs text-muted-foreground">{error}</div>
               ) : null}
 
               {!loading && !error && detail ? (
@@ -478,9 +559,7 @@ export function LogsTableWithDrawer({
                         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                           <div className="text-xs">
                             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">maxScore</div>
-                            <div className="mt-1 font-medium text-foreground">
-                              {detail.log.max_score ? detail.log.max_score : "—"}
-                            </div>
+                            <div className="mt-1 font-medium text-foreground">{detail.log.max_score ? detail.log.max_score : "—"}</div>
                           </div>
 
                           <div className="text-xs">
@@ -527,42 +606,93 @@ export function LogsTableWithDrawer({
                           {detail.log.used_gateway ? <Badge>gateway</Badge> : null}
                         </div>
 
-                        <div className="mt-3 text-xs text-muted-foreground">
-                          Session:{" "}
+                        <div className="mt-3 text-xs text-muted-foreground flex items-center gap-2">
+                          <span>Session:</span>
                           {detail.log.session_id ? (
-                            <Link
-                              href={`/admin/pgpt-insights/session/${encodeURIComponent(detail.log.session_id)}`}
-                              className="text-blue-600 underline"
-                            >
-                              {detail.log.session_id}
-                            </Link>
+                            <>
+                              <Link
+                                href={`/admin/pgpt-insights/session/${encodeURIComponent(detail.log.session_id)}`}
+                                className="text-blue-600 underline"
+                              >
+                                {detail.log.session_id}
+                              </Link>
+                              <CopyButton value={detail.log.session_id} label="Copy" ariaLabel="Copy session id" />
+                            </>
                           ) : (
                             "—"
                           )}
                         </div>
-
-                        {(detail.log.intents?.length ?? 0) > 0 ? (
-                          <div className="mt-3">
-                            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">intents</div>
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              {(detail.log.intents ?? []).slice(0, 12).map((x) => (
-                                <Badge key={`intent-${x}`}>{x}</Badge>
-                              ))}
-                            </div>
-                          </div>
-                        ) : null}
-
-                        {(detail.log.topics?.length ?? 0) > 0 ? (
-                          <div className="mt-3">
-                            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">topics</div>
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              {(detail.log.topics ?? []).slice(0, 12).map((x) => (
-                                <Badge key={`topic-${x}`}>{x}</Badge>
-                              ))}
-                            </div>
-                          </div>
-                        ) : null}
                       </div>
+
+                      {detail.log.archetype_scores ? (
+                        <div className="rounded-xl border border-border bg-background p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="space-y-1">
+                              <div className="text-xs font-semibold text-foreground">Archetype</div>
+                              <div className="text-xs text-muted-foreground">Distribution + winner/runner-up for this interaction.</div>
+                            </div>
+
+                            {typeof detail.log.archetype_confidence === "number" ? (
+                              <Badge tone="default" title="top1-top2 margin">
+                                margin +{Math.round(detail.log.archetype_confidence * 100)}pp
+                              </Badge>
+                            ) : null}
+                          </div>
+
+                          <div className="mt-3">
+                            <ArchetypeStackedBar scores={detail.log.archetype_scores as any} />
+                          </div>
+
+                          {(() => {
+                            // winner/runner-up callout
+                            const s = detail.log.archetype_scores as any;
+                            const normalized = s && typeof s === "object" ? s : null;
+                            if (!normalized) return null;
+
+                            // compute winner/runner from the object (assumed normalized)
+                            const { winner, runner, margin } = computeWinnerAndRunner(normalized);
+
+                            return (
+                              <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3 text-xs">
+                                <div className="rounded-lg border border-border bg-muted/10 p-3">
+                                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">winner</div>
+                                  <div className="mt-1 font-medium text-foreground">
+                                    {winner.k} · {(winner.v * 100).toFixed(0)}%
+                                  </div>
+                                </div>
+
+                                <div className="rounded-lg border border-border bg-muted/10 p-3">
+                                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">runner-up</div>
+                                  <div className="mt-1 font-medium text-foreground">
+                                    {runner ? `${runner.k} · ${(runner.v * 100).toFixed(0)}%` : "—"}
+                                  </div>
+                                </div>
+
+                                <div className="rounded-lg border border-border bg-muted/10 p-3">
+                                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">margin</div>
+                                  <div className="mt-1 font-medium text-foreground">+{Math.round(margin * 100)}pp</div>
+                                </div>
+                              </div>
+                            );
+                          })()}
+
+                          {detail.log.archetype_decision ? (
+                            <details className="mt-3">
+                              <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
+                                show decision metadata
+                              </summary>
+                              <pre className="mt-2 overflow-auto rounded-lg border border-border bg-muted/20 p-3 text-[11px] leading-snug text-foreground">
+                                {JSON.stringify(detail.log.archetype_decision, null, 2)}
+                              </pre>
+                            </details>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <div className="rounded-xl border border-border bg-background p-4">
+                          <div className="text-xs font-semibold text-foreground">Archetype</div>
+                          <div className="mt-1 text-xs text-muted-foreground">Legacy log: no archetype distribution recorded.</div>
+                        </div>
+                      )}
                     </div>
                   ) : null}
 
@@ -607,16 +737,9 @@ export function LogsTableWithDrawer({
                         </div>
                       ) : (
                         <div className="space-y-3">
-                          {(detail.log.retrieved_chunks ?? []).map((rawUnknown, idx: number) => {
-                            const raw = rawUnknown && typeof rawUnknown === "object" ? (rawUnknown as Record<string, unknown>) : null;
-                            const chunkIdRaw =
-                              raw?.chunkId ?? raw?.chunk_id ?? raw?.id ?? null;
-                            const chunkId =
-                              typeof chunkIdRaw === "string" || typeof chunkIdRaw === "number" ? chunkIdRaw : null;
-
-                            const scoreRaw = raw?.score ?? raw?.similarity ?? raw?.maxScore ?? null;
-                            const score =
-                              typeof scoreRaw === "string" || typeof scoreRaw === "number" ? scoreRaw : null;
+                          {(detail.log.retrieved_chunks ?? []).map((raw: any, idx: number) => {
+                            const chunkId = raw?.chunkId ?? raw?.chunk_id ?? raw?.id ?? null;
+                            const score = raw?.score ?? raw?.similarity ?? raw?.maxScore ?? null;
 
                             return (
                               <div key={`chunk-${idx}`} className="rounded-xl border border-border bg-background p-4">
@@ -638,7 +761,7 @@ export function LogsTableWithDrawer({
                                     show raw metadata
                                   </summary>
                                   <pre className="mt-2 overflow-auto rounded-lg border border-border bg-muted/20 p-3 text-[11px] leading-snug text-foreground">
-                                    {JSON.stringify(rawUnknown, null, 2)}
+                                    {JSON.stringify(raw, null, 2)}
                                   </pre>
                                 </details>
                               </div>
@@ -660,6 +783,7 @@ export function LogsTableWithDrawer({
 
                       <div className="rounded-xl border border-border bg-background p-4">
                         <div className="text-[10px] uppercase tracking-wide text-muted-foreground">latest</div>
+
                         <div className="mt-2 text-xs text-foreground">
                           {detail.qa_latest ? (
                             <>
@@ -672,14 +796,70 @@ export function LogsTableWithDrawer({
                                   {formatTimestampShort(detail.qa_latest.created_at)}
                                 </span>
                               </div>
+
                               {detail.qa_latest.notes ? (
-                                <div className="mt-2 whitespace-pre-wrap text-xs text-muted-foreground">
-                                  {detail.qa_latest.notes}
-                                </div>
+                                <div className="mt-2 whitespace-pre-wrap text-xs text-muted-foreground">{detail.qa_latest.notes}</div>
                               ) : null}
                             </>
                           ) : (
                             <div className="text-xs text-muted-foreground">No flags for this interaction.</div>
+                          )}
+                        </div>
+
+                        <div className="mt-4 border-t border-border pt-3">
+                          {detail.qa_latest?.status === "open" ? (
+                            <form method="POST" action="/admin/pgpt-insights/qa/resolve" className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                              <input type="hidden" name="flagId" value={detail.qa_latest.id} />
+                              <input type="hidden" name="returnTo" value={qaReturnTo} />
+
+                              <input
+                                name="notes"
+                                aria-label="Resolution notes"
+                                placeholder="resolution notes…"
+                                maxLength={200}
+                                className="h-9 w-[320px] max-w-full rounded-md border bg-background px-3 text-xs"
+                              />
+
+                              <button
+                                type="submit"
+                                className="inline-flex h-9 items-center rounded-md border border-border bg-background px-4 text-xs hover:bg-muted"
+                              >
+                                Resolve
+                              </button>
+                            </form>
+                          ) : (
+                            <form method="POST" action="/admin/pgpt-insights/qa/flag" className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                              <input type="hidden" name="interactionId" value={selectedId ?? ""} />
+                              <input type="hidden" name="returnTo" value={qaReturnTo} />
+
+                              <select
+                                name="reason"
+                                aria-label="QA reason"
+                                defaultValue="hallucination"
+                                className="h-9 rounded-md border bg-background px-2 text-xs"
+                              >
+                                {QA_REASON_OPTIONS.map((opt) => (
+                                  <option key={opt} value={opt}>
+                                    {opt}
+                                  </option>
+                                ))}
+                              </select>
+
+                              <input
+                                name="notes"
+                                aria-label="QA notes"
+                                placeholder="notes…"
+                                maxLength={200}
+                                className="h-9 w-[320px] max-w-full rounded-md border bg-background px-3 text-xs"
+                              />
+
+                              <button
+                                type="submit"
+                                className="inline-flex h-9 items-center rounded-md border border-border bg-background px-4 text-xs hover:bg-muted"
+                              >
+                                {detail.qa_latest ? "Flag again" : "Flag"}
+                              </button>
+                            </form>
                           )}
                         </div>
                       </div>
@@ -698,13 +878,14 @@ export function LogsTableWithDrawer({
                                   {f.reason ? <Badge>{f.reason}</Badge> : null}
                                   <span className="text-xs text-muted-foreground">{formatTimestampShort(f.created_at)}</span>
 
-                                  <Link href={`/admin/pgpt-insights/qa#flag-${f.id}`} className="ml-auto text-xs text-blue-600 underline">
+                                  <Link
+                                    href={`/admin/pgpt-insights/qa#flag-${f.id}`}
+                                    className="ml-auto text-xs text-blue-600 underline"
+                                  >
                                     view →
                                   </Link>
                                 </div>
-                                {f.notes ? (
-                                  <div className="mt-2 whitespace-pre-wrap text-xs text-muted-foreground">{f.notes}</div>
-                                ) : null}
+                                {f.notes ? <div className="mt-2 whitespace-pre-wrap text-xs text-muted-foreground">{f.notes}</div> : null}
                               </div>
                             ))}
                           </div>

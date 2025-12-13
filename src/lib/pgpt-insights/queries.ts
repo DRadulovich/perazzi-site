@@ -1,9 +1,11 @@
 import { pool } from "../db";
 import { LOW_SCORE_THRESHOLD } from "./constants";
-import { buildLogsQueryParts, parseLogsFilters, type LogsFilters } from "./log-filters";
+import { buildLogsQueryParts, buildLogsQueryPartsWithBase, parseLogsFilters, type LogsFilters } from "./log-filters";
 import type {
   PerazziLogRow,
   PerazziLogPreviewRow,
+  PgptSessionLogRow,
+  PgptSessionMeta,
   RagSummary,
   TopChunkRow,
   GuardrailStatRow,
@@ -14,8 +16,11 @@ import type {
   DailyTokenUsageRow,
   AvgMetricsRow,
   QaFlagLookupRow,
+  QaFlagLatestRow,
   DailyTrendsRow,
   DailyLowScoreRateRow,
+  PgptSessionSummary,
+  PgptSessionTimelineRow,
 } from "./types";
 
 function isUuidLike(value: string) {
@@ -61,6 +66,10 @@ export async function fetchLogs(args: {
   model?: string;
   gateway?: string;
   qa?: string;
+  winner_changed?: string;
+  margin_lt?: string;
+  score_archetype?: string;
+  min?: string;
 
   limit: number;
   offset: number;
@@ -79,6 +88,10 @@ export async function fetchLogs(args: {
     model: args.model,
     gateway: args.gateway,
     qa: args.qa,
+    winner_changed: args.winner_changed,
+    margin_lt: args.margin_lt,
+    score_archetype: args.score_archetype,
+    min: args.min,
   });
 
   const { joinSql, whereClause, values, nextIndex } = buildLogsQueryParts(filters);
@@ -99,6 +112,7 @@ export async function fetchLogs(args: {
       l.session_id,
       l.model,
       l.used_gateway,
+      (l.metadata->>'archetypeConfidence')::float as archetype_confidence,
 
       left(l.prompt, 800) as prompt_preview,
       left(l.response, 800) as response_preview,
@@ -859,4 +873,365 @@ export async function fetchAssistantRequestCountWindow(
 
   const { rows } = await pool.query<{ hits: string | number }>(query, params);
   return Number(rows[0]?.hits ?? 0);
+}
+
+// -----------------------------------------------------------------------------
+// Session Explorer
+// -----------------------------------------------------------------------------
+
+function isUuidLikeSession(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
+/**
+ * Pass 1: full logs for the session page (keeps current UI behavior).
+ * Pass 2 will switch the session list to previews + drawer detail fetch.
+ */
+export async function fetchSessionLogsFull(sessionId: string): Promise<PgptSessionLogRow[]> {
+  const { rows } = await pool.query<PgptSessionLogRow>(
+    `
+      select
+        id,
+        created_at,
+        env,
+        endpoint,
+        archetype,
+        session_id,
+        model,
+        used_gateway,
+        prompt,
+        response,
+        low_confidence,
+        intents,
+        topics,
+        metadata->>'maxScore' as max_score,
+        metadata->>'guardrailStatus' as guardrail_status,
+        metadata->>'guardrailReason' as guardrail_reason
+      from perazzi_conversation_logs
+      where session_id = $1
+      order by created_at asc;
+    `,
+    [sessionId],
+  );
+
+  return rows;
+}
+
+export async function fetchSessionTimelineRows(args: {
+  sessionId: string;
+  limit: number;
+  offset: number;
+}): Promise<PgptSessionTimelineRow[]> {
+  const { rows } = await pool.query<PgptSessionTimelineRow>(
+    `
+      select
+        id,
+        created_at::text as created_at,
+        endpoint,
+        archetype,
+        (metadata->>'archetypeConfidence')::float as archetype_confidence,
+        metadata->'archetypeScores' as archetype_scores
+      from perazzi_conversation_logs
+      where session_id = $1
+      order by created_at asc
+      limit $2
+      offset $3;
+    `,
+    [args.sessionId, args.limit, args.offset],
+  );
+
+  return rows;
+}
+
+/**
+ * Pass 2+ (not used in Pass 1): preview-only rows for scan mode.
+ * Mirrors the logs list fields and includes latest QA via lateral join.
+ */
+export async function fetchSessionLogsPreview(args: {
+  sessionId: string;
+  q?: string;
+
+  gr_status?: string;
+  low_conf?: string;
+  score?: string;
+  qa?: string;
+  winner_changed?: string;
+  margin_lt?: string;
+  score_archetype?: string;
+  min?: string;
+
+  limit: number;
+  offset: number;
+}): Promise<PerazziLogPreviewRow[]> {
+  const filters: LogsFilters = parseLogsFilters({
+    q: args.q,
+
+    gr_status: args.gr_status,
+    low_conf: args.low_conf,
+    score: args.score,
+    qa: args.qa,
+    winner_changed: args.winner_changed,
+    margin_lt: args.margin_lt,
+    score_archetype: args.score_archetype,
+    min: args.min,
+  });
+
+  // Base condition: session scope must always apply
+  const { joinSql, whereClause, values, nextIndex } = buildLogsQueryPartsWithBase({
+    filters,
+    baseConditions: [`l.session_id = $1`],
+    baseValues: [args.sessionId],
+    startIndex: 2,
+  });
+
+  const limitIndex = nextIndex;
+  values.push(args.limit);
+
+  const offsetIndex = nextIndex + 1;
+  values.push(args.offset);
+
+  const query = `
+    select
+      l.id,
+      l.created_at,
+      l.env,
+      l.endpoint,
+      l.archetype,
+      l.session_id,
+      l.model,
+      l.used_gateway,
+      (l.metadata->>'archetypeConfidence')::float as archetype_confidence,
+
+      left(l.prompt, 800) as prompt_preview,
+      left(l.response, 800) as response_preview,
+      char_length(l.prompt) as prompt_len,
+      char_length(l.response) as response_len,
+
+      l.low_confidence,
+      l.intents,
+      l.topics,
+      l.metadata->>'maxScore' as max_score,
+      l.metadata->>'guardrailStatus' as guardrail_status,
+      l.metadata->>'guardrailReason' as guardrail_reason,
+
+      qf.qa_flag_id,
+      qf.qa_flag_status,
+      qf.qa_flag_reason,
+      qf.qa_flag_notes,
+      qf.qa_flag_created_at
+    from perazzi_conversation_logs l
+    ${joinSql}
+    ${whereClause}
+    order by l.created_at asc
+    limit $${limitIndex}
+    offset $${offsetIndex};
+  `;
+
+  const { rows } = await pool.query<PerazziLogPreviewRow>(query, values);
+  return rows;
+}
+
+/**
+ * Optional: metadata for a session header / summary (not used yet in Pass 1).
+ */
+export async function fetchSessionMeta(sessionId: string): Promise<PgptSessionMeta> {
+  const { rows } = await pool.query<{
+    session_id: string;
+    interaction_count: string | number;
+    started_at: string | null;
+    ended_at: string | null;
+    envs: string[] | null;
+    endpoints: string[] | null;
+    models: string[] | null;
+  }>(
+    `
+      select
+        $1::text as session_id,
+        count(*) as interaction_count,
+        min(created_at)::text as started_at,
+        max(created_at)::text as ended_at,
+        array_remove(array_agg(distinct env), null) as envs,
+        array_remove(array_agg(distinct endpoint), null) as endpoints,
+        array_remove(array_agg(distinct model), null) as models
+      from perazzi_conversation_logs
+      where session_id = $1;
+    `,
+    [sessionId],
+  );
+
+  const r = rows[0];
+  return {
+    session_id: sessionId,
+    interaction_count: Number(r?.interaction_count ?? 0),
+    started_at: r?.started_at ?? null,
+    ended_at: r?.ended_at ?? null,
+    envs: r?.envs ?? [],
+    endpoints: r?.endpoints ?? [],
+    models: r?.models ?? [],
+  };
+}
+
+/**
+ * Pass 1: keep current behavior (QA fetched in a separate query) but move SQL out of page.
+ * Later passes can inline this via lateral join or reuse preview query’s QA columns.
+ */
+export async function fetchLatestQaFlagsForInteractionIds(
+  interactionIds: string[],
+): Promise<Map<string, QaFlagLatestRow>> {
+  const ids = interactionIds.filter(isUuidLikeSession);
+  if (ids.length === 0) return new Map();
+
+  const { rows } = await pool.query<QaFlagLatestRow>(
+    `
+      select distinct on (interaction_id)
+        interaction_id::text as interaction_id,
+        id::text as id,
+        status,
+        reason,
+        notes,
+        created_at::text as created_at
+      from qa_flags
+      where interaction_id = any($1::uuid[])
+      order by interaction_id, (status = 'open') desc, created_at desc;
+    `,
+    [ids],
+  );
+
+  const out = new Map<string, QaFlagLatestRow>();
+  for (const row of rows) out.set(row.interaction_id, row);
+  return out;
+}
+
+export async function fetchSessionSummary(
+  sessionId: string,
+  lowScoreThreshold: number,
+): Promise<PgptSessionSummary> {
+  const { rows } = await pool.query<{
+    session_id: string;
+
+    interaction_count: string | number;
+    started_at: string | null;
+    ended_at: string | null;
+
+    assistant_count: string | number;
+
+    blocked_count: string | number;
+    scored_count: string | number;
+    low_score_count: string | number;
+
+    open_qa_count: string | number;
+
+    top_archetype: string | null;
+    top_model: string | null;
+  }>(
+    `
+      with logs as (
+        select
+          id,
+          created_at,
+          endpoint,
+          archetype,
+          model,
+          metadata
+        from perazzi_conversation_logs
+        where session_id = $1
+      ),
+      latest_flags as (
+        select distinct on (interaction_id)
+          interaction_id::text as interaction_id,
+          id::text as id,
+          status,
+          reason,
+          notes,
+          created_at::text as created_at
+        from qa_flags
+        where interaction_id in (select id from logs)
+        order by interaction_id, (status = 'open') desc, created_at desc
+      ),
+      agg as (
+        select
+          count(*) as interaction_count,
+          min(created_at)::text as started_at,
+          max(created_at)::text as ended_at,
+
+          count(*) filter (where endpoint = 'assistant') as assistant_count,
+
+          count(*) filter (
+            where endpoint = 'assistant' and metadata->>'guardrailStatus' = 'blocked'
+          ) as blocked_count,
+
+          count(*) filter (
+            where endpoint = 'assistant' and metadata->>'maxScore' is not null
+          ) as scored_count,
+
+          count(*) filter (
+            where endpoint = 'assistant'
+              and metadata->>'maxScore' is not null
+              and (metadata->>'maxScore')::float < $2
+          ) as low_score_count
+        from logs
+      ),
+      open_qa as (
+        select count(*) as open_qa_count
+        from latest_flags
+        where status = 'open'
+      ),
+      top_archetype as (
+        select archetype
+        from logs
+        where archetype is not null
+        group by archetype
+        order by count(*) desc, archetype asc
+        limit 1
+      ),
+      top_model as (
+        select model
+        from logs
+        where model is not null
+        group by model
+        order by count(*) desc, model asc
+        limit 1
+      )
+      select
+        $1::text as session_id,
+
+        agg.interaction_count,
+        agg.started_at,
+        agg.ended_at,
+
+        agg.assistant_count,
+
+        agg.blocked_count,
+        agg.scored_count,
+        agg.low_score_count,
+
+        (select open_qa_count from open_qa) as open_qa_count,
+
+        (select archetype from top_archetype) as top_archetype,
+        (select model from top_model) as top_model
+      from agg;
+    `,
+    [sessionId, lowScoreThreshold],
+  );
+
+  const r = rows[0];
+
+  return {
+    session_id: sessionId,
+
+    interaction_count: Number(r?.interaction_count ?? 0),
+    started_at: r?.started_at ?? null,
+    ended_at: r?.ended_at ?? null,
+
+    assistant_count: Number(r?.assistant_count ?? 0),
+
+    blocked_count: Number(r?.blocked_count ?? 0),
+    scored_count: Number(r?.scored_count ?? 0),
+    low_score_count: Number(r?.low_score_count ?? 0),
+
+    open_qa_count: Number(r?.open_qa_count ?? 0),
+
+    top_archetype: r?.top_archetype ?? null,
+    top_model: r?.top_model ?? null,
+  };
 }

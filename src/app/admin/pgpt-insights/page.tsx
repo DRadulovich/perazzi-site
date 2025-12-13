@@ -5,6 +5,7 @@ import { DEFAULT_DAYS_WINDOW, LOW_SCORE_THRESHOLD } from "../../../lib/pgpt-insi
 
 import { QaReviewLink } from "../../../components/pgpt-insights/QaReviewLink";
 import { FiltersBar } from "../../../components/pgpt-insights/FiltersBar";
+import { ArchetypeFiltersBar } from "../../../components/pgpt-insights/archetype/ArchetypeFiltersBar";
 import { SectionSkeleton } from "../../../components/pgpt-insights/sections/SectionError";
 
 import { OverviewSection } from "../../../components/pgpt-insights/sections/OverviewSection";
@@ -35,6 +36,10 @@ type SearchParams = {
   model?: string;
   gateway?: string;
   qa?: string;
+  winner_changed?: string;
+  margin_lt?: string;
+  score_archetype?: string;
+  min?: string;
 };
 
 export default async function PgptInsightsPage({
@@ -90,8 +95,8 @@ export default async function PgptInsightsPage({
   ].join(" · ");
 
   return (
-    <div className="min-h-screen bg-canvas text-ink">
-      <main className="mx-auto max-w-6xl px-6 py-12 md:py-14 space-y-10">
+    <div className="min-h-screen bg-canvas text-ink overflow-x-hidden">
+      <main className="mx-auto w-full max-w-6xl min-w-0 px-6 py-12 md:py-14 space-y-10">
         <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-1">
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Perazzi · Workshop</p>
@@ -106,6 +111,7 @@ export default async function PgptInsightsPage({
         </header>
 
         <FiltersBar defaultDays={DEFAULT_DAYS_WINDOW} />
+        <ArchetypeFiltersBar />
 
         <Suspense fallback={<SectionSkeleton id="overview" title="Overview" />}>
           <OverviewSection envFilter={envFilter} daysFilter={daysFilter} scopeSummary={scopeSummary} />
@@ -123,7 +129,8 @@ export default async function PgptInsightsPage({
           </Suspense>
         ) : null}
 
-        <div className="grid gap-6 lg:grid-cols-[220px_1fr] lg:items-start">
+        {/* ✅ Key layout fix: minmax(0,1fr) + min-w-0 to allow wide tables to scroll INSIDE their wrappers */}
+        <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start min-w-0">
           <aside className="hidden lg:block">
             <div className="sticky top-20 rounded-2xl border border-border bg-card shadow-sm p-4">
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Sections</div>
@@ -194,7 +201,8 @@ export default async function PgptInsightsPage({
             </div>
           </aside>
 
-          <div className="space-y-10">
+          {/* ✅ Key layout fix: min-w-0 on the content column so it can shrink and allow inner overflow-x-auto areas to work */}
+          <div className="space-y-10 min-w-0">
             {/* Mobile nav + legend */}
             <div className="space-y-3 lg:hidden">
               <nav className="flex flex-wrap gap-3 text-xs text-muted-foreground">

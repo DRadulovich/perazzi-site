@@ -49,6 +49,9 @@ export async function GET(
       guardrail_reason: string | null;
       latency_ms: string | number | null | undefined;
       retrieved_chunks: unknown;
+      archetype_scores: Record<string, number> | null;
+      archetype_confidence: number | null;
+      archetype_decision: unknown | null;
     };
 
     const { rows } = await pool.query<LogRow>(
@@ -73,7 +76,10 @@ export async function GET(
         metadata->>'guardrailStatus' as guardrail_status,
         metadata->>'guardrailReason' as guardrail_reason,
         (nullif(metadata->>'latencyMs',''))::float as latency_ms,
-        coalesce(metadata->'retrievedChunks', '[]'::jsonb) as retrieved_chunks
+        coalesce(metadata->'retrievedChunks', '[]'::jsonb) as retrieved_chunks,
+        metadata->'archetypeScores' as archetype_scores,
+        (metadata->>'archetypeConfidence')::float as archetype_confidence,
+        metadata->'archetypeDecision' as archetype_decision
       from perazzi_conversation_logs
       where id = $1::uuid
       limit 1;
@@ -132,6 +138,9 @@ export async function GET(
         completion_tokens: r.completion_tokens === null || r.completion_tokens === undefined ? null : Number(r.completion_tokens),
         latency_ms: r.latency_ms === null || r.latency_ms === undefined ? null : Number(r.latency_ms),
         retrieved_chunks: Array.isArray(r.retrieved_chunks) ? r.retrieved_chunks : [],
+        archetype_scores: r.archetype_scores ?? null,
+        archetype_confidence: r.archetype_confidence ?? null,
+        archetype_decision: r.archetype_decision ?? null,
       },
       qa_latest,
       qa_history,

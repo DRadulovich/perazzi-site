@@ -15,6 +15,10 @@ export function buildInsightsHref(params: {
   model?: string;
   gateway?: string;
   qa?: string;
+  winner_changed?: string;
+  margin_lt?: string;
+  score_archetype?: string;
+  min?: string;
 }): string {
   const sp = new URLSearchParams();
 
@@ -39,6 +43,10 @@ export function buildInsightsHref(params: {
   set("model", params.model);
   set("gateway", params.gateway);
   set("qa", params.qa);
+  set("winner_changed", params.winner_changed);
+  set("margin_lt", params.margin_lt);
+  set("score_archetype", params.score_archetype);
+  set("min", params.min);
 
   const qs = sp.toString();
   return qs ? `/admin/pgpt-insights?${qs}` : "/admin/pgpt-insights";

@@ -16,8 +16,10 @@ import {
   isConnectionError,
 } from "@/lib/perazzi-retrieval";
 import {
+  buildArchetypeClassification,
   computeArchetypeBreakdown,
   type ArchetypeContext,
+  type ArchetypeClassification,
   getModeArchetypeBridgeGuidance,
   getNeutralArchetypeVector,
 } from "@/lib/perazzi-archetypes";
@@ -490,7 +492,8 @@ export async function POST(request: Request) {
       archetypeContext,
       previousVector,
     );
-    const effectiveArchetype = archetypeBreakdown.primary;
+    const archetypeClassification = buildArchetypeClassification(archetypeBreakdown);
+    const effectiveArchetype = archetypeClassification.archetype;
 
     if (archetypeOverride) {
       const answer = `Understood. I’ll answer from the perspective of a ${capitalize(
@@ -545,6 +548,7 @@ export async function POST(request: Request) {
             endpoint: "assistant",
             pageUrl: body?.context?.pageUrl ?? undefined,
             archetype: effectiveArchetype ?? null,
+            archetypeClassification,
             sessionId: fullBody.sessionId ?? null,
             userId: null,
             lowConfidence: false,
@@ -614,6 +618,7 @@ export async function POST(request: Request) {
       responseTemplates,
       effectiveMode,
       effectiveArchetype,
+      archetypeClassification,
       retrieval.maxScore,
       guardrail,
       hints,
@@ -725,6 +730,7 @@ async function generateAssistantAnswer(
   templates: string[],
   mode: PerazziMode | null,
   archetype: Archetype | null,
+  archetypeClassification: ArchetypeClassification | null,
   maxScore?: number,
   guardrail?: { status: "ok" | "blocked"; reason: string | null },
   hints?: RetrievalHints,
@@ -761,6 +767,7 @@ async function generateAssistantAnswer(
     endpoint: "assistant",
     pageUrl: context?.pageUrl ?? undefined,
     archetype: archetype ?? null,
+    archetypeClassification: archetypeClassification ?? undefined,
     sessionId: sessionId ?? null,
     userId: null,
     lowConfidence: false,

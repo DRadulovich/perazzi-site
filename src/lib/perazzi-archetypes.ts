@@ -4,6 +4,12 @@ import {
   ArchetypeVector,
   PerazziMode,
 } from "@/types/perazzi-assistant";
+import {
+  ARCHETYPE_KEYS,
+  type ArchetypeKey,
+  type ArchetypeScores,
+  normalizeArchetypeScores,
+} from "@/lib/pgpt-insights/archetype-distribution";
 
 export interface ArchetypeContext {
   mode?: PerazziMode | null;
@@ -15,6 +21,17 @@ export interface ArchetypeContext {
   /** If present, this wins over inferred primary archetype. */
   devOverrideArchetype?: Archetype | null;
 }
+
+export type ArchetypeClassification = {
+  archetype: Archetype | null;
+  archetypeScores: ArchetypeScores;
+  archetypeDecision?: {
+    winner: ArchetypeKey | null;
+    runnerUp: ArchetypeKey | null;
+    signals?: string[];
+    reasoning?: string;
+  };
+};
 
 export const NEUTRAL_ARCHETYPE_VECTOR: ArchetypeVector = {
   loyalist: 0.2,
@@ -394,6 +411,55 @@ export function computeArchetypeBreakdown(
     vector: updatedVector,
     reasoning: reasoningParts.join(" "),
     signalsUsed,
+  };
+}
+
+export function buildArchetypeClassification(
+  breakdown: ArchetypeBreakdown,
+): ArchetypeClassification {
+  const rawScores: ArchetypeScores = {
+    Loyalist: breakdown.vector.loyalist ?? 0,
+    Prestige: breakdown.vector.prestige ?? 0,
+    Analyst: breakdown.vector.analyst ?? 0,
+    Achiever: breakdown.vector.achiever ?? 0,
+    Legacy: breakdown.vector.legacy ?? 0,
+  };
+
+  const normalized = normalizeArchetypeScores(rawScores) ?? {
+    Loyalist: 0.2,
+    Prestige: 0.2,
+    Analyst: 0.2,
+    Achiever: 0.2,
+    Legacy: 0.2,
+  };
+
+  const sorted = ARCHETYPE_KEYS.map((key) => ({
+    key,
+    value: normalized[key] ?? 0,
+  })).sort((a, b) => b.value - a.value);
+
+  const winner = sorted[0]?.key ?? null;
+  const runnerUp = sorted[1]?.key ?? null;
+
+  let archetype: Archetype | null = breakdown.primary;
+  if (!archetype && winner) {
+    archetype = winner.toLowerCase() as Archetype;
+  }
+
+  const decision =
+    breakdown.reasoning || (breakdown.signalsUsed && breakdown.signalsUsed.length)
+      ? {
+          winner: winner ?? null,
+          runnerUp: runnerUp ?? null,
+          signals: breakdown.signalsUsed,
+          reasoning: breakdown.reasoning,
+        }
+      : undefined;
+
+  return {
+    archetype,
+    archetypeScores: normalized,
+    archetypeDecision: decision,
   };
 }
 

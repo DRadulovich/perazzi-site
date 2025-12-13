@@ -34,6 +34,7 @@ export type PerazziLogPreviewRow = PerazziLogBase & {
   response_preview: string;
   prompt_len: number;
   response_len: number;
+  archetype_confidence?: number | null;
 };
 
 export type RagSummary = {
@@ -129,6 +130,9 @@ export type PgptLogDetail = PerazziLogRow & {
   completion_tokens: number | null;
   latency_ms: number | null;
   retrieved_chunks: unknown[];
+  archetype_scores?: Record<string, number> | null;
+  archetype_confidence?: number | null;
+  archetype_decision?: unknown | null;
 };
 
 export type PgptLogDetailResponse = {
@@ -150,4 +154,89 @@ export type DailyLowScoreRateRow = {
   total_scored: number;
   low_count: number;
   threshold: number;
+};
+
+// -----------------------------------------------------------------------------
+// Session Explorer (full rows + QA lookup)
+// -----------------------------------------------------------------------------
+
+export type PgptSessionLogRow = {
+  id: string;
+  created_at: string;
+  env: string;
+  endpoint: string;
+  archetype: string | null;
+  session_id: string | null;
+  model: string | null;
+  used_gateway: boolean | null;
+
+  // Full content (Pass 1 keeps existing UI behavior)
+  prompt: string;
+  response: string;
+
+  low_confidence: boolean | null;
+  intents: string[] | null;
+  topics: string[] | null;
+
+  max_score: string | null;
+  guardrail_status: string | null;
+  guardrail_reason: string | null;
+
+  // Optional: attached by the page after a QA lookup query
+  qa_flag_id?: string | null;
+  qa_flag_status?: string | null;
+  qa_flag_reason?: string | null;
+  qa_flag_notes?: string | null;
+  qa_flag_created_at?: string | null;
+};
+
+export type QaFlagLatestRow = {
+  interaction_id: string;
+  id: string;
+  status: string;
+  reason: string | null;
+  notes: string | null;
+  created_at: string;
+};
+
+export type PgptSessionMeta = {
+  session_id: string;
+  interaction_count: number;
+  started_at: string | null;
+  ended_at: string | null;
+  envs: string[];
+  endpoints: string[];
+  models: string[];
+};
+
+export type PgptSessionTimelineRow = {
+  id: string;
+  created_at: string;
+  endpoint: string;
+  archetype: string | null;
+  archetype_confidence: number | null;
+  archetype_scores: Record<string, number> | null;
+};
+
+// -----------------------------------------------------------------------------
+// Session Summary (dashboard head)
+// -----------------------------------------------------------------------------
+
+export type PgptSessionSummary = {
+  session_id: string;
+
+  interaction_count: number;
+  started_at: string | null;
+  ended_at: string | null;
+
+  assistant_count: number;
+
+  blocked_count: number; // assistant-only
+  scored_count: number; // assistant-only (maxScore present)
+  low_score_count: number; // assistant-only (maxScore < threshold)
+
+  open_qa_count: number; // latest-flag status == open (per interaction)
+
+  top_archetype: string | null;
+  top_model: string | null;
 };

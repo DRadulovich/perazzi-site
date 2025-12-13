@@ -30,6 +30,10 @@ type SearchParams = {
   model?: string;
   gateway?: string;
   qa?: string;
+  winner_changed?: string;
+  margin_lt?: string;
+  score_archetype?: string;
+  min?: string;
 };
 
 export async function LogsSection({
@@ -70,6 +74,10 @@ export async function LogsSection({
       model: resolvedSearchParams.model,
       gateway: resolvedSearchParams.gateway,
       qa: resolvedSearchParams.qa,
+      winner_changed: resolvedSearchParams.winner_changed,
+      margin_lt: resolvedSearchParams.margin_lt,
+      score_archetype: resolvedSearchParams.score_archetype,
+      min: resolvedSearchParams.min,
 
       limit: LOGS_PAGE_SIZE + 1,
       offset,
@@ -101,6 +109,10 @@ export async function LogsSection({
             model: resolvedSearchParams.model,
             gateway: resolvedSearchParams.gateway,
             qa: resolvedSearchParams.qa,
+            winner_changed: resolvedSearchParams.winner_changed,
+            margin_lt: resolvedSearchParams.margin_lt,
+            score_archetype: resolvedSearchParams.score_archetype,
+            min: resolvedSearchParams.min,
           })
         : null;
 
@@ -121,6 +133,10 @@ export async function LogsSection({
           model: resolvedSearchParams.model,
           gateway: resolvedSearchParams.gateway,
           qa: resolvedSearchParams.qa,
+          winner_changed: resolvedSearchParams.winner_changed,
+          margin_lt: resolvedSearchParams.margin_lt,
+          score_archetype: resolvedSearchParams.score_archetype,
+          min: resolvedSearchParams.min,
         })
       : null;
 

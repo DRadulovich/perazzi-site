@@ -20,6 +20,11 @@ export type LogsFilters = {
 
   gateway: BoolFilter;
   qa: QaFilter;
+
+  winnerChanged?: boolean;
+  marginLt?: number | null;
+  scoreArchetype?: "Loyalist" | "Prestige" | "Analyst" | "Achiever" | "Legacy" | null;
+  scoreArchetypeMin?: number | null;
 };
 
 function normalizeShortText(value: unknown, maxLen: number): string {
@@ -68,8 +73,33 @@ export function parseLogsFilters(input: {
   model?: string;
   gateway?: string;
   qa?: string;
+  winner_changed?: string;
+  margin_lt?: string;
+  score_archetype?: string;
+  min?: string;
 }): LogsFilters {
+  const ARCH_KEYS = new Set(["Loyalist", "Prestige", "Analyst", "Achiever", "Legacy"]);
+
+  function parseFloat01(v: string | undefined | null): number | null {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return null;
+    if (n < 0) return 0;
+    if (n > 1) return 1;
+    return n;
+  }
+
   const qNorm = normalizeShortText(input.q, 500);
+  const winner_changed = String((input as any).winner_changed ?? "").trim();
+  const margin_lt = String((input as any).margin_lt ?? "").trim();
+  const score_archetype = String((input as any).score_archetype ?? "").trim();
+  const min = String((input as any).min ?? "").trim();
+
+  const winnerChanged = winner_changed === "true";
+
+  const marginLt = margin_lt ? parseFloat01(margin_lt) : null;
+
+  const scoreArchetype = ARCH_KEYS.has(score_archetype) ? (score_archetype as any) : null;
+  const scoreArchetypeMin = scoreArchetype && min ? parseFloat01(min) : null;
 
   return {
     envFilter: input.envFilter,
@@ -88,19 +118,33 @@ export function parseLogsFilters(input: {
 
     gateway: parseBoolFilter(input.gateway),
     qa: parseQaFilter(input.qa),
+
+    winnerChanged,
+    marginLt,
+    scoreArchetype,
+    scoreArchetypeMin,
   };
 }
 
-export function buildLogsQueryParts(filters: LogsFilters): {
+type LogsQueryParts = {
   joinSql: string;
   whereClause: string;
   values: Array<string | number | boolean>;
   nextIndex: number;
-} {
-  const conditions: string[] = [];
-  const values: Array<string | number | boolean> = [];
-  let idx = 1;
+};
 
+function buildLogsQueryPartsInternal(args: {
+  filters: LogsFilters;
+  conditions: string[];
+  values: Array<string | number | boolean>;
+  idx: number;
+}): LogsQueryParts {
+  const { filters } = args;
+  const conditions = args.conditions;
+  const values = args.values;
+  let idx = args.idx;
+
+  // Base/global
   if (filters.envFilter) {
     conditions.push(`l.env = $${idx++}`);
     values.push(filters.envFilter);
@@ -116,12 +160,14 @@ export function buildLogsQueryParts(filters: LogsFilters): {
     values.push(filters.daysFilter);
   }
 
+  // Search over FULL prompt/response, but select previews
   if (filters.q && filters.q.trim().length > 0) {
     conditions.push(`(l.prompt ILIKE $${idx} OR l.response ILIKE $${idx})`);
     values.push(`%${filters.q.trim()}%`);
     idx += 1;
   }
 
+  // Guardrails
   if (filters.grStatus === "blocked") {
     conditions.push(`l.metadata->>'guardrailStatus' = 'blocked'`);
   } else if (filters.grStatus === "not_blocked") {
@@ -133,12 +179,14 @@ export function buildLogsQueryParts(filters: LogsFilters): {
     values.push(filters.grReason);
   }
 
+  // Confidence
   if (filters.lowConf === "true") {
     conditions.push(`l.low_confidence = true`);
   } else if (filters.lowConf === "false") {
     conditions.push(`coalesce(l.low_confidence, false) = false`);
   }
 
+  // maxScore presets
   if (filters.score !== "any") {
     conditions.push(`l.metadata->>'maxScore' is not null`);
     if (filters.score === "lt0.25") {
@@ -154,6 +202,7 @@ export function buildLogsQueryParts(filters: LogsFilters): {
     }
   }
 
+  // Archetype / model
   if (filters.archetype) {
     conditions.push(`l.archetype = $${idx++}`);
     values.push(filters.archetype);
@@ -164,12 +213,14 @@ export function buildLogsQueryParts(filters: LogsFilters): {
     values.push(filters.model);
   }
 
+  // Gateway
   if (filters.gateway === "true") {
     conditions.push(`l.used_gateway = true`);
   } else if (filters.gateway === "false") {
     conditions.push(`coalesce(l.used_gateway, false) = false`);
   }
 
+  // QA (requires join alias qf)
   if (filters.qa === "open") {
     conditions.push(`qf.qa_flag_id is not null and qf.qa_flag_status = 'open'`);
   } else if (filters.qa === "resolved") {
@@ -178,22 +229,80 @@ export function buildLogsQueryParts(filters: LogsFilters): {
     conditions.push(`qf.qa_flag_id is null`);
   }
 
-  const joinSql = `
-    left join lateral (
-      select
-        id::text as qa_flag_id,
-        status as qa_flag_status,
-        reason as qa_flag_reason,
-        notes as qa_flag_notes,
-        created_at as qa_flag_created_at
-      from qa_flags
-      where interaction_id = l.id
-      order by (status = 'open') desc, created_at desc
-      limit 1
-    ) qf on true
-  `;
+  if (filters.marginLt !== null && filters.marginLt !== undefined) {
+    conditions.push(`l.metadata->>'archetypeConfidence' is not null`);
+    conditions.push(`(l.metadata->>'archetypeConfidence')::float < $${idx++}`);
+    values.push(filters.marginLt);
+  }
+
+  if (filters.scoreArchetype && filters.scoreArchetypeMin !== null && filters.scoreArchetypeMin !== undefined) {
+    const key = filters.scoreArchetype; // safe enum
+    conditions.push(`l.metadata->'archetypeScores' is not null`);
+    conditions.push(`(l.metadata->'archetypeScores'->>'${key}')::float >= $${idx++}`);
+    values.push(filters.scoreArchetypeMin);
+  }
+
+  const joins: string[] = [
+    `
+      left join lateral (
+        select
+          id::text as qa_flag_id,
+          status as qa_flag_status,
+          reason as qa_flag_reason,
+          notes as qa_flag_notes,
+          created_at as qa_flag_created_at
+        from qa_flags
+        where interaction_id = l.id
+        order by (status = 'open') desc, created_at desc
+        limit 1
+      ) qf on true
+    `,
+  ];
+
+  if (filters.winnerChanged) {
+    joins.push(`
+      left join lateral (
+        select p.archetype as prev_archetype
+        from perazzi_conversation_logs p
+        where p.session_id = l.session_id
+          and p.created_at < l.created_at
+        order by p.created_at desc
+        limit 1
+      ) prev on true
+    `);
+  }
+
+  if (filters.winnerChanged) {
+    conditions.push(`l.session_id is not null`);
+    conditions.push(`prev.prev_archetype is not null`);
+    conditions.push(`prev.prev_archetype is distinct from l.archetype`);
+  }
+
+  const joinSql = joins.join("\n");
 
   const whereClause = conditions.length ? `where ${conditions.join(" and ")}` : "";
 
   return { joinSql, whereClause, values, nextIndex: idx };
+}
+
+export function buildLogsQueryParts(filters: LogsFilters): LogsQueryParts {
+  return buildLogsQueryPartsInternal({ filters, conditions: [], values: [], idx: 1 });
+}
+
+/**
+ * Pass 3: Same logic as buildLogsQueryParts, but allows “base conditions” (e.g. session_id = $1).
+ * Caller controls startIndex so parameter numbering remains correct.
+ */
+export function buildLogsQueryPartsWithBase(args: {
+  filters: LogsFilters;
+  baseConditions: string[];
+  baseValues: Array<string | number | boolean>;
+  startIndex: number;
+}): LogsQueryParts {
+  return buildLogsQueryPartsInternal({
+    filters: args.filters,
+    conditions: [...args.baseConditions],
+    values: [...args.baseValues],
+    idx: args.startIndex,
+  });
 }

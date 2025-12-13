@@ -23,7 +23,7 @@ function sanitizeReason(value: unknown): string {
 
 function sanitizeNotes(value: unknown): string | null {
   const raw = String(value ?? "")
-    .replace(/\r\n/g, "\n")
+    .replaceAll(/\r\n/g, "\n")
     .trim();
 
   if (!raw) return null;
@@ -32,7 +32,7 @@ function sanitizeNotes(value: unknown): string | null {
   const clipped = raw.slice(0, 500);
 
   // Keep notes single-line-ish if user pastes multiline
-  return clipped.replace(/\s*\n\s*/g, " ").trim() || null;
+  return clipped.replaceAll(/\s*\n\s*/g, " ").trim() || null;
 }
 
 function normalizeFallback(referer: string | null, defaultPath: string): string {
