@@ -61,6 +61,12 @@ PERAZZI_LOW_CONF_THRESHOLD=                   # Threshold for low-confidence res
 PERAZZI_ENABLE_FILE_LOG=                      # "true" to write conversation logs locally
 EMBED_BATCH_SIZE=64                           # Batch size for embedding ingest scripts
 PERAZZI_AI_LOGGING_ENABLED=                   # Reserved for future app-level AI logging toggle
+# === ZR1 (Archetype Analysis) feature flags ===
+# Keep these OFF in production until ZR1 is validated.
+PERAZZI_ENABLE_RERANK=false
+PERAZZI_RERANK_CANDIDATE_LIMIT=60
+PERAZZI_ARCHETYPE_CONFIDENCE_MIN=0.08
+PERAZZI_ENABLE_RETRIEVAL_DEBUG=false
 
 # Postgres / pgvector for the knowledge base
 DATABASE_URL=postgres://user:password@localhost:5433/perazzi
