@@ -214,17 +214,45 @@ type RetrievedRow = {
   doc_type: string | null;
   distance: number;
   score: number;
+
+  // Chunk metadata (unused for now)
+  chunk_primary_modes?: unknown;
+  chunk_archetype_bias?: unknown;
+  chunk_section_labels?: unknown;
+  chunk_disciplines?: unknown;
+  chunk_platforms?: unknown;
+  chunk_audiences?: unknown;
+  chunk_context_tags?: unknown;
+  chunk_related_entities?: unknown;
+  chunk_guardrail_flags?: unknown;
+  chunk_visibility?: string | null;
+  chunk_confidentiality?: string | null;
+  chunk_language?: string | null;
+
+  // Document metadata (unused for now)
+  doc_disciplines?: unknown;
+  doc_platforms?: unknown;
+  doc_audiences?: unknown;
+  doc_tags?: unknown;
+  doc_pricing_sensitive?: boolean | null;
+  doc_visibility?: string | null;
+  doc_confidentiality?: string | null;
+  doc_guardrail_flags?: unknown;
+  doc_language?: string | null;
+  doc_summary?: string | null;
 };
 
 async function fetchV2Chunks(opts: {
   client: PoolClient;
   queryEmbedding: number[];
   limit: number;
+  candidateLimit?: number;
   hints?: RetrievalHints;
 }): Promise<RetrievedChunk[]> {
-  const { client, queryEmbedding, limit, hints: _hints } = opts;
+  const { client, queryEmbedding, limit, candidateLimit, hints: _hints } = opts;
   void _hints;
   const embeddingParam = JSON.stringify(queryEmbedding);
+  const effectiveCandidateLimit = Math.max(candidateLimit ?? limit, limit);
 
   const { rows } = await client.query(
     `
@@ -233,32 +261,55 @@ async function fetchV2Chunks(opts: {
           c.id as chunk_id,
           c.text as content,
           c.heading_path,
+
           d.path as document_path,
           d.title as document_title,
           d.category,
           d.doc_type,
+
+          c.primary_modes as chunk_primary_modes,
+          c.archetype_bias as chunk_archetype_bias,
+          c.section_labels as chunk_section_labels,
+          c.disciplines as chunk_disciplines,
+          c.platforms as chunk_platforms,
+          c.audiences as chunk_audiences,
+          c.context_tags as chunk_context_tags,
+          c.related_entities as chunk_related_entities,
+          c.guardrail_flags as chunk_guardrail_flags,
+          c.visibility as chunk_visibility,
+          c.confidentiality as chunk_confidentiality,
+          c.language as chunk_language,
+
+          d.disciplines as doc_disciplines,
+          d.platforms as doc_platforms,
+          d.audiences as doc_audiences,
+          d.tags as doc_tags,
+          d.pricing_sensitive as doc_pricing_sensitive,
+          d.visibility as doc_visibility,
+          d.confidentiality as doc_confidentiality,
+          d.guardrail_flags as doc_guardrail_flags,
+          d.language as doc_language,
+          d.summary as doc_summary,
+
           (e.embedding::halfvec(3072) <=> $1::halfvec(3072)) as distance
         from public.embeddings e
         join public.chunks c on c.id = e.chunk_id
         join public.documents d on d.id = c.document_id
-        where d.status = 'active'
+        where
+          d.status = 'active'
           and coalesce(c.visibility, 'public') = 'public'
+          and coalesce(d.visibility, 'public') = 'public'
+          and coalesce(d.confidentiality, 'normal') = 'normal'
+          and coalesce(c.confidentiality, 'normal') = 'normal'
         order by distance asc
         limit $2
       )
       select
-        chunk_id,
-        content,
-        heading_path,
-        document_path,
-        document_title,
-        category,
-        doc_type,
-        distance,
-        (1.0 - distance) as score
+        ranked.*,
+        (1.0 - ranked.distance) as score
       from ranked
     `,
-    [embeddingParam, limit],
+    [embeddingParam, effectiveCandidateLimit],
   );
   console.info(
     JSON.stringify({
@@ -275,7 +326,7 @@ async function fetchV2Chunks(opts: {
 
   const typedRows = rows as RetrievedRow[];
 
-  return typedRows.map((row) => {
+  const results = typedRows.map((row) => {
     const title =
       row.document_title ??
       row.document_path ??
@@ -294,6 +345,8 @@ async function fetchV2Chunks(opts: {
       docType: row.doc_type ?? null,
     };
   });
+
+  return results.slice(0, limit);
 }
 
 async function getPgPool(): Promise<Pool> {
