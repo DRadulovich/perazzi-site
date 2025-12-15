@@ -377,6 +377,155 @@ type RetrievedRow = {
   doc_summary?: string | null;
 };
 
+function clamp(n: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, n));
+}
+
+function countOverlap(a: string[], b: string[]): number {
+  if (!a.length || !b.length) return 0;
+  const setB = new Set(b);
+  let count = 0;
+  for (const item of a) {
+    if (setB.has(item)) count += 1;
+  }
+  return count;
+}
+
+function normalizeStringArray(values: unknown[] | undefined): string[] {
+  if (!values?.length) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const v of values) {
+    const token = normalizeStringToken(v);
+    if (!token) continue;
+    if (seen.has(token)) continue;
+    seen.add(token);
+    out.push(token);
+  }
+  return out;
+}
+
+export function computeBoostV2(
+  row: RetrievedRow,
+  context?: PerazziAssistantRequest["context"],
+  hints?: RetrievalHints,
+): number {
+  let boost = 0;
+
+  const mode = normalizeStringToken(context?.mode);
+  const contextPlatform = normalizeStringToken(context?.platformSlug);
+  const contextModel = normalizeStringToken(context?.modelSlug);
+
+  const topics = normalizeStringArray(hints?.topics);
+  const keywords = normalizeStringArray(hints?.keywords)
+    // Avoid ultra-short noisy tokens
+    .filter((k) => k.length >= 3);
+
+  const focusEntities = normalizeStringArray(hints?.focusEntities);
+
+  // ---------- Parse jsonb fields ----------
+  const chunkModes = parseJsonbStringArray(row.chunk_primary_modes);
+
+  const docPlatforms = parseJsonbStringArray(row.doc_platforms);
+  const chunkPlatforms = parseJsonbStringArray(row.chunk_platforms);
+  const allPlatforms = Array.from(new Set([...docPlatforms, ...chunkPlatforms]));
+
+  const docDisciplines = parseJsonbStringArray(row.doc_disciplines);
+  const chunkDisciplines = parseJsonbStringArray(row.chunk_disciplines);
+  const allDisciplines = Array.from(new Set([...docDisciplines, ...chunkDisciplines]));
+
+  const docTags = parseJsonbStringArray(row.doc_tags);
+  const chunkContextTags = parseJsonbStringArray(row.chunk_context_tags);
+  const chunkSectionLabels = parseJsonbStringArray(row.chunk_section_labels);
+
+  const relatedEntityIds = extractRelatedEntityIds(row.chunk_related_entities);
+
+  // ---------- Mode alignment ----------
+  if (mode && chunkModes.includes(mode)) {
+    boost += 0.06; // guideline: +0.03 to +0.08
+  }
+
+  // ---------- Platform alignment ----------
+  if (contextPlatform && allPlatforms.includes(contextPlatform)) {
+    boost += 0.1; // guideline: +0.05 to +0.12
+  }
+  if (topics.length) {
+    const hintPlatforms = topics
+      .filter((t) => t.startsWith("platform_"))
+      .map((t) => t.replace("platform_", ""))
+      .filter(Boolean);
+    if (countOverlap(hintPlatforms, allPlatforms) > 0) {
+      boost += 0.08;
+    }
+  }
+
+  // ---------- Discipline alignment ----------
+  if (topics.length) {
+    const hintDisciplines = topics
+      .filter((t) => t.startsWith("discipline_"))
+      .map((t) => t.replace("discipline_", ""))
+      .filter(Boolean);
+    if (countOverlap(hintDisciplines, allDisciplines) > 0) {
+      boost += 0.06; // guideline: +0.03 to +0.08
+    }
+  }
+
+  // ---------- Entity alignment (strong) ----------
+  // Prefer max-style (don't stack too hard)
+  let entityBoost = 0;
+  if (contextModel && relatedEntityIds.includes(contextModel)) {
+    entityBoost = Math.max(entityBoost, 0.12);
+  }
+  if (focusEntities.length && countOverlap(focusEntities, relatedEntityIds) > 0) {
+    entityBoost = Math.max(entityBoost, 0.15);
+  }
+  boost += entityBoost; // guideline: +0.10 to +0.20
+
+  // ---------- Topic alignment (tags/labels) ----------
+  // Only count "non-platform / non-discipline" topics here to avoid double counting
+  const topicalTopics = topics.filter(
+    (t) => !t.startsWith("platform_") && !t.startsWith("discipline_"),
+  );
+  if (topicalTopics.length) {
+    if (countOverlap(topicalTopics, chunkContextTags) > 0) boost += 0.06;
+    if (countOverlap(topicalTopics, chunkSectionLabels) > 0) boost += 0.04;
+    if (countOverlap(topicalTopics, docTags) > 0) boost += 0.04;
+  }
+
+  // ---------- Keyword alignment ----------
+  if (keywords.length) {
+    const haystackParts: string[] = [];
+
+    haystackParts.push(String(row.document_title ?? ""));
+    haystackParts.push(String(row.document_path ?? ""));
+    haystackParts.push(String(row.heading_path ?? ""));
+    haystackParts.push(String(row.doc_summary ?? ""));
+
+    // Include tags/labels as text
+    haystackParts.push(chunkContextTags.join(" "));
+    haystackParts.push(chunkSectionLabels.join(" "));
+    haystackParts.push(docTags.join(" "));
+
+    const haystack = haystackParts.join(" ").toLowerCase();
+
+    let matchCount = 0;
+    for (const kw of keywords) {
+      if (haystack.includes(kw)) matchCount += 1;
+    }
+
+    // Small, bounded keyword boost
+    if (matchCount > 0) {
+      // 1 match => 0.03, 2 => 0.04, 3 => 0.05, 4+ => 0.06
+      boost += clamp(0.02 + 0.01 * Math.min(matchCount, 4), 0, 0.06);
+    }
+  }
+
+  if (!Number.isFinite(boost)) return 0;
+
+  // Hard clamp to keep this a "nudge", not an override
+  return clamp(boost, -0.1, 0.5);
+}
+
 async function fetchV2Chunks(opts: {
   client: PoolClient;
   queryEmbedding: number[];
