@@ -196,6 +196,7 @@ export function useChatState(
       addMessage(assistantEntry);
       setContext((prev) => ({
         ...prev,
+        mode: data.mode ?? prev.mode,
         archetype: data.archetype ?? prev.archetype ?? null,
         archetypeVector:
           data.archetypeBreakdown?.vector ?? prev.archetypeVector ?? null,

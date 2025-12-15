@@ -291,8 +291,9 @@ Pick one:
 
 # 5) Phase 4: Make archetype shape response structure (not just tone)
 
-**Primary file:** `src/lib/perazzi-intents.ts`
-**Also touches:** `src/app/api/perazzi-assistant/route.ts` (system prompt assembly)
+**Primary file:** `src/lib/perazzi-intents.ts` --> `https://raw.githubusercontent.com/DRadulovich/perazzi-site/refs/heads/feature/archetype-zr1-rerank/src/lib/perazzi-intents.ts`
+
+**Also touches:** `src/app/api/perazzi-assistant/route.ts` (system prompt assembly) --> `https://github.com/DRadulovich/perazzi-site/blob/feature/archetype-zr1-rerank/src/app/api/perazzi-assistant/route.ts`
 
 ## 5.1 Add archetype-aware templates (structured “output architecture”)
 
