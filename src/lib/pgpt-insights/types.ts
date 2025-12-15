@@ -16,6 +16,11 @@ export type PerazziLogBase = {
   guardrail_status: string | null;
   guardrail_reason: string | null;
 
+  // Optional context fields (may be absent on older logs)
+  page_url?: string | null;
+  user_id?: string | null;
+  mode?: string | null;
+
   // QA fields (attached server-side after fetching)
   qa_flag_id?: string | null;
   qa_flag_status?: string | null;
@@ -133,6 +138,9 @@ export type PgptLogDetail = PerazziLogRow & {
   archetype_scores?: Record<string, number> | null;
   archetype_confidence?: number | null;
   archetype_decision?: unknown | null;
+  page_url?: string | null;
+  user_id?: string | null;
+  mode?: string | null;
 };
 
 export type PgptLogDetailResponse = {

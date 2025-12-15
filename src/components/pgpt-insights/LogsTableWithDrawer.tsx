@@ -676,6 +676,43 @@ export function LogsTableWithDrawer({
                             );
                           })()}
 
+                          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3 text-xs">
+                            <div className="rounded-lg border border-border bg-muted/10 p-3">
+                              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">mode</div>
+                              <div className="mt-1 font-medium text-foreground">{detail.log.mode ?? "—"}</div>
+                            </div>
+
+                            <div className="rounded-lg border border-border bg-muted/10 p-3">
+                              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">page url</div>
+                              <div className="mt-1 font-medium text-foreground break-words">
+                                {detail.log.page_url ? (
+                                  detail.log.page_url.startsWith("http://") || detail.log.page_url.startsWith("https://") ? (
+                                    <a
+                                      href={detail.log.page_url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="text-blue-600 underline"
+                                      title={detail.log.page_url}
+                                    >
+                                      {truncate(detail.log.page_url, 80)}
+                                    </a>
+                                  ) : (
+                                    <span title={detail.log.page_url}>{truncate(detail.log.page_url, 80)}</span>
+                                  )
+                                ) : (
+                                  "—"
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="rounded-lg border border-border bg-muted/10 p-3">
+                              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">user id</div>
+                              <div className="mt-1 font-medium text-foreground break-words">
+                                {detail.log.user_id ?? "—"}
+                              </div>
+                            </div>
+                          </div>
+
                           {detail.log.archetype_decision ? (
                             <details className="mt-3">
                               <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
@@ -691,6 +728,43 @@ export function LogsTableWithDrawer({
                         <div className="rounded-xl border border-border bg-background p-4">
                           <div className="text-xs font-semibold text-foreground">Archetype</div>
                           <div className="mt-1 text-xs text-muted-foreground">Legacy log: no archetype distribution recorded.</div>
+
+                          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3 text-xs">
+                            <div className="rounded-lg border border-border bg-muted/10 p-3">
+                              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">mode</div>
+                              <div className="mt-1 font-medium text-foreground">{detail.log.mode ?? "—"}</div>
+                            </div>
+
+                            <div className="rounded-lg border border-border bg-muted/10 p-3">
+                              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">page url</div>
+                              <div className="mt-1 font-medium text-foreground break-words">
+                                {detail.log.page_url ? (
+                                  detail.log.page_url.startsWith("http://") || detail.log.page_url.startsWith("https://") ? (
+                                    <a
+                                      href={detail.log.page_url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="text-blue-600 underline"
+                                      title={detail.log.page_url}
+                                    >
+                                      {truncate(detail.log.page_url, 80)}
+                                    </a>
+                                  ) : (
+                                    <span title={detail.log.page_url}>{truncate(detail.log.page_url, 80)}</span>
+                                  )
+                                ) : (
+                                  "—"
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="rounded-lg border border-border bg-muted/10 p-3">
+                              <div className="text-[10px] uppercase tracking-wide text-muted-foreground">user id</div>
+                              <div className="mt-1 font-medium text-foreground break-words">
+                                {detail.log.user_id ?? "—"}
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>

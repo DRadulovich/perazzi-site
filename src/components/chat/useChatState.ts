@@ -213,13 +213,33 @@ export function useChatState(
         archetypeBreakdown: data.archetypeBreakdown,
       };
       addMessage(assistantEntry);
-      setContext((prev) => ({
-        ...prev,
-        mode: data.mode ?? prev.mode,
-        archetype: data.archetype ?? prev.archetype ?? null,
-        archetypeVector:
-          data.archetypeBreakdown?.vector ?? prev.archetypeVector ?? null,
-      }));
+      setContext((prev) => {
+        // Explicit reset should stay cleared, regardless of server output.
+        if (isArchetypeReset) {
+          return {
+            ...prev,
+            mode: data.mode ?? prev.mode,
+            archetype: null,
+            archetypeVector: null,
+          };
+        }
+
+        // Only fall back when the server omitted the field (undefined).
+        const nextArchetype =
+          data.archetype !== undefined ? data.archetype : prev.archetype ?? null;
+
+        const nextArchetypeVector =
+          data.archetypeBreakdown?.vector !== undefined
+            ? data.archetypeBreakdown.vector
+            : prev.archetypeVector ?? null;
+
+        return {
+          ...prev,
+          mode: data.mode ?? prev.mode,
+          archetype: nextArchetype,
+          archetypeVector: nextArchetypeVector,
+        };
+      });
       options.onResponseMeta?.({
         citations: data.citations,
         guardrail: data.guardrail,

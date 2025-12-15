@@ -321,7 +321,7 @@ If archetype confidence is low (mixed/balanced), default to your current neutral
 
 # 6) Phase 5: Fix the client “reset doesn’t clear archetype label” bug
 
-**Primary file:** `src/components/chat/useChatState.ts`
+**Primary file:** `src/components/chat/useChatState.ts` --> `https://raw.githubusercontent.com/DRadulovich/perazzi-site/refs/heads/feature/archetype-zr1-rerank/src/components/chat/useChatState.ts`
 
 **Search for:**
 `archetype: data.archetype ?? prev.archetype ?? null`
@@ -340,8 +340,9 @@ Also ensure reset clears `archetypeVector` and doesn’t rehydrate stale values 
 
 # 7) Phase 6: Logging upgrades for tuning (turn your system into science)
 
-**Primary file:** `src/lib/aiLogging.ts` --> 
-**Also:** add metadata in `route.ts` when calling `logAiInteraction`
+**Primary file:** `src/lib/aiLogging.ts` --> `https://raw.githubusercontent.com/DRadulovich/perazzi-site/refs/heads/feature/archetype-zr1-rerank/src/lib/aiLogging.ts`
+
+**Also:** add metadata in `route.ts` when calling `logAiInteraction` --> `https://raw.githubusercontent.com/DRadulovich/perazzi-site/refs/heads/feature/archetype-zr1-rerank/src/app/api/perazzi-assistant/route.ts`
 
 ## 7.1 Log reranking metrics
 
