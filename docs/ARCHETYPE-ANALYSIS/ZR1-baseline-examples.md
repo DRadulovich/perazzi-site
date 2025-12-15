@@ -3,15 +3,15 @@
 Purpose: This document is the baseline harness for the ZR1 Archetype + Retrieval rebuild. We run these prompts before and after each phase to measure deltas objectively and keep refusals stable.
 
 ## Run metadata (fill this in every time you run the set)
-- Date:
+- Date: 12/15/2026
 - Branch:
 - Commit SHA:
 - Environment (local/staging/prod):
 - Flags:
-  - PERAZZI_ENABLE_RERANK=
-  - PERAZZI_RERANK_CANDIDATE_LIMIT=
-  - PERAZZI_ARCHETYPE_CONFIDENCE_MIN=
-  - PERAZZI_ENABLE_RETRIEVAL_DEBUG=
+  - PERAZZI_ENABLE_RERANK=false
+  - PERAZZI_RERANK_CANDIDATE_LIMIT=60
+  - PERAZZI_ARCHETYPE_CONFIDENCE_MIN=0.08
+  - PERAZZI_ENABLE_RETRIEVAL_DEBUG=false
 
 ## Baseline protocol (runbook)
 1) Set flags for the run (baseline = rerank OFF, debug OFF; note candidate limit and confidence min).  

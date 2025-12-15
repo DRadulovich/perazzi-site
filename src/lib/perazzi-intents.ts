@@ -1,6 +1,7 @@
-import type { PerazziAssistantRequest } from "@/types/perazzi-assistant";
+import type { PerazziAssistantRequest, PerazziMode } from "@/types/perazzi-assistant";
 
 export type RetrievalHints = {
+  mode: PerazziMode;
   intents: string[];
   topics: string[];
   focusEntities: string[];
@@ -139,12 +140,58 @@ const TEMPLATE_GUIDES: Record<string, string> = {
     "- Present upcoming events as a list with **Event — Location — Date** plus how to register or inquire.",
 };
 
+const ALLOWED_MODES: PerazziMode[] = ["prospect", "owner", "navigation"];
+
+function normalizeMode(input: unknown): PerazziMode | null {
+  if (typeof input !== "string") return null;
+  const cleaned = input.trim().toLowerCase();
+  return (ALLOWED_MODES as string[]).includes(cleaned) ? (cleaned as PerazziMode) : null;
+}
+
+function inferMode(
+  latestQuestion: string,
+  contextMode: PerazziMode | null,
+  intents: Set<string>,
+): PerazziMode {
+  const q = latestQuestion.toLowerCase();
+
+  const hasNavigationSignal =
+    intents.has("dealers") ||
+    intents.has("events") ||
+    /\b(where\s+can\s+i\s+(find|get|buy|try|contact|reach)|link\s+me|show\s+me|what\s+page|contact|dealer|stockist|authorized\s+dealer|near\s+me)\b/i.test(
+      q,
+    );
+
+  const hasOwnerSignal =
+    intents.has("service") ||
+    /\b(my\s+(gun|perazzi|shotgun)|serial(\s*number)?|s\/n|maintenance|servic(e|ing)|clean(ing)?|repair|timing|warranty)\b/i.test(
+      q,
+    );
+
+  const hasProspectSignal =
+    intents.has("models") ||
+    intents.has("bespoke") ||
+    /\b(mx\s?(8|10|12|2000)?|mx8|mx10|mx12|mx2000|high\s*tech|hts?|tm1|tmx|compare|difference|vs\.?|which\s+(model|platform)|recommend|bespoke|atelier|made\s+to\s+order|sco|sc3|lusso)\b/i.test(
+      q,
+    );
+
+  if (hasNavigationSignal) return "navigation";
+  if (hasOwnerSignal) return "owner";
+  if (hasProspectSignal) return "prospect";
+
+  if (contextMode === "owner" || contextMode === "navigation") return contextMode;
+
+  return "prospect";
+}
+
 export function detectRetrievalHints(
   latestQuestion: string | null,
   context?: PerazziAssistantRequest["context"],
 ): RetrievalHints {
+  const contextMode = normalizeMode(context?.mode);
+
   if (!latestQuestion) {
-    return { intents: [], topics: [], focusEntities: [], keywords: [] };
+    return { mode: contextMode ?? "prospect", intents: [], topics: [], focusEntities: [], keywords: [] };
   }
   const lowerQuestion = latestQuestion.toLowerCase();
   const intents = new Set<string>();
@@ -157,6 +204,7 @@ export function detectRetrievalHints(
     }
   });
 
+  const mode = inferMode(latestQuestion, contextMode, intents);
   const focusEntities = new Set<string>();
   const keywords = new Set<string>();
 
@@ -180,7 +228,7 @@ export function detectRetrievalHints(
     topics.add(`platform_${context.platformSlug.toLowerCase()}`);
   }
 
-  if (context?.mode === "prospect") {
+  if (mode === "prospect") {
     topics.add("models");
     topics.add("platforms");
   }
@@ -203,6 +251,7 @@ export function detectRetrievalHints(
   }
 
   return {
+    mode,
     intents: Array.from(intents),
     topics: Array.from(topics),
     focusEntities: Array.from(focusEntities),
@@ -228,4 +277,41 @@ export function buildResponseTemplates(hints: RetrievalHints): string[] {
     templates.add(TEMPLATE_GUIDES.models);
   }
   return Array.from(templates);
+}
+
+function __assertEqual(name: string, actual: unknown, expected: unknown) {
+  if (actual !== expected) {
+    throw new Error(
+      `[perazzi-intents] detectRetrievalHints mode self-test failed: ${name} (expected ${expected}, got ${String(actual)})`,
+    );
+  }
+}
+
+if (process.env.NODE_ENV === "development") {
+  const ctxProspect: PerazziAssistantRequest["context"] = { mode: "prospect" };
+
+  __assertEqual(
+    "service my gun => owner",
+    detectRetrievalHints("How often should I service my gun?", ctxProspect).mode,
+    "owner",
+  );
+
+  __assertEqual(
+    "where can I find dealer => navigation",
+    detectRetrievalHints("Where can I find a dealer? Link me to one.", ctxProspect).mode,
+    "navigation",
+  );
+
+  __assertEqual(
+    "mx8 vs high tech => prospect",
+    detectRetrievalHints("Explain MX8 vs High Tech", ctxProspect).mode,
+    "prospect",
+  );
+
+  const ctxOwner: PerazziAssistantRequest["context"] = { mode: "owner" };
+  __assertEqual(
+    "neutral follow-up keeps owner",
+    detectRetrievalHints("Thanks", ctxOwner).mode,
+    "owner",
+  );
 }
