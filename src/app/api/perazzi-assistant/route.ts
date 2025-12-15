@@ -597,7 +597,7 @@ export async function POST(request: Request) {
 
     const guardrail = { status: "ok" as const, reason: null as string | null };
 
-    const responseTemplates = buildResponseTemplates(hints);
+    const responseTemplates = buildResponseTemplates(hints, effectiveArchetype);
     const baseContext = body.context ?? {};
 
     const retrievalContext = {

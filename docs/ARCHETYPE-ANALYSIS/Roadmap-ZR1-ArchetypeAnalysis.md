@@ -340,7 +340,7 @@ Also ensure reset clears `archetypeVector` and doesn’t rehydrate stale values 
 
 # 7) Phase 6: Logging upgrades for tuning (turn your system into science)
 
-**Primary file:** `src/lib/aiLogging.ts`
+**Primary file:** `src/lib/aiLogging.ts` --> 
 **Also:** add metadata in `route.ts` when calling `logAiInteraction`
 
 ## 7.1 Log reranking metrics
