@@ -676,6 +676,7 @@ async function fetchV2Chunks(opts: {
     context,
     rerankEnabled,
   } = opts;
+  const retrievalDebugEnabled = isEnvTrue(process.env.PERAZZI_ENABLE_RETRIEVAL_DEBUG);
   const embeddingParam = JSON.stringify(queryEmbedding);
   const effectiveCandidateLimit = Math.max(candidateLimit ?? limit, limit);
 
@@ -736,20 +737,12 @@ async function fetchV2Chunks(opts: {
     `,
     [embeddingParam, effectiveCandidateLimit],
   );
-  console.info(
-    JSON.stringify({
-      type: "perazzi-retrieval-debug",
-      rowsCount: rows.length,
-      firstRow: rows[0]
-        ? {
-            distance: (rows[0] as any).distance ?? null,
-            score: (rows[0] as any).score ?? null,
-          }
-        : null,
-    }),
-  );
 
   const typedRows = rows as RetrievedRow[];
+  const logRetrievalDebug = (payload: Record<string, unknown>) => {
+    if (!retrievalDebugEnabled) return;
+    console.info(JSON.stringify({ type: "perazzi-retrieval-debug", ...payload }));
+  };
   const maxBaseScore = typedRows.reduce((max, row) => {
     const s = Number(row.score ?? 0);
     return s > max ? s : max;
@@ -778,7 +771,31 @@ async function fetchV2Chunks(opts: {
       };
     });
 
-    return { chunks: results.slice(0, limit), maxBaseScore };
+    const sliced = results.slice(0, limit);
+
+    logRetrievalDebug({
+      rerankEnabled: false,
+      candidateCount: typedRows.length,
+      returnedCount: sliced.length,
+      limit,
+      effectiveCandidateLimit,
+      top: typedRows.slice(0, Math.min(limit, 12)).map((row, idx) => {
+        const baseScore = Number(row.score ?? 0);
+        return {
+          rank: idx + 1,
+          chunkId: row.chunk_id,
+          documentPath: row.document_path ?? null,
+          baseScore,
+          boost: 0,
+          archetypeBoost: 0,
+          finalScore: baseScore,
+          primaryModes: parseJsonbStringArray(row.chunk_primary_modes),
+          archetypeBias: parseJsonbStringArray(row.chunk_archetype_bias),
+        };
+      }),
+    });
+
+    return { chunks: sliced, maxBaseScore };
   }
 
   const userVector = context?.archetypeVector ?? null;
@@ -805,6 +822,25 @@ async function fetchV2Chunks(opts: {
   });
 
   const top = scored.slice(0, limit);
+
+  logRetrievalDebug({
+    rerankEnabled: true,
+    candidateCount: typedRows.length,
+    returnedCount: top.length,
+    limit,
+    effectiveCandidateLimit,
+    top: top.slice(0, 12).map((item, idx) => ({
+      rank: idx + 1,
+      chunkId: item.row.chunk_id,
+      documentPath: item.row.document_path ?? null,
+      baseScore: item.baseScore,
+      boost: item.boost,
+      archetypeBoost: item.archetypeBoost,
+      finalScore: item.finalScore,
+      primaryModes: parseJsonbStringArray(item.row.chunk_primary_modes),
+      archetypeBias: parseJsonbStringArray(item.row.chunk_archetype_bias),
+    })),
+  });
 
   const results: RetrievedChunk[] = top.map(({ row, baseScore, finalScore }) => {
     const title =
