@@ -493,7 +493,8 @@ export async function POST(request: Request) {
       previousVector,
     );
     const archetypeClassification = buildArchetypeClassification(archetypeBreakdown);
-    const effectiveArchetype = archetypeClassification.archetype;
+    const effectiveArchetype: Archetype | null =
+      archetypeOverride ?? archetypeBreakdown.primary ?? null;
 
     if (archetypeOverride) {
       const answer = `Understood. I’ll answer from the perspective of a ${capitalize(
