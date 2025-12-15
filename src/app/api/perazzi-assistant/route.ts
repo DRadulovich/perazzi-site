@@ -481,12 +481,14 @@ export async function POST(request: Request) {
 
     const archetypeContext: ArchetypeContext = {
       mode: effectiveMode,
-      pageUrl: body?.context?.pageUrl ?? null,
-      modelSlug: body?.context?.modelSlug ?? null,
-      platformSlug: body?.context?.platformSlug ?? null,
-      userMessage: latestQuestion ?? "",
-      devOverrideArchetype: archetypeOverride,
-    };
+    pageUrl: body?.context?.pageUrl ?? null,
+    modelSlug: body?.context?.modelSlug ?? null,
+    platformSlug: body?.context?.platformSlug ?? null,
+    intents: Array.isArray(hints?.intents) ? hints.intents : [],
+    topics: Array.isArray(hints?.topics) ? hints.topics : [],
+    userMessage: latestQuestion ?? "",
+    devOverrideArchetype: archetypeOverride,
+  };
 
     const archetypeBreakdown = computeArchetypeBreakdown(
       archetypeContext,

@@ -16,6 +16,8 @@ export interface ArchetypeContext {
   pageUrl?: string | null;
   modelSlug?: string | null;
   platformSlug?: string | null;
+  intents?: string[] | null;
+  topics?: string[] | null;
   /** Latest user message content. */
   userMessage: string;
   /** If present, this wins over inferred primary archetype. */
@@ -287,6 +289,56 @@ if (process.env.NODE_ENV === "development") {
     (vagueBreakdown.vector.prestige ?? 0) > 0.2,
     true
   );
+
+  const hintsOnlyAnalystCtx: ArchetypeContext = {
+    mode: null,
+    pageUrl: null,
+    modelSlug: null,
+    platformSlug: null,
+    intents: ["models"],
+    topics: ["specs"],
+    userMessage: "Tell me about Perazzi.",
+    devOverrideArchetype: null,
+  };
+
+  const hintsAnalystBreakdown = computeArchetypeBreakdown(
+    hintsOnlyAnalystCtx,
+    getNeutralArchetypeVector()
+  );
+
+  __assertEqual(
+    "hints (specs/models) should gently nudge analyst above neutral",
+    (hintsAnalystBreakdown.vector.analyst ?? 0) > 0.205,
+    true
+  );
+
+  __assertEqual(
+    "hints alone should not snap primary",
+    hintsAnalystBreakdown.primary === null,
+    true
+  );
+
+  const hintsOnlyLegacyCtx: ArchetypeContext = {
+    mode: null,
+    pageUrl: null,
+    modelSlug: null,
+    platformSlug: null,
+    intents: ["heritage"],
+    topics: ["history"],
+    userMessage: "Tell me about Perazzi.",
+    devOverrideArchetype: null,
+  };
+
+  const hintsLegacyBreakdown = computeArchetypeBreakdown(
+    hintsOnlyLegacyCtx,
+    getNeutralArchetypeVector()
+  );
+
+  __assertEqual(
+    "hints (history/heritage) should gently nudge legacy above neutral",
+    (hintsLegacyBreakdown.vector.legacy ?? 0) > 0.205,
+    true
+  );
 }
 
 function initZeroVector(): ArchetypeVector {
@@ -335,6 +387,85 @@ function computePriorScale(
 
   const finalScale = Math.max(0.15, Math.min(1, languageScale * profileScale));
   return finalScale;
+}
+
+function normalizeHintList(input?: string[] | null): Set<string> {
+  if (!Array.isArray(input)) return new Set();
+  const out = new Set<string>();
+  input.forEach((v) => {
+    const s = String(v ?? "").toLowerCase().trim();
+    if (s) out.add(s);
+  });
+  return out;
+}
+
+function applyHintSignals(
+  ctx: ArchetypeContext,
+  delta: ArchetypeVector,
+  signals: string[],
+) {
+  const intents = normalizeHintList(ctx.intents);
+  const topics = normalizeHintList(ctx.topics);
+
+  if (intents.size === 0 && topics.size === 0) return;
+
+  const BOOST_ANALYST = 0.06;
+  const BOOST_PRESTIGE = 0.06;
+  const BOOST_LEGACY = 0.06;
+  const BOOST_ACHIEVER = 0.05;
+  const BOOST_LOYALIST = 0.05;
+
+  const analystHint =
+    topics.has("specs") ||
+    topics.has("rib_adjustable") ||
+    topics.has("rib_fixed") ||
+    topics.has("models") ||
+    intents.has("models");
+
+  const prestigeHint =
+    topics.has("bespoke") ||
+    topics.has("grade_sco") ||
+    topics.has("grade_sc3") ||
+    topics.has("grade_lusso") ||
+    intents.has("bespoke");
+
+  const legacyHint =
+    topics.has("heritage") ||
+    topics.has("history") ||
+    intents.has("heritage");
+
+  const achieverHint =
+    topics.has("olympic") ||
+    topics.has("athletes") ||
+    topics.has("events") ||
+    intents.has("olympic") ||
+    intents.has("events");
+
+  const loyalistHint =
+    topics.has("service") ||
+    topics.has("care") ||
+    intents.has("service");
+
+  if (analystHint) {
+    delta.analyst += BOOST_ANALYST;
+    signals.push("hint:analyst");
+  }
+  if (prestigeHint) {
+    delta.prestige += BOOST_PRESTIGE;
+    signals.push("hint:prestige");
+  }
+  if (legacyHint) {
+    delta.legacy += BOOST_LEGACY;
+    signals.push("hint:legacy");
+  }
+  if (achieverHint) {
+    delta.achiever += BOOST_ACHIEVER;
+    signals.push("hint:achiever");
+  }
+  if (loyalistHint) {
+    delta.loyalist += BOOST_LOYALIST;
+    signals.push("hint:loyalist");
+  }
 }
 
 function applyModeSignals(
@@ -598,6 +729,7 @@ export function computeArchetypeBreakdown(
   applyPageUrlSignals(ctx, priorDelta, signalsUsed);
   applyModelSignals(ctx, priorDelta, signalsUsed);
   applyLanguageSignals(ctx, languageDelta, signalsUsed);
+  applyHintSignals(ctx, languageDelta, signalsUsed);
 
   const priorScale = computePriorScale(startingVector, languageDelta);
   if (hasAnyDelta(priorDelta) && priorScale < 1) {
