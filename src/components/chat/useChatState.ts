@@ -10,6 +10,21 @@ import type {
 } from "@/types/perazzi-assistant";
 import { getOrCreateSessionId } from "@/lib/session";
 
+type ApiMode = NonNullable<PerazziAssistantResponse["mode"]>;
+
+function normalizeOutgoingMode(input: unknown): ApiMode | undefined {
+  if (input === null || input === undefined) return undefined;
+  const raw = String(input).trim().toLowerCase();
+
+  if (raw === "heritage") return "navigation";
+
+  if (raw === "prospect" || raw === "owner" || raw === "navigation") {
+    return raw as ApiMode;
+  }
+
+  return undefined;
+}
+
 export type ChatEntry = {
   id: string;
   role: "system" | "assistant" | "user";
@@ -140,12 +155,16 @@ export function useChatState(
       const resetRegex = /^please\s+clear\s+your\s+memory\s+of\s+my\s+archetype\.?$/i;
       const isArchetypeReset = resetRegex.test(payload.question.trim());
 
+      const normalizedMode =
+        normalizeOutgoingMode(payload.context?.mode) ??
+        normalizeOutgoingMode(context.mode);
+
       const effectiveContext: ChatContextShape = {
         pageUrl: payload.context?.pageUrl ?? context.pageUrl,
         locale: payload.context?.locale ?? context.locale,
         modelSlug: payload.context?.modelSlug ?? context.modelSlug,
         platformSlug: payload.context?.platformSlug ?? context.platformSlug,
-        mode: payload.context?.mode ?? context.mode,
+        mode: normalizedMode,
         archetype: isArchetypeReset
           ? null
           : payload.context?.archetype ?? context.archetype ?? null,
