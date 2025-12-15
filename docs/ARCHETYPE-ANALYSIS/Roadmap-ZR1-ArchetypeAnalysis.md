@@ -229,7 +229,7 @@ Right now mode/page/model signals may bias archetype too strongly. Update logic 
 * priors apply strongly only when the vector is near-neutral
 * or priors are lower-weighted than language + behavior signals
 
-## 3.4 Add intent/topic signals into archetype scoring (optional but high value)
+## 3.4 Add intent/topic signals into archetype scoring (high value)
 
 Update archetype context to include `hints.intents` and `hints.topics` so archetype inference uses higher-quality signals than raw keywords.
 

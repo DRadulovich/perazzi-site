@@ -42,6 +42,13 @@ export const NEUTRAL_ARCHETYPE_VECTOR: ArchetypeVector = {
 };
 
 const DEFAULT_SMOOTHING = 0.75; // 75% previous, 25% new per message
+const ARCHETYPE_ORDER: Archetype[] = [
+  "loyalist",
+  "prestige",
+  "analyst",
+  "achiever",
+  "legacy",
+];
 
 export function getNeutralArchetypeVector(): ArchetypeVector {
   return { ...NEUTRAL_ARCHETYPE_VECTOR };
@@ -95,9 +102,154 @@ export function pickPrimaryArchetype(
   return best;
 }
 
-function messageIncludesAny(text: string, words: string[]): boolean {
-  const lower = text.toLowerCase();
-  return words.some((word) => lower.includes(word.toLowerCase()));
+function getArchetypeConfidenceMin(): number {
+  const raw = Number(process.env.PERAZZI_ARCHETYPE_CONFIDENCE_MIN);
+  if (Number.isFinite(raw) && raw > 0) return raw;
+  return 0.08;
+}
+
+function getWinnerRunnerUpAndMargin(vector: ArchetypeVector): {
+  winner: Archetype;
+  winnerScore: number;
+  runnerUp: Archetype;
+  runnerUpScore: number;
+  margin: number;
+} {
+  const scored = ARCHETYPE_ORDER.map((k) => {
+    const v = Number(vector[k] ?? 0);
+    return { k, v: Number.isFinite(v) ? v : 0 };
+  });
+
+  scored.sort((a, b) => {
+    const diff = b.v - a.v;
+    if (diff !== 0) return diff;
+    return ARCHETYPE_ORDER.indexOf(a.k) - ARCHETYPE_ORDER.indexOf(b.k);
+  });
+
+  const winner = scored[0]?.k ?? ARCHETYPE_ORDER[0];
+  const runnerUp = scored[1]?.k ?? ARCHETYPE_ORDER[1];
+  const winnerScore = scored[0]?.v ?? 0;
+  const runnerUpScore = scored[1]?.v ?? 0;
+  const margin = winnerScore - runnerUpScore;
+
+  return { winner, winnerScore, runnerUp, runnerUpScore, margin };
+}
+
+function normalizeForMatch(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/[’‘]/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function tokenizeToWordSet(normalizedMessage: string): Set<string> {
+  const tokens = normalizedMessage.match(/[a-z0-9']+/g) ?? [];
+  return new Set(tokens);
+}
+
+function messageIncludesAny(message: string, needles: string[]): boolean {
+  const normalizedMessage = normalizeForMatch(message);
+  if (!normalizedMessage) return false;
+
+  const tokenSet = tokenizeToWordSet(normalizedMessage);
+
+  for (const rawNeedle of needles) {
+    if (!rawNeedle) continue;
+    const needle = normalizeForMatch(rawNeedle);
+    if (!needle) continue;
+
+    if (/\s/.test(needle)) {
+      if (normalizedMessage.includes(needle)) return true;
+      continue;
+    }
+
+    if (tokenSet.has(needle)) return true;
+  }
+
+  return false;
+}
+
+function __assertEqual(name: string, actual: boolean, expected: boolean) {
+  if (actual !== expected) {
+    throw new Error(
+      `[perazzi-archetypes] self-test failed: ${name} (expected ${expected}, got ${actual})`
+    );
+  }
+}
+
+if (process.env.NODE_ENV === "development") {
+  __assertEqual(
+    "broadcast should not match cast",
+    messageIncludesAny("broadcast", ["cast"]),
+    false
+  );
+  __assertEqual(
+    "casting should not match cast",
+    messageIncludesAny("casting", ["cast"]),
+    false
+  );
+  __assertEqual(
+    "cast as token should match cast",
+    messageIncludesAny("my cast is broken", ["cast"]),
+    true
+  );
+  __assertEqual(
+    "phrase match: point of impact",
+    messageIncludesAny("Point of Impact matters", ["point of impact"]),
+    true
+  );
+  __assertEqual(
+    "phrase match across whitespace normalization",
+    messageIncludesAny("point\nof\timpact", ["point of impact"]),
+    true
+  );
+
+  const threshold = getArchetypeConfidenceMin();
+  const pickPrimaryForTest = (v: ArchetypeVector) => {
+    const { winner, margin } = getWinnerRunnerUpAndMargin(v);
+    return margin >= threshold ? winner : null;
+  };
+
+  const mixedVector: ArchetypeVector = {
+    loyalist: 0.2,
+    prestige: 0.2,
+    analyst: 0.2,
+    achiever: 0.2,
+    legacy: 0.2,
+  };
+
+  const strongAnalystVector: ArchetypeVector = {
+    loyalist: 0.05,
+    prestige: 0.05,
+    analyst: 0.7,
+    achiever: 0.1,
+    legacy: 0.1,
+  };
+
+  const borderlineVector: ArchetypeVector = {
+    loyalist: 0.26,
+    prestige: 0.25,
+    analyst: 0.25,
+    achiever: 0.12,
+    legacy: 0.12,
+  };
+
+  __assertEqual(
+    "mixed vector => primary null",
+    pickPrimaryForTest(mixedVector) === null,
+    true
+  );
+  __assertEqual(
+    "strong analyst vector => primary analyst",
+    pickPrimaryForTest(strongAnalystVector) === "analyst",
+    true
+  );
+  __assertEqual(
+    "borderline vector => primary null",
+    pickPrimaryForTest(borderlineVector) === null,
+    true
+  );
 }
 
 function initZeroVector(): ArchetypeVector {
@@ -373,8 +525,6 @@ export function computeArchetypeBreakdown(
 
   let updatedVector = smoothUpdateArchetypeVector(startingVector, delta);
 
-  let primary = pickPrimaryArchetype(updatedVector);
-
   // Dev override wins and intentionally dominates the vector.
   if (ctx.devOverrideArchetype) {
     const override = ctx.devOverrideArchetype;
@@ -393,12 +543,15 @@ export function computeArchetypeBreakdown(
     });
 
     updatedVector = normalizeArchetypeVector(overridden);
-    primary = override;
     signalsUsed.push(`override:${override}`);
     reasoningParts.push(
       `Archetype manually overridden to "${override}" via dev override phrase.`
     );
   }
+
+  const threshold = getArchetypeConfidenceMin();
+  const { winner, margin } = getWinnerRunnerUpAndMargin(updatedVector);
+  const primary: Archetype | null = margin >= threshold ? winner : null;
 
   if (!ctx.devOverrideArchetype) {
     reasoningParts.push(
@@ -441,10 +594,7 @@ export function buildArchetypeClassification(
   const winner = sorted[0]?.key ?? null;
   const runnerUp = sorted[1]?.key ?? null;
 
-  let archetype: Archetype | null = breakdown.primary;
-  if (!archetype && winner) {
-    archetype = winner.toLowerCase() as Archetype;
-  }
+  const archetype: Archetype | null = breakdown.primary;
 
   const decision =
     breakdown.reasoning || (breakdown.signalsUsed && breakdown.signalsUsed.length)
