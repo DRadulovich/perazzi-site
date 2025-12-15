@@ -13,6 +13,22 @@ import type { RetrievalHints } from "@/lib/perazzi-intents";
 const EMBEDDING_MODEL = process.env.PERAZZI_EMBED_MODEL ?? "text-embedding-3-large";
 const CHUNK_LIMIT = Number(process.env.PERAZZI_RETRIEVAL_LIMIT ?? 12);
 
+type RetrievedChunkScoreBreakdown = {
+  chunkId: string;
+  baseScore: number;
+  boost: number;
+  archetypeBoost: number;
+  finalScore: number;
+};
+
+export type RerankMetrics = {
+  rerankEnabled: boolean;
+  // effective SQL limit used to pull candidates (>= final limit)
+  candidateLimit: number;
+  // top returned chunks only, capped (no content)
+  topReturnedChunks: RetrievedChunkScoreBreakdown[];
+};
+
 function isEnvTrue(value?: string): boolean {
   const v = (value ?? "").trim().toLowerCase();
   return v === "1" || v === "true" || v === "yes" || v === "on";
@@ -32,10 +48,19 @@ let pgPool: Pool | null = null;
 export async function retrievePerazziContext(
   body: PerazziAssistantRequest,
   hints?: RetrievalHints,
-): Promise<{ chunks: RetrievedChunk[]; maxScore: number }> {
+): Promise<{ chunks: RetrievedChunk[]; maxScore: number; rerankMetrics: RerankMetrics }> {
+  const rerankEnabled = isEnvTrue(process.env.PERAZZI_ENABLE_RERANK);
+  const candidateLimit = rerankEnabled ? getRerankCandidateLimit(CHUNK_LIMIT) : CHUNK_LIMIT;
+
+  const emptyMetrics: RerankMetrics = {
+    rerankEnabled,
+    candidateLimit,
+    topReturnedChunks: [],
+  };
+
   const question = extractLatestUserMessage(body.messages);
   if (!question) {
-    return { chunks: [], maxScore: 0 };
+    return { chunks: [], maxScore: 0, rerankMetrics: emptyMetrics };
   }
 
   let embeddingResponse;
@@ -52,17 +77,14 @@ export async function retrievePerazziContext(
   }
   const queryEmbedding = embeddingResponse.data[0]?.embedding ?? [];
   if (!queryEmbedding.length) {
-    return { chunks: [], maxScore: 0 };
+    return { chunks: [], maxScore: 0, rerankMetrics: emptyMetrics };
   }
 
   const pool = await getPgPool();
   const client = await pool.connect();
 
   try {
-    const rerankEnabled = isEnvTrue(process.env.PERAZZI_ENABLE_RERANK);
-    const candidateLimit = rerankEnabled ? getRerankCandidateLimit(CHUNK_LIMIT) : undefined;
-
-    const { chunks, maxBaseScore } = await fetchV2Chunks({
+    const { chunks, maxBaseScore, rerankMetrics } = await fetchV2Chunks({
       client,
       queryEmbedding,
       limit: CHUNK_LIMIT,
@@ -71,7 +93,7 @@ export async function retrievePerazziContext(
       context: body.context,
       rerankEnabled,
     });
-    return { chunks, maxScore: maxBaseScore };
+    return { chunks, maxScore: maxBaseScore, rerankMetrics };
   } finally {
     client.release();
   }
@@ -666,7 +688,7 @@ async function fetchV2Chunks(opts: {
   hints?: RetrievalHints;
   context?: PerazziAssistantRequest["context"];
   rerankEnabled?: boolean;
-}): Promise<{ chunks: RetrievedChunk[]; maxBaseScore: number }> {
+}): Promise<{ chunks: RetrievedChunk[]; maxBaseScore: number; rerankMetrics: RerankMetrics }> {
   const {
     client,
     queryEmbedding,
@@ -795,7 +817,23 @@ async function fetchV2Chunks(opts: {
       }),
     });
 
-    return { chunks: sliced, maxBaseScore };
+    const topReturnedChunks: RetrievedChunkScoreBreakdown[] = sliced
+      .slice(0, Math.min(12, sliced.length))
+      .map((c) => ({
+        chunkId: c.chunkId,
+        baseScore: Number(c.baseScore ?? 0),
+        boost: 0,
+        archetypeBoost: 0,
+        finalScore: Number(c.baseScore ?? 0),
+      }));
+
+    const rerankMetrics: RerankMetrics = {
+      rerankEnabled: false,
+      candidateLimit: effectiveCandidateLimit,
+      topReturnedChunks,
+    };
+
+    return { chunks: sliced, maxBaseScore, rerankMetrics };
   }
 
   const userVector = context?.archetypeVector ?? null;
@@ -861,7 +899,23 @@ async function fetchV2Chunks(opts: {
     };
   });
 
-  return { chunks: results, maxBaseScore };
+  const topReturnedChunks: RetrievedChunkScoreBreakdown[] = top
+    .slice(0, Math.min(12, top.length))
+    .map((item) => ({
+      chunkId: item.row.chunk_id,
+      baseScore: Number(item.baseScore ?? 0),
+      boost: Number(item.boost ?? 0),
+      archetypeBoost: Number(item.archetypeBoost ?? 0),
+      finalScore: Number(item.finalScore ?? 0),
+    }));
+
+  const rerankMetrics: RerankMetrics = {
+    rerankEnabled: true,
+    candidateLimit: effectiveCandidateLimit,
+    topReturnedChunks,
+  };
+
+  return { chunks: results, maxBaseScore, rerankMetrics };
 }
 
 async function getPgPool(): Promise<Pool> {
