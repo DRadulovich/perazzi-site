@@ -2,7 +2,12 @@ import { Pool } from "pg";
 import type { PoolClient } from "pg";
 import { registerType } from "pgvector/pg";
 import { createEmbeddings } from "@/lib/aiClient";
-import type { PerazziAssistantRequest, RetrievedChunk } from "@/types/perazzi-assistant";
+import type {
+  PerazziAssistantRequest,
+  RetrievedChunk,
+  Archetype,
+  ArchetypeVector,
+} from "@/types/perazzi-assistant";
 import type { RetrievalHints } from "@/lib/perazzi-intents";
 
 const EMBEDDING_MODEL = process.env.PERAZZI_EMBED_MODEL ?? "text-embedding-3-large";
@@ -524,6 +529,116 @@ export function computeBoostV2(
 
   // Hard clamp to keep this a "nudge", not an override
   return clamp(boost, -0.1, 0.5);
+}
+
+const ARCHETYPE_KEYS_LOWER: Archetype[] = [
+  "loyalist",
+  "prestige",
+  "analyst",
+  "achiever",
+  "legacy",
+];
+
+function normalizeArchetypeVectorForBoost(
+  vec: ArchetypeVector,
+): ArchetypeVector {
+  // Defensive normalize: clamp negatives to 0, normalize to sum=1
+  const cleaned: ArchetypeVector = { ...vec };
+  let sum = 0;
+
+  for (const key of ARCHETYPE_KEYS_LOWER) {
+    const v = Number(cleaned[key] ?? 0);
+    const safe = Number.isFinite(v) ? Math.max(0, v) : 0;
+    cleaned[key] = safe;
+    sum += safe;
+  }
+
+  if (sum <= 0) {
+    // Fallback to a neutral vector if someone passes garbage
+    const neutral = 1 / ARCHETYPE_KEYS_LOWER.length;
+    const out: ArchetypeVector = { ...vec };
+    for (const key of ARCHETYPE_KEYS_LOWER) out[key] = neutral;
+    return out;
+  }
+
+  const out: ArchetypeVector = { ...vec };
+  for (const key of ARCHETYPE_KEYS_LOWER) out[key] = (cleaned[key] ?? 0) / sum;
+  return out;
+}
+
+function getArchetypeConfidenceMargin(vec: ArchetypeVector): number {
+  // margin = best - runnerUp, bounded [0..1]
+  const values = ARCHETYPE_KEYS_LOWER.map((key) => Number(vec[key] ?? 0))
+    .map((v) => (Number.isFinite(v) ? Math.max(0, v) : 0))
+    .sort((a, b) => b - a);
+
+  const best = values[0] ?? 0;
+  const runner = values[1] ?? 0;
+  return clamp(best - runner, 0, 1);
+}
+
+function getArchetypeConfidenceMin(): number {
+  const raw = Number(process.env.PERAZZI_ARCHETYPE_CONFIDENCE_MIN);
+  // default from roadmap: ~0.08
+  if (Number.isFinite(raw) && raw > 0) return raw;
+  return 0.08;
+}
+
+export function computeArchetypeBoost(
+  userVector: ArchetypeVector | null | undefined,
+  chunkArchetypeBias: unknown,
+  archetypeConfidenceMargin?: number | null,
+): number {
+  if (!userVector) return 0;
+
+  // Parse and validate bias keys from chunk jsonb
+  const biasRaw = parseJsonbStringArray(chunkArchetypeBias);
+
+  if (!biasRaw.length) return 0;
+
+  // Filter to recognized archetype keys only
+  const biasSet = new Set<string>(biasRaw);
+  const biasKeys = ARCHETYPE_KEYS_LOWER.filter((k) => biasSet.has(k));
+
+  // If bias is empty after filtering, no archetype signal.
+  if (!biasKeys.length) return 0;
+
+  // If the chunk claims it matches "everything", archetype should not move it.
+  if (biasKeys.length === ARCHETYPE_KEYS_LOWER.length) return 0;
+
+  const vec = normalizeArchetypeVectorForBoost(userVector);
+
+  // alignment = sum of user weights for biased archetypes
+  let alignment = 0;
+  for (const key of biasKeys) {
+    alignment += Number(vec[key] ?? 0);
+  }
+  alignment = clamp(alignment, 0, 1);
+
+  // specialization: 1.0 when very specific, 0.0 when broad (all 5, handled above)
+  const specialization = clamp(
+    1 - biasKeys.length / ARCHETYPE_KEYS_LOWER.length,
+    0,
+    1,
+  );
+
+  // confidenceFactor: scale by margin so mixed vectors don't dominate ranking
+  const margin =
+    archetypeConfidenceMargin ?? getArchetypeConfidenceMargin(vec);
+
+  const confMin = getArchetypeConfidenceMin();
+  const confidenceFactor =
+    confMin > 0 ? clamp(margin / confMin, 0, 1) : 1;
+
+  // K: tune later; start with roadmap guidance
+  const K = 0.08;
+
+  const boost = K * alignment * specialization * confidenceFactor;
+
+  if (!Number.isFinite(boost)) return 0;
+
+  // Archetype boost should be a small positive nudge only
+  return clamp(boost, 0, 0.15);
 }
 
 async function fetchV2Chunks(opts: {
