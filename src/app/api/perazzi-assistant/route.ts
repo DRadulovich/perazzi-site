@@ -586,7 +586,20 @@ export async function POST(request: Request) {
     const guardrail = { status: "ok" as const, reason: null as string | null };
 
     const responseTemplates = buildResponseTemplates(hints);
-    const retrieval = await retrievePerazziContext(fullBody, hints);
+    const baseContext = body.context ?? {};
+
+    const retrievalContext = {
+      ...baseContext,
+      mode: effectiveMode,
+      archetypeVector: archetypeBreakdown.vector,
+    };
+
+    const retrievalBody = {
+      ...fullBody,
+      context: retrievalContext,
+    };
+
+    const retrieval = await retrievePerazziContext(retrievalBody, hints);
     if (retrieval.maxScore < getLowConfidenceThreshold()) {
       logInteraction(
         fullBody,
