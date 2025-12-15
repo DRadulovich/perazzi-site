@@ -250,6 +250,43 @@ if (process.env.NODE_ENV === "development") {
     pickPrimaryForTest(borderlineVector) === null,
     true
   );
+
+  const strongLegacyCtx: ArchetypeContext = {
+    mode: "prospect",
+    pageUrl: "/perazzi/bespoke",
+    modelSlug: "sco",
+    platformSlug: null,
+    userMessage: "This is an heirloom. I want to preserve it and pass it down to my kids.",
+    devOverrideArchetype: null,
+  };
+
+  const legacyBreakdown = computeArchetypeBreakdown(
+    strongLegacyCtx,
+    getNeutralArchetypeVector()
+  );
+
+  __assertEqual(
+    "strong legacy language should outweigh prestige priors",
+    (legacyBreakdown.vector.legacy ?? 0) > (legacyBreakdown.vector.prestige ?? 0),
+    true
+  );
+
+  const vagueCtx: ArchetypeContext = {
+    mode: "prospect",
+    pageUrl: "/perazzi/bespoke",
+    modelSlug: "sco",
+    platformSlug: null,
+    userMessage: "Tell me about Perazzi.",
+    devOverrideArchetype: null,
+  };
+
+  const vagueBreakdown = computeArchetypeBreakdown(vagueCtx, getNeutralArchetypeVector());
+
+  __assertEqual(
+    "vague prompt should still be guided by priors (prestige tends to rise)",
+    (vagueBreakdown.vector.prestige ?? 0) > 0.2,
+    true
+  );
 }
 
 function initZeroVector(): ArchetypeVector {
@@ -260,6 +297,44 @@ function initZeroVector(): ArchetypeVector {
     achiever: 0,
     legacy: 0,
   };
+}
+
+function hasAnyDelta(vec: ArchetypeVector): boolean {
+  return ARCHETYPE_ORDER.some((k) => (vec[k] ?? 0) > 0);
+}
+
+function sumDelta(vec: ArchetypeVector): number {
+  return ARCHETYPE_ORDER.reduce((sum, k) => sum + Math.max(0, vec[k] ?? 0), 0);
+}
+
+function scaleVectorInPlace(vec: ArchetypeVector, factor: number): void {
+  ARCHETYPE_ORDER.forEach((k) => {
+    vec[k] = (vec[k] ?? 0) * factor;
+  });
+}
+
+function computePriorScale(
+  startingVector: ArchetypeVector,
+  languageDelta: ArchetypeVector,
+): number {
+  const LANGUAGE_STRONG = 0.35;
+  const MIN_SCALE_FROM_LANGUAGE = 0.25;
+  const DAMP_FACTOR = 0.75;
+
+  const languageMass = sumDelta(languageDelta);
+  const languageStrength = Math.min(1, Math.max(0, languageMass / LANGUAGE_STRONG));
+  const languageScale = Math.max(
+    MIN_SCALE_FROM_LANGUAGE,
+    1 - DAMP_FACTOR * languageStrength,
+  );
+
+  const threshold = getArchetypeConfidenceMin();
+  const normalizedStart = normalizeArchetypeVector({ ...startingVector });
+  const { margin: startMargin } = getWinnerRunnerUpAndMargin(normalizedStart);
+  const profileScale = startMargin >= threshold ? 0.6 : 1;
+
+  const finalScale = Math.max(0.15, Math.min(1, languageScale * profileScale));
+  return finalScale;
 }
 
 function applyModeSignals(
@@ -514,16 +589,28 @@ export function computeArchetypeBreakdown(
     ? { ...previousVector }
     : getNeutralArchetypeVector();
 
-  const delta = initZeroVector();
+  const priorDelta = initZeroVector();
+  const languageDelta = initZeroVector();
   const signalsUsed: string[] = [];
   const reasoningParts: string[] = [];
 
-  applyModeSignals(ctx, delta, signalsUsed);
-  applyPageUrlSignals(ctx, delta, signalsUsed);
-  applyModelSignals(ctx, delta, signalsUsed);
-  applyLanguageSignals(ctx, delta, signalsUsed);
+  applyModeSignals(ctx, priorDelta, signalsUsed);
+  applyPageUrlSignals(ctx, priorDelta, signalsUsed);
+  applyModelSignals(ctx, priorDelta, signalsUsed);
+  applyLanguageSignals(ctx, languageDelta, signalsUsed);
 
-  let updatedVector = smoothUpdateArchetypeVector(startingVector, delta);
+  const priorScale = computePriorScale(startingVector, languageDelta);
+  if (hasAnyDelta(priorDelta) && priorScale < 1) {
+    signalsUsed.push(`priors:scaled:${priorScale.toFixed(2)}`);
+  }
+  scaleVectorInPlace(priorDelta, priorScale);
+
+  const combinedDelta = initZeroVector();
+  ARCHETYPE_ORDER.forEach((k) => {
+    combinedDelta[k] = (priorDelta[k] ?? 0) + (languageDelta[k] ?? 0);
+  });
+
+  let updatedVector = smoothUpdateArchetypeVector(startingVector, combinedDelta);
 
   // Dev override wins and intentionally dominates the vector.
   if (ctx.devOverrideArchetype) {
