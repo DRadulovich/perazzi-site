@@ -13,14 +13,26 @@ import type { RetrievalHints } from "@/lib/perazzi-intents";
 const EMBEDDING_MODEL = process.env.PERAZZI_EMBED_MODEL ?? "text-embedding-3-large";
 const CHUNK_LIMIT = Number(process.env.PERAZZI_RETRIEVAL_LIMIT ?? 12);
 
+function isEnvTrue(value?: string): boolean {
+  const v = (value ?? "").trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes" || v === "on";
+}
+
+function getRerankCandidateLimit(finalLimit: number): number {
+  const raw = Number(process.env.PERAZZI_RERANK_CANDIDATE_LIMIT);
+  const DEFAULT = 60;
+  const MAX = 200;
+
+  const parsed = Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : DEFAULT;
+  return Math.max(finalLimit, Math.min(parsed, MAX));
+}
+
 let pgPool: Pool | null = null;
 
 export async function retrievePerazziContext(
   body: PerazziAssistantRequest,
   hints?: RetrievalHints,
 ): Promise<{ chunks: RetrievedChunk[]; maxScore: number }> {
-  const _hints = hints;
-  void _hints;
   const question = extractLatestUserMessage(body.messages);
   if (!question) {
     return { chunks: [], maxScore: 0 };
@@ -47,14 +59,19 @@ export async function retrievePerazziContext(
   const client = await pool.connect();
 
   try {
-    const chunks = await fetchV2Chunks({
+    const rerankEnabled = isEnvTrue(process.env.PERAZZI_ENABLE_RERANK);
+    const candidateLimit = rerankEnabled ? getRerankCandidateLimit(CHUNK_LIMIT) : undefined;
+
+    const { chunks, maxBaseScore } = await fetchV2Chunks({
       client,
       queryEmbedding,
       limit: CHUNK_LIMIT,
       hints,
+      candidateLimit,
+      context: body.context,
+      rerankEnabled,
     });
-    const maxScore = chunks.reduce((max, c) => (c.score > max ? c.score : max), 0);
-    return { chunks, maxScore };
+    return { chunks, maxScore: maxBaseScore };
   } finally {
     client.release();
   }
@@ -647,9 +664,18 @@ async function fetchV2Chunks(opts: {
   limit: number;
   candidateLimit?: number;
   hints?: RetrievalHints;
-}): Promise<RetrievedChunk[]> {
-  const { client, queryEmbedding, limit, candidateLimit, hints: _hints } = opts;
-  void _hints;
+  context?: PerazziAssistantRequest["context"];
+  rerankEnabled?: boolean;
+}): Promise<{ chunks: RetrievedChunk[]; maxBaseScore: number }> {
+  const {
+    client,
+    queryEmbedding,
+    limit,
+    candidateLimit,
+    hints,
+    context,
+    rerankEnabled,
+  } = opts;
   const embeddingParam = JSON.stringify(queryEmbedding);
   const effectiveCandidateLimit = Math.max(candidateLimit ?? limit, limit);
 
@@ -724,20 +750,74 @@ async function fetchV2Chunks(opts: {
   );
 
   const typedRows = rows as RetrievedRow[];
+  const maxBaseScore = typedRows.reduce((max, row) => {
+    const s = Number(row.score ?? 0);
+    return s > max ? s : max;
+  }, 0);
 
-  const results = typedRows.map((row) => {
+  if (!rerankEnabled) {
+    const results = typedRows.map((row) => {
+      const title =
+        row.document_title ??
+        row.document_path ??
+        "Perazzi Reference";
+
+      const baseScore = row.score ?? 0;
+
+      return {
+        chunkId: row.chunk_id,
+        title,
+        sourcePath: row.document_path ?? "V2-PGPT/unknown",
+        content: row.content ?? "",
+        baseScore,
+        score: baseScore,
+        documentPath: row.document_path ?? undefined,
+        headingPath: row.heading_path ?? undefined,
+        category: row.category ?? null,
+        docType: row.doc_type ?? null,
+      };
+    });
+
+    return { chunks: results.slice(0, limit), maxBaseScore };
+  }
+
+  const userVector = context?.archetypeVector ?? null;
+  const normalized = userVector ? normalizeArchetypeVectorForBoost(userVector) : null;
+  const margin = normalized ? getArchetypeConfidenceMargin(normalized) : null;
+
+  const scored = typedRows.map((row) => {
+    const baseScore = row.score ?? 0;
+    const boost = computeBoostV2(row, context, hints);
+    const archetypeBoost = computeArchetypeBoost(userVector, row.chunk_archetype_bias, margin);
+    const finalScore = baseScore + boost + archetypeBoost;
+
+    return { row, baseScore, boost, archetypeBoost, finalScore };
+  });
+
+  scored.sort((a, b) => {
+    const diff = b.finalScore - a.finalScore;
+    if (diff !== 0) return diff;
+
+    const baseDiff = b.baseScore - a.baseScore;
+    if (baseDiff !== 0) return baseDiff;
+
+    return a.row.chunk_id.localeCompare(b.row.chunk_id);
+  });
+
+  const top = scored.slice(0, limit);
+
+  const results: RetrievedChunk[] = top.map(({ row, baseScore, finalScore }) => {
     const title =
       row.document_title ??
       row.document_path ??
       "Perazzi Reference";
-
     return {
       chunkId: row.chunk_id,
       title,
       sourcePath: row.document_path ?? "V2-PGPT/unknown",
       content: row.content ?? "",
-      baseScore: row.score ?? 0,
-      score: row.score ?? 0,
+      baseScore,
+      score: finalScore,
       documentPath: row.document_path ?? undefined,
       headingPath: row.heading_path ?? undefined,
       category: row.category ?? null,
@@ -745,7 +825,7 @@ async function fetchV2Chunks(opts: {
     };
   });
 
-  return results.slice(0, limit);
+  return { chunks: results, maxBaseScore };
 }
 
 async function getPgPool(): Promise<Pool> {
