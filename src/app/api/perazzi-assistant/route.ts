@@ -196,10 +196,19 @@ const ALLOWED_ARCHETYPES: Archetype[] = [
   "legacy",
 ];
 
+const ALLOWED_MODES: PerazziMode[] = ["prospect", "owner", "navigation"];
+
 function normalizeArchetype(input: string): Archetype | null {
   const cleaned = input.trim().toLowerCase();
   if (!cleaned) return null;
   const match = ALLOWED_ARCHETYPES.find((a) => a === cleaned);
+  return match ?? null;
+}
+
+function normalizeMode(input: unknown): PerazziMode | null {
+  if (typeof input !== "string") return null;
+  const cleaned = input.trim().toLowerCase();
+  const match = ALLOWED_MODES.find((mode) => mode === cleaned);
   return match ?? null;
 }
 
@@ -345,10 +354,10 @@ export async function POST(request: Request) {
 
     const sanitizedMessages = sanitizeMessages(fullBody.messages);
     const latestQuestion = getLatestUserContent(sanitizedMessages);
-    const hints: any = detectRetrievalHints(latestQuestion, body?.context);
+    const hints: RetrievalHints = detectRetrievalHints(latestQuestion, body?.context);
 
     const effectiveMode: PerazziMode =
-      hints?.mode ?? body?.context?.mode ?? "prospect";
+      normalizeMode(hints.mode) ?? normalizeMode(body?.context?.mode) ?? "prospect";
 
     // Soft-meta origin handler: answer who built/designed the assistant, without exposing internals.
     if (detectAssistantOriginQuestion(latestQuestion)) {
