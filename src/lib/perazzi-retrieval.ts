@@ -204,6 +204,141 @@ export function computeBoost(
   return boost;
 }
 
+function normalizeStringToken(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  const s = String(value).trim().toLowerCase();
+  if (!s) return null;
+  if (s === "null" || s === "undefined") return null;
+  return s;
+}
+
+function tryParseJson(value: string): unknown | null {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+// Accepts jsonb coming back from PG as object/array/string/null
+// Returns normalized string[] lowercased + trimmed + de-duped
+export function parseJsonbStringArray(value: unknown): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+
+  const push = (v: unknown) => {
+    const token = normalizeStringToken(v);
+    if (!token) return;
+    if (seen.has(token)) return;
+    seen.add(token);
+    out.push(token);
+  };
+
+  const walk = (v: unknown, depth: number) => {
+    if (v === null || v === undefined) return;
+    if (depth > 4) return;
+
+    if (Array.isArray(v)) {
+      for (const item of v) walk(item, depth + 1);
+      return;
+    }
+
+    if (typeof v === "string") {
+      const trimmed = v.trim();
+      if (!trimmed) return;
+
+      const parsed = tryParseJson(trimmed);
+      if (parsed !== null) {
+        walk(parsed, depth + 1);
+        return;
+      }
+
+      // Fallback: comma-separated strings
+      if (trimmed.includes(",")) {
+        for (const part of trimmed.split(",")) push(part);
+        return;
+      }
+
+      push(trimmed);
+      return;
+    }
+
+    if (typeof v === "object") {
+      // Handles odd cases like {"0":"owner","1":"prospect"} or nested structures
+      for (const item of Object.values(v as Record<string, unknown>)) {
+        walk(item, depth + 1);
+      }
+      return;
+    }
+
+    // number/boolean/etc => stringify + normalize
+    push(v);
+  };
+
+  walk(value, 0);
+  return out;
+}
+
+// Parses chunk.related_entities jsonb into stable lowercase entity id/slug list
+export function extractRelatedEntityIds(value: unknown): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+
+  const push = (v: unknown) => {
+    const token = normalizeStringToken(v);
+    if (!token) return;
+    if (seen.has(token)) return;
+    seen.add(token);
+    out.push(token);
+  };
+
+  const extractFromObject = (obj: Record<string, unknown>) => {
+    // Priority order for IDs
+    push(obj.entity_id ?? obj.entityId ?? obj.slug ?? obj.id ?? obj.code);
+  };
+
+  const walk = (v: unknown, depth: number) => {
+    if (v === null || v === undefined) return;
+    if (depth > 4) return;
+
+    if (Array.isArray(v)) {
+      for (const item of v) walk(item, depth + 1);
+      return;
+    }
+
+    if (typeof v === "string") {
+      const trimmed = v.trim();
+      if (!trimmed) return;
+
+      const parsed = tryParseJson(trimmed);
+      if (parsed !== null) {
+        walk(parsed, depth + 1);
+        return;
+      }
+
+      // Could be a single id/slug, or comma-separated fallback
+      if (trimmed.includes(",")) {
+        for (const part of trimmed.split(",")) push(part);
+        return;
+      }
+
+      push(trimmed);
+      return;
+    }
+
+    if (typeof v === "object") {
+      extractFromObject(v as Record<string, unknown>);
+      return;
+    }
+
+    // number/boolean/etc => stringify + normalize
+    push(v);
+  };
+
+  walk(value, 0);
+  return out;
+}
+
 type RetrievedRow = {
   chunk_id: string;
   content: string;
