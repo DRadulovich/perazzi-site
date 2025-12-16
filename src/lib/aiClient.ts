@@ -151,6 +151,10 @@ export async function createResponseText(
   params: CreateResponseTextParams,
 ): Promise<CreateResponseTextResult> {
   const {
+    temperature,
+    top_p,
+    logprobs,
+    top_logprobs,
     maxOutputTokens,
     reasoningEffort,
     textVerbosity,
@@ -184,6 +188,22 @@ export async function createResponseText(
   const resolvedPromptCacheRetention = promptCacheRetention ?? prompt_cache_retention;
   const resolvedPromptCacheKey = promptCacheKey ?? prompt_cache_key;
   const resolvedPreviousResponseId = previousResponseId ?? previous_response_id;
+  const model = typeof (rest as Record<string, unknown>).model === "string"
+    ? (rest as Record<string, string>).model.toLowerCase()
+    : "";
+
+  const isGpt5 = model.startsWith("gpt-5");
+  const isGpt52Pro = model.startsWith("gpt-5.2-pro");
+  const isGpt52 = model.startsWith("gpt-5.2") && !isGpt52Pro;
+  const isGpt51 = model.startsWith("gpt-5.1");
+  const samplingModelAllowed = isGpt52 || isGpt51;
+
+  const effort = typeof (resolvedReasoning as { effort?: unknown })?.effort === "string"
+    ? (resolvedReasoning as { effort?: string }).effort.toLowerCase()
+    : undefined;
+  const reasoningAllowsSampling = !resolvedReasoning || effort === "none";
+
+  const allowSamplingParams = !isGpt5 ? true : samplingModelAllowed && reasoningAllowsSampling;
 
   const clientInstance = getOpenAIClient();
   const response = await clientInstance.responses.create({
@@ -198,6 +218,10 @@ export async function createResponseText(
     ...(resolvedPreviousResponseId !== undefined
       ? { previous_response_id: resolvedPreviousResponseId }
       : {}),
+    ...(allowSamplingParams && temperature !== undefined ? { temperature } : {}),
+    ...(allowSamplingParams && top_p !== undefined ? { top_p } : {}),
+    ...(allowSamplingParams && logprobs !== undefined ? { logprobs } : {}),
+    ...(allowSamplingParams && top_logprobs !== undefined ? { top_logprobs } : {}),
   });
 
   const requestId = (response as { _request_id?: string })._request_id;
