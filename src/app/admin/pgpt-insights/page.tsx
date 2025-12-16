@@ -327,7 +327,6 @@ export default async function PgptInsightsPage({
                 resolvedSearchParams={resolvedSearchParams}
                 tableDensityClass={tableDensityClass}
                 truncPrimary={truncPrimary}
-                isCompact={isCompact}
               />
             </Suspense>
           </div>

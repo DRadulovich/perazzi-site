@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { fetchSessionLogsPreview, fetchSessionTimelineRows } from "../../../../../lib/pgpt-insights/queries";
+import { fetchSessionConversationLogs, fetchSessionLogsPreview, fetchSessionTimelineRows } from "../../../../../lib/pgpt-insights/queries";
 import { CopyButton } from "../../../../../components/pgpt-insights/CopyButton";
-import { LogsTableWithDrawer } from "../../../../../components/pgpt-insights/LogsTableWithDrawer";
 import { SessionArchetypeTimeline } from "../../../../../components/pgpt-insights/session/SessionArchetypeTimeline";
 import { SessionFiltersBar } from "../../../../../components/pgpt-insights/session/SessionFiltersBar";
+import { SessionLogsViewSwitcher } from "../../../../../components/pgpt-insights/session/SessionLogsViewSwitcher";
 import { SessionSummarySection } from "../../../../../components/pgpt-insights/session/SessionSummarySection";
 
 export const dynamic = "force-dynamic";
@@ -79,6 +79,24 @@ export default async function PgptInsightsSessionPage({
 
   const hasMore = logsMaybeMore.length > SESSION_LOGS_LIMIT;
   const logs = hasMore ? logsMaybeMore.slice(0, SESSION_LOGS_LIMIT) : logsMaybeMore;
+  const conversationLogs = await fetchSessionConversationLogs({
+    sessionId,
+    q,
+
+    gr_status: resolvedSearchParams.gr_status,
+    low_conf: resolvedSearchParams.low_conf,
+    score: resolvedSearchParams.score,
+    qa: resolvedSearchParams.qa,
+    winner_changed: resolvedSearchParams.winner_changed,
+    margin_lt: resolvedSearchParams.margin_lt,
+    score_archetype: resolvedSearchParams.score_archetype,
+    min: resolvedSearchParams.min,
+    rerank: resolvedSearchParams.rerank,
+    snapped: resolvedSearchParams.snapped,
+
+    limit: SESSION_LOGS_LIMIT,
+    offset: 0,
+  });
   const timelineRows = await fetchSessionTimelineRows({ sessionId, limit: 2000, offset: 0 });
 
   return (
@@ -122,11 +140,13 @@ export default async function PgptInsightsSessionPage({
               No interactions match the current filters.
             </div>
           ) : (
-            <LogsTableWithDrawer
-              logs={logs}
+            <SessionLogsViewSwitcher
+              tableLogs={logs}
+              conversationLogs={conversationLogs}
               tableDensityClass={tableDensityClass}
               truncPrimary={truncPrimary}
-              isCompact={isCompact}
+              hasMore={hasMore}
+              sessionId={sessionId}
             />
           )}
         </section>

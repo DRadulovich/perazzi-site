@@ -1088,8 +1088,12 @@ export async function fetchArchetypeMarginHistogram(
     order by bucket_order asc;
   `;
 
-  const { rows } = await pool.query(query, params);
-  return rows.map((r: any) => ({
+  const { rows } = await pool.query<{
+    bucket_order: number | string | null;
+    bucket_label: string | null;
+    hits: number | string | null;
+  }>(query, params);
+  return rows.map((r) => ({
     bucket_order: Number(r.bucket_order ?? 0),
     bucket_label: String(r.bucket_label ?? ""),
     hits: Number(r.hits ?? 0),
@@ -1148,8 +1152,13 @@ export async function fetchDailyArchetypeSnapRate(args: {
     order by day asc;
   `;
 
-  const { rows } = await pool.query(query, params);
-  return rows.map((r: any) => ({
+  const { rows } = await pool.query<{
+    day: string;
+    snapped_count: number | string | null;
+    mixed_count: number | string | null;
+    total_classified: number | string | null;
+  }>(query, params);
+  return rows.map((r) => ({
     day: String(r.day),
     snapped_count: Number(r.snapped_count ?? 0),
     mixed_count: Number(r.mixed_count ?? 0),
@@ -1218,9 +1227,16 @@ export async function fetchDailyRerankEnabledRate(args: {
     order by day asc;
   `;
 
-  const { rows } = await pool.query(query, params);
-  return rows.map((r: any) => {
-    const avg = r.avg_candidate_limit === null || r.avg_candidate_limit === undefined ? null : Number(r.avg_candidate_limit);
+  const { rows } = await pool.query<{
+    day: string;
+    rerank_on_count: number | string | null;
+    rerank_off_count: number | string | null;
+    total_flagged: number | string | null;
+    avg_candidate_limit: number | string | null;
+  }>(query, params);
+  return rows.map((r) => {
+    const avg =
+      r.avg_candidate_limit === null || r.avg_candidate_limit === undefined ? null : Number(r.avg_candidate_limit);
     return {
       day: String(r.day),
       rerank_on_count: Number(r.rerank_on_count ?? 0),
@@ -1395,6 +1411,82 @@ export async function fetchSessionLogsPreview(args: {
   `;
 
   const { rows } = await pool.query<PerazziLogPreviewRow>(query, values);
+  return rows;
+}
+
+export async function fetchSessionConversationLogs(args: {
+  sessionId: string;
+  q?: string;
+
+  gr_status?: string;
+  low_conf?: string;
+  score?: string;
+  qa?: string;
+  winner_changed?: string;
+  margin_lt?: string;
+  score_archetype?: string;
+  min?: string;
+  rerank?: string;
+  snapped?: string;
+
+  limit: number;
+  offset: number;
+}): Promise<PerazziLogRow[]> {
+  const filters: LogsFilters = parseLogsFilters({
+    q: args.q,
+
+    gr_status: args.gr_status,
+    low_conf: args.low_conf,
+    score: args.score,
+    qa: args.qa,
+    winner_changed: args.winner_changed,
+    margin_lt: args.margin_lt,
+    score_archetype: args.score_archetype,
+    min: args.min,
+    rerank: args.rerank,
+    snapped: args.snapped,
+  });
+
+  const { joinSql, whereClause, values, nextIndex } = buildLogsQueryPartsWithBase({
+    filters,
+    baseConditions: [`l.session_id = $1`],
+    baseValues: [args.sessionId],
+    startIndex: 2,
+  });
+
+  const limitIndex = nextIndex;
+  values.push(args.limit);
+
+  const offsetIndex = nextIndex + 1;
+  values.push(args.offset);
+
+  const query = `
+    select
+      l.id,
+      l.created_at,
+      l.env,
+      l.endpoint,
+      l.archetype,
+      l.session_id,
+      l.model,
+      l.used_gateway,
+      l.prompt,
+      l.response,
+      l.low_confidence,
+      l.intents,
+      l.topics,
+      l.metadata->>'maxScore' as max_score,
+      l.metadata->>'guardrailStatus' as guardrail_status,
+      l.metadata->>'guardrailReason' as guardrail_reason
+    from perazzi_conversation_logs l
+    ${joinSql}
+    ${whereClause}
+    order by l.created_at asc
+    limit $${limitIndex}
+    offset $${offsetIndex};
+  `;
+
+  const { rows } = await pool.query<PerazziLogRow>(query, values);
   return rows;
 }
 

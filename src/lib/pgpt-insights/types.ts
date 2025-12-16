@@ -139,6 +139,7 @@ export type PgptLogDetail = PerazziLogRow & {
   completion_tokens: number | null;
   latency_ms: number | null;
   retrieved_chunks: unknown[];
+  metadata?: unknown | null;
   archetype_scores?: Record<string, number> | null;
   archetype_confidence?: number | null;
   archetype_decision?: unknown | null;

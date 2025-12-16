@@ -1,6 +1,6 @@
 # PerazziGPT v2 – System Manifest
 
-> Version: 0.1 (Draft)  
+> Version: 0.2 (Draft)  
 > Owner: David Radulovich  
 > File: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-1/V2_REDO_system-manifest.md`  
 
@@ -20,7 +20,7 @@ Phase 1 establishes the conversational contract: the assistant spec codifies mis
 
 Phase 2 turns brand, craft, and operational content into a structured RAG corpus. The source-corpus manifest lists every eligible document and its ingestion status; the metadata schema defines Supabase tables for documents, chunks, and embeddings; and chunking guidelines dictate how text is split with heading paths, mode/archetype hints, and guardrail flags. Optional configs (chunking overrides, embedding stack, infra, rerun process, validation) keep ingestion reproducible and auditable.
 
-Phase 3 (currently represented by a placeholder API contract) will describe how runtime requests package mode, archetype, and retrieval context into system prompts and how the app exchanges data with Supabase-backed RAG. Even in draft form, it signals where request/response schemas and orchestration logic will live.
+Phase 3 defines the runtime and API contract: how runtime requests package mode, archetype, and retrieval context into system prompts, and how the app exchanges data with Supabase-backed RAG with stable request/response schemas and orchestration logic.
 
 Together, these phases ensure that behavior (Phase 1) is always grounded in vetted V2 corpus data (Phase 2) and exposed through a predictable runtime surface (Phase 3).
 
@@ -53,7 +53,7 @@ Phase 2 defines what enters the RAG corpus, how each asset is labeled, how text 
 | `V2_REDO_embedding-stack.md` | Embedding model & pipeline | Placeholder for model choice, preprocessing, vector dims, and refresh cadence. | Planned; update when embedding stack is chosen. |
 | `V2_REDO_infrastructure.md` | Supabase & infra notes | Placeholder for pgvector setup, indexing, and service wiring. | Planned; fill once the v2 stack is finalized. |
 | `V2_REDO_rerun-process.md` | Re-ingestion process | Placeholder describing how to rerun ingestion when docs change. | Planned; to be written with the live pipeline. |
-| `V2_REDO_validation.md` | Validation & test prompts | Placeholder for retrieval and safety regression checks. | Planned; add test harness and prompts later. |
+| `V2_REDO_validation.md` | Validation & test prompts | System-level validation and regression prompts for retrieval and safety. | Use as the validation playbook alongside the test harness. |
 
 ---
 
@@ -63,7 +63,12 @@ Phase 3 captures how the application talks to the assistant and RAG at runtime: 
 
 | File | Role | Summary | Notes |
 |------|------|---------|-------|
-| `V2_REDO_api-contract.md` | API & runtime contract | Placeholder outlining where to define request/response schemas, prompt assembly, and Supabase retrieval orchestration. | Planned; expand once runtime integration decisions are made. |
+| `V2_REDO_api-contract.md` | API & runtime contract | Defines request/response schemas, prompt assembly, and Supabase retrieval orchestration. | Canonical runtime surface for mode/archetype packaging and citations. |
+
+**Observability / Tuning**
+
+- Server-side logging captures rerank + archetype confidence telemetry in metadata.
+- Admin Insights UI is the intended tuning surface.
 
 ---
 
@@ -73,9 +78,9 @@ Authoring starts in `V2_PreBuild-Docs`: brand, craft, operational, and reference
 
 Ingestion begins with `V2_REDO_source-corpus.md`, which selects eligible documents, categories, and flags. `V2_REDO_metadata-schema.md` sets how those assets are stored in Supabase, and `V2_REDO_chunking-guidelines.md` dictates how each file is split with heading paths, mode/archetype hints, and guardrail flags. Optional chunking overrides and the embedding stack determine exact tokenization and vectorization.
 
-Runtime retrieval pulls chunks from Supabase based on the user message, guided by metadata from the schema and chunking rules. Phase 1 docs (assistant spec, guardrails, voice, use-case depth) provide the behavioral layer, while Phase 3 will define the exact API contract that binds requests, retrieval payloads, and system prompt assembly.
+Runtime retrieval pulls chunks from Supabase based on the user message, guided by metadata from the schema and chunking rules. Phase 1 docs (assistant spec, guardrails, voice, use-case depth) provide the behavioral layer, while Phase 3 defines the exact API contract that binds requests, retrieval payloads, and system prompt assembly.
 
-When responding, the assistant applies the 3 modes and 5 archetypes matrix from the assistant spec as a lens on top of retrieved corpus chunks. Mode influences intent handling (Prospect, Owner, Navigation/Guide), archetype fine-tunes tone and emphasis, and guardrails enforce hard boundaries while RAG keeps facts anchored in the V2 corpus.
+When responding, the assistant applies the 3 modes and 5 archetypes matrix from the assistant spec as a lens on top of retrieved corpus chunks. Mode influences intent handling (Prospect, Owner, Navigation/Guide), archetype steers structure + tone + emphasis (without labeling the user) gated by confidence, and guardrails enforce hard boundaries while RAG keeps facts anchored in the V2 corpus.
 
 ---
 
@@ -85,4 +90,13 @@ When responding, the assistant applies the 3 modes and 5 archetypes matrix from 
 - Changing behavior or voice: update `V2_REDO_assistant-spec.md`, `V2_REDO_non-negotiable-guardrails.md`, and `V2_REDO_voice-calibration.md` together, then adjust use-case depth if flows change.
 - Changing how data is stored: update `V2_REDO_metadata-schema.md` (and related Supabase migrations) plus any chunking rules that rely on schema fields.
 - Rerunning ingestion: follow `V2_REDO_rerun-process.md` once populated; ensure embeddings and chunking configs are in sync.
+- Changing request/response or orchestration: update `V2_REDO_api-contract.md` and ensure it matches the canonical TS contract.
 - Updating this manifest: bump the version above and briefly note what changed so contributors can track the map itself.
+
+## 7. Changelog
+
+- 0.2 (Draft)
+  - Phase 3 documented as the runtime/API contract layer (no longer a placeholder).
+  - Validation doc marked as the system-level playbook rather than a placeholder.
+  - Added tuning/observability note for rerank + archetype confidence telemetry.
+  - Added change-management note for API contract updates and bumped manifest version.

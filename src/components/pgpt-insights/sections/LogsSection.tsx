@@ -47,7 +47,6 @@ export async function LogsSection({
   resolvedSearchParams,
   tableDensityClass,
   truncPrimary,
-  isCompact,
 }: {
   envFilter?: string;
   endpointFilter?: string;
@@ -57,7 +56,6 @@ export async function LogsSection({
   resolvedSearchParams: SearchParams;
   tableDensityClass: string;
   truncPrimary: number;
-  isCompact: boolean;
 }) {
   try {
     const offset = (page - 1) * LOGS_PAGE_SIZE;
@@ -218,7 +216,6 @@ export async function LogsSection({
               logs={logsWithQa}
               tableDensityClass={tableDensityClass}
               truncPrimary={truncPrimary}
-              isCompact={isCompact}
             />
 
             <div className="flex items-center justify-between pt-2 text-xs text-muted-foreground">
