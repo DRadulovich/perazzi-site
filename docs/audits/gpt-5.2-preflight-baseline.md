@@ -13,14 +13,14 @@
 ## Endpoint contracts (dev server http://localhost:3000)
 - Root (`/`): 200.
 - `/api/perazzi-assistant` scenarios (top-level keys: answer|string, guardrail|object, citations|array, intents|array, topics|array, templates|array, similarity|number, mode|string, archetype|null, archetypeBreakdown|object):
-  - Meta origin (“Who built you?”): 200, guardrail.status `ok`, citations empty, archetypeBreakdown present.
-  - Meta training (“What are you trained on?”): 200, guardrail.status `ok`, citations empty.
-  - Guardrail pricing (“What does a new Perazzi cost?”): 200, guardrail.status `blocked`, reason `pricing`, citations empty, similarity 0.
-  - Platform compare (“Explain the difference between the MX platform and the HT platform.”): 500 with `{ error: string }` (“Unexpected error while processing the request.”) — OpenAI/gateway not configured.
+  - Meta origin ("Who built you?"): 200, guardrail.status `ok`, citations empty, archetypeBreakdown present.
+  - Meta training ("What are you trained on?"): 200, guardrail.status `ok`, citations empty.
+  - Guardrail pricing ("What does a new Perazzi cost?"): 200, guardrail.status `blocked`, reason `pricing`, citations empty, similarity 0.
+  - Platform compare ("Explain the difference between the MX platform and the HT platform."): 500 with `{ error: string }` ("Unexpected error while processing the request.") - OpenAI/gateway not configured.
 - `/api/soul-journey-step` (error shape `{ error: string }`):
-  - Missing step: 400 “Missing or invalid step”.
-  - Missing userAnswer: 400 “Missing or invalid userAnswer”.
-  - Unknown step: 400 “Unknown step”.
+  - Missing step: 400 "Missing or invalid step".
+  - Missing userAnswer: 400 "Missing or invalid userAnswer".
+  - Unknown step: 400 "Unknown step".
   - Success path not attempted (no OpenAI/gateway env).
 - Raw responses/headers: `tmp/audit/preflight-gpt-5.2/responses/*`, headers in `tmp/audit/preflight-gpt-5.2/*.headers.txt`.
 
@@ -45,5 +45,5 @@
 ## Do Not Break checklist
 - [ ] Do not change existing API JSON keys/shape for `/api/perazzi-assistant` or `/api/soul-journey-step` unless a task explicitly says so.
 - [ ] Keep `perazzi_conversation_logs` insert/select contract usable for PGPT Insights (prompt/response may be omitted/truncated, but UI and queries must not crash).
-- [ ] GPT‑5.2 parameter compatibility: `temperature/top_p/logprobs` only allowed when `reasoning.effort = "none"`. Reference: https://platform.openai.com/docs/guides/latest-model
+- [ ] GPT-5.2 parameter compatibility: `temperature/top_p/logprobs` only allowed when `reasoning.effort = "none"`. Reference: https://platform.openai.com/docs/guides/latest-model
 - [ ] Prompt cache retention allowed values are `in_memory` or `24h`. Reference: https://platform.openai.com/docs/guides/prompt-caching
