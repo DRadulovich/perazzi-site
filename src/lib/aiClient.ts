@@ -76,9 +76,21 @@ function getOpenAIClient(): OpenAI {
   return client;
 }
 
+/**
+ * @deprecated Legacy Chat Completions path. Prefer createResponseText() (Responses API).
+ * Disabled by default to prevent accidental regressions.
+ * To use, set PERAZZI_ALLOW_CHAT_COMPLETIONS=true (local/dev only).
+ */
 export async function runChatCompletion(
   params: RunChatCompletionParams,
 ): Promise<OpenAI.Chat.Completions.ChatCompletion> {
+  const allow = process.env.PERAZZI_ALLOW_CHAT_COMPLETIONS === "true";
+  if (!allow) {
+    throw new Error(
+      "runChatCompletion is deprecated and disabled by default. " +
+        "Set PERAZZI_ALLOW_CHAT_COMPLETIONS=true to enable (local/dev only).",
+    );
+  }
   const { model, messages, maxCompletionTokens, context, ...rest } = params;
 
   const completionParams: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming = {
