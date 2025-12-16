@@ -108,6 +108,7 @@ const REASONING_EFFORT = parseReasoningEffort(process.env.PERAZZI_REASONING_EFFO
 const ENV_TEXT_VERBOSITY: CreateResponseTextParams["textVerbosity"] =
   normalizeTextVerbosity(process.env.PERAZZI_TEXT_VERBOSITY) ?? "medium";
 const PROMPT_CACHE_RETENTION = parsePromptCacheRetention(process.env.PERAZZI_PROMPT_CACHE_RETENTION);
+const PROMPT_CACHE_KEY = parsePromptCacheKey(process.env.PERAZZI_PROMPT_CACHE_KEY);
 const ASSISTANT_TEMPERATURE = parseTemperature(
   process.env.PERAZZI_ASSISTANT_TEMPERATURE,
   1.0,
@@ -297,12 +298,21 @@ function normalizeTextVerbosity(
 function parsePromptCacheRetention(
   value: string | null | undefined,
 ): CreateResponseTextParams["promptCacheRetention"] {
-  const normalized = value?.trim().toLowerCase().replace("_", "-");
-  const allowed = new Set(["in-memory", "24h"]);
-  if (normalized && allowed.has(normalized)) {
-    return normalized as CreateResponseTextParams["promptCacheRetention"];
+  const raw = value?.trim().toLowerCase();
+  if (!raw) return undefined;
+
+  const canonical = raw.replaceAll("-", "_");
+  const allowed = new Set(["in_memory", "24h"]);
+  if (allowed.has(canonical)) {
+    return canonical as CreateResponseTextParams["promptCacheRetention"];
   }
   return undefined;
+}
+
+function parsePromptCacheKey(value: string | null | undefined): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  return trimmed;
 }
 
 function parseTemperature(value: string | null | undefined, fallback: number): number {
@@ -944,6 +954,7 @@ async function generateAssistantAnswer(
       reasoningEffort: REASONING_EFFORT,
       text: { verbosity: textVerbosity },
       promptCacheRetention: PROMPT_CACHE_RETENTION,
+      promptCacheKey: PROMPT_CACHE_KEY,
       previousResponseId: previousResponseId ?? undefined,
     });
     const latencyMs = Date.now() - start;
