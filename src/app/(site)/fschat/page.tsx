@@ -3,7 +3,7 @@ import { SiteShell } from "@/components/site-shell";
 import { FullScreenChat } from "@/components/chat/FullScreenChat";
 
 type FullScreenChatPageProps = Readonly<{
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }>;
 
 export const metadata: Metadata = {
@@ -11,11 +11,12 @@ export const metadata: Metadata = {
   description: "A focused, full-screen view of the Perazzi concierge chat experience.",
 };
 
-export default function FullScreenChatPage({ searchParams }: FullScreenChatPageProps) {
+export default async function FullScreenChatPage({ searchParams }: FullScreenChatPageProps) {
+  const resolvedParams = (await searchParams) ?? {};
   const promptParam =
-    (typeof searchParams?.q === "string" && searchParams.q) ||
-    (typeof searchParams?.prompt === "string" && searchParams.prompt) ||
-    (typeof searchParams?.question === "string" && searchParams.question) ||
+    (typeof resolvedParams.q === "string" && resolvedParams.q) ||
+    (typeof resolvedParams.prompt === "string" && resolvedParams.prompt) ||
+    (typeof resolvedParams.question === "string" && resolvedParams.question) ||
     null;
 
   const initialPrompt = promptParam?.trim() ? { question: promptParam.trim() } : null;

@@ -917,7 +917,6 @@ async function generateAssistantAnswer(
   try {
     const response = await createResponseText({
       model: OPENAI_MODEL,
-      temperature: 0.4,
       maxOutputTokens: MAX_OUTPUT_TOKENS,
       instructions,
       input: sanitizedMessages as CreateResponseTextParams["input"],

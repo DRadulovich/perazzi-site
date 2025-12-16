@@ -51,7 +51,6 @@ export async function POST(req: Request) {
 
     const response = await createResponseText({
       model: OPENAI_MODEL,
-      temperature: 0.6,
       maxOutputTokens: MAX_OUTPUT_TOKENS,
       instructions,
       input: `${titleLine}${prompt}`,
