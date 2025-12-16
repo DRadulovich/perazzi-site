@@ -37,6 +37,7 @@ export async function GET(
       session_id: string | null;
       model: string | null;
       used_gateway: boolean | null;
+      metadata: unknown | null;
       page_url?: string | null;
       user_id?: string | null;
       mode?: string | null;
@@ -68,6 +69,7 @@ export async function GET(
         session_id,
         model,
         used_gateway,
+        metadata,
         page_url,
         user_id,
         prompt,
@@ -132,6 +134,7 @@ export async function GET(
         session_id: r.session_id ?? null,
         model: r.model ?? null,
         used_gateway: r.used_gateway ?? null,
+        metadata: r.metadata ?? null,
         page_url: r.page_url ?? null,
         user_id: r.user_id ?? null,
         prompt: r.prompt ?? "",
