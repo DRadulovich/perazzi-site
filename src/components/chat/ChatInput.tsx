@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { VerbosityToggle } from "@/components/chat/VerbosityToggle";
 import type { TextVerbosity } from "@/types/perazzi-assistant";
 
 interface ChatInputProps extends Readonly<{
@@ -18,13 +19,6 @@ export function ChatInput({
 }: ChatInputProps) {
   const [value, setValue] = useState("");
 
-  const handleVerbosityChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const next = event.target.value as TextVerbosity;
-    if (next === "low" || next === "medium" || next === "high") {
-      onTextVerbosityChange(next);
-    }
-  };
-
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!value.trim() || pending) return;
@@ -34,22 +28,7 @@ export function ChatInput({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="flex items-center justify-between gap-3 text-xs font-semibold text-ink-muted">
-        <label className="flex items-center gap-2">
-          <span>Verbosity</span>
-          <select
-            className="rounded-lg border border-subtle bg-card px-2 py-1 text-sm font-normal text-ink shadow-sm transition hover:border-ink focus:border-ink focus:outline-none disabled:cursor-not-allowed disabled:border-subtle disabled:text-ink-muted"
-            value={textVerbosity}
-            onChange={handleVerbosityChange}
-            disabled={pending}
-            aria-label="Choose response verbosity"
-          >
-            <option value="low">Concise</option>
-            <option value="medium">Normal</option>
-            <option value="high">Detailed</option>
-          </select>
-        </label>
-      </div>
+      <VerbosityToggle value={textVerbosity} onChange={onTextVerbosityChange} disabled={pending} />
       <div className="relative">
         <label htmlFor="perazzi-chat-input" className="sr-only">
           Ask the Perazzi concierge
