@@ -47,6 +47,53 @@ function parseScore(score: string | null | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function toNumberOrNull(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+function readNestedNumber(obj: unknown, path: string[]): number | null {
+  let current: unknown = obj;
+  for (const key of path) {
+    if (!current || typeof current !== "object" || !(key in (current as Record<string, unknown>))) return null;
+    current = (current as Record<string, unknown>)[key];
+  }
+  return toNumberOrNull(current);
+}
+
+function getTokenMetrics(log: PerazziLogPreviewRow) {
+  const promptTokens = toNumberOrNull((log as { prompt_tokens?: unknown }).prompt_tokens);
+  const completionTokens = toNumberOrNull((log as { completion_tokens?: unknown }).completion_tokens);
+  const metadataObj =
+    log.metadata && typeof log.metadata === "object" ? (log.metadata as Record<string, unknown>) : null;
+  const responseUsage =
+    metadataObj && typeof (metadataObj as { responseUsage?: unknown }).responseUsage === "object"
+      ? (metadataObj as { responseUsage: unknown }).responseUsage
+      : null;
+
+  const cachedTokens =
+    toNumberOrNull((log as { cached_tokens?: unknown }).cached_tokens) ??
+    readNestedNumber(metadataObj, ["cachedTokens"]) ??
+    readNestedNumber(responseUsage, ["input_tokens_details", "cached_tokens"]);
+
+  const reasoningTokens =
+    toNumberOrNull((log as { reasoning_tokens?: unknown }).reasoning_tokens) ??
+    readNestedNumber(metadataObj, ["reasoningTokens"]) ??
+    readNestedNumber(responseUsage, ["output_tokens_details", "reasoning_tokens"]);
+
+  const totalTokens =
+    toNumberOrNull((log as { total_tokens?: unknown }).total_tokens) ??
+    readNestedNumber(metadataObj, ["totalTokens"]) ??
+    readNestedNumber(responseUsage, ["total_tokens"]) ??
+    (promptTokens !== null && completionTokens !== null ? promptTokens + completionTokens : null);
+
+  return { promptTokens, completionTokens, cachedTokens, reasoningTokens, totalTokens };
+}
+
 function rowToneClass(log: PerazziLogPreviewRow): string {
   if (log.guardrail_status === "blocked")
     return "border-l-4 border-red-500/50 bg-red-500/5 dark:border-red-500/60 dark:bg-red-500/15";
@@ -332,6 +379,9 @@ export function LogsTableWithDrawer({
               const responsePreviewTruncated =
                 !responseStatus.isOmitted && (log.response_len ?? 0) > (log.response_preview?.length ?? 0);
 
+              const tokenMetrics = getTokenMetrics(log);
+              const { cachedTokens, reasoningTokens, totalTokens } = tokenMetrics;
+
               return (
                 <tr
                   key={log.id}
@@ -458,6 +508,12 @@ export function LogsTableWithDrawer({
                         {log.qa_flag_status ? (
                           <Badge tone={log.qa_flag_status === "open" ? "purple" : "default"}>QA {log.qa_flag_status}</Badge>
                         ) : null}
+                      </div>
+
+                      <div className="text-[11px] text-muted-foreground flex flex-wrap gap-3">
+                        <span>Total tokens: {totalTokens ?? "—"}</span>
+                        <span>Cached tokens: {cachedTokens ?? "—"}</span>
+                        <span>Reasoning tokens: {reasoningTokens ?? "—"}</span>
                       </div>
 
                       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Inspect →</div>

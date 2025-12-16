@@ -140,6 +140,13 @@ export async function fetchLogs(args: {
       l.metadata->>'maxScore' as max_score,
       l.metadata->>'guardrailStatus' as guardrail_status,
       l.metadata->>'guardrailReason' as guardrail_reason,
+      coalesce((l.metadata->>'cachedTokens')::int, (l.metadata->'responseUsage'->'input_tokens_details'->>'cached_tokens')::int) as cached_tokens,
+      coalesce((l.metadata->>'reasoningTokens')::int, (l.metadata->'responseUsage'->'output_tokens_details'->>'reasoning_tokens')::int) as reasoning_tokens,
+      coalesce(
+        (l.metadata->>'totalTokens')::int,
+        (l.metadata->'responseUsage'->>'total_tokens')::int,
+        case when l.prompt_tokens is null or l.completion_tokens is null then null else l.prompt_tokens + l.completion_tokens end
+      ) as total_tokens,
 
       qf.qa_flag_id,
       qf.qa_flag_status,
@@ -1291,7 +1298,14 @@ export async function fetchSessionLogsFull(sessionId: string): Promise<PgptSessi
         topics,
         metadata->>'maxScore' as max_score,
         metadata->>'guardrailStatus' as guardrail_status,
-        metadata->>'guardrailReason' as guardrail_reason
+        metadata->>'guardrailReason' as guardrail_reason,
+        coalesce((metadata->>'cachedTokens')::int, (metadata->'responseUsage'->'input_tokens_details'->>'cached_tokens')::int) as cached_tokens,
+        coalesce((metadata->>'reasoningTokens')::int, (metadata->'responseUsage'->'output_tokens_details'->>'reasoning_tokens')::int) as reasoning_tokens,
+        coalesce(
+          (metadata->>'totalTokens')::int,
+          (metadata->'responseUsage'->>'total_tokens')::int,
+          case when prompt_tokens is null or completion_tokens is null then null else prompt_tokens + completion_tokens end
+        ) as total_tokens
       from perazzi_conversation_logs
       where session_id = $1
       order by created_at asc;
@@ -1415,6 +1429,13 @@ export async function fetchSessionLogsPreview(args: {
       l.metadata->>'maxScore' as max_score,
       l.metadata->>'guardrailStatus' as guardrail_status,
       l.metadata->>'guardrailReason' as guardrail_reason,
+      coalesce((l.metadata->>'cachedTokens')::int, (l.metadata->'responseUsage'->'input_tokens_details'->>'cached_tokens')::int) as cached_tokens,
+      coalesce((l.metadata->>'reasoningTokens')::int, (l.metadata->'responseUsage'->'output_tokens_details'->>'reasoning_tokens')::int) as reasoning_tokens,
+      coalesce(
+        (l.metadata->>'totalTokens')::int,
+        (l.metadata->'responseUsage'->>'total_tokens')::int,
+        case when l.prompt_tokens is null or l.completion_tokens is null then null else l.prompt_tokens + l.completion_tokens end
+      ) as total_tokens,
 
       qf.qa_flag_id,
       qf.qa_flag_status,
@@ -1503,7 +1524,14 @@ export async function fetchSessionConversationLogs(args: {
       l.topics,
       l.metadata->>'maxScore' as max_score,
       l.metadata->>'guardrailStatus' as guardrail_status,
-      l.metadata->>'guardrailReason' as guardrail_reason
+      l.metadata->>'guardrailReason' as guardrail_reason,
+      coalesce((l.metadata->>'cachedTokens')::int, (l.metadata->'responseUsage'->'input_tokens_details'->>'cached_tokens')::int) as cached_tokens,
+      coalesce((l.metadata->>'reasoningTokens')::int, (l.metadata->'responseUsage'->'output_tokens_details'->>'reasoning_tokens')::int) as reasoning_tokens,
+      coalesce(
+        (l.metadata->>'totalTokens')::int,
+        (l.metadata->'responseUsage'->>'total_tokens')::int,
+        case when l.prompt_tokens is null or l.completion_tokens is null then null else l.prompt_tokens + l.completion_tokens end
+      ) as total_tokens
     from perazzi_conversation_logs l
     ${joinSql}
     ${whereClause}

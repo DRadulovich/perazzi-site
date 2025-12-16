@@ -118,6 +118,44 @@ function sanitizeMetadata(metadata: Record<string, unknown>): Record<string, unk
   return clone;
 }
 
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function toOptionalNumber(value: unknown): number | undefined {
+  return isFiniteNumber(value) ? value : undefined;
+}
+
+function extractUsageMetrics(usage: unknown): {
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+  cachedTokens?: number;
+  reasoningTokens?: number;
+} {
+  if (!usage || typeof usage !== "object") return {};
+  const inputTokens = toOptionalNumber((usage as { input_tokens?: unknown })?.input_tokens);
+  const outputTokens = toOptionalNumber((usage as { output_tokens?: unknown })?.output_tokens);
+  const cachedTokens = toOptionalNumber(
+    (usage as { input_tokens_details?: { cached_tokens?: unknown } })?.input_tokens_details?.cached_tokens,
+  );
+  const reasoningTokens = toOptionalNumber(
+    (usage as { output_tokens_details?: { reasoning_tokens?: unknown } })?.output_tokens_details?.reasoning_tokens,
+  );
+  const totalTokensFromUsage = toOptionalNumber((usage as { total_tokens?: unknown })?.total_tokens);
+  const totalTokens =
+    totalTokensFromUsage ??
+    (inputTokens !== undefined && outputTokens !== undefined ? inputTokens + outputTokens : undefined);
+
+  return {
+    inputTokens,
+    outputTokens,
+    totalTokens,
+    cachedTokens,
+    reasoningTokens,
+  };
+}
+
 export async function logAiInteraction(input: AiInteractionLogInput): Promise<void> {
   if (process.env.PERAZZI_AI_LOGGING_ENABLED !== "true") return;
 
@@ -165,11 +203,17 @@ export async function logAiInteraction(input: AiInteractionLogInput): Promise<vo
   const responseTextTruncated = mode === "truncate" && rawResponse.length > maxChars;
 
   const metadataBase = sanitizeMetadata((metadata ?? {}) as Record<string, unknown>);
+  const usageMetrics = extractUsageMetrics(usage);
   const metadataWithIds = {
     ...metadataBase,
     ...(responseId ? { responseId } : {}),
     ...(requestId ? { requestId } : {}),
     ...(usage ? { responseUsage: usage } : {}),
+    ...(usageMetrics.inputTokens !== undefined ? { inputTokens: usageMetrics.inputTokens } : {}),
+    ...(usageMetrics.outputTokens !== undefined ? { outputTokens: usageMetrics.outputTokens } : {}),
+    ...(usageMetrics.cachedTokens !== undefined ? { cachedTokens: usageMetrics.cachedTokens } : {}),
+    ...(usageMetrics.reasoningTokens !== undefined ? { reasoningTokens: usageMetrics.reasoningTokens } : {}),
+    ...(usageMetrics.totalTokens !== undefined ? { totalTokens: usageMetrics.totalTokens } : {}),
     logTextMode: mode,
     logTextMaxChars: maxChars,
     promptTextOmitted,

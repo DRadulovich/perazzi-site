@@ -10,6 +10,24 @@ function isUuidLike(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 }
 
+function toNumberOrNull(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+function readNestedNumber(obj: unknown, path: string[]): number | null {
+  let current: unknown = obj;
+  for (const key of path) {
+    if (!current || typeof current !== "object" || !(key in (current as Record<string, unknown>))) return null;
+    current = (current as Record<string, unknown>)[key];
+  }
+  return toNumberOrNull(current);
+}
+
 export async function GET(
   _: Request,
   context: { params: { id: string } } | { params: Promise<{ id: string }> },
@@ -124,6 +142,26 @@ export async function GET(
 
     const qa_latest = qa_latest_rows[0] ?? null;
 
+    const promptTokens = toNumberOrNull(r.prompt_tokens);
+    const completionTokens = toNumberOrNull(r.completion_tokens);
+
+    const metadataObj = r.metadata && typeof r.metadata === "object" ? (r.metadata as Record<string, unknown>) : null;
+    const responseUsage =
+      metadataObj && typeof (metadataObj as { responseUsage?: unknown }).responseUsage === "object"
+        ? (metadataObj as { responseUsage: unknown }).responseUsage
+        : null;
+
+    const cachedTokens =
+      readNestedNumber(metadataObj, ["cachedTokens"]) ??
+      readNestedNumber(responseUsage, ["input_tokens_details", "cached_tokens"]);
+    const reasoningTokens =
+      readNestedNumber(metadataObj, ["reasoningTokens"]) ??
+      readNestedNumber(responseUsage, ["output_tokens_details", "reasoning_tokens"]);
+    const totalTokens =
+      readNestedNumber(metadataObj, ["totalTokens"]) ??
+      readNestedNumber(responseUsage, ["total_tokens"]) ??
+      (promptTokens !== null && completionTokens !== null ? promptTokens + completionTokens : null);
+
     const payload: PgptLogDetailResponse = {
       log: {
         id: String(r.id),
@@ -145,8 +183,11 @@ export async function GET(
         max_score: r.max_score ?? null,
         guardrail_status: r.guardrail_status ?? null,
         guardrail_reason: r.guardrail_reason ?? null,
-        prompt_tokens: r.prompt_tokens === null || r.prompt_tokens === undefined ? null : Number(r.prompt_tokens),
-        completion_tokens: r.completion_tokens === null || r.completion_tokens === undefined ? null : Number(r.completion_tokens),
+        prompt_tokens: promptTokens,
+        completion_tokens: completionTokens,
+        cached_tokens: cachedTokens,
+        reasoning_tokens: reasoningTokens,
+        total_tokens: totalTokens,
         latency_ms: r.latency_ms === null || r.latency_ms === undefined ? null : Number(r.latency_ms),
         retrieved_chunks: Array.isArray(r.retrieved_chunks) ? r.retrieved_chunks : [],
         archetype_scores: r.archetype_scores ?? null,

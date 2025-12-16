@@ -26,6 +26,12 @@ export type PerazziLogBase = LogTextMetadata & {
   guardrail_status: string | null;
   guardrail_reason: string | null;
 
+  prompt_tokens?: number | null;
+  completion_tokens?: number | null;
+  cached_tokens?: number | null;
+  reasoning_tokens?: number | null;
+  total_tokens?: number | null;
+
   // Optional context fields (may be absent on older logs)
   page_url?: string | null;
   user_id?: string | null;
@@ -153,6 +159,9 @@ export type QaFlagRow = {
 export type PgptLogDetail = PerazziLogRow & {
   prompt_tokens: number | null;
   completion_tokens: number | null;
+  cached_tokens?: number | null;
+  reasoning_tokens?: number | null;
+  total_tokens?: number | null;
   latency_ms: number | null;
   retrieved_chunks: unknown[];
   metadata?: unknown | null;
@@ -217,6 +226,10 @@ export type PgptSessionLogRow = {
   qa_flag_reason?: string | null;
   qa_flag_notes?: string | null;
   qa_flag_created_at?: string | null;
+
+  cached_tokens?: number | null;
+  reasoning_tokens?: number | null;
+  total_tokens?: number | null;
 };
 
 export type QaFlagLatestRow = {

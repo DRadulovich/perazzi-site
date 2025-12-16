@@ -92,6 +92,14 @@ export function LogSummaryPanel({
     return computeWinnerAndRunner(diagScores);
   }, [diagScores]);
 
+  const promptTokens = detail.log.prompt_tokens ?? null;
+  const completionTokens = detail.log.completion_tokens ?? null;
+  const cachedTokens = detail.log.cached_tokens ?? null;
+  const reasoningTokens = detail.log.reasoning_tokens ?? null;
+  const totalTokens =
+    detail.log.total_tokens ??
+    (promptTokens !== null && completionTokens !== null ? promptTokens + completionTokens : null);
+
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-border bg-background p-4">
@@ -126,7 +134,12 @@ export function LogSummaryPanel({
           <div className="text-xs">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">tokens</div>
             <div className="mt-1 font-medium text-foreground">
-              {detail.log.prompt_tokens ?? "—"} prompt · {detail.log.completion_tokens ?? "—"} completion
+              {promptTokens ?? "—"} prompt · {completionTokens ?? "—"} completion
+            </div>
+            <div className="mt-1 space-y-0.5 text-[11px] text-muted-foreground">
+              <div>Cached tokens: {cachedTokens ?? "—"}</div>
+              <div>Reasoning tokens: {reasoningTokens ?? "—"}</div>
+              <div>Total tokens: {totalTokens ?? "—"}</div>
             </div>
           </div>
 

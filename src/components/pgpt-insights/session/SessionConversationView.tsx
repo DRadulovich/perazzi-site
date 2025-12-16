@@ -21,6 +21,60 @@ type DetailStatus = {
   error: string | null;
 };
 
+function toNumberOrNull(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+function readNestedNumber(obj: unknown, path: string[]): number | null {
+  let current: unknown = obj;
+  for (const key of path) {
+    if (!current || typeof current !== "object" || !(key in (current as Record<string, unknown>))) return null;
+    current = (current as Record<string, unknown>)[key];
+  }
+  return toNumberOrNull(current);
+}
+
+function getTokenMetrics(source: {
+  cached_tokens?: unknown;
+  reasoning_tokens?: unknown;
+  total_tokens?: unknown;
+  prompt_tokens?: unknown;
+  completion_tokens?: unknown;
+  metadata?: unknown | null;
+}) {
+  const promptTokens = toNumberOrNull(source.prompt_tokens);
+  const completionTokens = toNumberOrNull(source.completion_tokens);
+  const metadataObj =
+    source.metadata && typeof source.metadata === "object" ? (source.metadata as Record<string, unknown>) : null;
+  const responseUsage =
+    metadataObj && typeof (metadataObj as { responseUsage?: unknown }).responseUsage === "object"
+      ? (metadataObj as { responseUsage: unknown }).responseUsage
+      : null;
+
+  const cachedTokens =
+    toNumberOrNull(source.cached_tokens) ??
+    readNestedNumber(metadataObj, ["cachedTokens"]) ??
+    readNestedNumber(responseUsage, ["input_tokens_details", "cached_tokens"]);
+
+  const reasoningTokens =
+    toNumberOrNull(source.reasoning_tokens) ??
+    readNestedNumber(metadataObj, ["reasoningTokens"]) ??
+    readNestedNumber(responseUsage, ["output_tokens_details", "reasoning_tokens"]);
+
+  const totalTokens =
+    toNumberOrNull(source.total_tokens) ??
+    readNestedNumber(metadataObj, ["totalTokens"]) ??
+    readNestedNumber(responseUsage, ["total_tokens"]) ??
+    (promptTokens !== null && completionTokens !== null ? promptTokens + completionTokens : null);
+
+  return { promptTokens, completionTokens, cachedTokens, reasoningTokens, totalTokens };
+}
+
 function SummarySkeleton() {
   return (
     <div className="animate-pulse space-y-3">
@@ -162,6 +216,14 @@ export function SessionConversationView({
                 );
               }
 
+              const previewTokens = getTokenMetrics(log);
+              const detailTokens = detail ? getTokenMetrics(detail.log) : null;
+              const promptTokens = detailTokens?.promptTokens ?? previewTokens.promptTokens;
+              const completionTokens = detailTokens?.completionTokens ?? previewTokens.completionTokens;
+              const cachedTokens = detailTokens?.cachedTokens ?? previewTokens.cachedTokens;
+              const reasoningTokens = detailTokens?.reasoningTokens ?? previewTokens.reasoningTokens;
+              const totalTokens = detailTokens?.totalTokens ?? previewTokens.totalTokens;
+
               return (
                 <div key={log.id} className="space-y-3 rounded-xl border border-border bg-background/80 p-4">
                   <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
@@ -189,6 +251,14 @@ export function SessionConversationView({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">{metaBadges}</div>
+
+                  <div className="text-[11px] text-muted-foreground flex flex-wrap gap-3">
+                    <span>Prompt: {promptTokens ?? "—"}</span>
+                    <span>Completion: {completionTokens ?? "—"}</span>
+                    <span>Total tokens: {totalTokens ?? "—"}</span>
+                    <span>Cached tokens: {cachedTokens ?? "—"}</span>
+                    <span>Reasoning tokens: {reasoningTokens ?? "—"}</span>
+                  </div>
 
                     <div className="space-y-3">
                       <div className="flex items-start gap-3">
