@@ -21,6 +21,25 @@ export type CreateEmbeddingsParams = {
   [key: string]: unknown;
 };
 
+type ResponseCreateParams = OpenAI.Responses.ResponseCreateParamsNonStreaming;
+
+export type CreateResponseTextParams = ResponseCreateParams & {
+  maxOutputTokens?: number;
+  reasoningEffort?: OpenAI.ReasoningEffort | null;
+  textVerbosity?: OpenAI.Responses.ResponseTextConfig["verbosity"];
+  promptCacheRetention?: ResponseCreateParams["prompt_cache_retention"];
+  promptCacheKey?: string;
+  previousResponseId?: string;
+};
+
+export type CreateResponseTextResult = {
+  text: string;
+  responseId?: string;
+  requestId?: string;
+  usage?: OpenAI.Responses.ResponseUsage;
+  raw?: OpenAI.Responses.Response;
+};
+
 let client: OpenAI | null = null;
 let usingGateway = false;
 
@@ -123,6 +142,77 @@ export async function runChatCompletion(
   }
 
   return completion;
+}
+
+export async function createResponseText(
+  params: CreateResponseTextParams,
+): Promise<CreateResponseTextResult> {
+  const {
+    maxOutputTokens,
+    reasoningEffort,
+    textVerbosity,
+    promptCacheRetention,
+    promptCacheKey,
+    previousResponseId,
+    max_output_tokens,
+    reasoning,
+    text,
+    prompt_cache_retention,
+    prompt_cache_key,
+    previous_response_id,
+    ...rest
+  } = params;
+
+  const resolvedMaxTokens = maxOutputTokens ?? max_output_tokens;
+  const resolvedReasoning =
+    reasoningEffort !== undefined || reasoning
+      ? {
+          ...(reasoning ?? {}),
+          ...(reasoningEffort !== undefined ? { effort: reasoningEffort } : {}),
+        }
+      : undefined;
+  const resolvedText =
+    textVerbosity !== undefined || text
+      ? {
+          ...(text ?? {}),
+          ...(textVerbosity !== undefined ? { verbosity: textVerbosity } : {}),
+        }
+      : undefined;
+  const resolvedPromptCacheRetention = promptCacheRetention ?? prompt_cache_retention;
+  const resolvedPromptCacheKey = promptCacheKey ?? prompt_cache_key;
+  const resolvedPreviousResponseId = previousResponseId ?? previous_response_id;
+
+  const clientInstance = getOpenAIClient();
+  const response = await clientInstance.responses.create({
+    ...rest,
+    ...(resolvedMaxTokens !== undefined ? { max_output_tokens: resolvedMaxTokens } : {}),
+    ...(resolvedReasoning ? { reasoning: resolvedReasoning } : {}),
+    ...(resolvedText ? { text: resolvedText } : {}),
+    ...(resolvedPromptCacheRetention !== undefined
+      ? { prompt_cache_retention: resolvedPromptCacheRetention }
+      : {}),
+    ...(resolvedPromptCacheKey !== undefined ? { prompt_cache_key: resolvedPromptCacheKey } : {}),
+    ...(resolvedPreviousResponseId !== undefined
+      ? { previous_response_id: resolvedPreviousResponseId }
+      : {}),
+  });
+
+  const requestId = (response as { _request_id?: string })._request_id;
+  const outputText = response.output_text ?? "";
+
+  if (!outputText.trim()) {
+    throw new Error(
+      `OpenAI returned empty output_text (responseId=${response.id ?? "unknown"}, requestId=${requestId ?? "unknown"})`,
+    );
+  }
+
+  return {
+    text: outputText,
+    responseId: response.id,
+    requestId,
+    usage: response.usage ?? undefined,
+    raw: response,
+  };
 }
 
 export async function createEmbeddings(

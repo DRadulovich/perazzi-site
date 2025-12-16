@@ -454,7 +454,7 @@ const MobileMenu = ({
               ))}
             </div>
             <div className="border-t border-border px-6 py-4">
-              <CTAs />
+              <CTAs tone="light" />
             </div>
           </motion.div>
         )}
