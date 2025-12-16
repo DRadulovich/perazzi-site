@@ -18,7 +18,7 @@ Endpoint: `POST /api/perazzi-assistant`
 }
 ```
 
-- `messages` follows OpenAI chat format; the server **always** prepends the Phase 1 assistant spec as the canonical system message. Client-supplied system messages are ignored in v0 to prevent overriding Perazzi policy.
+- `messages` follows OpenAI chat format; the server **always** builds the system prompt internally (Responses `instructions`) from the Phase 1 assistant spec. Client-supplied system messages are ignored in v0 to prevent overriding Perazzi policy.
 - `context` is optional; missing fields default to `null`.
 - No client-side knobs for temperature/max tokens/model in v0.
 
@@ -47,7 +47,12 @@ Endpoint: `POST /api/perazzi-assistant`
 - `similarity` (number, optional) — highest similarity score returned; surfaced so we can inspect relevance during dev.
 
 ## Server behavior
-- Model: `gpt-4.1-mini`, temperature 0.4, max completion tokens ≈ 800.
+- Model: `gpt-5.2` by default (env `PERAZZI_MODEL` / `PERAZZI_RESPONSES_MODEL`; `PERAZZI_COMPLETIONS_MODEL` remains as a deprecated fallback), temperature 0.4, max output tokens ≈ 3000 (`PERAZZI_MAX_OUTPUT_TOKENS`).
+- Responses API fields: `instructions` (server-built system prompt + tone), `input` (sanitized chat messages), `max_output_tokens`.
+- Tuning knobs (env-driven):
+  - `reasoning.effort`: `none|minimal|low|medium|high|xhigh` (`PERAZZI_REASONING_EFFORT`)
+  - `text.verbosity`: `low|medium|high` (`PERAZZI_TEXT_VERBOSITY`)
+  - Prompt caching: `prompt_cache_retention` supports `in_memory` or `24h` (`PERAZZI_PROMPT_CACHE_RETENTION`; optional `PERAZZI_PROMPT_CACHE_KEY`). Caching improves latency; archetype/mode/rerank are recomputed each request.
 - Retrieval: derive `languageFilter` by converting `context.locale` (e.g., `en-US`, `it-IT`) to its base language (`en`, `it`). Filter top 6–8 chunks by that language; if no matches exist, fall back to English (`language="en"`). Apply additional filters for `mode`/`modelSlug` when present.
 - Low confidence: the current dev threshold is `PERAZZI_LOW_CONF_THRESHOLD` (default `0.1`). If the highest similarity score falls below that value, set `guardrail.status="low_confidence"`. In this state the assistant should lead with uncertainty (“I’m not certain enough to answer this accurately… please contact Perazzi or rephrase.”). Only include partial information if the retrieved chunks clearly contain relevant facts, and the answer must explicitly flag uncertainty. Never fabricate details while status=`low_confidence`. Once the corpus is stronger (e.g., post-launch) we’ll raise the threshold again.
 - Guardrail blocking: continue to defer to Phase 1 policies (pricing, gunsmithing, legal). Return `status="blocked"` and approved refusal copy.

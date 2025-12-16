@@ -11,7 +11,7 @@ The client sends chat messages and optional context; the server:
 
 - Applies the v2 behavior spec (modes, archetypes, guardrails, voice).  
 - Runs RAG queries against the v2 Supabase corpus.  
-- Calls `gpt-4.1` to generate the answer.  
+- Calls the OpenAI **Responses API** (default model: `gpt-5.2`) to generate the answer using `instructions`, `input`, and `max_output_tokens`.  
 - Returns the answer, citations, guardrail status, and (in dev) the mode + archetype used.
 
 ---
@@ -39,8 +39,8 @@ The client sends chat messages and optional context; the server:
 
 ### 1.1 `messages`
 
-- Follows the standard OpenAI Chat API format.  
-- Client-supplied `system` messages are **ignored/dropped** for safety; only `user` and prior `assistant` messages are kept when constructing the model prompt.  
+- Follows the OpenAI chat message shape; at runtime we pass these to Responses as `input`.  
+- Client-supplied `system` messages are **ignored/dropped** for safety; only `user` and prior `assistant` messages are kept when constructing the model prompt (`instructions` is built server-side).  
 - The last `user` message drives retrieval hints, archetype inference, and mode inference when `context.mode` is missing or invalid.
 
 ### 1.2 `context` (optional)
@@ -209,9 +209,15 @@ Minimal response shape (keys and types as returned today):
 
 ### 3.1 Model & generation
 
-- Model: **`gpt-4.1`**  
+- Model: **`gpt-5.2`** by default (`PERAZZI_MODEL` / `PERAZZI_RESPONSES_MODEL` env; `PERAZZI_COMPLETIONS_MODEL` remains as a deprecated fallback).  
 - Temperature: ~**0.3–0.4**  
-- Max completion tokens: ~**800–1200** (tuned to allow nuanced, but not rambling, answers).  
+- Max output tokens: ~**3000** (via `max_output_tokens`; `PERAZZI_MAX_OUTPUT_TOKENS` env).  
+- Responses API fields: `instructions` (server-built system prompt + tone nudge), `input` (sanitized user/assistant messages), `max_output_tokens`.  
+- Tuning knobs:
+  - `reasoning.effort`: `none|minimal|low|medium|high|xhigh` (env: `PERAZZI_REASONING_EFFORT`).  
+  - `text.verbosity`: `low|medium|high` (env: `PERAZZI_TEXT_VERBOSITY`).  
+  - Prompt caching: `prompt_cache_retention` supports `in_memory` or `24h` (env: `PERAZZI_PROMPT_CACHE_RETENTION`; optional `PERAZZI_PROMPT_CACHE_KEY`).  
+  - Note: prompt caching is a performance feature; archetype/mode/rerank are recomputed each request.  
 - System prompt:
   - Constructed from Phase 1 docs (assistant spec, guardrails, voice, use-case depth).  
   - Client-provided `system` messages are ignored in v2.0.
@@ -228,7 +234,7 @@ Minimal response shape (keys and types as returned today):
        - `chunks.visibility = 'public'`  
        - Optional: `category` / `doc_type` depending on mode and context (e.g., `making-a-perazzi` for craft questions).  
        - Optional: mild bias based on `primary_modes` and (internally) archetype.  
-  3. Collects top-k chunks (default `k = 12`), passes them as context to `gpt-4.1`.
+  3. Collects top-k chunks (default `k = 12`), passes them as context to the Responses call (`input` + server-built `instructions`).
 - The server tracks the maximum similarity score across the retrieved chunks to inform guardrail decisions.
 
 ### 3.3 Low confidence behavior

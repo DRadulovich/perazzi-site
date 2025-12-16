@@ -1,13 +1,13 @@
 # Dealer Authority Audit (Authorized Dealer Leakage)
 
-## LLM entrypoints & sampling
-- `src/app/api/perazzi-assistant/route.ts:124-136,845-852` — Main chat endpoint uses `model=gpt-4.1`, `temperature:0.4`, `max_completion_tokens:3000`; system prompt prepends `V2_REDO_assistant-spec.md` + style exemplars on every call. System/dev instructions: **closed-world intent** (grounded in V2 corpus) but no hard refusal when context is empty.
+-## LLM entrypoints & sampling
+- `src/app/api/perazzi-assistant/route.ts:124-136,845-852` — Main chat endpoint uses Responses (`model=gpt-5.2` default via env), `temperature:0.4`, `max_output_tokens:3000`; system prompt (`instructions`) prepends `V2_REDO_assistant-spec.md` + style exemplars on every call. System/dev instructions: **closed-world intent** (grounded in V2 corpus) but no hard refusal when context is empty. Reasoning/verbosity/prompt-cache knobs are env-driven (`PERAZZI_REASONING_EFFORT`, `PERAZZI_TEXT_VERBOSITY`, `PERAZZI_PROMPT_CACHE_RETENTION`).
 - `src/app/api/perazzi-assistant/route.ts:945-964` — System prompt injects retrieved chunks then says “Use the following retrieved references when relevant … If you are not certain, clearly state the limitation,” but still runs even when `docSnippets` is empty. Classification: **open-world fallback** (invites best-effort answer without context).
 - `src/lib/perazzi-intents.ts:52-55,128-133` — Dealer intent detection routes dealer-like phrases to Navigation mode and injects template: “List up to three recommended dealers with Name — City/State …” Classification: **open-world nudge** (encourages listing dealers without requiring corpus support or “authorized” wording).
 - `src/app/api/perazzi-assistant/route.ts:186-189,650-666` — Low-confidence gate defaults to `PERAZZI_LOW_CONF_THRESHOLD ?? 0`, so threshold is 0 unless overridden; low-conf message exists but is effectively disabled. Classification: **open-world** (allows answering on zero/weak retrieval).
 - `src/app/api/perazzi-assistant/route.ts:138-177` — Additional system tone exemplars and guardrails (pricing/competitor refusals) appended to every prompt. Classification: neutral/brand guardrails, no retrieval enforcement.
 - `src/app/api/perazzi-assistant/route.ts:637-688` — Retrieval happens once per call; no retry/backoff or min-chunk requirement before generation. Classification: **open-world fallback path**.
-- Other chat-like endpoint: `src/app/api/soul-journey-step/route.ts:5-74` (model `gpt-4.1`, `temperature:0.6`, max tokens 700) but unrelated to dealers.
+- Other chat-like endpoint: `src/app/api/soul-journey-step/route.ts:5-74` (Responses, default `gpt-5.2`, `temperature:0.6`, max output tokens 700) but unrelated to dealers.
 
 ## Instruction inventory (dealer relevance)
 - **Closed-world / corpus-only instructions**
@@ -35,7 +35,7 @@
   - Retrieval debug is off by default; missing context not surfaced to caller unless env `PERAZZI_ENABLE_RETRIEVAL_DEBUG=true` or `PERAZZI_ENABLE_FILE_LOG=true`.
 
 ## Sampling config (dealer-capable endpoint)
-- Chat: `src/app/api/perazzi-assistant/route.ts` → `gpt-4.1`, `temperature 0.4`, `top_p` default (not set), `max_completion_tokens 3000`, no seed.
+- Responses: `src/app/api/perazzi-assistant/route.ts` → default `gpt-5.2` (`PERAZZI_MODEL` / `PERAZZI_RESPONSES_MODEL`), `temperature 0.4`, `top_p` default (not set), `max_output_tokens 3000`, no seed. Reasoning/verbosity/prompt-cache knobs are env-driven.
 - Embeddings: `text-embedding-3-large` (`PERAZZI_EMBED_MODEL`, default) for queries and archetype vectors.
 - Rerank: disabled by default unless `PERAZZI_ENABLE_RERANK=true`; candidateLimit 60 when on, otherwise limit 12.
 
