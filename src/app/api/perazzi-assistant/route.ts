@@ -105,7 +105,8 @@ const DEFAULT_MODEL = "gpt-5.2";
 const OPENAI_MODEL = resolveModel();
 const MAX_OUTPUT_TOKENS = resolveMaxOutputTokens();
 const REASONING_EFFORT = parseReasoningEffort(process.env.PERAZZI_REASONING_EFFORT);
-const TEXT_VERBOSITY = parseTextVerbosity(process.env.PERAZZI_TEXT_VERBOSITY);
+const ENV_TEXT_VERBOSITY: CreateResponseTextParams["textVerbosity"] =
+  normalizeTextVerbosity(process.env.PERAZZI_TEXT_VERBOSITY) ?? "medium";
 const PROMPT_CACHE_RETENTION = parsePromptCacheRetention(process.env.PERAZZI_PROMPT_CACHE_RETENTION);
 
 function isOriginAllowed(req: Request): { ok: boolean; originHost?: string } {
@@ -279,15 +280,14 @@ function parseReasoningEffort(
   return undefined;
 }
 
-function parseTextVerbosity(
-  value: string | null | undefined,
-): CreateResponseTextParams["textVerbosity"] {
-  const normalized = value?.trim().toLowerCase();
-  const allowed = new Set(["low", "medium", "high"]);
-  if (normalized && allowed.has(normalized)) {
+function normalizeTextVerbosity(
+  value: unknown,
+): CreateResponseTextParams["textVerbosity"] | null {
+  const normalized = typeof value === "string" ? value.toLowerCase().trim() : "";
+  if (normalized === "low" || normalized === "medium" || normalized === "high") {
     return normalized as CreateResponseTextParams["textVerbosity"];
   }
-  return undefined;
+  return null;
 }
 
 function parsePromptCacheRetention(
@@ -455,6 +455,8 @@ export async function POST(request: Request) {
 
     const effectiveMode: PerazziMode =
       normalizeMode(hints.mode) ?? normalizeMode(body?.context?.mode) ?? "prospect";
+    const requestedTextVerbosity = normalizeTextVerbosity(body?.context?.textVerbosity);
+    const effectiveTextVerbosity = requestedTextVerbosity ?? ENV_TEXT_VERBOSITY;
 
     // Soft-meta origin handler: answer who built/designed the assistant, without exposing internals.
     if (detectAssistantOriginQuestion(latestQuestion)) {
@@ -666,6 +668,7 @@ export async function POST(request: Request) {
             topics: hints?.topics,
             metadata: {
               mode: effectiveMode ?? null,
+              textVerbosity: effectiveTextVerbosity,
               guardrailStatus: "blocked",
               guardrailReason: guardrailBlock.reason ?? null,
               ...archetypeMetrics,
@@ -744,6 +747,7 @@ export async function POST(request: Request) {
       effectiveMode,
       effectiveArchetype,
       archetypeClassification,
+      effectiveTextVerbosity,
       retrieval.maxScore,
       guardrail,
       hints,
@@ -859,6 +863,7 @@ async function generateAssistantAnswer(
   mode: PerazziMode | null,
   archetype: Archetype | null,
   archetypeClassification: ArchetypeClassification | null,
+  textVerbosity: CreateResponseTextParams["textVerbosity"],
   maxScore?: number,
   guardrail?: { status: "ok" | "blocked"; reason: string | null },
   hints?: RetrievalHints,
@@ -875,6 +880,7 @@ async function generateAssistantAnswer(
   const guardrailInfo = guardrail ?? { status: "ok", reason: null as string | null };
   const metadata: Record<string, unknown> = {
     mode: mode ?? context?.mode ?? null,
+    textVerbosity,
     guardrailStatus: guardrailInfo.status,
     guardrailReason: guardrailInfo.reason ?? null,
   };
@@ -919,9 +925,12 @@ async function generateAssistantAnswer(
       model: OPENAI_MODEL,
       maxOutputTokens: MAX_OUTPUT_TOKENS,
       instructions,
+      temperature: 0.8,
+      frequencyPenalty: FREQUENCY_PENALTY,
+      presencePenalty: PRESENCE_PENALTY,
       input: sanitizedMessages as CreateResponseTextParams["input"],
       reasoningEffort: REASONING_EFFORT,
-      textVerbosity: TEXT_VERBOSITY,
+      text: { verbosity: textVerbosity },
       promptCacheRetention: PROMPT_CACHE_RETENTION,
       previousResponseId: previousResponseId ?? undefined,
     });
