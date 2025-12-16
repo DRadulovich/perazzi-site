@@ -3,7 +3,9 @@ import Link from "next/link";
 
 import { CANONICAL_ARCHETYPE_ORDER } from "../../../lib/pgpt-insights/constants";
 import { getGuardrailByArchetype, getGuardrailStats, getRecentGuardrailBlocks } from "../../../lib/pgpt-insights/cached";
+import { getLogTextCalloutToneClass, getTextStorageBadges } from "../../../lib/pgpt-insights/logTextStatus";
 
+import { Badge } from "../Badge";
 import { Chevron } from "../Chevron";
 import { MiniBar } from "../MiniBar";
 import { formatCompactNumber, formatTimestampShort } from "../format";
@@ -148,47 +150,106 @@ export async function GuardrailsSection({
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-border/60">
-                            {recentGuardrailBlocks.map((log) => (
-                              <tr key={`guardrail-${log.id}`} className="border-l-4 border-red-500/50 bg-red-500/5 dark:border-red-500/60 dark:bg-red-500/15">
-                              <td className="px-3 py-2 whitespace-normal break-words leading-snug">
-                                <span title={String(log.created_at)} className="tabular-nums">
-                                  {formatTimestampShort(String(log.created_at))}
-                                </span>
-                              </td>
-                              <td className="px-3 py-2">{log.env}</td>
-                              <td className="px-3 py-2">
-                                {log.session_id ? (
-                                  <Link
-                                    href={`/admin/pgpt-insights/session/${encodeURIComponent(log.session_id)}`}
-                                    className="text-blue-600 underline"
-                                  >
-                                    {log.session_id}
-                                  </Link>
-                                ) : (
-                                  ""
-                                )}
-                              </td>
-                              <td className="px-3 py-2">{log.guardrail_reason ?? "(none)"}</td>
-                              <td className="px-3 py-2 align-top">
-                                <details className="group" open={detailsDefaultOpen}>
-                                  <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-                                    <div className="break-words text-xs leading-snug text-foreground">{truncate(log.prompt ?? "", truncSecondary)}</div>
-                                    <div className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground group-open:hidden">expand</div>
-                                  </summary>
-                                  <pre className="mt-2 max-h-[360px] overflow-auto whitespace-pre-wrap rounded-lg border border-border bg-background p-2 text-xs leading-snug text-foreground">{log.prompt ?? ""}</pre>
-                                </details>
-                              </td>
-                              <td className="px-3 py-2 align-top">
-                                <details className="group" open={detailsDefaultOpen}>
-                                  <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-                                    <div className="break-words text-xs leading-snug text-foreground">{truncate(log.response ?? "", truncSecondary)}</div>
-                                    <div className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground group-open:hidden">expand</div>
-                                  </summary>
-                                  <pre className="mt-2 max-h-[360px] overflow-auto whitespace-pre-wrap rounded-lg border border-border bg-background p-2 text-xs leading-snug text-foreground">{log.response ?? ""}</pre>
-                                </details>
-                              </td>
-                            </tr>
-                          ))}
+                            {recentGuardrailBlocks.map((log) => {
+                              const textStatus = getTextStorageBadges({
+                                promptText: log.prompt,
+                                responseText: log.response,
+                                metadata: log.metadata,
+                                logTextMode: log.log_text_mode,
+                                logTextMaxChars: log.log_text_max_chars,
+                                promptTextOmitted: log.prompt_text_omitted,
+                                responseTextOmitted: log.response_text_omitted,
+                                promptTextTruncated: log.prompt_text_truncated,
+                                responseTextTruncated: log.response_text_truncated,
+                              });
+
+                              const promptStatus = textStatus.prompt;
+                              const responseStatus = textStatus.response;
+
+                              return (
+                                <tr key={`guardrail-${log.id}`} className="border-l-4 border-red-500/50 bg-red-500/5 dark:border-red-500/60 dark:bg-red-500/15">
+                                  <td className="px-3 py-2 whitespace-normal break-words leading-snug">
+                                    <span title={String(log.created_at)} className="tabular-nums">
+                                      {formatTimestampShort(String(log.created_at))}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-2">{log.env}</td>
+                                  <td className="px-3 py-2">
+                                    {log.session_id ? (
+                                      <Link
+                                        href={`/admin/pgpt-insights/session/${encodeURIComponent(log.session_id)}`}
+                                        className="text-blue-600 underline"
+                                      >
+                                        {log.session_id}
+                                      </Link>
+                                    ) : (
+                                      ""
+                                    )}
+                                  </td>
+                                  <td className="px-3 py-2">{log.guardrail_reason ?? "(none)"}</td>
+                                  <td className="px-3 py-2 align-top">
+                                    <details className="group" open={detailsDefaultOpen}>
+                                      <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                          <div className="break-words text-xs leading-snug text-foreground">
+                                            {truncate(promptStatus.displayValue ?? "", truncSecondary)}
+                                          </div>
+                                          {promptStatus.badge ? (
+                                            <Badge
+                                              tone={promptStatus.badgeTone ?? "default"}
+                                              title={promptStatus.callout ?? undefined}
+                                            >
+                                              {promptStatus.badge}
+                                            </Badge>
+                                          ) : null}
+                                        </div>
+                                        <div className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground group-open:hidden">expand</div>
+                                      </summary>
+                                      {promptStatus.callout ? (
+                                        <div
+                                          className={`mb-2 rounded-md border px-2 py-1 text-[11px] leading-snug ${getLogTextCalloutToneClass(promptStatus)}`}
+                                        >
+                                          {promptStatus.callout}
+                                        </div>
+                                      ) : null}
+                                      <pre className="mt-2 max-h-[360px] overflow-auto whitespace-pre-wrap rounded-lg border border-border bg-background p-2 text-xs leading-snug text-foreground">
+                                        {promptStatus.displayValue ?? ""}
+                                      </pre>
+                                    </details>
+                                  </td>
+                                  <td className="px-3 py-2 align-top">
+                                    <details className="group" open={detailsDefaultOpen}>
+                                      <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                          <div className="break-words text-xs leading-snug text-foreground">
+                                            {truncate(responseStatus.displayValue ?? "", truncSecondary)}
+                                          </div>
+                                          {responseStatus.badge ? (
+                                            <Badge
+                                              tone={responseStatus.badgeTone ?? "default"}
+                                              title={responseStatus.callout ?? undefined}
+                                            >
+                                              {responseStatus.badge}
+                                            </Badge>
+                                          ) : null}
+                                        </div>
+                                        <div className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground group-open:hidden">expand</div>
+                                      </summary>
+                                      {responseStatus.callout ? (
+                                        <div
+                                          className={`mb-2 rounded-md border px-2 py-1 text-[11px] leading-snug ${getLogTextCalloutToneClass(responseStatus)}`}
+                                        >
+                                          {responseStatus.callout}
+                                        </div>
+                                      ) : null}
+                                      <pre className="mt-2 max-h-[360px] overflow-auto whitespace-pre-wrap rounded-lg border border-border bg-background p-2 text-xs leading-snug text-foreground">
+                                        {responseStatus.displayValue ?? ""}
+                                      </pre>
+                                    </details>
+                                  </td>
+                                </tr>
+                              );
+                            })}
                         </tbody>
                       </table>
                     </div>

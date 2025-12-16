@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { LOW_SCORE_THRESHOLD } from "../../lib/pgpt-insights/constants";
+import { getLogTextCalloutToneClass, getTextStorageBadges } from "../../lib/pgpt-insights/logTextStatus";
 import type { PerazziLogPreviewRow, PgptLogDetailResponse } from "../../lib/pgpt-insights/types";
 
 import { Badge } from "./Badge";
@@ -112,7 +113,7 @@ export function LogsTableWithDrawer({
     return logs.find((l) => l.id === selectedId) ?? null;
   }, [logs, selectedId]);
 
-  const fallbackMetadata = (selectedPreview as { metadata?: unknown } | null | undefined)?.metadata;
+  const fallbackMetadata = selectedPreview?.metadata;
 
   const qaReturnTo = useMemo(() => {
     if (!open) return "";
@@ -124,6 +125,21 @@ export function LogsTableWithDrawer({
       return "";
     }
   }, [open]);
+
+  const detailTextStatus = useMemo(() => {
+    if (!detail?.log) return null;
+    return getTextStorageBadges({
+      promptText: detail.log.prompt,
+      responseText: detail.log.response,
+      metadata: detail.log.metadata ?? fallbackMetadata,
+      logTextMode: detail.log.log_text_mode,
+      logTextMaxChars: detail.log.log_text_max_chars,
+      promptTextOmitted: detail.log.prompt_text_omitted,
+      responseTextOmitted: detail.log.response_text_omitted,
+      promptTextTruncated: detail.log.prompt_text_truncated,
+      responseTextTruncated: detail.log.response_text_truncated,
+    });
+  }, [detail, fallbackMetadata]);
 
   function closeDrawer() {
     setOpen(false);
@@ -293,11 +309,28 @@ export function LogsTableWithDrawer({
               const intentCount = log.intents?.length ?? 0;
               const topicCount = log.topics?.length ?? 0;
 
-              const p1 = oneLine(log.prompt_preview ?? "");
-              const a1 = oneLine(log.response_preview ?? "");
+              const textStatus = getTextStorageBadges({
+                promptText: log.prompt_preview,
+                responseText: log.response_preview,
+                metadata: log.metadata,
+                logTextMode: log.log_text_mode,
+                logTextMaxChars: log.log_text_max_chars,
+                promptTextOmitted: log.prompt_text_omitted,
+                responseTextOmitted: log.response_text_omitted,
+                promptTextTruncated: log.prompt_text_truncated,
+                responseTextTruncated: log.response_text_truncated,
+              });
 
-              const promptTruncated = (log.prompt_len ?? 0) > (log.prompt_preview?.length ?? 0);
-              const responseTruncated = (log.response_len ?? 0) > (log.response_preview?.length ?? 0);
+              const promptStatus = textStatus.prompt;
+              const responseStatus = textStatus.response;
+
+              const promptPreview = truncate(oneLine(promptStatus.displayValue), truncPrimary);
+              const responsePreview = truncate(oneLine(responseStatus.displayValue), truncPrimary);
+
+              const promptPreviewTruncated =
+                !promptStatus.isOmitted && (log.prompt_len ?? 0) > (log.prompt_preview?.length ?? 0);
+              const responsePreviewTruncated =
+                !responseStatus.isOmitted && (log.response_len ?? 0) > (log.response_preview?.length ?? 0);
 
               return (
                 <tr
@@ -343,16 +376,46 @@ export function LogsTableWithDrawer({
                       <div className="space-y-1">
                         <div className="text-xs text-muted-foreground">
                           <span className="font-medium text-foreground">P:</span>{" "}
-                          <span className="break-words">{truncate(p1, truncPrimary)}</span>
-                          {promptTruncated ? (
-                            <span className="ml-2 text-[10px] uppercase tracking-wide text-muted-foreground">truncated</span>
+                          <span
+                            className={cn("break-words", promptStatus.isOmitted ? "text-muted-foreground" : undefined)}
+                          >
+                            {promptStatus.isOmitted ? "[omitted]" : promptPreview}
+                          </span>
+                          {promptStatus.badge ? (
+                            <span className="ml-2 inline-flex">
+                              <Badge tone={promptStatus.badgeTone ?? "default"} title={promptStatus.callout}>
+                                {promptStatus.badge}
+                              </Badge>
+                            </span>
+                          ) : null}
+                          {promptPreviewTruncated ? (
+                            <span className="ml-2 inline-flex">
+                              <Badge tone="default" title="Preview shortened for table">
+                                preview
+                              </Badge>
+                            </span>
                           ) : null}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           <span className="font-medium text-foreground">A:</span>{" "}
-                          <span className="break-words">{truncate(a1, truncPrimary)}</span>
-                          {responseTruncated ? (
-                            <span className="ml-2 text-[10px] uppercase tracking-wide text-muted-foreground">truncated</span>
+                          <span
+                            className={cn("break-words", responseStatus.isOmitted ? "text-muted-foreground" : undefined)}
+                          >
+                            {responseStatus.isOmitted ? "[omitted]" : responsePreview}
+                          </span>
+                          {responseStatus.badge ? (
+                            <span className="ml-2 inline-flex">
+                              <Badge tone={responseStatus.badgeTone ?? "default"} title={responseStatus.callout}>
+                                {responseStatus.badge}
+                              </Badge>
+                            </span>
+                          ) : null}
+                          {responsePreviewTruncated ? (
+                            <span className="ml-2 inline-flex">
+                              <Badge tone="default" title="Preview shortened for table">
+                                preview
+                              </Badge>
+                            </span>
                           ) : null}
                         </div>
                       </div>
@@ -525,10 +588,25 @@ export function LogsTableWithDrawer({
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="text-xs font-semibold text-foreground">Prompt</div>
-                        <CopyButton value={detail.log.prompt ?? ""} label="Copy prompt" />
+                        <CopyButton
+                          value={detail.log.prompt ?? ""}
+                          label={detailTextStatus?.prompt.copyLabel ?? "Copy prompt"}
+                          disabled={detailTextStatus ? !detailTextStatus.prompt.copyAllowed : false}
+                          title={detailTextStatus?.prompt.callout}
+                        />
                       </div>
+                      {detailTextStatus?.prompt.callout ? (
+                        <div
+                          className={cn(
+                            "rounded-lg border px-3 py-2 text-[11px] leading-snug",
+                            getLogTextCalloutToneClass(detailTextStatus.prompt),
+                          )}
+                        >
+                          {detailTextStatus.prompt.callout}
+                        </div>
+                      ) : null}
                       <pre className="max-h-[70vh] overflow-auto whitespace-pre-wrap rounded-xl border border-border bg-background p-3 text-xs leading-snug text-foreground">
-                        {detail.log.prompt ?? ""}
+                        {detailTextStatus?.prompt.displayValue ?? detail.log.prompt ?? ""}
                       </pre>
                     </div>
                   ) : null}
@@ -537,16 +615,34 @@ export function LogsTableWithDrawer({
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="text-xs font-semibold text-foreground">Response</div>
-                        <CopyButton value={detail.log.response ?? ""} label="Copy response" />
+                        <CopyButton
+                          value={detail.log.response ?? ""}
+                          label={detailTextStatus?.response.copyLabel ?? "Copy response"}
+                          disabled={detailTextStatus ? !detailTextStatus.response.copyAllowed : false}
+                          title={detailTextStatus?.response.callout}
+                        />
                       </div>
+
+                      {detailTextStatus?.response.callout ? (
+                        <div
+                          className={cn(
+                            "rounded-lg border px-3 py-2 text-[11px] leading-snug",
+                            getLogTextCalloutToneClass(detailTextStatus.response),
+                          )}
+                        >
+                          {detailTextStatus.response.callout}
+                        </div>
+                      ) : null}
 
                       {responseMode === "raw" ? (
                         <pre className="max-h-[70vh] overflow-auto whitespace-pre-wrap rounded-xl border border-border bg-background p-3 text-xs leading-snug text-foreground">
-                          {detail.log.response ?? ""}
+                          {detailTextStatus?.response.displayValue ?? detail.log.response ?? ""}
                         </pre>
                       ) : (
                         <div className="max-h-[70vh] overflow-auto rounded-xl border border-border bg-background p-3">
-                          <MarkdownViewClient markdown={detail.log.response ?? ""} />
+                          <MarkdownViewClient
+                            markdown={detailTextStatus?.response.displayValue ?? detail.log.response ?? ""}
+                          />
                         </div>
                       )}
                     </div>

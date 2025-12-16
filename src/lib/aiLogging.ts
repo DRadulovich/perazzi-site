@@ -156,6 +156,14 @@ export async function logAiInteraction(input: AiInteractionLogInput): Promise<vo
   const maxChars = resolveMaxChars();
   const archetypeForRow = archetype ?? archetypeClassification?.archetype ?? null;
 
+  const rawPrompt = (prompt ?? "").trim();
+  const rawResponse = (response ?? "").trim();
+
+  const promptTextOmitted = mode === "omitted" && rawPrompt.length > 0;
+  const responseTextOmitted = mode === "omitted" && rawResponse.length > 0;
+  const promptTextTruncated = mode === "truncate" && rawPrompt.length > maxChars;
+  const responseTextTruncated = mode === "truncate" && rawResponse.length > maxChars;
+
   const metadataBase = sanitizeMetadata((metadata ?? {}) as Record<string, unknown>);
   const metadataWithIds = {
     ...metadataBase,
@@ -164,6 +172,10 @@ export async function logAiInteraction(input: AiInteractionLogInput): Promise<vo
     ...(usage ? { responseUsage: usage } : {}),
     logTextMode: mode,
     logTextMaxChars: maxChars,
+    promptTextOmitted,
+    responseTextOmitted,
+    promptTextTruncated,
+    responseTextTruncated,
   };
   const archetypeScores = archetypeScoresOrDefault(archetypeClassification, archetypeForRow);
   const metadataWithArchetype = withArchetypeDistribution(
@@ -196,8 +208,8 @@ export async function logAiInteraction(input: AiInteractionLogInput): Promise<vo
     )
   `;
 
-  const promptForInsert = applyTextMode(prompt, mode, maxChars);
-  const responseForInsert = applyTextMode(response, mode, maxChars);
+  const promptForInsert = applyTextMode(rawPrompt, mode, maxChars);
+  const responseForInsert = applyTextMode(rawResponse, mode, maxChars);
 
   const values = [
     env,

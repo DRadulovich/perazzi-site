@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 
 import { LOW_SCORE_THRESHOLD } from "../../../lib/pgpt-insights/constants";
+import { getLogTextCalloutToneClass, getTextStorageBadges } from "../../../lib/pgpt-insights/logTextStatus";
 import type { PerazziLogRow, PgptLogDetailResponse } from "../../../lib/pgpt-insights/types";
 
 import { Badge } from "../Badge";
@@ -107,6 +108,20 @@ export function SessionConversationView({
               const isLowScore =
                 log.endpoint === "assistant" && scoreNum !== null && Number.isFinite(scoreNum) && scoreNum < LOW_SCORE_THRESHOLD;
 
+              const textStatus = getTextStorageBadges({
+                promptText: log.prompt,
+                responseText: log.response,
+                metadata: log.metadata,
+                logTextMode: log.log_text_mode,
+                logTextMaxChars: log.log_text_max_chars,
+                promptTextOmitted: log.prompt_text_omitted,
+                responseTextOmitted: log.response_text_omitted,
+                promptTextTruncated: log.prompt_text_truncated,
+                responseTextTruncated: log.response_text_truncated,
+              });
+              const promptStatus = textStatus.prompt;
+              const responseStatus = textStatus.response;
+
               const metaBadges = [];
               if (log.archetype) metaBadges.push(<Badge key="arch">{log.archetype}</Badge>);
               if (log.model) metaBadges.push(<Badge key="model" tone="blue">{log.model}</Badge>);
@@ -124,6 +139,28 @@ export function SessionConversationView({
                     maxScore {log.max_score}
                   </Badge>,
                 );
+              if (promptStatus.badge) {
+                metaBadges.push(
+                  <Badge
+                    key="prompt-text"
+                    tone={promptStatus.badgeTone ?? "default"}
+                    title={promptStatus.callout ?? undefined}
+                  >
+                    P {promptStatus.badge}
+                  </Badge>,
+                );
+              }
+              if (responseStatus.badge) {
+                metaBadges.push(
+                  <Badge
+                    key="response-text"
+                    tone={responseStatus.badgeTone ?? "default"}
+                    title={responseStatus.callout ?? undefined}
+                  >
+                    A {responseStatus.badge}
+                  </Badge>,
+                );
+              }
 
               return (
                 <div key={log.id} className="space-y-3 rounded-xl border border-border bg-background/80 p-4">
@@ -153,22 +190,42 @@ export function SessionConversationView({
 
                   <div className="flex flex-wrap items-center gap-2">{metaBadges}</div>
 
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
-                      <div className="mt-1 h-8 w-8 shrink-0 rounded-full border border-border bg-muted/50 text-[11px] font-semibold text-muted-foreground flex items-center justify-center">
-                        User
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="mt-1 h-8 w-8 shrink-0 rounded-full border border-border bg-muted/50 text-[11px] font-semibold text-muted-foreground flex items-center justify-center">
+                          User
+                        </div>
+                        <div className="flex-1 rounded-2xl border border-border bg-background p-3 text-sm leading-relaxed text-foreground shadow-sm">
+                          {promptStatus.callout ? (
+                            <div
+                              className={cn(
+                                "mb-2 rounded-md border px-2 py-1 text-[11px] leading-snug",
+                                getLogTextCalloutToneClass(promptStatus),
+                              )}
+                            >
+                              {promptStatus.callout}
+                            </div>
+                          ) : null}
+                          <p className="whitespace-pre-wrap">{promptStatus.displayValue}</p>
+                        </div>
                       </div>
-                      <div className="flex-1 rounded-2xl border border-border bg-background p-3 text-sm leading-relaxed text-foreground shadow-sm">
-                        <p className="whitespace-pre-wrap">{log.prompt}</p>
-                      </div>
-                    </div>
 
                     <div className="flex items-start gap-3">
                       <div className="mt-1 h-8 w-8 shrink-0 rounded-full border border-border bg-blue-50 text-[11px] font-semibold text-blue-700 dark:bg-blue-500/20 dark:text-blue-100 flex items-center justify-center">
                         AI
                       </div>
                       <div className="flex-1 rounded-2xl border border-border bg-background p-3 text-sm leading-relaxed text-foreground shadow-sm">
-                        <MarkdownViewClient markdown={log.response ?? ""} />
+                        {responseStatus.callout ? (
+                          <div
+                            className={cn(
+                              "mb-2 rounded-md border px-2 py-1 text-[11px] leading-snug",
+                              getLogTextCalloutToneClass(responseStatus),
+                            )}
+                          >
+                            {responseStatus.callout}
+                          </div>
+                        ) : null}
+                        <MarkdownViewClient markdown={responseStatus.displayValue ?? ""} />
                       </div>
                     </div>
                   </div>
