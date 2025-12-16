@@ -56,6 +56,8 @@ docs/ARCHETYPE-ANALYSIS/GIT-IGNORE
 docs/SANITY-MIGRATION
 Page_Spec_Layouts
 Perazzi_Model_Information
+SITE_DOCUMENTS/PRICE_LISTS
+
 
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
