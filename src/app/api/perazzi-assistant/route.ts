@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import fs from "node:fs";
 import path from "node:path";
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import type {
   ChatMessage,
   PerazziAssistantRequest,
@@ -25,7 +24,7 @@ import {
 } from "@/lib/perazzi-archetypes";
 import { detectRetrievalHints, buildResponseTemplates } from "@/lib/perazzi-intents";
 import type { RetrievalHints } from "@/lib/perazzi-intents";
-import { runChatCompletion } from "@/lib/aiClient";
+import { createResponseText, type CreateResponseTextParams } from "@/lib/aiClient";
 import { logAiInteraction, type AiInteractionContext } from "@/lib/aiLogging";
 
 const LOW_CONFIDENCE_THRESHOLD = Number(process.env.PERAZZI_LOW_CONF_THRESHOLD ?? 0.1);
@@ -102,6 +101,13 @@ const allowedOriginHosts = (() => {
   return hosts;
 })();
 
+const DEFAULT_MODEL = "gpt-5.2";
+const OPENAI_MODEL = resolveModel();
+const MAX_OUTPUT_TOKENS = resolveMaxOutputTokens();
+const REASONING_EFFORT = parseReasoningEffort(process.env.PERAZZI_REASONING_EFFORT);
+const TEXT_VERBOSITY = parseTextVerbosity(process.env.PERAZZI_TEXT_VERBOSITY);
+const PROMPT_CACHE_RETENTION = parsePromptCacheRetention(process.env.PERAZZI_PROMPT_CACHE_RETENTION);
+
 function isOriginAllowed(req: Request): { ok: boolean; originHost?: string } {
   if (IS_DEV) {
     // In development (including dev tunnels), allow all origins so preview links work.
@@ -121,8 +127,6 @@ function isOriginAllowed(req: Request): { ok: boolean; originHost?: string } {
   }
 }
 
-const OPENAI_MODEL = process.env.PERAZZI_COMPLETIONS_MODEL ?? "gpt-4.1";
-const MAX_COMPLETION_TOKENS = Number(process.env.PERAZZI_MAX_COMPLETION_TOKENS ?? 3000);
 const PHASE_ONE_SPEC = fs.readFileSync(
   path.join(
     process.cwd(),
@@ -242,6 +246,64 @@ function normalizeMode(input: unknown): PerazziMode | null {
   const cleaned = input.trim().toLowerCase();
   const match = ALLOWED_MODES.find((mode) => mode === cleaned);
   return match ?? null;
+}
+
+function resolveModel(): string {
+  const candidate =
+    process.env.PERAZZI_RESPONSES_MODEL ??
+    process.env.PERAZZI_COMPLETIONS_MODEL ??
+    "";
+  const trimmed = candidate.trim();
+  return trimmed || DEFAULT_MODEL;
+}
+
+function resolveMaxOutputTokens(): number {
+  const raw =
+    process.env.PERAZZI_MAX_OUTPUT_TOKENS ??
+    process.env.PERAZZI_MAX_COMPLETION_TOKENS ??
+    "";
+  const parsed = Number(raw);
+  if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  return 3000;
+}
+
+function parseReasoningEffort(
+  value: string | null | undefined,
+): CreateResponseTextParams["reasoningEffort"] {
+  const normalized = value?.trim().toLowerCase();
+  const allowed = new Set(["none", "minimal", "low", "medium", "high", "xhigh"]);
+  if (normalized && allowed.has(normalized)) {
+    return normalized as CreateResponseTextParams["reasoningEffort"];
+  }
+  return undefined;
+}
+
+function parseTextVerbosity(
+  value: string | null | undefined,
+): CreateResponseTextParams["textVerbosity"] {
+  const normalized = value?.trim().toLowerCase();
+  const allowed = new Set(["low", "medium", "high"]);
+  if (normalized && allowed.has(normalized)) {
+    return normalized as CreateResponseTextParams["textVerbosity"];
+  }
+  return undefined;
+}
+
+function parsePromptCacheRetention(
+  value: string | null | undefined,
+): CreateResponseTextParams["promptCacheRetention"] {
+  const normalized = value?.trim().toLowerCase().replace("_", "-");
+  const allowed = new Set(["in-memory", "24h"]);
+  if (normalized && allowed.has(normalized)) {
+    return normalized as CreateResponseTextParams["promptCacheRetention"];
+  }
+  return undefined;
+}
+
+function isUsingGateway(): boolean {
+  const forceDirect = process.env.AI_FORCE_DIRECT === "true";
+  if (forceDirect) return false;
+  return Boolean(process.env.AI_GATEWAY_URL && process.env.AI_GATEWAY_TOKEN);
 }
 
 /**
@@ -607,7 +669,7 @@ export async function POST(request: Request) {
             },
           },
           model: OPENAI_MODEL,
-          usedGateway: false,
+          usedGateway: isUsingGateway(),
           prompt: promptForLog,
           response: guardrailBlock.message,
         });
@@ -801,11 +863,7 @@ async function generateAssistantAnswer(
   const systemPrompt = buildSystemPrompt(context, chunks, templates, mode, archetype);
   const toneNudge =
     "Stay in the Perazzi concierge voice: quiet, reverent, concise, no slang, and avoid pricing or legal guidance. Keep responses focused on Perazzi heritage, platforms, service, and fittings.";
-  const finalMessages: ChatCompletionMessageParam[] = [
-    { role: "system", content: systemPrompt },
-    { role: "system", content: toneNudge },
-    ...sanitizedMessages,
-  ];
+  const instructions = [systemPrompt, toneNudge].join("\n\n");
 
   const env = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local";
   const guardrailInfo = guardrail ?? { status: "ok", reason: null as string | null };
@@ -841,23 +899,50 @@ async function generateAssistantAnswer(
     metadata,
   };
 
-  let completion;
+  let responseText = LOW_CONFIDENCE_MESSAGE;
+  const start = Date.now();
+  const promptForLog = sanitizedMessages
+    .filter((msg) => msg.role === "user")
+    .map((msg) => msg.content ?? "")
+    .filter(Boolean)
+    .slice(-3)
+    .join("\n\n");
   try {
-    completion = await runChatCompletion({
+    const response = await createResponseText({
       model: OPENAI_MODEL,
       temperature: 0.4,
-      max_completion_tokens: MAX_COMPLETION_TOKENS,
-      messages: finalMessages,
-      context: interactionContext,
+      maxOutputTokens: MAX_OUTPUT_TOKENS,
+      instructions,
+      input: sanitizedMessages as CreateResponseTextParams["input"],
+      reasoningEffort: REASONING_EFFORT,
+      textVerbosity: TEXT_VERBOSITY,
+      promptCacheRetention: PROMPT_CACHE_RETENTION,
     });
+    const latencyMs = Date.now() - start;
+    metadata.latencyMs = latencyMs;
+    responseText = response.text ?? LOW_CONFIDENCE_MESSAGE;
+
+    try {
+      await logAiInteraction({
+        context: interactionContext,
+        model: OPENAI_MODEL,
+        usedGateway: isUsingGateway(),
+        prompt: promptForLog,
+        response: responseText,
+        promptTokens: response.usage?.input_tokens ?? undefined,
+        completionTokens: response.usage?.output_tokens ?? undefined,
+      });
+    } catch (logError) {
+      console.error("logAiInteraction failed", logError);
+    }
   } catch (error) {
     if (isConnectionError(error)) {
-      throw new OpenAIConnectionError("Unable to reach OpenAI completions endpoint", { cause: error });
+      throw new OpenAIConnectionError("Unable to reach OpenAI responses endpoint", { cause: error });
     }
     throw error;
   }
 
-  return completion.choices[0]?.message?.content ?? LOW_CONFIDENCE_MESSAGE;
+  return responseText;
 }
 
 export function buildSystemPrompt(
