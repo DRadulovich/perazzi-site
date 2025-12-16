@@ -119,10 +119,11 @@ function parseReasoningEffort(
   value: string | null | undefined,
 ): CreateResponseTextParams["reasoningEffort"] {
   const normalized = value?.trim().toLowerCase();
-  const allowed = new Set(["none", "minimal", "low", "medium", "high", "xhigh"]);
+  const allowed = new Set(["none", "low", "medium", "high", "xhigh"]);
   if (normalized && allowed.has(normalized)) {
     return normalized as CreateResponseTextParams["reasoningEffort"];
   }
+  // "minimal" is not a valid OpenAI effort value; omit reasoning config.
   return undefined;
 }
 
