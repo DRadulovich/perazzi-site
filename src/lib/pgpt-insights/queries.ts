@@ -879,6 +879,243 @@ export async function fetchAssistantRequestCountWindow(
   return Number(rows[0]?.hits ?? 0);
 }
 
+export async function fetchArchetypeSnapSummary(
+  envFilter?: string,
+  daysFilter?: number,
+): Promise<{ total: number; snapped_count: number; mixed_count: number; unknown_count: number }> {
+  const conditions: string[] = ["endpoint = 'assistant'"];
+  const params: Array<string | number> = [];
+  let idx = 1;
+
+  if (envFilter) {
+    conditions.push(`env = $${idx++}`);
+    params.push(envFilter);
+  }
+  if (daysFilter) {
+    conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
+    params.push(daysFilter);
+  }
+
+  const query = `
+    select
+      count(*) as total,
+      count(*) filter (where metadata->>'archetypeSnapped' = 'true') as snapped_count,
+      count(*) filter (where metadata->>'archetypeSnapped' = 'false') as mixed_count,
+      count(*) filter (where metadata->>'archetypeSnapped' is null) as unknown_count
+    from perazzi_conversation_logs
+    where ${conditions.join(" and ")};
+  `;
+
+  const { rows } = await pool.query(query, params);
+  const r = rows[0] ?? {};
+  return {
+    total: Number(r.total ?? 0),
+    snapped_count: Number(r.snapped_count ?? 0),
+    mixed_count: Number(r.mixed_count ?? 0),
+    unknown_count: Number(r.unknown_count ?? 0),
+  };
+}
+
+export async function fetchRerankEnabledSummary(
+  envFilter?: string,
+  daysFilter?: number,
+): Promise<{
+  total: number;
+  rerank_on_count: number;
+  rerank_off_count: number;
+  unknown_count: number;
+  avg_candidate_limit: number | null;
+}> {
+  const conditions: string[] = ["endpoint = 'assistant'"];
+  const params: Array<string | number> = [];
+  let idx = 1;
+
+  if (envFilter) {
+    conditions.push(`env = $${idx++}`);
+    params.push(envFilter);
+  }
+  if (daysFilter) {
+    conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
+    params.push(daysFilter);
+  }
+
+  const query = `
+    select
+      count(*) as total,
+      count(*) filter (where metadata->>'rerankEnabled' = 'true') as rerank_on_count,
+      count(*) filter (where metadata->>'rerankEnabled' = 'false') as rerank_off_count,
+      count(*) filter (where metadata->>'rerankEnabled' is null) as unknown_count,
+      avg((metadata->>'candidateLimit')::float) as avg_candidate_limit
+    from perazzi_conversation_logs
+    where ${conditions.join(" and ")};
+  `;
+
+  const { rows } = await pool.query(query, params);
+  const r = rows[0] ?? {};
+  const avg = r.avg_candidate_limit === null || r.avg_candidate_limit === undefined ? null : Number(r.avg_candidate_limit);
+  return {
+    total: Number(r.total ?? 0),
+    rerank_on_count: Number(r.rerank_on_count ?? 0),
+    rerank_off_count: Number(r.rerank_off_count ?? 0),
+    unknown_count: Number(r.unknown_count ?? 0),
+    avg_candidate_limit: Number.isFinite(avg as number) ? (avg as number) : null,
+  };
+}
+
+export async function fetchArchetypeMarginHistogram(
+  envFilter?: string,
+  daysFilter?: number,
+): Promise<Array<{ bucket_order: number; bucket_label: string; hits: number }>> {
+  const conditions: string[] = ["endpoint = 'assistant'"];
+  const params: Array<string | number> = [];
+  let idx = 1;
+
+  if (envFilter) {
+    conditions.push(`env = $${idx++}`);
+    params.push(envFilter);
+  }
+  if (daysFilter) {
+    conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
+    params.push(daysFilter);
+  }
+
+  const query = `
+    with base as (
+      select
+        coalesce(
+          (metadata->>'archetypeConfidenceMargin')::float,
+          (metadata->>'archetypeConfidence')::float
+        ) as v
+      from perazzi_conversation_logs
+      where ${conditions.join(" and ")}
+    ),
+    bucketed as (
+      select
+        case
+          when v is null then 0
+          when v < 0.02 then 1
+          when v < 0.05 then 2
+          when v < 0.08 then 3
+          when v < 0.12 then 4
+          when v < 0.20 then 5
+          else 6
+        end as bucket_order,
+        case
+          when v is null then 'missing'
+          when v < 0.02 then '<2%'
+          when v < 0.05 then '2–5%'
+          when v < 0.08 then '5–8%'
+          when v < 0.12 then '8–12%'
+          when v < 0.20 then '12–20%'
+          else '≥20%'
+        end as bucket_label
+      from base
+    )
+    select bucket_order, bucket_label, count(*) as hits
+    from bucketed
+    group by bucket_order, bucket_label
+    order by bucket_order asc;
+  `;
+
+  const { rows } = await pool.query(query, params);
+  return rows.map((r: any) => ({
+    bucket_order: Number(r.bucket_order ?? 0),
+    bucket_label: String(r.bucket_label ?? ""),
+    hits: Number(r.hits ?? 0),
+  }));
+}
+
+export async function fetchDailyArchetypeSnapRate(args: {
+  envFilter?: string;
+  days: number;
+}): Promise<Array<{ day: string; snapped_count: number; mixed_count: number; total_classified: number }>> {
+  const { envFilter, days } = args;
+
+  const conditions: string[] = ["endpoint = 'assistant'"];
+  const params: Array<string | number> = [];
+  let idx = 1;
+
+  if (envFilter) {
+    conditions.push(`env = $${idx++}`);
+    params.push(envFilter);
+  }
+
+  conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
+  params.push(days);
+
+  const query = `
+    select
+      date_trunc('day', created_at)::date as day,
+      count(*) filter (where metadata->>'archetypeSnapped' = 'true') as snapped_count,
+      count(*) filter (where metadata->>'archetypeSnapped' = 'false') as mixed_count,
+      count(*) filter (where metadata->>'archetypeSnapped' in ('true','false')) as total_classified
+    from perazzi_conversation_logs
+    where ${conditions.join(" and ")}
+    group by day
+    order by day asc;
+  `;
+
+  const { rows } = await pool.query(query, params);
+  return rows.map((r: any) => ({
+    day: String(r.day),
+    snapped_count: Number(r.snapped_count ?? 0),
+    mixed_count: Number(r.mixed_count ?? 0),
+    total_classified: Number(r.total_classified ?? 0),
+  }));
+}
+
+export async function fetchDailyRerankEnabledRate(args: {
+  envFilter?: string;
+  days: number;
+}): Promise<
+  Array<{
+    day: string;
+    rerank_on_count: number;
+    rerank_off_count: number;
+    total_flagged: number;
+    avg_candidate_limit: number | null;
+  }>
+> {
+  const { envFilter, days } = args;
+
+  const conditions: string[] = ["endpoint = 'assistant'"];
+  const params: Array<string | number> = [];
+  let idx = 1;
+
+  if (envFilter) {
+    conditions.push(`env = $${idx++}`);
+    params.push(envFilter);
+  }
+
+  conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
+  params.push(days);
+
+  const query = `
+    select
+      date_trunc('day', created_at)::date as day,
+      count(*) filter (where metadata->>'rerankEnabled' = 'true') as rerank_on_count,
+      count(*) filter (where metadata->>'rerankEnabled' = 'false') as rerank_off_count,
+      count(*) filter (where metadata->>'rerankEnabled' in ('true','false')) as total_flagged,
+      avg((metadata->>'candidateLimit')::float) as avg_candidate_limit
+    from perazzi_conversation_logs
+    where ${conditions.join(" and ")}
+    group by day
+    order by day asc;
+  `;
+
+  const { rows } = await pool.query(query, params);
+  return rows.map((r: any) => {
+    const avg = r.avg_candidate_limit === null || r.avg_candidate_limit === undefined ? null : Number(r.avg_candidate_limit);
+    return {
+      day: String(r.day),
+      rerank_on_count: Number(r.rerank_on_count ?? 0),
+      rerank_off_count: Number(r.rerank_off_count ?? 0),
+      total_flagged: Number(r.total_flagged ?? 0),
+      avg_candidate_limit: Number.isFinite(avg as number) ? (avg as number) : null,
+    };
+  });
+}
+
 // -----------------------------------------------------------------------------
 // Session Explorer
 // -----------------------------------------------------------------------------

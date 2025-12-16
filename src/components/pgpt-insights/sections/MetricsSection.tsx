@@ -1,5 +1,11 @@
 /* eslint-disable react-hooks/error-boundaries */
-import { getAvgMetrics, getDailyTokenUsage } from "../../../lib/pgpt-insights/cached";
+import {
+  getArchetypeMarginHistogram,
+  getArchetypeSnapSummary,
+  getAvgMetrics,
+  getDailyTokenUsage,
+  getRerankEnabledSummary,
+} from "../../../lib/pgpt-insights/cached";
 
 import { Chevron } from "../Chevron";
 import { formatCompactNumber, formatDurationMs } from "../format";
@@ -16,9 +22,12 @@ export async function MetricsSection({
   tableDensityClass: string;
 }) {
   try {
-    const [dailyTokenUsage, avgMetrics] = await Promise.all([
+    const [dailyTokenUsage, avgMetrics, snapSummary, rerankSummary, marginBuckets] = await Promise.all([
       getDailyTokenUsage(envFilter, daysFilter),
       getAvgMetrics(envFilter, daysFilter),
+      getArchetypeSnapSummary(envFilter, daysFilter),
+      getRerankEnabledSummary(envFilter, daysFilter),
+      getArchetypeMarginHistogram(envFilter, daysFilter),
     ]);
 
     const totalPromptTokens = dailyTokenUsage.reduce((sum, row) => sum + row.total_prompt_tokens, 0);
@@ -36,6 +45,14 @@ export async function MetricsSection({
     );
     const avgLatencyMs = latencyRollup.denominator > 0 ? latencyRollup.numerator / latencyRollup.denominator : null;
 
+    const snapDenom = (snapSummary?.snapped_count ?? 0) + (snapSummary?.mixed_count ?? 0);
+    const snapPct = snapDenom > 0 ? Math.round(((snapSummary?.snapped_count ?? 0) / snapDenom) * 100) : null;
+
+    const rerankDenom = (rerankSummary?.rerank_on_count ?? 0) + (rerankSummary?.rerank_off_count ?? 0);
+    const rerankPct = rerankDenom > 0 ? Math.round(((rerankSummary?.rerank_on_count ?? 0) / rerankDenom) * 100) : null;
+
+    const maxBucketHits = marginBuckets.reduce((m, b) => Math.max(m, b.hits), 0) || 0;
+
     return (
       <section id="metrics" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6">
         <details open className="group">
@@ -43,8 +60,8 @@ export async function MetricsSection({
             <div className="flex items-start justify-between gap-4">
               <div className="space-y-1">
                 <h2 className="text-sm font-semibold tracking-wide text-foreground">Metrics (Tokens &amp; Latency)</h2>
-                <p className="text-xs text-muted-foreground">Cost and responsiveness signals.</p>
-              </div>
+            <p className="text-xs text-muted-foreground">Cost and responsiveness signals.</p>
+          </div>
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground tabular-nums">
                   latency {formatDurationMs(avgLatencyMs)}
@@ -151,6 +168,102 @@ export async function MetricsSection({
                 </div>
               </div>
             )}
+
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold">Tuning (Archetype + Retrieval)</h3>
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                <div className="rounded-xl border border-border bg-background p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <div className="font-semibold text-foreground">Archetype snapped vs mixed</div>
+                    <div className="text-muted-foreground">
+                      {snapPct !== null ? `${snapPct}% snapped` : "—"}
+                    </div>
+                  </div>
+                  <div className="flex h-3 overflow-hidden rounded-full border border-border bg-muted/30">
+                    <div
+                      className="bg-blue-500/70"
+                      style={{ width: `${snapDenom > 0 ? ((snapSummary?.snapped_count ?? 0) / snapDenom) * 100 : 0}%` }}
+                      aria-label="snapped share"
+                    />
+                    <div
+                      className="bg-amber-500/60"
+                      style={{ width: `${snapDenom > 0 ? ((snapSummary?.mixed_count ?? 0) / snapDenom) * 100 : 0}%` }}
+                      aria-label="mixed share"
+                    />
+                  </div>
+                  <div className="text-[11px] text-muted-foreground flex flex-wrap gap-2">
+                    <span>snapped {snapSummary?.snapped_count ?? 0}</span>
+                    <span>mixed {snapSummary?.mixed_count ?? 0}</span>
+                    <span>unknown {snapSummary?.unknown_count ?? 0}</span>
+                    <span>total {snapSummary?.total ?? 0}</span>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border bg-background p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <div className="font-semibold text-foreground">Rerank enabled</div>
+                    <div className="text-muted-foreground">{rerankPct !== null ? `${rerankPct}% on` : "—"}</div>
+                  </div>
+                  <div className="flex h-3 overflow-hidden rounded-full border border-border bg-muted/30">
+                    <div
+                      className="bg-emerald-500/70"
+                      style={{
+                        width: `${rerankDenom > 0 ? ((rerankSummary?.rerank_on_count ?? 0) / rerankDenom) * 100 : 0}%`,
+                      }}
+                      aria-label="rerank on share"
+                    />
+                    <div
+                      className="bg-slate-500/60"
+                      style={{
+                        width: `${rerankDenom > 0 ? ((rerankSummary?.rerank_off_count ?? 0) / rerankDenom) * 100 : 0}%`,
+                      }}
+                      aria-label="rerank off share"
+                    />
+                  </div>
+                  <div className="text-[11px] text-muted-foreground flex flex-wrap gap-2">
+                    <span>on {rerankSummary?.rerank_on_count ?? 0}</span>
+                    <span>off {rerankSummary?.rerank_off_count ?? 0}</span>
+                    <span>unknown {rerankSummary?.unknown_count ?? 0}</span>
+                    <span>total {rerankSummary?.total ?? 0}</span>
+                    {rerankSummary?.avg_candidate_limit !== null ? (
+                      <span>avg candidateLimit {Math.round(rerankSummary.avg_candidate_limit)}</span>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-border bg-background p-3 space-y-2">
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <div className="font-semibold text-foreground">Archetype margin histogram</div>
+                  <div className="text-muted-foreground text-[11px]">
+                    Uses margin when present, otherwise legacy confidence.
+                  </div>
+                </div>
+
+                {marginBuckets.length === 0 ? (
+                  <div className="text-xs text-muted-foreground">No margin data for the current filters.</div>
+                ) : (
+                  <div className="space-y-1">
+                    {marginBuckets.map((b) => (
+                      <div key={b.bucket_order} className="flex items-center gap-3 text-xs">
+                        <div className="w-20 text-muted-foreground">{b.bucket_label}</div>
+                        <div className="flex-1">
+                          <div className="h-3 rounded-full border border-border bg-muted/20">
+                            <div
+                              className="h-3 rounded-full bg-foreground/60"
+                              style={{
+                                width: `${maxBucketHits > 0 ? (b.hits / maxBucketHits) * 100 : 0}%`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <div className="w-12 text-right tabular-nums text-muted-foreground">{b.hits}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </details>
       </section>

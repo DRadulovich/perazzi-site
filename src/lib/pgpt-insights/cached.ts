@@ -18,6 +18,11 @@ import {
   fetchDailyTrends,
   fetchDailyLowScoreRate,
   fetchAssistantRequestCountWindow,
+  fetchArchetypeSnapSummary,
+  fetchRerankEnabledSummary,
+  fetchArchetypeMarginHistogram,
+  fetchDailyArchetypeSnapRate,
+  fetchDailyRerankEnabledRate,
 } from "./queries";
 
 export const getRagSummary = cache(async (envFilter: string | undefined, daysFilter: number | undefined) =>
@@ -92,4 +97,24 @@ export const getDailyLowScoreRate = cache(async (envFilter: string | undefined, 
 export const getAssistantRequestCountWindow = cache(
   async (envFilter: string | undefined, startDaysAgo: number, endDaysAgo: number) =>
     fetchAssistantRequestCountWindow(envFilter, startDaysAgo, endDaysAgo),
+);
+
+export const getArchetypeSnapSummary = cache(async (envFilter: string | undefined, daysFilter: number | undefined) =>
+  fetchArchetypeSnapSummary(envFilter, daysFilter),
+);
+
+export const getRerankEnabledSummary = cache(async (envFilter: string | undefined, daysFilter: number | undefined) =>
+  fetchRerankEnabledSummary(envFilter, daysFilter),
+);
+
+export const getArchetypeMarginHistogram = cache(async (envFilter: string | undefined, daysFilter: number | undefined) =>
+  fetchArchetypeMarginHistogram(envFilter, daysFilter),
+);
+
+export const getDailyArchetypeSnapRate = cache(async (envFilter: string | undefined, days: number) =>
+  fetchDailyArchetypeSnapRate({ envFilter, days }),
+);
+
+export const getDailyRerankEnabledRate = cache(async (envFilter: string | undefined, days: number) =>
+  fetchDailyRerankEnabledRate({ envFilter, days }),
 );
