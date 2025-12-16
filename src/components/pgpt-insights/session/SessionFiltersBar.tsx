@@ -21,6 +21,8 @@ export function SessionFiltersBar() {
   const marginLt = get("margin_lt") || "any";
   const scoreArchetype = get("score_archetype") || "any";
   const min = get("min") || "0.40";
+  const rerank = get("rerank") || "any";
+  const snapped = get("snapped") || "any";
   const qUrl = get("q");
 
   function replaceParams(next: URLSearchParams) {
@@ -33,7 +35,15 @@ export function SessionFiltersBar() {
     const v = String(value ?? "").trim();
 
     const isAnyKey =
-      key === "qa" || key === "gr_status" || key === "low_conf" || key === "score" || key === "winner_changed" || key === "margin_lt" || key === "score_archetype";
+      key === "qa" ||
+      key === "gr_status" ||
+      key === "low_conf" ||
+      key === "score" ||
+      key === "winner_changed" ||
+      key === "margin_lt" ||
+      key === "score_archetype" ||
+      key === "rerank" ||
+      key === "snapped";
 
     if (!v) next.delete(key);
     else next.set(key, v);
@@ -166,6 +176,38 @@ export function SessionFiltersBar() {
             <option value="any">any</option>
             <option value="true">true</option>
             <option value="false">false</option>
+          </select>
+        </div>
+
+        <div className="text-sm">
+          <label htmlFor="sess-rerank" className="block text-xs text-muted-foreground">
+            Rerank
+          </label>
+          <select
+            id="sess-rerank"
+            value={rerank}
+            onChange={(e) => setParam("rerank", e.target.value)}
+            className="h-9 rounded-md border bg-background px-2 text-sm"
+          >
+            <option value="any">any</option>
+            <option value="true">enabled</option>
+            <option value="false">disabled</option>
+          </select>
+        </div>
+
+        <div className="text-sm">
+          <label htmlFor="sess-snapped" className="block text-xs text-muted-foreground">
+            Confidence
+          </label>
+          <select
+            id="sess-snapped"
+            value={snapped}
+            onChange={(e) => setParam("snapped", e.target.value)}
+            className="h-9 rounded-md border bg-background px-2 text-sm"
+          >
+            <option value="any">any</option>
+            <option value="true">snapped</option>
+            <option value="false">mixed</option>
           </select>
         </div>
 

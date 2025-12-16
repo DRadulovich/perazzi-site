@@ -229,7 +229,7 @@ Right now mode/page/model signals may bias archetype too strongly. Update logic 
 * priors apply strongly only when the vector is near-neutral
 * or priors are lower-weighted than language + behavior signals
 
-## 3.4 Add intent/topic signals into archetype scoring (optional but high value)
+## 3.4 Add intent/topic signals into archetype scoring (high value)
 
 Update archetype context to include `hints.intents` and `hints.topics` so archetype inference uses higher-quality signals than raw keywords.
 
@@ -291,8 +291,9 @@ Pick one:
 
 # 5) Phase 4: Make archetype shape response structure (not just tone)
 
-**Primary file:** `src/lib/perazzi-intents.ts`
-**Also touches:** `src/app/api/perazzi-assistant/route.ts` (system prompt assembly)
+**Primary file:** `src/lib/perazzi-intents.ts` --> `https://raw.githubusercontent.com/DRadulovich/perazzi-site/refs/heads/feature/archetype-zr1-rerank/src/lib/perazzi-intents.ts`
+
+**Also touches:** `src/app/api/perazzi-assistant/route.ts` (system prompt assembly) --> `https://github.com/DRadulovich/perazzi-site/blob/feature/archetype-zr1-rerank/src/app/api/perazzi-assistant/route.ts`
 
 ## 5.1 Add archetype-aware templates (structured “output architecture”)
 
@@ -320,7 +321,7 @@ If archetype confidence is low (mixed/balanced), default to your current neutral
 
 # 6) Phase 5: Fix the client “reset doesn’t clear archetype label” bug
 
-**Primary file:** `src/components/chat/useChatState.ts`
+**Primary file:** `src/components/chat/useChatState.ts` --> `https://raw.githubusercontent.com/DRadulovich/perazzi-site/refs/heads/feature/archetype-zr1-rerank/src/components/chat/useChatState.ts`
 
 **Search for:**
 `archetype: data.archetype ?? prev.archetype ?? null`
@@ -339,8 +340,9 @@ Also ensure reset clears `archetypeVector` and doesn’t rehydrate stale values 
 
 # 7) Phase 6: Logging upgrades for tuning (turn your system into science)
 
-**Primary file:** `src/lib/aiLogging.ts`
-**Also:** add metadata in `route.ts` when calling `logAiInteraction`
+**Primary file:** `src/lib/aiLogging.ts` --> `https://raw.githubusercontent.com/DRadulovich/perazzi-site/refs/heads/feature/archetype-zr1-rerank/src/lib/aiLogging.ts`
+
+**Also:** add metadata in `route.ts` when calling `logAiInteraction` --> `https://raw.githubusercontent.com/DRadulovich/perazzi-site/refs/heads/feature/archetype-zr1-rerank/src/app/api/perazzi-assistant/route.ts`
 
 ## 7.1 Log reranking metrics
 

@@ -22,6 +22,7 @@ import type {
   PgptSessionSummary,
   PgptSessionTimelineRow,
 } from "./types";
+import type { BoolFilter } from "./log-filters";
 
 function isUuidLike(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
@@ -70,6 +71,8 @@ export async function fetchLogs(args: {
   margin_lt?: string;
   score_archetype?: string;
   min?: string;
+  rerank?: string;
+  snapped?: string;
 
   limit: number;
   offset: number;
@@ -92,6 +95,8 @@ export async function fetchLogs(args: {
     margin_lt: args.margin_lt,
     score_archetype: args.score_archetype,
     min: args.min,
+    rerank: args.rerank,
+    snapped: args.snapped,
   });
 
   const { joinSql, whereClause, values, nextIndex } = buildLogsQueryParts(filters);
@@ -112,6 +117,10 @@ export async function fetchLogs(args: {
       l.session_id,
       l.model,
       l.used_gateway,
+      l.metadata as metadata,
+      (l.metadata->>'rerankEnabled')::boolean as rerank_enabled,
+      (l.metadata->>'archetypeSnapped')::boolean as archetype_snapped,
+      coalesce((l.metadata->>'archetypeConfidenceMargin')::float, (l.metadata->>'archetypeConfidence')::float) as archetype_confidence_margin,
       (l.metadata->>'archetypeConfidence')::float as archetype_confidence,
 
       left(l.prompt, 800) as prompt_preview,
@@ -875,6 +884,369 @@ export async function fetchAssistantRequestCountWindow(
   return Number(rows[0]?.hits ?? 0);
 }
 
+export async function fetchArchetypeSnapSummary(
+  envFilter?: string,
+  daysFilter?: number,
+  rerank?: BoolFilter,
+  snappedFilter?: BoolFilter,
+  marginLt?: number | null,
+): Promise<{ total: number; snapped_count: number; mixed_count: number; unknown_count: number }> {
+  const conditions: string[] = ["endpoint = 'assistant'"];
+  const params: Array<string | number> = [];
+  let idx = 1;
+
+  if (envFilter) {
+    conditions.push(`env = $${idx++}`);
+    params.push(envFilter);
+  }
+  if (daysFilter) {
+    conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
+    params.push(daysFilter);
+  }
+
+  if (rerank === "true") {
+    conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = true`);
+  } else if (rerank === "false") {
+    conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = false`);
+  }
+
+  if (snappedFilter === "true") {
+    conditions.push(`coalesce((metadata->>'archetypeSnapped')::boolean, false) = true`);
+  } else if (snappedFilter === "false") {
+    conditions.push(`coalesce((metadata->>'archetypeSnapped')::boolean, false) = false`);
+  }
+
+  if (marginLt !== null && marginLt !== undefined) {
+    conditions.push(
+      `coalesce((metadata->>'archetypeConfidenceMargin')::float, (metadata->>'archetypeConfidence')::float) < $${idx++}`,
+    );
+    params.push(marginLt);
+  }
+
+  const query = `
+    select
+      count(*) as total,
+      count(*) filter (where metadata->>'archetypeSnapped' = 'true') as snapped_count,
+      count(*) filter (where metadata->>'archetypeSnapped' = 'false') as mixed_count,
+      count(*) filter (where metadata->>'archetypeSnapped' is null) as unknown_count
+    from perazzi_conversation_logs
+    where ${conditions.join(" and ")};
+  `;
+
+  const { rows } = await pool.query(query, params);
+  const r = rows[0] ?? {};
+  return {
+    total: Number(r.total ?? 0),
+    snapped_count: Number(r.snapped_count ?? 0),
+    mixed_count: Number(r.mixed_count ?? 0),
+    unknown_count: Number(r.unknown_count ?? 0),
+  };
+}
+
+export async function fetchRerankEnabledSummary(
+  envFilter?: string,
+  daysFilter?: number,
+  rerank?: BoolFilter,
+  snapped?: BoolFilter,
+  marginLt?: number | null,
+): Promise<{
+  total: number;
+  rerank_on_count: number;
+  rerank_off_count: number;
+  unknown_count: number;
+  avg_candidate_limit: number | null;
+}> {
+  const conditions: string[] = ["endpoint = 'assistant'"];
+  const params: Array<string | number> = [];
+  let idx = 1;
+
+  if (envFilter) {
+    conditions.push(`env = $${idx++}`);
+    params.push(envFilter);
+  }
+  if (daysFilter) {
+    conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
+    params.push(daysFilter);
+  }
+
+  if (rerank === "true") {
+    conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = true`);
+  } else if (rerank === "false") {
+    conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = false`);
+  }
+
+  if (snapped === "true") {
+    conditions.push(`coalesce((metadata->>'archetypeSnapped')::boolean, false) = true`);
+  } else if (snapped === "false") {
+    conditions.push(`coalesce((metadata->>'archetypeSnapped')::boolean, false) = false`);
+  }
+
+  if (marginLt !== null && marginLt !== undefined) {
+    conditions.push(
+      `coalesce((metadata->>'archetypeConfidenceMargin')::float, (metadata->>'archetypeConfidence')::float) < $${idx++}`,
+    );
+    params.push(marginLt);
+  }
+
+  const query = `
+    select
+      count(*) as total,
+      count(*) filter (where metadata->>'rerankEnabled' = 'true') as rerank_on_count,
+      count(*) filter (where metadata->>'rerankEnabled' = 'false') as rerank_off_count,
+      count(*) filter (where metadata->>'rerankEnabled' is null) as unknown_count,
+      avg((metadata->>'candidateLimit')::float) as avg_candidate_limit
+    from perazzi_conversation_logs
+    where ${conditions.join(" and ")};
+  `;
+
+  const { rows } = await pool.query(query, params);
+  const r = rows[0] ?? {};
+  const avg = r.avg_candidate_limit === null || r.avg_candidate_limit === undefined ? null : Number(r.avg_candidate_limit);
+  return {
+    total: Number(r.total ?? 0),
+    rerank_on_count: Number(r.rerank_on_count ?? 0),
+    rerank_off_count: Number(r.rerank_off_count ?? 0),
+    unknown_count: Number(r.unknown_count ?? 0),
+    avg_candidate_limit: Number.isFinite(avg as number) ? (avg as number) : null,
+  };
+}
+
+export async function fetchArchetypeMarginHistogram(
+  envFilter?: string,
+  daysFilter?: number,
+  rerank?: BoolFilter,
+  snapped?: BoolFilter,
+  marginLt?: number | null,
+): Promise<Array<{ bucket_order: number; bucket_label: string; hits: number }>> {
+  const conditions: string[] = ["endpoint = 'assistant'"];
+  const params: Array<string | number> = [];
+  let idx = 1;
+
+  if (envFilter) {
+    conditions.push(`env = $${idx++}`);
+    params.push(envFilter);
+  }
+  if (daysFilter) {
+    conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
+    params.push(daysFilter);
+  }
+
+  if (rerank === "true") {
+    conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = true`);
+  } else if (rerank === "false") {
+    conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = false`);
+  }
+
+  if (snapped === "true") {
+    conditions.push(`coalesce((metadata->>'archetypeSnapped')::boolean, false) = true`);
+  } else if (snapped === "false") {
+    conditions.push(`coalesce((metadata->>'archetypeSnapped')::boolean, false) = false`);
+  }
+
+  if (marginLt !== null && marginLt !== undefined) {
+    conditions.push(
+      `coalesce((metadata->>'archetypeConfidenceMargin')::float, (metadata->>'archetypeConfidence')::float) < $${idx++}`,
+    );
+    params.push(marginLt);
+  }
+
+  const query = `
+    with base as (
+      select
+        coalesce(
+          (metadata->>'archetypeConfidenceMargin')::float,
+          (metadata->>'archetypeConfidence')::float
+        ) as v
+      from perazzi_conversation_logs
+      where ${conditions.join(" and ")}
+    ),
+    bucketed as (
+      select
+        case
+          when v is null then 0
+          when v < 0.02 then 1
+          when v < 0.05 then 2
+          when v < 0.08 then 3
+          when v < 0.12 then 4
+          when v < 0.20 then 5
+          else 6
+        end as bucket_order,
+        case
+          when v is null then 'missing'
+          when v < 0.02 then '<2%'
+          when v < 0.05 then '2–5%'
+          when v < 0.08 then '5–8%'
+          when v < 0.12 then '8–12%'
+          when v < 0.20 then '12–20%'
+          else '≥20%'
+        end as bucket_label
+      from base
+    )
+    select bucket_order, bucket_label, count(*) as hits
+    from bucketed
+    group by bucket_order, bucket_label
+    order by bucket_order asc;
+  `;
+
+  const { rows } = await pool.query<{
+    bucket_order: number | string | null;
+    bucket_label: string | null;
+    hits: number | string | null;
+  }>(query, params);
+  return rows.map((r) => ({
+    bucket_order: Number(r.bucket_order ?? 0),
+    bucket_label: String(r.bucket_label ?? ""),
+    hits: Number(r.hits ?? 0),
+  }));
+}
+
+export async function fetchDailyArchetypeSnapRate(args: {
+  envFilter?: string;
+  days: number;
+  rerank?: BoolFilter;
+  snapped?: BoolFilter;
+  marginLt?: number | null;
+}): Promise<Array<{ day: string; snapped_count: number; mixed_count: number; total_classified: number }>> {
+  const { envFilter, days, rerank, snapped, marginLt } = args;
+
+  const conditions: string[] = ["endpoint = 'assistant'"];
+  const params: Array<string | number> = [];
+  let idx = 1;
+
+  if (envFilter) {
+    conditions.push(`env = $${idx++}`);
+    params.push(envFilter);
+  }
+
+  conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
+  params.push(days);
+
+  if (rerank === "true") {
+    conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = true`);
+  } else if (rerank === "false") {
+    conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = false`);
+  }
+
+  if (snapped === "true") {
+    conditions.push(`coalesce((metadata->>'archetypeSnapped')::boolean, false) = true`);
+  } else if (snapped === "false") {
+    conditions.push(`coalesce((metadata->>'archetypeSnapped')::boolean, false) = false`);
+  }
+
+  if (marginLt !== null && marginLt !== undefined) {
+    conditions.push(
+      `coalesce((metadata->>'archetypeConfidenceMargin')::float, (metadata->>'archetypeConfidence')::float) < $${idx++}`,
+    );
+    params.push(marginLt);
+  }
+
+  const query = `
+    select
+      date_trunc('day', created_at)::date as day,
+      count(*) filter (where metadata->>'archetypeSnapped' = 'true') as snapped_count,
+      count(*) filter (where metadata->>'archetypeSnapped' = 'false') as mixed_count,
+      count(*) filter (where metadata->>'archetypeSnapped' in ('true','false')) as total_classified
+    from perazzi_conversation_logs
+    where ${conditions.join(" and ")}
+    group by day
+    order by day asc;
+  `;
+
+  const { rows } = await pool.query<{
+    day: string;
+    snapped_count: number | string | null;
+    mixed_count: number | string | null;
+    total_classified: number | string | null;
+  }>(query, params);
+  return rows.map((r) => ({
+    day: String(r.day),
+    snapped_count: Number(r.snapped_count ?? 0),
+    mixed_count: Number(r.mixed_count ?? 0),
+    total_classified: Number(r.total_classified ?? 0),
+  }));
+}
+
+export async function fetchDailyRerankEnabledRate(args: {
+  envFilter?: string;
+  days: number;
+  rerank?: BoolFilter;
+  snapped?: BoolFilter;
+  marginLt?: number | null;
+}): Promise<
+  Array<{
+    day: string;
+    rerank_on_count: number;
+    rerank_off_count: number;
+    total_flagged: number;
+    avg_candidate_limit: number | null;
+  }>
+> {
+  const { envFilter, days, rerank, snapped, marginLt } = args;
+
+  const conditions: string[] = ["endpoint = 'assistant'"];
+  const params: Array<string | number> = [];
+  let idx = 1;
+
+  if (envFilter) {
+    conditions.push(`env = $${idx++}`);
+    params.push(envFilter);
+  }
+
+  conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
+  params.push(days);
+
+  if (rerank === "true") {
+    conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = true`);
+  } else if (rerank === "false") {
+    conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = false`);
+  }
+
+  if (snapped === "true") {
+    conditions.push(`coalesce((metadata->>'archetypeSnapped')::boolean, false) = true`);
+  } else if (snapped === "false") {
+    conditions.push(`coalesce((metadata->>'archetypeSnapped')::boolean, false) = false`);
+  }
+
+  if (marginLt !== null && marginLt !== undefined) {
+    conditions.push(
+      `coalesce((metadata->>'archetypeConfidenceMargin')::float, (metadata->>'archetypeConfidence')::float) < $${idx++}`,
+    );
+    params.push(marginLt);
+  }
+
+  const query = `
+    select
+      date_trunc('day', created_at)::date as day,
+      count(*) filter (where metadata->>'rerankEnabled' = 'true') as rerank_on_count,
+      count(*) filter (where metadata->>'rerankEnabled' = 'false') as rerank_off_count,
+      count(*) filter (where metadata->>'rerankEnabled' in ('true','false')) as total_flagged,
+      avg((metadata->>'candidateLimit')::float) as avg_candidate_limit
+    from perazzi_conversation_logs
+    where ${conditions.join(" and ")}
+    group by day
+    order by day asc;
+  `;
+
+  const { rows } = await pool.query<{
+    day: string;
+    rerank_on_count: number | string | null;
+    rerank_off_count: number | string | null;
+    total_flagged: number | string | null;
+    avg_candidate_limit: number | string | null;
+  }>(query, params);
+  return rows.map((r) => {
+    const avg =
+      r.avg_candidate_limit === null || r.avg_candidate_limit === undefined ? null : Number(r.avg_candidate_limit);
+    return {
+      day: String(r.day),
+      rerank_on_count: Number(r.rerank_on_count ?? 0),
+      rerank_off_count: Number(r.rerank_off_count ?? 0),
+      total_flagged: Number(r.total_flagged ?? 0),
+      avg_candidate_limit: Number.isFinite(avg as number) ? (avg as number) : null,
+    };
+  });
+}
+
 // -----------------------------------------------------------------------------
 // Session Explorer
 // -----------------------------------------------------------------------------
@@ -929,7 +1301,10 @@ export async function fetchSessionTimelineRows(args: {
         created_at::text as created_at,
         endpoint,
         archetype,
+        coalesce((metadata->>'archetypeConfidenceMargin')::float, (metadata->>'archetypeConfidence')::float) as archetype_confidence_margin,
         (metadata->>'archetypeConfidence')::float as archetype_confidence,
+        (metadata->>'archetypeSnapped')::boolean as archetype_snapped,
+        (metadata->>'rerankEnabled')::boolean as rerank_enabled,
         metadata->'archetypeScores' as archetype_scores
       from perazzi_conversation_logs
       where session_id = $1
@@ -959,6 +1334,8 @@ export async function fetchSessionLogsPreview(args: {
   margin_lt?: string;
   score_archetype?: string;
   min?: string;
+  rerank?: string;
+  snapped?: string;
 
   limit: number;
   offset: number;
@@ -974,6 +1351,8 @@ export async function fetchSessionLogsPreview(args: {
     margin_lt: args.margin_lt,
     score_archetype: args.score_archetype,
     min: args.min,
+    rerank: args.rerank,
+    snapped: args.snapped,
   });
 
   // Base condition: session scope must always apply
@@ -1000,6 +1379,10 @@ export async function fetchSessionLogsPreview(args: {
       l.session_id,
       l.model,
       l.used_gateway,
+      l.metadata as metadata,
+      (l.metadata->>'rerankEnabled')::boolean as rerank_enabled,
+      (l.metadata->>'archetypeSnapped')::boolean as archetype_snapped,
+      coalesce((l.metadata->>'archetypeConfidenceMargin')::float, (l.metadata->>'archetypeConfidence')::float) as archetype_confidence_margin,
       (l.metadata->>'archetypeConfidence')::float as archetype_confidence,
 
       left(l.prompt, 800) as prompt_preview,
@@ -1028,6 +1411,82 @@ export async function fetchSessionLogsPreview(args: {
   `;
 
   const { rows } = await pool.query<PerazziLogPreviewRow>(query, values);
+  return rows;
+}
+
+export async function fetchSessionConversationLogs(args: {
+  sessionId: string;
+  q?: string;
+
+  gr_status?: string;
+  low_conf?: string;
+  score?: string;
+  qa?: string;
+  winner_changed?: string;
+  margin_lt?: string;
+  score_archetype?: string;
+  min?: string;
+  rerank?: string;
+  snapped?: string;
+
+  limit: number;
+  offset: number;
+}): Promise<PerazziLogRow[]> {
+  const filters: LogsFilters = parseLogsFilters({
+    q: args.q,
+
+    gr_status: args.gr_status,
+    low_conf: args.low_conf,
+    score: args.score,
+    qa: args.qa,
+    winner_changed: args.winner_changed,
+    margin_lt: args.margin_lt,
+    score_archetype: args.score_archetype,
+    min: args.min,
+    rerank: args.rerank,
+    snapped: args.snapped,
+  });
+
+  const { joinSql, whereClause, values, nextIndex } = buildLogsQueryPartsWithBase({
+    filters,
+    baseConditions: [`l.session_id = $1`],
+    baseValues: [args.sessionId],
+    startIndex: 2,
+  });
+
+  const limitIndex = nextIndex;
+  values.push(args.limit);
+
+  const offsetIndex = nextIndex + 1;
+  values.push(args.offset);
+
+  const query = `
+    select
+      l.id,
+      l.created_at,
+      l.env,
+      l.endpoint,
+      l.archetype,
+      l.session_id,
+      l.model,
+      l.used_gateway,
+      l.prompt,
+      l.response,
+      l.low_confidence,
+      l.intents,
+      l.topics,
+      l.metadata->>'maxScore' as max_score,
+      l.metadata->>'guardrailStatus' as guardrail_status,
+      l.metadata->>'guardrailReason' as guardrail_reason
+    from perazzi_conversation_logs l
+    ${joinSql}
+    ${whereClause}
+    order by l.created_at asc
+    limit $${limitIndex}
+    offset $${offsetIndex};
+  `;
+
+  const { rows } = await pool.query<PerazziLogRow>(query, values);
   return rows;
 }
 

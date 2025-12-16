@@ -16,6 +16,11 @@ export type PerazziLogBase = {
   guardrail_status: string | null;
   guardrail_reason: string | null;
 
+  // Optional context fields (may be absent on older logs)
+  page_url?: string | null;
+  user_id?: string | null;
+  mode?: string | null;
+
   // QA fields (attached server-side after fetching)
   qa_flag_id?: string | null;
   qa_flag_status?: string | null;
@@ -35,6 +40,10 @@ export type PerazziLogPreviewRow = PerazziLogBase & {
   prompt_len: number;
   response_len: number;
   archetype_confidence?: number | null;
+  metadata?: unknown | null;
+  rerank_enabled?: boolean | null;
+  archetype_snapped?: boolean | null;
+  archetype_confidence_margin?: number | null;
 };
 
 export type RagSummary = {
@@ -130,9 +139,13 @@ export type PgptLogDetail = PerazziLogRow & {
   completion_tokens: number | null;
   latency_ms: number | null;
   retrieved_chunks: unknown[];
+  metadata?: unknown | null;
   archetype_scores?: Record<string, number> | null;
   archetype_confidence?: number | null;
   archetype_decision?: unknown | null;
+  page_url?: string | null;
+  user_id?: string | null;
+  mode?: string | null;
 };
 
 export type PgptLogDetailResponse = {
@@ -215,6 +228,9 @@ export type PgptSessionTimelineRow = {
   endpoint: string;
   archetype: string | null;
   archetype_confidence: number | null;
+  archetype_confidence_margin?: number | null;
+  archetype_snapped?: boolean | null;
+  rerank_enabled?: boolean | null;
   archetype_scores: Record<string, number> | null;
 };
 

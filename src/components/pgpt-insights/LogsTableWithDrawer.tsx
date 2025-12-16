@@ -6,9 +6,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { LOW_SCORE_THRESHOLD } from "../../lib/pgpt-insights/constants";
 import type { PerazziLogPreviewRow, PgptLogDetailResponse } from "../../lib/pgpt-insights/types";
 
+import { Badge } from "./Badge";
 import { CopyButton } from "./CopyButton";
-import { ArchetypeStackedBar, computeWinnerAndRunner } from "./archetype/ArchetypeStackedBar";
-import { formatCompactNumber, formatDurationMs, formatScore, formatTimestampShort } from "./format";
+import { formatCompactNumber, formatScore, formatTimestampShort } from "./format";
+import { LogSummaryPanel } from "./LogSummaryPanel";
 import { MarkdownViewClient } from "./MarkdownViewClient";
 
 type TabKey = "summary" | "prompt" | "response" | "retrieval" | "qa";
@@ -58,41 +59,6 @@ function rowToneClass(log: PerazziLogPreviewRow): string {
   return "border-l-4 border-transparent";
 }
 
-function Badge({
-  children,
-  tone = "default",
-  title,
-}: {
-  children: React.ReactNode;
-  tone?: "default" | "red" | "amber" | "yellow" | "blue" | "purple";
-  title?: string;
-}) {
-  const toneClass =
-    tone === "red"
-      ? "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300"
-      : tone === "amber"
-        ? "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
-        : tone === "yellow"
-          ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-700 dark:text-yellow-300"
-          : tone === "blue"
-            ? "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300"
-            : tone === "purple"
-              ? "border-purple-500/30 bg-purple-500/10 text-purple-700 dark:text-purple-300"
-              : "border-border bg-background text-muted-foreground";
-
-  return (
-    <span
-      title={title}
-      className={cn(
-        "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wide tabular-nums",
-        toneClass,
-      )}
-    >
-      {children}
-    </span>
-  );
-}
-
 function DrawerSkeleton() {
   return (
     <div className="animate-pulse space-y-4">
@@ -121,12 +87,10 @@ export function LogsTableWithDrawer({
   logs,
   tableDensityClass,
   truncPrimary,
-  isCompact,
 }: {
   logs: PerazziLogPreviewRow[];
   tableDensityClass: string;
   truncPrimary: number;
-  isCompact: boolean;
 }) {
   const cacheRef = useRef(new Map<string, PgptLogDetailResponse>());
 
@@ -143,12 +107,23 @@ export function LogsTableWithDrawer({
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
   const lastFocusRef = useRef<HTMLElement | null>(null);
 
-  const [qaReturnTo, setQaReturnTo] = useState<string>("");
-
   const selectedPreview = useMemo(() => {
     if (!selectedId) return null;
     return logs.find((l) => l.id === selectedId) ?? null;
   }, [logs, selectedId]);
+
+  const fallbackMetadata = (selectedPreview as { metadata?: unknown } | null | undefined)?.metadata;
+
+  const qaReturnTo = useMemo(() => {
+    if (!open) return "";
+    if (typeof window === "undefined") return "";
+    try {
+      const base = window.location.href.split("#")[0];
+      return `${base}#logs`;
+    } catch {
+      return "";
+    }
+  }, [open]);
 
   function closeDrawer() {
     setOpen(false);
@@ -160,15 +135,6 @@ export function LogsTableWithDrawer({
     setResponseMode("rendered");
     setOpen(true);
   }
-
-  // Build returnTo for QA actions while drawer is open
-  useEffect(() => {
-    if (!open) return;
-    try {
-      const base = window.location.href.split("#")[0];
-      setQaReturnTo(`${base}#logs`);
-    } catch {}
-  }, [open, selectedId]);
 
   // Lock body scroll while drawer is open
   useEffect(() => {
@@ -552,148 +518,7 @@ export function LogsTableWithDrawer({
               {!loading && !error && detail ? (
                 <>
                   {activeTab === "summary" ? (
-                    <div className="space-y-4">
-                      <div className="rounded-xl border border-border bg-background p-4">
-                        <div className="text-xs font-semibold text-foreground">Signals</div>
-
-                        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                          <div className="text-xs">
-                            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">maxScore</div>
-                            <div className="mt-1 font-medium text-foreground">{detail.log.max_score ? detail.log.max_score : "—"}</div>
-                          </div>
-
-                          <div className="text-xs">
-                            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">latency</div>
-                            <div className="mt-1 font-medium text-foreground">{formatDurationMs(detail.log.latency_ms)}</div>
-                          </div>
-
-                          <div className="text-xs">
-                            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">guardrail</div>
-                            <div className="mt-1 font-medium text-foreground">
-                              {detail.log.guardrail_status ?? "—"}
-                              {detail.log.guardrail_reason ? ` · ${detail.log.guardrail_reason}` : ""}
-                            </div>
-                          </div>
-
-                          <div className="text-xs">
-                            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">confidence</div>
-                            <div className="mt-1 font-medium text-foreground">
-                              {detail.log.low_confidence === true ? "low" : "ok/unknown"}
-                            </div>
-                          </div>
-
-                          <div className="text-xs">
-                            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">tokens</div>
-                            <div className="mt-1 font-medium text-foreground">
-                              {detail.log.prompt_tokens ?? "—"} prompt · {detail.log.completion_tokens ?? "—"} completion
-                            </div>
-                          </div>
-
-                          <div className="text-xs">
-                            <div className="text-[10px] uppercase tracking-wide text-muted-foreground">model</div>
-                            <div className="mt-1 font-medium text-foreground">{detail.log.model ?? "—"}</div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="rounded-xl border border-border bg-background p-4">
-                        <div className="text-xs font-semibold text-foreground">Context</div>
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {detail.log.env ? <Badge>{detail.log.env}</Badge> : null}
-                          {detail.log.endpoint ? <Badge tone="blue">{detail.log.endpoint}</Badge> : null}
-                          {detail.log.archetype ? <Badge>{detail.log.archetype}</Badge> : null}
-                          {detail.log.used_gateway ? <Badge>gateway</Badge> : null}
-                        </div>
-
-                        <div className="mt-3 text-xs text-muted-foreground flex items-center gap-2">
-                          <span>Session:</span>
-                          {detail.log.session_id ? (
-                            <>
-                              <Link
-                                href={`/admin/pgpt-insights/session/${encodeURIComponent(detail.log.session_id)}`}
-                                className="text-blue-600 underline"
-                              >
-                                {detail.log.session_id}
-                              </Link>
-                              <CopyButton value={detail.log.session_id} label="Copy" ariaLabel="Copy session id" />
-                            </>
-                          ) : (
-                            "—"
-                          )}
-                        </div>
-                      </div>
-
-                      {detail.log.archetype_scores ? (
-                        <div className="rounded-xl border border-border bg-background p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="space-y-1">
-                              <div className="text-xs font-semibold text-foreground">Archetype</div>
-                              <div className="text-xs text-muted-foreground">Distribution + winner/runner-up for this interaction.</div>
-                            </div>
-
-                            {typeof detail.log.archetype_confidence === "number" ? (
-                              <Badge tone="default" title="top1-top2 margin">
-                                margin +{Math.round(detail.log.archetype_confidence * 100)}pp
-                              </Badge>
-                            ) : null}
-                          </div>
-
-                          <div className="mt-3">
-                            <ArchetypeStackedBar scores={detail.log.archetype_scores as any} />
-                          </div>
-
-                          {(() => {
-                            // winner/runner-up callout
-                            const s = detail.log.archetype_scores as any;
-                            const normalized = s && typeof s === "object" ? s : null;
-                            if (!normalized) return null;
-
-                            // compute winner/runner from the object (assumed normalized)
-                            const { winner, runner, margin } = computeWinnerAndRunner(normalized);
-
-                            return (
-                              <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3 text-xs">
-                                <div className="rounded-lg border border-border bg-muted/10 p-3">
-                                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">winner</div>
-                                  <div className="mt-1 font-medium text-foreground">
-                                    {winner.k} · {(winner.v * 100).toFixed(0)}%
-                                  </div>
-                                </div>
-
-                                <div className="rounded-lg border border-border bg-muted/10 p-3">
-                                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">runner-up</div>
-                                  <div className="mt-1 font-medium text-foreground">
-                                    {runner ? `${runner.k} · ${(runner.v * 100).toFixed(0)}%` : "—"}
-                                  </div>
-                                </div>
-
-                                <div className="rounded-lg border border-border bg-muted/10 p-3">
-                                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">margin</div>
-                                  <div className="mt-1 font-medium text-foreground">+{Math.round(margin * 100)}pp</div>
-                                </div>
-                              </div>
-                            );
-                          })()}
-
-                          {detail.log.archetype_decision ? (
-                            <details className="mt-3">
-                              <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
-                                show decision metadata
-                              </summary>
-                              <pre className="mt-2 overflow-auto rounded-lg border border-border bg-muted/20 p-3 text-[11px] leading-snug text-foreground">
-                                {JSON.stringify(detail.log.archetype_decision, null, 2)}
-                              </pre>
-                            </details>
-                          ) : null}
-                        </div>
-                      ) : (
-                        <div className="rounded-xl border border-border bg-background p-4">
-                          <div className="text-xs font-semibold text-foreground">Archetype</div>
-                          <div className="mt-1 text-xs text-muted-foreground">Legacy log: no archetype distribution recorded.</div>
-                        </div>
-                      )}
-                    </div>
+                    <LogSummaryPanel detail={detail} fallbackMetadata={fallbackMetadata} />
                   ) : null}
 
                   {activeTab === "prompt" ? (
@@ -737,9 +562,12 @@ export function LogsTableWithDrawer({
                         </div>
                       ) : (
                         <div className="space-y-3">
-                          {(detail.log.retrieved_chunks ?? []).map((raw: any, idx: number) => {
-                            const chunkId = raw?.chunkId ?? raw?.chunk_id ?? raw?.id ?? null;
-                            const score = raw?.score ?? raw?.similarity ?? raw?.maxScore ?? null;
+                          {(Array.isArray(detail.log.retrieved_chunks) ? detail.log.retrieved_chunks : []).map((raw, idx: number) => {
+                            const chunk = (raw ?? {}) as Record<string, unknown>;
+                            const chunkIdRaw = (chunk.chunkId ?? chunk.chunk_id ?? chunk.id) as string | number | undefined;
+                            const chunkId = typeof chunkIdRaw === "string" || typeof chunkIdRaw === "number" ? chunkIdRaw : null;
+                            const scoreRaw = (chunk.score ?? chunk.similarity ?? chunk.maxScore) as string | number | undefined;
+                            const score = typeof scoreRaw === "string" || typeof scoreRaw === "number" ? scoreRaw : null;
 
                             return (
                               <div key={`chunk-${idx}`} className="rounded-xl border border-border bg-background p-4">
@@ -761,7 +589,7 @@ export function LogsTableWithDrawer({
                                     show raw metadata
                                   </summary>
                                   <pre className="mt-2 overflow-auto rounded-lg border border-border bg-muted/20 p-3 text-[11px] leading-snug text-foreground">
-                                    {JSON.stringify(raw, null, 2)}
+                                    {JSON.stringify(chunk, null, 2)}
                                   </pre>
                                 </details>
                               </div>

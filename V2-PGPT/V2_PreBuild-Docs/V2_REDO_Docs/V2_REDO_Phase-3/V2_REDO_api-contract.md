@@ -1,6 +1,6 @@
 # PerazziGPT v2 – Concierge API Contract
 
-> Version: 0.1 (Draft)  
+> Version: 0.2 (Draft)  
 > Owner: David Radulovich  
 > File: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-3/V2_REDO_api-contract.md`  
 
@@ -20,37 +20,28 @@ The client sends chat messages and optional context; the server:
 
 ```jsonc
 {
+  "sessionId": "optional-session-id",
   "messages": [
-    { "role": "system", "content": "optional client system (ignored in v2.0)" },
     { "role": "user", "content": "Help me choose between MX2000 and High Tech." }
   ],
   "context": {
     "pageUrl": "/shotguns",
     "modelSlug": "mx2000",
-    "mode": "auto",
+    "platformSlug": "mx",
+    "mode": "prospect",
     "locale": "en-US",
-    "sessionId": "optional-session-id",
     "archetype": null,
-    "debug": true
-  }
+    "archetypeVector": { "loyalist": 0.2, "prestige": 0.2, "analyst": 0.2, "achiever": 0.2, "legacy": 0.2 }
+  },
+  "summaryIntent": null
 }
 ```
 
 ### 1.1 `messages`
 
 - Follows the standard OpenAI Chat API format.  
-- In v2.0, **client-supplied `system` messages are ignored** for safety.
-  - The server always prepends its own canonical system prompt built from:
-    - `V2_REDO_assistant-spec.md`  
-    - `V2_REDO_non-negotiable-guardrails.md`  
-    - `V2_REDO_voice-calibration.md`  
-    - `V2_REDO_use-case-depth.md`  
-
-The last `user` message is what we use for:
-
-- Mode classification (if `mode: "auto"`),  
-- Archetype inference (unless overridden),  
-- Retrieval query embedding.
+- Client-supplied `system` messages are **ignored/dropped** for safety; only `user` and prior `assistant` messages are kept when constructing the model prompt.  
+- The last `user` message drives retrieval hints, archetype inference, and mode inference when `context.mode` is missing or invalid.
 
 ### 1.2 `context` (optional)
 
@@ -58,24 +49,40 @@ The last `user` message is what we use for:
 interface PerazziContext {
   pageUrl?: string | null;   // e.g. "/shotguns/mx8"
   modelSlug?: string | null; // e.g. "mx8", if on a specific model page
-  mode?: "prospect" | "owner" | "navigation" | "auto"; // default "auto"
+  platformSlug?: string | null; // e.g. "mx"
+  mode?: "prospect" | "owner" | "navigation" | null;
   locale?: string | null;    // e.g. "en-US", "it-IT"
-  sessionId?: string | null; // optional conversation/session identifier
   archetype?: "loyalist" | "prestige" | "analyst" | "achiever" | "legacy" | null;
-  debug?: boolean;           // if true, include extra debug info in response
+  archetypeVector?: Record<"loyalist" | "prestige" | "analyst" | "achiever" | "legacy", number> | null;
 }
 ```
 
 - `mode`:
-  - `"auto"` (default): server infers mode from the user message and context.  
-  - `"prospect"`, `"owner"`, `"navigation"`: hints that may override or bias mode detection.
+  - Only `"prospect"`, `"owner"`, or `"navigation"` are accepted; invalid/legacy values are ignored and the server defaults to `"prospect"`.
+  - The server also infers mode from hints (latest user message + context) and clamps any invalid input to the allowed set.
 - `archetype`:
-  - Optional override for the current request.  
-  - Typically `null` and inferred internally, but in **dev** we also support a manual override phrase (see §4.3).
+  - Optional hint; the runtime currently infers archetype internally (see §4).
+  - For explicit override in dev/testing, use the control phrase described in §4.3.
+- `archetypeVector`:
+  - Optional **soft signal** carrying the previous archetype vector. The server uses this as a prior (`previousVector`) when smoothing across turns.
+- `platformSlug`:
+  - Optional platform hint (e.g., `"mx"`) used by retrieval/templates.
+
+### 1.3 Other top-level fields
+
+```ts
+interface PerazziAssistantRequest {
+  messages: ChatMessage[];
+  sessionId?: string;
+  context?: PerazziContext;
+  summaryIntent?: string | null;
+}
+```
+
 - `sessionId`:
-  - Optional opaque string used to tie multiple requests together for future stateful behavior (e.g., remembered archetype).  
-- `debug`:
-  - If `true`, response may include additional debug info (`debug` block) for dev tools.
+  - Optional opaque identifier at the **top level** (not inside `context`). Used for logging and continuity, including archetype smoothing.
+- `summaryIntent`:
+  - Optional string used by some internal callers as a pre-labeled intent; currently passed through without changing runtime behavior.
 
 ---
 
@@ -83,33 +90,22 @@ interface PerazziContext {
 
 ```json
 {
-  "answer": "calm concierge answer here...",
-  "mode": "prospect",
-  "archetype": "analyst",
+  "answer": "…",
   "citations": [
-    {
-      "chunkId": "7e4dc699-0b09-4d2e-bb36-1f3a2674beef",
-      "documentPath": "V2-PGPT/V2_PreBuild-Docs/V2_Making-a-Perazzi-Docs/2-G_Roles-and-Stations_Checkering.md",
-      "headingPath": "Part II > 2-G Checkering > 3.4 Typical Decisions & Tradeoffs",
-      "category": "making-a-perazzi",
-      "docType": "craftsmanship-handbook"
-    }
+    { "chunkId": "…", "title": "…", "sourcePath": "…", "excerpt": "…" }
   ],
-  "guardrail": {
-    "status": "ok",
-    "reason": null,
-    "message": null
-  },
-  "debug": {
-    "maxSimilarity": 0.78,
-    "topChunks": [
-      {
-        "chunkId": "7e4dc699-0b09-4d2e-bb36-1f3a2674beef",
-        "similarity": 0.78
-      }
-    ],
-    "archetypeSource": "inferred", // or "manual"
-    "notes": []
+  "guardrail": { "status": "ok", "reason": null },
+  "intents": ["models"],
+  "topics": ["platforms"],
+  "templates": ["…"],
+  "similarity": 0.42,
+  "mode": "prospect",
+  "archetype": null,
+  "archetypeBreakdown": {
+    "primary": null,
+    "vector": { "loyalist": 0.2, "prestige": 0.2, "analyst": 0.2, "achiever": 0.2, "legacy": 0.2 },
+    "reasoning": "…",
+    "signalsUsed": ["…"]
   }
 }
 ```
@@ -117,63 +113,95 @@ interface PerazziContext {
 ### 2.1 Fields
 
 - `answer` (string)  
-  - The final assistant reply. v2.0 is non-streaming by default; we may add SSE later.
+  - Final assistant reply. Non-streaming in current runtime. If a guardrail triggers, the refusal or low-confidence message is placed here.
 
-- `mode` (string)  
-  - The mode actually used for behavior in this response:
-    - `"prospect"`, `"owner"`, or `"navigation"`.  
-  - Exposed so the front-end can display or tag responses differently.
-
-- `archetype` (string)  
-  - The archetype lens used for this response:
-    - `"loyalist"`, `"prestige"`, `"analyst"`, `"achiever"`, `"legacy"`.  
-  - In **dev**, it is returned explicitly so you and early testers can see which lens is active.  
-  - In production, you may choose to hide this field or gate it behind `debug`.
-
-- `citations` (array) – optional but recommended
+- `citations` (array)
 
   ```ts
   interface Citation {
-    chunkId: string;       // UUID from `chunks.id`
-    documentPath: string;  // from `documents.path`
-    headingPath?: string;  // from `chunks.heading_path`
-    category?: string;     // from `documents.category`
-    docType?: string;      // from `documents.doc_type`
+    chunkId: string;
+    title: string;
+    sourcePath: string;
+    excerpt?: string;
   }
   ```
 
-  - The server should include at least the top 1–3 chunks that heavily informed the answer.
+  - Shape matches `mapChunkToCitation()` in the route: chunk ID, title, source path, and an excerpt trimmed server-side.
 
 - `guardrail` (object)
 
   ```ts
   interface GuardrailInfo {
     status: "ok" | "low_confidence" | "blocked";
-    reason: string | null;   // e.g. "retrieval_low", "pricing", "gunsmithing", "scope"
-    message: string | null;  // optional user-facing short explanation
+    reason: string | null;   // e.g., "retrieval_low", "pricing", "gunsmithing", "scope"
   }
   ```
 
-  - `status`:
-    - `"ok"` – no guardrail concerns.  
-    - `"low_confidence"` – retrieval signal too weak; answer should be cautious/qualified.  
-    - `"blocked"` – we cannot answer (pricing, gunsmithing, legal, etc.).  
-  - `reason`:
-    - `retrieval_low` – top similarity below configured threshold.  
-    - `pricing`, `gunsmithing`, `scope`, etc.  
-  - `message` (optional):
-    - A short, user-friendly description (e.g., “This question involves gunsmithing work that must be handled by authorized specialists.”).
+  - `status` reflects retrieval confidence or hard guardrails.  
+  - `reason` is the code for the guardrail decision; no separate `message` field is returned.
 
-- `debug` (object, optional)
+- `intents` / `topics` / `templates` (arrays)
+  - Internal intent/topic/tone hints used to build the prompt and structure responses; echoed so clients can observe routing choices.
 
-  - Only present when:
-    - `context.debug === true`, or  
-    - The server is running in a dev environment.  
-  - Contains:
-    - `maxSimilarity` – highest similarity score from vector search.  
-    - `topChunks` – list of `{ chunkId, similarity }`.  
-    - `archetypeSource` – e.g., `"inferred"` or `"manual"`.  
-    - `notes` – any extra internal notes for debugging.
+- `similarity` (number, optional)
+  - Max similarity score from retrieval; present in current responses for observability.
+
+- `mode` (string, optional)
+  - Mode the server actually used: `"prospect"`, `"owner"`, or `"navigation"`. Invalid inputs are clamped and the resolved mode is echoed here.
+
+- `archetype` (string | null, optional)
+  - Primary archetype lens applied for tone; may be `null` on mixed/balanced turns or when confidence is low.
+
+- `archetypeBreakdown` (object, optional)
+
+  ```ts
+  interface ArchetypeBreakdown {
+    primary: "loyalist" | "prestige" | "analyst" | "achiever" | "legacy" | null;
+    vector: Record<"loyalist" | "prestige" | "analyst" | "achiever" | "legacy", number>;
+    reasoning?: string;
+    signalsUsed?: string[];
+  }
+  ```
+
+  - `primary` may be `null` when confidence margin is below threshold; `vector` still reflects the soft weighting used for tone/rerank.  
+  - `reasoning` and `signalsUsed` are optional debug-friendly notes returned by the runtime today.
+
+### 2.2 Practical examples
+
+Minimal request with the current contract:
+
+```bash
+curl -X POST http://localhost:3000/api/perazzi-assistant \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sessionId": "demo-session",
+    "messages": [{ "role": "user", "content": "What is the difference between MX2000 and High Tech?" }],
+    "context": {
+      "pageUrl": "/shotguns",
+      "modelSlug": "mx2000",
+      "platformSlug": "mx",
+      "mode": "prospect",
+      "archetypeVector": { "loyalist": 0.2, "prestige": 0.2, "analyst": 0.2, "achiever": 0.2, "legacy": 0.2 }
+    }
+  }'
+```
+
+Minimal response shape (keys and types as returned today):
+
+```json
+{
+  "answer": "…",
+  "citations": [{ "chunkId": "…", "title": "…", "sourcePath": "…", "excerpt": "…" }],
+  "guardrail": { "status": "ok", "reason": null },
+  "intents": [],
+  "topics": [],
+  "templates": [],
+  "similarity": 0.0,
+  "mode": "prospect",
+  "archetype": null,
+  "archetypeBreakdown": { "primary": null, "vector": { "loyalist": 0.2, "prestige": 0.2, "analyst": 0.2, "achiever": 0.2, "legacy": 0.2 } }
+}
+```
 
 ---
 
@@ -229,8 +257,14 @@ interface PerazziContext {
   - User message and context.  
   - Top chunk IDs and similarity scores.  
   - Guardrail status & reason.  
+  - Archetype classification metadata (winner, runner-up, margin) and rerank metrics.  
   - Token usage (prompt/completion).  
 - These logs are **not** included in the HTTP response.
+
+### 3.6 Observability (server-side tuning signals)
+
+- Rerank scoring breakdowns and archetype confidence metrics are recorded in server logs/DB metadata for tuning.
+- None of these observability fields are exposed in the HTTP response; only `similarity`, `mode`, `archetype`, and `archetypeBreakdown` are returned publicly.
 
 ---
 
@@ -238,25 +272,17 @@ interface PerazziContext {
 
 ### 4.1 Mode handling
 
-- If `context.mode` is provided:
-  - `"prospect"`, `"owner"`, or `"navigation"`:
-    - Server uses this as **strong hint** for behavior & retrieval filters.  
-  - `"auto"` or omitted:
-    - Server infers mode from:
-      - user message,  
-      - pageUrl,  
-      - modelSlug.  
-
+- `context.mode` is normalized to `"prospect"`, `"owner"`, or `"navigation"`.
+- If missing or invalid, the server infers mode from hints (latest user message plus `pageUrl`/`modelSlug`/`platformSlug` and detected intents) and defaults to `"prospect"`.
+- Legacy `"auto"` is not supported; invalid inputs are simply clamped to the allowed set.
 - The final `mode` used is always returned in the response.
 
 ### 4.2 Archetype handling (internal + dev)
 
-- By default, archetype is **inferred internally** based on language and behavior over time.  
-- If `context.archetype` is provided:
-  - Valid values:
-    - `"loyalist"`, `"prestige"`, `"analyst"`, `"achiever"`, `"legacy"`.  
-  - Server treats that as an explicit override for this request (and may store it per-session if desired).  
-  - `archetype` field in the response reflects the lens actually used.
+- Archetype is inferred from language and context, combined with any prior vector passed in `context.archetypeVector`.
+- `context.archetype` can be supplied as a hint, but the runtime derives the effective archetype internally; tone-only, not fact-changing.
+- `archetypeBreakdown.primary` may be `null` when confidence is low; `vector` still carries the weights used for tone/rerank smoothing.
+- `archetype` in the response may therefore be `null` on mixed/balanced turns.
 - The server must **never** change facts or safety advice based on archetype—only tone and emphasis (as per `V2_REDO_voice-calibration.md` and `V2_REDO_assistant-spec.md`).
 
 ### 4.3 Manual archetype override via user phrase (dev feature)
@@ -280,8 +306,7 @@ In dev (and optionally in early beta):
 - Then the server:
 
   1. Interprets this as a **control command**, not a normal QA message.  
-  2. Sets the archetype for this session/context to the requested value.
-     - e.g., store in memory keyed by `sessionId`, or simply reflect it in the response and let the client reuse it.
+  2. Sets the archetype for this interaction to the requested value (and reflects it in `archetypeBreakdown`).  
   3. Returns a simple acknowledgment answer, e.g.:
 
      ```json
@@ -289,8 +314,13 @@ In dev (and optionally in early beta):
        "answer": "Understood. I’ll answer from the perspective of an Analyst from now on.",
        "mode": "prospect",
        "archetype": "analyst",
+       "archetypeBreakdown": { "primary": "analyst", "vector": { "loyalist": 0, "prestige": 0, "analyst": 1, "achiever": 0, "legacy": 0 } },
        "citations": [],
-       "guardrail": { "status": "ok", "reason": null, "message": null }
+       "guardrail": { "status": "ok", "reason": null },
+       "intents": [],
+       "topics": [],
+       "templates": [],
+       "similarity": 0
      }
      ```
 
@@ -298,7 +328,7 @@ In dev (and optionally in early beta):
 
 - This feature is primarily for **dev and testing**:
   - It allows testers to explore how different archetype lenses feel.  
-  - In production, you may restrict this behavior or gate it behind `context.debug`.
+  - Clients should not rely on it for production flows.
 
 ---
 
@@ -309,8 +339,7 @@ In dev (and optionally in early beta):
   - Same request shape.  
   - Server switches to streaming mode if:
     - `Accept: text/event-stream`, or  
-    - `context.debug` + some internal flag, or  
-    - a future `options.stream` property.
+    - a future `options.stream` property or internal flag.
 
 The response structure will remain compatible; only delivery will change.
 
@@ -318,7 +347,16 @@ The response structure will remain compatible; only delivery will change.
 
 ## 6. Versioning & Changes
 
-- This contract is v2.0.  
+- Current doc version: **0.2 (Draft)** for the Phase 3 runtime.  
 - When fields change, update:
-  - The version header,  
+  - The version header.  
   - A short “Changelog” section noting what changed (e.g., model changes, new fields, streaming support).
+
+## 7. Changelog
+
+- 0.2 (Draft):
+  - Aligned request/response fields to `PerazziAssistantRequest`/`PerazziAssistantResponse` (sessionId at top level, `context.archetypeVector` added, `mode` limited to `prospect|owner|navigation`).  
+  - Updated response contract to the live payload (no `debug` block, citations now `{ chunkId, title, sourcePath, excerpt }`, guardrail `{ status, reason }`).  
+  - Documented nullable `archetype`, confidence-gated `archetypeBreakdown`, and removed legacy `"auto"` mode language.  
+  - Added observability notes and practical request/response examples.
+- 0.1 (Draft): Initial draft.

@@ -34,6 +34,8 @@ type SearchParams = {
   margin_lt?: string;
   score_archetype?: string;
   min?: string;
+  rerank?: string;
+  snapped?: string;
 };
 
 export async function LogsSection({
@@ -45,7 +47,6 @@ export async function LogsSection({
   resolvedSearchParams,
   tableDensityClass,
   truncPrimary,
-  isCompact,
 }: {
   envFilter?: string;
   endpointFilter?: string;
@@ -55,7 +56,6 @@ export async function LogsSection({
   resolvedSearchParams: SearchParams;
   tableDensityClass: string;
   truncPrimary: number;
-  isCompact: boolean;
 }) {
   try {
     const offset = (page - 1) * LOGS_PAGE_SIZE;
@@ -78,6 +78,8 @@ export async function LogsSection({
       margin_lt: resolvedSearchParams.margin_lt,
       score_archetype: resolvedSearchParams.score_archetype,
       min: resolvedSearchParams.min,
+      rerank: resolvedSearchParams.rerank,
+      snapped: resolvedSearchParams.snapped,
 
       limit: LOGS_PAGE_SIZE + 1,
       offset,
@@ -113,6 +115,8 @@ export async function LogsSection({
             margin_lt: resolvedSearchParams.margin_lt,
             score_archetype: resolvedSearchParams.score_archetype,
             min: resolvedSearchParams.min,
+            rerank: resolvedSearchParams.rerank,
+            snapped: resolvedSearchParams.snapped,
           })
         : null;
 
@@ -137,6 +141,8 @@ export async function LogsSection({
           margin_lt: resolvedSearchParams.margin_lt,
           score_archetype: resolvedSearchParams.score_archetype,
           min: resolvedSearchParams.min,
+          rerank: resolvedSearchParams.rerank,
+          snapped: resolvedSearchParams.snapped,
         })
       : null;
 
@@ -210,7 +216,6 @@ export async function LogsSection({
               logs={logsWithQa}
               tableDensityClass={tableDensityClass}
               truncPrimary={truncPrimary}
-              isCompact={isCompact}
             />
 
             <div className="flex items-center justify-between pt-2 text-xs text-muted-foreground">

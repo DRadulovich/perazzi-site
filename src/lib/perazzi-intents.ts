@@ -1,6 +1,7 @@
-import type { PerazziAssistantRequest } from "@/types/perazzi-assistant";
+import type { PerazziAssistantRequest, PerazziMode, Archetype } from "@/types/perazzi-assistant";
 
 export type RetrievalHints = {
+  mode: PerazziMode;
   intents: string[];
   topics: string[];
   focusEntities: string[];
@@ -139,12 +140,95 @@ const TEMPLATE_GUIDES: Record<string, string> = {
     "- Present upcoming events as a list with **Event — Location — Date** plus how to register or inquire.",
 };
 
+const TEMPLATE_GUIDES_BY_ARCHETYPE: Partial<Record<string, Partial<Record<Archetype, string>>>> = {
+  models: {
+    analyst: [
+      "- Start with a compact comparison table (Platform — Handling — Best-fit disciplines — Tradeoffs).",
+      "- Then give 3–5 decision criteria (fit, POI/rib options, trigger feel, balance).",
+      "- Add a short “How to test” checklist (patterning/POI check, fit checkpoints, trigger feel).",
+      "- Close with a clear decision path (If X → consider A; if Y → consider B).",
+    ].join("\n"),
+
+    achiever: [
+      "- Lead with the performance path: what each option optimizes for consistency and match execution.",
+      "- Map choices to training implications (what changes in mount, sight picture, recovery).",
+      "- Call out discipline-specific setups (trap/skeet/sporting) and why they matter.",
+      "- Close with a “next practice session” plan (what to run, what to measure).",
+    ].join("\n"),
+  },
+
+  service: {
+    legacy: [
+      "- Lead with preservation: storage, corrosion prevention, and conservative post-shoot care.",
+      "- Include documentation: record serial, service history, and any fit/POI changes over time.",
+      "- Provide a conservative schedule plus red flags that justify professional inspection.",
+      "- Always recommend Perazzi-authorized service centers; avoid DIY gunsmithing or timing work.",
+    ].join("\n"),
+  },
+
+  // NOTE: no neutral "bespoke" template exists today; keep it that way for neutral parity.
+  bespoke: {
+    prestige: [
+      "- Start with a curated set of options (receiver style, engraving direction, wood/stock figure, finish).",
+      "- Offer 2–4 tasteful pathways rather than an exhaustive list.",
+      "- Keep the tone discreet and focused on fit + personal preference.",
+      "- End with a clear next step: consultation/fitting + dealer introduction; avoid quoting prices.",
+    ].join("\n"),
+  },
+};
+
+const ALLOWED_MODES: PerazziMode[] = ["prospect", "owner", "navigation"];
+
+function normalizeMode(input: unknown): PerazziMode | null {
+  if (typeof input !== "string") return null;
+  const cleaned = input.trim().toLowerCase();
+  return (ALLOWED_MODES as string[]).includes(cleaned) ? (cleaned as PerazziMode) : null;
+}
+
+function inferMode(
+  latestQuestion: string,
+  contextMode: PerazziMode | null,
+  intents: Set<string>,
+): PerazziMode {
+  const q = latestQuestion.toLowerCase();
+
+  const hasNavigationSignal =
+    intents.has("dealers") ||
+    intents.has("events") ||
+    /\b(where\s+can\s+i\s+(find|get|buy|try|contact|reach)|link\s+me|show\s+me|what\s+page|contact|dealer|stockist|authorized\s+dealer|near\s+me)\b/i.test(
+      q,
+    );
+
+  const hasOwnerSignal =
+    intents.has("service") ||
+    /\b(my\s+(gun|perazzi|shotgun)|serial(\s*number)?|s\/n|maintenance|servic(e|ing)|clean(ing)?|repair|timing|warranty)\b/i.test(
+      q,
+    );
+
+  const hasProspectSignal =
+    intents.has("models") ||
+    intents.has("bespoke") ||
+    /\b(mx\s?(8|10|12|2000)?|mx8|mx10|mx12|mx2000|high\s*tech|hts?|tm1|tmx|compare|difference|vs\.?|which\s+(model|platform)|recommend|bespoke|atelier|made\s+to\s+order|sco|sc3|lusso)\b/i.test(
+      q,
+    );
+
+  if (hasNavigationSignal) return "navigation";
+  if (hasOwnerSignal) return "owner";
+  if (hasProspectSignal) return "prospect";
+
+  if (contextMode === "owner" || contextMode === "navigation") return contextMode;
+
+  return "prospect";
+}
+
 export function detectRetrievalHints(
   latestQuestion: string | null,
   context?: PerazziAssistantRequest["context"],
 ): RetrievalHints {
+  const contextMode = normalizeMode(context?.mode);
+
   if (!latestQuestion) {
-    return { intents: [], topics: [], focusEntities: [], keywords: [] };
+    return { mode: contextMode ?? "prospect", intents: [], topics: [], focusEntities: [], keywords: [] };
   }
   const lowerQuestion = latestQuestion.toLowerCase();
   const intents = new Set<string>();
@@ -157,6 +241,7 @@ export function detectRetrievalHints(
     }
   });
 
+  const mode = inferMode(latestQuestion, contextMode, intents);
   const focusEntities = new Set<string>();
   const keywords = new Set<string>();
 
@@ -180,7 +265,7 @@ export function detectRetrievalHints(
     topics.add(`platform_${context.platformSlug.toLowerCase()}`);
   }
 
-  if (context?.mode === "prospect") {
+  if (mode === "prospect") {
     topics.add("models");
     topics.add("platforms");
   }
@@ -203,6 +288,7 @@ export function detectRetrievalHints(
   }
 
   return {
+    mode,
     intents: Array.from(intents),
     topics: Array.from(topics),
     focusEntities: Array.from(focusEntities),
@@ -217,15 +303,118 @@ function slugify(input: string) {
     .replaceAll(/(?:^-+|-+$)/g, "");
 }
 
-export function buildResponseTemplates(hints: RetrievalHints): string[] {
+function getTemplateGuide(intent: string, archetype: Archetype | null): string | undefined {
+  if (archetype) {
+    const variant = TEMPLATE_GUIDES_BY_ARCHETYPE[intent]?.[archetype];
+    if (variant) return variant;
+  }
+  return TEMPLATE_GUIDES[intent];
+}
+
+export function buildResponseTemplates(hints: RetrievalHints, archetype?: Archetype | null): string[] {
+  const resolvedArchetype = archetype ?? null;
   const templates = new Set<string>();
   hints.intents.forEach((intent) => {
-    if (TEMPLATE_GUIDES[intent]) {
-      templates.add(TEMPLATE_GUIDES[intent]);
-    }
+    const guide = getTemplateGuide(intent, resolvedArchetype);
+    if (guide) templates.add(guide);
   });
+
+  // Preserve existing fallback behavior when nothing matched but the question is model-related.
   if (!templates.size && hints.topics.includes("models")) {
-    templates.add(TEMPLATE_GUIDES.models);
+    const fallback = getTemplateGuide("models", resolvedArchetype) ?? TEMPLATE_GUIDES.models;
+    templates.add(fallback);
   }
   return Array.from(templates);
+}
+
+function __assertEqual(name: string, actual: unknown, expected: unknown) {
+  if (actual !== expected) {
+    throw new Error(
+      `[perazzi-intents] detectRetrievalHints mode self-test failed: ${name} (expected ${expected}, got ${String(actual)})`,
+    );
+  }
+}
+
+function __assert(name: string, condition: boolean) {
+  if (!condition) {
+    throw new Error(`[perazzi-intents] template self-test failed: ${name}`);
+  }
+}
+
+if (process.env.NODE_ENV === "development") {
+  const ctxProspect: PerazziAssistantRequest["context"] = { mode: "prospect" };
+
+  __assertEqual(
+    "service my gun => owner",
+    detectRetrievalHints("How often should I service my gun?", ctxProspect).mode,
+    "owner",
+  );
+
+  __assertEqual(
+    "where can I find dealer => navigation",
+    detectRetrievalHints("Where can I find a dealer? Link me to one.", ctxProspect).mode,
+    "navigation",
+  );
+
+  __assertEqual(
+    "mx8 vs high tech => prospect",
+    detectRetrievalHints("Explain MX8 vs High Tech", ctxProspect).mode,
+    "prospect",
+  );
+
+  const ctxOwner: PerazziAssistantRequest["context"] = { mode: "owner" };
+  __assertEqual(
+    "neutral follow-up keeps owner",
+    detectRetrievalHints("Thanks", ctxOwner).mode,
+    "owner",
+  );
+
+  const baseHints: RetrievalHints = {
+    mode: "prospect",
+    intents: ["models"],
+    topics: ["models", "specs"],
+    focusEntities: [],
+    keywords: [],
+  };
+
+  const neutralTemplates = buildResponseTemplates(baseHints, null);
+  __assert("neutral uses the existing models template", neutralTemplates.includes(TEMPLATE_GUIDES.models));
+
+  const analystTemplates = buildResponseTemplates(baseHints, "analyst");
+  __assert("models+analyst selects a variant", analystTemplates.some((t) => t.includes("How to test")));
+  __assert("models+analyst does not include neutral models template", !analystTemplates.includes(TEMPLATE_GUIDES.models));
+
+  const achieverTemplates = buildResponseTemplates(baseHints, "achiever");
+  __assert("models+achiever selects a variant", achieverTemplates.some((t) => t.includes("next practice session")));
+
+  const serviceHints: RetrievalHints = {
+    mode: "owner",
+    intents: ["service"],
+    topics: ["service"],
+    focusEntities: [],
+    keywords: [],
+  };
+  const serviceLegacyTemplates = buildResponseTemplates(serviceHints, "legacy");
+  __assert("service+legacy includes authorized service guidance", serviceLegacyTemplates.some((t) => t.toLowerCase().includes("authorized")));
+  __assert("service+legacy discourages diy gunsmithing", serviceLegacyTemplates.some((t) => t.toLowerCase().includes("avoid diy")));
+
+  const bespokeHints: RetrievalHints = {
+    mode: "prospect",
+    intents: ["bespoke"],
+    topics: ["bespoke", "models"],
+    focusEntities: [],
+    keywords: [],
+  };
+  const bespokeNeutral = buildResponseTemplates(bespokeHints, null);
+  __assert("bespoke+null falls back to models template (current behavior)", bespokeNeutral.includes(TEMPLATE_GUIDES.models));
+
+  const bespokePrestige = buildResponseTemplates(bespokeHints, "prestige");
+  __assert("bespoke+prestige selects bespoke variant", bespokePrestige.some((t) => t.toLowerCase().includes("curated")));
+
+  const forbidden = ["analyst", "achiever", "prestige", "legacy", "loyalist"];
+  const all = [...neutralTemplates, ...analystTemplates, ...achieverTemplates, ...serviceLegacyTemplates, ...bespokePrestige];
+  __assert(
+    "templates should not mention archetype labels",
+    !all.some((t) => forbidden.some((w) => t.toLowerCase().includes(w))),
+  );
 }

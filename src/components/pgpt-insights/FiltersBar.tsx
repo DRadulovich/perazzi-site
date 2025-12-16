@@ -42,6 +42,9 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
 
   const gateway = get("gateway") || "any";
   const qa = get("qa") || "any";
+  const rerank = get("rerank") || "any";
+  const snapped = get("snapped") || "any";
+  const marginLt = get("margin_lt") || "any";
 
   function replaceParams(next: URLSearchParams) {
     const qs = next.toString();
@@ -65,7 +68,10 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
           key === "score" ||
           key === "archetype" ||
           key === "gateway" ||
-          key === "qa") &&
+          key === "qa" ||
+          key === "rerank" ||
+          key === "snapped" ||
+          key === "margin_lt") &&
         value === "any"
       ) {
         next.delete(key);
@@ -217,6 +223,23 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
 
     if (qa !== "any") out.push({ key: "qa", label: `qa: ${qa}`, onRemove: () => removeParam("qa") });
 
+    if (rerank !== "any")
+      out.push({ key: "rerank", label: `rerank: ${rerank === "true" ? "on" : "off"}`, onRemove: () => removeParam("rerank") });
+
+    if (snapped !== "any")
+      out.push({
+        key: "snapped",
+        label: `confidence: ${snapped === "true" ? "snapped" : "mixed"}`,
+        onRemove: () => removeParam("snapped"),
+      });
+
+    if (marginLt !== "any")
+      out.push({
+        key: "margin_lt",
+        label: `margin < ${marginLt}`,
+        onRemove: () => removeParam("margin_lt"),
+      });
+
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -234,6 +257,9 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
     modelUrl,
     gateway,
     qa,
+    rerank,
+    snapped,
+    marginLt,
     defaultDays,
   ]);
 
@@ -475,6 +501,46 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
               <option value="open">open</option>
               <option value="resolved">resolved</option>
               <option value="none">none</option>
+            </select>
+          </label>
+
+          <label className="text-sm">
+            Rerank:
+            <select
+              value={rerank}
+              onChange={(e) => setParam("rerank", e.target.value)}
+              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
+            >
+              <option value="any">any</option>
+              <option value="true">enabled</option>
+              <option value="false">disabled</option>
+            </select>
+          </label>
+
+          <label className="text-sm">
+            Confidence:
+            <select
+              value={snapped}
+              onChange={(e) => setParam("snapped", e.target.value)}
+              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
+            >
+              <option value="any">any</option>
+              <option value="true">snapped</option>
+              <option value="false">mixed</option>
+            </select>
+          </label>
+
+          <label className="text-sm">
+            Margin &lt;
+            <select
+              value={marginLt}
+              onChange={(e) => setParam("margin_lt", e.target.value)}
+              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
+            >
+              <option value="any">any</option>
+              <option value="0.08">0.08</option>
+              <option value="0.12">0.12</option>
+              <option value="0.20">0.20</option>
             </select>
           </label>
         </div>

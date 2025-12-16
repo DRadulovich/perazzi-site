@@ -37,6 +37,10 @@ export async function GET(
       session_id: string | null;
       model: string | null;
       used_gateway: boolean | null;
+      metadata: unknown | null;
+      page_url?: string | null;
+      user_id?: string | null;
+      mode?: string | null;
       prompt: string | null;
       response: string | null;
       low_confidence: boolean | null;
@@ -65,6 +69,9 @@ export async function GET(
         session_id,
         model,
         used_gateway,
+        metadata,
+        page_url,
+        user_id,
         prompt,
         response,
         low_confidence,
@@ -79,7 +86,8 @@ export async function GET(
         coalesce(metadata->'retrievedChunks', '[]'::jsonb) as retrieved_chunks,
         metadata->'archetypeScores' as archetype_scores,
         (metadata->>'archetypeConfidence')::float as archetype_confidence,
-        metadata->'archetypeDecision' as archetype_decision
+        metadata->'archetypeDecision' as archetype_decision,
+        metadata->>'mode' as mode
       from perazzi_conversation_logs
       where id = $1::uuid
       limit 1;
@@ -126,6 +134,9 @@ export async function GET(
         session_id: r.session_id ?? null,
         model: r.model ?? null,
         used_gateway: r.used_gateway ?? null,
+        metadata: r.metadata ?? null,
+        page_url: r.page_url ?? null,
+        user_id: r.user_id ?? null,
         prompt: r.prompt ?? "",
         response: r.response ?? "",
         low_confidence: r.low_confidence ?? null,
@@ -141,6 +152,7 @@ export async function GET(
         archetype_scores: r.archetype_scores ?? null,
         archetype_confidence: r.archetype_confidence ?? null,
         archetype_decision: r.archetype_decision ?? null,
+        mode: r.mode ?? null,
       },
       qa_latest,
       qa_history,

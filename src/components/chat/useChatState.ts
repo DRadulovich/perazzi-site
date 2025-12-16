@@ -10,6 +10,21 @@ import type {
 } from "@/types/perazzi-assistant";
 import { getOrCreateSessionId } from "@/lib/session";
 
+type ApiMode = NonNullable<PerazziAssistantResponse["mode"]>;
+
+function normalizeOutgoingMode(input: unknown): ApiMode | undefined {
+  if (input === null || input === undefined) return undefined;
+  const raw = String(input).trim().toLowerCase();
+
+  if (raw === "heritage") return "navigation";
+
+  if (raw === "prospect" || raw === "owner" || raw === "navigation") {
+    return raw as ApiMode;
+  }
+
+  return undefined;
+}
+
 export type ChatEntry = {
   id: string;
   role: "system" | "assistant" | "user";
@@ -140,12 +155,16 @@ export function useChatState(
       const resetRegex = /^please\s+clear\s+your\s+memory\s+of\s+my\s+archetype\.?$/i;
       const isArchetypeReset = resetRegex.test(payload.question.trim());
 
+      const normalizedMode =
+        normalizeOutgoingMode(payload.context?.mode) ??
+        normalizeOutgoingMode(context.mode);
+
       const effectiveContext: ChatContextShape = {
         pageUrl: payload.context?.pageUrl ?? context.pageUrl,
         locale: payload.context?.locale ?? context.locale,
         modelSlug: payload.context?.modelSlug ?? context.modelSlug,
         platformSlug: payload.context?.platformSlug ?? context.platformSlug,
-        mode: payload.context?.mode ?? context.mode,
+        mode: normalizedMode,
         archetype: isArchetypeReset
           ? null
           : payload.context?.archetype ?? context.archetype ?? null,
@@ -194,12 +213,33 @@ export function useChatState(
         archetypeBreakdown: data.archetypeBreakdown,
       };
       addMessage(assistantEntry);
-      setContext((prev) => ({
-        ...prev,
-        archetype: data.archetype ?? prev.archetype ?? null,
-        archetypeVector:
-          data.archetypeBreakdown?.vector ?? prev.archetypeVector ?? null,
-      }));
+      setContext((prev) => {
+        // Explicit reset should stay cleared, regardless of server output.
+        if (isArchetypeReset) {
+          return {
+            ...prev,
+            mode: data.mode ?? prev.mode,
+            archetype: null,
+            archetypeVector: null,
+          };
+        }
+
+        // Only fall back when the server omitted the field (undefined).
+        const nextArchetype =
+          data.archetype !== undefined ? data.archetype : prev.archetype ?? null;
+
+        const nextArchetypeVector =
+          data.archetypeBreakdown?.vector !== undefined
+            ? data.archetypeBreakdown.vector
+            : prev.archetypeVector ?? null;
+
+        return {
+          ...prev,
+          mode: data.mode ?? prev.mode,
+          archetype: nextArchetype,
+          archetypeVector: nextArchetypeVector,
+        };
+      });
       options.onResponseMeta?.({
         citations: data.citations,
         guardrail: data.guardrail,

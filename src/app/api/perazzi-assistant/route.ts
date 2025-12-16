@@ -188,6 +188,12 @@ function getLowConfidenceThreshold() {
   return Number.isFinite(value) ? value : 0;
 }
 
+function getArchetypeConfidenceMin(): number {
+  const raw = Number(process.env.PERAZZI_ARCHETYPE_CONFIDENCE_MIN);
+  if (Number.isFinite(raw) && raw > 0) return raw;
+  return 0.08;
+}
+
 const ALLOWED_ARCHETYPES: Archetype[] = [
   "loyalist",
   "prestige",
@@ -196,10 +202,45 @@ const ALLOWED_ARCHETYPES: Archetype[] = [
   "legacy",
 ];
 
+function computeArchetypeConfidenceMetrics(vector: Record<string, unknown> | null | undefined) {
+  const threshold = getArchetypeConfidenceMin();
+
+  const scored = ALLOWED_ARCHETYPES.map((a) => {
+    const v = Number((vector as Record<string, unknown> | null | undefined)?.[a] ?? 0);
+    return { a, v: Number.isFinite(v) ? v : 0 };
+  });
+
+  scored.sort((x, y) => {
+    const diff = y.v - x.v;
+    if (diff !== 0) return diff;
+    return ALLOWED_ARCHETYPES.indexOf(x.a) - ALLOWED_ARCHETYPES.indexOf(y.a);
+  });
+
+  const winner = scored[0]?.a ?? null;
+  const runnerUp = scored[1]?.a ?? null;
+  const margin = (scored[0]?.v ?? 0) - (scored[1]?.v ?? 0);
+
+  return {
+    archetypeWinner: winner,
+    archetypeRunnerUp: runnerUp,
+    archetypeConfidenceMargin: margin,
+    archetypeSnapped: margin >= threshold,
+  };
+}
+
+const ALLOWED_MODES: PerazziMode[] = ["prospect", "owner", "navigation"];
+
 function normalizeArchetype(input: string): Archetype | null {
   const cleaned = input.trim().toLowerCase();
   if (!cleaned) return null;
   const match = ALLOWED_ARCHETYPES.find((a) => a === cleaned);
+  return match ?? null;
+}
+
+function normalizeMode(input: unknown): PerazziMode | null {
+  if (typeof input !== "string") return null;
+  const cleaned = input.trim().toLowerCase();
+  const match = ALLOWED_MODES.find((mode) => mode === cleaned);
   return match ?? null;
 }
 
@@ -345,10 +386,10 @@ export async function POST(request: Request) {
 
     const sanitizedMessages = sanitizeMessages(fullBody.messages);
     const latestQuestion = getLatestUserContent(sanitizedMessages);
-    const hints: any = detectRetrievalHints(latestQuestion, body?.context);
+    const hints: RetrievalHints = detectRetrievalHints(latestQuestion, body?.context);
 
     const effectiveMode: PerazziMode =
-      hints?.mode ?? body?.context?.mode ?? "prospect";
+      normalizeMode(hints.mode) ?? normalizeMode(body?.context?.mode) ?? "prospect";
 
     // Soft-meta origin handler: answer who built/designed the assistant, without exposing internals.
     if (detectAssistantOriginQuestion(latestQuestion)) {
@@ -481,19 +522,23 @@ export async function POST(request: Request) {
 
     const archetypeContext: ArchetypeContext = {
       mode: effectiveMode,
-      pageUrl: body?.context?.pageUrl ?? null,
-      modelSlug: body?.context?.modelSlug ?? null,
-      platformSlug: body?.context?.platformSlug ?? null,
-      userMessage: latestQuestion ?? "",
-      devOverrideArchetype: archetypeOverride,
-    };
+    pageUrl: body?.context?.pageUrl ?? null,
+    modelSlug: body?.context?.modelSlug ?? null,
+    platformSlug: body?.context?.platformSlug ?? null,
+    intents: Array.isArray(hints?.intents) ? hints.intents : [],
+    topics: Array.isArray(hints?.topics) ? hints.topics : [],
+    userMessage: latestQuestion ?? "",
+    devOverrideArchetype: archetypeOverride,
+  };
 
     const archetypeBreakdown = computeArchetypeBreakdown(
       archetypeContext,
       previousVector,
     );
+    const archetypeMetrics = computeArchetypeConfidenceMetrics(archetypeBreakdown.vector);
     const archetypeClassification = buildArchetypeClassification(archetypeBreakdown);
-    const effectiveArchetype = archetypeClassification.archetype;
+    const effectiveArchetype: Archetype | null =
+      archetypeOverride ?? archetypeBreakdown.primary ?? null;
 
     if (archetypeOverride) {
       const answer = `Understood. I’ll answer from the perspective of a ${capitalize(
@@ -558,6 +603,7 @@ export async function POST(request: Request) {
               mode: effectiveMode ?? null,
               guardrailStatus: "blocked",
               guardrailReason: guardrailBlock.reason ?? null,
+              ...archetypeMetrics,
             },
           },
           model: OPENAI_MODEL,
@@ -585,8 +631,22 @@ export async function POST(request: Request) {
 
     const guardrail = { status: "ok" as const, reason: null as string | null };
 
-    const responseTemplates = buildResponseTemplates(hints);
-    const retrieval = await retrievePerazziContext(fullBody, hints);
+    const responseTemplates = buildResponseTemplates(hints, effectiveArchetype);
+    const baseContext = body.context ?? {};
+
+    const retrievalContext = {
+      ...baseContext,
+      mode: effectiveMode,
+      archetypeVector: archetypeBreakdown.vector,
+    };
+
+    const retrievalBody = {
+      ...fullBody,
+      context: retrievalContext,
+    };
+
+    const retrieval = await retrievePerazziContext(retrievalBody, hints);
+    const loggingMetrics = { ...archetypeMetrics, ...retrieval.rerankMetrics };
     if (retrieval.maxScore < getLowConfidenceThreshold()) {
       logInteraction(
         fullBody,
@@ -623,6 +683,7 @@ export async function POST(request: Request) {
       guardrail,
       hints,
       fullBody.sessionId ?? null,
+      loggingMetrics,
     );
 
     logInteraction(
@@ -735,6 +796,7 @@ async function generateAssistantAnswer(
   guardrail?: { status: "ok" | "blocked"; reason: string | null },
   hints?: RetrievalHints,
   sessionId?: string | null,
+  extraMetadata?: Record<string, unknown> | null,
 ): Promise<string> {
   const systemPrompt = buildSystemPrompt(context, chunks, templates, mode, archetype);
   const toneNudge =
@@ -760,6 +822,9 @@ async function generateAssistantAnswer(
       chunkId: chunk.chunkId,
       score: chunk.score,
     }));
+  }
+  if (extraMetadata && typeof extraMetadata === "object") {
+    Object.assign(metadata, extraMetadata);
   }
 
   const interactionContext: AiInteractionContext = {

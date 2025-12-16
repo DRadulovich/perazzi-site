@@ -1,6 +1,6 @@
 # PerazziGPT v2 – Validation & Testing
 
-> Version: 0.1 (Draft)  
+> Version: 0.2 (Draft)  
 > Owner: David Radulovich  
 > File: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-2/V2_REDO_validation.md`  
 > Related docs:  
@@ -154,6 +154,43 @@ At minimum:
 
 Over time, you may template these tests and build a regression harness.
 
+**Note:** You can also validate retrieval via the real `/api/perazzi-assistant` route and inspect `/admin/pgpt-insights` logs, since reranking happens at runtime (after raw embedding search).
+
+### 2.4 Reranking Validation (Embedding candidates → rerank → top-k)
+
+Reranking pulls more candidates (`candidateLimit`), reorders them, then returns the top 12. Validate that rerank changes ordering without violating visibility/guardrails.
+
+**Expected outcomes:**
+
+- Ordering shifts when rerank is ON; grounding docs remain the same category and respect status/visibility.  
+- Rerank never surfaces pricing, hidden, or deprecated chunks.  
+- Turning rerank OFF should revert to similarity order while staying relevant.
+
+**Rerank ON vs OFF comparisons (run both modes):**
+
+- **Platform comparison (Prospect/analyst intent)**  
+  - Prompt: “What’s the difference between the MX8 and the High Tech?”  
+  - Expect ON: platform-detail chunks reordered to favor clearer comparisons; citations stay in model-details docs.  
+  - Expect OFF: similarity-ordered list may mix overview + detail; still relevant.  
+  - Never: pricing lists, dealer lists, or brand-narrative overwhelm the top 12.
+
+- **Owner service (service intent)**  
+  - Prompt: “My top lever is nearing center. What should I do?”  
+  - Expect ON: service-center + warning content prioritized; no DIY steps.  
+  - Expect OFF: similar content but possibly flatter ordering.  
+  - Never: DIY gunsmithing steps, hidden/internal docs, pricing.
+
+- **Navigation / dealer (navigation intent)**  
+  - Prompt: “Where can I find a Perazzi dealer near me?”  
+  - Expect ON: dealer list + site-navigation chunks bubble to the top; terse orientation.  
+  - Expect OFF: relevant but less sharply ordered navigation chunks.  
+  - Never: platform comparison docs outranking dealer info; pricing content.
+
+- **Template stability check**  
+  - Run any of the above with archetype/mode variations.  
+  - Expect: rerank reorders grounding only; it does not swap in a different template or alter guardrails.  
+  - Never: rerank pulling in hidden or inactive chunks.
+
 ---
 
 ## 3. Guardrail Validation
@@ -284,21 +321,38 @@ For each mode, craft a few tests and inspect responses.
 
 ### 4.2 Archetype flavor tests (manual read)
 
-For a given mode, manually read answers and check if the tone shifts appropriately when the system is told to “treat this as” a specific archetype (in dev/testing).
+Runtime does not read system-role archetype labels. Validate flavor using supported signals.
 
-Example prompts (dev-only; not user-visible archetype labels):
+- **Method A – Natural signal prompts (preferred)**  
+  - Use prompts with strong archetype signals that should naturally “snap”:  
+    - Analyst-ish: POI, rib height, patterning trade-offs.  
+    - Legacy-ish: stewardship, documentation, decades of use.  
+    - Prestige-ish: engraving, bespoke experience.  
+    - Achiever-ish: performance, training, competition.  
+  - Read answers for framing shifts while facts/guardrails remain the same.
 
-- Prospect + Analyst:  
-  > “(System: user is analytically minded) I’m trying to understand how the MX8 and High Tech actually behave differently. Can you break it down?”
-
-- Owner + Legacy:  
-  > “(System: user is a Legacy Builder) I’d like to keep this Perazzi right for my family to use for decades. How should I think about service over time?”
+- **Method B – Context seeding (dev/testing only)**  
+  - In a harness or direct API call, set `context.archetypeVector` (and mode if needed).  
+  - Do **not** attempt system-role injection or expose archetype labels to users.  
+  - Use this to check flavor shifts without changing retrieval.
 
 **Checks:**
 
 - Analyst → answers more structured, explicit trade-offs, less flowery.  
 - Legacy → more emphasis on time horizon, documentation, careful choices.  
-- In all cases: facts and guardrails do not change; only framing does.
+- In all cases: guardrails and factual content do not change; only framing does.
+
+### 4.3 Archetype Confidence Validation (Snapped vs Mixed)
+
+- **Snapped:** Confident primary archetype winner selected; archetype-specific templates/voice guidance apply.  
+- **Mixed/Balanced:** No primary archetype (winner margin low); vector still exists as a soft signal, but templates stay neutral.
+
+Validation steps:
+
+- Trigger a snapped case via natural signals (e.g., technical POI question) and confirm the archetype-specific template is used while retrieval stays the same.  
+- Trigger a mixed case (ambiguous ask with blended signals) and confirm the response uses neutral templates/structure—no archetype-specific tone or slotting.  
+- Ensure mixed/balanced responses still respect guardrails and do not mislabel the user.  
+- When switching between snapped and mixed, retrieval/citations should remain appropriate; only framing shifts when snapped.
 
 ---
 
@@ -358,6 +412,16 @@ For small content edits (e.g., typo fixes in a single doc), a basic retrieval va
 
 ---
 
+## 6.1 Observability & Logging Validation (Tuning telemetry)
+
+Validate that tuning metadata is emitted and stored for three situations. Check via `/admin/pgpt-insights` (preferred) or the interaction log rows in the DB.
+
+- **Normal request:** Confirm logs show rerank flag, `candidateLimit`, and `topReturnedChunks` with scores. Archetype metadata should show winner, runner-up, margin, and `snapped = true/false`.  
+- **Mixed-confidence archetype (primary null / mixed):** Confirm `snapped = false`, winner margin low, neutral template selected; rerank metadata still present.  
+- **Guardrail-blocked request:** Confirm guardrail reason is logged, archetype confidence captured, and rerank metadata is present (if the flow reached retrieval). No hidden/blocked content should appear in returned chunks.
+
+---
+
 ## 7. Automation Roadmap (Optional)
 
 Over time, you may wish to:
@@ -370,3 +434,9 @@ Over time, you may wish to:
   - A pre-release checklist for major ingest updates.
 
 For now, this document serves as the **manual playbook** for validating that PerazziGPT v2 remains on-spec as you evolve the corpus and behavior docs.
+
+---
+
+## 8. Changelog
+
+- **v0.2 (Draft):** Added rerank validation, archetype snapped vs mixed validation, observability/logging checks, and updated archetype flavor testing approach to match runtime.

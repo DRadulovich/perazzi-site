@@ -16,6 +16,8 @@ export interface ArchetypeContext {
   pageUrl?: string | null;
   modelSlug?: string | null;
   platformSlug?: string | null;
+  intents?: string[] | null;
+  topics?: string[] | null;
   /** Latest user message content. */
   userMessage: string;
   /** If present, this wins over inferred primary archetype. */
@@ -42,6 +44,13 @@ export const NEUTRAL_ARCHETYPE_VECTOR: ArchetypeVector = {
 };
 
 const DEFAULT_SMOOTHING = 0.75; // 75% previous, 25% new per message
+const ARCHETYPE_ORDER: Archetype[] = [
+  "loyalist",
+  "prestige",
+  "analyst",
+  "achiever",
+  "legacy",
+];
 
 export function getNeutralArchetypeVector(): ArchetypeVector {
   return { ...NEUTRAL_ARCHETYPE_VECTOR };
@@ -95,9 +104,241 @@ export function pickPrimaryArchetype(
   return best;
 }
 
-function messageIncludesAny(text: string, words: string[]): boolean {
-  const lower = text.toLowerCase();
-  return words.some((word) => lower.includes(word.toLowerCase()));
+function getArchetypeConfidenceMin(): number {
+  const raw = Number(process.env.PERAZZI_ARCHETYPE_CONFIDENCE_MIN);
+  if (Number.isFinite(raw) && raw > 0) return raw;
+  return 0.08;
+}
+
+function getWinnerRunnerUpAndMargin(vector: ArchetypeVector): {
+  winner: Archetype;
+  winnerScore: number;
+  runnerUp: Archetype;
+  runnerUpScore: number;
+  margin: number;
+} {
+  const scored = ARCHETYPE_ORDER.map((k) => {
+    const v = Number(vector[k] ?? 0);
+    return { k, v: Number.isFinite(v) ? v : 0 };
+  });
+
+  scored.sort((a, b) => {
+    const diff = b.v - a.v;
+    if (diff !== 0) return diff;
+    return ARCHETYPE_ORDER.indexOf(a.k) - ARCHETYPE_ORDER.indexOf(b.k);
+  });
+
+  const winner = scored[0]?.k ?? ARCHETYPE_ORDER[0];
+  const runnerUp = scored[1]?.k ?? ARCHETYPE_ORDER[1];
+  const winnerScore = scored[0]?.v ?? 0;
+  const runnerUpScore = scored[1]?.v ?? 0;
+  const margin = winnerScore - runnerUpScore;
+
+  return { winner, winnerScore, runnerUp, runnerUpScore, margin };
+}
+
+function normalizeForMatch(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/[’‘]/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function tokenizeToWordSet(normalizedMessage: string): Set<string> {
+  const tokens = normalizedMessage.match(/[a-z0-9']+/g) ?? [];
+  return new Set(tokens);
+}
+
+function messageIncludesAny(message: string, needles: string[]): boolean {
+  const normalizedMessage = normalizeForMatch(message);
+  if (!normalizedMessage) return false;
+
+  const tokenSet = tokenizeToWordSet(normalizedMessage);
+
+  for (const rawNeedle of needles) {
+    if (!rawNeedle) continue;
+    const needle = normalizeForMatch(rawNeedle);
+    if (!needle) continue;
+
+    if (/\s/.test(needle)) {
+      if (normalizedMessage.includes(needle)) return true;
+      continue;
+    }
+
+    if (tokenSet.has(needle)) return true;
+  }
+
+  return false;
+}
+
+function __assertEqual(name: string, actual: boolean, expected: boolean) {
+  if (actual !== expected) {
+    throw new Error(
+      `[perazzi-archetypes] self-test failed: ${name} (expected ${expected}, got ${actual})`
+    );
+  }
+}
+
+if (process.env.NODE_ENV === "development") {
+  __assertEqual(
+    "broadcast should not match cast",
+    messageIncludesAny("broadcast", ["cast"]),
+    false
+  );
+  __assertEqual(
+    "casting should not match cast",
+    messageIncludesAny("casting", ["cast"]),
+    false
+  );
+  __assertEqual(
+    "cast as token should match cast",
+    messageIncludesAny("my cast is broken", ["cast"]),
+    true
+  );
+  __assertEqual(
+    "phrase match: point of impact",
+    messageIncludesAny("Point of Impact matters", ["point of impact"]),
+    true
+  );
+  __assertEqual(
+    "phrase match across whitespace normalization",
+    messageIncludesAny("point\nof\timpact", ["point of impact"]),
+    true
+  );
+
+  const threshold = getArchetypeConfidenceMin();
+  const pickPrimaryForTest = (v: ArchetypeVector) => {
+    const { winner, margin } = getWinnerRunnerUpAndMargin(v);
+    return margin >= threshold ? winner : null;
+  };
+
+  const mixedVector: ArchetypeVector = {
+    loyalist: 0.2,
+    prestige: 0.2,
+    analyst: 0.2,
+    achiever: 0.2,
+    legacy: 0.2,
+  };
+
+  const strongAnalystVector: ArchetypeVector = {
+    loyalist: 0.05,
+    prestige: 0.05,
+    analyst: 0.7,
+    achiever: 0.1,
+    legacy: 0.1,
+  };
+
+  const borderlineVector: ArchetypeVector = {
+    loyalist: 0.26,
+    prestige: 0.25,
+    analyst: 0.25,
+    achiever: 0.12,
+    legacy: 0.12,
+  };
+
+  __assertEqual(
+    "mixed vector => primary null",
+    pickPrimaryForTest(mixedVector) === null,
+    true
+  );
+  __assertEqual(
+    "strong analyst vector => primary analyst",
+    pickPrimaryForTest(strongAnalystVector) === "analyst",
+    true
+  );
+  __assertEqual(
+    "borderline vector => primary null",
+    pickPrimaryForTest(borderlineVector) === null,
+    true
+  );
+
+  const strongLegacyCtx: ArchetypeContext = {
+    mode: "prospect",
+    pageUrl: "/perazzi/bespoke",
+    modelSlug: "sco",
+    platformSlug: null,
+    userMessage: "This is an heirloom. I want to preserve it and pass it down to my kids.",
+    devOverrideArchetype: null,
+  };
+
+  const legacyBreakdown = computeArchetypeBreakdown(
+    strongLegacyCtx,
+    getNeutralArchetypeVector()
+  );
+
+  __assertEqual(
+    "strong legacy language should outweigh prestige priors",
+    (legacyBreakdown.vector.legacy ?? 0) > (legacyBreakdown.vector.prestige ?? 0),
+    true
+  );
+
+  const vagueCtx: ArchetypeContext = {
+    mode: "prospect",
+    pageUrl: "/perazzi/bespoke",
+    modelSlug: "sco",
+    platformSlug: null,
+    userMessage: "Tell me about Perazzi.",
+    devOverrideArchetype: null,
+  };
+
+  const vagueBreakdown = computeArchetypeBreakdown(vagueCtx, getNeutralArchetypeVector());
+
+  __assertEqual(
+    "vague prompt should still be guided by priors (prestige tends to rise)",
+    (vagueBreakdown.vector.prestige ?? 0) > 0.2,
+    true
+  );
+
+  const hintsOnlyAnalystCtx: ArchetypeContext = {
+    mode: null,
+    pageUrl: null,
+    modelSlug: null,
+    platformSlug: null,
+    intents: ["models"],
+    topics: ["specs"],
+    userMessage: "Tell me about Perazzi.",
+    devOverrideArchetype: null,
+  };
+
+  const hintsAnalystBreakdown = computeArchetypeBreakdown(
+    hintsOnlyAnalystCtx,
+    getNeutralArchetypeVector()
+  );
+
+  __assertEqual(
+    "hints (specs/models) should gently nudge analyst above neutral",
+    (hintsAnalystBreakdown.vector.analyst ?? 0) > 0.205,
+    true
+  );
+
+  __assertEqual(
+    "hints alone should not snap primary",
+    hintsAnalystBreakdown.primary === null,
+    true
+  );
+
+  const hintsOnlyLegacyCtx: ArchetypeContext = {
+    mode: null,
+    pageUrl: null,
+    modelSlug: null,
+    platformSlug: null,
+    intents: ["heritage"],
+    topics: ["history"],
+    userMessage: "Tell me about Perazzi.",
+    devOverrideArchetype: null,
+  };
+
+  const hintsLegacyBreakdown = computeArchetypeBreakdown(
+    hintsOnlyLegacyCtx,
+    getNeutralArchetypeVector()
+  );
+
+  __assertEqual(
+    "hints (history/heritage) should gently nudge legacy above neutral",
+    (hintsLegacyBreakdown.vector.legacy ?? 0) > 0.205,
+    true
+  );
 }
 
 function initZeroVector(): ArchetypeVector {
@@ -108,6 +349,123 @@ function initZeroVector(): ArchetypeVector {
     achiever: 0,
     legacy: 0,
   };
+}
+
+function hasAnyDelta(vec: ArchetypeVector): boolean {
+  return ARCHETYPE_ORDER.some((k) => (vec[k] ?? 0) > 0);
+}
+
+function sumDelta(vec: ArchetypeVector): number {
+  return ARCHETYPE_ORDER.reduce((sum, k) => sum + Math.max(0, vec[k] ?? 0), 0);
+}
+
+function scaleVectorInPlace(vec: ArchetypeVector, factor: number): void {
+  ARCHETYPE_ORDER.forEach((k) => {
+    vec[k] = (vec[k] ?? 0) * factor;
+  });
+}
+
+function computePriorScale(
+  startingVector: ArchetypeVector,
+  languageDelta: ArchetypeVector,
+): number {
+  const LANGUAGE_STRONG = 0.35;
+  const MIN_SCALE_FROM_LANGUAGE = 0.25;
+  const DAMP_FACTOR = 0.75;
+
+  const languageMass = sumDelta(languageDelta);
+  const languageStrength = Math.min(1, Math.max(0, languageMass / LANGUAGE_STRONG));
+  const languageScale = Math.max(
+    MIN_SCALE_FROM_LANGUAGE,
+    1 - DAMP_FACTOR * languageStrength,
+  );
+
+  const threshold = getArchetypeConfidenceMin();
+  const normalizedStart = normalizeArchetypeVector({ ...startingVector });
+  const { margin: startMargin } = getWinnerRunnerUpAndMargin(normalizedStart);
+  const profileScale = startMargin >= threshold ? 0.6 : 1;
+
+  const finalScale = Math.max(0.15, Math.min(1, languageScale * profileScale));
+  return finalScale;
+}
+
+function normalizeHintList(input?: string[] | null): Set<string> {
+  if (!Array.isArray(input)) return new Set();
+  const out = new Set<string>();
+  input.forEach((v) => {
+    const s = String(v ?? "").toLowerCase().trim();
+    if (s) out.add(s);
+  });
+  return out;
+}
+
+function applyHintSignals(
+  ctx: ArchetypeContext,
+  delta: ArchetypeVector,
+  signals: string[],
+) {
+  const intents = normalizeHintList(ctx.intents);
+  const topics = normalizeHintList(ctx.topics);
+
+  if (intents.size === 0 && topics.size === 0) return;
+
+  const BOOST_ANALYST = 0.06;
+  const BOOST_PRESTIGE = 0.06;
+  const BOOST_LEGACY = 0.06;
+  const BOOST_ACHIEVER = 0.05;
+  const BOOST_LOYALIST = 0.05;
+
+  const analystHint =
+    topics.has("specs") ||
+    topics.has("rib_adjustable") ||
+    topics.has("rib_fixed") ||
+    topics.has("models") ||
+    intents.has("models");
+
+  const prestigeHint =
+    topics.has("bespoke") ||
+    topics.has("grade_sco") ||
+    topics.has("grade_sc3") ||
+    topics.has("grade_lusso") ||
+    intents.has("bespoke");
+
+  const legacyHint =
+    topics.has("heritage") ||
+    topics.has("history") ||
+    intents.has("heritage");
+
+  const achieverHint =
+    topics.has("olympic") ||
+    topics.has("athletes") ||
+    topics.has("events") ||
+    intents.has("olympic") ||
+    intents.has("events");
+
+  const loyalistHint =
+    topics.has("service") ||
+    topics.has("care") ||
+    intents.has("service");
+
+  if (analystHint) {
+    delta.analyst += BOOST_ANALYST;
+    signals.push("hint:analyst");
+  }
+  if (prestigeHint) {
+    delta.prestige += BOOST_PRESTIGE;
+    signals.push("hint:prestige");
+  }
+  if (legacyHint) {
+    delta.legacy += BOOST_LEGACY;
+    signals.push("hint:legacy");
+  }
+  if (achieverHint) {
+    delta.achiever += BOOST_ACHIEVER;
+    signals.push("hint:achiever");
+  }
+  if (loyalistHint) {
+    delta.loyalist += BOOST_LOYALIST;
+    signals.push("hint:loyalist");
+  }
 }
 
 function applyModeSignals(
@@ -362,18 +720,29 @@ export function computeArchetypeBreakdown(
     ? { ...previousVector }
     : getNeutralArchetypeVector();
 
-  const delta = initZeroVector();
+  const priorDelta = initZeroVector();
+  const languageDelta = initZeroVector();
   const signalsUsed: string[] = [];
   const reasoningParts: string[] = [];
 
-  applyModeSignals(ctx, delta, signalsUsed);
-  applyPageUrlSignals(ctx, delta, signalsUsed);
-  applyModelSignals(ctx, delta, signalsUsed);
-  applyLanguageSignals(ctx, delta, signalsUsed);
+  applyModeSignals(ctx, priorDelta, signalsUsed);
+  applyPageUrlSignals(ctx, priorDelta, signalsUsed);
+  applyModelSignals(ctx, priorDelta, signalsUsed);
+  applyLanguageSignals(ctx, languageDelta, signalsUsed);
+  applyHintSignals(ctx, languageDelta, signalsUsed);
 
-  let updatedVector = smoothUpdateArchetypeVector(startingVector, delta);
+  const priorScale = computePriorScale(startingVector, languageDelta);
+  if (hasAnyDelta(priorDelta) && priorScale < 1) {
+    signalsUsed.push(`priors:scaled:${priorScale.toFixed(2)}`);
+  }
+  scaleVectorInPlace(priorDelta, priorScale);
 
-  let primary = pickPrimaryArchetype(updatedVector);
+  const combinedDelta = initZeroVector();
+  ARCHETYPE_ORDER.forEach((k) => {
+    combinedDelta[k] = (priorDelta[k] ?? 0) + (languageDelta[k] ?? 0);
+  });
+
+  let updatedVector = smoothUpdateArchetypeVector(startingVector, combinedDelta);
 
   // Dev override wins and intentionally dominates the vector.
   if (ctx.devOverrideArchetype) {
@@ -393,12 +762,15 @@ export function computeArchetypeBreakdown(
     });
 
     updatedVector = normalizeArchetypeVector(overridden);
-    primary = override;
     signalsUsed.push(`override:${override}`);
     reasoningParts.push(
       `Archetype manually overridden to "${override}" via dev override phrase.`
     );
   }
+
+  const threshold = getArchetypeConfidenceMin();
+  const { winner, margin } = getWinnerRunnerUpAndMargin(updatedVector);
+  const primary: Archetype | null = margin >= threshold ? winner : null;
 
   if (!ctx.devOverrideArchetype) {
     reasoningParts.push(
@@ -441,10 +813,7 @@ export function buildArchetypeClassification(
   const winner = sorted[0]?.key ?? null;
   const runnerUp = sorted[1]?.key ?? null;
 
-  let archetype: Archetype | null = breakdown.primary;
-  if (!archetype && winner) {
-    archetype = winner.toLowerCase() as Archetype;
-  }
+  const archetype: Archetype | null = breakdown.primary;
 
   const decision =
     breakdown.reasoning || (breakdown.signalsUsed && breakdown.signalsUsed.length)
