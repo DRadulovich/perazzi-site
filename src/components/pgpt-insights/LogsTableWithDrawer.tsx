@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { LOW_SCORE_THRESHOLD } from "../../lib/pgpt-insights/constants";
+import { decodePgptMetadata } from "../../lib/pgpt-insights/metadata";
 import type { PerazziLogPreviewRow, PgptLogDetailResponse } from "../../lib/pgpt-insights/types";
 
 import { CopyButton } from "./CopyButton";
@@ -117,6 +118,51 @@ function getFocusable(container: HTMLElement): HTMLElement[] {
   return Array.from(container.querySelectorAll(selectors)).filter((el): el is HTMLElement => el instanceof HTMLElement);
 }
 
+const ARCHETYPE_ORDER = ["Loyalist", "Prestige", "Analyst", "Achiever", "Legacy"] as const;
+
+function normalizeArchetypeScoresForDiag(raw: any): Record<(typeof ARCHETYPE_ORDER)[number], number> | null {
+  if (!raw || typeof raw !== "object") return null;
+  const vals = ARCHETYPE_ORDER.map((k) => {
+    const v = raw?.[k];
+    const n = typeof v === "number" ? v : typeof v === "string" ? Number(v) : NaN;
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  });
+  const sum = vals.reduce((a, b) => a + b, 0);
+  if (!Number.isFinite(sum) || sum <= 0) return null;
+  const out: Record<(typeof ARCHETYPE_ORDER)[number], number> = {
+    Loyalist: vals[0] / sum,
+    Prestige: vals[1] / sum,
+    Analyst: vals[2] / sum,
+    Achiever: vals[3] / sum,
+    Legacy: vals[4] / sum,
+  };
+  return out;
+}
+
+function toPrettyJson(v: unknown): string {
+  try {
+    return JSON.stringify(v, null, 2);
+  } catch {
+    return String(v);
+  }
+}
+
+async function copyText(text: string): Promise<void> {
+  if (typeof navigator !== "undefined" && navigator?.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.left = "-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand("copy");
+  document.body.removeChild(ta);
+}
+
 export function LogsTableWithDrawer({
   logs,
   tableDensityClass,
@@ -138,6 +184,7 @@ export function LogsTableWithDrawer({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [detail, setDetail] = useState<PgptLogDetailResponse | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const drawerRef = useRef<HTMLDivElement | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -149,6 +196,21 @@ export function LogsTableWithDrawer({
     if (!selectedId) return null;
     return logs.find((l) => l.id === selectedId) ?? null;
   }, [logs, selectedId]);
+
+  const rawMetadata = (detail as any)?.log?.metadata ?? (selectedPreview as any)?.metadata ?? null;
+  const decoded = useMemo(() => decodePgptMetadata(rawMetadata), [rawMetadata]);
+  const archetypeDiag = decoded?.archetype ?? null;
+  const rerankDiag = decoded?.rerank ?? null;
+
+  const diagScores = useMemo(() => {
+    const src = archetypeDiag?.scores ?? (detail as any)?.log?.archetype_scores;
+    return normalizeArchetypeScoresForDiag(src);
+  }, [archetypeDiag?.scores, detail]);
+
+  const computedArchetype = useMemo(() => {
+    if (!diagScores) return null;
+    return computeWinnerAndRunner(diagScores as any);
+  }, [diagScores]);
 
   function closeDrawer() {
     setOpen(false);
@@ -767,6 +829,206 @@ export function LogsTableWithDrawer({
                           </div>
                         </div>
                       )}
+
+                      <div className="rounded-xl border border-border bg-background p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-xs font-semibold text-foreground">Tuning Diagnostics</div>
+                            <div className="text-xs text-muted-foreground">Archetype confidence + rerank metadata (safe fallbacks).</div>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+                          <div className="rounded-lg border border-border bg-muted/5 p-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="space-y-1">
+                                <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Archetype Confidence</div>
+                                <div className="text-xs text-muted-foreground">Winner/runner/margin + snapped status.</div>
+                              </div>
+                              <button
+                                type="button"
+                                disabled={!archetypeDiag && !diagScores}
+                                onClick={async () => {
+                                  const payload =
+                                    archetypeDiag ??
+                                    (diagScores && computedArchetype
+                                      ? {
+                                          winner: computedArchetype.winner?.k,
+                                          runnerUp: computedArchetype.runner?.k,
+                                          margin: computedArchetype.margin,
+                                          scores: diagScores,
+                                        }
+                                      : null);
+                                  if (!payload) return;
+                                  await copyText(toPrettyJson(payload));
+                                  setCopiedKey("archetype");
+                                  window.setTimeout(() => setCopiedKey((prev) => (prev === "archetype" ? null : prev)), 800);
+                                }}
+                                className={cn(
+                                  "inline-flex items-center rounded-md border px-2 py-1 text-[11px]",
+                                  archetypeDiag || diagScores
+                                    ? "border-border bg-background hover:bg-muted/40"
+                                    : "cursor-not-allowed border-border bg-muted/40 text-muted-foreground",
+                                )}
+                              >
+                                {copiedKey === "archetype" ? "Copied" : "Copy JSON"}
+                              </button>
+                            </div>
+
+                            {archetypeDiag || diagScores || computedArchetype ? (
+                              <div className="mt-3 space-y-2 text-xs">
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div className="rounded-md border border-border bg-background/60 p-2">
+                                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">winner</div>
+                                    <div className="mt-1 font-medium text-foreground">
+                                      {archetypeDiag?.winner ?? computedArchetype?.winner?.k ?? "—"}
+                                    </div>
+                                  </div>
+                                  <div className="rounded-md border border-border bg-background/60 p-2">
+                                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">runner-up</div>
+                                    <div className="mt-1 font-medium text-foreground">
+                                      {archetypeDiag?.runnerUp ?? computedArchetype?.runner?.k ?? "—"}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div className="rounded-md border border-border bg-background/60 p-2">
+                                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">margin</div>
+                                    <div className="mt-1 font-medium text-foreground">
+                                      {typeof (archetypeDiag?.margin ?? computedArchetype?.margin) === "number"
+                                        ? `+${Math.round(((archetypeDiag?.margin ?? computedArchetype?.margin) ?? 0) * 100)}pp`
+                                        : "—"}
+                                    </div>
+                                  </div>
+                                  <div className="rounded-md border border-border bg-background/60 p-2">
+                                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">status</div>
+                                    <div className="mt-1 font-medium text-foreground">
+                                      {archetypeDiag?.snapped === true ? (
+                                        <Badge tone="blue">snapped</Badge>
+                                      ) : archetypeDiag?.snapped === false ? (
+                                        <Badge>mixed</Badge>
+                                      ) : (
+                                        <Badge tone="amber">unknown</Badge>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {diagScores ? (
+                                  <div className="space-y-1">
+                                    <div className="flex h-2.5 w-full overflow-hidden rounded-full border border-border bg-muted/30" role="img">
+                                      {ARCHETYPE_ORDER.map((k) => (
+                                        <div
+                                          key={k}
+                                          className="bg-muted-foreground/60"
+                                          style={{ width: `${(diagScores[k] ?? 0) * 100}%` }}
+                                          aria-hidden="true"
+                                        />
+                                      ))}
+                                    </div>
+                                    <div className="flex flex-wrap gap-1 text-[10px] text-muted-foreground">
+                                      {ARCHETYPE_ORDER.map((k) => (
+                                        <span key={k}>
+                                          {k}: {Math.round((diagScores[k] ?? 0) * 100)}%
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="text-[11px] text-muted-foreground">Scores not available for this interaction.</div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="mt-3 text-[11px] text-muted-foreground">
+                                Not available for this interaction (older log).
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="rounded-lg border border-border bg-muted/5 p-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="space-y-1">
+                                <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Rerank Dyno</div>
+                                <div className="text-xs text-muted-foreground">Candidate limit + reranked chunks.</div>
+                              </div>
+                              <button
+                                type="button"
+                                disabled={!rerankDiag}
+                                onClick={async () => {
+                                  if (!rerankDiag) return;
+                                  await copyText(toPrettyJson(rerankDiag));
+                                  setCopiedKey("rerank");
+                                  window.setTimeout(() => setCopiedKey((prev) => (prev === "rerank" ? null : prev)), 800);
+                                }}
+                                className={cn(
+                                  "inline-flex items-center rounded-md border px-2 py-1 text-[11px]",
+                                  rerankDiag
+                                    ? "border-border bg-background hover:bg-muted/40"
+                                    : "cursor-not-allowed border-border bg-muted/40 text-muted-foreground",
+                                )}
+                              >
+                                {copiedKey === "rerank" ? "Copied" : "Copy JSON"}
+                              </button>
+                            </div>
+
+                            {rerankDiag ? (
+                              <div className="mt-3 space-y-2 text-xs">
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div className="rounded-md border border-border bg-background/60 p-2">
+                                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">rerank</div>
+                                    <div className="mt-1 font-medium text-foreground">
+                                      {rerankDiag.rerankEnabled ? "enabled" : "disabled / unknown"}
+                                    </div>
+                                  </div>
+                                  <div className="rounded-md border border-border bg-background/60 p-2">
+                                    <div className="text-[10px] uppercase tracking-wide text-muted-foreground">candidate limit</div>
+                                    <div className="mt-1 font-medium text-foreground">{rerankDiag.candidateLimit ?? "—"}</div>
+                                  </div>
+                                </div>
+
+                                <div className="rounded-md border border-border bg-background/60 p-2">
+                                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">top returned chunks</div>
+                                  {Array.isArray(rerankDiag.topReturnedChunks) && rerankDiag.topReturnedChunks.length > 0 ? (
+                                    <div className="mt-2 overflow-hidden rounded-md border border-border">
+                                      <table className="w-full table-fixed border-collapse text-[11px]">
+                                        <thead>
+                                          <tr className="bg-muted/40 text-muted-foreground">
+                                            <th className="px-2 py-1 text-left font-medium">chunkId</th>
+                                            <th className="px-2 py-1 text-right font-medium">base</th>
+                                            <th className="px-2 py-1 text-right font-medium">boost</th>
+                                            <th className="px-2 py-1 text-right font-medium">arch boost</th>
+                                            <th className="px-2 py-1 text-right font-medium">final</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {rerankDiag.topReturnedChunks.slice(0, 12).map((c, idx) => (
+                                            <tr key={`${c.chunkId}-${idx}`} className="border-t border-border/60">
+                                              <td className="truncate px-2 py-1 font-medium text-foreground" title={c.chunkId}>
+                                                {c.chunkId}
+                                              </td>
+                                              <td className="px-2 py-1 text-right text-muted-foreground">{formatScore(c.baseScore)}</td>
+                                              <td className="px-2 py-1 text-right text-muted-foreground">{formatScore(c.boost)}</td>
+                                              <td className="px-2 py-1 text-right text-muted-foreground">{formatScore(c.archetypeBoost)}</td>
+                                              <td className="px-2 py-1 text-right font-semibold text-foreground">{formatScore(c.finalScore)}</td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  ) : (
+                                    <div className="mt-2 text-[11px] text-muted-foreground">Not available for this interaction.</div>
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="mt-3 text-[11px] text-muted-foreground">
+                                Not available for this interaction (older log).
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   ) : null}
 
