@@ -2,7 +2,7 @@
 
 # PerazziGPT v2 – Chunking Guidelines
 
-> Version: 0.1 (Draft)  
+> Version: 0.2 (Draft)  
 > Owner: David Radulovich  
 > File: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-2/V2_REDO_chunking-guidelines.md`  
 > Purpose: Define **how** V2 corpus documents are split into chunks for embeddings, and how chunk-level metadata (heading paths, labels, mode/archetype hints, guardrails) should be derived.
@@ -341,6 +341,15 @@ The chunker should derive as much metadata as possible automatically.
 
 These hints are suggestions for retrieval and prompt-building, not hard constraints.
 
+#### 4.2.1 Normalization & semantics (required)
+
+- Treat `primary_modes` and `archetype_bias` as **case-insensitive sets**; normalize on ingest by trimming whitespace, lowercasing (recommended), and de-duplicating values. Order is not meaningful.
+- Canonical values → `primary_modes: ["prospect","owner","navigation"]`, `archetype_bias: ["loyalist","prestige","analyst","achiever","legacy"]`.
+- Semantics → `[]` = neutral (no weighting), “all values” = general-purpose (also no weighting), subset = specialized (eligible for archetype/mode alignment). Missing `primary_modes` is treated as empty.
+- These fields are retrieval/rerank hints only; they do not set runtime mode or archetype identity.
+
+Chunking guidance: use `archetype_bias: []` when content is broadly useful and should not be archetype-weighted; use all five for explicitly global/brand/spec content (still general-purpose); use 1–3 when content is legitimately skewed (e.g., patterning/fit → analyst; heritage/history → legacy/loyalist).
+
 ---
 
 ## 5. Implementation Sketch (Pseudo-Algorithm)
@@ -386,3 +395,7 @@ High-level algorithm the ingestion script could follow:
   - Cross-document link metadata for tightly coupled docs (e.g., models ↔ pricing metadata).
 
 With these guidelines, the chunker has a clear playbook for how to handle each class of document in V2 and how to populate the metadata that PerazziGPT v2 depends on for high-quality, on-brand retrieval.
+
+## Changelog
+
+- 0.2 (Draft): added normalization/semantics note for mode/archetype hints

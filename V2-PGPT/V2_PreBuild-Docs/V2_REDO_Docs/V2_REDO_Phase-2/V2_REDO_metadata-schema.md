@@ -2,7 +2,7 @@
 
 # PerazziGPT v2 – Metadata Schema
 
-> Version: 0.1 (Draft)  
+> Version: 0.2 (Draft)  
 > Owner: David Radulovich  
 > File: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-2/V2_REDO_metadata-schema.md`  
 > Purpose: Define the canonical metadata schema for PerazziGPT v2 documents, chunks, and embeddings so that Supabase, the ingestion pipeline, and the runtime all agree on how knowledge is stored and retrieved.
@@ -172,6 +172,18 @@ chunks (
 );
 ```
 
+**Normalization (required):**
+- Treat `primary_modes` and `archetype_bias` as case-insensitive sets; store normalized values to align ingestion and rerank.
+- In ingestion, normalize by trimming whitespace, lowercasing (recommended), and de-duplicating.
+- Order is not meaningful.
+- Canonical `primary_modes`: `["prospect","owner","navigation"]`
+- Canonical `archetype_bias`: `["loyalist","prestige","analyst","achiever","legacy"]`
+
+**Semantics:**
+- `archetype_bias: []` → neutral (no archetype weighting); all five archetypes → general-purpose (also no archetype weighting); subset of 1–4 → specialized (eligible for archetype-alignment weighting).
+- `primary_modes` follows the same pattern: missing/empty → neutral; all three → general-purpose; subset → specialized.
+- These fields are retrieval/rerank hints only and must not set runtime mode or archetype identity.
+
 **Notes:**
 
 - `primary_modes` and `archetype_bias` are hints. They don’t set runtime `mode` or `archetype` but can be used to:
@@ -309,11 +321,11 @@ section_labels:
   - "3.4-decisions-and-tradeoffs"
 
 primary_modes:
-  - "Prospect"
-  - "Owner"
+  - "prospect"
+  - "owner"
 archetype_bias:
-  - "Analyst"
-  - "Legacy"
+  - "analyst"
+  - "legacy"
 
 language: "en"
 disciplines: ["sporting", "bunker_trap"]
@@ -370,3 +382,7 @@ created_at: "2025-03-01T12:35:01Z"
   - Populating `guardrail_flags` for pricing-sensitive and safety-critical content.
 
 With this schema in place, PerazziGPT v2 has a **stable, explicit contract** for how all knowledge is stored and can evolve the corpus safely over time.
+
+## Changelog
+
+- 0.2 (Draft): added normalization + semantics for primary_modes/archetype_bias to match rerank expectations
