@@ -108,6 +108,10 @@ const REASONING_EFFORT = parseReasoningEffort(process.env.PERAZZI_REASONING_EFFO
 const ENV_TEXT_VERBOSITY: CreateResponseTextParams["textVerbosity"] =
   normalizeTextVerbosity(process.env.PERAZZI_TEXT_VERBOSITY) ?? "medium";
 const PROMPT_CACHE_RETENTION = parsePromptCacheRetention(process.env.PERAZZI_PROMPT_CACHE_RETENTION);
+const ASSISTANT_TEMPERATURE = parseTemperature(
+  process.env.PERAZZI_ASSISTANT_TEMPERATURE,
+  1.0,
+);
 
 function isOriginAllowed(req: Request): { ok: boolean; originHost?: string } {
   if (IS_DEV) {
@@ -299,6 +303,16 @@ function parsePromptCacheRetention(
     return normalized as CreateResponseTextParams["promptCacheRetention"];
   }
   return undefined;
+}
+
+function parseTemperature(value: string | null | undefined, fallback: number): number {
+  const parsed = Number(value);
+  if (Number.isFinite(parsed)) {
+    if (parsed < 0) return 0;
+    if (parsed > 2) return 2;
+    return parsed;
+  }
+  return fallback;
 }
 
 function isUsingGateway(): boolean {
@@ -925,7 +939,7 @@ async function generateAssistantAnswer(
       model: OPENAI_MODEL,
       maxOutputTokens: MAX_OUTPUT_TOKENS,
       instructions,
-      temperature: 1.0,
+      temperature: ASSISTANT_TEMPERATURE,
       input: sanitizedMessages as CreateResponseTextParams["input"],
       reasoningEffort: REASONING_EFFORT,
       text: { verbosity: textVerbosity },

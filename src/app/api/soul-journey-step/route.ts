@@ -9,6 +9,10 @@ const MAX_OUTPUT_TOKENS = resolveMaxOutputTokens();
 const REASONING_EFFORT = parseReasoningEffort(process.env.PERAZZI_REASONING_EFFORT);
 const TEXT_VERBOSITY = parseTextVerbosity(process.env.PERAZZI_TEXT_VERBOSITY);
 const PROMPT_CACHE_RETENTION = parsePromptCacheRetention(process.env.PERAZZI_PROMPT_CACHE_RETENTION);
+const SOUL_JOURNEY_TEMPERATURE = parseTemperature(
+  process.env.PERAZZI_SOUL_JOURNEY_TEMPERATURE,
+  0.6,
+);
 
 export async function POST(req: Request) {
   try {
@@ -51,7 +55,7 @@ export async function POST(req: Request) {
 
     const response = await createResponseText({
       model: OPENAI_MODEL,
-      temperature: 0.6,
+      temperature: SOUL_JOURNEY_TEMPERATURE,
       maxOutputTokens: MAX_OUTPUT_TOKENS,
       instructions,
       input: `${titleLine}${prompt}`,
@@ -140,6 +144,16 @@ function parsePromptCacheRetention(
     return normalized as CreateResponseTextParams["promptCacheRetention"];
   }
   return undefined;
+}
+
+function parseTemperature(value: string | null | undefined, fallback: number): number {
+  const parsed = Number(value);
+  if (Number.isFinite(parsed)) {
+    if (parsed < 0) return 0;
+    if (parsed > 2) return 2;
+    return parsed;
+  }
+  return fallback;
 }
 
 function isUsingGateway(): boolean {
