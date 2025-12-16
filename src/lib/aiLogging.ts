@@ -1,7 +1,29 @@
 import { Pool } from "pg";
 import { type ArchetypeScores, withArchetypeDistribution } from "@/lib/pgpt-insights/archetype-distribution";
 
-const TEXT_PLACEHOLDER = "[omitted]";
+const TEXT_PLACEHOLDER = "[omitted]" as const;
+
+type LogTextMode = "omitted" | "truncate" | "full";
+
+function resolveLogTextMode(): LogTextMode {
+  const raw = (process.env.PERAZZI_LOG_TEXT_MODE ?? "omitted").toLowerCase().trim();
+  if (raw === "full" || raw === "truncate" || raw === "omitted") return raw;
+  return "omitted";
+}
+
+function resolveMaxChars(): number {
+  const n = Number.parseInt(process.env.PERAZZI_LOG_TEXT_MAX_CHARS ?? "8000", 10);
+  if (!Number.isFinite(n) || n <= 0) return 8000;
+  return Math.min(n, 100_000);
+}
+
+function applyTextMode(value: string | null | undefined, mode: LogTextMode, maxChars: number): string {
+  if (mode === "omitted") return TEXT_PLACEHOLDER;
+  const text = (value ?? "").trim();
+  if (!text) return "";
+  if (text.length <= maxChars) return text;
+  return text.slice(0, maxChars);
+}
 
 const ARCHETYPE_NAME_MAP: Record<string, keyof ArchetypeScores> = {
   loyalist: "Loyalist",
@@ -130,6 +152,8 @@ export async function logAiInteraction(input: AiInteractionLogInput): Promise<vo
     usage,
   } = input;
 
+  const mode = resolveLogTextMode();
+  const maxChars = resolveMaxChars();
   const archetypeForRow = archetype ?? archetypeClassification?.archetype ?? null;
 
   const metadataBase = sanitizeMetadata((metadata ?? {}) as Record<string, unknown>);
@@ -138,6 +162,8 @@ export async function logAiInteraction(input: AiInteractionLogInput): Promise<vo
     ...(responseId ? { responseId } : {}),
     ...(requestId ? { requestId } : {}),
     ...(usage ? { responseUsage: usage } : {}),
+    logTextMode: mode,
+    logTextMaxChars: maxChars,
   };
   const archetypeScores = archetypeScoresOrDefault(archetypeClassification, archetypeForRow);
   const metadataWithArchetype = withArchetypeDistribution(
@@ -170,8 +196,8 @@ export async function logAiInteraction(input: AiInteractionLogInput): Promise<vo
     )
   `;
 
-  const promptForInsert = TEXT_PLACEHOLDER;
-  const responseForInsert = TEXT_PLACEHOLDER;
+  const promptForInsert = applyTextMode(prompt, mode, maxChars);
+  const responseForInsert = applyTextMode(response, mode, maxChars);
 
   const values = [
     env,
