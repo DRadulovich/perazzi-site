@@ -250,6 +250,7 @@ function normalizeMode(input: unknown): PerazziMode | null {
 
 function resolveModel(): string {
   const candidate =
+    process.env.PERAZZI_MODEL ??
     process.env.PERAZZI_RESPONSES_MODEL ??
     process.env.PERAZZI_COMPLETIONS_MODEL ??
     "";

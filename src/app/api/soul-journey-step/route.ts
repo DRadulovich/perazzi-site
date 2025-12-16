@@ -91,6 +91,7 @@ export async function POST(req: Request) {
 
 function resolveModel(): string {
   const candidate =
+    process.env.PERAZZI_MODEL ??
     process.env.PERAZZI_RESPONSES_MODEL ??
     process.env.PERAZZI_COMPLETIONS_MODEL ??
     "";
