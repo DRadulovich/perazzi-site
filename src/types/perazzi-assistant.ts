@@ -30,6 +30,8 @@ export interface ChatMessage {
 export interface PerazziAssistantRequest {
   messages: ChatMessage[];
   sessionId?: string;
+  /** Optional previous Responses ID to enable multi-turn state. */
+  previousResponseId?: string | null;
   context?: {
     pageUrl?: string | null;
     modelSlug?: string | null;
@@ -40,6 +42,8 @@ export interface PerazziAssistantRequest {
     archetype?: Archetype | null;
     /** Previous archetype vector from the last interaction, for smoothing across turns. */
     archetypeVector?: ArchetypeVector | null;
+    /** Optional previous Responses ID to enable multi-turn state. */
+    previousResponseId?: string | null;
   };
   summaryIntent?: string | null;
 }
@@ -61,6 +65,9 @@ export interface PerazziAssistantResponse {
   intents: string[];
   topics: string[];
   templates: string[];
+
+  /** OpenAI Responses ID for this turn (when generated). */
+  responseId?: string | null;
 
   /**
    * Mode that PerazziGPT used when answering this request (prospect, owner, navigation).

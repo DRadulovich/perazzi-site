@@ -48,6 +48,8 @@ export type ChatContextShape = {
   archetype?: Archetype | null;
   /** Previous archetype vector from the last response, used for smoothing across turns. */
   archetypeVector?: ArchetypeVector | null;
+  /** Previous OpenAI Responses ID to enable multi-turn state. */
+  previousResponseId?: string | null;
 };
 
 export type AssistantResponseMeta = {
@@ -171,6 +173,9 @@ export function useChatState(
         archetypeVector: isArchetypeReset
           ? null
           : payload.context?.archetypeVector ?? context.archetypeVector ?? null,
+        previousResponseId: isArchetypeReset
+          ? null
+          : payload.context?.previousResponseId ?? context.previousResponseId ?? null,
       };
 
       setContext(effectiveContext);
@@ -185,6 +190,7 @@ export function useChatState(
           messages: fullHistory,
           context: effectiveContext,
           sessionId,
+          previousResponseId: effectiveContext.previousResponseId ?? undefined,
         }),
       });
       if (!res.ok) {
@@ -238,6 +244,7 @@ export function useChatState(
           mode: data.mode ?? prev.mode,
           archetype: nextArchetype,
           archetypeVector: nextArchetypeVector,
+          previousResponseId: data.responseId ?? null,
         };
       });
       options.onResponseMeta?.({
@@ -284,6 +291,7 @@ export function useChatState(
   const clearConversation = useCallback(() => {
     setMessages([]);
     setError(null);
+    setContext(options.initialContext ?? {});
     if ("localStorage" in globalThis) {
       try {
         globalThis.localStorage.removeItem(storageKey);

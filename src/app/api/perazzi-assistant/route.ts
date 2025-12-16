@@ -450,6 +450,8 @@ export async function POST(request: Request) {
     const sanitizedMessages = sanitizeMessages(fullBody.messages);
     const latestQuestion = getLatestUserContent(sanitizedMessages);
     const hints: RetrievalHints = detectRetrievalHints(latestQuestion, body?.context);
+    const previousResponseId =
+      fullBody.previousResponseId ?? fullBody.context?.previousResponseId ?? null;
 
     const effectiveMode: PerazziMode =
       normalizeMode(hints.mode) ?? normalizeMode(body?.context?.mode) ?? "prospect";
@@ -734,7 +736,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const answer = await generateAssistantAnswer(
+    const { text: answer, responseId } = await generateAssistantAnswer(
       sanitizedMessages,
       body?.context,
       retrieval.chunks,
@@ -747,6 +749,7 @@ export async function POST(request: Request) {
       hints,
       fullBody.sessionId ?? null,
       loggingMetrics,
+      previousResponseId,
     );
 
     logInteraction(
@@ -769,6 +772,7 @@ export async function POST(request: Request) {
       mode: effectiveMode,
       archetype: effectiveArchetype,
       archetypeBreakdown,
+      responseId: responseId ?? null,
     });
   } catch (error) {
     console.error("Perazzi assistant error", error);
@@ -860,7 +864,8 @@ async function generateAssistantAnswer(
   hints?: RetrievalHints,
   sessionId?: string | null,
   extraMetadata?: Record<string, unknown> | null,
-): Promise<string> {
+  previousResponseId?: string | null,
+): Promise<{ text: string; responseId?: string | null }> {
   const systemPrompt = buildSystemPrompt(context, chunks, templates, mode, archetype);
   const toneNudge =
     "Stay in the Perazzi concierge voice: quiet, reverent, concise, no slang, and avoid pricing or legal guidance. Keep responses focused on Perazzi heritage, platforms, service, and fittings.";
@@ -901,6 +906,7 @@ async function generateAssistantAnswer(
   };
 
   let responseText = LOW_CONFIDENCE_MESSAGE;
+  let responseId: string | null | undefined;
   const start = Date.now();
   const promptForLog = sanitizedMessages
     .filter((msg) => msg.role === "user")
@@ -918,10 +924,12 @@ async function generateAssistantAnswer(
       reasoningEffort: REASONING_EFFORT,
       textVerbosity: TEXT_VERBOSITY,
       promptCacheRetention: PROMPT_CACHE_RETENTION,
+      previousResponseId: previousResponseId ?? undefined,
     });
     const latencyMs = Date.now() - start;
     metadata.latencyMs = latencyMs;
     responseText = response.text ?? LOW_CONFIDENCE_MESSAGE;
+    responseId = response.responseId ?? null;
 
     try {
       await logAiInteraction({
@@ -946,7 +954,7 @@ async function generateAssistantAnswer(
     throw error;
   }
 
-  return responseText;
+  return { text: responseText, responseId };
 }
 
 export function buildSystemPrompt(
