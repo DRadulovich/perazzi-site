@@ -69,6 +69,9 @@ export async function POST(req: Request) {
         response: response.text,
         promptTokens: response.usage?.input_tokens ?? undefined,
         completionTokens: response.usage?.output_tokens ?? undefined,
+        responseId: response.responseId,
+        requestId: response.requestId,
+        usage: response.usage,
       });
     } catch (logError) {
       console.error("logAiInteraction failed", logError);

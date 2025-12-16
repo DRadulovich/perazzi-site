@@ -1,6 +1,8 @@
 import { Pool } from "pg";
 import { type ArchetypeScores, withArchetypeDistribution } from "@/lib/pgpt-insights/archetype-distribution";
 
+const TEXT_PLACEHOLDER = "[omitted]";
+
 const ARCHETYPE_NAME_MAP: Record<string, keyof ArchetypeScores> = {
   loyalist: "Loyalist",
   prestige: "Prestige",
@@ -39,10 +41,13 @@ export type AiInteractionLogInput = {
   context: AiInteractionContext;
   model: string;
   usedGateway: boolean;
-  prompt: string;
-  response: string;
+  prompt?: string;
+  response?: string;
   promptTokens?: number;
   completionTokens?: number;
+  responseId?: string | null;
+  requestId?: string | null;
+  usage?: unknown;
 };
 
 let pool: Pool | null = null;
@@ -80,6 +85,17 @@ function archetypeScoresOrDefault(
   return NEUTRAL_ARCHETYPE_SCORES;
 }
 
+function sanitizeMetadata(metadata: Record<string, unknown>): Record<string, unknown> {
+  const clone = { ...metadata };
+  const sensitiveKeys = ["loggedPrompt", "prompt", "userPrompt", "userMessage", "messages"];
+  for (const key of sensitiveKeys) {
+    if (key in clone) {
+      delete clone[key];
+    }
+  }
+  return clone;
+}
+
 export async function logAiInteraction(input: AiInteractionLogInput): Promise<void> {
   if (process.env.PERAZZI_AI_LOGGING_ENABLED !== "true") return;
 
@@ -109,14 +125,23 @@ export async function logAiInteraction(input: AiInteractionLogInput): Promise<vo
     response,
     promptTokens,
     completionTokens,
+    responseId,
+    requestId,
+    usage,
   } = input;
 
   const archetypeForRow = archetype ?? archetypeClassification?.archetype ?? null;
 
-  const metadataBase = (metadata ?? {}) as Record<string, unknown>;
+  const metadataBase = sanitizeMetadata((metadata ?? {}) as Record<string, unknown>);
+  const metadataWithIds = {
+    ...metadataBase,
+    ...(responseId ? { responseId } : {}),
+    ...(requestId ? { requestId } : {}),
+    ...(usage ? { responseUsage: usage } : {}),
+  };
   const archetypeScores = archetypeScoresOrDefault(archetypeClassification, archetypeForRow);
   const metadataWithArchetype = withArchetypeDistribution(
-    metadataBase,
+    metadataWithIds,
     archetypeScores,
     archetypeClassification?.archetypeDecision,
   );
@@ -145,6 +170,9 @@ export async function logAiInteraction(input: AiInteractionLogInput): Promise<vo
     )
   `;
 
+  const promptForInsert = TEXT_PLACEHOLDER;
+  const responseForInsert = TEXT_PLACEHOLDER;
+
   const values = [
     env,
     endpoint,
@@ -154,8 +182,8 @@ export async function logAiInteraction(input: AiInteractionLogInput): Promise<vo
     userId ?? null,
     model,
     usedGateway,
-    prompt,
-    response,
+    promptForInsert,
+    responseForInsert,
     promptTokens ?? null,
     completionTokens ?? null,
     lowConfidence ?? null,

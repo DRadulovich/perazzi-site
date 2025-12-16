@@ -119,6 +119,7 @@ export async function runChatCompletion(
     const responseText = normalizeMessageContent(completion.choices?.[0]?.message?.content);
     const promptTokens = completion.usage?.prompt_tokens ?? undefined;
     const completionTokens = completion.usage?.completion_tokens ?? undefined;
+    const responseId = completion.id ?? undefined;
 
     const baseMetadata = (contextForLog.metadata ?? {}) as Record<string, unknown>;
     const metadataWithLatency = {
@@ -135,6 +136,8 @@ export async function runChatCompletion(
         response: responseText,
         promptTokens,
         completionTokens,
+        responseId,
+        usage: completion.usage,
       });
     } catch (error) {
       console.error("logAiInteraction failed", error);
