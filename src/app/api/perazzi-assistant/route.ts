@@ -925,7 +925,7 @@ async function generateAssistantAnswer(
       model: OPENAI_MODEL,
       maxOutputTokens: MAX_OUTPUT_TOKENS,
       instructions,
-      temperature: 0.8,
+      temperature: 1.0,
       input: sanitizedMessages as CreateResponseTextParams["input"],
       reasoningEffort: REASONING_EFFORT,
       text: { verbosity: textVerbosity },
