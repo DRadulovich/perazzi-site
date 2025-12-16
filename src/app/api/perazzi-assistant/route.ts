@@ -26,6 +26,16 @@ import { detectRetrievalHints, buildResponseTemplates } from "@/lib/perazzi-inte
 import type { RetrievalHints } from "@/lib/perazzi-intents";
 import { createResponseText, type CreateResponseTextParams } from "@/lib/aiClient";
 import { logAiInteraction, type AiInteractionContext } from "@/lib/aiLogging";
+import {
+  resolveModel,
+  resolveMaxOutputTokens,
+  parseReasoningEffort,
+  parseTextVerbosity,
+  parsePromptCacheRetention,
+  parsePromptCacheKey,
+  parseTemperature,
+  isUsingGateway,
+} from "@/lib/perazziAiConfig";
 
 const LOW_CONFIDENCE_THRESHOLD = Number(process.env.PERAZZI_LOW_CONF_THRESHOLD ?? 0.1);
 const LOW_CONFIDENCE_MESSAGE =
@@ -102,11 +112,11 @@ const allowedOriginHosts = (() => {
 })();
 
 const DEFAULT_MODEL = "gpt-5.2";
-const OPENAI_MODEL = resolveModel();
-const MAX_OUTPUT_TOKENS = resolveMaxOutputTokens();
+const OPENAI_MODEL = resolveModel(DEFAULT_MODEL);
+const MAX_OUTPUT_TOKENS = resolveMaxOutputTokens(3000);
 const REASONING_EFFORT = parseReasoningEffort(process.env.PERAZZI_REASONING_EFFORT);
 const ENV_TEXT_VERBOSITY: CreateResponseTextParams["textVerbosity"] =
-  normalizeTextVerbosity(process.env.PERAZZI_TEXT_VERBOSITY) ?? "medium";
+  parseTextVerbosity(process.env.PERAZZI_TEXT_VERBOSITY) ?? "medium";
 const PROMPT_CACHE_RETENTION = parsePromptCacheRetention(process.env.PERAZZI_PROMPT_CACHE_RETENTION);
 const PROMPT_CACHE_KEY = parsePromptCacheKey(process.env.PERAZZI_PROMPT_CACHE_KEY);
 const ASSISTANT_TEMPERATURE = parseTemperature(
@@ -252,84 +262,6 @@ function normalizeMode(input: unknown): PerazziMode | null {
   const cleaned = input.trim().toLowerCase();
   const match = ALLOWED_MODES.find((mode) => mode === cleaned);
   return match ?? null;
-}
-
-function resolveModel(): string {
-  const candidate =
-    process.env.PERAZZI_MODEL ??
-    process.env.PERAZZI_RESPONSES_MODEL ??
-    process.env.PERAZZI_COMPLETIONS_MODEL ??
-    "";
-  const trimmed = candidate.trim();
-  return trimmed || DEFAULT_MODEL;
-}
-
-function resolveMaxOutputTokens(): number {
-  const raw =
-    process.env.PERAZZI_MAX_OUTPUT_TOKENS ??
-    process.env.PERAZZI_MAX_COMPLETION_TOKENS ??
-    "";
-  const parsed = Number(raw);
-  if (Number.isFinite(parsed) && parsed > 0) return parsed;
-  return 3000;
-}
-
-function parseReasoningEffort(
-  value: string | null | undefined,
-): CreateResponseTextParams["reasoningEffort"] {
-  const normalized = value?.trim().toLowerCase();
-  const allowed = new Set(["none", "low", "medium", "high", "xhigh"]);
-  if (normalized && allowed.has(normalized)) {
-    return normalized as CreateResponseTextParams["reasoningEffort"];
-  }
-  // "minimal" is not a valid OpenAI effort value; omit reasoning config.
-  return undefined;
-}
-
-function normalizeTextVerbosity(
-  value: unknown,
-): CreateResponseTextParams["textVerbosity"] | null {
-  const normalized = typeof value === "string" ? value.toLowerCase().trim() : "";
-  if (normalized === "low" || normalized === "medium" || normalized === "high") {
-    return normalized as CreateResponseTextParams["textVerbosity"];
-  }
-  return null;
-}
-
-function parsePromptCacheRetention(
-  value: string | null | undefined,
-): CreateResponseTextParams["promptCacheRetention"] {
-  const raw = value?.trim().toLowerCase();
-  if (!raw) return undefined;
-
-  const canonical = raw.replaceAll("-", "_");
-  const allowed = new Set(["in_memory", "24h"]);
-  if (allowed.has(canonical)) {
-    return canonical as CreateResponseTextParams["promptCacheRetention"];
-  }
-  return undefined;
-}
-
-function parsePromptCacheKey(value: string | null | undefined): string | undefined {
-  const trimmed = value?.trim();
-  if (!trimmed) return undefined;
-  return trimmed;
-}
-
-function parseTemperature(value: string | null | undefined, fallback: number): number {
-  const parsed = Number(value);
-  if (Number.isFinite(parsed)) {
-    if (parsed < 0) return 0;
-    if (parsed > 2) return 2;
-    return parsed;
-  }
-  return fallback;
-}
-
-function isUsingGateway(): boolean {
-  const forceDirect = process.env.AI_FORCE_DIRECT === "true";
-  if (forceDirect) return false;
-  return Boolean(process.env.AI_GATEWAY_URL && process.env.AI_GATEWAY_TOKEN);
 }
 
 /**
@@ -480,7 +412,7 @@ export async function POST(request: Request) {
 
     const effectiveMode: PerazziMode =
       normalizeMode(hints.mode) ?? normalizeMode(body?.context?.mode) ?? "prospect";
-    const requestedTextVerbosity = normalizeTextVerbosity(body?.context?.textVerbosity);
+    const requestedTextVerbosity = parseTextVerbosity(body?.context?.textVerbosity);
     const effectiveTextVerbosity = requestedTextVerbosity ?? ENV_TEXT_VERBOSITY;
 
     // Soft-meta origin handler: answer who built/designed the assistant, without exposing internals.

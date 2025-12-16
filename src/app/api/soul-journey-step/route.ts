@@ -1,11 +1,21 @@
 import { NextResponse } from "next/server";
-import { createResponseText, type CreateResponseTextParams } from "@/lib/aiClient";
+import { createResponseText } from "@/lib/aiClient";
 import { getSoulArtisanPromptForStep } from "@/lib/soulJourneyPrompts";
 import { logAiInteraction, type AiInteractionContext } from "@/lib/aiLogging";
+import {
+  resolveModel,
+  resolveMaxOutputTokens,
+  parseReasoningEffort,
+  parseTextVerbosity,
+  parsePromptCacheRetention,
+  parsePromptCacheKey,
+  parseTemperature,
+  isUsingGateway,
+} from "@/lib/perazziAiConfig";
 
 const DEFAULT_MODEL = "gpt-5.2";
-const OPENAI_MODEL = resolveModel();
-const MAX_OUTPUT_TOKENS = resolveMaxOutputTokens();
+const OPENAI_MODEL = resolveModel(DEFAULT_MODEL);
+const MAX_OUTPUT_TOKENS = resolveMaxOutputTokens(700);
 const REASONING_EFFORT = parseReasoningEffort(process.env.PERAZZI_REASONING_EFFORT);
 const TEXT_VERBOSITY = parseTextVerbosity(process.env.PERAZZI_TEXT_VERBOSITY);
 const PROMPT_CACHE_RETENTION = parsePromptCacheRetention(process.env.PERAZZI_PROMPT_CACHE_RETENTION);
@@ -93,83 +103,4 @@ export async function POST(req: Request) {
     console.error("[soul-journey-step]", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
-}
-
-function resolveModel(): string {
-  const candidate =
-    process.env.PERAZZI_MODEL ??
-    process.env.PERAZZI_RESPONSES_MODEL ??
-    process.env.PERAZZI_COMPLETIONS_MODEL ??
-    "";
-  const trimmed = candidate.trim();
-  return trimmed || DEFAULT_MODEL;
-}
-
-function resolveMaxOutputTokens(): number {
-  const raw =
-    process.env.PERAZZI_MAX_OUTPUT_TOKENS ??
-    process.env.PERAZZI_MAX_COMPLETION_TOKENS ??
-    "";
-  const parsed = Number(raw);
-  if (Number.isFinite(parsed) && parsed > 0) return parsed;
-  return 700;
-}
-
-function parseReasoningEffort(
-  value: string | null | undefined,
-): CreateResponseTextParams["reasoningEffort"] {
-  const normalized = value?.trim().toLowerCase();
-  const allowed = new Set(["none", "low", "medium", "high", "xhigh"]);
-  if (normalized && allowed.has(normalized)) {
-    return normalized as CreateResponseTextParams["reasoningEffort"];
-  }
-  // "minimal" is not a valid OpenAI effort value; omit reasoning config.
-  return undefined;
-}
-
-function parseTextVerbosity(
-  value: string | null | undefined,
-): CreateResponseTextParams["textVerbosity"] {
-  const normalized = value?.trim().toLowerCase();
-  const allowed = new Set(["low", "medium", "high"]);
-  if (normalized && allowed.has(normalized)) {
-    return normalized as CreateResponseTextParams["textVerbosity"];
-  }
-  return undefined;
-}
-
-function parsePromptCacheRetention(
-  value: string | null | undefined,
-): CreateResponseTextParams["promptCacheRetention"] {
-  const raw = value?.trim().toLowerCase();
-  if (!raw) return undefined;
-
-  const canonical = raw.replaceAll("-", "_");
-  const allowed = new Set(["in_memory", "24h"]);
-  if (allowed.has(canonical)) {
-    return canonical as CreateResponseTextParams["promptCacheRetention"];
-  }
-  return undefined;
-}
-
-function parsePromptCacheKey(value: string | null | undefined): string | undefined {
-  const trimmed = value?.trim();
-  if (!trimmed) return undefined;
-  return trimmed;
-}
-
-function parseTemperature(value: string | null | undefined, fallback: number): number {
-  const parsed = Number(value);
-  if (Number.isFinite(parsed)) {
-    if (parsed < 0) return 0;
-    if (parsed > 2) return 2;
-    return parsed;
-  }
-  return fallback;
-}
-
-function isUsingGateway(): boolean {
-  const forceDirect = process.env.AI_FORCE_DIRECT === "true";
-  if (forceDirect) return false;
-  return Boolean(process.env.AI_GATEWAY_URL && process.env.AI_GATEWAY_TOKEN);
 }
