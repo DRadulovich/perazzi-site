@@ -1,6 +1,6 @@
 import type { PerazziAssistantRequest } from "@/types/perazzi-assistant";
 import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
-import { mockChatCreate } from "../mocks/openai";
+import { mockResponsesCreate } from "../mocks/openai";
 
 const retrieveMock = vi.fn();
 vi.mock("@/lib/perazzi-retrieval", () => ({
@@ -10,7 +10,8 @@ vi.mock("@/lib/perazzi-retrieval", () => ({
 let routeModule: typeof import("@/app/api/perazzi-assistant/route");
 
 beforeAll(async () => {
-  process.env.PERAZZI_COMPLETIONS_MODEL = "gpt-4.1-mini";
+  process.env.PERAZZI_MODEL = "gpt-5-mini";
+  process.env.PERAZZI_COMPLETIONS_MODEL = "gpt-5-mini";
   process.env.PERAZZI_EMBED_MODEL = "text-embedding-3-small";
   routeModule = await import("@/app/api/perazzi-assistant/route");
 });
@@ -40,8 +41,10 @@ it("returns ok guardrail with citations and ignores client system message", asyn
     ],
     maxScore: 0.9,
   });
-  mockChatCreate.mockResolvedValue({
-    choices: [{ message: { content: "MX2000 offers a classic feel with bespoke balance." } }],
+  mockResponsesCreate.mockResolvedValue({
+    output_text: "MX2000 offers a classic feel with bespoke balance.",
+    id: "resp_test",
+    usage: { input_tokens: 111, output_tokens: 222 },
   });
 
   const request = buildRequest({
@@ -64,13 +67,14 @@ it("returns ok guardrail with citations and ignores client system message", asyn
   expect(body.templates).toBeDefined();
   expect(body.citations[0]?.excerpt).toBeDefined();
 
-  const completionCall = mockChatCreate.mock.calls[0]?.[0];
-  expect(completionCall).toBeDefined();
-  const systemMessages = completionCall.messages.filter((msg: any) => msg.role === "system");
-  expect(systemMessages.length).toBeGreaterThanOrEqual(1);
-  systemMessages.forEach((msg: any) => {
-    expect(msg.content).not.toContain("User override");
-  });
+  const responseCall = mockResponsesCreate.mock.calls[0]?.[0];
+  expect(responseCall).toBeDefined();
+  if (!responseCall) throw new Error("Response call not captured");
+  expect(responseCall.instructions).not.toContain("User override");
+  const inputMessages = (responseCall.input ?? []) as Array<{ role: string; content: string }>;
+  expect(inputMessages).toHaveLength(1);
+  expect(inputMessages[0]?.role).toBe("user");
+  expect(inputMessages[0]?.content).toContain("High Tech?");
 });
 
 it("reflects low confidence threshold behavior", async () => {
@@ -91,7 +95,7 @@ it("reflects low confidence threshold behavior", async () => {
   expect(body.intents).toBeDefined();
   expect(body.topics).toBeDefined();
   expect(body.templates).toBeDefined();
-  expect(mockChatCreate).not.toHaveBeenCalled();
+  expect(mockResponsesCreate).not.toHaveBeenCalled();
   process.env.PERAZZI_LOW_CONF_THRESHOLD = original;
 });
 
