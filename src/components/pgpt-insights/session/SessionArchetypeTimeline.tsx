@@ -8,6 +8,23 @@ import { formatTimestampShort } from "../format";
 type Mode = "instant" | "rolling5";
 type EndpointFilter = "all" | "assistant" | "user";
 
+function StatusBadge({ state }: { state: "snapped" | "mixed" | "unknown" }) {
+  const cls =
+    state === "snapped"
+      ? "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300"
+      : state === "mixed"
+        ? "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+        : "border-border bg-background text-muted-foreground";
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] uppercase tracking-wide tabular-nums ${cls}`}
+    >
+      {state}
+    </span>
+  );
+}
+
 function isRecord(v: unknown): v is Record<string, number> {
   return !!v && typeof v === "object" && !Array.isArray(v);
 }
@@ -93,7 +110,7 @@ export function SessionArchetypeTimeline({ rows }: { rows: PgptSessionTimelineRo
         <div className="space-y-1">
           <h2 className="text-sm font-semibold tracking-wide text-foreground">Archetype Adaptation</h2>
           <p className="text-xs text-muted-foreground">
-            One row per interaction. Stacked bars show the archetype distribution (if logged).
+            One row per interaction. Stacked bars show the archetype distribution (if logged). Rolling (5) smooths the bars; snapped/mixed reflects the logged per-turn decision.
           </p>
         </div>
 
@@ -160,20 +177,65 @@ export function SessionArchetypeTimeline({ rows }: { rows: PgptSessionTimelineRo
             </thead>
             <tbody className="divide-y divide-border/60">
               {computed.map((r, idx) => {
-                const scores = (r.archetype_scores ?? null) as any;
-                const norm = scores && typeof scores === "object" ? scores : null;
+                const snappedRaw = (r as any).archetype_snapped;
+                const state: "snapped" | "mixed" | "unknown" =
+                  snappedRaw === true ? "snapped" : snappedRaw === false ? "mixed" : "unknown";
+
+                const scores = isRecord(r.archetype_scores) ? r.archetype_scores : null;
+                const norm = normalize(scores as any);
 
                 let winnerText = r.archetype ?? "—";
-                let marginPp: number | null = typeof r.archetype_confidence === "number" ? Math.round(r.archetype_confidence * 100) : null;
+                let runnerText: string | null = null;
+                let computedMargin: number | null = null;
+                let winnerPct: number | null = null;
+                let runnerPct: number | null = null;
 
                 if (norm) {
-                  const { winner, runner, margin } = computeWinnerAndRunner(norm);
+                  const { winner, runner, margin } = computeWinnerAndRunner(norm as any);
                   winnerText = winner.k;
-                  marginPp = Math.round(margin * 100);
+                  runnerText = runner?.k ?? null;
+                  computedMargin = margin;
+                  winnerPct = winner.v;
+                  runnerPct = runner?.v ?? null;
                 }
 
-                const prevWinner = idx > 0 ? (computed[idx - 1].archetype ?? null) : null;
-                const changed = prevWinner && winnerText !== "—" && prevWinner !== winnerText;
+                const rowMargin =
+                  typeof (r as any).archetype_confidence_margin === "number"
+                    ? (r as any).archetype_confidence_margin
+                    : null;
+
+                const marginToShow = rowMargin ?? computedMargin;
+                const marginPp = typeof marginToShow === "number" ? Math.round(marginToShow * 100) : null;
+
+                const legacyConf = typeof r.archetype_confidence === "number" ? r.archetype_confidence : null;
+                const legacyConfPct = legacyConf !== null ? Math.round(legacyConf * 100) : null;
+
+                let prevWinnerText: string | null = null;
+                if (idx > 0) {
+                  const prev = computed[idx - 1];
+                  const prevScores = isRecord(prev.archetype_scores) ? prev.archetype_scores : null;
+                  const prevNorm = normalize(prevScores as any);
+                  if (prevNorm) {
+                    prevWinnerText = computeWinnerAndRunner(prevNorm as any).winner.k;
+                  } else if (prev.archetype) {
+                    prevWinnerText = prev.archetype;
+                  }
+                }
+
+                const changed = prevWinnerText && winnerText !== "—" && prevWinnerText !== winnerText;
+
+                const hoverTitle = [
+                  `endpoint: ${r.endpoint}`,
+                  `state: ${state}`,
+                  `winner: ${winnerText}${winnerPct !== null ? ` (${Math.round(winnerPct * 100)}%)` : ""}`,
+                  runnerText
+                    ? `runner-up: ${runnerText}${runnerPct !== null ? ` (${Math.round(runnerPct * 100)}%)` : ""}`
+                    : null,
+                  marginPp !== null ? `margin: +${marginPp}pp` : null,
+                  marginPp === null && legacyConfPct !== null ? `conf: ${legacyConfPct}%` : null,
+                ]
+                  .filter(Boolean)
+                  .join("\n");
 
                 return (
                   <tr key={r.id} className={changed ? "bg-muted/15" : undefined}>
@@ -182,11 +244,21 @@ export function SessionArchetypeTimeline({ rows }: { rows: PgptSessionTimelineRo
                     <td className="px-3 py-2">
                       <ArchetypeStackedBar scores={norm} heightClass="h-2.5" />
                     </td>
-                    <td className="px-3 py-2">
-                      <div className="text-xs text-foreground">
-                        {winnerText}
-                        {marginPp !== null ? <span className="text-muted-foreground"> · +{marginPp}pp</span> : null}
-                        {changed ? <span className="ml-2 text-[10px] uppercase tracking-wide text-muted-foreground">flip</span> : null}
+                    <td className="px-3 py-2" title={hoverTitle}>
+                      <div className="flex items-center gap-2 text-xs text-foreground">
+                        <span>{winnerText}</span>
+                        <StatusBadge state={state} />
+                        {changed ? <span className="ml-1 text-[10px] uppercase tracking-wide text-muted-foreground">flip</span> : null}
+                      </div>
+                      <div className="mt-0.5 text-[10px] text-muted-foreground tabular-nums">
+                        {marginPp !== null ? (
+                          <>margin +{marginPp}pp</>
+                        ) : legacyConfPct !== null ? (
+                          <>conf {legacyConfPct}%</>
+                        ) : (
+                          <>—</>
+                        )}
+                        {runnerText ? <> · runner-up {runnerText}</> : null}
                       </div>
                     </td>
                   </tr>
