@@ -112,6 +112,10 @@ export async function fetchLogs(args: {
       l.session_id,
       l.model,
       l.used_gateway,
+      l.metadata as metadata,
+      (l.metadata->>'rerankEnabled')::boolean as rerank_enabled,
+      (l.metadata->>'archetypeSnapped')::boolean as archetype_snapped,
+      coalesce((l.metadata->>'archetypeConfidenceMargin')::float, (l.metadata->>'archetypeConfidence')::float) as archetype_confidence_margin,
       (l.metadata->>'archetypeConfidence')::float as archetype_confidence,
 
       left(l.prompt, 800) as prompt_preview,
@@ -929,7 +933,10 @@ export async function fetchSessionTimelineRows(args: {
         created_at::text as created_at,
         endpoint,
         archetype,
+        coalesce((metadata->>'archetypeConfidenceMargin')::float, (metadata->>'archetypeConfidence')::float) as archetype_confidence_margin,
         (metadata->>'archetypeConfidence')::float as archetype_confidence,
+        (metadata->>'archetypeSnapped')::boolean as archetype_snapped,
+        (metadata->>'rerankEnabled')::boolean as rerank_enabled,
         metadata->'archetypeScores' as archetype_scores
       from perazzi_conversation_logs
       where session_id = $1
@@ -1000,6 +1007,10 @@ export async function fetchSessionLogsPreview(args: {
       l.session_id,
       l.model,
       l.used_gateway,
+      l.metadata as metadata,
+      (l.metadata->>'rerankEnabled')::boolean as rerank_enabled,
+      (l.metadata->>'archetypeSnapped')::boolean as archetype_snapped,
+      coalesce((l.metadata->>'archetypeConfidenceMargin')::float, (l.metadata->>'archetypeConfidence')::float) as archetype_confidence_margin,
       (l.metadata->>'archetypeConfidence')::float as archetype_confidence,
 
       left(l.prompt, 800) as prompt_preview,

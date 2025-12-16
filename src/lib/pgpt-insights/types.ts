@@ -40,6 +40,10 @@ export type PerazziLogPreviewRow = PerazziLogBase & {
   prompt_len: number;
   response_len: number;
   archetype_confidence?: number | null;
+  metadata?: unknown | null;
+  rerank_enabled?: boolean | null;
+  archetype_snapped?: boolean | null;
+  archetype_confidence_margin?: number | null;
 };
 
 export type RagSummary = {
@@ -223,6 +227,9 @@ export type PgptSessionTimelineRow = {
   endpoint: string;
   archetype: string | null;
   archetype_confidence: number | null;
+  archetype_confidence_margin?: number | null;
+  archetype_snapped?: boolean | null;
+  rerank_enabled?: boolean | null;
   archetype_scores: Record<string, number> | null;
 };
 
