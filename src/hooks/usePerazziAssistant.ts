@@ -9,6 +9,7 @@ import type {
   PerazziMode,
   Archetype,
   ArchetypeVector,
+  TextVerbosity,
 } from "@/types/perazzi-assistant";
 
 export type PlatformSlug = "mx" | "ht" | "tm" | "dc" | "sho";
@@ -23,6 +24,8 @@ export type AssistantContext = {
   archetype?: Archetype | null;
   /** Previous archetype vector from the last response, used for smoothing. */
   archetypeVector?: ArchetypeVector | null;
+  /** Preferred verbosity for assistant text responses. */
+  textVerbosity?: TextVerbosity;
 };
 
 export type UsePerazziAssistantOptions = {

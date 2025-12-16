@@ -595,7 +595,17 @@ export function ChatPanel({
       </div>
         <div className="border-t border-subtle px-6 py-4">
           {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
-          <ChatInput pending={pending} onSend={handleSend} />
+          <ChatInput
+            pending={pending}
+            onSend={handleSend}
+            textVerbosity={context.textVerbosity ?? "medium"}
+            onTextVerbosityChange={(verbosity) =>
+              setContext((prev) => ({
+                ...prev,
+                textVerbosity: verbosity,
+              }))
+            }
+          />
         </div>
       </div>
       </div>
