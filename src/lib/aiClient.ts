@@ -30,6 +30,8 @@ export type CreateResponseTextParams = ResponseCreateParams & {
   promptCacheRetention?: ResponseCreateParams["prompt_cache_retention"];
   promptCacheKey?: string;
   previousResponseId?: string;
+  logprobs?: number | boolean | null;
+  top_logprobs?: number | null;
 };
 
 export type CreateResponseTextResult = {
@@ -210,9 +212,8 @@ export async function createResponseText(
   const isGpt51 = model.startsWith("gpt-5.1");
   const samplingModelAllowed = isGpt52 || isGpt51;
 
-  const effort = typeof (resolvedReasoning as { effort?: unknown })?.effort === "string"
-    ? (resolvedReasoning as { effort?: string }).effort.toLowerCase()
-    : undefined;
+  const effortValue = (resolvedReasoning as { effort?: unknown } | undefined)?.effort;
+  const effort = typeof effortValue === "string" ? effortValue.toLowerCase() : undefined;
   const reasoningAllowsSampling = !resolvedReasoning || effort === "none";
 
   const allowSamplingParams = !isGpt5 ? true : samplingModelAllowed && reasoningAllowsSampling;
