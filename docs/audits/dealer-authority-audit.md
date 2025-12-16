@@ -1,7 +1,7 @@
 # Dealer Authority Audit (Authorized Dealer Leakage)
 
 -## LLM entrypoints & sampling
-- `src/app/api/perazzi-assistant/route.ts:124-136,845-852` — Main chat endpoint uses Responses (`model=gpt-5.2` default via env), `temperature:0.4`, `max_output_tokens:3000`; system prompt (`instructions`) prepends `V2_REDO_assistant-spec.md` + style exemplars on every call. System/dev instructions: **closed-world intent** (grounded in V2 corpus) but no hard refusal when context is empty. Reasoning/verbosity/prompt-cache knobs are env-driven (`PERAZZI_REASONING_EFFORT`, `PERAZZI_TEXT_VERBOSITY`, `PERAZZI_PROMPT_CACHE_RETENTION`).
+- `src/app/api/perazzi-assistant/route.ts:124-136,845-852` — Main chat endpoint uses Responses (`model=gpt-5.2` default via env), `temperature:1.0` (env `PERAZZI_ASSISTANT_TEMPERATURE`; only applied when `reasoning.effort="none"`), `max_output_tokens:3000`; system prompt (`instructions`) prepends `V2_REDO_assistant-spec.md` + style exemplars on every call. System/dev instructions: **closed-world intent** (grounded in V2 corpus) but no hard refusal when context is empty. Reasoning/verbosity/prompt-cache knobs are env-driven (`PERAZZI_REASONING_EFFORT`, `PERAZZI_TEXT_VERBOSITY`, `PERAZZI_PROMPT_CACHE_RETENTION`).
 - `src/app/api/perazzi-assistant/route.ts:945-964` — System prompt injects retrieved chunks then says “Use the following retrieved references when relevant … If you are not certain, clearly state the limitation,” but still runs even when `docSnippets` is empty. Classification: **open-world fallback** (invites best-effort answer without context).
 - `src/lib/perazzi-intents.ts:52-55,128-133` — Dealer intent detection routes dealer-like phrases to Navigation mode and injects template: “List up to three recommended dealers with Name — City/State …” Classification: **open-world nudge** (encourages listing dealers without requiring corpus support or “authorized” wording).
 - `src/app/api/perazzi-assistant/route.ts:186-189,650-666` — Low-confidence gate defaults to `PERAZZI_LOW_CONF_THRESHOLD ?? 0`, so threshold is 0 unless overridden; low-conf message exists but is effectively disabled. Classification: **open-world** (allows answering on zero/weak retrieval).
@@ -24,7 +24,7 @@
 ## Conflict map (helpful vs corpus-only)
 - Corpus-only mandate (V2 specs) vs dealer template that pushes proactive lists without checking retrieval/citations.
 - Low-confidence/unknown-handling requirements in specs vs runtime gate set to 0 → model is never forced to defer when dealer chunks are missing.
-- System prompt “use retrieved references when relevant” vs absence of a rule like “do not answer if none provided”; combined with temperature 0.4 yields plausible-but-uncited dealer names.
+- System prompt “use retrieved references when relevant” vs absence of a rule like “do not answer if none provided”; combined with temperature 1.0 yields plausible-but-uncited dealer names.
 
 ## Retrieval flow & fallback branches
 - Flow: user query → `retrievePerazziContext` embeds with `text-embedding-3-large` → PG `embeddings` table query (limit 12; rerank optional, candidateLimit 60 if enabled) → optional rerank/boosting → return chunks + maxScore → low-confidence check (`maxScore < threshold`, threshold defaults to 0) → `buildSystemPrompt` injects chunks → `runChatCompletion`.
@@ -35,7 +35,7 @@
   - Retrieval debug is off by default; missing context not surfaced to caller unless env `PERAZZI_ENABLE_RETRIEVAL_DEBUG=true` or `PERAZZI_ENABLE_FILE_LOG=true`.
 
 ## Sampling config (dealer-capable endpoint)
-- Responses: `src/app/api/perazzi-assistant/route.ts` → default `gpt-5.2` (`PERAZZI_MODEL` / `PERAZZI_RESPONSES_MODEL`), `temperature 0.4`, `top_p` default (not set), `max_output_tokens 3000`, no seed. Reasoning/verbosity/prompt-cache knobs are env-driven.
+- Responses: `src/app/api/perazzi-assistant/route.ts` → default `gpt-5.2` (`PERAZZI_MODEL` / `PERAZZI_RESPONSES_MODEL`), `temperature 1.0` (env; only applied when `reasoning.effort="none"`), `top_p` default (not set), `max_output_tokens 3000`, no seed. Reasoning/verbosity/prompt-cache knobs are env-driven.
 - Embeddings: `text-embedding-3-large` (`PERAZZI_EMBED_MODEL`, default) for queries and archetype vectors.
 - Rerank: disabled by default unless `PERAZZI_ENABLE_RERANK=true`; candidateLimit 60 when on, otherwise limit 12.
 

@@ -45,7 +45,7 @@
 - Env: `PERAZZI_ASSISTANT_TEMPERATURE`, `PERAZZI_SOUL_JOURNEY_TEMPERATURE`, `PERAZZI_REASONING_EFFORT`.
 - UI: None directly; behavioral changes visible to chat users.
 - Tests: Not asserting temperature; OpenAI mocks ignore temperature. Adjustments should avoid shape changes to `ResponseCreateParams`.
-- Docs: `.env.example` lists temperatures (assistant comment shows `0.`); `docs/audits/gpt-5.2-responses-migration-audit.md` and API contracts still cite earlier temperature expectations (0.4 in prior audit).
+- Docs: `.env.example` lists temperatures (assistant default 1.0, soul journey 0.6; only applied when `reasoning.effort="none"`); `docs/audits/gpt-5.2-responses-migration-audit.md` and API contracts now mirror these defaults.
 - Danger zones: Setting reasoning with temperature>2 will clamp (parseTemperature), but enabling reasoning without removing temperature may conflict with planned gating; any added defaults must keep payload shape consistent with tests/mocks.
 
 ### Prompt Caching

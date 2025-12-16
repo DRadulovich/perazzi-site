@@ -47,7 +47,7 @@ Endpoint: `POST /api/perazzi-assistant`
 - `similarity` (number, optional) — highest similarity score returned; surfaced so we can inspect relevance during dev.
 
 ## Server behavior
-- Model: `gpt-5.2` by default (env `PERAZZI_MODEL` / `PERAZZI_RESPONSES_MODEL`; `PERAZZI_COMPLETIONS_MODEL` remains as a deprecated fallback), temperature 0.4, max output tokens ≈ 3000 (`PERAZZI_MAX_OUTPUT_TOKENS`).
+- Model: `gpt-5.2` by default (env `PERAZZI_MODEL` / `PERAZZI_RESPONSES_MODEL`; `PERAZZI_COMPLETIONS_MODEL` remains as a deprecated fallback), temperature defaults to `1.0` (env `PERAZZI_ASSISTANT_TEMPERATURE`, clamped 0–2) and only applies when `reasoning.effort="none"`, max output tokens ≈ 3000 (`PERAZZI_MAX_OUTPUT_TOKENS`).
 - Responses API fields: `instructions` (server-built system prompt + tone), `input` (sanitized chat messages), `max_output_tokens`.
 - Tuning knobs (env-driven):
   - `reasoning.effort`: `none|minimal|low|medium|high|xhigh` (`PERAZZI_REASONING_EFFORT`)

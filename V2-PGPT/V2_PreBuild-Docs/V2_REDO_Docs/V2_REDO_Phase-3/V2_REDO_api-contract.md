@@ -210,7 +210,7 @@ Minimal response shape (keys and types as returned today):
 ### 3.1 Model & generation
 
 - Model: **`gpt-5.2`** by default (`PERAZZI_MODEL` / `PERAZZI_RESPONSES_MODEL` env; `PERAZZI_COMPLETIONS_MODEL` remains as a deprecated fallback).  
-- Temperature: ~**0.3–0.4**  
+- Temperature: default **1.0** (env: `PERAZZI_ASSISTANT_TEMPERATURE`; clamped 0–2; only applied when `reasoning.effort="none"`).  
 - Max output tokens: ~**3000** (via `max_output_tokens`; `PERAZZI_MAX_OUTPUT_TOKENS` env).  
 - Responses API fields: `instructions` (server-built system prompt + tone nudge), `input` (sanitized user/assistant messages), `max_output_tokens`.  
 - Tuning knobs:
