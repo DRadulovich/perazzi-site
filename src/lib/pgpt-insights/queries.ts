@@ -22,6 +22,7 @@ import type {
   PgptSessionSummary,
   PgptSessionTimelineRow,
 } from "./types";
+import type { BoolFilter } from "./log-filters";
 
 function isUuidLike(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
@@ -70,6 +71,8 @@ export async function fetchLogs(args: {
   margin_lt?: string;
   score_archetype?: string;
   min?: string;
+  rerank?: string;
+  snapped?: string;
 
   limit: number;
   offset: number;
@@ -92,6 +95,8 @@ export async function fetchLogs(args: {
     margin_lt: args.margin_lt,
     score_archetype: args.score_archetype,
     min: args.min,
+    rerank: args.rerank,
+    snapped: args.snapped,
   });
 
   const { joinSql, whereClause, values, nextIndex } = buildLogsQueryParts(filters);
@@ -882,6 +887,9 @@ export async function fetchAssistantRequestCountWindow(
 export async function fetchArchetypeSnapSummary(
   envFilter?: string,
   daysFilter?: number,
+  rerank?: BoolFilter,
+  snappedFilter?: BoolFilter,
+  marginLt?: number | null,
 ): Promise<{ total: number; snapped_count: number; mixed_count: number; unknown_count: number }> {
   const conditions: string[] = ["endpoint = 'assistant'"];
   const params: Array<string | number> = [];
@@ -894,6 +902,25 @@ export async function fetchArchetypeSnapSummary(
   if (daysFilter) {
     conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
     params.push(daysFilter);
+  }
+
+  if (rerank === "true") {
+    conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = true`);
+  } else if (rerank === "false") {
+    conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = false`);
+  }
+
+  if (snappedFilter === "true") {
+    conditions.push(`coalesce((metadata->>'archetypeSnapped')::boolean, false) = true`);
+  } else if (snappedFilter === "false") {
+    conditions.push(`coalesce((metadata->>'archetypeSnapped')::boolean, false) = false`);
+  }
+
+  if (marginLt !== null && marginLt !== undefined) {
+    conditions.push(
+      `coalesce((metadata->>'archetypeConfidenceMargin')::float, (metadata->>'archetypeConfidence')::float) < $${idx++}`,
+    );
+    params.push(marginLt);
   }
 
   const query = `
@@ -919,6 +946,9 @@ export async function fetchArchetypeSnapSummary(
 export async function fetchRerankEnabledSummary(
   envFilter?: string,
   daysFilter?: number,
+  rerank?: BoolFilter,
+  snapped?: BoolFilter,
+  marginLt?: number | null,
 ): Promise<{
   total: number;
   rerank_on_count: number;
@@ -937,6 +967,25 @@ export async function fetchRerankEnabledSummary(
   if (daysFilter) {
     conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
     params.push(daysFilter);
+  }
+
+  if (rerank === "true") {
+    conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = true`);
+  } else if (rerank === "false") {
+    conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = false`);
+  }
+
+  if (snapped === "true") {
+    conditions.push(`coalesce((metadata->>'archetypeSnapped')::boolean, false) = true`);
+  } else if (snapped === "false") {
+    conditions.push(`coalesce((metadata->>'archetypeSnapped')::boolean, false) = false`);
+  }
+
+  if (marginLt !== null && marginLt !== undefined) {
+    conditions.push(
+      `coalesce((metadata->>'archetypeConfidenceMargin')::float, (metadata->>'archetypeConfidence')::float) < $${idx++}`,
+    );
+    params.push(marginLt);
   }
 
   const query = `
@@ -965,6 +1014,9 @@ export async function fetchRerankEnabledSummary(
 export async function fetchArchetypeMarginHistogram(
   envFilter?: string,
   daysFilter?: number,
+  rerank?: BoolFilter,
+  snapped?: BoolFilter,
+  marginLt?: number | null,
 ): Promise<Array<{ bucket_order: number; bucket_label: string; hits: number }>> {
   const conditions: string[] = ["endpoint = 'assistant'"];
   const params: Array<string | number> = [];
@@ -977,6 +1029,25 @@ export async function fetchArchetypeMarginHistogram(
   if (daysFilter) {
     conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
     params.push(daysFilter);
+  }
+
+  if (rerank === "true") {
+    conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = true`);
+  } else if (rerank === "false") {
+    conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = false`);
+  }
+
+  if (snapped === "true") {
+    conditions.push(`coalesce((metadata->>'archetypeSnapped')::boolean, false) = true`);
+  } else if (snapped === "false") {
+    conditions.push(`coalesce((metadata->>'archetypeSnapped')::boolean, false) = false`);
+  }
+
+  if (marginLt !== null && marginLt !== undefined) {
+    conditions.push(
+      `coalesce((metadata->>'archetypeConfidenceMargin')::float, (metadata->>'archetypeConfidence')::float) < $${idx++}`,
+    );
+    params.push(marginLt);
   }
 
   const query = `
@@ -1028,8 +1099,11 @@ export async function fetchArchetypeMarginHistogram(
 export async function fetchDailyArchetypeSnapRate(args: {
   envFilter?: string;
   days: number;
+  rerank?: BoolFilter;
+  snapped?: BoolFilter;
+  marginLt?: number | null;
 }): Promise<Array<{ day: string; snapped_count: number; mixed_count: number; total_classified: number }>> {
-  const { envFilter, days } = args;
+  const { envFilter, days, rerank, snapped, marginLt } = args;
 
   const conditions: string[] = ["endpoint = 'assistant'"];
   const params: Array<string | number> = [];
@@ -1042,6 +1116,25 @@ export async function fetchDailyArchetypeSnapRate(args: {
 
   conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
   params.push(days);
+
+  if (rerank === "true") {
+    conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = true`);
+  } else if (rerank === "false") {
+    conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = false`);
+  }
+
+  if (snapped === "true") {
+    conditions.push(`coalesce((metadata->>'archetypeSnapped')::boolean, false) = true`);
+  } else if (snapped === "false") {
+    conditions.push(`coalesce((metadata->>'archetypeSnapped')::boolean, false) = false`);
+  }
+
+  if (marginLt !== null && marginLt !== undefined) {
+    conditions.push(
+      `coalesce((metadata->>'archetypeConfidenceMargin')::float, (metadata->>'archetypeConfidence')::float) < $${idx++}`,
+    );
+    params.push(marginLt);
+  }
 
   const query = `
     select
@@ -1067,6 +1160,9 @@ export async function fetchDailyArchetypeSnapRate(args: {
 export async function fetchDailyRerankEnabledRate(args: {
   envFilter?: string;
   days: number;
+  rerank?: BoolFilter;
+  snapped?: BoolFilter;
+  marginLt?: number | null;
 }): Promise<
   Array<{
     day: string;
@@ -1076,7 +1172,7 @@ export async function fetchDailyRerankEnabledRate(args: {
     avg_candidate_limit: number | null;
   }>
 > {
-  const { envFilter, days } = args;
+  const { envFilter, days, rerank, snapped, marginLt } = args;
 
   const conditions: string[] = ["endpoint = 'assistant'"];
   const params: Array<string | number> = [];
@@ -1089,6 +1185,25 @@ export async function fetchDailyRerankEnabledRate(args: {
 
   conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
   params.push(days);
+
+  if (rerank === "true") {
+    conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = true`);
+  } else if (rerank === "false") {
+    conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = false`);
+  }
+
+  if (snapped === "true") {
+    conditions.push(`coalesce((metadata->>'archetypeSnapped')::boolean, false) = true`);
+  } else if (snapped === "false") {
+    conditions.push(`coalesce((metadata->>'archetypeSnapped')::boolean, false) = false`);
+  }
+
+  if (marginLt !== null && marginLt !== undefined) {
+    conditions.push(
+      `coalesce((metadata->>'archetypeConfidenceMargin')::float, (metadata->>'archetypeConfidence')::float) < $${idx++}`,
+    );
+    params.push(marginLt);
+  }
 
   const query = `
     select
@@ -1203,6 +1318,8 @@ export async function fetchSessionLogsPreview(args: {
   margin_lt?: string;
   score_archetype?: string;
   min?: string;
+  rerank?: string;
+  snapped?: string;
 
   limit: number;
   offset: number;
@@ -1218,6 +1335,8 @@ export async function fetchSessionLogsPreview(args: {
     margin_lt: args.margin_lt,
     score_archetype: args.score_archetype,
     min: args.min,
+    rerank: args.rerank,
+    snapped: args.snapped,
   });
 
   // Base condition: session scope must always apply

@@ -16,18 +16,35 @@ export async function MetricsSection({
   envFilter,
   daysFilter,
   tableDensityClass,
+  rerankFilter,
+  snappedFilter,
+  marginLt,
 }: {
   envFilter?: string;
   daysFilter?: number;
   tableDensityClass: string;
+  rerankFilter?: string;
+  snappedFilter?: string;
+  marginLt?: string;
 }) {
   try {
+    const parseMargin = (v?: string) => {
+      if (!v || v === "any") return null;
+      const n = Number(v);
+      if (!Number.isFinite(n)) return null;
+      if (n < 0) return 0;
+      if (n > 1) return 1;
+      return n;
+    };
+
+    const marginLtNum = parseMargin(marginLt);
+
     const [dailyTokenUsage, avgMetrics, snapSummary, rerankSummary, marginBuckets] = await Promise.all([
       getDailyTokenUsage(envFilter, daysFilter),
       getAvgMetrics(envFilter, daysFilter),
-      getArchetypeSnapSummary(envFilter, daysFilter),
-      getRerankEnabledSummary(envFilter, daysFilter),
-      getArchetypeMarginHistogram(envFilter, daysFilter),
+      getArchetypeSnapSummary(envFilter, daysFilter, rerankFilter, snappedFilter, marginLtNum),
+      getRerankEnabledSummary(envFilter, daysFilter, rerankFilter, snappedFilter, marginLtNum),
+      getArchetypeMarginHistogram(envFilter, daysFilter, rerankFilter, snappedFilter, marginLtNum),
     ]);
 
     const totalPromptTokens = dailyTokenUsage.reduce((sum, row) => sum + row.total_prompt_tokens, 0);

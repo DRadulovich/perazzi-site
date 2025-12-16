@@ -21,6 +21,9 @@ export type LogsFilters = {
   gateway: BoolFilter;
   qa: QaFilter;
 
+  rerank: BoolFilter;
+  snapped: BoolFilter;
+
   winnerChanged?: boolean;
   marginLt?: number | null;
   scoreArchetype?: "Loyalist" | "Prestige" | "Analyst" | "Achiever" | "Legacy" | null;
@@ -77,6 +80,8 @@ export function parseLogsFilters(input: {
   margin_lt?: string;
   score_archetype?: string;
   min?: string;
+  rerank?: string;
+  snapped?: string;
 }): LogsFilters {
   const ARCH_KEYS = new Set(["Loyalist", "Prestige", "Analyst", "Achiever", "Legacy"]);
 
@@ -118,6 +123,9 @@ export function parseLogsFilters(input: {
 
     gateway: parseBoolFilter(input.gateway),
     qa: parseQaFilter(input.qa),
+
+    rerank: parseBoolFilter((input as any).rerank),
+    snapped: parseBoolFilter((input as any).snapped),
 
     winnerChanged,
     marginLt,
@@ -229,9 +237,22 @@ function buildLogsQueryPartsInternal(args: {
     conditions.push(`qf.qa_flag_id is null`);
   }
 
+  if (filters.rerank === "true") {
+    conditions.push(`coalesce((l.metadata->>'rerankEnabled')::boolean, false) = true`);
+  } else if (filters.rerank === "false") {
+    conditions.push(`coalesce((l.metadata->>'rerankEnabled')::boolean, false) = false`);
+  }
+
+  if (filters.snapped === "true") {
+    conditions.push(`coalesce((l.metadata->>'archetypeSnapped')::boolean, false) = true`);
+  } else if (filters.snapped === "false") {
+    conditions.push(`coalesce((l.metadata->>'archetypeSnapped')::boolean, false) = false`);
+  }
+
   if (filters.marginLt !== null && filters.marginLt !== undefined) {
-    conditions.push(`l.metadata->>'archetypeConfidence' is not null`);
-    conditions.push(`(l.metadata->>'archetypeConfidence')::float < $${idx++}`);
+    conditions.push(
+      `coalesce((l.metadata->>'archetypeConfidenceMargin')::float, (l.metadata->>'archetypeConfidence')::float) < $${idx++}`,
+    );
     values.push(filters.marginLt);
   }
 

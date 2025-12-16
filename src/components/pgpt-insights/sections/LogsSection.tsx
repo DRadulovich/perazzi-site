@@ -34,6 +34,8 @@ type SearchParams = {
   margin_lt?: string;
   score_archetype?: string;
   min?: string;
+  rerank?: string;
+  snapped?: string;
 };
 
 export async function LogsSection({
@@ -78,6 +80,8 @@ export async function LogsSection({
       margin_lt: resolvedSearchParams.margin_lt,
       score_archetype: resolvedSearchParams.score_archetype,
       min: resolvedSearchParams.min,
+      rerank: resolvedSearchParams.rerank,
+      snapped: resolvedSearchParams.snapped,
 
       limit: LOGS_PAGE_SIZE + 1,
       offset,
@@ -113,6 +117,8 @@ export async function LogsSection({
             margin_lt: resolvedSearchParams.margin_lt,
             score_archetype: resolvedSearchParams.score_archetype,
             min: resolvedSearchParams.min,
+            rerank: resolvedSearchParams.rerank,
+            snapped: resolvedSearchParams.snapped,
           })
         : null;
 
@@ -137,6 +143,8 @@ export async function LogsSection({
           margin_lt: resolvedSearchParams.margin_lt,
           score_archetype: resolvedSearchParams.score_archetype,
           min: resolvedSearchParams.min,
+          rerank: resolvedSearchParams.rerank,
+          snapped: resolvedSearchParams.snapped,
         })
       : null;
 

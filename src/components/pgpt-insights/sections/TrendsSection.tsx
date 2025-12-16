@@ -20,21 +20,42 @@ export async function TrendsSection({
   envFilter,
   endpointFilter,
   daysFilter,
+  rerankFilter,
+  snappedFilter,
+  marginLt,
 }: {
   envFilter?: string;
   endpointFilter?: string;
   daysFilter?: number;
+  rerankFilter?: string;
+  snappedFilter?: string;
+  marginLt?: string;
 }) {
   try {
     const capDays = typeof daysFilter === "number" && Number.isFinite(daysFilter) ? Math.min(Math.max(daysFilter, 7), 90) : 90;
 
     const tuningApplies = !endpointFilter || endpointFilter === "assistant" || endpointFilter === "all";
 
+    const parseMargin = (v?: string) => {
+      if (!v || v === "any") return null;
+      const n = Number(v);
+      if (!Number.isFinite(n)) return null;
+      if (n < 0) return 0;
+      if (n > 1) return 1;
+      return n;
+    };
+
+    const marginLtNum = parseMargin(marginLt);
+
     const [trends, lowScore, snapDaily, rerankDaily] = await Promise.all([
       getDailyTrends(envFilter, endpointFilter, capDays),
       getDailyLowScoreRate(envFilter, capDays, LOW_SCORE_THRESHOLD),
-      tuningApplies ? getDailyArchetypeSnapRate(envFilter, capDays) : Promise.resolve([]),
-      tuningApplies ? getDailyRerankEnabledRate(envFilter, capDays) : Promise.resolve([]),
+      tuningApplies
+        ? getDailyArchetypeSnapRate(envFilter, capDays, rerankFilter, snappedFilter, marginLtNum)
+        : Promise.resolve([]),
+      tuningApplies
+        ? getDailyRerankEnabledRate(envFilter, capDays, rerankFilter, snappedFilter, marginLtNum)
+        : Promise.resolve([]),
     ]);
 
     const lowMap = new Map(lowScore.map((r) => [r.day, r]));

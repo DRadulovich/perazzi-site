@@ -40,6 +40,8 @@ type SearchParams = {
   margin_lt?: string;
   score_archetype?: string;
   min?: string;
+  rerank?: string;
+  snapped?: string;
 };
 
 export default async function PgptInsightsPage({
@@ -119,7 +121,14 @@ export default async function PgptInsightsPage({
 
         {!isTriageView ? (
           <Suspense fallback={<SectionSkeleton id="trends" title="Trends" lines={8} />}>
-            <TrendsSection envFilter={envFilter} endpointFilter={endpointFilter} daysFilter={daysFilter} />
+            <TrendsSection
+              envFilter={envFilter}
+              endpointFilter={endpointFilter}
+              daysFilter={daysFilter}
+              rerankFilter={resolvedSearchParams.rerank}
+              snappedFilter={resolvedSearchParams.snapped}
+              marginLt={resolvedSearchParams.margin_lt}
+            />
           </Suspense>
         ) : null}
 
@@ -297,7 +306,14 @@ export default async function PgptInsightsPage({
 
             {!isTriageView ? (
               <Suspense fallback={<SectionSkeleton id="metrics" title="Metrics (Tokens & Latency)" lines={6} />}>
-                <MetricsSection envFilter={envFilter} daysFilter={daysFilter} tableDensityClass={tableDensityClass} />
+                <MetricsSection
+                  envFilter={envFilter}
+                  daysFilter={daysFilter}
+                  tableDensityClass={tableDensityClass}
+                  rerankFilter={resolvedSearchParams.rerank}
+                  snappedFilter={resolvedSearchParams.snapped}
+                  marginLt={resolvedSearchParams.margin_lt}
+                />
               </Suspense>
             ) : null}
 

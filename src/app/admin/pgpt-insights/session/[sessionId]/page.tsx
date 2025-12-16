@@ -21,6 +21,8 @@ type SearchParams = {
   margin_lt?: string;
   score_archetype?: string;
   min?: string;
+  rerank?: string;
+  snapped?: string;
 };
 
 const SESSION_LOGS_LIMIT = 2000;
@@ -68,6 +70,8 @@ export default async function PgptInsightsSessionPage({
     margin_lt: resolvedSearchParams.margin_lt,
     score_archetype: resolvedSearchParams.score_archetype,
     min: resolvedSearchParams.min,
+    rerank: resolvedSearchParams.rerank,
+    snapped: resolvedSearchParams.snapped,
 
     limit: SESSION_LOGS_LIMIT + 1,
     offset: 0,

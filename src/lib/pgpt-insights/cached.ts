@@ -99,22 +99,42 @@ export const getAssistantRequestCountWindow = cache(
     fetchAssistantRequestCountWindow(envFilter, startDaysAgo, endDaysAgo),
 );
 
-export const getArchetypeSnapSummary = cache(async (envFilter: string | undefined, daysFilter: number | undefined) =>
-  fetchArchetypeSnapSummary(envFilter, daysFilter),
+export const getArchetypeSnapSummary = cache(
+  async (
+    envFilter: string | undefined,
+    daysFilter: number | undefined,
+    rerank?: string,
+    snapped?: string,
+    marginLt?: number | null,
+  ) => fetchArchetypeSnapSummary(envFilter, daysFilter, rerank as any, snapped as any, marginLt),
 );
 
-export const getRerankEnabledSummary = cache(async (envFilter: string | undefined, daysFilter: number | undefined) =>
-  fetchRerankEnabledSummary(envFilter, daysFilter),
+export const getRerankEnabledSummary = cache(
+  async (
+    envFilter: string | undefined,
+    daysFilter: number | undefined,
+    rerank?: string,
+    snapped?: string,
+    marginLt?: number | null,
+  ) => fetchRerankEnabledSummary(envFilter, daysFilter, rerank as any, snapped as any, marginLt),
 );
 
-export const getArchetypeMarginHistogram = cache(async (envFilter: string | undefined, daysFilter: number | undefined) =>
-  fetchArchetypeMarginHistogram(envFilter, daysFilter),
+export const getArchetypeMarginHistogram = cache(
+  async (
+    envFilter: string | undefined,
+    daysFilter: number | undefined,
+    rerank?: string,
+    snapped?: string,
+    marginLt?: number | null,
+  ) => fetchArchetypeMarginHistogram(envFilter, daysFilter, rerank as any, snapped as any, marginLt),
 );
 
-export const getDailyArchetypeSnapRate = cache(async (envFilter: string | undefined, days: number) =>
-  fetchDailyArchetypeSnapRate({ envFilter, days }),
+export const getDailyArchetypeSnapRate = cache(
+  async (envFilter: string | undefined, days: number, rerank?: string, snapped?: string, marginLt?: number | null) =>
+    fetchDailyArchetypeSnapRate({ envFilter, days, rerank: rerank as any, snapped: snapped as any, marginLt }),
 );
 
-export const getDailyRerankEnabledRate = cache(async (envFilter: string | undefined, days: number) =>
-  fetchDailyRerankEnabledRate({ envFilter, days }),
+export const getDailyRerankEnabledRate = cache(
+  async (envFilter: string | undefined, days: number, rerank?: string, snapped?: string, marginLt?: number | null) =>
+    fetchDailyRerankEnabledRate({ envFilter, days, rerank: rerank as any, snapped: snapped as any, marginLt }),
 );

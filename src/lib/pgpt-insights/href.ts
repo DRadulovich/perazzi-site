@@ -19,6 +19,8 @@ export function buildInsightsHref(params: {
   margin_lt?: string;
   score_archetype?: string;
   min?: string;
+  rerank?: string;
+  snapped?: string;
 }): string {
   const sp = new URLSearchParams();
 
@@ -47,6 +49,8 @@ export function buildInsightsHref(params: {
   set("margin_lt", params.margin_lt);
   set("score_archetype", params.score_archetype);
   set("min", params.min);
+  set("rerank", params.rerank);
+  set("snapped", params.snapped);
 
   const qs = sp.toString();
   return qs ? `/admin/pgpt-insights?${qs}` : "/admin/pgpt-insights";
