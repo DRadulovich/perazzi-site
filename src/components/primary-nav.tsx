@@ -19,35 +19,54 @@ type NavItem = {
   component?: FlyoutRenderer;
 };
 
+type NavTone = "light" | "dark";
+
 type PrimaryNavProps = Readonly<{
   brandLabel: string;
+  variant?: "brand" | "transparent";
 }>;
 
-export function PrimaryNav({ brandLabel }: PrimaryNavProps) {
+export function PrimaryNav({ brandLabel, variant = "brand" }: PrimaryNavProps) {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const { scrollY } = useScroll();
+  const isTransparent = variant === "transparent";
+  const tone: NavTone = isTransparent ? "dark" : "light";
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     setScrolled(latest > 160);
   });
 
+  const navBackground = isTransparent
+    ? scrolled
+      ? "bg-card/80 backdrop-blur-md"
+      : "bg-transparent"
+    : "bg-perazzi-red";
+
+  const navShadow = isTransparent
+    ? scrolled
+      ? "shadow-sm"
+      : "shadow-none"
+    : scrolled
+      ? "shadow-2xl"
+      : "shadow-sm";
+
+  const navText = tone === "light" ? "text-white" : "text-ink";
+
   return (
     <nav
-      className={`w-full bg-perazzi-red text-white shadow transition-all ${
-        scrolled ? "shadow-2xl" : "shadow-sm"
-      }`}
+      className={`w-full transition-all ${navBackground} ${navShadow} ${navText}`}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
         <Logo label={brandLabel} />
         <div className="hidden items-center gap-6 lg:flex">
-          <Links pathname={pathname ?? "/"} />
-          <CTAs />
-          <ThemeToggle variant="inverted" />
+          <Links pathname={pathname ?? "/"} tone={tone} />
+          <CTAs tone={tone} />
+          <ThemeToggle variant={tone === "light" ? "inverted" : "default"} />
         </div>
         <div className="flex items-center gap-3 lg:hidden">
-          <MobileMenu pathname={pathname ?? "/"} brandLabel={brandLabel} />
-          <ThemeToggle variant="ghost" />
+          <MobileMenu pathname={pathname ?? "/"} brandLabel={brandLabel} tone={tone} />
+          <ThemeToggle variant={tone === "light" ? "ghost" : "default"} />
         </div>
       </div>
     </nav>
@@ -63,20 +82,20 @@ const Logo = ({ label }: { label: string }) => (
       width={120}
       height={38}
       priority
-      className="h-10 w-auto"
-    />
-  </Link>
+    className="h-10 w-auto"
+  />
+</Link>
 );
 
-const Links = ({ pathname }: { pathname: string }) => (
+const Links = ({ pathname, tone }: { pathname: string; tone: NavTone }) => (
   <div className="flex items-center gap-6">
     {NAV_LINKS.map((item) => (
-      <NavLink key={item.text} item={item} pathname={pathname} />
+      <NavLink key={item.text} item={item} pathname={pathname} tone={tone} />
     ))}
   </div>
 );
 
-const NavLink = ({ item, pathname }: { item: NavItem; pathname: string }) => {
+const NavLink = ({ item, pathname, tone }: { item: NavItem; pathname: string; tone: NavTone }) => {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
   const FlyoutContent = item.component;
@@ -111,17 +130,29 @@ const NavLink = ({ item, pathname }: { item: NavItem; pathname: string }) => {
       className="relative"
       {...interactiveHandlers}
     >
+      {/*
+        Switch link treatment so transparent variant remains legible on light admin backgrounds.
+        Tone drives text/underline colors while preserving hover + active affordances.
+      */}
       <Link
         href={item.href}
         className={`relative text-sm font-semibold transition-colors ${
-          isActive ? "text-white" : "text-white/70 hover:text-white"
+          isActive
+            ? tone === "light"
+              ? "text-white"
+              : "text-ink"
+            : tone === "light"
+              ? "text-white/70 hover:text-white"
+              : "text-ink/70 hover:text-ink"
         }`}
         aria-haspopup={hasFlyout ? "menu" : undefined}
         aria-expanded={hasFlyout ? showFlyout : undefined}
       >
         {item.text}
         <span
-          className="absolute -bottom-1 left-0 right-0 h-0.5 origin-left rounded-full bg-white transition-transform duration-300 ease-out"
+          className={`absolute -bottom-1 left-0 right-0 h-0.5 origin-left rounded-full transition-transform duration-300 ease-out ${
+            tone === "light" ? "bg-white" : "bg-ink"
+          }`}
           style={{ transform: showFlyout || isActive ? "scaleX(1)" : "scaleX(0)" }}
         />
       </Link>
@@ -147,11 +178,15 @@ const NavLink = ({ item, pathname }: { item: NavItem; pathname: string }) => {
   );
 };
 
-const CTAs = () => (
+const CTAs = ({ tone }: { tone: NavTone }) => (
   <div className="flex items-center gap-3">
     <Link
       href="/concierge"
-      className="flex items-center gap-2 rounded-xl border border-white/50 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-perazzi-black"
+      className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+        tone === "light"
+          ? "border border-white/50 text-white hover:bg-white hover:text-perazzi-black"
+          : "border border-ink/20 text-ink hover:border-ink hover:bg-ink hover:text-white"
+      }`}
     >
       <FaUserCircle />
       <span>Build Planner</span>
@@ -160,7 +195,11 @@ const CTAs = () => (
       href="https://store.perazzi.com"
       target="_blank"
       rel="noreferrer"
-      className="rounded-xl border border-perazzi-red bg-perazzi-red px-4 py-2 text-sm font-semibold text-white transition-colors hover:border-white"
+      className={`rounded-xl border px-4 py-2 text-sm font-semibold text-white transition-colors ${
+        tone === "light"
+          ? "border-perazzi-red bg-perazzi-red hover:border-white"
+          : "border-perazzi-red bg-perazzi-red hover:brightness-95"
+      }`}
     >
       Store
     </a>
@@ -366,9 +405,11 @@ const HERITAGE_LINKS = [
 const MobileMenu = ({
   pathname,
   brandLabel,
+  tone,
 }: {
   pathname: string;
   brandLabel: string;
+  tone: NavTone;
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -376,7 +417,9 @@ const MobileMenu = ({
     <div className="lg:hidden">
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-full text-2xl text-white focus-ring"
+        className={`inline-flex h-10 w-10 items-center justify-center rounded-full text-2xl focus-ring ${
+          tone === "light" ? "text-white" : "text-ink"
+        }`}
         aria-label="Open navigation menu"
       >
         <FiMenu />

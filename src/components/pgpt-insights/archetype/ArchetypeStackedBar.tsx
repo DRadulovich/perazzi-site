@@ -42,15 +42,15 @@ function colorClass(k: ArchetypeKey) {
   // High-contrast, stable across light/dark
   switch (k) {
     case "Loyalist":
-      return "bg-emerald-500/80";
+      return "bg-[#00224E]";
     case "Prestige":
-      return "bg-blue-500/80";
+      return "bg-[#35456C]";
     case "Analyst":
-      return "bg-violet-500/80";
+      return "bg-[#666970]";
     case "Achiever":
-      return "bg-amber-500/80";
+      return "bg-[#948E77]";
     case "Legacy":
-      return "bg-rose-500/80";
+      return "bg-[#C8B866]";
   }
 }
 
@@ -66,7 +66,7 @@ export function computeWinnerAndRunner(scores: Record<ArchetypeKey, number>) {
 export function ArchetypeStackedBar({
   scores,
   heightClass = "h-2.5",
-  showLabels = false,
+  showLabels = true,
 }: {
   scores: ArchetypeScores | null | undefined;
   heightClass?: string;
@@ -101,11 +101,11 @@ export function ArchetypeStackedBar({
       </div>
 
       {showLabels ? (
-        <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+        <div className="flex flex-wrap gap-2 text-small text-ink-muted/50">
           {ORDER.map((k) => (
             <div key={k} className="flex items-center gap-1">
               <span className={`inline-block h-2 w-2 rounded-sm ${colorClass(k)}`} aria-hidden="true" />
-              <span className="font-medium text-foreground">{k}</span>
+              <span className="font-small text-ink-muted/50">{k}</span>
               <span>{pct(normalized[k])}</span>
             </div>
           ))}
