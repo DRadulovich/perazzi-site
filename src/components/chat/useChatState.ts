@@ -7,6 +7,7 @@ import type {
   Archetype,
   ArchetypeBreakdown,
   ArchetypeVector,
+  TextVerbosity,
 } from "@/types/perazzi-assistant";
 import { getOrCreateSessionId } from "@/lib/session";
 
@@ -50,6 +51,8 @@ export type ChatContextShape = {
   archetypeVector?: ArchetypeVector | null;
   /** Previous OpenAI Responses ID to enable multi-turn state. */
   previousResponseId?: string | null;
+  /** Preferred verbosity for assistant text responses. */
+  textVerbosity?: TextVerbosity;
 };
 
 export type AssistantResponseMeta = {
@@ -160,6 +163,8 @@ export function useChatState(
       const normalizedMode =
         normalizeOutgoingMode(payload.context?.mode) ??
         normalizeOutgoingMode(context.mode);
+      const hasIncomingVerbosity =
+        payload.context !== undefined && "textVerbosity" in payload.context;
 
       const effectiveContext: ChatContextShape = {
         pageUrl: payload.context?.pageUrl ?? context.pageUrl,
@@ -167,6 +172,9 @@ export function useChatState(
         modelSlug: payload.context?.modelSlug ?? context.modelSlug,
         platformSlug: payload.context?.platformSlug ?? context.platformSlug,
         mode: normalizedMode,
+        textVerbosity: hasIncomingVerbosity
+          ? payload.context?.textVerbosity
+          : context.textVerbosity,
         archetype: isArchetypeReset
           ? null
           : payload.context?.archetype ?? context.archetype ?? null,
@@ -291,7 +299,13 @@ export function useChatState(
   const clearConversation = useCallback(() => {
     setMessages([]);
     setError(null);
-    setContext(options.initialContext ?? {});
+    setContext((prev) => {
+      const base = options.initialContext ?? {};
+      return {
+        ...base,
+        textVerbosity: prev.textVerbosity ?? base.textVerbosity,
+      };
+    });
     if ("localStorage" in globalThis) {
       try {
         globalThis.localStorage.removeItem(storageKey);
@@ -299,7 +313,7 @@ export function useChatState(
         console.warn("Failed to clear stored chat history", err);
       }
     }
-  }, [storageKey]);
+  }, [storageKey, options.initialContext]);
 
   return {
     messages,

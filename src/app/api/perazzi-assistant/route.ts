@@ -926,8 +926,6 @@ async function generateAssistantAnswer(
       maxOutputTokens: MAX_OUTPUT_TOKENS,
       instructions,
       temperature: 0.8,
-      frequencyPenalty: FREQUENCY_PENALTY,
-      presencePenalty: PRESENCE_PENALTY,
       input: sanitizedMessages as CreateResponseTextParams["input"],
       reasoningEffort: REASONING_EFFORT,
       text: { verbosity: textVerbosity },
