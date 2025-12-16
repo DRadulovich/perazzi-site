@@ -1,5 +1,7 @@
 export type PerazziMode = "prospect" | "owner" | "navigation";
 
+export type TextVerbosity = "low" | "medium" | "high";
+
 export type Archetype =
   | "loyalist"
   | "prestige"
@@ -38,6 +40,7 @@ export interface PerazziAssistantRequest {
     platformSlug?: string | null;
     mode?: PerazziMode | null;
     locale?: string | null;
+    textVerbosity?: TextVerbosity;
     /** Sticky archetype hint from the client (e.g. last known primary archetype). */
     archetype?: Archetype | null;
     /** Previous archetype vector from the last interaction, for smoothing across turns. */
