@@ -74,7 +74,7 @@ export type UseChatStateOptions = {
 };
 
 const DEFAULT_STORAGE_KEY = "perazzi-chat-history";
-const MAX_MESSAGES = 40;
+const MAX_MESSAGES = 1;
 
 class ConciergeRequestError extends Error {
   status?: number;
