@@ -69,6 +69,12 @@ export interface PerazziAssistantResponse {
   topics: string[];
   templates: string[];
 
+  /**
+   * Indicates the server could not resume the provided `previous_response_id` and the client
+   * should clear its persisted thread state (but keep the visible chat log).
+   */
+  thread_reset_required?: boolean;
+
   /** OpenAI Responses ID for this turn (when generated). */
   responseId?: string | null;
 

@@ -75,11 +75,78 @@ export type UseChatStateOptions = {
 
 const DEFAULT_STORAGE_KEY = "perazzi-chat-history";
 const MAX_RENDER_MESSAGES = 200;
+const THREAD_STORAGE_SUFFIX = ":previousResponseId";
 
 function normalizeResponseId(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function getThreadStorageKey(storageKey: string): string {
+  return `${storageKey}${THREAD_STORAGE_SUFFIX}`;
+}
+
+function loadStoredChatState(storageKey: string): {
+  messages?: ChatEntry[];
+  context?: ChatContextShape;
+} | null {
+  if (!("localStorage" in globalThis)) return null;
+  try {
+    const stored = globalThis.localStorage.getItem(storageKey);
+    if (!stored) return null;
+    return JSON.parse(stored) as { messages?: ChatEntry[]; context?: ChatContextShape };
+  } catch (error) {
+    console.warn("Failed to load stored chat state", error);
+    return null;
+  }
+}
+
+function loadPersistedPreviousResponseId(
+  threadStorageKey: string,
+  storedContextValue: unknown,
+): string | null {
+  if (!("localStorage" in globalThis)) {
+    return normalizeResponseId((storedContextValue as ChatContextShape | null | undefined)?.previousResponseId);
+  }
+  try {
+    const storedThread = globalThis.localStorage.getItem(threadStorageKey);
+    const normalizedThread = normalizeResponseId(storedThread);
+    if (normalizedThread) return normalizedThread;
+  } catch (error) {
+    console.warn("Failed to read stored thread state", error);
+  }
+  return normalizeResponseId((storedContextValue as ChatContextShape | null | undefined)?.previousResponseId);
+}
+
+function persistPreviousResponseId(threadStorageKey: string, responseId: string | null) {
+  if (!("localStorage" in globalThis)) return;
+  try {
+    const normalized = normalizeResponseId(responseId);
+    if (normalized) {
+      globalThis.localStorage.setItem(threadStorageKey, normalized);
+    } else {
+      globalThis.localStorage.removeItem(threadStorageKey);
+    }
+  } catch (error) {
+    console.warn("Failed to persist thread state", error);
+  }
+}
+
+function clearPreviousResponseIdFromStoredChatState(storageKey: string) {
+  if (!("localStorage" in globalThis)) return;
+  try {
+    const stored = globalThis.localStorage.getItem(storageKey);
+    if (!stored) return;
+    const parsed = JSON.parse(stored) as { context?: ChatContextShape } | null;
+    if (!parsed || typeof parsed !== "object") return;
+    if (parsed.context && typeof parsed.context === "object") {
+      parsed.context.previousResponseId = null;
+    }
+    globalThis.localStorage.setItem(storageKey, JSON.stringify(parsed));
+  } catch (error) {
+    console.warn("Failed to clear thread state from stored chat history", error);
+  }
 }
 
 class ConciergeRequestError extends Error {
@@ -95,12 +162,34 @@ export function useChatState(
   initialMessages: ChatEntry[] = [],
   options: UseChatStateOptions = {},
 ) {
-  const [messages, setMessages] = useState<ChatEntry[]>(initialMessages);
+  const storageKey = options.storageKey ?? DEFAULT_STORAGE_KEY;
+  const threadStorageKey = getThreadStorageKey(storageKey);
+
+  const [messages, setMessages] = useState<ChatEntry[]>(() => {
+    const stored = loadStoredChatState(storageKey);
+    const storedMessages = stored?.messages;
+    if (storedMessages?.length) {
+      return storedMessages.slice(-MAX_RENDER_MESSAGES);
+    }
+    return initialMessages;
+  });
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
-  const [context, setContext] = useState<ChatContextShape>(options.initialContext ?? {});
-  const storageKey = options.storageKey ?? DEFAULT_STORAGE_KEY;
+  const [context, setContext] = useState<ChatContextShape>(() => {
+    const stored = loadStoredChatState(storageKey);
+    const storedContext = stored?.context;
+    const persistedPreviousResponseId = loadPersistedPreviousResponseId(
+      threadStorageKey,
+      storedContext,
+    );
+
+    return {
+      ...(options.initialContext ?? {}),
+      ...(storedContext ?? {}),
+      ...(persistedPreviousResponseId ? { previousResponseId: persistedPreviousResponseId } : {}),
+    };
+  });
 
   const addMessage = useCallback((entry: ChatEntry) => {
     setMessages((prev) => {
@@ -116,35 +205,6 @@ export function useChatState(
     (patch: Partial<ChatContextShape>) => setContext((prev) => ({ ...prev, ...patch })),
     [],
   );
-
-  useEffect(() => {
-    if (!("localStorage" in globalThis)) return;
-    try {
-      const stored = globalThis.localStorage.getItem(storageKey);
-      if (stored) {
-        const parsed = JSON.parse(stored) as {
-          messages?: ChatEntry[];
-          context?: ChatContextShape;
-        };
-        if (parsed?.messages?.length) {
-          setMessages(parsed.messages.slice(-MAX_RENDER_MESSAGES));
-        }
-        if (parsed?.context) {
-          setContext((prev) => ({
-            ...options.initialContext,
-            ...prev,
-            ...parsed.context,
-          }));
-        }
-      } else if (options.initialContext) {
-        setContext((prev) => ({ ...options.initialContext, ...prev }));
-      }
-    } catch (error) {
-      console.warn("Failed to load stored chat state", error);
-    }
-    // We intentionally omit dependencies to only run once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const sendMessage = async (payload: {
     question: string;
@@ -237,6 +297,12 @@ export function useChatState(
         archetypeBreakdown: data.archetypeBreakdown,
       };
       addMessage(assistantEntry);
+
+      if (data.thread_reset_required) {
+        persistPreviousResponseId(threadStorageKey, null);
+        clearPreviousResponseIdFromStoredChatState(storageKey);
+      }
+
       setContext((prev) => {
         // Explicit reset should stay cleared, regardless of server output.
         if (isArchetypeReset) {
@@ -245,6 +311,14 @@ export function useChatState(
             mode: data.mode ?? prev.mode,
             archetype: null,
             archetypeVector: null,
+          };
+        }
+
+        if (data.thread_reset_required) {
+          return {
+            ...prev,
+            mode: data.mode ?? prev.mode,
+            previousResponseId: null,
           };
         }
 
@@ -291,6 +365,10 @@ export function useChatState(
   };
 
   useEffect(() => {
+    persistPreviousResponseId(threadStorageKey, context.previousResponseId ?? null);
+  }, [context.previousResponseId, threadStorageKey]);
+
+  useEffect(() => {
     if (!("localStorage" in globalThis)) return;
     try {
       const payload = JSON.stringify({
@@ -320,11 +398,12 @@ export function useChatState(
     if ("localStorage" in globalThis) {
       try {
         globalThis.localStorage.removeItem(storageKey);
+        globalThis.localStorage.removeItem(threadStorageKey);
       } catch (err) {
         console.warn("Failed to clear stored chat history", err);
       }
     }
-  }, [storageKey, options.initialContext]);
+  }, [storageKey, threadStorageKey, options.initialContext]);
 
   return {
     messages,

@@ -51,6 +51,9 @@ const BLOCKED_RESPONSES: Record<string, string> = {
     "There is internal guidance and infrastructure behind how I work, but that’s not something I can open up or walk through in detail. My job is to reflect how Perazzi thinks about its guns and owners, not to expose internal systems. Let’s bring this back to your shooting, your gun, or the decisions you’re trying to make, and I’ll stay with you there.",
 };
 
+const THREAD_RESET_REBUILD_MESSAGE =
+  "I can’t resume that prior thread (its conversation ID is no longer valid). Your on-screen chat is still here, but I need to start a fresh thread. What were we discussing, and what outcome do you want from this chat?";
+
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = 10; // 10 requests per IP per minute
 const MAX_INPUT_CHARS = 16000; // max total user message characters per latest user message
@@ -752,22 +755,42 @@ export async function POST(request: Request) {
       });
     }
 
-    const { text: answer, responseId } = await generateAssistantAnswer(
-      sanitizedMessages,
-      body?.context,
-      retrieval.chunks,
-      responseTemplates,
-      effectiveMode,
-      effectiveArchetype,
-      archetypeClassification,
-      effectiveTextVerbosity,
-      retrieval.maxScore,
-      guardrail,
-      hints,
-      fullBody.sessionId ?? null,
-      loggingMetrics,
-      previousResponseId,
-    );
+    let answer: string;
+    let responseId: string | null | undefined;
+    let threadResetRequired = false;
+
+    try {
+      const generated = await generateAssistantAnswer(
+        sanitizedMessages,
+        body?.context,
+        retrieval.chunks,
+        responseTemplates,
+        effectiveMode,
+        effectiveArchetype,
+        archetypeClassification,
+        effectiveTextVerbosity,
+        retrieval.maxScore,
+        guardrail,
+        hints,
+        fullBody.sessionId ?? null,
+        loggingMetrics,
+        previousResponseId,
+      );
+      answer = generated.text;
+      responseId = generated.responseId;
+    } catch (error) {
+      if (previousResponseId && isInvalidPreviousResponseIdError(error)) {
+        threadResetRequired = true;
+        answer = THREAD_RESET_REBUILD_MESSAGE;
+        responseId = null;
+        console.warn(
+          "[PERAZZI_THREAD_RESET] OpenAI rejected previous_response_id; asking client to reset thread",
+          JSON.stringify(serializeOpenAiError(error)),
+        );
+      } else {
+        throw error;
+      }
+    }
 
     logInteraction(
       fullBody,
@@ -780,7 +803,8 @@ export async function POST(request: Request) {
     );
     return NextResponse.json<PerazziAssistantResponse>({
       answer,
-      citations: retrieval.chunks.map(mapChunkToCitation),
+      ...(threadResetRequired ? { thread_reset_required: true } : {}),
+      citations: threadResetRequired ? [] : retrieval.chunks.map(mapChunkToCitation),
       guardrail: { status: "ok", reason: null },
       intents: hints.intents,
       topics: hints.topics,
@@ -872,6 +896,81 @@ function normalizePreviousResponseId(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+type OpenAiApiErrorLike = {
+  status?: number;
+  code?: string | null;
+  param?: string | null;
+  type?: string;
+  requestID?: string | null;
+  error?: unknown;
+  message?: string;
+  name?: string;
+};
+
+function serializeOpenAiError(error: unknown) {
+  if (!error || typeof error !== "object") return { message: String(error) };
+  const err = error as OpenAiApiErrorLike & Record<string, unknown>;
+  const nested =
+    (err.error as Record<string, unknown> | undefined)?.error ??
+    (err.error as Record<string, unknown> | undefined) ??
+    undefined;
+
+  return {
+    name: typeof err.name === "string" ? err.name : undefined,
+    message: typeof err.message === "string" ? err.message : undefined,
+    status: typeof err.status === "number" ? err.status : undefined,
+    code: typeof err.code === "string" ? err.code : undefined,
+    param: typeof err.param === "string" ? err.param : undefined,
+    type: typeof err.type === "string" ? err.type : undefined,
+    requestID: typeof err.requestID === "string" ? err.requestID : undefined,
+    error: nested,
+  };
+}
+
+function isInvalidPreviousResponseIdError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const err = error as OpenAiApiErrorLike & {
+    error?: { error?: unknown; code?: unknown; param?: unknown; message?: unknown };
+  };
+
+  if (err.status !== 400) return false;
+
+  const nestedBody = (err.error as Record<string, unknown> | undefined) ?? undefined;
+  const nestedError = (nestedBody?.error as Record<string, unknown> | undefined) ?? undefined;
+
+  const codeCandidate =
+    err.code ??
+    (typeof nestedBody?.code === "string" ? (nestedBody.code as string) : null) ??
+    (typeof nestedError?.code === "string" ? (nestedError.code as string) : null);
+  const paramCandidate =
+    err.param ??
+    (typeof nestedBody?.param === "string" ? (nestedBody.param as string) : null) ??
+    (typeof nestedError?.param === "string" ? (nestedError.param as string) : null);
+  const messageCandidate =
+    typeof err.message === "string"
+      ? err.message
+      : typeof nestedBody?.message === "string"
+        ? (nestedBody.message as string)
+        : typeof nestedError?.message === "string"
+          ? (nestedError.message as string)
+          : "";
+
+  const code = typeof codeCandidate === "string" ? codeCandidate.toLowerCase() : "";
+  const param = typeof paramCandidate === "string" ? paramCandidate.toLowerCase() : "";
+  const message = messageCandidate.toLowerCase();
+
+  if (code.includes("previous") && code.includes("response")) return true;
+  if (param === "previous_response_id" || param === "previousresponseid") return true;
+  if (
+    message.includes("previous_response_id") &&
+    (message.includes("invalid") || message.includes("not found") || message.includes("unknown"))
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 function buildThreadStrategyInput(messages: ChatMessage[]): ChatMessage[] {
