@@ -28,6 +28,7 @@ import { detectRetrievalHints, buildResponseTemplates } from "@/lib/perazzi-inte
 import type { RetrievalHints } from "@/lib/perazzi-intents";
 import { createResponseText, type CreateResponseTextParams } from "@/lib/aiClient";
 import { logAiInteraction, type AiInteractionContext } from "@/lib/aiLogging";
+import { shouldRetrieve } from "@/lib/perazzi-retrieval-policy";
 import {
   resolveModel,
   resolveMaxOutputTokens,
@@ -59,6 +60,8 @@ const THREAD_RESET_REBUILD_MESSAGE =
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = 10; // 10 requests per IP per minute
 const MAX_INPUT_CHARS = 16000; // max total user message characters per latest user message
+
+type RetrievalPolicy = "hybrid" | "always";
 
 type RateRecord = {
   count: number;
@@ -146,6 +149,12 @@ function isOriginAllowed(req: Request): { ok: boolean; originHost?: string } {
   } catch {
     return { ok: false, originHost: origin };
   }
+}
+
+function getRetrievalPolicy(): RetrievalPolicy {
+  const raw = (process.env.PERAZZI_RETRIEVAL_POLICY ?? "hybrid").trim().toLowerCase();
+  if (raw === "always") return "always";
+  return "hybrid";
 }
 
 const PHASE_ONE_SPEC = fs.readFileSync(
@@ -510,11 +519,21 @@ export async function POST(request: Request) {
 
     const effectiveMode: PerazziMode =
       normalizeMode(hints.mode) ?? normalizeMode(body?.context?.mode) ?? "prospect";
+    const retrievalPolicy = getRetrievalPolicy();
     const requestedTextVerbosity = parseTextVerbosity(body?.context?.textVerbosity);
     const effectiveTextVerbosity = requestedTextVerbosity ?? ENV_TEXT_VERBOSITY;
 
     // Soft-meta origin handler: answer who built/designed the assistant, without exposing internals.
     if (detectAssistantOriginQuestion(latestQuestion)) {
+      logRetrievalDecision({
+        retrieve: false,
+        reason: "early_return:assistant_origin",
+        policy: retrievalPolicy,
+        userText: latestQuestion,
+        mode: effectiveMode,
+        pageUrl: body?.context?.pageUrl ?? null,
+        sessionId: fullBody.sessionId ?? null,
+      });
       const neutralVector = getNeutralArchetypeVector();
       const archetypeBreakdown = {
         primary: null,
@@ -558,6 +577,15 @@ export async function POST(request: Request) {
 
     // Knowledge-source handler: explain curated Perazzi corpus without exposing internal docs or architecture.
     if (detectKnowledgeSourceQuestion(latestQuestion)) {
+      logRetrievalDecision({
+        retrieve: false,
+        reason: "early_return:knowledge_source",
+        policy: retrievalPolicy,
+        userText: latestQuestion,
+        mode: effectiveMode,
+        pageUrl: body?.context?.pageUrl ?? null,
+        sessionId: fullBody.sessionId ?? null,
+      });
       const neutralVector = getNeutralArchetypeVector();
       const archetypeBreakdown = {
         primary: null,
@@ -600,6 +628,15 @@ export async function POST(request: Request) {
     const resetRequested = detectArchetypeResetPhrase(latestQuestion);
 
     if (resetRequested) {
+      logRetrievalDecision({
+        retrieve: false,
+        reason: "early_return:archetype_reset",
+        policy: retrievalPolicy,
+        userText: latestQuestion,
+        mode: effectiveMode,
+        pageUrl: body?.context?.pageUrl ?? null,
+        sessionId: fullBody.sessionId ?? null,
+      });
       const neutralVector = getNeutralArchetypeVector();
       const archetypeBreakdown = {
         primary: null,
@@ -663,6 +700,15 @@ export async function POST(request: Request) {
       archetypeOverride ?? archetypeBreakdown.primary ?? null;
 
     if (archetypeOverride) {
+      logRetrievalDecision({
+        retrieve: false,
+        reason: "early_return:archetype_override",
+        policy: retrievalPolicy,
+        userText: latestQuestion,
+        mode: effectiveMode,
+        pageUrl: body?.context?.pageUrl ?? null,
+        sessionId: fullBody.sessionId ?? null,
+      });
       const answer = `Understood. I’ll answer from the perspective of a ${capitalize(
         archetypeOverride,
       )} from now on.`;
@@ -691,6 +737,15 @@ export async function POST(request: Request) {
 
     const guardrailBlock = detectBlockedIntent(sanitizedMessages);
     if (guardrailBlock) {
+      logRetrievalDecision({
+        retrieve: false,
+        reason: `early_return:guardrail:${guardrailBlock.reason ?? "blocked"}`,
+        policy: retrievalPolicy,
+        userText: latestQuestion,
+        mode: effectiveMode,
+        pageUrl: body?.context?.pageUrl ?? null,
+        sessionId: fullBody.sessionId ?? null,
+      });
       logInteraction(
         fullBody,
         [],
@@ -768,9 +823,48 @@ export async function POST(request: Request) {
       context: retrievalContext,
     };
 
-    const retrieval = await retrievePerazziContext(retrievalBody, hints);
-    const loggingMetrics = { ...archetypeMetrics, ...retrieval.rerankMetrics };
-    if (retrieval.maxScore < getLowConfidenceThreshold()) {
+    const retrievalDecision =
+      retrievalPolicy === "always"
+        ? { retrieve: true, reason: "policy:always" }
+        : shouldRetrieve({
+            userText: latestQuestion,
+            mode: effectiveMode,
+            pageUrl: body?.context?.pageUrl ?? null,
+          });
+    logRetrievalDecision({
+      retrieve: retrievalDecision.retrieve,
+      reason: retrievalDecision.reason,
+      policy: retrievalPolicy,
+      userText: latestQuestion,
+      mode: effectiveMode,
+      pageUrl: body?.context?.pageUrl ?? null,
+      sessionId: fullBody.sessionId ?? null,
+    });
+
+    const emptyRerankMetrics = {
+      rerankEnabled: false,
+      candidateLimit: 0,
+      topReturnedChunks: [],
+    };
+    let retrieval: Awaited<ReturnType<typeof retrievePerazziContext>> = {
+      chunks: [],
+      maxScore: 0,
+      rerankMetrics: emptyRerankMetrics,
+    };
+    const retrievalAttempted = retrievalDecision.retrieve;
+    if (retrievalDecision.retrieve) {
+      retrieval = await retrievePerazziContext(retrievalBody, hints);
+    }
+
+    const loggingMetrics = {
+      ...archetypeMetrics,
+      ...retrieval.rerankMetrics,
+      retrievalPolicy,
+      retrievalSkipped: !retrievalAttempted,
+      retrievalSkipReason: retrievalAttempted ? null : retrievalDecision.reason,
+    };
+
+    if (retrievalAttempted && retrieval.maxScore < getLowConfidenceThreshold()) {
       logInteraction(
         fullBody,
         retrieval.chunks,
@@ -1332,6 +1426,32 @@ function mapChunkToCitation(chunk: RetrievedChunk) {
     sourcePath: chunk.sourcePath,
     excerpt: buildExcerpt(chunk.content),
   };
+}
+
+function logRetrievalDecision(params: {
+  retrieve: boolean;
+  reason: string;
+  policy: RetrievalPolicy;
+  userText: string | null | undefined;
+  mode: PerazziMode | null | undefined;
+  pageUrl: string | null | undefined;
+  sessionId: string | null | undefined;
+}) {
+  const data = {
+    type: "perazzi-retrieval-decision",
+    timestamp: new Date().toISOString(),
+    retrieve: params.retrieve,
+    reason: params.reason,
+    policy: params.policy,
+    mode: params.mode ?? null,
+    pageUrl: params.pageUrl ?? null,
+    sessionId: params.sessionId ?? null,
+    userText: params.userText ?? "",
+  };
+  console.info(JSON.stringify(data));
+  if (ENABLE_FILE_LOG) {
+    appendEvalLog(data);
+  }
 }
 
 function logInteraction(
