@@ -1574,295 +1574,295 @@ Archetype affects runtime behavior through:
 
 ### PerazziGPT Response:
 >
-You’re trying to do this the right way: make the decisions that determine *how the gun lives with you* first, and let the purely decorative choices wait until the foundation is locked in.
-
-A bespoke Perazzi is at its best when it’s treated like one long, careful conversation—discipline, handling, fit, and longevity first; ornament last. Below is a **curation path** that keeps regret to a minimum and preserves the story of the gun over decades.
-
----
-
-## The Curation Path (in the order that prevents regret)
-
-### Phase 1 — Define the gun’s “job” (before you touch a spec sheet)
-**Decide first: what you will actually do with it.**
-
-Perazzi can be built in many directions. The *platform* and *barrel/stock architecture* should be chosen around a clear use case: trap, skeet, sporting, live pigeon, game—plus the way you shoot (volume, recoil tolerance, target presentations).
-
-**Questions to answer (for yourself and your dealer/fitter):**
-- What discipline is this gun primarily for—and what is second?
-- How many shells per year do you realistically shoot now, and where do you want that number to be in 3–5 years?
-- Do you want this to be a single lifetime “one-gun” companion, or the first of a two-gun battery (e.g., a dedicated trap gun later)?
-- What do you love about your current gun’s sight picture and swing—and what do you fight?
-
-**Why this comes first (Perazzi lens):** Perazzi is built around a long-term partnership with one fitted instrument. If the “job” is fuzzy, the configuration becomes a collection of attractive options rather than a coherent whole.
-
----
-
-### Phase 2 — Choose the **platform** (the foundation)
-Perazzi starts with platform selection—MX, High Tech, TM, DC, or SHO—then you tailor everything else around that architecture.
-
-**Questions to ask:**
-- Which platform best matches my discipline and the way I mount and move the gun?
-- If I’m ordering “one gun for decades,” which platform is the most stable long-term home for me?
-- Is there a common, proven configuration in this platform for my discipline that we can use as a baseline?
-
-**Regret minimizer:** Ask your dealer/fitter to explain the platform choice in plain handling terms (stability, balance, sight picture), not in model mythology.
-
----
-
-### Phase 3 — Solve **fit** before aesthetics (stock geometry is destiny)
-Perazzi’s differentiator is that it’s made to a shooter’s blueprint: stock dimensions, grip shape, and how the gun meets your face and shoulder.
-
-**Decide early:**
-- Whether you want an **adjustable comb** (useful for fine-tuning; it can also change weight distribution slightly because it adds hardware higher in the stock).
-- Grip shape direction: standard pistol, palm swell, glove-grip concept, etc.
-- Your true “non-negotiables” for feel: length of pull, drop, cast, pitch, toe.
-
-**Questions to ask your fitter (these prevent years of small annoyance):**
-- How are you capturing measurements—static numbers, live shooting, pattern board, video, or a combination?
-- Are you fitting me to where I am today, or where I’m training to be in two seasons?
-- What is your plan for seasonal clothing changes (summer shirt vs winter vest/jacket)?
-- If we add an adjustable comb, what is the plan to keep balance exactly where I want it?
-
-**Regret minimizer:** Don’t treat fit as “we’ll tweak it later.” You can adjust some things later, but the goal is to start with a stock that already speaks your language.
-
----
-
-### Phase 4 — Barrels: choose the **handling personality**
-This is where many great orders become *uniquely right*—or quietly wrong.
-
-**Barrel decisions you should make early:**
-- **Length** (commonly 75/78/80 cm)
-- **Weight/profile** (how the gun carries and finishes the move)
-- **Rib style** (flat/semi-high/high/extra-high; adjustable vs fixed; rib width/surface)
-- **Choke system**: fixed constrictions vs multi-choke
-- **Chamber length** (e.g., 70mm or 76mm)
-- Side ribs: solid, ventilated, or deleted
-
-**Questions to ask (critical):**
-- What sight picture do I naturally want: “flat/level,” or more “head-up” with a higher rib?
-- Do I want the gun to feel quick between targets, or anchored and steady?
-- Am I choosing barrel length for aesthetics, or because it genuinely supports my tempo and target types?
-- Do I want fixed chokes because I know exactly what I want forever, or multi-chokes because my shooting life will evolve?
-
-**Regret minimizer:** If you are unsure about chokes, **multi-choke is the safer long-term hedge**. Fixed chokes can be wonderful when you are certain—but uncertainty and fixed constrictions are a classic pairing for later regret.
-
----
-
-### Phase 5 — Trigger & controls: choose reliability and feel, not novelty
-Perazzi is known for a competition-first mindset, including trigger configuration options and the broader Perazzi approach to serviceability.
-
-**Decide early:**
-- Drop-out vs fixed trigger configuration (if you’re considering it)
-- Trigger blade shape and finish
-- Any preferences that affect how you interface with the gun under pressure
-
-**Questions to ask:**
-- What trigger setup is most consistent for me across long, high-volume days?
-- If I travel or compete seriously, what choice best supports quick diagnosis and serviceability?
-
----
-
-### Phase 6 — Gauge/frame strategy: “today’s use” vs “lifetime battery”
-Perazzi offers 12 gauge commonly, with options for sub-gauges either via scaled frames or sub-gauge barrels on a 12-gauge frame.
-
-**Questions to ask (this is a long-horizon decision):**
-- Do I want this built around a 12-gauge “main gun” with the ability to run sub-gauge sets later?
-- Would I regret not having a path to sub-gauge competition or practice?
-- Am I optimizing for one discipline forever, or building a platform that can grow with me?
-
----
-
-### Phase 7 — Wood, finish, engraving: let the gun earn its decoration
-Perazzi can be understated excellence or full artistic expression—both are authentic. But aesthetically driven decisions should sit on top of a completed functional blueprint.
-
-**Aesthetic choices (best made after fit/handling is locked):**
-- Wood grade and figure (standard through higher exhibition levels)
-- Finish (oil, lacquer, or unfinished for local finishing)
-- Receiver finish (blued vs nickel/coin)
-- Engraving pattern, inlays, monograms/crests, and other personalization
-
-**Questions to ask (Legacy lens):**
-- What will this gun look like *in 20 years*, when it has lived a full competitive life?
-- Do I want the gun to be quietly serious, or to carry visible ceremony?
-- If this could become an heirloom, what identifiers (crest, initials, date, meaningful motif) are timeless rather than trendy?
-
-**Regret minimizer:** Choose aesthetics that will still feel dignified when tastes change. “Understated” ages gracefully; if you go ornate, go classical rather than fashionable.
-
----
-
-## Decide Now vs. Can Wait (practical regret table)
-
-| Category | Decide First (hard to change later) | Can Wait / Evolve Later (lower regret) |
-|---|---|---|
-| **Platform** | Platform selection (MX / High Tech / TM / DC / SHO) | — |
-| **Core fit** | Stock dimensions (LOP, drop, cast, pitch, toe), grip concept | Fine-tuning adjustable comb settings (if you choose it) |
-| **Barrels** | Length, barrel weight/profile, rib style philosophy, chamber length | Beads (within reason), small sighting refinements |
-| **Chokes** | Fixed vs multi-choke decision | Specific choke tubes/constrictions (if multi-choke) |
-| **Overall balance** | The foundational “feel” via barrel + stock decisions | Minor balancing tweaks (within sensible limits) |
-| **Aesthetics** | Only the broad direction (understated vs ceremonial) | Wood grade, engraving pattern details, monograms/inlays, case style/color |
-
-*Note:* Some changes are possible later through qualified specialists, but the point of bespoke is to avoid rebuilding what you could have clarified upfront.
-
----
-
-## The questions that protect you from miscommunication (the hidden source of regret)
-Many bespoke orders come through dealers, and details can get compressed or accidentally altered as they’re transmitted. You want a process that prevents that.
-
-**Ask your dealer/fitter:**
-1. **“Can you show me the complete spec sheet I will sign off on—line by line?”**  
-2. **“How do you confirm rib height/style and sight picture before finalizing?”**  
-3. **“What’s the plan if a measurement feels right on paper but not in live shooting?”**  
-4. **“Who is the single point of responsibility for translating my fit into the factory order?”**  
-5. **“What are the checkpoints before the order becomes irreversible?”**  
-6. **“If we’re making a high-stakes/complex build, should we consider a direct conversation or on-site fitting to reduce translation risk?”**
-
----
-
-## Timeline expectation (so you plan the journey calmly)
-A bespoke Perazzi is typically a **months-long build**—often around **6 months**, and commonly **6–9 months** overall; longer if you choose complex engraving or multi-set complexity.
-
-The point isn’t speed. It’s that the gun arrives as *your* instrument, not a generic interpretation.
-
----
-
-## Next step
-If you tell me **(1) your discipline**, **(2) current gun and what you like/dislike about it**, and **(3) whether this is meant to be a “lifetime one-gun” or the start of a battery**, I’ll turn the path above into a **shortlist of platform directions and a first-draft spec blueprint** you can take to an authorized Perazzi dealer for a clean, unambiguous order—and, ideally, a fitting plan that honors the long life you’re building into the gun.
+> You’re trying to do this the right way: make the decisions that determine *how the gun lives with you* first, and let the purely decorative choices wait until the foundation is locked in.
+> 
+> A bespoke Perazzi is at its best when it’s treated like one long, careful conversation—discipline, handling, fit, and longevity first; ornament last. Below is a **curation path** that keeps regret to a minimum and preserves the story of the gun over decades.
+> 
+> ---
+> 
+> ## The Curation Path (in the order that prevents regret)
+> 
+> ### Phase 1 — Define the gun’s “job” (before you touch a spec sheet)
+> **Decide first: what you will actually do with it.**
+> 
+> Perazzi can be built in many directions. The *platform* and *barrel/stock architecture* should be chosen around a clear use case: trap, skeet, sporting, live pigeon, game—plus the way you shoot (volume, recoil tolerance, target presentations).
+> 
+> **Questions to answer (for yourself and your dealer/fitter):**
+> - What discipline is this gun primarily for—and what is second?
+> - How many shells per year do you realistically shoot now, and where do you want that number to be in 3–5 years?
+> - Do you want this to be a single lifetime “one-gun” companion, or the first of a two-gun battery (e.g., a dedicated trap gun later)?
+> - What do you love about your current gun’s sight picture and swing—and what do you fight?
+> 
+> **Why this comes first (Perazzi lens):** Perazzi is built around a long-term partnership with one fitted instrument. If the “job” is fuzzy, the configuration becomes a collection of attractive options rather than a coherent whole.
+> 
+> ---
+> 
+> ### Phase 2 — Choose the **platform** (the foundation)
+> Perazzi starts with platform selection—MX, High Tech, TM, DC, or SHO—then you tailor everything else around that architecture.
+> 
+> **Questions to ask:**
+> - Which platform best matches my discipline and the way I mount and move the gun?
+> - If I’m ordering “one gun for decades,” which platform is the most stable long-term home for me?
+> - Is there a common, proven configuration in this platform for my discipline that we can use as a baseline?
+> 
+> **Regret minimizer:** Ask your dealer/fitter to explain the platform choice in plain handling terms (stability, balance, sight picture), not in model mythology.
+> 
+> ---
+> 
+> ### Phase 3 — Solve **fit** before aesthetics (stock geometry is destiny)
+> Perazzi’s differentiator is that it’s made to a shooter’s blueprint: stock dimensions, grip shape, and how the gun meets your face and shoulder.
+> 
+> **Decide early:**
+> - Whether you want an **adjustable comb** (useful for fine-tuning; it can also change weight distribution slightly because it adds hardware higher in the stock).
+> - Grip shape direction: standard pistol, palm swell, glove-grip concept, etc.
+> - Your true “non-negotiables” for feel: length of pull, drop, cast, pitch, toe.
+> 
+> **Questions to ask your fitter (these prevent years of small annoyance):**
+> - How are you capturing measurements—static numbers, live shooting, pattern board, video, or a combination?
+> - Are you fitting me to where I am today, or where I’m training to be in two seasons?
+> - What is your plan for seasonal clothing changes (summer shirt vs winter vest/jacket)?
+> - If we add an adjustable comb, what is the plan to keep balance exactly where I want it?
+> 
+> **Regret minimizer:** Don’t treat fit as “we’ll tweak it later.” You can adjust some things later, but the goal is to start with a stock that already speaks your language.
+> 
+> ---
+> 
+> ### Phase 4 — Barrels: choose the **handling personality**
+> This is where many great orders become *uniquely right*—or quietly wrong.
+> 
+> **Barrel decisions you should make early:**
+> - **Length** (commonly 75/78/80 cm)
+> - **Weight/profile** (how the gun carries and finishes the move)
+> - **Rib style** (flat/semi-high/high/extra-high; adjustable vs fixed; rib width/surface)
+> - **Choke system**: fixed constrictions vs multi-choke
+> - **Chamber length** (e.g., 70mm or 76mm)
+> - Side ribs: solid, ventilated, or deleted
+> 
+> **Questions to ask (critical):**
+> - What sight picture do I naturally want: “flat/level,” or more “head-up” with a higher rib?
+> - Do I want the gun to feel quick between targets, or anchored and steady?
+> - Am I choosing barrel length for aesthetics, or because it genuinely supports my tempo and target types?
+> - Do I want fixed chokes because I know exactly what I want forever, or multi-chokes because my shooting life will evolve?
+> 
+> **Regret minimizer:** If you are unsure about chokes, **multi-choke is the safer long-term hedge**. Fixed chokes can be wonderful when you are certain—but uncertainty and fixed constrictions are a classic pairing for later regret.
+> 
+> ---
+> 
+> ### Phase 5 — Trigger & controls: choose reliability and feel, not novelty
+> Perazzi is known for a competition-first mindset, including trigger configuration options and the broader Perazzi approach to serviceability.
+> 
+> **Decide early:**
+> - Drop-out vs fixed trigger configuration (if you’re considering it)
+> - Trigger blade shape and finish
+> - Any preferences that affect how you interface with the gun under pressure
+> 
+> **Questions to ask:**
+> - What trigger setup is most consistent for me across long, high-volume days?
+> - If I travel or compete seriously, what choice best supports quick diagnosis and serviceability?
+> 
+> ---
+> 
+> ### Phase 6 — Gauge/frame strategy: “today’s use” vs “lifetime battery”
+> Perazzi offers 12 gauge commonly, with options for sub-gauges either via scaled frames or sub-gauge barrels on a 12-gauge frame.
+> 
+> **Questions to ask (this is a long-horizon decision):**
+> - Do I want this built around a 12-gauge “main gun” with the ability to run sub-gauge sets later?
+> - Would I regret not having a path to sub-gauge competition or practice?
+> - Am I optimizing for one discipline forever, or building a platform that can grow with me?
+> 
+> ---
+> 
+> ### Phase 7 — Wood, finish, engraving: let the gun earn its decoration
+> Perazzi can be understated excellence or full artistic expression—both are authentic. But aesthetically driven decisions should sit on top of a completed functional blueprint.
+> 
+> **Aesthetic choices (best made after fit/handling is locked):**
+> - Wood grade and figure (standard through higher exhibition levels)
+> - Finish (oil, lacquer, or unfinished for local finishing)
+> - Receiver finish (blued vs nickel/coin)
+> - Engraving pattern, inlays, monograms/crests, and other personalization
+> 
+> **Questions to ask (Legacy lens):**
+> - What will this gun look like *in 20 years*, when it has lived a full competitive life?
+> - Do I want the gun to be quietly serious, or to carry visible ceremony?
+> - If this could become an heirloom, what identifiers (crest, initials, date, meaningful motif) are timeless rather than trendy?
+> 
+> **Regret minimizer:** Choose aesthetics that will still feel dignified when tastes change. “Understated” ages gracefully; if you go ornate, go classical rather than fashionable.
+> 
+> ---
+> 
+> ## Decide Now vs. Can Wait (practical regret table)
+> 
+> | Category | Decide First (hard to change later) | Can Wait / Evolve Later (lower regret) |
+> |---|---|---|
+> | **Platform** | Platform selection (MX / High Tech / TM / DC / SHO) | — |
+> | **Core fit** | Stock dimensions (LOP, drop, cast, pitch, toe), grip concept | Fine-tuning adjustable comb settings (if you choose it) |
+> | **Barrels** | Length, barrel weight/profile, rib style philosophy, chamber length | Beads (within reason), small sighting refinements |
+> | **Chokes** | Fixed vs multi-choke decision | Specific choke tubes/constrictions (if multi-choke) |
+> | **Overall balance** | The foundational “feel” via barrel + stock decisions | Minor balancing tweaks (within sensible limits) |
+> | **Aesthetics** | Only the broad direction (understated vs ceremonial) | Wood grade, engraving pattern details, monograms/inlays, case style/color |
+> 
+> *Note:* Some changes are possible later through qualified specialists, but the point of bespoke is to avoid rebuilding what you could have clarified upfront.
+> 
+> ---
+> 
+> ## The questions that protect you from miscommunication (the hidden source of regret)
+> Many bespoke orders come through dealers, and details can get compressed or accidentally altered as they’re transmitted. You want a process that prevents that.
+> 
+> **Ask your dealer/fitter:**
+> 1. **“Can you show me the complete spec sheet I will sign off on—line by line?”**  
+> 2. **“How do you confirm rib height/style and sight picture before finalizing?”**  
+> 3. **“What’s the plan if a measurement feels right on paper but not in live shooting?”**  
+> 4. **“Who is the single point of responsibility for translating my fit into the factory order?”**  
+> 5. **“What are the checkpoints before the order becomes irreversible?”**  
+> 6. **“If we’re making a high-stakes/complex build, should we consider a direct conversation or on-site fitting to reduce translation risk?”**
+> 
+> ---
+> 
+> ## Timeline expectation (so you plan the journey calmly)
+> A bespoke Perazzi is typically a **months-long build**—often around **6 months**, and commonly **6–9 months** overall; longer if you choose complex engraving or multi-set complexity.
+> 
+> The point isn’t speed. It’s that the gun arrives as *your* instrument, not a generic interpretation.
+> 
+> ---
+> 
+> ## Next step
+> If you tell me **(1) your discipline**, **(2) current gun and what you like/dislike about it**, and **(3) whether this is meant to be a “lifetime one-gun” or the start of a battery**, I’ll turn the path above into a **shortlist of platform directions and a first-draft spec blueprint** you can take to an authorized Perazzi dealer for a clean, unambiguous order—and, ideally, a fitting plan that honors the long life you’re building into the gun.
 >
 
 ### PROMPT: *"If Perazzi were a philosophy of craft, what would its principles be—and how do those principles show up in practical ownership and performance?"*
 
 ### PerazziGPT Response:
 >
-If Perazzi were a philosophy of craft, it would be a set of principles about **how a competition gun should be made, lived with, renewed, and ultimately trusted**. Not abstract ideals—rules that show up in the metal, the fit, and the way ownership feels ten years in.
-
-Below are the principles, and then how each one becomes practical in **performance** and **ownership**.
-
----
-
-## 1) Precision is measured—and then finished by feel  
-**Principle:** Modern metrology and CNC get you to the edge of perfection; the last few microns are resolved by the hands of craftsmen who know what “zero-play where it matters” actually feels like.
-
-**How it shows up in performance**
-- A consistent, solid lock-up and a repeatable “closing feel” gun to gun.
-- A competition-grade sense of mechanical confidence—less uncertainty about whether what you felt was you or the gun.
-- When things are right, the gun behaves like a single unit: it starts, tracks, and stops without distracting mechanical chatter.
-
-**How it shows up in ownership**
-- Quality is not treated as an end-of-line department; it’s woven through the whole build process (measurement, gauging, repeated checking).
-- If something rare surfaces in the field—point-of-impact concerns, a screw that won’t stay put—the expectation is to address it promptly and correctly, not normalize it as “just how guns are.”
-
-*Perazzi-specific anchor:* their tolerance philosophy explicitly blends CNC/gauges with old-world hand fitting, aiming to catch issues in-house and meet internal and CIP standards.
-
----
-
-## 2) The gun is engineered to be serviced, not merely owned  
-**Principle:** A Perazzi is built to live a long working life, with wear parts meant to be renewed. Longevity is a design requirement, not a hope.
-
-**How it shows up in performance**
-- High-volume reliability: the gun is conceived as a “competition machine,” intended to digest very high round counts over decades.
-- Consistency over time, because maintenance and rebuilding are part of the lifecycle, not an emergency measure.
-
-**How it shows up in ownership**
-- The ownership relationship includes the expectation of periodic inspection and renewal of wear components by qualified hands.
-- This is one reason Perazzi guns maintain a steady place in serious competition: you’re not hoping a sealed system lasts forever—you’re stewarding a platform designed to be kept correct.
-
----
-
-## 3) Modularity serves mastery (not convenience)  
-**Principle:** Modularity is not a gadget; it’s a competition tool. The removable trigger group is a classic example: the architecture supports serious use, maintenance, and continuity.
-
-**How it shows up in performance**
-- Triggers can be tuned and maintained as a unit, preserving a consistent feel.
-- At major events, competitors can carry a spare trigger group—so a small issue doesn’t end a week of shooting.
-
-**How it shows up in ownership**
-- Service becomes cleaner and more precise because the working mechanism can be evaluated as a complete assembly.
-- You can build a long-term relationship with a known trigger feel rather than constantly adapting to small changes.
-
-*Perazzi-specific anchor:* removable trigger group is a core architectural trait across Perazzi O/U designs, with benefits explicitly tied to maintenance and competition realities.
-
----
-
-## 4) Barrels are not components—they’re the truth-tellers  
-**Principle:** Perazzi treats barrels as a central craft discipline: made in-house, then straightened and regulated with traditional skill. “Close enough” isn’t a Perazzi idea; regulation is where the gun becomes honest.
-
-**How it shows up in performance**
-- Point-of-impact integrity and pattern consistency are treated as fundamental, not optional.
-- The gun’s behavior stays coherent because the barrel set is built and regulated with intention, not just assembled.
-
-**How it shows up in ownership**
-- When you commission a bespoke build, barrel decisions (length, rib style, choke approach) are not cosmetic—they’re the gun’s handling personality.
-- Over time, the confidence you feel is partly because the barrel work has been treated as a primary craft, not a subcontracted afterthought.
-
-*Perazzi-specific anchor:* in-house barrel making with traditional straightening and regulation is called out as a distinctive.
-
----
-
-## 5) Customization is not “options”—it’s the production logic  
-**Principle:** Perazzi doesn’t treat customization as a surcharge category. The factory is organized around building guns to a shooter’s blueprint—stock dimensions, barrel configuration, ribs, chokes, trigger choices, aesthetic level.
-
-**How it shows up in performance**
-- Fit is not an accessory. A correctly specified stock and sight picture reduce compensation, which reduces variability under pressure.
-- The gun becomes simpler to shoot well because it asks less of your posture and less of your face-to-stock negotiation.
-
-**How it shows up in ownership**
-- You’re not merely selecting a model; you’re authoring a specification that can remain stable for decades.
-- This is why the “order of decisions” matters so much: if you get platform + fit + barrels right, the gun tends to age gracefully with you.
-
-*Perazzi-specific anchor:* Perazzi’s low-volume, made-to-order mindset (roughly 70 specialists; about 7 guns per day) exists to preserve this individualized attention.
-
----
-
-## 6) Competition is the home language: function-first, but not soulless  
-**Principle:** The aesthetic is restrained because the gun’s first job is performance—but Perazzi also acknowledges that identity matters. Confidence is part mechanics, part relationship.
-
-**How it shows up in performance**
-- Understated competition styling tends to keep focus on sight picture, repeatability, and practical use.
-- A gun that feels “right” to its owner often performs better simply because the shooter trusts it and commits to it.
-
-**How it shows up in ownership**
-- You can stay in the realm of quiet excellence—clean lines, purposeful finish—or scale upward into high-art engraving and wood without departing from the core identity.
-- The key is alignment: the gun’s visual language should match who you are when you step onto the line.
-
-*Perazzi-specific anchor:* Perazzi’s “understated excellence” house style on many competition guns, with the option to scale into full artistic expression.
-
----
-
-## 7) Low profile, strong locking, balanced mass—because recoil and rhythm matter  
-**Principle:** The architecture is designed around how humans actually shoot thousands of shells: stable, durable locking; a low-profile action; weight and balance tuned for recoil mitigation and smooth swing rather than delicate carry.
-
-**How it shows up in performance**
-- A lower-profile action keeps the barrels closer to the hands and shoulder—often experienced as a lively but settled feel.
-- Slightly heavier, competition-oriented balance helps with recoil management and repeatable movement on targets.
-
-**How it shows up in ownership**
-- The gun makes sense as a long-term training partner: it is built for the cadence of practice, not just the romance of occasional use.
-- Over a decade, that design intent is felt in reduced fatigue and more consistent execution—especially for high-volume shooters.
-
-*Perazzi-specific anchor:* low-profile action with modified Boss-style locking; monobloc construction; competition-oriented weight and balance.
-
----
-
-## 8) The factory culture is “inclusive of the customer,” not mysterious  
-**Principle:** Perazzi’s identity includes transparency and a customer-inclusive mindset—because a bespoke gun is a relationship, not a transaction.
-
-**How it shows up in performance**
-- You can make decisions with clearer intent because the build is treated as a dialogue: what you want the gun to do, and what configuration supports that.
-
-**How it shows up in ownership**
-- The owner is invited into an ongoing stewardship mindset: maintain it, renew it, keep it correct, keep its story intact.
-
-*Perazzi-specific anchor:* “transparent, customer-inclusive factory culture” and “high-endurance serviceability” are listed among Perazzi’s distinctives.
-
----
-
-## Putting it in one sentence  
-**Perazzi’s craft philosophy is this:** build a competition instrument with measured precision and hand-resolved fit, regulate the barrels as the source of truth, make the system serviceable for a lifetime, and allow the gun to reflect the shooter’s identity without ever letting decoration outrun function.
-
----
-
-## Next step  
-If you tell me **what you shoot (trap / skeet / sporting / FITASC)** and **what you value most (sight picture, stability, speed between targets, recoil comfort, heirloom aesthetics)**, I’ll translate these principles into a **practical bespoke specification checklist**—the exact decisions to lock early and the ones you can safely leave open until later.
+> If Perazzi were a philosophy of craft, it would be a set of principles about **how a competition gun should be made, lived with, renewed, and ultimately trusted**. Not abstract ideals—rules that show up in the metal, the fit, and the way ownership feels ten years in.
+> 
+> Below are the principles, and then how each one becomes practical in **performance** and **ownership**.
+> 
+> ---
+> 
+> ## 1) Precision is measured—and then finished by feel  
+> **Principle:** Modern metrology and CNC get you to the edge of perfection; the last few microns are resolved by the hands of craftsmen who know what “zero-play where it matters” actually feels like.
+> 
+> **How it shows up in performance**
+> - A consistent, solid lock-up and a repeatable “closing feel” gun to gun.
+> - A competition-grade sense of mechanical confidence—less uncertainty about whether what you felt was you or the gun.
+> - When things are right, the gun behaves like a single unit: it starts, tracks, and stops without distracting mechanical chatter.
+> 
+> **How it shows up in ownership**
+> - Quality is not treated as an end-of-line department; it’s woven through the whole build process (measurement, gauging, repeated checking).
+> - If something rare surfaces in the field—point-of-impact concerns, a screw that won’t stay put—the expectation is to address it promptly and correctly, not normalize it as “just how guns are.”
+> 
+> *Perazzi-specific anchor:* their tolerance philosophy explicitly blends CNC/gauges with old-world hand fitting, aiming to catch issues in-house and meet internal and CIP standards.
+> 
+> ---
+> 
+> ## 2) The gun is engineered to be serviced, not merely owned  
+> **Principle:** A Perazzi is built to live a long working life, with wear parts meant to be renewed. Longevity is a design requirement, not a hope.
+> 
+> **How it shows up in performance**
+> - High-volume reliability: the gun is conceived as a “competition machine,” intended to digest very high round counts over decades.
+> - Consistency over time, because maintenance and rebuilding are part of the lifecycle, not an emergency measure.
+> 
+> **How it shows up in ownership**
+> - The ownership relationship includes the expectation of periodic inspection and renewal of wear components by qualified hands.
+> - This is one reason Perazzi guns maintain a steady place in serious competition: you’re not hoping a sealed system lasts forever—you’re stewarding a platform designed to be kept correct.
+> 
+> ---
+> 
+> ## 3) Modularity serves mastery (not convenience)  
+> **Principle:** Modularity is not a gadget; it’s a competition tool. The removable trigger group is a classic example: the architecture supports serious use, maintenance, and continuity.
+> 
+> **How it shows up in performance**
+> - Triggers can be tuned and maintained as a unit, preserving a consistent feel.
+> - At major events, competitors can carry a spare trigger group—so a small issue doesn’t end a week of shooting.
+> 
+> **How it shows up in ownership**
+> - Service becomes cleaner and more precise because the working mechanism can be evaluated as a complete assembly.
+> - You can build a long-term relationship with a known trigger feel rather than constantly adapting to small changes.
+> 
+> *Perazzi-specific anchor:* removable trigger group is a core architectural trait across Perazzi O/U designs, with benefits explicitly tied to maintenance and competition realities.
+> 
+> ---
+> 
+> ## 4) Barrels are not components—they’re the truth-tellers  
+> **Principle:** Perazzi treats barrels as a central craft discipline: made in-house, then straightened and regulated with traditional skill. “Close enough” isn’t a Perazzi idea; regulation is where the gun becomes honest.
+> 
+> **How it shows up in performance**
+> - Point-of-impact integrity and pattern consistency are treated as fundamental, not optional.
+> - The gun’s behavior stays coherent because the barrel set is built and regulated with intention, not just assembled.
+> 
+> **How it shows up in ownership**
+> - When you commission a bespoke build, barrel decisions (length, rib style, choke approach) are not cosmetic—they’re the gun’s handling personality.
+> - Over time, the confidence you feel is partly because the barrel work has been treated as a primary craft, not a subcontracted afterthought.
+> 
+> *Perazzi-specific anchor:* in-house barrel making with traditional straightening and regulation is called out as a distinctive.
+> 
+> ---
+> 
+> ## 5) Customization is not “options”—it’s the production logic  
+> **Principle:** Perazzi doesn’t treat customization as a surcharge category. The factory is organized around building guns to a shooter’s blueprint—stock dimensions, barrel configuration, ribs, chokes, trigger choices, aesthetic level.
+> 
+> **How it shows up in performance**
+> - Fit is not an accessory. A correctly specified stock and sight picture reduce compensation, which reduces variability under pressure.
+> - The gun becomes simpler to shoot well because it asks less of your posture and less of your face-to-stock negotiation.
+> 
+> **How it shows up in ownership**
+> - You’re not merely selecting a model; you’re authoring a specification that can remain stable for decades.
+> - This is why the “order of decisions” matters so much: if you get platform + fit + barrels right, the gun tends to age gracefully with you.
+> 
+> *Perazzi-specific anchor:* Perazzi’s low-volume, made-to-order mindset (roughly 70 specialists; about 7 guns per day) exists to preserve this individualized attention.
+> 
+> ---
+> 
+> ## 6) Competition is the home language: function-first, but not soulless  
+> **Principle:** The aesthetic is restrained because the gun’s first job is performance—but Perazzi also acknowledges that identity matters. Confidence is part mechanics, part relationship.
+> 
+> **How it shows up in performance**
+> - Understated competition styling tends to keep focus on sight picture, repeatability, and practical use.
+> - A gun that feels “right” to its owner often performs better simply because the shooter trusts it and commits to it.
+> 
+> **How it shows up in ownership**
+> - You can stay in the realm of quiet excellence—clean lines, purposeful finish—or scale upward into high-art engraving and wood without departing from the core identity.
+> - The key is alignment: the gun’s visual language should match who you are when you step onto the line.
+> 
+> *Perazzi-specific anchor:* Perazzi’s “understated excellence” house style on many competition guns, with the option to scale into full artistic expression.
+> 
+> ---
+> 
+> ## 7) Low profile, strong locking, balanced mass—because recoil and rhythm matter  
+> **Principle:** The architecture is designed around how humans actually shoot thousands of shells: stable, durable locking; a low-profile action; weight and balance tuned for recoil mitigation and smooth swing rather than delicate carry.
+> 
+> **How it shows up in performance**
+> - A lower-profile action keeps the barrels closer to the hands and shoulder—often experienced as a lively but settled feel.
+> - Slightly heavier, competition-oriented balance helps with recoil management and repeatable movement on targets.
+> 
+> **How it shows up in ownership**
+> - The gun makes sense as a long-term training partner: it is built for the cadence of practice, not just the romance of occasional use.
+> - Over a decade, that design intent is felt in reduced fatigue and more consistent execution—especially for high-volume shooters.
+> 
+> *Perazzi-specific anchor:* low-profile action with modified Boss-style locking; monobloc construction; competition-oriented weight and balance.
+> 
+> ---
+> 
+> ## 8) The factory culture is “inclusive of the customer,” not mysterious  
+> **Principle:** Perazzi’s identity includes transparency and a customer-inclusive mindset—because a bespoke gun is a relationship, not a transaction.
+> 
+> **How it shows up in performance**
+> - You can make decisions with clearer intent because the build is treated as a dialogue: what you want the gun to do, and what configuration supports that.
+> 
+> **How it shows up in ownership**
+> - The owner is invited into an ongoing stewardship mindset: maintain it, renew it, keep it correct, keep its story intact.
+> 
+> *Perazzi-specific anchor:* “transparent, customer-inclusive factory culture” and “high-endurance serviceability” are listed among Perazzi’s distinctives.
+> 
+> ---
+> 
+> ## Putting it in one sentence  
+> **Perazzi’s craft philosophy is this:** build a competition instrument with measured precision and hand-resolved fit, regulate the barrels as the source of truth, make the system serviceable for a lifetime, and allow the gun to reflect the shooter’s identity without ever letting decoration outrun function.
+> 
+> ---
+> 
+> ## Next step  
+> If you tell me **what you shoot (trap / skeet / sporting / FITASC)** and **what you value most (sight picture, stability, speed between targets, recoil comfort, heirloom aesthetics)**, I’ll translate these principles into a **practical bespoke specification checklist**—the exact decisions to lock early and the ones you can safely leave open until later.
 >
 ---
 
