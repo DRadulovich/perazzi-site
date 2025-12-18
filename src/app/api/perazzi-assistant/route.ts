@@ -211,6 +211,7 @@ If you share how and where you shoot, I can stay on that path with you and help 
 
 const ENABLE_FILE_LOG = process.env.PERAZZI_ENABLE_FILE_LOG === "true";
 const DEBUG_PROMPT = process.env.PERAZZI_DEBUG_PROMPT === "true";
+const REQUIRE_GENERAL_LABEL = parseEnvBoolDefaultTrue(process.env.PERAZZI_REQUIRE_GENERAL_LABEL);
 const RETRIEVAL_EXCERPT_CHAR_LIMIT = clampEnvInt(
   process.env.PERAZZI_RETRIEVAL_EXCERPT_CHARS,
   1000,
@@ -269,6 +270,15 @@ const CORE_INSTRUCTIONS_HASH = crypto
   .createHash("sha256")
   .update(CORE_INSTRUCTIONS, "utf8")
   .digest("hex");
+
+type EvidenceMode = "perazzi_sourced" | "general_unsourced";
+
+type EvidenceContext = {
+  evidenceMode: EvidenceMode;
+  requireGeneralLabel: boolean;
+};
+
+const GENERAL_UNSOURCED_LABEL_PREFIX = "General answer (not sourced from Perazzi docs): ";
 
 function hashText(value: string): string {
   return crypto.createHash("sha256").update(value, "utf8").digest("hex");
@@ -866,6 +876,17 @@ export async function POST(request: Request) {
       retrieval = await retrievePerazziContext(retrievalBody, hints);
     }
 
+    const retrievalChunkCount = retrievalAttempted ? retrieval.chunks.length : 0;
+    const { evidenceMode, evidenceReason } = computeEvidenceMode({
+      retrievalAttempted,
+      retrievalChunkCount,
+      retrievalSkipReason: retrievalAttempted ? null : retrievalDecision.reason,
+    });
+    const evidenceContext: EvidenceContext = {
+      evidenceMode,
+      requireGeneralLabel: REQUIRE_GENERAL_LABEL,
+    };
+
     const rerankMetrics = retrieval.rerankMetrics ?? emptyRerankMetrics;
     const loggingMetrics = {
       ...archetypeMetrics,
@@ -873,9 +894,29 @@ export async function POST(request: Request) {
       retrievalPolicy,
       retrievalSkipped: !retrievalAttempted,
       retrievalSkipReason: retrievalAttempted ? null : retrievalDecision.reason,
+      retrievalChunkCount,
+      evidenceMode,
+      evidenceReason,
+      requireGeneralLabel: REQUIRE_GENERAL_LABEL,
     };
 
-    if (retrievalAttempted && retrieval.maxScore < getLowConfidenceThreshold()) {
+    logEvidenceModeDecision({
+      evidenceMode,
+      evidenceReason,
+      retrievalPolicy,
+      retrievalSkipped: !retrievalAttempted,
+      retrievalSkipReason: retrievalAttempted ? null : retrievalDecision.reason,
+      retrievalChunkCount,
+      mode: effectiveMode,
+      pageUrl: body?.context?.pageUrl ?? null,
+      sessionId: fullBody.sessionId ?? null,
+    });
+
+    if (
+      retrievalAttempted &&
+      retrieval.chunks.length > 0 &&
+      retrieval.maxScore < getLowConfidenceThreshold()
+    ) {
       logInteraction(
         fullBody,
         retrieval.chunks,
@@ -884,6 +925,7 @@ export async function POST(request: Request) {
         "retrieval_low",
         hints,
         responseTemplates,
+        loggingMetrics,
       );
       return NextResponse.json<PerazziAssistantResponse>({
         answer: LOW_CONFIDENCE_MESSAGE,
@@ -919,8 +961,9 @@ export async function POST(request: Request) {
         fullBody.sessionId ?? null,
         loggingMetrics,
         previousResponseId,
+        evidenceContext,
       );
-      answer = generated.text;
+      answer = enforceEvidenceAwareFormatting(generated.text, evidenceContext);
       responseId = generated.responseId;
     } catch (error) {
       if (previousResponseId && isInvalidPreviousResponseIdError(error)) {
@@ -961,6 +1004,7 @@ export async function POST(request: Request) {
       undefined,
       hints,
       responseTemplates,
+      loggingMetrics,
     );
     return NextResponse.json<PerazziAssistantResponse>({
       answer,
@@ -1175,6 +1219,39 @@ function buildThreadStrategyInput(messages: ChatMessage[]): ChatMessage[] {
   return [{ role: "user", content: latestUser }];
 }
 
+function parseEnvBoolDefaultTrue(value: string | undefined): boolean {
+  const v = (value ?? "").trim().toLowerCase();
+  if (!v) return true;
+  return !(v === "false" || v === "0" || v === "no" || v === "off");
+}
+
+function computeEvidenceMode(params: {
+  retrievalAttempted: boolean;
+  retrievalChunkCount: number;
+  retrievalSkipReason: string | null;
+}): { evidenceMode: EvidenceMode; evidenceReason: string } {
+  if (!params.retrievalAttempted) {
+    const reason = params.retrievalSkipReason ?? "unknown";
+    return { evidenceMode: "general_unsourced", evidenceReason: `retrieval_skipped:${reason}` };
+  }
+  if (params.retrievalChunkCount <= 0) {
+    return { evidenceMode: "general_unsourced", evidenceReason: "retrieval_empty" };
+  }
+  return {
+    evidenceMode: "perazzi_sourced",
+    evidenceReason: `retrieval_chunks:${params.retrievalChunkCount}`,
+  };
+}
+
+function enforceEvidenceAwareFormatting(text: string, evidence: EvidenceContext): string {
+  if (evidence.evidenceMode !== "general_unsourced") return text;
+  if (!evidence.requireGeneralLabel) return text;
+
+  const trimmed = (text ?? "").trimStart();
+  if (trimmed.startsWith(GENERAL_UNSOURCED_LABEL_PREFIX)) return trimmed;
+  return `${GENERAL_UNSOURCED_LABEL_PREFIX}${trimmed}`;
+}
+
 async function generateAssistantAnswer(
   sanitizedMessages: ChatMessage[],
   context: PerazziAssistantRequest["context"],
@@ -1190,6 +1267,7 @@ async function generateAssistantAnswer(
   sessionId?: string | null,
   extraMetadata?: Record<string, unknown> | null,
   previousResponseId?: string | null,
+  evidence?: EvidenceContext,
 ): Promise<{ text: string; responseId?: string | null }> {
   const conversationStrategy = (process.env.PERAZZI_CONVO_STRATEGY ?? "").trim().toLowerCase();
   const shouldEnforceThreadInput =
@@ -1203,7 +1281,7 @@ async function generateAssistantAnswer(
       : sanitizedMessages;
   const openAiStoreEnabled = process.env.PERAZZI_OPENAI_STORE === "true";
 
-  const dynamicContext = buildDynamicContext(context, chunks, templates, mode, archetype);
+  const dynamicContext = buildDynamicContext(context, chunks, templates, mode, archetype, evidence);
   const instructions = [CORE_INSTRUCTIONS, dynamicContext].join("\n\n");
   const retrievalPrompt = buildRetrievedReferencesForPrompt(chunks);
 
@@ -1225,6 +1303,13 @@ async function generateAssistantAnswer(
       typeof extra.rerankEnabled === "boolean" ? extra.rerankEnabled : undefined;
     const candidateLimit =
       typeof extra.candidateLimit === "number" ? extra.candidateLimit : undefined;
+    const evidenceMode = typeof extra.evidenceMode === "string" ? extra.evidenceMode : undefined;
+    const evidenceReason =
+      typeof extra.evidenceReason === "string" ? extra.evidenceReason : undefined;
+    const retrievalChunkCount =
+      typeof extra.retrievalChunkCount === "number" ? extra.retrievalChunkCount : undefined;
+    const retrievalSkipped =
+      typeof extra.retrievalSkipped === "boolean" ? extra.retrievalSkipped : undefined;
 
     console.info(
       "[PERAZZI_DEBUG_PROMPT] perazzi-assistant prompt summary",
@@ -1260,6 +1345,12 @@ async function generateAssistantAnswer(
         text_verbosity: textVerbosity,
         temperature: ASSISTANT_TEMPERATURE,
         max_output_tokens: MAX_OUTPUT_TOKENS,
+        evidence: {
+          evidenceMode: evidenceMode ?? null,
+          evidenceReason: evidenceReason ?? null,
+          retrievalChunkCount: retrievalChunkCount ?? null,
+          retrievalSkipped: retrievalSkipped ?? null,
+        },
         retrieval: {
           rerankEnabled,
           candidateLimit,
@@ -1388,6 +1479,7 @@ export function buildDynamicContext(
   templates: string[] = [],
   mode?: PerazziMode | null,
   archetype?: Archetype | null,
+  evidence?: EvidenceContext,
 ): string {
   const { promptBlock: retrievedReferencesBlock } = buildRetrievedReferencesForPrompt(chunks);
   let modeLabel: string | null = null;
@@ -1411,6 +1503,7 @@ export function buildDynamicContext(
         .join("\n")}\n`
     : "";
 
+  const evidencePolicyBlock = buildEvidencePolicyBlock(evidence);
   const archetypeGuidanceBlock = buildArchetypeGuidanceBlock(archetype);
 
   const bridgeGuidance = getModeArchetypeBridgeGuidance(
@@ -1420,13 +1513,41 @@ export function buildDynamicContext(
 
   return `Context: ${contextSummary || "General Perazzi concierge inquiry"}
 
-${retrievedReferencesBlock}
+${evidencePolicyBlock ? `${evidencePolicyBlock}\n\n` : ""}${retrievedReferencesBlock}
 
 ${templateGuidance}${
     archetypeGuidanceBlock ? `\n${archetypeGuidanceBlock}\n` : ""
   }${
     bridgeGuidance ? `\n${bridgeGuidance}\n` : ""
   }`.trimEnd();
+}
+
+function buildEvidencePolicyBlock(evidence?: EvidenceContext): string {
+  if (!evidence) return "";
+
+  if (evidence.evidenceMode === "perazzi_sourced") {
+    return [
+      "Evidence policy:",
+      "- Evidence mode: perazzi_sourced (Perazzi references are provided below).",
+      "- Ground Perazzi-specific factual claims in the retrieved references. If the references are silent or unclear, say so.",
+    ].join("\n");
+  }
+
+  const labelRule = evidence.requireGeneralLabel
+    ? [
+        "- First line must be exactly:",
+        `  \`${GENERAL_UNSOURCED_LABEL_PREFIX}…\``,
+      ].join("\n")
+    : "- Label rule disabled (PERAZZI_REQUIRE_GENERAL_LABEL=false).";
+
+  return [
+    "Evidence policy:",
+    "- Evidence mode: general_unsourced (no Perazzi references were retrieved for this request).",
+    labelRule,
+    "- Do not assert Perazzi-specific facts, model details, policies, pricing, history, or people unless the user explicitly provided them in this conversation.",
+    "- Use hedged, general language and frame statements as general guidance rather than official Perazzi information.",
+    "- Ambiguity gate: ask 1–2 clarifying questions only when the ambiguity is high-impact; otherwise proceed with a clearly stated assumption.",
+  ].join("\n");
 }
 
 function clampEnvInt(
@@ -1452,6 +1573,16 @@ function looksLikePath(value: string): boolean {
   if (v.includes("/") || v.includes("\\")) return true;
   if (/\.[a-z0-9]{1,6}$/i.test(v)) return true;
   return false;
+}
+
+function sanitizeReferenceTitleForPrompt(rawTitle: string | null | undefined): string {
+  const title = normalizeSnippetText(String(rawTitle ?? ""));
+  if (!title) return "Perazzi Reference";
+  if (looksLikePath(title)) return "Perazzi Reference";
+  // Defensive: prevent accidental leakage if upstream titles ever include IDs or "Source:"-style noise.
+  if (/chunk-[a-z0-9_-]{3,}/i.test(title)) return "Perazzi Reference";
+  if (/\bsource:\b/i.test(title)) return "Perazzi Reference";
+  return title;
 }
 
 function trimWithEllipsis(text: string, limit: number): { text: string; wasTrimmed: boolean } {
@@ -1502,9 +1633,7 @@ export function buildRetrievedReferencesForPrompt(chunks: RetrievedChunk[]): {
   for (let i = 0; i < chunks.length; i += 1) {
     const chunk = chunks[i]!;
     const rank = i + 1;
-    const rawTitle = String(chunk.title ?? "").trim();
-    const displayTitle =
-      rawTitle && !looksLikePath(rawTitle) ? rawTitle : "Perazzi Reference";
+    const displayTitle = sanitizeReferenceTitleForPrompt(chunk.title);
 
     const perChunk = trimWithEllipsis(chunk.content ?? "", RETRIEVAL_EXCERPT_CHAR_LIMIT);
     const prefix = `[${rank}] ${displayTitle}${perChunk.text ? " — " : ""}`;
@@ -1602,13 +1731,36 @@ function logInteraction(
   reason?: string,
   hints?: RetrievalHints,
   templates?: string[],
+  extraMetadata?: Record<string, unknown>,
 ) {
   const retrievalPrompt = buildRetrievedReferencesForPrompt(chunks);
+  const evidenceMode =
+    typeof extraMetadata?.evidenceMode === "string" ? (extraMetadata.evidenceMode as string) : null;
+  const evidenceReason =
+    typeof extraMetadata?.evidenceReason === "string"
+      ? (extraMetadata.evidenceReason as string)
+      : null;
+  const retrievalSkipped =
+    typeof extraMetadata?.retrievalSkipped === "boolean"
+      ? (extraMetadata.retrievalSkipped as boolean)
+      : null;
+  const retrievalChunkCount =
+    typeof extraMetadata?.retrievalChunkCount === "number"
+      ? (extraMetadata.retrievalChunkCount as number)
+      : null;
   const data = {
     type: "perazzi-assistant-log",
     timestamp: new Date().toISOString(),
     question: body.messages.find((m) => m.role === "user")?.content ?? "",
     context: body.context ?? {},
+    evidenceMode,
+    evidenceReason,
+    retrievalSkipped,
+    retrievalChunkCount,
+    retrievalCaps: {
+      excerptCharLimit: RETRIEVAL_EXCERPT_CHAR_LIMIT,
+      totalCharLimit: RETRIEVAL_TOTAL_CHAR_LIMIT,
+    },
     retrieved: retrievalPrompt.metadata.map((meta) => ({
       chunkId: meta.chunkId,
       title: meta.title,
@@ -1624,6 +1776,38 @@ function logInteraction(
     intents: hints?.intents ?? [],
     topics: hints?.topics ?? [],
     templates: templates ?? [],
+  };
+  console.info(JSON.stringify(data));
+  if (ENABLE_FILE_LOG) {
+    appendEvalLog(data);
+  }
+}
+
+function logEvidenceModeDecision(params: {
+  evidenceMode: EvidenceMode;
+  evidenceReason: string;
+  retrievalPolicy: RetrievalPolicy;
+  retrievalSkipped: boolean;
+  retrievalSkipReason: string | null;
+  retrievalChunkCount: number;
+  mode: PerazziMode | null | undefined;
+  pageUrl: string | null | undefined;
+  sessionId: string | null | undefined;
+}) {
+  const data = {
+    type: "perazzi-evidence-mode",
+    timestamp: new Date().toISOString(),
+    evidenceMode: params.evidenceMode,
+    evidenceReason: params.evidenceReason,
+    retrieval: {
+      policy: params.retrievalPolicy,
+      skipped: params.retrievalSkipped,
+      skipReason: params.retrievalSkipReason ?? null,
+      chunkCount: params.retrievalChunkCount,
+    },
+    mode: params.mode ?? null,
+    pageUrl: params.pageUrl ?? null,
+    sessionId: params.sessionId ?? null,
   };
   console.info(JSON.stringify(data));
   if (ENABLE_FILE_LOG) {
