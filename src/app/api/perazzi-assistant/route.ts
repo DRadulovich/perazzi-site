@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "node:fs";
 import path from "node:path";
+import { APIError } from "openai";
 import type {
   ChatMessage,
   PerazziAssistantRequest,
@@ -52,7 +53,7 @@ const BLOCKED_RESPONSES: Record<string, string> = {
 };
 
 const THREAD_RESET_REBUILD_MESSAGE =
-  "I can’t resume that prior thread (its conversation ID is no longer valid). Your on-screen chat is still here, but I need to start a fresh thread. What were we discussing, and what outcome do you want from this chat?";
+  "Quick rebuild: Are you (A) researching Perazzi or (B) an owner needing support?\nWhich model/focus are we on today (High Tech / MX8 / Unsure)?";
 
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = 10; // 10 requests per IP per minute
@@ -783,9 +784,26 @@ export async function POST(request: Request) {
         threadResetRequired = true;
         answer = THREAD_RESET_REBUILD_MESSAGE;
         responseId = null;
+        const preview =
+          previousResponseId.length > 18
+            ? `${previousResponseId.slice(0, 8)}…${previousResponseId.slice(-6)}`
+            : previousResponseId;
         console.warn(
-          "[PERAZZI_THREAD_RESET] OpenAI rejected previous_response_id; asking client to reset thread",
-          JSON.stringify(serializeOpenAiError(error)),
+          "[PERAZZI_THREAD_RESET] thread reset triggered (invalid previous_response_id)",
+          JSON.stringify({
+            event: "perazzi.thread_reset_required",
+            thread_reset_required: true,
+            reason: "invalid_previous_response_id",
+            endpoint: "perazzi-assistant",
+            sessionId: fullBody.sessionId ?? null,
+            pageUrl: body?.context?.pageUrl ?? null,
+            previous_response_id: {
+              present: true,
+              length: previousResponseId.length,
+              preview,
+            },
+            openai_error: serializeOpenAiError(error),
+          }),
         );
       } else {
         throw error;
@@ -904,6 +922,8 @@ type OpenAiApiErrorLike = {
   param?: string | null;
   type?: string;
   requestID?: string | null;
+  requestId?: string | null;
+  request_id?: string | null;
   error?: unknown;
   message?: string;
   name?: string;
@@ -924,12 +944,45 @@ function serializeOpenAiError(error: unknown) {
     code: typeof err.code === "string" ? err.code : undefined,
     param: typeof err.param === "string" ? err.param : undefined,
     type: typeof err.type === "string" ? err.type : undefined,
-    requestID: typeof err.requestID === "string" ? err.requestID : undefined,
+    requestID:
+      typeof err.requestID === "string"
+        ? err.requestID
+        : typeof err.requestId === "string"
+          ? err.requestId
+          : typeof err.request_id === "string"
+            ? err.request_id
+            : undefined,
     error: nested,
   };
 }
 
 function isInvalidPreviousResponseIdError(error: unknown): boolean {
+  const normalize = (value: unknown) =>
+    typeof value === "string" ? value.trim().toLowerCase() : "";
+
+  if (error instanceof APIError) {
+    if (error.status !== 400) return false;
+
+    const param = normalize((error as { param?: unknown }).param);
+    if (param === "previous_response_id") return true;
+
+    const code = normalize((error as { code?: unknown }).code);
+    if (code.includes("previous") && code.includes("response")) return true;
+
+    const message = normalize(error.message);
+    if (
+      message.includes("previous_response_id") &&
+      (message.includes("invalid") ||
+        message.includes("not found") ||
+        message.includes("unknown") ||
+        message.includes("no longer valid"))
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
   if (!error || typeof error !== "object") return false;
   const err = error as OpenAiApiErrorLike & {
     error?: { error?: unknown; code?: unknown; param?: unknown; message?: unknown };
