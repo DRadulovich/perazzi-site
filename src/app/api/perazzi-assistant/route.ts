@@ -462,8 +462,9 @@ export async function POST(request: Request) {
     const sanitizedMessages = sanitizeMessages(fullBody.messages);
     const latestQuestion = getLatestUserContent(sanitizedMessages);
     const hints: RetrievalHints = detectRetrievalHints(latestQuestion, body?.context);
-    const previousResponseId =
-      fullBody.previousResponseId ?? fullBody.context?.previousResponseId ?? null;
+    const previousResponseId = normalizePreviousResponseId(
+      fullBody.previousResponseId ?? fullBody.context?.previousResponseId,
+    );
 
     const effectiveMode: PerazziMode =
       normalizeMode(hints.mode) ?? normalizeMode(body?.context?.mode) ?? "prospect";
@@ -867,6 +868,12 @@ function getLatestUserContent(messages: ChatMessage[]): string | null {
   return null;
 }
 
+function normalizePreviousResponseId(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 function buildThreadStrategyInput(messages: ChatMessage[]): ChatMessage[] {
   const latestUser = getLatestUserContent(messages);
   if (latestUser === null) return [];
@@ -890,9 +897,14 @@ async function generateAssistantAnswer(
   previousResponseId?: string | null,
 ): Promise<{ text: string; responseId?: string | null }> {
   const conversationStrategy = (process.env.PERAZZI_CONVO_STRATEGY ?? "").trim().toLowerCase();
+  const shouldEnforceThreadInput =
+    conversationStrategy === "thread" && normalizePreviousResponseId(previousResponseId) !== null;
+  const threadInput = shouldEnforceThreadInput
+    ? buildThreadStrategyInput(sanitizedMessages)
+    : null;
   const openaiInputMessages =
-    conversationStrategy === "thread"
-      ? buildThreadStrategyInput(sanitizedMessages)
+    shouldEnforceThreadInput && threadInput && threadInput.length > 0
+      ? threadInput
       : sanitizedMessages;
   const openAiStoreEnabled = process.env.PERAZZI_OPENAI_STORE === "true";
 
@@ -936,10 +948,12 @@ async function generateAssistantAnswer(
         relatabilityBlockChars: RELATABILITY_BLOCK.length,
         retrievedChunkTextChars,
         chatHistoryTextChars: inputSummary.totalChars,
+        inputItemCount: inputSummary.items.length,
         inputItems: inputSummary.items,
         inputCountsByRole: inputSummary.countsByRole,
         previous_response_id_present: Boolean(previousResponseId),
         store_present: openAiStoreEnabled,
+        store_value: openAiStoreEnabled ? true : undefined,
         prompt_cache_retention: PROMPT_CACHE_RETENTION ?? null,
         prompt_cache_key_present: Boolean(PROMPT_CACHE_KEY),
         prompt_cache_key_chars: PROMPT_CACHE_KEY?.length ?? 0,
@@ -1167,7 +1181,7 @@ function logInteraction(
   }
 }
 
-function appendEvalLog(entry: Record<string, any>) {
+function appendEvalLog(entry: Record<string, unknown>) {
   try {
     fs.mkdirSync(path.dirname(CONVERSATION_LOG_PATH), { recursive: true });
     fs.appendFileSync(CONVERSATION_LOG_PATH, `${JSON.stringify(entry)}\n`, "utf8");

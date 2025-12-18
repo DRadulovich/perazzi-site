@@ -75,7 +75,12 @@ export type UseChatStateOptions = {
 
 const DEFAULT_STORAGE_KEY = "perazzi-chat-history";
 const MAX_RENDER_MESSAGES = 200;
-const MAX_API_MESSAGES = 20;
+
+function normalizeResponseId(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
 
 class ConciergeRequestError extends Error {
   status?: number;
@@ -184,18 +189,16 @@ export function useChatState(
           : payload.context?.archetypeVector ?? context.archetypeVector ?? null,
         previousResponseId: isArchetypeReset
           ? null
-          : payload.context?.previousResponseId ?? context.previousResponseId ?? null,
+          : normalizeResponseId(
+              payload.context?.previousResponseId ?? context.previousResponseId,
+            ),
       };
 
       setContext(effectiveContext);
 
-      const fullHistory = [...messages, userEntry]
-        .map(({ role, content }) => ({ role, content }))
-        .slice(-MAX_API_MESSAGES);
-      const apiMessages =
-        effectiveContext.previousResponseId != null && effectiveContext.previousResponseId !== ""
-          ? [{ role: "user" as const, content: payload.question }]
-          : fullHistory;
+      // Render-history and API payload are intentionally separate. For thread-based conversation
+      // state, we send only the latest user message and rely on `previousResponseId` for continuity.
+      const apiMessages = [{ role: "user" as const, content: userEntry.content }];
       const sessionId = getOrCreateSessionId();
 
       const res = await fetch("/api/perazzi-assistant", {
@@ -259,7 +262,8 @@ export function useChatState(
           mode: data.mode ?? prev.mode,
           archetype: nextArchetype,
           archetypeVector: nextArchetypeVector,
-          previousResponseId: data.responseId ?? prev.previousResponseId ?? null,
+          previousResponseId:
+            normalizeResponseId(data.responseId) ?? prev.previousResponseId ?? null,
         };
       });
       options.onResponseMeta?.({
