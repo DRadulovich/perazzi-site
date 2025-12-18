@@ -29,6 +29,13 @@ import type { RetrievalHints } from "@/lib/perazzi-intents";
 import { createResponseText, type CreateResponseTextParams } from "@/lib/aiClient";
 import { logAiInteraction, type AiInteractionContext } from "@/lib/aiLogging";
 import { shouldRetrieve } from "@/lib/perazzi-retrieval-policy";
+import { BLOCKED_RESPONSES } from "@/lib/perazzi-guardrail-responses";
+import {
+  type EvidenceMode,
+  GENERAL_UNSOURCED_LABEL_PREFIX,
+  ensureGeneralUnsourcedLabelFirstLine,
+} from "@/lib/perazzi-evidence";
+import { postValidate } from "@/lib/perazzi-postvalidate";
 import {
   resolveModel,
   resolveMaxOutputTokens,
@@ -43,16 +50,6 @@ import {
 const LOW_CONFIDENCE_THRESHOLD = Number(process.env.PERAZZI_LOW_CONF_THRESHOLD ?? 0.1);
 const LOW_CONFIDENCE_MESSAGE =
   "I’m not certain enough to answer this accurately from the information I have. For a definitive answer, please contact Perazzi directly or consider rephrasing your question.";
-const BLOCKED_RESPONSES: Record<string, string> = {
-  pricing:
-    "I’m not able to discuss pricing details. Please reach out to an authorized Perazzi dealer or the Perazzi team for official information.",
-  gunsmithing:
-    "Technical modifications and repairs must be handled by authorized Perazzi experts. Let me connect you with the right service channel.",
-  legal:
-    "Perazzi can’t provide legal guidance. Please consult local authorities or qualified professionals for this topic.",
-  system_meta:
-    "There is internal guidance and infrastructure behind how I work, but that’s not something I can open up or walk through in detail. My job is to reflect how Perazzi thinks about its guns and owners, not to expose internal systems. Let’s bring this back to your shooting, your gun, or the decisions you’re trying to make, and I’ll stay with you there.",
-};
 
 const THREAD_RESET_REBUILD_MESSAGE =
   "Quick rebuild: Are you (A) researching Perazzi or (B) an owner needing support?\nWhich model/focus are we on today (High Tech / MX8 / Unsure)?";
@@ -212,6 +209,7 @@ If you share how and where you shoot, I can stay on that path with you and help 
 const ENABLE_FILE_LOG = process.env.PERAZZI_ENABLE_FILE_LOG === "true";
 const DEBUG_PROMPT = process.env.PERAZZI_DEBUG_PROMPT === "true";
 const REQUIRE_GENERAL_LABEL = parseEnvBoolDefaultTrue(process.env.PERAZZI_REQUIRE_GENERAL_LABEL);
+const ENABLE_POST_VALIDATE_OUTPUT = process.env.PERAZZI_POST_VALIDATE_OUTPUT === "true";
 const RETRIEVAL_EXCERPT_CHAR_LIMIT = clampEnvInt(
   process.env.PERAZZI_RETRIEVAL_EXCERPT_CHARS,
   1000,
@@ -271,14 +269,11 @@ const CORE_INSTRUCTIONS_HASH = crypto
   .update(CORE_INSTRUCTIONS, "utf8")
   .digest("hex");
 
-type EvidenceMode = "perazzi_sourced" | "general_unsourced";
-
 type EvidenceContext = {
   evidenceMode: EvidenceMode;
+  evidenceReason: string;
   requireGeneralLabel: boolean;
 };
-
-const GENERAL_UNSOURCED_LABEL_PREFIX = "General answer (not sourced from Perazzi docs): ";
 
 function hashText(value: string): string {
   return crypto.createHash("sha256").update(value, "utf8").digest("hex");
@@ -884,6 +879,7 @@ export async function POST(request: Request) {
     });
     const evidenceContext: EvidenceContext = {
       evidenceMode,
+      evidenceReason,
       requireGeneralLabel: REQUIRE_GENERAL_LABEL,
     };
 
@@ -994,6 +990,26 @@ export async function POST(request: Request) {
       } else {
         throw error;
       }
+    }
+
+    if (ENABLE_POST_VALIDATE_OUTPUT && !threadResetRequired) {
+      const before = answer;
+      const result = postValidate(before, {
+        evidenceMode,
+        requireGeneralLabel: evidenceContext.requireGeneralLabel,
+      });
+      answer = result.text;
+      logPostValidate({
+        sessionId: fullBody.sessionId ?? null,
+        pageUrl: body?.context?.pageUrl ?? null,
+        evidenceMode,
+        triggered: result.triggered,
+        reasons: result.reasons,
+        replacedWithBlock: result.replacedWithBlock,
+        labelInjected: result.labelInjected,
+        qualifierInjected: result.qualifierInjected,
+        changed: before !== result.text,
+      });
     }
 
     logInteraction(
@@ -1247,9 +1263,7 @@ function enforceEvidenceAwareFormatting(text: string, evidence: EvidenceContext)
   if (evidence.evidenceMode !== "general_unsourced") return text;
   if (!evidence.requireGeneralLabel) return text;
 
-  const trimmed = (text ?? "").trimStart();
-  if (trimmed.startsWith(GENERAL_UNSOURCED_LABEL_PREFIX)) return trimmed;
-  return `${GENERAL_UNSOURCED_LABEL_PREFIX}${trimmed}`;
+  return ensureGeneralUnsourcedLabelFirstLine(text ?? "");
 }
 
 async function generateAssistantAnswer(
@@ -1529,6 +1543,7 @@ function buildEvidencePolicyBlock(evidence?: EvidenceContext): string {
     return [
       "Evidence policy:",
       "- Evidence mode: perazzi_sourced (Perazzi references are provided below).",
+      `- Evidence reason: ${evidence.evidenceReason}.`,
       "- Ground Perazzi-specific factual claims in the retrieved references. If the references are silent or unclear, say so.",
     ].join("\n");
   }
@@ -1543,6 +1558,7 @@ function buildEvidencePolicyBlock(evidence?: EvidenceContext): string {
   return [
     "Evidence policy:",
     "- Evidence mode: general_unsourced (no Perazzi references were retrieved for this request).",
+    `- Evidence reason: ${evidence.evidenceReason}.`,
     labelRule,
     "- Do not assert Perazzi-specific facts, model details, policies, pricing, history, or people unless the user explicitly provided them in this conversation.",
     "- Use hedged, general language and frame statements as general guidance rather than official Perazzi information.",
@@ -1744,6 +1760,10 @@ function logInteraction(
     typeof extraMetadata?.retrievalSkipped === "boolean"
       ? (extraMetadata.retrievalSkipped as boolean)
       : null;
+  const retrievalSkipReason =
+    typeof extraMetadata?.retrievalSkipReason === "string"
+      ? (extraMetadata.retrievalSkipReason as string)
+      : null;
   const retrievalChunkCount =
     typeof extraMetadata?.retrievalChunkCount === "number"
       ? (extraMetadata.retrievalChunkCount as number)
@@ -1756,6 +1776,7 @@ function logInteraction(
     evidenceMode,
     evidenceReason,
     retrievalSkipped,
+    retrievalSkipReason,
     retrievalChunkCount,
     retrievalCaps: {
       excerptCharLimit: RETRIEVAL_EXCERPT_CHAR_LIMIT,
@@ -1799,6 +1820,9 @@ function logEvidenceModeDecision(params: {
     timestamp: new Date().toISOString(),
     evidenceMode: params.evidenceMode,
     evidenceReason: params.evidenceReason,
+    retrievalAttempted: !params.retrievalSkipped,
+    retrievalChunkCount: params.retrievalChunkCount,
+    retrievalSkippedReason: params.retrievalSkipReason ?? null,
     retrieval: {
       policy: params.retrievalPolicy,
       skipped: params.retrievalSkipped,
@@ -1808,6 +1832,36 @@ function logEvidenceModeDecision(params: {
     mode: params.mode ?? null,
     pageUrl: params.pageUrl ?? null,
     sessionId: params.sessionId ?? null,
+  };
+  console.info(JSON.stringify(data));
+  if (ENABLE_FILE_LOG) {
+    appendEvalLog(data);
+  }
+}
+
+function logPostValidate(params: {
+  triggered: boolean;
+  reasons: string[];
+  evidenceMode: EvidenceMode;
+  replacedWithBlock: boolean;
+  labelInjected: boolean;
+  qualifierInjected: boolean;
+  changed: boolean;
+  pageUrl: string | null;
+  sessionId: string | null;
+}) {
+  const data = {
+    type: "perazzi-postvalidate",
+    timestamp: new Date().toISOString(),
+    triggered: params.triggered,
+    reasons: params.reasons,
+    evidenceMode: params.evidenceMode,
+    replacedWithBlock: params.replacedWithBlock,
+    labelInjected: params.labelInjected,
+    qualifierInjected: params.qualifierInjected,
+    changed: params.changed,
+    pageUrl: params.pageUrl,
+    sessionId: params.sessionId,
   };
   console.info(JSON.stringify(data));
   if (ENABLE_FILE_LOG) {
