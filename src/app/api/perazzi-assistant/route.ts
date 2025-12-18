@@ -196,12 +196,35 @@ If you’re standing between different options, I can help you understand the Pe
 If you share how and where you shoot, I can stay on that path with you and help you see which Perazzi platforms are most likely to feel like home.`;
 
 const ENABLE_FILE_LOG = process.env.PERAZZI_ENABLE_FILE_LOG === "true";
+const DEBUG_PROMPT = process.env.PERAZZI_DEBUG_PROMPT === "true";
 const CONVERSATION_LOG_PATH = path.join(
   process.cwd(),
   "tmp",
   "logs",
   "perazzi-conversations.ndjson",
 );
+
+const RELATABILITY_BLOCK = `
+Relatability and reframing guidelines:
+
+- Begin by briefly reflecting the user's concern or goal in their own terms (1–2 sentences).
+- Then reinterpret that concern through Perazzi's core pillars: long-term partnership with a fitted instrument, meticulous craftsmanship, and serious competition use.
+- Close with one concrete next step that keeps the relationship between the shooter and their gun at the center of the decision.
+- Keep empathy explicit, but do not mirror slang or hype; stay in the Perazzi voice described above.
+`.trim();
+
+const ARCHETYPE_TONE_GUIDANCE: Record<Archetype, string> = {
+  loyalist:
+    "Emphasize long-term ownership, trust, and the experience of living with the same gun over many seasons. Acknowledge emotional attachment and stability, but keep facts and safety unchanged.",
+  prestige:
+    "Emphasize craftsmanship, materials, aesthetics, engraving, and the ritual of ownership. Talk about how the gun presents itself and what it says about the owner, without exaggerating performance claims.",
+  analyst:
+    "Be especially clear about mechanics, specifications, tradeoffs, and the reasons behind any recommendation. Use structured explanations, concrete examples, and comparisons between platforms.",
+  achiever:
+    "Tie explanations to performance, consistency, and competition outcomes. Show how choices support training, match performance, and long days on demanding courses, without over-promising results.",
+  legacy:
+    "Frame decisions in terms of history, continuity, and what the gun will mean over time. Acknowledge heritage, passing the gun down, and preserving its story, while keeping technical details accurate and grounded.",
+};
 
 function getLowConfidenceThreshold() {
   const value = Number(process.env.PERAZZI_LOW_CONF_THRESHOLD ?? 0);
@@ -345,6 +368,38 @@ function detectKnowledgeSourceQuestion(latestUserContent: string | null): boolea
 function capitalize(input: string): string {
   if (!input) return input;
   return input.charAt(0).toUpperCase() + input.slice(1);
+}
+
+function buildArchetypeGuidanceBlock(archetype?: Archetype | null): string {
+  if (!archetype) {
+    return `Archetype profile: none detected.\n\nTreat the user as a balanced mix of Loyalist, Prestige, Analyst, Achiever, and Legacy. Do not assume strong preferences; focus on clarity and neutrality of tone.`;
+  }
+  const prettyName = capitalize(archetype);
+  const extra = ARCHETYPE_TONE_GUIDANCE[archetype] ?? "";
+  return [
+    `Archetype profile for this user:`,
+    `- Primary archetype: ${prettyName} (${archetype})`,
+    "",
+    "Use this profile only to adjust tone, analogies, and which details you emphasize.",
+    "Do not change any facts, technical recommendations, safety behavior, or brand guardrails.",
+    extra ? "" : undefined,
+    extra ? `Additional tone guidance for this archetype: ${extra}` : undefined,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function summarizeInputMessagesForDebug(messages: ChatMessage[]) {
+  const items = messages.map((msg) => ({
+    role: msg.role,
+    chars: (msg.content ?? "").length,
+  }));
+  const totalChars = items.reduce((sum, item) => sum + item.chars, 0);
+  const countsByRole = items.reduce<Record<string, number>>((acc, item) => {
+    acc[item.role] = (acc[item.role] ?? 0) + 1;
+    return acc;
+  }, {});
+  return { items, totalChars, countsByRole };
 }
 
 export async function POST(request: Request) {
@@ -833,6 +888,61 @@ async function generateAssistantAnswer(
     "Stay in the Perazzi concierge voice: quiet, reverent, concise, no slang, and avoid pricing or legal guidance. Keep responses focused on Perazzi heritage, platforms, service, and fittings.";
   const instructions = [systemPrompt, toneNudge].join("\n\n");
 
+  if (DEBUG_PROMPT) {
+    const inputSummary = summarizeInputMessagesForDebug(sanitizedMessages);
+    const retrievedChunkTextChars = chunks.reduce(
+      (sum, chunk) => sum + (chunk.content?.length ?? 0),
+      0,
+    );
+    const effectiveMode = mode ?? context?.mode ?? null;
+    const effectiveArchetype = archetype ?? null;
+    const bridgeGuidance = getModeArchetypeBridgeGuidance(
+      effectiveMode,
+      effectiveArchetype,
+    );
+    const archetypeGuidanceBlock = buildArchetypeGuidanceBlock(effectiveArchetype);
+    const extra = (extraMetadata ?? {}) as Record<string, unknown>;
+    const rerankEnabled =
+      typeof extra.rerankEnabled === "boolean" ? extra.rerankEnabled : undefined;
+    const candidateLimit =
+      typeof extra.candidateLimit === "number" ? extra.candidateLimit : undefined;
+
+    console.info(
+      "[PERAZZI_DEBUG_PROMPT] perazzi-assistant prompt summary",
+      JSON.stringify({
+        model: OPENAI_MODEL,
+        hasInstructions: instructions.length > 0,
+        instructionsChars: instructions.length,
+        systemPromptChars: systemPrompt.length,
+        toneNudgeChars: toneNudge.length,
+        specChars: PHASE_ONE_SPEC.length,
+        exemplarsChars: STYLE_EXEMPLARS.length,
+        archetypeGuidanceChars: archetypeGuidanceBlock.length,
+        bridgeGuidanceChars: bridgeGuidance.length,
+        archetypeBridgeChars: archetypeGuidanceBlock.length + bridgeGuidance.length,
+        relatabilityBlockChars: RELATABILITY_BLOCK.length,
+        retrievedChunkTextChars,
+        chatHistoryTextChars: inputSummary.totalChars,
+        inputItems: inputSummary.items,
+        inputCountsByRole: inputSummary.countsByRole,
+        previous_response_id_present: Boolean(previousResponseId),
+        store_present: false,
+        prompt_cache_retention: PROMPT_CACHE_RETENTION ?? null,
+        prompt_cache_key_present: Boolean(PROMPT_CACHE_KEY),
+        prompt_cache_key_chars: PROMPT_CACHE_KEY?.length ?? 0,
+        reasoning_effort: REASONING_EFFORT ?? null,
+        text_verbosity: textVerbosity,
+        temperature: ASSISTANT_TEMPERATURE,
+        max_output_tokens: MAX_OUTPUT_TOKENS,
+        retrieval: {
+          rerankEnabled,
+          candidateLimit,
+          returnedChunkCount: chunks.length,
+        },
+      }),
+    );
+  }
+
   const env = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local";
   const guardrailInfo = guardrail ?? { status: "ok", reason: null as string | null };
   const metadata: Record<string, unknown> = {
@@ -894,6 +1004,16 @@ async function generateAssistantAnswer(
     metadata.latencyMs = latencyMs;
     responseText = response.text ?? LOW_CONFIDENCE_MESSAGE;
     responseId = response.responseId ?? null;
+    if (DEBUG_PROMPT) {
+      console.info(
+        "[PERAZZI_DEBUG_PROMPT] perazzi-assistant openai usage",
+        JSON.stringify({
+          responseId: response.responseId ?? null,
+          requestId: response.requestId ?? null,
+          usage: response.usage ?? null,
+        }),
+      );
+    }
 
     try {
       await logAiInteraction({
@@ -955,52 +1075,13 @@ export function buildSystemPrompt(
         .join("\n")}\n`
     : "";
 
-  const archetypeToneGuidance: Record<Archetype, string> = {
-    loyalist:
-      "Emphasize long-term ownership, trust, and the experience of living with the same gun over many seasons. Acknowledge emotional attachment and stability, but keep facts and safety unchanged.",
-    prestige:
-      "Emphasize craftsmanship, materials, aesthetics, engraving, and the ritual of ownership. Talk about how the gun presents itself and what it says about the owner, without exaggerating performance claims.",
-    analyst:
-      "Be especially clear about mechanics, specifications, tradeoffs, and the reasons behind any recommendation. Use structured explanations, concrete examples, and comparisons between platforms.",
-    achiever:
-      "Tie explanations to performance, consistency, and competition outcomes. Show how choices support training, match performance, and long days on demanding courses, without over-promising results.",
-    legacy:
-      "Frame decisions in terms of history, continuity, and what the gun will mean over time. Acknowledge heritage, passing the gun down, and preserving its story, while keeping technical details accurate and grounded.",
-  };
-
-  const archetypeGuidanceBlock = (() => {
-    if (!archetype) {
-      return `Archetype profile: none detected.\n\nTreat the user as a balanced mix of Loyalist, Prestige, Analyst, Achiever, and Legacy. Do not assume strong preferences; focus on clarity and neutrality of tone.`;
-    }
-    const prettyName = capitalize(archetype);
-    const extra = archetypeToneGuidance[archetype] ?? "";
-    return [
-      `Archetype profile for this user:`,
-      `- Primary archetype: ${prettyName} (${archetype})`,
-      "",
-      "Use this profile only to adjust tone, analogies, and which details you emphasize.",
-      "Do not change any facts, technical recommendations, safety behavior, or brand guardrails.",
-      extra ? "" : undefined,
-      extra ? `Additional tone guidance for this archetype: ${extra}` : undefined,
-    ]
-      .filter(Boolean)
-      .join("\n");
-  })();
+  const archetypeGuidanceBlock = buildArchetypeGuidanceBlock(archetype);
 
   // --- Bridge guidance and relatability block additions ---
   const bridgeGuidance = getModeArchetypeBridgeGuidance(
     mode ?? context?.mode ?? null,
     archetype ?? null,
   );
-
-  const relatabilityBlock = `
-Relatability and reframing guidelines:
-
-- Begin by briefly reflecting the user's concern or goal in their own terms (1–2 sentences).
-- Then reinterpret that concern through Perazzi's core pillars: long-term partnership with a fitted instrument, meticulous craftsmanship, and serious competition use.
-- Close with one concrete next step that keeps the relationship between the shooter and their gun at the center of the decision.
-- Keep empathy explicit, but do not mirror slang or hype; stay in the Perazzi voice described above.
-`.trim();
   // -------------------------------------------------------
 
   return `${PHASE_ONE_SPEC}
@@ -1017,7 +1098,7 @@ ${templateGuidance}${
 }${
   bridgeGuidance ? `\n${bridgeGuidance}\n` : ""
 }${
-  relatabilityBlock ? `\n${relatabilityBlock}\n` : ""
+  RELATABILITY_BLOCK ? `\n${RELATABILITY_BLOCK}\n` : ""
 }When composing responses:
 - Write in polished Markdown with short paragraphs separated by blank lines.
 - Use bold subheadings or bullet lists when outlining model comparisons, steps, or care tips.
