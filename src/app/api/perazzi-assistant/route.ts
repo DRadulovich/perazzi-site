@@ -3,10 +3,13 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { APIError } from "openai";
+import type OpenAI from "openai";
 import type {
   ChatMessage,
   PerazziAssistantRequest,
   PerazziAssistantResponse,
+  PerazziAdminDebugPayload,
+  PerazziAdminDebugUsage,
   RetrievedChunk,
   Archetype,
   PerazziMode,
@@ -66,6 +69,79 @@ type RateRecord = {
 };
 
 const ipRateLimit = new Map<string, RateRecord>();
+
+const ADMIN_DEBUG_HEADER = "x-perazzi-admin-debug";
+const ADMIN_DEBUG_TITLE_LIMIT = 5;
+const ADMIN_DEBUG_TITLE_MAX_CHARS = 160;
+
+function isAdminDebugAuthorized(req: Request): boolean {
+  if (process.env.PERAZZI_ADMIN_DEBUG !== "true") return false;
+  const expectedToken = (process.env.PERAZZI_ADMIN_DEBUG_TOKEN ?? "").trim();
+  if (!expectedToken) return false;
+
+  const providedToken = (req.headers.get(ADMIN_DEBUG_HEADER) ?? "").trim();
+  if (!providedToken) return false;
+
+  const expectedBuffer = Buffer.from(expectedToken);
+  const providedBuffer = Buffer.from(providedToken);
+
+  if (expectedBuffer.length !== providedBuffer.length) {
+    // Keep timing dependent on the expected secret length, not attacker-controlled input.
+    crypto.timingSafeEqual(expectedBuffer, expectedBuffer);
+    return false;
+  }
+  return crypto.timingSafeEqual(expectedBuffer, providedBuffer);
+}
+
+function capString(value: string, maxChars: number): string {
+  if (value.length <= maxChars) return value;
+  return `${value.slice(0, maxChars - 1)}…`;
+}
+
+function extractAdminDebugUsage(
+  usage: OpenAI.Responses.ResponseUsage | null | undefined,
+): PerazziAdminDebugUsage | null {
+  if (!usage) return null;
+  const asRecord = usage as unknown as Record<string, unknown>;
+
+  const cachedTokensRaw =
+    typeof asRecord.cached_tokens === "number"
+      ? (asRecord.cached_tokens as number)
+      : ((asRecord.input_tokens_details as { cached_tokens?: unknown } | undefined)?.cached_tokens ??
+          undefined);
+
+  const result: PerazziAdminDebugUsage = {};
+  if (typeof usage.input_tokens === "number") result.input_tokens = usage.input_tokens;
+  if (typeof cachedTokensRaw === "number") result.cached_tokens = cachedTokensRaw;
+  if (typeof usage.output_tokens === "number") result.output_tokens = usage.output_tokens;
+  if (typeof usage.total_tokens === "number") result.total_tokens = usage.total_tokens;
+
+  return Object.keys(result).length ? result : null;
+}
+
+function buildDebugPayload(params: {
+  thread: PerazziAdminDebugPayload["thread"];
+  retrieval: PerazziAdminDebugPayload["retrieval"];
+  usage: OpenAI.Responses.ResponseUsage | null | undefined;
+  flags: PerazziAdminDebugPayload["flags"];
+  triggers?: PerazziAdminDebugPayload["triggers"];
+}): PerazziAdminDebugPayload {
+  const topTitles = (params.retrieval.top_titles ?? [])
+    .filter((title) => typeof title === "string" && title.trim().length > 0)
+    .slice(0, ADMIN_DEBUG_TITLE_LIMIT)
+    .map((title) => capString(title.trim(), ADMIN_DEBUG_TITLE_MAX_CHARS));
+
+  return {
+    thread: params.thread,
+    retrieval: {
+      ...params.retrieval,
+      top_titles: topTitles,
+    },
+    usage: extractAdminDebugUsage(params.usage),
+    flags: params.flags,
+    ...(params.triggers ? { triggers: params.triggers } : {}),
+  };
+}
 
 function getClientIp(req: Request): string {
   const xff = req.headers.get("x-forwarded-for");
@@ -499,6 +575,22 @@ export async function POST(request: Request) {
     );
   }
   // -------------------------------------------
+  const adminDebugAuthorized = isAdminDebugAuthorized(request);
+  console.info(
+    JSON.stringify({
+      type: "perazzi-admin-debug-auth",
+      authorized: adminDebugAuthorized,
+    }),
+  );
+
+  const respond = <T extends PerazziAssistantResponse>(
+    payload: T,
+    debugPayload?: PerazziAdminDebugPayload,
+  ) => {
+    if (!adminDebugAuthorized || !debugPayload) return NextResponse.json(payload);
+    return NextResponse.json({ ...payload, debug: debugPayload });
+  };
+
   try {
     const body: Partial<PerazziAssistantRequest> = await request.json();
     const validationError = validateRequest(body);
@@ -532,11 +624,60 @@ export async function POST(request: Request) {
       fullBody.previousResponseId ?? fullBody.context?.previousResponseId,
     );
 
+    const conversationStrategyRaw = (process.env.PERAZZI_CONVO_STRATEGY ?? "").trim().toLowerCase();
+    const conversationStrategy = conversationStrategyRaw.length ? conversationStrategyRaw : null;
+    const openAiStoreEnabled = process.env.PERAZZI_OPENAI_STORE === "true";
+    const enforcedThreadInput =
+      conversationStrategy === "thread" && normalizePreviousResponseId(previousResponseId) !== null;
+
     const effectiveMode: PerazziMode =
       normalizeMode(hints.mode) ?? normalizeMode(body?.context?.mode) ?? "prospect";
     const retrievalPolicy = getRetrievalPolicy();
     const requestedTextVerbosity = parseTextVerbosity(body?.context?.textVerbosity);
     const effectiveTextVerbosity = requestedTextVerbosity ?? ENV_TEXT_VERBOSITY;
+
+    const buildEarlyReturnDebugPayload = (reason: string, blockedIntent?: string | null) => {
+      const { evidenceMode, evidenceReason } = computeEvidenceMode({
+        retrievalAttempted: false,
+        retrievalChunkCount: 0,
+        retrievalSkipReason: reason,
+      });
+      return buildDebugPayload({
+        thread: {
+          previous_response_id_present: Boolean(previousResponseId),
+          store_enabled: openAiStoreEnabled,
+          thread_reset_required: false,
+          conversationStrategy,
+          enforced_thread_input: enforcedThreadInput,
+        },
+        retrieval: {
+          attempted: false,
+          skipped: true,
+          reason,
+          chunk_count: 0,
+          top_titles: [],
+          rerank_enabled: null,
+          rerank_metrics_present: false,
+        },
+        usage: null,
+        flags: {
+          convo_strategy: conversationStrategy,
+          retrieval_policy: retrievalPolicy,
+          text_verbosity: effectiveTextVerbosity ?? null,
+          reasoning_effort: REASONING_EFFORT ?? null,
+          require_general_label: REQUIRE_GENERAL_LABEL,
+          postvalidate_enabled: ENABLE_POST_VALIDATE_OUTPUT,
+          prompt_cache_retention: PROMPT_CACHE_RETENTION ?? null,
+          prompt_cache_key_present: Boolean(PROMPT_CACHE_KEY),
+        },
+        triggers: {
+          blocked_intent: blockedIntent ?? null,
+          evidenceMode,
+          evidenceReason,
+          postvalidate: null,
+        },
+      });
+    };
 
     // Soft-meta origin handler: answer who built/designed the assistant, without exposing internals.
     if (detectAssistantOriginQuestion(latestQuestion)) {
@@ -576,7 +717,7 @@ export async function POST(request: Request) {
         [],
       );
 
-      return NextResponse.json<PerazziAssistantResponse>({
+      const payload: PerazziAssistantResponse = {
         answer,
         guardrail: { status: "ok", reason: null },
         citations: [],
@@ -587,7 +728,8 @@ export async function POST(request: Request) {
         mode: effectiveMode,
         archetype: null,
         archetypeBreakdown,
-      });
+      };
+      return respond(payload, buildEarlyReturnDebugPayload("early_return:assistant_origin"));
     }
 
     // Knowledge-source handler: explain curated Perazzi corpus without exposing internal docs or architecture.
@@ -626,7 +768,7 @@ export async function POST(request: Request) {
         [],
       );
 
-      return NextResponse.json<PerazziAssistantResponse>({
+      const payload: PerazziAssistantResponse = {
         answer,
         guardrail: { status: "ok", reason: null },
         citations: [],
@@ -637,7 +779,8 @@ export async function POST(request: Request) {
         mode: effectiveMode,
         archetype: null,
         archetypeBreakdown,
-      });
+      };
+      return respond(payload, buildEarlyReturnDebugPayload("early_return:knowledge_source"));
     }
 
     const resetRequested = detectArchetypeResetPhrase(latestQuestion);
@@ -674,7 +817,7 @@ export async function POST(request: Request) {
         [],
       );
 
-      return NextResponse.json<PerazziAssistantResponse>({
+      const payload: PerazziAssistantResponse = {
         answer,
         guardrail: { status: "ok", reason: null },
         citations: [],
@@ -685,7 +828,8 @@ export async function POST(request: Request) {
         mode: effectiveMode,
         archetype: null,
         archetypeBreakdown,
-      });
+      };
+      return respond(payload, buildEarlyReturnDebugPayload("early_return:archetype_reset"));
     }
 
     // Dev feature: manual archetype override via phrase
@@ -736,7 +880,7 @@ export async function POST(request: Request) {
         hints,
         [],
       );
-      return NextResponse.json<PerazziAssistantResponse>({
+      const payload: PerazziAssistantResponse = {
         answer,
         guardrail: { status: "ok", reason: null },
         citations: [],
@@ -747,7 +891,8 @@ export async function POST(request: Request) {
         mode: effectiveMode,
         archetype: effectiveArchetype,
         archetypeBreakdown,
-      });
+      };
+      return respond(payload, buildEarlyReturnDebugPayload("early_return:archetype_override"));
     }
 
     const guardrailBlock = detectBlockedIntent(sanitizedMessages);
@@ -808,7 +953,7 @@ export async function POST(request: Request) {
         console.error("logAiInteraction guardrail block failed", error);
       }
 
-      return NextResponse.json<PerazziAssistantResponse>({
+      const payload: PerazziAssistantResponse = {
         answer: guardrailBlock.message,
         guardrail: { status: "blocked", reason: guardrailBlock.reason },
         citations: [],
@@ -819,7 +964,9 @@ export async function POST(request: Request) {
         mode: effectiveMode,
         archetype: effectiveArchetype,
         archetypeBreakdown,
-      });
+      };
+      const reason = `early_return:guardrail:${guardrailBlock.reason ?? "blocked"}`;
+      return respond(payload, buildEarlyReturnDebugPayload(reason, guardrailBlock.reason));
     }
 
     const guardrail = { status: "ok" as const, reason: null as string | null };
@@ -923,7 +1070,46 @@ export async function POST(request: Request) {
         responseTemplates,
         loggingMetrics,
       );
-      return NextResponse.json<PerazziAssistantResponse>({
+      const debugPayload = buildDebugPayload({
+        thread: {
+          previous_response_id_present: Boolean(previousResponseId),
+          store_enabled: openAiStoreEnabled,
+          thread_reset_required: false,
+          conversationStrategy,
+          enforced_thread_input: enforcedThreadInput,
+        },
+        retrieval: {
+          attempted: retrievalAttempted,
+          skipped: !retrievalAttempted,
+          reason: retrievalDecision.reason ?? null,
+          chunk_count: retrievalChunkCount,
+          top_titles: retrievalAttempted ? retrieval.chunks.map((chunk) => chunk.title) : [],
+          rerank_enabled: retrievalAttempted ? Boolean(rerankMetrics.rerankEnabled) : null,
+          rerank_metrics_present:
+            retrievalAttempted &&
+            Array.isArray(rerankMetrics.topReturnedChunks) &&
+            rerankMetrics.topReturnedChunks.length > 0,
+        },
+        usage: null,
+        flags: {
+          convo_strategy: conversationStrategy,
+          retrieval_policy: retrievalPolicy,
+          text_verbosity: effectiveTextVerbosity ?? null,
+          reasoning_effort: REASONING_EFFORT ?? null,
+          require_general_label: REQUIRE_GENERAL_LABEL,
+          postvalidate_enabled: ENABLE_POST_VALIDATE_OUTPUT,
+          prompt_cache_retention: PROMPT_CACHE_RETENTION ?? null,
+          prompt_cache_key_present: Boolean(PROMPT_CACHE_KEY),
+        },
+        triggers: {
+          blocked_intent: null,
+          evidenceMode,
+          evidenceReason,
+          postvalidate: null,
+        },
+      });
+
+      const payload: PerazziAssistantResponse = {
         answer: LOW_CONFIDENCE_MESSAGE,
         guardrail: { status: "low_confidence", reason: "retrieval_low" },
         citations: [],
@@ -934,12 +1120,15 @@ export async function POST(request: Request) {
         mode: effectiveMode,
         archetype: effectiveArchetype,
         archetypeBreakdown,
-      });
+      };
+      return respond(payload, debugPayload);
     }
 
     let answer: string;
     let responseId: string | null | undefined;
     let threadResetRequired = false;
+    let assistantUsage: OpenAI.Responses.ResponseUsage | null = null;
+    let postvalidateDebug: { triggered: boolean; reasons: string[] } | null = null;
 
     try {
       const generated = await generateAssistantAnswer(
@@ -961,11 +1150,13 @@ export async function POST(request: Request) {
       );
       answer = enforceEvidenceAwareFormatting(generated.text, evidenceContext);
       responseId = generated.responseId;
+      assistantUsage = generated.usage ?? null;
     } catch (error) {
       if (previousResponseId && isInvalidPreviousResponseIdError(error)) {
         threadResetRequired = true;
-        answer = THREAD_RESET_REBUILD_MESSAGE;
-        responseId = null;
+      answer = THREAD_RESET_REBUILD_MESSAGE;
+      responseId = null;
+        assistantUsage = null;
         const preview =
           previousResponseId.length > 18
             ? `${previousResponseId.slice(0, 8)}…${previousResponseId.slice(-6)}`
@@ -999,6 +1190,7 @@ export async function POST(request: Request) {
         requireGeneralLabel: evidenceContext.requireGeneralLabel,
       });
       answer = result.text;
+      postvalidateDebug = { triggered: result.triggered, reasons: result.reasons };
       logPostValidate({
         sessionId: fullBody.sessionId ?? null,
         pageUrl: body?.context?.pageUrl ?? null,
@@ -1022,7 +1214,53 @@ export async function POST(request: Request) {
       responseTemplates,
       loggingMetrics,
     );
-    return NextResponse.json<PerazziAssistantResponse>({
+
+    const debugPayload = buildDebugPayload({
+      thread: {
+        previous_response_id_present: Boolean(previousResponseId),
+        store_enabled: openAiStoreEnabled,
+        thread_reset_required: threadResetRequired,
+        conversationStrategy,
+        enforced_thread_input: enforcedThreadInput,
+      },
+      retrieval: {
+        attempted: retrievalAttempted,
+        skipped: !retrievalAttempted,
+        reason: retrievalDecision.reason ?? null,
+        chunk_count: retrievalChunkCount,
+        top_titles: retrievalAttempted ? retrieval.chunks.map((chunk) => chunk.title) : [],
+        rerank_enabled: retrievalAttempted ? Boolean(rerankMetrics.rerankEnabled) : null,
+        rerank_metrics_present:
+          retrievalAttempted &&
+          Array.isArray(rerankMetrics.topReturnedChunks) &&
+          rerankMetrics.topReturnedChunks.length > 0,
+      },
+      usage: assistantUsage,
+      flags: {
+        convo_strategy: conversationStrategy,
+        retrieval_policy: retrievalPolicy,
+        text_verbosity: effectiveTextVerbosity ?? null,
+        reasoning_effort: REASONING_EFFORT ?? null,
+        require_general_label: REQUIRE_GENERAL_LABEL,
+        postvalidate_enabled: ENABLE_POST_VALIDATE_OUTPUT,
+        prompt_cache_retention: PROMPT_CACHE_RETENTION ?? null,
+        prompt_cache_key_present: Boolean(PROMPT_CACHE_KEY),
+      },
+      triggers: {
+        blocked_intent: null,
+        evidenceMode,
+        evidenceReason,
+        postvalidate:
+          postvalidateDebug && postvalidateDebug.triggered
+            ? {
+                triggered: true,
+                reasons: postvalidateDebug.reasons.slice(0, 10),
+              }
+            : null,
+      },
+    });
+
+    const payload: PerazziAssistantResponse = {
       answer,
       ...(threadResetRequired ? { thread_reset_required: true } : {}),
       citations: threadResetRequired ? [] : retrieval.chunks.map(mapChunkToCitation),
@@ -1035,7 +1273,9 @@ export async function POST(request: Request) {
       archetype: effectiveArchetype,
       archetypeBreakdown,
       responseId: responseId ?? null,
-    });
+    };
+
+    return respond(payload, debugPayload);
   } catch (error) {
     console.error("Perazzi assistant error", error);
     if (error instanceof OpenAIConnectionError) {
@@ -1282,7 +1522,11 @@ async function generateAssistantAnswer(
   extraMetadata?: Record<string, unknown> | null,
   previousResponseId?: string | null,
   evidence?: EvidenceContext,
-): Promise<{ text: string; responseId?: string | null }> {
+): Promise<{
+  text: string;
+  responseId?: string | null;
+  usage?: OpenAI.Responses.ResponseUsage | null;
+}> {
   const conversationStrategy = (process.env.PERAZZI_CONVO_STRATEGY ?? "").trim().toLowerCase();
   const shouldEnforceThreadInput =
     conversationStrategy === "thread" && normalizePreviousResponseId(previousResponseId) !== null;
@@ -1426,6 +1670,7 @@ async function generateAssistantAnswer(
 
   let responseText = LOW_CONFIDENCE_MESSAGE;
   let responseId: string | null | undefined;
+  let usage: OpenAI.Responses.ResponseUsage | null | undefined;
   const start = Date.now();
   const promptForLog = sanitizedMessages
     .filter((msg) => msg.role === "user")
@@ -1450,6 +1695,7 @@ async function generateAssistantAnswer(
     metadata.latencyMs = latencyMs;
     responseText = response.text ?? LOW_CONFIDENCE_MESSAGE;
     responseId = response.responseId ?? null;
+    usage = response.usage ?? null;
     if (DEBUG_PROMPT) {
       console.info(
         "[PERAZZI_DEBUG_PROMPT] perazzi-assistant openai usage",
@@ -1484,7 +1730,7 @@ async function generateAssistantAnswer(
     throw error;
   }
 
-  return { text: responseText, responseId };
+  return { text: responseText, responseId, usage };
 }
 
 export function buildDynamicContext(

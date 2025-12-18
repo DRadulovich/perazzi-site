@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import type {
   Citation,
   PerazziAssistantResponse,
+  PerazziAdminDebugPayload,
   Archetype,
   ArchetypeBreakdown,
   ArchetypeVector,
@@ -76,6 +77,7 @@ export type UseChatStateOptions = {
 const DEFAULT_STORAGE_KEY = "perazzi-chat-history";
 const MAX_RENDER_MESSAGES = 200;
 const THREAD_STORAGE_SUFFIX = ":previousResponseId";
+export const ADMIN_DEBUG_TOKEN_STORAGE_KEY = "perazzi_admin_debug_token";
 
 function normalizeResponseId(value: unknown): string | null {
   if (typeof value !== "string") return null;
@@ -176,6 +178,7 @@ export function useChatState(
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [lastAdminDebug, setLastAdminDebug] = useState<PerazziAdminDebugPayload | null>(null);
   const [context, setContext] = useState<ChatContextShape>(() => {
     const stored = loadStoredChatState(storageKey);
     const storedContext = stored?.context;
@@ -261,9 +264,19 @@ export function useChatState(
       const apiMessages = [{ role: "user" as const, content: userEntry.content }];
       const sessionId = getOrCreateSessionId();
 
+      const adminDebugToken =
+        "localStorage" in globalThis
+          ? globalThis.localStorage.getItem(ADMIN_DEBUG_TOKEN_STORAGE_KEY)
+          : null;
+
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (adminDebugToken) {
+        headers["x-perazzi-admin-debug"] = adminDebugToken;
+      }
+
       const res = await fetch("/api/perazzi-assistant", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           messages: apiMessages,
           context: effectiveContext,
@@ -287,6 +300,7 @@ export function useChatState(
         throw new ConciergeRequestError(message, res.status);
       }
       const data: PerazziAssistantResponse = await res.json();
+      setLastAdminDebug(data.debug ?? null);
       const assistantEntry: ChatEntry = {
         id: crypto.randomUUID(),
         role: "assistant",
@@ -388,6 +402,7 @@ export function useChatState(
   const clearConversation = useCallback(() => {
     setMessages([]);
     setError(null);
+    setLastAdminDebug(null);
     setContext((prev) => {
       const base = options.initialContext ?? {};
       return {
@@ -410,6 +425,7 @@ export function useChatState(
     pending,
     isTyping,
     error,
+    lastAdminDebug,
     context,
     setContext,
     sendMessage,

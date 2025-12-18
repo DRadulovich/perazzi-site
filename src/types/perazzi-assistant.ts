@@ -58,6 +58,52 @@ export interface Citation {
   excerpt?: string;
 }
 
+export type PerazziAdminDebugUsage = {
+  input_tokens?: number;
+  cached_tokens?: number;
+  output_tokens?: number;
+  total_tokens?: number;
+};
+
+export type PerazziAdminDebugPayload = {
+  thread: {
+    previous_response_id_present: boolean;
+    store_enabled: boolean;
+    thread_reset_required: boolean;
+    conversationStrategy: string | null;
+    enforced_thread_input: boolean;
+  };
+  retrieval: {
+    attempted: boolean;
+    skipped: boolean;
+    reason: string | null;
+    chunk_count: number;
+    top_titles: string[];
+    rerank_enabled: boolean | null;
+    rerank_metrics_present: boolean;
+  };
+  usage: PerazziAdminDebugUsage | null;
+  flags: {
+    convo_strategy: string | null;
+    retrieval_policy: string | null;
+    text_verbosity: string | null;
+    reasoning_effort: string | null;
+    require_general_label: boolean;
+    postvalidate_enabled: boolean;
+    prompt_cache_retention: string | null;
+    prompt_cache_key_present: boolean;
+  };
+  triggers?: {
+    blocked_intent?: string | null;
+    evidenceMode?: string | null;
+    evidenceReason?: string | null;
+    postvalidate?: {
+      triggered: boolean;
+      reasons: string[];
+    } | null;
+  };
+};
+
 export interface PerazziAssistantResponse {
   answer: string;
   citations: Citation[];
@@ -68,6 +114,12 @@ export interface PerazziAssistantResponse {
   intents: string[];
   topics: string[];
   templates: string[];
+
+  /**
+   * Admin-only structured debug payload (never sent to normal users).
+   * Present only when PERAZZI_ADMIN_DEBUG=true and x-perazzi-admin-debug is authorized.
+   */
+  debug?: PerazziAdminDebugPayload;
 
   /**
    * Indicates the server could not resume the provided `previous_response_id` and the client
