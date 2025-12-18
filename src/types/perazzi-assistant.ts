@@ -73,6 +73,18 @@ export type PerazziAdminDebugPayload = {
     conversationStrategy: string | null;
     enforced_thread_input: boolean;
   };
+  /**
+   * Admin-only OpenAI request summary (never includes message text).
+   * Present only on OpenAI-backed responses (not early-return handlers).
+   */
+  openai?: {
+    input_item_count: number;
+    input_counts_by_role: Record<string, number>;
+    input_items: Array<{
+      role: ChatRole;
+      chars: number;
+    }>;
+  } | null;
   retrieval: {
     attempted: boolean;
     skipped: boolean;
@@ -93,6 +105,10 @@ export type PerazziAdminDebugPayload = {
     prompt_cache_retention: string | null;
     prompt_cache_key_present: boolean;
   };
+  /** Admin-only output summary signals for deterministic eval assertions. */
+  output?: {
+    general_unsourced_label_present: boolean;
+  } | null;
   triggers?: {
     blocked_intent?: string | null;
     evidenceMode?: string | null;

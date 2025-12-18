@@ -121,9 +121,11 @@ function extractAdminDebugUsage(
 
 function buildDebugPayload(params: {
   thread: PerazziAdminDebugPayload["thread"];
+  openai?: PerazziAdminDebugPayload["openai"];
   retrieval: PerazziAdminDebugPayload["retrieval"];
   usage: OpenAI.Responses.ResponseUsage | null | undefined;
   flags: PerazziAdminDebugPayload["flags"];
+  output?: PerazziAdminDebugPayload["output"];
   triggers?: PerazziAdminDebugPayload["triggers"];
 }): PerazziAdminDebugPayload {
   const topTitles = (params.retrieval.top_titles ?? [])
@@ -133,12 +135,14 @@ function buildDebugPayload(params: {
 
   return {
     thread: params.thread,
+    ...(typeof params.openai === "undefined" ? {} : { openai: params.openai }),
     retrieval: {
       ...params.retrieval,
       top_titles: topTitles,
     },
     usage: extractAdminDebugUsage(params.usage),
     flags: params.flags,
+    ...(typeof params.output === "undefined" ? {} : { output: params.output }),
     ...(params.triggers ? { triggers: params.triggers } : {}),
   };
 }
@@ -636,7 +640,11 @@ export async function POST(request: Request) {
     const requestedTextVerbosity = parseTextVerbosity(body?.context?.textVerbosity);
     const effectiveTextVerbosity = requestedTextVerbosity ?? ENV_TEXT_VERBOSITY;
 
-    const buildEarlyReturnDebugPayload = (reason: string, blockedIntent?: string | null) => {
+    const buildEarlyReturnDebugPayload = (
+      reason: string,
+      blockedIntent?: string | null,
+      answerText?: string | null,
+    ) => {
       const { evidenceMode, evidenceReason } = computeEvidenceMode({
         retrievalAttempted: false,
         retrievalChunkCount: 0,
@@ -650,6 +658,7 @@ export async function POST(request: Request) {
           conversationStrategy,
           enforced_thread_input: enforcedThreadInput,
         },
+        openai: null,
         retrieval: {
           attempted: false,
           skipped: true,
@@ -670,6 +679,10 @@ export async function POST(request: Request) {
           prompt_cache_retention: PROMPT_CACHE_RETENTION ?? null,
           prompt_cache_key_present: Boolean(PROMPT_CACHE_KEY),
         },
+        output:
+          typeof answerText === "string"
+            ? { general_unsourced_label_present: answerText.startsWith(GENERAL_UNSOURCED_LABEL_PREFIX) }
+            : null,
         triggers: {
           blocked_intent: blockedIntent ?? null,
           evidenceMode,
@@ -729,7 +742,10 @@ export async function POST(request: Request) {
         archetype: null,
         archetypeBreakdown,
       };
-      return respond(payload, buildEarlyReturnDebugPayload("early_return:assistant_origin"));
+      return respond(
+        payload,
+        buildEarlyReturnDebugPayload("early_return:assistant_origin", null, answer),
+      );
     }
 
     // Knowledge-source handler: explain curated Perazzi corpus without exposing internal docs or architecture.
@@ -780,7 +796,10 @@ export async function POST(request: Request) {
         archetype: null,
         archetypeBreakdown,
       };
-      return respond(payload, buildEarlyReturnDebugPayload("early_return:knowledge_source"));
+      return respond(
+        payload,
+        buildEarlyReturnDebugPayload("early_return:knowledge_source", null, answer),
+      );
     }
 
     const resetRequested = detectArchetypeResetPhrase(latestQuestion);
@@ -829,7 +848,10 @@ export async function POST(request: Request) {
         archetype: null,
         archetypeBreakdown,
       };
-      return respond(payload, buildEarlyReturnDebugPayload("early_return:archetype_reset"));
+      return respond(
+        payload,
+        buildEarlyReturnDebugPayload("early_return:archetype_reset", null, answer),
+      );
     }
 
     // Dev feature: manual archetype override via phrase
@@ -892,7 +914,10 @@ export async function POST(request: Request) {
         archetype: effectiveArchetype,
         archetypeBreakdown,
       };
-      return respond(payload, buildEarlyReturnDebugPayload("early_return:archetype_override"));
+      return respond(
+        payload,
+        buildEarlyReturnDebugPayload("early_return:archetype_override", null, answer),
+      );
     }
 
     const guardrailBlock = detectBlockedIntent(sanitizedMessages);
@@ -966,7 +991,10 @@ export async function POST(request: Request) {
         archetypeBreakdown,
       };
       const reason = `early_return:guardrail:${guardrailBlock.reason ?? "blocked"}`;
-      return respond(payload, buildEarlyReturnDebugPayload(reason, guardrailBlock.reason));
+      return respond(
+        payload,
+        buildEarlyReturnDebugPayload(reason, guardrailBlock.reason, payload.answer),
+      );
     }
 
     const guardrail = { status: "ok" as const, reason: null as string | null };
@@ -1078,6 +1106,7 @@ export async function POST(request: Request) {
           conversationStrategy,
           enforced_thread_input: enforcedThreadInput,
         },
+        openai: null,
         retrieval: {
           attempted: retrievalAttempted,
           skipped: !retrievalAttempted,
@@ -1101,6 +1130,7 @@ export async function POST(request: Request) {
           prompt_cache_retention: PROMPT_CACHE_RETENTION ?? null,
           prompt_cache_key_present: Boolean(PROMPT_CACHE_KEY),
         },
+        output: { general_unsourced_label_present: false },
         triggers: {
           blocked_intent: null,
           evidenceMode,
@@ -1128,6 +1158,7 @@ export async function POST(request: Request) {
     let responseId: string | null | undefined;
     let threadResetRequired = false;
     let assistantUsage: OpenAI.Responses.ResponseUsage | null = null;
+    let assistantOpenAiDebug: PerazziAdminDebugPayload["openai"] = null;
     let postvalidateDebug: { triggered: boolean; reasons: string[] } | null = null;
 
     try {
@@ -1151,12 +1182,14 @@ export async function POST(request: Request) {
       answer = enforceEvidenceAwareFormatting(generated.text, evidenceContext);
       responseId = generated.responseId;
       assistantUsage = generated.usage ?? null;
+      assistantOpenAiDebug = generated.openai ?? null;
     } catch (error) {
       if (previousResponseId && isInvalidPreviousResponseIdError(error)) {
         threadResetRequired = true;
       answer = THREAD_RESET_REBUILD_MESSAGE;
       responseId = null;
         assistantUsage = null;
+        assistantOpenAiDebug = null;
         const preview =
           previousResponseId.length > 18
             ? `${previousResponseId.slice(0, 8)}…${previousResponseId.slice(-6)}`
@@ -1223,6 +1256,7 @@ export async function POST(request: Request) {
         conversationStrategy,
         enforced_thread_input: enforcedThreadInput,
       },
+      openai: assistantOpenAiDebug,
       retrieval: {
         attempted: retrievalAttempted,
         skipped: !retrievalAttempted,
@@ -1245,6 +1279,9 @@ export async function POST(request: Request) {
         postvalidate_enabled: ENABLE_POST_VALIDATE_OUTPUT,
         prompt_cache_retention: PROMPT_CACHE_RETENTION ?? null,
         prompt_cache_key_present: Boolean(PROMPT_CACHE_KEY),
+      },
+      output: {
+        general_unsourced_label_present: answer.startsWith(GENERAL_UNSOURCED_LABEL_PREFIX),
       },
       triggers: {
         blocked_intent: null,
@@ -1526,6 +1563,7 @@ async function generateAssistantAnswer(
   text: string;
   responseId?: string | null;
   usage?: OpenAI.Responses.ResponseUsage | null;
+  openai?: PerazziAdminDebugPayload["openai"];
 }> {
   const conversationStrategy = (process.env.PERAZZI_CONVO_STRATEGY ?? "").trim().toLowerCase();
   const shouldEnforceThreadInput =
@@ -1542,9 +1580,14 @@ async function generateAssistantAnswer(
   const dynamicContext = buildDynamicContext(context, chunks, templates, mode, archetype, evidence);
   const instructions = [CORE_INSTRUCTIONS, dynamicContext].join("\n\n");
   const retrievalPrompt = buildRetrievedReferencesForPrompt(chunks);
+  const inputSummary = summarizeInputMessagesForDebug(openaiInputMessages);
+  const openaiDebug: PerazziAdminDebugPayload["openai"] = {
+    input_item_count: inputSummary.items.length,
+    input_counts_by_role: inputSummary.countsByRole,
+    input_items: inputSummary.items,
+  };
 
   if (DEBUG_PROMPT) {
-    const inputSummary = summarizeInputMessagesForDebug(openaiInputMessages);
     const retrievedChunkTextChars = chunks.reduce(
       (sum, chunk) => sum + (chunk.content?.length ?? 0),
       0,
@@ -1730,7 +1773,7 @@ async function generateAssistantAnswer(
     throw error;
   }
 
-  return { text: responseText, responseId, usage };
+  return { text: responseText, responseId, usage, openai: openaiDebug };
 }
 
 export function buildDynamicContext(

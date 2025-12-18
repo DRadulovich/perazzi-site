@@ -13,6 +13,7 @@
     "emit:chunks": "tsx scripts/ingest.ts --dry-run --emit-metadata",
     "test": "vitest",
     "typecheck": "tsc --noEmit",
+    "perazzi:smoke": "tsx scripts/perazzi-eval/smoke.ts",
     "ingest:v2": "tsx scripts/ingest-v2.ts",
     "ingest:v2:full": "tsx scripts/ingest-v2.ts --full",
     "ingest:v2:dry-run": "tsx scripts/ingest-v2.ts --dry-run"
