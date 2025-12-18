@@ -83,6 +83,15 @@ function isUiMeta(text: string): boolean {
 
 function isChatMetaRewrite(text: string): boolean {
   const lower = text.toLowerCase();
+  const refersToPriorText =
+    /\b(this|that|it|above|the above|your answer|the answer|my message|my text|this text)\b/.test(
+      lower,
+    );
+  const isFormattingAboutPrior =
+    refersToPriorText &&
+    (/\b(format|reformat)\b/.test(lower) ||
+      (/\b(put|turn|convert|make)\b/.test(lower) &&
+        /\b(bullets?|bullet points?|an outline|outline)\b/.test(lower)));
   return (
     /\b(make|keep)\s+(that|this|it)\s+(shorter|more concise|brief)\b/.test(lower) ||
     /\bshorten\b/.test(lower) ||
@@ -93,7 +102,7 @@ function isChatMetaRewrite(text: string): boolean {
     /\bparaphrase\b/.test(lower) ||
     /\btranslate\b/.test(lower) ||
     /\bfix\b\s+(grammar|spelling)\b/.test(lower) ||
-    /\b(format|bullet|outline)\b/.test(lower)
+    isFormattingAboutPrior
   );
 }
 

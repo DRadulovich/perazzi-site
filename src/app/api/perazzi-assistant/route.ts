@@ -856,9 +856,10 @@ export async function POST(request: Request) {
       retrieval = await retrievePerazziContext(retrievalBody, hints);
     }
 
+    const rerankMetrics = retrieval.rerankMetrics ?? emptyRerankMetrics;
     const loggingMetrics = {
       ...archetypeMetrics,
-      ...retrieval.rerankMetrics,
+      ...rerankMetrics,
       retrievalPolicy,
       retrievalSkipped: !retrievalAttempted,
       retrievalSkipReason: retrievalAttempted ? null : retrievalDecision.reason,
