@@ -681,7 +681,11 @@ export async function POST(request: Request) {
         },
         output:
           typeof answerText === "string"
-            ? { general_unsourced_label_present: answerText.startsWith(GENERAL_UNSOURCED_LABEL_PREFIX) }
+            ? {
+                general_unsourced_label_present: answerText
+                  .trimStart()
+                  .startsWith(GENERAL_UNSOURCED_LABEL_PREFIX),
+              }
             : null,
         triggers: {
           blocked_intent: blockedIntent ?? null,
@@ -1281,7 +1285,7 @@ export async function POST(request: Request) {
         prompt_cache_key_present: Boolean(PROMPT_CACHE_KEY),
       },
       output: {
-        general_unsourced_label_present: answer.startsWith(GENERAL_UNSOURCED_LABEL_PREFIX),
+        general_unsourced_label_present: answer.trimStart().startsWith(GENERAL_UNSOURCED_LABEL_PREFIX),
       },
       triggers: {
         blocked_intent: null,

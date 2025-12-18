@@ -79,7 +79,7 @@ export type PerazziAdminDebugPayload = {
    */
   openai?: {
     input_item_count: number;
-    input_counts_by_role: Record<string, number>;
+    input_counts_by_role: Partial<Record<ChatRole, number>>;
     input_items: Array<{
       role: ChatRole;
       chars: number;

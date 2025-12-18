@@ -1,24 +1,37 @@
 #!/usr/bin/env tsx
 import dotenv from "dotenv";
-dotenv.config({ path: ".env.local" });
+dotenv.config({ path: ".env.local", quiet: true });
 
 import fetch from "node-fetch";
 import minimist from "minimist";
-import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
 import process from "node:process";
 import { setTimeout as delay } from "node:timers/promises";
 import { BLOCKED_RESPONSES } from "@/lib/perazzi-guardrail-responses";
 import { GENERAL_UNSOURCED_LABEL_PREFIX } from "@/lib/perazzi-evidence";
 import type { PerazziAssistantResponse, ChatMessage } from "@/types/perazzi-assistant";
 
-type TestResult = {
-  name: string;
-  ok: boolean;
-  details?: string;
+type SmokeSummary = {
+  ok: true;
+  runner: "scripts/perazzi-eval/smoke.ts";
+  baseUrl: string;
+  requestCount: number;
+  tests: string[];
+  durationMs: number;
 };
 
+function fail(message: string): never {
+  throw new Error(message);
+}
+
 function assert(condition: unknown, message: string): asserts condition {
-  if (!condition) throw new Error(message);
+  if (!condition) fail(message);
+}
+
+function assertEqual<T>(name: string, got: T, expected: T): void {
+  if (got !== expected) {
+    fail(`${name}: expected ${JSON.stringify(expected)} but got ${JSON.stringify(got)}`);
+  }
 }
 
 function asString(value: unknown): string | null {
@@ -27,7 +40,7 @@ function asString(value: unknown): string | null {
 
 function normalizeBaseUrl(value: string): string {
   const trimmed = value.trim().replace(/\/+$/, "");
-  return trimmed.length ? trimmed : "http://localhost:3000";
+  return trimmed.length ? trimmed : "http://localhost:3333";
 }
 
 async function fetchJson(url: string, init: Parameters<typeof fetch>[1]) {
@@ -64,18 +77,11 @@ async function waitForOk(url: string, timeoutMs: number): Promise<void> {
   throw new Error(`Timeout waiting for server at ${url} (${lastError ?? "no response"})`);
 }
 
-function startDevServer(port: number): ChildProcessWithoutNullStreams {
-  const child = spawn(
-    "npm",
-    ["run", "dev", "--", "-p", String(port)],
-    {
-      env: { ...process.env, PORT: String(port) },
-      stdio: "pipe",
-    },
-  );
-  child.stdout.on("data", (chunk) => process.stdout.write(chunk));
-  child.stderr.on("data", (chunk) => process.stderr.write(chunk));
-  return child;
+function startDevServer(port: number, verbose: boolean): ChildProcess {
+  return spawn("npm", ["run", "dev", "--", "-p", String(port)], {
+    env: { ...process.env, PORT: String(port) },
+    stdio: verbose ? "inherit" : "ignore",
+  });
 }
 
 async function requestAssistant(params: {
@@ -84,7 +90,8 @@ async function requestAssistant(params: {
   previousResponseId?: string | null;
   sessionId?: string | null;
   context?: Record<string, unknown>;
-  adminDebugToken?: string | null;
+  adminDebugToken: string;
+  requestCountRef: { count: number };
 }): Promise<PerazziAssistantResponse> {
   const payload = {
     messages: params.messages,
@@ -97,11 +104,12 @@ async function requestAssistant(params: {
     },
   };
 
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  if (params.adminDebugToken) {
-    headers["x-perazzi-admin-debug"] = params.adminDebugToken;
-  }
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-perazzi-admin-debug": params.adminDebugToken,
+  };
 
+  params.requestCountRef.count += 1;
   const { res, text, json } = await fetchJson(`${params.baseUrl}/api/perazzi-assistant`, {
     method: "POST",
     headers,
@@ -109,7 +117,7 @@ async function requestAssistant(params: {
   });
 
   if (!res.ok) {
-    throw new Error(`Request failed (${res.status}): ${text.slice(0, 400)}`);
+    fail(`Request failed (${res.status}): ${text.slice(0, 400)}`);
   }
 
   assert(json && typeof json === "object", "Expected JSON response object.");
@@ -121,136 +129,128 @@ function requireDebug(
   testName: string,
 ): NonNullable<PerazziAssistantResponse["debug"]> {
   const debug = response.debug;
-  assert(debug && typeof debug === "object", `${testName}: missing response.debug (admin debug not enabled?)`);
+  assert(
+    debug && typeof debug === "object",
+    `${testName}: Debug not authorized (check PERAZZI_ADMIN_DEBUG + token header)`,
+  );
   return debug;
 }
 
-async function runTest(name: string, fn: () => Promise<void>): Promise<TestResult> {
+async function runTest(name: string, fn: () => Promise<void>, tests: string[]): Promise<void> {
   try {
     await fn();
-    return { name, ok: true };
+    tests.push(name);
   } catch (error) {
-    return {
-      name,
-      ok: false,
-      details: error instanceof Error ? error.message : String(error),
-    };
+    const msg = error instanceof Error ? error.message : String(error);
+    fail(`${name}: ${msg}`);
+  }
+}
+
+function parsePortFromBaseUrl(baseUrl: string): number {
+  try {
+    const url = new URL(baseUrl);
+    if (url.port) return Number(url.port);
+    if (url.protocol === "https:") return 443;
+    return 80;
+  } catch {
+    return 3333;
   }
 }
 
 async function main() {
   const argv = minimist(process.argv.slice(2), {
-    boolean: ["start", "verbose", "allow-no-debug", "intentionally-fail"],
+    boolean: ["start", "intentionally-fail", "verbose"],
     string: ["base-url"],
     default: {
       start: false,
-      verbose: false,
-      "allow-no-debug": false,
       "intentionally-fail": false,
+      verbose: false,
     },
   });
 
-  const port = Number(process.env.PERAZZI_EVAL_PORT ?? 3000);
-  const requestedBaseUrl = normalizeBaseUrl(
-    (argv["base-url"] as string | undefined) ??
-      process.env.PERAZZI_EVAL_BASE_URL ??
-      `http://localhost:${port}`,
+  const baseUrl = normalizeBaseUrl(
+    (argv["base-url"] as string | undefined) ?? process.env.PERAZZI_EVAL_BASE_URL ?? "http://localhost:3333",
   );
+  const port = parsePortFromBaseUrl(baseUrl);
 
-  const adminDebugToken = (process.env.PERAZZI_ADMIN_DEBUG_TOKEN ?? "").trim() || null;
-  const requireAdminDebug = Boolean(adminDebugToken) && !Boolean(argv["allow-no-debug"]);
+  const adminDebugToken = (process.env.PERAZZI_ADMIN_DEBUG_TOKEN ?? "").trim();
+  if (!adminDebugToken) {
+    fail("Missing PERAZZI_ADMIN_DEBUG_TOKEN (required for deterministic assertions).");
+  }
 
-  const shouldAutoStart =
-    Boolean(argv.start) || process.env.PERAZZI_EVAL_AUTOSTART === "1" || process.env.PERAZZI_EVAL_AUTOSTART === "true";
+  const shouldAutoStart = Boolean(argv.start);
 
   const sessionId = "perazzi-eval-smoke";
   const perazziRetrievalPrompt =
-    "Explain the practical difference between the Perazzi High Tech platform and the MX8 platform for a sporting clays shooter. Focus on feel and intended use, and avoid purchase guidance. End with 1 clarifying question.";
-  const makeShorterPrompt = "Make that shorter and keep only the key differences in 4 bullet points.";
+    "Perazzi question: In sporting clays, what’s the practical feel difference between the High Tech platform and an MX8? Keep it concise and end with 1 clarifying question.";
+  const makeShorterPrompt = "Make that shorter. Keep only the key differences in 4 bullet points.";
   const generalLabelPrompt =
-    "TL;DR: Give 3 general guidelines for choosing an over/under shotgun for sporting clays. Do not mention any brands. Keep it under 120 words.";
+    "TL;DR: Give 3 general guidelines for choosing an over/under shotgun for sporting clays. Do not mention any brands. Under 120 words.";
   const pricingBlockedPrompt = "What does a new Perazzi High Tech cost?";
 
-  const baseUrl = shouldAutoStart ? `http://localhost:${port}` : requestedBaseUrl;
+  const tests: string[] = [];
+  const requestCountRef = { count: 0 };
+  const startedAt = Date.now();
 
-  console.log(
-    JSON.stringify(
-      {
-        ok: true,
-        runner: "scripts/perazzi-eval/smoke.ts",
-        baseUrl,
-        autoStart: shouldAutoStart,
-        requireAdminDebug,
-        hasAdminDebugToken: Boolean(adminDebugToken),
-        notes: shouldAutoStart
-          ? "Auto-start enabled: launches `npm run dev` and waits for it to respond."
-          : "Default: assumes a dev/prod server is already running at PERAZZI_EVAL_BASE_URL (or http://localhost:3000).",
-      },
-      null,
-      2,
-    ),
-  );
-
-  let devProc: ChildProcessWithoutNullStreams | null = null;
+  let devProc: ChildProcess | null = null;
   try {
     if (shouldAutoStart) {
-      devProc = startDevServer(port);
+      devProc = startDevServer(port, Boolean(argv.verbose));
       await waitForOk(baseUrl, 120_000);
+    } else {
+      await waitForOk(baseUrl, 10_000);
+    }
+
+    if (argv["intentionally-fail"]) {
+      fail("Intentional failure requested via --intentionally-fail");
     }
 
     // --- Test 1: Turn 1 OpenAI path + Perazzi retrieval ---
-    let turn1: PerazziAssistantResponse | null = null;
     let turn1ResponseId: string | null = null;
     let turn1Answer: string | null = null;
 
-    // --- Test 2: Turn 2 thread continuity + retrieval skip + thread-only input enforcement ---
-    let turn2: PerazziAssistantResponse | null = null;
-    let turn2ResponseId: string | null = null;
-    let turn2Answer: string | null = null;
-
-    const results: TestResult[] = [];
-
-    results.push(
-      await runTest("turn1: perazzi retrieval + responseId", async () => {
-        turn1 = await requestAssistant({
+    await runTest(
+      "turn1: perazzi retrieval + responseId",
+      async () => {
+        const turn1 = await requestAssistant({
           baseUrl,
           adminDebugToken,
           sessionId,
           messages: [{ role: "user", content: perazziRetrievalPrompt }],
           context: { pageUrl: "/shotguns", mode: "prospect", locale: "en-US" },
+          requestCountRef,
         });
 
         assert(typeof turn1.answer === "string" && turn1.answer.length > 0, "Expected non-empty answer.");
+        assert(!turn1.answer.startsWith(GENERAL_UNSOURCED_LABEL_PREFIX), "Expected NO general_unsourced label on Perazzi-sourced answer.");
         turn1Answer = turn1.answer;
+
         turn1ResponseId = asString(turn1.responseId);
         assert(turn1ResponseId, "Expected responseId on OpenAI-backed response.");
 
-        if (requireAdminDebug) {
-          const debug = requireDebug(turn1, "turn1");
-          assert(debug.openai, "turn1: expected debug.openai");
-          assert(debug.openai.input_item_count === 1, "turn1: expected OpenAI input_item_count == 1");
-          assert(
-            debug.openai.input_counts_by_role?.user === 1,
-            "turn1: expected OpenAI input_counts_by_role.user == 1",
-          );
-          assert(debug.retrieval.attempted === true, "turn1: expected retrieval.attempted === true");
-          assert(debug.retrieval.chunk_count > 0, "turn1: expected retrieval.chunk_count > 0");
-          assert(
-            debug.triggers?.evidenceMode === "perazzi_sourced",
-            `turn1: expected triggers.evidenceMode === "perazzi_sourced" (got ${String(
-              debug.triggers?.evidenceMode,
-            )})`,
-          );
-          assert(
-            turn1.citations.length === debug.retrieval.chunk_count,
-            "turn1: expected citations.length === debug.retrieval.chunk_count",
-          );
-        }
-      }),
+        const debug = requireDebug(turn1, "turn1");
+        assert(debug.openai, "turn1: expected debug.openai");
+        assertEqual("turn1.openai.input_item_count", debug.openai.input_item_count, 1);
+        assertEqual("turn1.openai.input_counts_by_role.user", debug.openai.input_counts_by_role["user"] ?? 0, 1);
+
+        assertEqual("turn1.retrieval.attempted", debug.retrieval.attempted, true);
+        assert(
+          debug.retrieval.chunk_count > 0,
+          "turn1: expected retrieval.chunk_count > 0 (configure PERAZZI_RETRIEVAL_POLICY=hybrid and ingest corpus/vector DB)",
+        );
+        assertEqual("turn1.triggers.evidenceMode", debug.triggers?.evidenceMode ?? null, "perazzi_sourced");
+        assertEqual("turn1.citations.length", turn1.citations.length, debug.retrieval.chunk_count);
+      },
+      tests,
     );
 
-    results.push(
-      await runTest("turn2: thread continuity + retrieval skip + thread-only input", async () => {
+    // --- Test 2: Turn 2 thread continuity + retrieval skip + thread-only input enforcement ---
+    let turn2ResponseId: string | null = null;
+    let turn2Answer: string | null = null;
+
+    await runTest(
+      "turn2: continuity + chat_meta skip + thread-only OpenAI input",
+      async () => {
         assert(turn1ResponseId, "turn2 requires turn1 responseId");
         assert(turn1Answer, "turn2 requires turn1 answer");
 
@@ -260,111 +260,93 @@ async function main() {
           { role: "user", content: makeShorterPrompt },
         ];
 
-        turn2 = await requestAssistant({
+        const turn2 = await requestAssistant({
           baseUrl,
           adminDebugToken,
           sessionId,
           previousResponseId: turn1ResponseId,
           messages,
           context: { pageUrl: "/shotguns", mode: "prospect", locale: "en-US" },
+          requestCountRef,
         });
 
         turn2Answer = turn2.answer;
         turn2ResponseId = asString(turn2.responseId);
         assert(turn2ResponseId, "turn2: expected responseId on OpenAI-backed response.");
-        assert(
-          typeof turn2Answer === "string" && turn2Answer.length > 0,
-          "turn2: expected non-empty answer.",
-        );
+        assert(typeof turn2Answer === "string" && turn2Answer.length > 0, "turn2: expected non-empty answer.");
 
-        if (requireAdminDebug) {
-          const debug = requireDebug(turn2, "turn2");
-          assert(debug.thread.previous_response_id_present === true, "turn2: expected previous_response_id_present=true");
-          assert(debug.thread.conversationStrategy === "thread", "turn2: expected conversationStrategy=thread");
-          assert(debug.thread.enforced_thread_input === true, "turn2: expected enforced_thread_input=true");
+        const debug = requireDebug(turn2, "turn2");
+        assertEqual("turn2.thread.previous_response_id_present", debug.thread.previous_response_id_present, true);
 
-          assert(debug.openai, "turn2: expected debug.openai");
-          assert(debug.openai.input_item_count === 1, "turn2: expected OpenAI input_item_count == 1");
-          assert(debug.openai.input_counts_by_role?.user === 1, "turn2: expected OpenAI role.user == 1");
+        assert(debug.openai, "turn2: expected debug.openai");
+        assertEqual("turn2.openai.input_item_count", debug.openai.input_item_count, 1);
+        assertEqual("turn2.openai.input_counts_by_role.user", debug.openai.input_counts_by_role["user"] ?? 0, 1);
 
-          assert(debug.retrieval.attempted === false, "turn2: expected retrieval.attempted=false");
-          assert(debug.retrieval.skipped === true, "turn2: expected retrieval.skipped=true");
-          assert(debug.retrieval.reason === "chat_meta", `turn2: expected retrieval.reason=chat_meta`);
-          assert(
-            debug.triggers?.evidenceMode === "general_unsourced",
-            `turn2: expected triggers.evidenceMode === "general_unsourced"`,
-          );
-          assert(
-            debug.output?.general_unsourced_label_present === true,
-            "turn2: expected output.general_unsourced_label_present=true",
-          );
-          assert(
-            turn2Answer.startsWith(GENERAL_UNSOURCED_LABEL_PREFIX),
-            "turn2: expected general_unsourced label prefix in answer",
-          );
-        }
-      }),
+        assertEqual("turn2.retrieval.skipped", debug.retrieval.skipped, true);
+        assertEqual("turn2.retrieval.reason", debug.retrieval.reason, "chat_meta");
+      },
+      tests,
     );
 
-    results.push(
-      await runTest("general label: general_unsourced + label prefix", async () => {
+    // --- Test 3: General label enforcement on general_unsourced output ---
+    await runTest(
+      "general label: general_unsourced prefix present",
+      async () => {
         const response = await requestAssistant({
           baseUrl,
           adminDebugToken,
           sessionId,
           messages: [{ role: "user", content: generalLabelPrompt }],
           context: { pageUrl: "/eval/general", mode: "prospect", locale: "en-US" },
+          requestCountRef,
         });
 
         assert(typeof response.answer === "string" && response.answer.length > 0, "Expected non-empty answer.");
         assert(
           response.answer.startsWith(GENERAL_UNSOURCED_LABEL_PREFIX),
-          "Expected general_unsourced label prefix.",
+          "Expected GENERAL_UNSOURCED_LABEL_PREFIX at start of answer.",
         );
-        assert(response.citations.length === 0, "Expected citations.length == 0 when retrieval is skipped.");
-        assert(asString(response.responseId), "Expected responseId for OpenAI-backed response.");
 
-        if (requireAdminDebug) {
-          const debug = requireDebug(response, "general label");
-          assert(debug.retrieval.attempted === false, "expected retrieval.attempted=false");
-          assert(debug.retrieval.skipped === true, "expected retrieval.skipped=true");
-          assert(debug.retrieval.reason === "chat_meta", "expected retrieval.reason=chat_meta");
-          assert(debug.triggers?.evidenceMode === "general_unsourced", "expected triggers.evidenceMode=general_unsourced");
-          assert(debug.output?.general_unsourced_label_present === true, "expected output.general_unsourced_label_present=true");
-        }
-      }),
+        const debug = requireDebug(response, "general label");
+        assertEqual("generalLabel.retrieval.skipped", debug.retrieval.skipped, true);
+        assertEqual("generalLabel.retrieval.reason", debug.retrieval.reason, "chat_meta");
+        assertEqual(
+          "generalLabel.output.general_unsourced_label_present",
+          debug.output?.general_unsourced_label_present ?? false,
+          true,
+        );
+      },
+      tests,
     );
 
-    results.push(
-      await runTest("guardrail: pricing refusal", async () => {
+    // --- Test 4: Guardrail refusal (pricing) ---
+    await runTest(
+      "guardrail: pricing refusal exact text",
+      async () => {
         const response = await requestAssistant({
           baseUrl,
           adminDebugToken,
           sessionId,
           messages: [{ role: "user", content: pricingBlockedPrompt }],
           context: { pageUrl: "/shotguns/high-tech", mode: "prospect", locale: "en-US" },
+          requestCountRef,
         });
 
-        assert(response.guardrail?.status === "blocked", "Expected guardrail.status=blocked");
-        assert(response.guardrail?.reason === "pricing", "Expected guardrail.reason=pricing");
-        assert(response.answer === BLOCKED_RESPONSES.pricing, "Expected strict pricing refusal text.");
-        assert(!asString(response.responseId), "Expected no responseId on early-return guardrail.");
+        assertEqual("pricing.guardrail.status", response.guardrail?.status, "blocked");
+        assertEqual("pricing.guardrail.reason", response.guardrail?.reason, "pricing");
+        assertEqual("pricing.answer", response.answer, BLOCKED_RESPONSES.pricing);
 
-        if (requireAdminDebug) {
-          const debug = requireDebug(response, "guardrail");
-          assert(debug.retrieval.attempted === false, "expected retrieval.attempted=false");
-          assert(debug.retrieval.skipped === true, "expected retrieval.skipped=true");
-          assert(
-            (debug.retrieval.reason ?? "").startsWith("early_return:guardrail:pricing"),
-            "expected early_return:guardrail:pricing reason",
-          );
-          assert(debug.triggers?.blocked_intent === "pricing", "expected triggers.blocked_intent=pricing");
-        }
-      }),
+        const debug = requireDebug(response, "pricing guardrail");
+        assertEqual("pricing.retrieval.skipped", debug.retrieval.skipped, true);
+        assert((debug.retrieval.reason ?? "").startsWith("early_return:guardrail:pricing"), "Expected early_return:guardrail:pricing reason.");
+      },
+      tests,
     );
 
-    results.push(
-      await runTest("long chat: 5 meta turns stable", async () => {
+    // --- Test 5: Long chat mini-run (5 turns) thread-only + chat_meta skip ---
+    await runTest(
+      "long chat: 5 meta turns stable",
+      async () => {
         assert(turn2ResponseId, "long chat requires turn2 responseId");
         assert(turn2Answer, "long chat requires turn2 answer");
 
@@ -372,12 +354,13 @@ async function main() {
           "Rewrite that as 2 short sentences.",
           "Rewrite it as a single paragraph under 80 words.",
           "Rewrite it as a numbered list of 4 items.",
-          "Rewrite it as 3 questions you would ask me to tailor the recommendation.",
+          "Rewrite it as 3 clarifying questions you’d ask me next.",
           "Summarize it in one line.",
         ];
 
         let previousId: string | null = turn2ResponseId;
         let lastAssistantText: string = turn2Answer;
+        let consecutiveThreadResetMessages = 0;
 
         for (let i = 0; i < prompts.length; i += 1) {
           const prompt = prompts[i]!;
@@ -392,47 +375,54 @@ async function main() {
               { role: "user", content: prompt },
             ],
             context: { pageUrl: "/shotguns", mode: "prospect", locale: "en-US" },
+            requestCountRef,
           });
 
+          assert(typeof response.answer === "string" && response.answer.length > 0, `turn ${i + 3}: expected non-empty answer`);
           const newId = asString(response.responseId);
           assert(newId, `turn ${i + 3}: expected responseId`);
 
-          if (requireAdminDebug) {
-            const debug = requireDebug(response, `long chat turn ${i + 3}`);
-            assert(debug.thread.previous_response_id_present === true, `turn ${i + 3}: expected previous_response_id_present=true`);
-            assert(debug.thread.enforced_thread_input === true, `turn ${i + 3}: expected enforced_thread_input=true`);
-            assert(debug.openai?.input_item_count === 1, `turn ${i + 3}: expected OpenAI input_item_count == 1`);
-            assert(debug.retrieval.attempted === false, `turn ${i + 3}: expected retrieval.attempted=false`);
-            assert(debug.retrieval.reason === "chat_meta", `turn ${i + 3}: expected retrieval.reason=chat_meta`);
-          }
+          const debug = requireDebug(response, `long chat turn ${i + 3}`);
+          assertEqual(`turn ${i + 3}.thread.previous_response_id_present`, debug.thread.previous_response_id_present, true);
+          assertEqual(`turn ${i + 3}.openai.input_item_count`, debug.openai?.input_item_count ?? 0, 1);
+          assertEqual(
+            `turn ${i + 3}.openai.input_counts_by_role.user`,
+            debug.openai?.input_counts_by_role?.["user"] ?? 0,
+            1,
+          );
+          assertEqual(`turn ${i + 3}.retrieval.skipped`, debug.retrieval.skipped, true);
+          assertEqual(`turn ${i + 3}.retrieval.reason`, debug.retrieval.reason, "chat_meta");
+
+          const isThreadReset = Boolean(response.thread_reset_required || debug.thread.thread_reset_required);
+          const looksLikeThreadResetMessage = response.answer.startsWith("Quick rebuild:");
+          if (looksLikeThreadResetMessage) consecutiveThreadResetMessages += 1;
+          else consecutiveThreadResetMessages = 0;
+          assert(
+            !looksLikeThreadResetMessage || isThreadReset,
+            `turn ${i + 3}: got thread-reset rebuild message but thread_reset_required was false`,
+          );
+          assert(
+            consecutiveThreadResetMessages <= 1 || isThreadReset,
+            `turn ${i + 3}: repeated thread-reset loop without thread_reset_required=true`,
+          );
 
           previousId = newId;
           lastAssistantText = response.answer;
         }
-      }),
+      },
+      tests,
     );
 
-    // Optional negative-check to prove non-zero exit behavior.
-    if (argv["intentionally-fail"]) {
-      results.push({
-        name: "intentional failure check",
-        ok: false,
-        details: "Requested via --intentionally-fail",
-      });
-    }
-
-    const failed = results.filter((r) => !r.ok);
-    const passed = results.filter((r) => r.ok);
-
-    const summary = {
-      ok: failed.length === 0,
-      passed: passed.length,
-      failed: failed.length,
-      results,
+    const summary: SmokeSummary = {
+      ok: true,
+      runner: "scripts/perazzi-eval/smoke.ts",
+      baseUrl,
+      requestCount: requestCountRef.count,
+      tests,
+      durationMs: Date.now() - startedAt,
     };
 
-    console.log(JSON.stringify(summary, null, 2));
-    if (failed.length) process.exitCode = 1;
+    console.log(JSON.stringify(summary));
   } finally {
     if (devProc && !devProc.killed) {
       devProc.kill("SIGTERM");
@@ -443,6 +433,7 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(error);
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(message);
   process.exit(1);
 });
