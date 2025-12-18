@@ -74,7 +74,8 @@ export type UseChatStateOptions = {
 };
 
 const DEFAULT_STORAGE_KEY = "perazzi-chat-history";
-const MAX_MESSAGES = 1;
+const MAX_RENDER_MESSAGES = 200;
+const MAX_API_MESSAGES = 20;
 
 class ConciergeRequestError extends Error {
   status?: number;
@@ -99,8 +100,8 @@ export function useChatState(
   const addMessage = useCallback((entry: ChatEntry) => {
     setMessages((prev) => {
       const next = [...prev, entry];
-      if (next.length > MAX_MESSAGES) {
-        return next.slice(next.length - MAX_MESSAGES);
+      if (next.length > MAX_RENDER_MESSAGES) {
+        return next.slice(next.length - MAX_RENDER_MESSAGES);
       }
       return next;
     });
@@ -121,7 +122,7 @@ export function useChatState(
           context?: ChatContextShape;
         };
         if (parsed?.messages?.length) {
-          setMessages(parsed.messages.slice(-MAX_MESSAGES));
+          setMessages(parsed.messages.slice(-MAX_RENDER_MESSAGES));
         }
         if (parsed?.context) {
           setContext((prev) => ({
@@ -188,14 +189,20 @@ export function useChatState(
 
       setContext(effectiveContext);
 
-      const fullHistory = [...messages, userEntry].map(({ role, content }) => ({ role, content }));
+      const fullHistory = [...messages, userEntry]
+        .map(({ role, content }) => ({ role, content }))
+        .slice(-MAX_API_MESSAGES);
+      const apiMessages =
+        effectiveContext.previousResponseId != null && effectiveContext.previousResponseId !== ""
+          ? [{ role: "user" as const, content: payload.question }]
+          : fullHistory;
       const sessionId = getOrCreateSessionId();
 
       const res = await fetch("/api/perazzi-assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: fullHistory,
+          messages: apiMessages,
           context: effectiveContext,
           sessionId,
           previousResponseId: effectiveContext.previousResponseId ?? undefined,
@@ -252,7 +259,7 @@ export function useChatState(
           mode: data.mode ?? prev.mode,
           archetype: nextArchetype,
           archetypeVector: nextArchetypeVector,
-          previousResponseId: data.responseId ?? null,
+          previousResponseId: data.responseId ?? prev.previousResponseId ?? null,
         };
       });
       options.onResponseMeta?.({

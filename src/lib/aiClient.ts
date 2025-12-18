@@ -291,6 +291,7 @@ export async function createResponseText(
   const resolvedPromptCacheRetention = promptCacheRetention ?? prompt_cache_retention;
   const resolvedPromptCacheKey = promptCacheKey ?? prompt_cache_key;
   const resolvedPreviousResponseId = previousResponseId ?? previous_response_id;
+  const openAiStoreEnabled = process.env.PERAZZI_OPENAI_STORE === "true";
   const model = typeof (rest as Record<string, unknown>).model === "string"
     ? (rest as Record<string, string>).model.toLowerCase()
     : "";
@@ -324,6 +325,7 @@ export async function createResponseText(
     ...(allowSamplingParams && top_p !== undefined ? { top_p } : {}),
     ...(allowSamplingParams && logprobs !== undefined ? { logprobs } : {}),
     ...(allowSamplingParams && top_logprobs !== undefined ? { top_logprobs } : {}),
+    ...(openAiStoreEnabled ? { store: true } : {}),
   };
 
   if (isPromptDebugEnabled()) {

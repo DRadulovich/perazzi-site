@@ -867,6 +867,12 @@ function getLatestUserContent(messages: ChatMessage[]): string | null {
   return null;
 }
 
+function buildThreadStrategyInput(messages: ChatMessage[]): ChatMessage[] {
+  const latestUser = getLatestUserContent(messages);
+  if (latestUser === null) return [];
+  return [{ role: "user", content: latestUser }];
+}
+
 async function generateAssistantAnswer(
   sanitizedMessages: ChatMessage[],
   context: PerazziAssistantRequest["context"],
@@ -883,13 +889,20 @@ async function generateAssistantAnswer(
   extraMetadata?: Record<string, unknown> | null,
   previousResponseId?: string | null,
 ): Promise<{ text: string; responseId?: string | null }> {
+  const conversationStrategy = (process.env.PERAZZI_CONVO_STRATEGY ?? "").trim().toLowerCase();
+  const openaiInputMessages =
+    conversationStrategy === "thread"
+      ? buildThreadStrategyInput(sanitizedMessages)
+      : sanitizedMessages;
+  const openAiStoreEnabled = process.env.PERAZZI_OPENAI_STORE === "true";
+
   const systemPrompt = buildSystemPrompt(context, chunks, templates, mode, archetype);
   const toneNudge =
     "Stay in the Perazzi concierge voice: quiet, reverent, concise, no slang, and avoid pricing or legal guidance. Keep responses focused on Perazzi heritage, platforms, service, and fittings.";
   const instructions = [systemPrompt, toneNudge].join("\n\n");
 
   if (DEBUG_PROMPT) {
-    const inputSummary = summarizeInputMessagesForDebug(sanitizedMessages);
+    const inputSummary = summarizeInputMessagesForDebug(openaiInputMessages);
     const retrievedChunkTextChars = chunks.reduce(
       (sum, chunk) => sum + (chunk.content?.length ?? 0),
       0,
@@ -926,7 +939,7 @@ async function generateAssistantAnswer(
         inputItems: inputSummary.items,
         inputCountsByRole: inputSummary.countsByRole,
         previous_response_id_present: Boolean(previousResponseId),
-        store_present: false,
+        store_present: openAiStoreEnabled,
         prompt_cache_retention: PROMPT_CACHE_RETENTION ?? null,
         prompt_cache_key_present: Boolean(PROMPT_CACHE_KEY),
         prompt_cache_key_chars: PROMPT_CACHE_KEY?.length ?? 0,
@@ -993,7 +1006,7 @@ async function generateAssistantAnswer(
       maxOutputTokens: MAX_OUTPUT_TOKENS,
       instructions,
       temperature: ASSISTANT_TEMPERATURE,
-      input: sanitizedMessages as CreateResponseTextParams["input"],
+      input: openaiInputMessages as CreateResponseTextParams["input"],
       reasoningEffort: REASONING_EFFORT,
       text: { verbosity: textVerbosity },
       promptCacheRetention: PROMPT_CACHE_RETENTION,
