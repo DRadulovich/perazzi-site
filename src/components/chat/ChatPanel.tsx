@@ -134,12 +134,27 @@ function DebugRow(props: { label: string; value: unknown }) {
   );
 }
 
-function AdminDebugPanel(props: { debug: PerazziAdminDebugPayload | null }) {
+function AdminDebugPanel(props: {
+  debug: PerazziAdminDebugPayload | null;
+  onClearToken: () => void;
+}) {
   const debug = props.debug;
   const titles = debug?.retrieval?.top_titles ?? [];
 
   return (
     <div className="border-b border-subtle bg-subtle/30 px-6 py-4 text-[11px] sm:text-xs text-ink">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.25em] text-ink-muted">
+          Admin Debug
+        </p>
+        <button
+          type="button"
+          className="rounded-full border border-subtle px-2 py-1 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+          onClick={props.onClearToken}
+        >
+          Clear admin debug token
+        </button>
+      </div>
       {!debug ? (
         <p className="text-ink-muted">
           No debug payload in the last response (server debug disabled or token not authorized).
@@ -639,7 +654,20 @@ export function ChatPanel({
         </div>
       </div>
       {hasAdminDebugToken && adminDebugOpen && (
-        <AdminDebugPanel debug={lastAdminDebug} />
+        <AdminDebugPanel
+          debug={lastAdminDebug}
+          onClearToken={() => {
+            if (!("localStorage" in globalThis)) return;
+            try {
+              globalThis.localStorage.removeItem(ADMIN_DEBUG_TOKEN_STORAGE_KEY);
+            } catch (error) {
+              console.warn("Failed to clear admin debug token", error);
+            } finally {
+              setHasAdminDebugToken(false);
+              setAdminDebugOpen(false);
+            }
+          }}
+        />
       )}
       <div className="flex flex-1 flex-col overflow-hidden">
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-10 text-sm text-ink">
