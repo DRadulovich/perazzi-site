@@ -1237,7 +1237,7 @@ export async function POST(request: Request) {
         replacedWithBlock: result.replacedWithBlock,
         labelInjected: result.labelInjected,
         qualifierInjected: result.qualifierInjected,
-        changed: before !== result.text,
+        changed: result.changed,
       });
     }
 
