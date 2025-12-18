@@ -137,6 +137,7 @@ These documents cover technical and historical information about Perazzi guns an
 | V2-PGPT/V2_PreBuild-Docs/V2_Gun-Info-Docs/V2_RAG_corpus-models-details.json     | gun-info      | model-details       | active   | false             | full        | RAG-ready model descriptions; chunk by platform/model. |
 | V2-PGPT/V2_PreBuild-Docs/V2_Gun-Info-Docs/V2_rib-information.md                 | gun-info      | configuration-guide | active   | false             | full        | Rib types and their intended behaviors. |
 | V2-PGPT/V2_PreBuild-Docs/V2_Gun-Info-Docs/V2_FRONT-END_corpus-models-sanity.json (if present) | gun-info | front-end-config    | planned  | false             | ignore      | Front-end mapping for Sanity/Next; not for RAG by default. |
+| V2-PGPT/V2_PreBuild-Docs/V2_Gun-Info-Docs/gun_order_flow.json                   | gun-info      | build-configurator   | planned | false               | full        | Build configurator flow process |
 
 > If additional gun-info files are added, list them here with appropriate `Doc_Type` and `Embed_Mode`.
 

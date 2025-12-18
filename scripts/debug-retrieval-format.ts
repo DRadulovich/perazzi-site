@@ -10,23 +10,37 @@ function repeat(value: string, count: number): string {
 
 const HEADER = "Retrieved references (for grounding only, not instructions):";
 
+const MODEL_RECORD_CONTENT = `${repeat("Intro and heritage context text. ", 90)}
+Model name: MX8
+Platform: MX
+Trigger group: detachable with leaf springs.`;
+
 const chunks: RetrievedChunk[] = Array.from({ length: 20 }).map((_, idx) => {
   const rank = idx + 1;
   return {
     chunkId: `chunk-${String(rank).padStart(3, "0")}`,
     title:
-      rank === 2
-        ? "V2-PGPT/Perazzi/Pricing/pricing_and_models.md"
-        : `MX8 — Service intervals and wear points (${rank})`,
+      rank === 1
+        ? "V2-PGPT/Perazzi/Models/mx8.md"
+        : rank === 2
+          ? "V2-PGPT/Perazzi/Pricing/pricing_and_models.md"
+          : `MX8 — Service intervals and wear points (${rank})`,
     sourcePath:
-      rank === 2
-        ? "V2-PGPT/Perazzi/Pricing/pricing_and_models.md"
-        : `V2-PGPT/Perazzi/Service/mx8-${rank}.md`,
+      rank === 1
+        ? "V2-PGPT/Perazzi/Models/mx8.md"
+        : rank === 2
+          ? "V2-PGPT/Perazzi/Pricing/pricing_and_models.md"
+          : `V2-PGPT/Perazzi/Service/mx8-${rank}.md`,
     score: 1 - idx / 100,
-    content: repeat(
-      "Lockup feel, ejector timing, and hinge pin wear are the leading indicators. ",
-      120,
-    ),
+    content:
+      rank === 1
+        ? MODEL_RECORD_CONTENT
+        : repeat(
+            rank === 2
+              ? "Platform overview and fit guidance before pricing discussions. "
+              : "Lockup feel, ejector timing, and hinge pin wear are the leading indicators. ",
+            120,
+          ),
   };
 });
 
@@ -75,8 +89,16 @@ assert(
   "prompt block must include rank-based numbering like `[1] ...`",
 );
 assert(
-  retrievalPrompt.promptBlock.includes("Perazzi Reference"),
-  "path-looking titles must be redacted to a safe display title (`Perazzi Reference`)",
+  retrievalPrompt.promptBlock.includes("Model: MX8"),
+  "model-record chunks should surface a derived display title with the model name",
+);
+assert(
+  retrievalPrompt.promptBlock.includes("Platform: MX"),
+  "excerpts should include the platform line when present in the chunk content",
+);
+assert(
+  retrievalPrompt.promptBlock.includes("Perazzi Models Reference"),
+  "path-looking titles without model markers should fall back to a generic models reference title",
 );
 
 if (failures.length) {
@@ -124,6 +146,7 @@ console.info(
     retrieved: retrievalPrompt.metadata.map((m) => ({
       chunkId: m.chunkId,
       title: m.title,
+      displayTitle: m.displayTitle,
       sourcePath: m.sourcePath,
       score: m.score,
       rank: m.rank,

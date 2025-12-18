@@ -93,6 +93,9 @@ export type PerazziAdminDebugPayload = {
     top_titles: string[];
     rerank_enabled: boolean | null;
     rerank_metrics_present: boolean;
+    models_registry_sot_enabled?: boolean;
+    models_registry_sot_applied?: boolean;
+    models_registry_chunk_count?: number;
   };
   usage: PerazziAdminDebugUsage | null;
   flags: {

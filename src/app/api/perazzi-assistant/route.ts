@@ -20,6 +20,10 @@ import {
   isConnectionError,
 } from "@/lib/perazzi-retrieval";
 import {
+  applyModelsRegistrySot,
+  isModelSpecFactQuery,
+} from "@/lib/perazzi-models-registry-policy";
+import {
   buildArchetypeClassification,
   computeArchetypeBreakdown,
   type ArchetypeContext,
@@ -138,6 +142,15 @@ function buildDebugPayload(params: {
     ...(typeof params.openai === "undefined" ? {} : { openai: params.openai }),
     retrieval: {
       ...params.retrieval,
+      models_registry_sot_enabled:
+        typeof params.retrieval.models_registry_sot_enabled === "boolean"
+          ? params.retrieval.models_registry_sot_enabled
+          : false,
+      models_registry_sot_applied:
+        typeof params.retrieval.models_registry_sot_applied === "boolean"
+          ? params.retrieval.models_registry_sot_applied
+          : false,
+      models_registry_chunk_count: params.retrieval.models_registry_chunk_count ?? 0,
       top_titles: topTitles,
     },
     usage: extractAdminDebugUsage(params.usage),
@@ -195,6 +208,11 @@ const allowedOriginHosts = (() => {
   }
   return hosts;
 })();
+
+const MODELS_REGISTRY_SOT_ENABLED = parseEnvBoolWithDefault(
+  process.env.PERAZZI_MODELS_REGISTRY_SOT,
+  IS_DEV,
+);
 
 const DEFAULT_MODEL = "gpt-5.2";
 const OPENAI_MODEL = resolveModel(DEFAULT_MODEL);
@@ -300,6 +318,7 @@ const RETRIEVAL_TOTAL_CHAR_LIMIT = clampEnvInt(
   8000,
   { min: 1000, max: 20000 },
 );
+const SAFE_DISPLAY_TITLES = parseEnvBoolDefaultTrue(process.env.PERAZZI_SAFE_DISPLAY_TITLES);
 const CONVERSATION_LOG_PATH = path.join(
   process.cwd(),
   "tmp",
@@ -667,6 +686,9 @@ export async function POST(request: Request) {
           top_titles: [],
           rerank_enabled: null,
           rerank_metrics_present: false,
+          models_registry_sot_enabled: MODELS_REGISTRY_SOT_ENABLED,
+          models_registry_sot_applied: false,
+          models_registry_chunk_count: 0,
         },
         usage: null,
         flags: {
@@ -1017,6 +1039,8 @@ export async function POST(request: Request) {
       context: retrievalContext,
     };
 
+    const modelSpecFactQuery = isModelSpecFactQuery(latestQuestion);
+
     const retrievalDecision =
       retrievalPolicy === "always"
         ? { retrieve: true, reason: "policy:always" }
@@ -1050,6 +1074,20 @@ export async function POST(request: Request) {
       retrieval = await retrievePerazziContext(retrievalBody, hints);
     }
 
+    const modelsRegistryResult = applyModelsRegistrySot({
+      enabled: MODELS_REGISTRY_SOT_ENABLED,
+      modelSpecFactQuery,
+      retrievalAttempted,
+      chunks: retrieval.chunks,
+    });
+    retrieval = { ...retrieval, chunks: modelsRegistryResult.chunks };
+
+    logModelsRegistrySot({
+      enabled: MODELS_REGISTRY_SOT_ENABLED,
+      modelSpecFactQuery,
+      ...modelsRegistryResult,
+    });
+
     const retrievalChunkCount = retrievalAttempted ? retrieval.chunks.length : 0;
     const { evidenceMode, evidenceReason } = computeEvidenceMode({
       retrievalAttempted,
@@ -1073,6 +1111,10 @@ export async function POST(request: Request) {
       evidenceMode,
       evidenceReason,
       requireGeneralLabel: REQUIRE_GENERAL_LABEL,
+      modelsRegistrySotEnabled: MODELS_REGISTRY_SOT_ENABLED,
+      modelsRegistrySotApplied: modelsRegistryResult.applied,
+      modelsRegistryChunkCount: modelsRegistryResult.registryChunkCount,
+      modelSpecFactQuery,
     };
 
     logEvidenceModeDecision({
@@ -1122,6 +1164,9 @@ export async function POST(request: Request) {
             retrievalAttempted &&
             Array.isArray(rerankMetrics.topReturnedChunks) &&
             rerankMetrics.topReturnedChunks.length > 0,
+          models_registry_sot_enabled: MODELS_REGISTRY_SOT_ENABLED,
+          models_registry_sot_applied: modelsRegistryResult.applied,
+          models_registry_chunk_count: modelsRegistryResult.registryChunkCount,
         },
         usage: null,
         flags: {
@@ -1272,6 +1317,9 @@ export async function POST(request: Request) {
           retrievalAttempted &&
           Array.isArray(rerankMetrics.topReturnedChunks) &&
           rerankMetrics.topReturnedChunks.length > 0,
+        models_registry_sot_enabled: MODELS_REGISTRY_SOT_ENABLED,
+        models_registry_sot_applied: modelsRegistryResult.applied,
+        models_registry_chunk_count: modelsRegistryResult.registryChunkCount,
       },
       usage: assistantUsage,
       flags: {
@@ -1516,10 +1564,16 @@ function buildThreadStrategyInput(messages: ChatMessage[]): ChatMessage[] {
   return [{ role: "user", content: latestUser }];
 }
 
-function parseEnvBoolDefaultTrue(value: string | undefined): boolean {
+function parseEnvBoolWithDefault(value: string | undefined, defaultValue: boolean): boolean {
   const v = (value ?? "").trim().toLowerCase();
-  if (!v) return true;
-  return !(v === "false" || v === "0" || v === "no" || v === "off");
+  if (!v) return defaultValue;
+  if (v === "false" || v === "0" || v === "no" || v === "off") return false;
+  if (v === "true" || v === "1" || v === "yes" || v === "on") return true;
+  return defaultValue;
+}
+
+function parseEnvBoolDefaultTrue(value: string | undefined): boolean {
+  return parseEnvBoolWithDefault(value, true);
 }
 
 function computeEvidenceMode(params: {
@@ -1687,6 +1741,7 @@ async function generateAssistantAnswer(
     metadata.retrievedChunks = retrievalPrompt.metadata.map((meta) => ({
       chunkId: meta.chunkId,
       title: meta.title,
+      displayTitle: meta.displayTitle,
       sourcePath: meta.sourcePath,
       score: meta.score,
       rank: meta.rank,
@@ -1876,6 +1931,13 @@ function normalizeSnippetText(input: string): string {
   return (input ?? "").replaceAll(/\s+/g, " ").trim();
 }
 
+function sanitizeExcerptContent(raw: string | null | undefined): string {
+  if (!raw) return "";
+  const withoutSourceLines = raw.replace(/^\s*source:\s*[^\n\r]+/gim, "");
+  const withoutChunkIds = withoutSourceLines.replace(/chunk-[a-z0-9_-]{3,}/gi, "");
+  return normalizeSnippetText(withoutChunkIds);
+}
+
 function looksLikePath(value: string): boolean {
   const v = (value ?? "").trim();
   if (!v) return false;
@@ -1884,14 +1946,59 @@ function looksLikePath(value: string): boolean {
   return false;
 }
 
-function sanitizeReferenceTitleForPrompt(rawTitle: string | null | undefined): string {
+function sanitizeReferenceTitleForPrompt(
+  rawTitle: string | null | undefined,
+  fallback = "Perazzi Reference",
+): string {
   const title = normalizeSnippetText(String(rawTitle ?? ""));
-  if (!title) return "Perazzi Reference";
-  if (looksLikePath(title)) return "Perazzi Reference";
+  if (!title) return fallback;
+  if (looksLikePath(title)) return fallback;
   // Defensive: prevent accidental leakage if upstream titles ever include IDs or "Source:"-style noise.
-  if (/chunk-[a-z0-9_-]{3,}/i.test(title)) return "Perazzi Reference";
-  if (/\bsource:\b/i.test(title)) return "Perazzi Reference";
+  if (/chunk-[a-z0-9_-]{3,}/i.test(title)) return fallback;
+  if (/\bsource:\b/i.test(title)) return fallback;
   return title;
+}
+
+type ModelMetadata = { modelName: string | null; platform: string | null };
+
+function extractModelMetadata(content: string | null | undefined): ModelMetadata {
+  const cleanLabeledValue = (
+    rawValue: string | null | undefined,
+    options?: { stripPlatformMarker?: boolean },
+  ): string | null => {
+    if (!rawValue) return null;
+    let normalized = normalizeSnippetText(rawValue);
+    if (options?.stripPlatformMarker) {
+      normalized = normalized.replace(/\bplatform:\s*.+$/i, "").trim();
+    }
+    if (!normalized) return null;
+    if (looksLikePath(normalized)) return null;
+    if (/chunk-[a-z0-9_-]{3,}/i.test(normalized)) return null;
+    return normalized;
+  };
+
+  const modelMatch =
+    content?.match(/model\s+name:\s*([^\n\r]+)/i) ??
+    content?.match(/model:\s*([^\n\r]+)/i);
+  const platformMatch = content?.match(/platform:\s*([^\n\r]+)/i);
+
+  const safeContent = sanitizeExcerptContent(content);
+  const inlineModelMatch =
+    safeContent.match(/\bmodel\s+name:\s*([^.;]+)/i) ??
+    safeContent.match(/\bmodel:\s*([^.;]+)/i);
+  const inlinePlatformMatch = safeContent.match(/\bplatform:\s*([^.;]+)/i);
+
+  return {
+    modelName: cleanLabeledValue(modelMatch?.[1] ?? inlineModelMatch?.[1], {
+      stripPlatformMarker: true,
+    }),
+    platform: cleanLabeledValue(platformMatch?.[1] ?? inlinePlatformMatch?.[1]),
+  };
+}
+
+function findModelMarkerIndex(content: string): number | null {
+  const match = content.match(/\b(model\s+name|platform):/i);
+  return typeof match?.index === "number" ? match.index : null;
 }
 
 function trimWithEllipsis(text: string, limit: number): { text: string; wasTrimmed: boolean } {
@@ -1902,9 +2009,49 @@ function trimWithEllipsis(text: string, limit: number): { text: string; wasTrimm
   return { text: `${hardSlice}…`, wasTrimmed: true };
 }
 
+function buildExcerptForPrompt(
+  content: string | null | undefined,
+  limit: number,
+): { text: string; wasTrimmed: boolean } {
+  const clean = sanitizeExcerptContent(content);
+  if (!clean) return { text: "", wasTrimmed: false };
+
+  if (!SAFE_DISPLAY_TITLES) {
+    return trimWithEllipsis(clean, limit);
+  }
+
+  const markerIndex = findModelMarkerIndex(clean);
+  if (markerIndex === null) {
+    return trimWithEllipsis(clean, limit);
+  }
+
+  const start = Math.max(0, markerIndex - Math.floor(limit * 0.25));
+  const prefix = start > 0 ? "…" : "";
+  const effectiveLimit = Math.max(0, limit - prefix.length);
+  const trimmed = trimWithEllipsis(clean.slice(start), effectiveLimit);
+
+  return { text: `${prefix}${trimmed.text}`, wasTrimmed: trimmed.wasTrimmed || start > 0 };
+}
+
+function buildSafeDisplayTitle(chunk: RetrievedChunk): string {
+  if (!SAFE_DISPLAY_TITLES) {
+    return sanitizeReferenceTitleForPrompt(chunk.title);
+  }
+
+  const fallbackTitle = "Perazzi Models Reference";
+  const { modelName, platform } = extractModelMetadata(chunk.content);
+  if (modelName) {
+    const candidate = `Model: ${modelName}${platform ? ` (Platform: ${platform})` : ""}`;
+    return sanitizeReferenceTitleForPrompt(candidate, fallbackTitle);
+  }
+
+  return sanitizeReferenceTitleForPrompt(chunk.title, fallbackTitle);
+}
+
 export type RetrievalPromptChunkMeta = {
   chunkId: string;
   title: string;
+  displayTitle: string;
   sourcePath: string;
   score: number;
   rank: number;
@@ -1928,6 +2075,7 @@ export function buildRetrievedReferencesForPrompt(chunks: RetrievedChunk[]): {
   const metadata: RetrievalPromptChunkMeta[] = chunks.map((chunk, index) => ({
     chunkId: chunk.chunkId,
     title: chunk.title,
+    displayTitle: buildSafeDisplayTitle(chunk),
     sourcePath: chunk.sourcePath,
     score: chunk.score,
     rank: index + 1,
@@ -1942,9 +2090,10 @@ export function buildRetrievedReferencesForPrompt(chunks: RetrievedChunk[]): {
   for (let i = 0; i < chunks.length; i += 1) {
     const chunk = chunks[i]!;
     const rank = i + 1;
-    const displayTitle = sanitizeReferenceTitleForPrompt(chunk.title);
+    const meta = metadata[i]!;
+    const displayTitle = meta.displayTitle;
 
-    const perChunk = trimWithEllipsis(chunk.content ?? "", RETRIEVAL_EXCERPT_CHAR_LIMIT);
+    const perChunk = buildExcerptForPrompt(chunk.content, RETRIEVAL_EXCERPT_CHAR_LIMIT);
     const prefix = `[${rank}] ${displayTitle}${perChunk.text ? " — " : ""}`;
 
     const remaining = RETRIEVAL_TOTAL_CHAR_LIMIT - (assembled.length + 1);
@@ -1967,7 +2116,6 @@ export function buildRetrievedReferencesForPrompt(chunks: RetrievedChunk[]): {
     const line = `${prefix}${excerptText}`;
     assembled = `${assembled}\n${line}`;
 
-    const meta = metadata[i]!;
     meta.includedInPrompt = true;
     meta.excerptChars = excerptText.length;
     meta.wasTrimmed = wasTrimmed;
@@ -2032,6 +2180,32 @@ function logRetrievalDecision(params: {
   }
 }
 
+function logModelsRegistrySot(params: {
+  enabled: boolean;
+  applied: boolean;
+  reason: string;
+  modelSpecFactQuery: boolean;
+  registryChunkCount: number;
+  totalChunkCountBefore: number;
+  totalChunkCountAfter: number;
+}) {
+  const data = {
+    type: "perazzi-models-registry-sot",
+    timestamp: new Date().toISOString(),
+    enabled: params.enabled,
+    applied: params.applied,
+    reason: params.reason,
+    modelSpecFactQuery: params.modelSpecFactQuery,
+    registryChunkCount: params.registryChunkCount,
+    totalChunkCountBefore: params.totalChunkCountBefore,
+    totalChunkCountAfter: params.totalChunkCountAfter,
+  };
+  console.info(JSON.stringify(data));
+  if (ENABLE_FILE_LOG) {
+    appendEvalLog(data);
+  }
+}
+
 function logInteraction(
   body: PerazziAssistantRequest,
   chunks: RetrievedChunk[],
@@ -2078,6 +2252,7 @@ function logInteraction(
     retrieved: retrievalPrompt.metadata.map((meta) => ({
       chunkId: meta.chunkId,
       title: meta.title,
+      displayTitle: meta.displayTitle,
       sourcePath: meta.sourcePath,
       score: meta.score,
       rank: meta.rank,
