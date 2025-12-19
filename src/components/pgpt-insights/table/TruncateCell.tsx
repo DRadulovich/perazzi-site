@@ -25,14 +25,14 @@ export function TruncateCell({
   children,
   className,
   expandLabel = "expand",
-}: TruncateCellProps) {
+}: Readonly<TruncateCellProps>) {
   const preview = truncate(String(text ?? ""), previewChars);
 
   return (
     <details className={cn("group", className)} open={defaultOpen}>
       <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="break-words text-xs leading-snug text-foreground">{summaryContent ?? (preview || "—")}</div>
+          <div className="wrap-break-word text-xs leading-snug text-foreground">{summaryContent ?? (preview || "—")}</div>
         </div>
         <div className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground group-open:hidden">{expandLabel}</div>
       </summary>

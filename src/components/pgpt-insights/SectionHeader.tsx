@@ -2,19 +2,19 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
-type SectionHeaderProps = {
+type SectionHeaderProps = Readonly<{
   title: string;
   description?: string;
   rightMeta?: ReactNode;
   actions?: ReactNode;
   className?: string;
-};
+}>;
 
 export function SectionHeader({ title, description, rightMeta, actions, className }: SectionHeaderProps) {
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 border-b border-border/80 bg-gradient-to-r from-card/90 via-card/80 to-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-6 sm:py-4",
+        "flex flex-col gap-3 border-b border-border/80 bg-linear-to-r from-card/90 via-card/80 to-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-6 sm:py-4",
         className,
       )}
     >

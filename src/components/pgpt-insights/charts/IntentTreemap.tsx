@@ -7,13 +7,13 @@ type IntentDatum = {
   hits: number;
 };
 
-type IntentTreemapProps = {
+type IntentTreemapProps = Readonly<{
   title?: string;
   subtitle?: string;
   data: IntentDatum[];
   density?: "comfortable" | "compact";
   className?: string;
-};
+}>;
 
 function buildTiers(data: IntentDatum[], maxItems: number) {
   const sorted = [...data].sort((a, b) => b.hits - a.hits || a.intent.localeCompare(b.intent));
@@ -50,7 +50,7 @@ export function IntentTreemap({
   }
 
   return (
-    <div className={cn("rounded-2xl border border-border bg-card/80 p-4 shadow-sm", className)}>
+    <div className={cn("rounded-2xl border border-border bg-card/80 p-4 shadow-sm min-w-0", className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <div className="text-sm font-semibold leading-tight text-foreground">{title}</div>
@@ -92,7 +92,7 @@ export function IntentTreemap({
           })}
         </div>
       ) : (
-        <div className={cn("mt-3 grid grid-cols-12 gap-2", baseRow)}>
+        <div className={cn("mt-3 grid grid-cols-12 gap-x-3 gap-y-7 md:gap-x-3.5 md:gap-y-8", baseRow)}>
           {tiers.map((item, idx) => {
             const pct = total > 0 ? item.hits / total : 0;
             const colSpan = Math.min(12, Math.max(3, Math.round(pct * 12) + 1));
@@ -107,7 +107,7 @@ export function IntentTreemap({
                 title={`${item.intent}: ${formatCompactNumber(item.hits)} (${(pct * 100).toFixed(0)}%)`}
               >
                 <div
-                  className="absolute inset-0 bg-gradient-to-br from-blue-500/70 via-blue-500/50 to-blue-500/30"
+                  className="absolute inset-0 bg-linear-to-br from-blue-500/70 via-blue-500/50 to-blue-500/30"
                   style={{ opacity: 0.16 + pct * 0.6, filter: `hue-rotate(${hue}deg)` }}
                   aria-hidden="true"
                 />

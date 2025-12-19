@@ -1,8 +1,8 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Disclosure, Listbox, Transition } from "@headlessui/react";
+import { Disclosure, DisclosureButton, DisclosurePanel, Listbox, ListboxButton, ListboxOption, ListboxOptions, Transition } from "@headlessui/react";
 import { Check, ChevronDown, SlidersHorizontal } from "lucide-react";
 
 import { CANONICAL_ARCHETYPE_ORDER } from "../../lib/pgpt-insights/constants";
@@ -10,9 +10,9 @@ import { cn } from "@/lib/utils";
 
 type Chip = { key: string; label: string; onRemove: () => void };
 type FiltersPanelProps = {
-  defaultDays: number;
-  variant?: "default" | "sidebar";
-  className?: string;
+  readonly defaultDays: number;
+  readonly variant?: "default" | "sidebar";
+  readonly className?: string;
 };
 
 function safeLabel(value: string, max = 36) {
@@ -31,13 +31,13 @@ function FilterSelect({
   buttonClassName,
   fullWidth = false,
 }: {
-  value: string;
-  onChange: (value: string) => void;
-  options: Option[];
-  srLabel?: string;
-  className?: string;
-  buttonClassName?: string;
-  fullWidth?: boolean;
+  readonly value: string;
+  readonly onChange: (value: string) => void;
+  readonly options: Option[];
+  readonly srLabel?: string;
+  readonly className?: string;
+  readonly buttonClassName?: string;
+  readonly fullWidth?: boolean;
 }) {
   const current = options.find((o) => o.value === value);
   const displayLabel = current?.label ?? value;
@@ -46,7 +46,7 @@ function FilterSelect({
   return (
     <Listbox value={value} onChange={onChange}>
       <div className={cn("relative", baseWidth, className)}>
-        <Listbox.Button
+        <ListboxButton
           className={cn(
             "inline-flex h-9 w-full items-center justify-between rounded-md border border-border bg-background px-3 text-sm text-foreground shadow-sm transition",
             "hover:border-border/80 hover:bg-muted/30",
@@ -60,7 +60,7 @@ function FilterSelect({
             <ChevronDown className="h-4 w-4" />
           </span>
           {srLabel ? <span className="sr-only">{srLabel}</span> : null}
-        </Listbox.Button>
+        </ListboxButton>
 
         <Transition
           as={Fragment}
@@ -71,17 +71,12 @@ function FilterSelect({
           enterFrom="opacity-0 -translate-y-1"
           enterTo="opacity-100 translate-y-0"
         >
-          <Listbox.Options className="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-border bg-card text-sm shadow-xl focus:outline-none">
+          <ListboxOptions className="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-border bg-card text-sm shadow-xl focus:outline-none">
             {options.map((option) => (
-              <Listbox.Option
+              <ListboxOption
                 key={option.value}
                 value={option.value}
-                className={({ active }) =>
-                  cn(
-                    "flex cursor-pointer items-center justify-between gap-3 px-3 py-2",
-                    active ? "bg-muted/60 text-foreground" : "text-muted-foreground",
-                  )
-                }
+                className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 data-active:bg-muted/60 data-active:text-foreground text-muted-foreground"
               >
                 {({ selected }) => (
                   <>
@@ -91,9 +86,9 @@ function FilterSelect({
                     {selected ? <Check className="h-4 w-4 text-blue-500" aria-hidden="true" /> : null}
                   </>
                 )}
-              </Listbox.Option>
+              </ListboxOption>
             ))}
-          </Listbox.Options>
+          </ListboxOptions>
         </Transition>
       </div>
     </Listbox>
@@ -108,7 +103,9 @@ export function PgptInsightsFiltersPanel({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const searchParamsKey = searchParams.toString();
 
+  const pendingScrollRef = useRef<number | null>(null);
   const densityKey = "pgptInsights.density";
   const viewKey = "pgptInsights.view";
 
@@ -138,10 +135,24 @@ export function PgptInsightsFiltersPanel({
   const snapped = get("snapped") || "any";
   const marginLt = get("margin_lt") || "any";
 
-  function replaceParams(next: URLSearchParams) {
+  const replaceParams = useCallback((next: URLSearchParams) => {
     const qs = next.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-  }
+    const baseHref = qs ? `${pathname}?${qs}` : pathname;
+    const hash = typeof globalThis === "undefined" ? "" : globalThis.location.hash;
+
+    if (typeof globalThis !== "undefined") {
+      pendingScrollRef.current = globalThis.scrollY;
+    }
+
+    router.replace(`${baseHref}${hash}`, { scroll: false });
+  }, [pathname, router]);
+
+  useEffect(() => {
+    if (pendingScrollRef.current === null) return;
+    const y = pendingScrollRef.current;
+    pendingScrollRef.current = null;
+    requestAnimationFrame(() => window.scrollTo({ top: y }));
+  }, [searchParamsKey]);
 
   function setParam(key: string, value: string) {
     const next = new URLSearchParams(searchParams.toString());
@@ -172,7 +183,7 @@ export function PgptInsightsFiltersPanel({
 
     const v = String(value ?? "").trim();
 
-    if (!v) {
+    if (v === "") {
       next.delete(key);
     } else {
       next.set(key, v);
@@ -183,16 +194,16 @@ export function PgptInsightsFiltersPanel({
     replaceParams(next);
   }
 
-  function removeParam(key: string) {
+  const removeParam = useCallback((key: string) => {
     const next = new URLSearchParams(searchParams.toString());
     next.delete(key);
     next.delete("page");
     replaceParams(next);
-  }
+  }, [searchParams, replaceParams]);
 
   function resetAll() {
-    const storedDensity = typeof window !== "undefined" ? window.localStorage.getItem(densityKey) : null;
-    const storedView = typeof window !== "undefined" ? window.localStorage.getItem(viewKey) : null;
+    const storedDensity = typeof globalThis === "undefined" ? null : globalThis.localStorage.getItem(densityKey);
+    const storedView = typeof globalThis === "undefined" ? null : globalThis.localStorage.getItem(viewKey);
 
     const keepDensity = storedDensity || density || "comfortable";
     const keepView = storedView || view || "full";
@@ -206,40 +217,41 @@ export function PgptInsightsFiltersPanel({
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(densityKey, density);
+      globalThis.localStorage.setItem(densityKey, density);
     } catch {}
   }, [density]);
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(viewKey, view);
+      globalThis.localStorage.setItem(viewKey, view);
     } catch {}
   }, [view]);
 
   const didHydrateRef = useRef(false);
   useEffect(() => {
-    if (didHydrateRef.current) return;
-    didHydrateRef.current = true;
+    if (!didHydrateRef.current) {
+      didHydrateRef.current = true;
 
-    let changed = false;
-    const next = new URLSearchParams(searchParams.toString());
+      let changed = false;
+      const next = new URLSearchParams(searchParams.toString());
 
-    try {
-      const storedDensity = window.localStorage.getItem(densityKey);
-      const storedView = window.localStorage.getItem(viewKey);
+      try {
+        const storedDensity = globalThis.localStorage.getItem(densityKey);
+        const storedView = globalThis.localStorage.getItem(viewKey);
 
-      if (!searchParams.get("density") && storedDensity && storedDensity !== "comfortable") {
-        next.set("density", storedDensity);
-        changed = true;
-      }
+        if (searchParams.get("density") === null && storedDensity && storedDensity !== "comfortable") {
+          next.set("density", storedDensity);
+          changed = true;
+        }
 
-      if (!searchParams.get("view") && storedView && storedView !== "full") {
-        next.set("view", storedView);
-        changed = true;
-      }
-    } catch {}
+        if (searchParams.get("view") === null && storedView && storedView !== "full") {
+          next.set("view", storedView);
+          changed = true;
+        }
+      } catch {}
 
-    if (changed) replaceParams(next);
+      if (changed) replaceParams(next);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -248,7 +260,7 @@ export function PgptInsightsFiltersPanel({
 
   useEffect(() => {
     if (qInput === qUrl) return;
-    const t = window.setTimeout(() => {
+    const t = globalThis.setTimeout(() => {
       setParam("q", qInput.trim());
       if (!qInput.trim()) {
         const next = new URLSearchParams(searchParams.toString());
@@ -258,7 +270,7 @@ export function PgptInsightsFiltersPanel({
       }
     }, 350);
 
-    return () => window.clearTimeout(t);
+    return () => globalThis.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qInput, qUrl]);
 
@@ -268,72 +280,38 @@ export function PgptInsightsFiltersPanel({
   const [modelInput, setModelInput] = useState(modelUrl);
   useEffect(() => setModelInput(modelUrl), [modelUrl]);
 
-  const chips: Chip[] = useMemo(() => {
-    const out: Chip[] = [];
 
-    if (env && env !== "all") out.push({ key: "env", label: `env: ${env}`, onRemove: () => removeParam("env") });
-    if (endpoint && endpoint !== "all")
-      out.push({ key: "endpoint", label: `endpoint: ${endpoint}`, onRemove: () => removeParam("endpoint") });
 
-    if (days === "all") out.push({ key: "days", label: `time: all`, onRemove: () => removeParam("days") });
-    else if (days && days !== String(defaultDays))
-      out.push({ key: "days", label: `last ${days} days`, onRemove: () => removeParam("days") });
+  const buildChips = useCallback(() => {
+        const createChip = (key: string, label: string, condition: boolean) => {
+          if (condition) {
+            return { key, label, onRemove: () => removeParam(key) };
+          }
+          return null;
+        };
+    const chipConfigs = [
+      { key: "env", label: `env: ${env}`, condition: env && env !== "all" },
+      { key: "endpoint", label: `endpoint: ${endpoint}`, condition: endpoint && endpoint !== "all" },
+      { key: "days", label: days === "all" ? `time: all` : `last ${days} days`, condition: days === "all" || (days && days !== String(defaultDays)) },
+      { key: "density", label: `density: ${density}`, condition: density && density !== "comfortable" },
+      { key: "view", label: `view: ${view}`, condition: view && view !== "full" },
+      { key: "q", label: `q: “${safeLabel(qUrl, 28)}”`, condition: !!qUrl },
+      { key: "gr_status", label: `guardrail: ${grStatus}`, condition: grStatus !== "any" },
+      { key: "gr_reason", label: `reason: ${safeLabel(grReasonUrl, 28)}`, condition: !!grReasonUrl },
+      { key: "low_conf", label: `low_conf: ${lowConf}`, condition: lowConf !== "any" },
+      { key: "score", label: `score: ${score}`, condition: score !== "any" },
+      { key: "archetype", label: `archetype: ${archetype}`, condition: archetype !== "any" },
+      { key: "model", label: `model: ${safeLabel(modelUrl, 28)}`, condition: !!modelUrl },
+      { key: "gateway", label: `gateway: ${gateway}`, condition: gateway !== "any" },
+      { key: "qa", label: `qa: ${qa}`, condition: qa !== "any" },
+      { key: "rerank", label: `rerank: ${rerank === "true" ? "on" : "off"}`, condition: rerank !== "any" },
+      { key: "snapped", label: `confidence: ${snapped === "true" ? "snapped" : "mixed"}`, condition: snapped !== "any" },
+      { key: "margin_lt", label: `margin < ${marginLt}`, condition: marginLt !== "any" },
+    ];
 
-    if (density && density !== "comfortable")
-      out.push({ key: "density", label: `density: ${density}`, onRemove: () => removeParam("density") });
-    if (view && view !== "full") out.push({ key: "view", label: `view: ${view}`, onRemove: () => removeParam("view") });
-
-    if (qUrl) out.push({ key: "q", label: `q: “${safeLabel(qUrl, 28)}”`, onRemove: () => removeParam("q") });
-
-    if (grStatus !== "any")
-      out.push({
-        key: "gr_status",
-        label: `guardrail: ${grStatus}`,
-        onRemove: () => removeParam("gr_status"),
-      });
-
-    if (grReasonUrl)
-      out.push({
-        key: "gr_reason",
-        label: `reason: ${safeLabel(grReasonUrl, 28)}`,
-        onRemove: () => removeParam("gr_reason"),
-      });
-
-    if (lowConf !== "any")
-      out.push({ key: "low_conf", label: `low_conf: ${lowConf}`, onRemove: () => removeParam("low_conf") });
-
-    if (score !== "any") out.push({ key: "score", label: `score: ${score}`, onRemove: () => removeParam("score") });
-
-    if (archetype !== "any")
-      out.push({ key: "archetype", label: `archetype: ${archetype}`, onRemove: () => removeParam("archetype") });
-
-    if (modelUrl)
-      out.push({ key: "model", label: `model: ${safeLabel(modelUrl, 28)}`, onRemove: () => removeParam("model") });
-
-    if (gateway !== "any")
-      out.push({ key: "gateway", label: `gateway: ${gateway}`, onRemove: () => removeParam("gateway") });
-
-    if (qa !== "any") out.push({ key: "qa", label: `qa: ${qa}`, onRemove: () => removeParam("qa") });
-
-    if (rerank !== "any")
-      out.push({ key: "rerank", label: `rerank: ${rerank === "true" ? "on" : "off"}`, onRemove: () => removeParam("rerank") });
-
-    if (snapped !== "any")
-      out.push({
-        key: "snapped",
-        label: `confidence: ${snapped === "true" ? "snapped" : "mixed"}`,
-        onRemove: () => removeParam("snapped"),
-      });
-
-    if (marginLt !== "any")
-      out.push({
-        key: "margin_lt",
-        label: `margin < ${marginLt}`,
-        onRemove: () => removeParam("margin_lt"),
-      });
-
-    return out;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return chipConfigs
+      .map(config => createChip(config.key, config.label, Boolean(config.condition)))
+      .filter(Boolean) as Chip[];
   }, [
     env,
     endpoint,
@@ -353,7 +331,10 @@ export function PgptInsightsFiltersPanel({
     snapped,
     marginLt,
     defaultDays,
+    removeParam,
   ]);
+
+  const chips: Chip[] = useMemo(() => buildChips(), [buildChips]);
 
   const isSidebar = variant === "sidebar";
   const headerLayout = cn(
@@ -674,7 +655,7 @@ export function PgptInsightsFiltersPanel({
         <Disclosure defaultOpen>
           {({ open }) => (
             <div className="space-y-3">
-              <Disclosure.Button className="flex w-full items-center justify-between rounded-xl border border-border/80 bg-background/80 px-3 py-3 text-left shadow-sm transition hover:border-border hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+              <DisclosureButton className="flex w-full items-center justify-between rounded-xl border border-border/80 bg-background/80 px-3 py-3 text-left shadow-sm transition hover:border-border hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background">
                 <div className="flex items-center gap-3">
                   <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted/60 text-foreground/80">
                     <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
@@ -690,9 +671,9 @@ export function PgptInsightsFiltersPanel({
                   className={cn("h-4 w-4 text-muted-foreground transition-transform", open ? "rotate-180" : "rotate-0")}
                   aria-hidden="true"
                 />
-              </Disclosure.Button>
+              </DisclosureButton>
 
-              <Disclosure.Panel className="space-y-3">
+              <DisclosurePanel className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-xs text-muted-foreground">Filters apply to analytics and logs.</p>
                   <button
@@ -706,7 +687,7 @@ export function PgptInsightsFiltersPanel({
 
                 {chipsBlock}
                 {controls}
-              </Disclosure.Panel>
+              </DisclosurePanel>
             </div>
           )}
         </Disclosure>
@@ -743,7 +724,7 @@ export function PgptInsightsFiltersPanel({
   );
 }
 
-export function FiltersBar({ defaultDays }: { defaultDays: number }) {
+export function FiltersBar({ defaultDays }: { readonly defaultDays: number }) {
   return (
     <section id="filters" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6">
       <PgptInsightsFiltersPanel defaultDays={defaultDays} />

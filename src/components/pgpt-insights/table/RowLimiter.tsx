@@ -12,7 +12,7 @@ type RowLimiterProps = {
   className?: string;
 };
 
-export function RowLimiter({ children, colSpan, defaultVisible = 10, label = "rows", className }: RowLimiterProps) {
+export function RowLimiter({ children, colSpan, defaultVisible = 10, label = "rows", className }: Readonly<RowLimiterProps>) {
   const [expanded, setExpanded] = useState(false);
 
   const rows = useMemo(() => Children.toArray(children), [children]);
@@ -53,7 +53,7 @@ export function RowLimiter({ children, colSpan, defaultVisible = 10, label = "ro
                 type="button"
                 onClick={() => setExpanded((v) => !v)}
                 aria-expanded={expanded}
-                className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-background px-3 py-1.5 text-[12px] font-medium text-foreground shadow-sm transition hover:-translate-y-[1px] hover:bg-muted/40"
+                className="inline-flex items-center gap-2 rounded-full border border-border/80 bg-background px-3 py-1.5 text-[12px] font-medium text-foreground shadow-sm transition hover:-translate-y-px hover:bg-muted/40"
               >
                 {expanded ? "Show less" : `Show more (${hiddenCount})`}
                 <span className="text-[11px] text-muted-foreground">{expanded ? "Collapse" : "View all"}</span>

@@ -38,9 +38,9 @@ function truncate(text: string, length = 200) {
 
 function oneLine(text: string): string {
   return String(text ?? "")
-    .replace(/\r\n/g, "\n")
-    .replace(/\s*\n\s*/g, " ")
-    .replace(/\s+/g, " ")
+    .replaceAll("\r\n", "\n")
+    .replaceAll(/\s*\n\s*/g, " ")
+    .replaceAll(/\s+/g, " ")
     .trim();
 }
 
@@ -134,15 +134,17 @@ function getFocusable(container: HTMLElement): HTMLElement[] {
   return Array.from(container.querySelectorAll(selectors)).filter((el): el is HTMLElement => el instanceof HTMLElement);
 }
 
+type LogsTableWithDrawerProps = Readonly<{
+  logs: ReadonlyArray<PerazziLogPreviewRow>;
+  tableDensityClass: string;
+  truncPrimary: number;
+}>;
+
 export function LogsTableWithDrawer({
   logs,
   tableDensityClass,
   truncPrimary,
-}: {
-  logs: PerazziLogPreviewRow[];
-  tableDensityClass: string;
-  truncPrimary: number;
-}) {
+}: LogsTableWithDrawerProps) {
   const cacheRef = useRef(new Map<string, PgptLogDetailResponse>());
 
   const [open, setOpen] = useState(false);
@@ -154,7 +156,7 @@ export function LogsTableWithDrawer({
   const [error, setError] = useState<string | null>(null);
   const [detail, setDetail] = useState<PgptLogDetailResponse | null>(null);
 
-  const drawerRef = useRef<HTMLDivElement | null>(null);
+  const drawerRef = useRef<HTMLDialogElement | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
   const lastFocusRef = useRef<HTMLElement | null>(null);
 
@@ -167,9 +169,9 @@ export function LogsTableWithDrawer({
 
   const qaReturnTo = useMemo(() => {
     if (!open) return "";
-    if (typeof window === "undefined") return "";
+    if (typeof globalThis.window === "undefined") return "";
     try {
-      const base = window.location.href.split("#")[0];
+      const base = globalThis.window.location.href.split("#")[0];
       return `${base}#logs`;
     } catch {
       return "";
@@ -190,6 +192,13 @@ export function LogsTableWithDrawer({
       responseTextTruncated: detail.log.response_text_truncated,
     });
   }, [detail, fallbackMetadata]);
+
+  let interactionSummary = "";
+  if (detail?.log) {
+    interactionSummary = `${formatTimestampShort(detail.log.created_at)} · ${detail.log.env} · ${detail.log.endpoint}`;
+  } else if (selectedPreview) {
+    interactionSummary = `${formatTimestampShort(selectedPreview.created_at)} · ${selectedPreview.env} · ${selectedPreview.endpoint}`;
+  }
 
   function closeDrawer() {
     setOpen(false);
@@ -218,12 +227,15 @@ export function LogsTableWithDrawer({
 
     lastFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
-    const t = window.setTimeout(() => {
+    const win = typeof globalThis.window === "undefined" ? null : globalThis.window;
+    if (!win) return;
+
+    const t = win.setTimeout(() => {
       closeBtnRef.current?.focus();
     }, 0);
 
     return () => {
-      window.clearTimeout(t);
+      win.clearTimeout(t);
       lastFocusRef.current?.focus?.();
     };
   }, [open]);
@@ -231,11 +243,14 @@ export function LogsTableWithDrawer({
   // Escape to close (global)
   useEffect(() => {
     if (!open) return;
+    const win = typeof globalThis.window === "undefined" ? null : globalThis.window;
+    if (!win) return;
+
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") closeDrawer();
     };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    win.addEventListener("keydown", onKeyDown);
+    return () => win.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
   // Focus trap (inside drawer)
@@ -250,8 +265,9 @@ export function LogsTableWithDrawer({
       const focusables = getFocusable(el);
       if (focusables.length === 0) return;
 
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
+      const first = focusables.at(0);
+      const last = focusables.at(-1);
+      if (!first || !last) return;
       const active = document.activeElement;
 
       if (!e.shiftKey && active === last) {
@@ -380,7 +396,6 @@ export function LogsTableWithDrawer({
               key={log.id}
               className={rowClassName}
               tabIndex={0}
-              role="button"
               aria-label="Open interaction inspector"
               onClick={(e) => {
                 const target = e.target as HTMLElement | null;
@@ -394,7 +409,7 @@ export function LogsTableWithDrawer({
                 }
               }}
             >
-              <td className="whitespace-normal break-words leading-snug">
+              <td className="whitespace-normal wrap-break-word leading-snug">
                 <span title={String(log.created_at)} className="tabular-nums">
                   {formatTimestampShort(String(log.created_at))}
                 </span>
@@ -424,9 +439,7 @@ export function LogsTableWithDrawer({
                     <div className="flex items-start justify-between gap-2 text-xs text-muted-foreground">
                       <span>
                         <span className="font-medium text-foreground">P:</span>{" "}
-                        <span
-                          className={cn("break-words", promptStatus.isOmitted ? "text-muted-foreground" : undefined)}
-                        >
+                        <span className={cn("wrap-break-word", promptStatus.isOmitted ? "text-muted-foreground" : undefined)}>
                           {promptStatus.isOmitted ? "[omitted]" : promptPreview}
                         </span>
                       </span>
@@ -436,9 +449,7 @@ export function LogsTableWithDrawer({
                     </div>
                     <div className="text-xs text-muted-foreground">
                       <span className="font-medium text-foreground">A:</span>{" "}
-                      <span
-                        className={cn("break-words", responseStatus.isOmitted ? "text-muted-foreground" : undefined)}
-                      >
+                      <span className={cn("wrap-break-word", responseStatus.isOmitted ? "text-muted-foreground" : undefined)}>
                         {responseStatus.isOmitted ? "[omitted]" : responsePreview}
                       </span>
                     </div>
@@ -535,9 +546,9 @@ export function LogsTableWithDrawer({
         <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/50" onClick={closeDrawer} aria-hidden="true" />
 
-          <div
+          <dialog
             ref={drawerRef}
-            role="dialog"
+            open
             aria-modal="true"
             aria-labelledby="pgpt-drawer-title"
             className="absolute inset-y-0 right-0 flex w-full max-w-[760px] flex-col border-l border-border bg-card shadow-2xl"
@@ -550,11 +561,7 @@ export function LogsTableWithDrawer({
                   {detail?.log?.session_id ? detail.log.session_id : selectedId}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {detail?.log
-                    ? `${formatTimestampShort(detail.log.created_at)} · ${detail.log.env} · ${detail.log.endpoint}`
-                    : selectedPreview
-                      ? `${formatTimestampShort(selectedPreview.created_at)} · ${selectedPreview.env} · ${selectedPreview.endpoint}`
-                      : ""}
+                  {interactionSummary}
                 </div>
               </div>
 
@@ -725,9 +732,11 @@ export function LogsTableWithDrawer({
                             const chunkId = typeof chunkIdRaw === "string" || typeof chunkIdRaw === "number" ? chunkIdRaw : null;
                             const scoreRaw = (chunk.score ?? chunk.similarity ?? chunk.maxScore) as string | number | undefined;
                             const score = typeof scoreRaw === "string" || typeof scoreRaw === "number" ? scoreRaw : null;
+                            const chunkKey =
+                              chunkId !== null ? String(chunkId) : JSON.stringify(chunk) ?? `chunk-${String(score ?? "unknown")}`;
 
                             return (
-                              <div key={`chunk-${idx}`} className="rounded-xl border border-border bg-background p-4">
+                              <div key={chunkKey} className="rounded-xl border border-border bg-background p-4">
                                 <div className="flex items-start justify-between gap-3">
                                   <div className="space-y-1">
                                     <div className="text-xs font-semibold text-foreground">
@@ -802,7 +811,7 @@ export function LogsTableWithDrawer({
                                 aria-label="Resolution notes"
                                 placeholder="resolution notes…"
                                 maxLength={200}
-                                className="h-9 w-[320px] max-w-full rounded-md border bg-background px-3 text-xs"
+                                className="h-9 w-80 max-w-full rounded-md border bg-background px-3 text-xs"
                               />
 
                               <button
@@ -835,7 +844,7 @@ export function LogsTableWithDrawer({
                                 aria-label="QA notes"
                                 placeholder="notes…"
                                 maxLength={200}
-                                className="h-9 w-[320px] max-w-full rounded-md border bg-background px-3 text-xs"
+                                className="h-9 w-80 max-w-full rounded-md border bg-background px-3 text-xs"
                               />
 
                               <button
@@ -881,7 +890,7 @@ export function LogsTableWithDrawer({
                 </>
               ) : null}
             </div>
-          </div>
+          </dialog>
         </div>
       ) : null}
     </>

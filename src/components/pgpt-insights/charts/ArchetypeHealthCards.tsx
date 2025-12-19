@@ -11,11 +11,11 @@ type ArchetypeHealth = {
   total: number;
 };
 
-type ArchetypeHealthCardsProps = {
+type ArchetypeHealthCardsProps = Readonly<{
   data: ArchetypeHealth[];
   density?: "comfortable" | "compact";
   className?: string;
-};
+}>;
 
 function toneForRate(value: number | null) {
   if (value === null || Number.isNaN(value)) return "default";
@@ -40,7 +40,7 @@ export function ArchetypeHealthCards({ data, density = "comfortable", className 
   }
 
   return (
-    <div className={cn("rounded-2xl border border-border bg-card/80 p-4 shadow-sm", className)}>
+    <div className={cn("rounded-2xl border border-border bg-card/80 p-4 shadow-sm min-w-0", className)}>
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <div className="text-sm font-semibold leading-tight text-foreground">Archetype health</div>
@@ -84,7 +84,7 @@ export function ArchetypeHealthCards({ data, density = "comfortable", className 
 
               <div className={cn("relative overflow-hidden rounded-full bg-muted/40", barHeight)} title="Volume vs peers">
                 <div
-                  className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-blue-500/70 to-blue-500/40"
+                  className="absolute inset-y-0 left-0 rounded-full bg-linear-to-r from-blue-500/70 to-blue-500/40"
                   style={{ width: `${(pct * 100).toFixed(1)}%` }}
                   aria-hidden="true"
                 />

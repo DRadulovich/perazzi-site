@@ -5,7 +5,7 @@ import { LOW_SCORE_THRESHOLD } from "@/lib/pgpt-insights/constants";
 
 type Link = { href: string; label: string };
 
-function SectionLinks({ links }: { links: Link[] }) {
+function SectionLinks({ links }: Readonly<{ links: Link[] }>) {
   return (
     <div className="mt-3 flex flex-col gap-1 text-sm">
       {links.map((link) => (
@@ -27,10 +27,10 @@ function SectionLinks({ links }: { links: Link[] }) {
 export function InsightsOnPageRail({
   isTriageView,
   density,
-}: {
+}: Readonly<{
   isTriageView: boolean;
   density: string;
-}) {
+}>) {
   const links: Link[] = isTriageView
     ? [
         { href: "#overview", label: "Overview" },

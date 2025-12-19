@@ -1,13 +1,13 @@
 type SparklineProps = {
-  values: Array<number | null | undefined>;
-  width?: number;
-  height?: number;
-  strokeWidth?: number;
-  className?: string;
-  title?: string;
+  readonly values: ReadonlyArray<number | null | undefined>;
+  readonly width?: number;
+  readonly height?: number;
+  readonly strokeWidth?: number;
+  readonly className?: string;
+  readonly title?: string;
 };
 
-function buildPath(values: Array<number | null | undefined>, width: number, height: number): string {
+function buildPath(values: ReadonlyArray<number | null | undefined>, width: number, height: number): string {
   const finite = values.map((v) => (typeof v === "number" && Number.isFinite(v) ? v : null));
   const valid = finite.filter((v): v is number => v !== null);
 
@@ -34,11 +34,11 @@ function buildPath(values: Array<number | null | undefined>, width: number, heig
     const t = (v - min) / range;
     const y = height - t * height;
 
-    if (!penDown) {
+    if (penDown) {
+      d += `L ${x.toFixed(2)} ${y.toFixed(2)} `;
+    } else {
       d += `M ${x.toFixed(2)} ${y.toFixed(2)} `;
       penDown = true;
-    } else {
-      d += `L ${x.toFixed(2)} ${y.toFixed(2)} `;
     }
   }
 
@@ -52,12 +52,11 @@ export function Sparkline({
   strokeWidth = 2,
   className,
   title,
-}: SparklineProps) {
+}: Readonly<SparklineProps>) {
   const d = buildPath(values, width, height);
 
   return (
     <svg
-      role="img"
       aria-label={title ?? "sparkline"}
       width={width}
       height={height}

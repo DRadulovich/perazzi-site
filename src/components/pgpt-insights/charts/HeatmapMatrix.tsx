@@ -54,7 +54,7 @@ export function HeatmapMatrix({
   rows,
   density = "comfortable",
   className,
-}: HeatmapMatrixProps) {
+}: Readonly<HeatmapMatrixProps>) {
   const [hover, setHover] = useState<HoverState | null>(null);
 
   const columnLabels = useMemo(() => new Map(columns.map((c) => [c.key, c.label])), [columns]);
@@ -68,7 +68,8 @@ export function HeatmapMatrix({
     return values.length ? Math.max(...values, 1) : 1;
   }, [rows]);
 
-  const colWidth = density === "compact" ? "minmax(84px,1fr)" : "minmax(104px,1fr)";
+  const colMin = density === "compact" ? 72 : 88;
+  const rowLabelMin = density === "compact" ? 110 : 128;
   const rowHeight = density === "compact" ? "h-[52px]" : "h-[68px]";
   const labelClass = density === "compact" ? "text-[11px]" : "text-xs";
 
@@ -95,9 +96,9 @@ export function HeatmapMatrix({
   }
 
   const tooltipStyle =
-    hover && typeof window !== "undefined"
+    hover && globalThis.window !== undefined
       ? {
-          left: `${Math.min(window.innerWidth - 220, hover.clientX + 12)}px`,
+          left: `${Math.min(globalThis.window.innerWidth - 220, hover.clientX + 12)}px`,
           top: `${hover.clientY + 14}px`,
         }
       : undefined;
@@ -118,15 +119,11 @@ export function HeatmapMatrix({
         ) : null}
       </div>
 
-      {!hasData ? (
-        <div className="mt-6 rounded-xl border border-dashed border-border/70 bg-muted/30 px-4 py-6 text-xs text-muted-foreground">
-          No archetype/intent data for the current filters.
-        </div>
-      ) : (
+      {hasData ? (
         <div className={cn("mt-3 overflow-x-auto", density === "compact" ? "-mx-2 px-2" : "-mx-1 px-1")}>
           <div
-            className={cn("grid items-stretch gap-px text-[12px] text-foreground", labelClass)}
-            style={{ gridTemplateColumns: `160px repeat(${columns.length}, ${colWidth})` }}
+            className={cn("grid min-w-full items-stretch gap-px text-[12px] text-foreground", labelClass)}
+            style={{ gridTemplateColumns: `minmax(${rowLabelMin}px,1fr) repeat(${columns.length}, minmax(${colMin}px,1fr))` }}
           >
             <div className="h-10 border-b border-border/60 pr-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
               Archetype
@@ -177,7 +174,7 @@ export function HeatmapMatrix({
                       title={`${row.archetype} · ${columnLabels.get(col.key) ?? col.key}: ${hits} (${label})`}
                     >
                       <div
-                        className="absolute inset-0 bg-gradient-to-br from-blue-500/60 to-blue-500/40"
+                        className="absolute inset-0 bg-linear-to-br from-blue-500/60 to-blue-500/40"
                         style={{
                           backgroundColor: colorFor(hits, maxCellValue),
                           opacity: hits === 0 ? 0.08 : Math.min(0.88, (hits / maxCellValue) * 0.9),
@@ -198,6 +195,10 @@ export function HeatmapMatrix({
               </div>
             ))}
           </div>
+        </div>
+      ) : (
+        <div className="mt-6 rounded-xl border border-dashed border-border/70 bg-muted/30 px-4 py-6 text-xs text-muted-foreground">
+          No archetype/intent data for the current filters.
         </div>
       )}
 

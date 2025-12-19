@@ -76,7 +76,7 @@ function buildHeatmapDataset(stats: HeatmapRow[], maxColumns: number): HeatmapDa
     });
   }
 
-  const canonicalList = Array.from(CANONICAL_ARCHETYPE_ORDER);
+  const canonicalList: string[] = Array.from(CANONICAL_ARCHETYPE_ORDER);
   const extras = [...archetypeTotals.keys()].filter((a) => !canonicalList.includes(a));
   extras.sort((a, b) => {
     const diff = (archetypeTotals.get(b) ?? 0) - (archetypeTotals.get(a) ?? 0);
@@ -110,12 +110,12 @@ export async function ArchetypesSection({
   daysFilter,
   tableDensityClass,
   density = "comfortable",
-}: {
+}: Readonly<{
   envFilter?: string;
   daysFilter?: number;
   tableDensityClass: string;
   density?: "comfortable" | "compact";
-}) {
+}>) {
   try {
     const [archetypeIntentStats, archetypeSummaries] = await Promise.all([
       getArchetypeIntentStats(envFilter, daysFilter),
@@ -185,37 +185,36 @@ export async function ArchetypesSection({
         defaultOpen
         contentClassName="space-y-5 sm:space-y-6"
       >
-        {!hasAnyChartData ? (
-          <p className="text-xs text-muted-foreground">No archetype/intent data for the current filters.</p>
-        ) : (
+        {hasAnyChartData ? (
           <>
-            <div className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
-              <HeatmapMatrix
-                title="Archetype × intent heatmap"
-                subtitle={
-                  heatmapDataset.omittedIntentCount > 0
-                    ? `Top ${heatmapDataset.columns.length - 1} intents · ${heatmapDataset.omittedIntentCount} grouped into Other`
-                    : `Top ${heatmapDataset.columns.length} intents by hits`
-                }
-                columns={heatmapDataset.columns}
-                rows={heatmapDataset.rows}
-                density={densityMode}
-              />
+            <HeatmapMatrix
+              title="Archetype × intent heatmap"
+              subtitle={
+                heatmapDataset.omittedIntentCount > 0
+                  ? `Top ${heatmapDataset.columns.length - 1} intents · ${heatmapDataset.omittedIntentCount} grouped into Other`
+                  : `Top ${heatmapDataset.columns.length} intents by hits`
+              }
+              columns={heatmapDataset.columns}
+              rows={heatmapDataset.rows}
+              density={densityMode}
+              className="min-w-0"
+            />
 
-              <div className="grid gap-4">
-                <ArchetypeBars data={archetypeVolume} density={densityMode} />
-                <IntentTreemap data={intentDistribution} density={densityMode} />
-              </div>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <ArchetypeBars data={archetypeVolume} density={densityMode} className="min-w-0" />
+              <IntentTreemap data={intentDistribution} density={densityMode} className="min-w-0" />
             </div>
 
             <ArchetypeHealthCards data={healthCardsData} density={densityMode} />
           </>
+        ) : (
+          <p className="text-xs text-muted-foreground">No archetype/intent data for the current filters.</p>
         )}
 
         <details className="group rounded-xl border border-border/70 bg-card/80" open={false}>
           <summary className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-foreground">
             <span className="flex items-center gap-2">
-              Details
+              <span>Details</span>
               <span className="text-[11px] font-normal text-muted-foreground">Raw tables for auditability</span>
             </span>
             <Chevron />
@@ -249,7 +248,7 @@ export async function ArchetypesSection({
                       {orderedArchetypeIntentStats.map((row, idx) => (
                         <tr key={`${row.archetype ?? "unknown"}-${row.intent ?? "none"}-${idx}`}>
                           <td>{normalizeArchetypeLabel(row.archetype)}</td>
-                          <td className="break-words">{normalizeIntentLabel(row.intent)}</td>
+                          <td className="wrap-break-word">{normalizeIntentLabel(row.intent)}</td>
                           <td>
                             <MiniBar value={row.hits} max={maxHits} />
                           </td>
@@ -274,7 +273,7 @@ export async function ArchetypesSection({
                     colgroup={
                       <colgroup>
                         <col className="w-[220px]" />
-                        <col className="w-[160px]" />
+                        <col className="w-40" />
                         <col className="w-[220px]" />
                         <col className="w-[220px]" />
                         <col className="w-[140px]" />

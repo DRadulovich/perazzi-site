@@ -1,13 +1,22 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useEffect, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Listbox, Transition } from "@headlessui/react";
+import { Listbox, ListboxButton, ListboxOption, ListboxOptions, Transition } from "@headlessui/react";
 import { Check, ChevronDown } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-type Option = { value: string; label: string };
+type Option = Readonly<{ value: string; label: string }>;
+
+type FilterSelectProps = Readonly<{
+  value: string;
+  onChange: (value: string) => void;
+  options: Option[];
+  srLabel?: string;
+  className?: string;
+  id?: string;
+}>;
 
 function FilterSelect({
   value,
@@ -15,22 +24,20 @@ function FilterSelect({
   options,
   srLabel,
   className,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  options: Option[];
-  srLabel?: string;
-  className?: string;
-}) {
+  id,
+}: FilterSelectProps) {
   const current = options.find((o) => o.value === value);
   return (
     <Listbox value={value} onChange={onChange}>
       <div className={cn("relative w-full min-w-[140px]", className)}>
-        <Listbox.Button className="flex h-9 w-full items-center justify-between rounded-md border border-border bg-background px-3 text-sm text-foreground shadow-sm transition hover:border-border/80 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+        <ListboxButton
+          id={id}
+          className="flex h-9 w-full items-center justify-between rounded-md border border-border bg-background px-3 text-sm text-foreground shadow-sm transition hover:border-border/80 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
           <span className="truncate">{current?.label ?? value}</span>
           <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           {srLabel ? <span className="sr-only">{srLabel}</span> : null}
-        </Listbox.Button>
+        </ListboxButton>
 
         <Transition
           as={Fragment}
@@ -41,15 +48,15 @@ function FilterSelect({
           enterFrom="opacity-0 -translate-y-1"
           enterTo="opacity-100 translate-y-0"
         >
-          <Listbox.Options className="absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-border bg-card text-sm shadow-xl focus:outline-none">
+          <ListboxOptions className="absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-border bg-card text-sm shadow-xl focus:outline-none">
             {options.map((option) => (
-              <Listbox.Option
+              <ListboxOption
                 key={option.value}
                 value={option.value}
-                className={({ active }) =>
+                className={({ focus }) =>
                   cn(
                     "flex cursor-pointer items-center justify-between gap-3 px-3 py-2",
-                    active ? "bg-muted/60 text-foreground" : "text-muted-foreground",
+                    focus ? "bg-muted/60 text-foreground" : "text-muted-foreground",
                   )
                 }
               >
@@ -59,19 +66,26 @@ function FilterSelect({
                     {selected ? <Check className="h-4 w-4 text-blue-500" aria-hidden="true" /> : null}
                   </>
                 )}
-              </Listbox.Option>
+              </ListboxOption>
             ))}
-          </Listbox.Options>
+          </ListboxOptions>
         </Transition>
       </div>
     </Listbox>
   );
 }
 
+function getBrowserWindow(): (Window & typeof globalThis) | null {
+  return globalThis.window ?? null;
+}
+
 export function ArchetypeFiltersBar() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const searchParamsKey = searchParams.toString();
+
+  const pendingScrollRef = useRef<number | null>(null);
 
   const get = (k: string) => searchParams.get(k) ?? "";
 
@@ -82,16 +96,33 @@ export function ArchetypeFiltersBar() {
 
   function replaceParams(next: URLSearchParams) {
     const qs = next.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    const baseHref = qs ? `${pathname}?${qs}` : pathname;
+    const browserWindow = getBrowserWindow();
+    const hash = browserWindow ? browserWindow.location.hash : "";
+
+    if (browserWindow) {
+      pendingScrollRef.current = browserWindow.scrollY;
+    }
+
+    router.replace(`${baseHref}${hash}`, { scroll: false });
   }
+
+  useEffect(() => {
+    if (pendingScrollRef.current === null) return;
+    const browserWindow = getBrowserWindow();
+    if (browserWindow === null) return;
+    const y = pendingScrollRef.current;
+    pendingScrollRef.current = null;
+    browserWindow.requestAnimationFrame(() => browserWindow.scrollTo({ top: y }));
+  }, [searchParamsKey]);
 
   function setParam(key: string, value: string) {
     const next = new URLSearchParams(searchParams.toString());
     const v = String(value ?? "").trim();
 
     const anyKeys = new Set(["winner_changed", "margin_lt", "score_archetype"]);
-    if (!v) next.delete(key);
-    else next.set(key, v);
+    if (v) next.set(key, v);
+    else next.delete(key);
 
     if (anyKeys.has(key) && v === "any") next.delete(key);
     if (key === "score_archetype" && v === "any") next.delete("min");
@@ -113,6 +144,7 @@ export function ArchetypeFiltersBar() {
           <FilterSelect
             value={winnerChanged}
             onChange={(v) => setParam("winner_changed", v)}
+            id="pgpt-winner-changed"
             options={[
               { value: "any", label: "any" },
               { value: "true", label: "true" },
@@ -126,6 +158,7 @@ export function ArchetypeFiltersBar() {
           <FilterSelect
             value={marginLt}
             onChange={(v) => setParam("margin_lt", v)}
+            id="pgpt-margin-lt"
             options={[
               { value: "any", label: "any" },
               { value: "0.08", label: "0.08" },
@@ -144,6 +177,7 @@ export function ArchetypeFiltersBar() {
               setParam("score_archetype", v);
               if (v === "any") setParam("min", "");
             }}
+            id="pgpt-score-archetype"
             options={[
               { value: "any", label: "any" },
               { value: "Loyalist", label: "Loyalist" },
@@ -156,12 +190,13 @@ export function ArchetypeFiltersBar() {
           />
         </div>
 
-        {scoreArchetype !== "any" ? (
+        {scoreArchetype === "any" ? null : (
           <div className="space-y-1 text-sm">
             <span className="block text-xs text-muted-foreground">≥ min</span>
             <FilterSelect
               value={min}
               onChange={(v) => setParam("min", v)}
+              id="pgpt-score-min"
               options={[
                 { value: "0.20", label: "0.20" },
                 { value: "0.30", label: "0.30" },
@@ -172,7 +207,7 @@ export function ArchetypeFiltersBar() {
               srLabel="Minimum archetype score"
             />
           </div>
-        ) : null}
+        )}
       </div>
     </section>
   );
