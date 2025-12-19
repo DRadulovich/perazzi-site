@@ -4,15 +4,25 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { CANONICAL_ARCHETYPE_ORDER } from "../../lib/pgpt-insights/constants";
+import { cn } from "@/lib/utils";
 
 type Chip = { key: string; label: string; onRemove: () => void };
+type FiltersPanelProps = {
+  defaultDays: number;
+  variant?: "default" | "sidebar";
+  className?: string;
+};
 
 function safeLabel(value: string, max = 36) {
   const s = String(value ?? "");
   return s.length > max ? `${s.slice(0, max)}…` : s;
 }
 
-export function FiltersBar({ defaultDays }: { defaultDays: number }) {
+export function PgptInsightsFiltersPanel({
+  defaultDays,
+  variant = "default",
+  className,
+}: FiltersPanelProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -263,9 +273,21 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
     defaultDays,
   ]);
 
+  const isSidebar = variant === "sidebar";
+  const headerLayout = cn(
+    "flex flex-col gap-2",
+    isSidebar ? "sm:items-start" : "sm:flex-row sm:items-start sm:justify-between",
+  );
+  const primaryControls = isSidebar
+    ? "grid grid-cols-1 gap-3"
+    : "flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end";
+  const advancedControls = isSidebar
+    ? "mt-3 grid grid-cols-1 gap-3"
+    : "mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end";
+
   return (
-    <section id="filters" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6 space-y-3">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+    <div className={cn("space-y-3", className)}>
+      <div className={headerLayout}>
         <div className="space-y-1">
           <h2 className="text-sm font-semibold tracking-wide text-foreground">Filters</h2>
           <p className="text-xs text-muted-foreground">
@@ -276,7 +298,10 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
         <button
           type="button"
           onClick={resetAll}
-          className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-3 text-xs text-muted-foreground hover:bg-muted/20 hover:text-foreground"
+          className={cn(
+            "inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-3 text-xs text-muted-foreground hover:bg-muted/20 hover:text-foreground",
+            isSidebar && "w-full sm:w-auto",
+          )}
         >
           Reset
         </button>
@@ -301,7 +326,7 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
         <div className="text-xs text-muted-foreground">No active filters.</div>
       )}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+      <div className={primaryControls}>
         <label className="text-sm">
           Env:
           <select
@@ -384,7 +409,7 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
           <span className="ml-2 text-muted-foreground">guardrails · QA · score · model/archetype</span>
         </summary>
 
-        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+        <div className={advancedControls}>
           <label className="text-sm">
             Guardrail status:
             <select
@@ -545,6 +570,14 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
           </label>
         </div>
       </details>
+    </div>
+  );
+}
+
+export function FiltersBar({ defaultDays }: { defaultDays: number }) {
+  return (
+    <section id="filters" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6">
+      <PgptInsightsFiltersPanel defaultDays={defaultDays} />
     </section>
   );
 }

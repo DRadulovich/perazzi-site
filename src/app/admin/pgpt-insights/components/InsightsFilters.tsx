@@ -1,11 +1,14 @@
 import { ArchetypeFiltersBar } from "@/components/pgpt-insights/archetype/ArchetypeFiltersBar";
-import { FiltersBar } from "@/components/pgpt-insights/FiltersBar";
+import { PgptInsightsFiltersPanel } from "@/components/pgpt-insights/FiltersBar";
 
-export function InsightsFilters({ defaultDays }: { defaultDays: number }) {
+export function InsightsFilters() {
+  return <ArchetypeFiltersBar />;
+}
+
+export function InsightsSidebarFilters({ defaultDays }: { defaultDays: number }) {
   return (
-    <div className="space-y-4">
-      <FiltersBar defaultDays={defaultDays} />
-      <ArchetypeFiltersBar />
+    <div id="filters" className="space-y-3">
+      <PgptInsightsFiltersPanel defaultDays={defaultDays} variant="sidebar" />
     </div>
   );
 }

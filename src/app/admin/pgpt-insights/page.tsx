@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
+import { AdminSidebarPortal } from "@/components/admin/AdminShell";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { QaReviewLink } from "@/components/pgpt-insights/QaReviewLink";
 import { DEFAULT_DAYS_WINDOW } from "@/lib/pgpt-insights/constants";
-import { InsightsFilters } from "./components/InsightsFilters";
+import { InsightsFilters, InsightsSidebarFilters } from "./components/InsightsFilters";
 import { InsightsSections, type InsightsSearchParams } from "./components/InsightsSections";
 
 export const dynamic = "force-dynamic";
@@ -65,6 +66,10 @@ export default async function PgptInsightsPage({
 
   return (
     <div className="space-y-8">
+      <AdminSidebarPortal>
+        <InsightsSidebarFilters defaultDays={DEFAULT_DAYS_WINDOW} />
+      </AdminSidebarPortal>
+
       <AdminPageHeader
         breadcrumb="Insights"
         title="PerazziGPT Insights"
@@ -77,7 +82,7 @@ export default async function PgptInsightsPage({
         }
       />
 
-      <InsightsFilters defaultDays={DEFAULT_DAYS_WINDOW} />
+      <InsightsFilters />
 
       <InsightsSections
         envFilter={envFilter}
