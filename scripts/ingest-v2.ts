@@ -400,6 +400,92 @@ function chunkModelDetailsV2(rawText: string): ChunkInput[] {
   return chunks;
 }
 
+function buildHelperSectionLabels(
+  doc: ActiveDoc,
+  heading?: string,
+  headingPath?: string,
+): string[] {
+  const labels: string[] = [];
+  labels.push(doc.docType);
+  if (heading) {
+    const headingSlug = slugify(heading);
+    if (headingSlug) labels.push(headingSlug);
+  }
+  if (headingPath) {
+    const pathSlug = slugify(headingPath);
+    if (pathSlug) labels.push(pathSlug);
+  }
+
+  if (doc.docType === "discipline-index" && heading) {
+    const normalized = heading.toLowerCase().replace(/\s+/g, "-");
+    labels.push(`disciplines:${normalized}`);
+  }
+
+  if (doc.docType === "platform-guide" && heading) {
+    const match = /platform:\s*(.+)/i.exec(heading);
+    const platformSlug = slugify(match ? match[1] : heading);
+    if (platformSlug) labels.push(`platform:${platformSlug}`);
+  }
+
+  if (doc.docType === "base-model-index" && heading) {
+    const baseSlug = slugify(heading);
+    if (baseSlug) labels.push(`base-model:${baseSlug}`);
+  }
+
+  if (doc.docType === "model-spec-text" && heading) {
+    const modelSlug = slugify(heading);
+    if (modelSlug) labels.push(`model:${modelSlug}`);
+  }
+
+  return labels;
+}
+
+function chunkHeadingBlocksForHelperDocs(
+  doc: ActiveDoc,
+  rawText: string,
+): ChunkInput[] {
+  const sections = parseSections(rawText);
+  const chunks: ChunkInput[] = [];
+  let chunkIndex = 0;
+  const primaryModes = ["Prospect", "Owner"];
+  const archetypeBias: string[] = []; // neutral unless content skews otherwise
+
+  for (const section of sections) {
+    const content = section.content.join("\n").trim();
+    const hasHeading = Boolean(section.heading);
+    if (!hasHeading && !content) continue;
+
+    const text = [
+      section.heading ? section.heading.trim() : "",
+      content,
+    ]
+      .filter(Boolean)
+      .join("\n\n")
+      .trim();
+
+    if (!text) continue;
+
+    const labels = buildHelperSectionLabels(
+      doc,
+      section.heading,
+      section.headingPath,
+    );
+
+    chunks.push({
+      text,
+      chunkIndex,
+      heading: section.heading ?? undefined,
+      headingPath: section.headingPath ?? undefined,
+      sectionLabels: labels.length ? labels : undefined,
+      primaryModes,
+      archetypeBias,
+    });
+    chunkIndex += 1;
+  }
+
+  return chunks;
+}
+
 function chunkOlympicMedalsV2(rawText: string): ChunkInput[] {
   let records: any[];
   try {
@@ -598,6 +684,17 @@ function chunkMarkdownLike(doc: ActiveDoc, rawText: string): ChunkInput[] {
 
 function chunkDocument(doc: ActiveDoc, rawText: string): ChunkInput[] {
   const lowerPath = doc.path.toLowerCase();
+  const helperDocTypes = new Set([
+    "model-spec-text",
+    "base-model-index",
+    "discipline-index",
+    "platform-guide",
+  ]);
+
+  if (helperDocTypes.has(doc.docType)) {
+    return chunkHeadingBlocksForHelperDocs(doc, rawText);
+  }
+
   if (lowerPath.endsWith(".json")) {
     if (
       doc.path.includes(

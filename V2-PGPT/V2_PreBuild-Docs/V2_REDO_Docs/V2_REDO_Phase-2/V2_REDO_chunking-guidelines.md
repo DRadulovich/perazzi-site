@@ -185,7 +185,24 @@ The `Category` and `Doc_Type` fields from `V2_REDO_source-corpus.md` should driv
   - Comp/flagship platforms → `["Achiever","Prestige","Analyst"]`
   - Classic/heritage platforms → `["Loyalist","Legacy","Analyst"]`
 
-#### 3.3.3 Rib Information (`V2_rib-information.md`)
+#### 3.3.3 SpecText & Index Markdown Helpers
+
+- Files:  
+  - `V2_RAG_corpus-models-specText.md`  
+  - `V2_RAG_corpus-base-models.md`  
+  - `V2_RAG_corpus-disciplines.md`  
+  - `V2_RAG_corpus-platforms.md`
+- Chunking:
+  - Split on Markdown headings; aim for **one heading block per chunk**.
+  - Keep bullets under a heading in the same chunk (no mid-heading splits).
+  - These are short; prefer 400–800 token chunks, no overlap unless a section exceeds target.
+- Metadata hints:
+  - `section_labels`: `"model-spec-text"`, `"base-model-index"`, `"discipline-index"`, `"platform-guide"` depending on source file.
+  - For discipline/platform docs, include `disciplines` or `platforms` arrays derived from the heading.
+  - `primary_modes`: `["Prospect","Owner"]`
+  - `archetype_bias`: neutral (`[]`) unless a section is clearly performance-heavy (then include `["Analyst","Achiever"]`).
+
+#### 3.3.4 Rib Information (`V2_rib-information.md`)
 
 - Chunk by rib family/type and discipline:
   - One chunk per rib type if it fits (e.g., “High rib for bunker trap”, “Flat rib for sporting”).
@@ -201,7 +218,7 @@ The `Category` and `Doc_Type` fields from `V2_REDO_source-corpus.md` should driv
 - `primary_modes`: `["Prospect","Owner"]`
 - `archetype_bias`: `["Analyst","Achiever"]`
 
-#### 3.3.4 Front-End Config JSON
+#### 3.3.5 Front-End Config JSON
 
 - `V2_FRONT-END_corpus-models-sanity.json` is `Embed_Mode: ignore` by default.
 - Do **not** chunk or embed unless you decide to repurpose it for RAG later.
