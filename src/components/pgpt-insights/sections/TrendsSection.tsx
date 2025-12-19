@@ -13,6 +13,7 @@ import { Histogram } from "../charts/Histogram";
 import { KpiCard } from "../charts/KpiCard";
 import { formatCompactNumber, formatDurationMs } from "../format";
 import { DataTable } from "../table/DataTable";
+import { RowLimiter } from "../table/RowLimiter";
 import { TableShell } from "../table/TableShell";
 import { SectionError } from "./SectionError";
 
@@ -265,21 +266,23 @@ export async function TrendsSection({
               minWidth="min-w-[880px]"
               tableDensityClass={tableDensityClass}
             >
-              {rows.map((r) => (
-                <tr key={r.day}>
-                  <td>{String(r.day)}</td>
-                  <td className="text-right tabular-nums">{formatCompactNumber(r.requests)}</td>
-                  <td className="text-right tabular-nums">{formatCompactNumber(r.tokens)}</td>
-                  <td className="text-right tabular-nums">{formatDurationMs(r.latency_ms)}</td>
-                  <td className="text-right tabular-nums">{pct(r.low_rate_pct)}</td>
-                  <td className="text-right tabular-nums">
-                    {tuningApplies ? pct(r.snap_rate_pct ?? null) : "—"}
-                  </td>
-                  <td className="text-right tabular-nums">
-                    {tuningApplies ? pct(r.rerank_rate_pct ?? null) : "—"}
-                  </td>
-                </tr>
-              ))}
+              <RowLimiter colSpan={7} defaultVisible={14} label="days">
+                {rows.map((r) => (
+                  <tr key={r.day}>
+                    <td>{String(r.day)}</td>
+                    <td className="text-right tabular-nums">{formatCompactNumber(r.requests)}</td>
+                    <td className="text-right tabular-nums">{formatCompactNumber(r.tokens)}</td>
+                    <td className="text-right tabular-nums">{formatDurationMs(r.latency_ms)}</td>
+                    <td className="text-right tabular-nums">{pct(r.low_rate_pct)}</td>
+                    <td className="text-right tabular-nums">
+                      {tuningApplies ? pct(r.snap_rate_pct ?? null) : "—"}
+                    </td>
+                    <td className="text-right tabular-nums">
+                      {tuningApplies ? pct(r.rerank_rate_pct ?? null) : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </RowLimiter>
             </DataTable>
           </>
         )}

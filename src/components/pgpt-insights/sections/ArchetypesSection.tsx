@@ -5,6 +5,7 @@ import { getArchetypeIntentStats, getArchetypeSummary } from "../../../lib/pgpt-
 import { MiniBar } from "../MiniBar";
 import { formatRate, formatScore } from "../format";
 import { DataTable } from "../table/DataTable";
+import { RowLimiter } from "../table/RowLimiter";
 import { TableShell } from "../table/TableShell";
 
 import { SectionError } from "./SectionError";
@@ -74,18 +75,20 @@ export async function ArchetypesSection({
               minWidth="min-w-[760px]"
               tableDensityClass={tableDensityClass}
             >
-              {(() => {
-                const maxHits = Math.max(...orderedArchetypeIntentStats.map((r) => r.hits), 1);
-                return orderedArchetypeIntentStats.map((row, idx) => (
-                  <tr key={`${row.archetype ?? "unknown"}-${row.intent ?? "none"}-${idx}`}>
-                    <td>{row.archetype ?? "(unknown)"}</td>
-                    <td className="break-words">{row.intent ?? "(none)"}</td>
-                    <td>
-                      <MiniBar value={row.hits} max={maxHits} />
-                    </td>
-                  </tr>
-                ));
-              })()}
+              <RowLimiter colSpan={3} defaultVisible={10} label="intents">
+                {(() => {
+                  const maxHits = Math.max(...orderedArchetypeIntentStats.map((r) => r.hits), 1);
+                  return orderedArchetypeIntentStats.map((row, idx) => (
+                    <tr key={`${row.archetype ?? "unknown"}-${row.intent ?? "none"}-${idx}`}>
+                      <td>{row.archetype ?? "(unknown)"}</td>
+                      <td className="break-words">{row.intent ?? "(none)"}</td>
+                      <td>
+                        <MiniBar value={row.hits} max={maxHits} />
+                      </td>
+                    </tr>
+                  ));
+                })()}
+              </RowLimiter>
             </DataTable>
           </div>
         )}
@@ -113,15 +116,17 @@ export async function ArchetypesSection({
               minWidth="min-w-[980px]"
               tableDensityClass={tableDensityClass}
             >
-              {orderedArchetypeSummaries.map((row, idx) => (
-                <tr key={`${row.archetype ?? "unknown"}-${idx}`}>
-                  <td>{row.archetype ?? "(unknown)"}</td>
-                  <td className="text-right tabular-nums">{formatScore(row.avg_max_score)}</td>
-                  <td className="text-right tabular-nums">{formatRate(row.guardrail_block_rate)}</td>
-                  <td className="text-right tabular-nums">{formatRate(row.low_confidence_rate)}</td>
-                  <td className="text-right tabular-nums">{row.total}</td>
-                </tr>
-              ))}
+              <RowLimiter colSpan={5} defaultVisible={12} label="archetypes">
+                {orderedArchetypeSummaries.map((row, idx) => (
+                  <tr key={`${row.archetype ?? "unknown"}-${idx}`}>
+                    <td>{row.archetype ?? "(unknown)"}</td>
+                    <td className="text-right tabular-nums">{formatScore(row.avg_max_score)}</td>
+                    <td className="text-right tabular-nums">{formatRate(row.guardrail_block_rate)}</td>
+                    <td className="text-right tabular-nums">{formatRate(row.low_confidence_rate)}</td>
+                    <td className="text-right tabular-nums">{row.total}</td>
+                  </tr>
+                ))}
+              </RowLimiter>
             </DataTable>
           </div>
         )}

@@ -1,3 +1,5 @@
+import { SectionHeader } from "../SectionHeader";
+
 function messageFromError(error: unknown): string {
   if (!error) return "Unknown error.";
   if (error instanceof Error) return error.message || "Unknown error.";
@@ -20,19 +22,24 @@ export function SectionError({
   const msg = messageFromError(error);
 
   return (
-    <section id={id} className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6 space-y-2">
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h2 className="text-sm font-semibold tracking-wide text-foreground">{title}</h2>
-          <p className="text-xs text-muted-foreground">Failed to load this section.</p>
-        </div>
-        <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-          error
-        </span>
-      </div>
+    <section
+      id={id}
+      className="rounded-2xl border border-border/80 bg-gradient-to-b from-card via-card/80 to-muted/20 shadow-lg"
+    >
+      <SectionHeader
+        title={title}
+        description="Failed to load this section."
+        rightMeta={
+          <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+            error
+          </span>
+        }
+      />
 
-      <div className="rounded-xl border border-border bg-background p-3 text-xs text-muted-foreground whitespace-pre-wrap">
-        {msg}
+      <div className="space-y-2 border-t border-border/80 bg-card/70 px-4 pb-4 pt-3 sm:px-6 sm:pb-6">
+        <div className="rounded-xl border border-border bg-background p-3 text-xs text-muted-foreground whitespace-pre-wrap">
+          {msg}
+        </div>
       </div>
     </section>
   );
@@ -48,22 +55,27 @@ export function SectionSkeleton({
   lines?: number;
 }) {
   return (
-    <section id={id} className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6 space-y-4">
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h2 className="text-sm font-semibold tracking-wide text-foreground">{title}</h2>
-          <p className="text-xs text-muted-foreground">Loading…</p>
-        </div>
-        <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-          …
-        </span>
-      </div>
+    <section
+      id={id}
+      className="rounded-2xl border border-border/80 bg-gradient-to-b from-card via-card/80 to-muted/20 shadow-lg"
+    >
+      <SectionHeader
+        title={title}
+        description="Loading…"
+        rightMeta={
+          <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+            …
+          </span>
+        }
+      />
 
-      <div className="animate-pulse space-y-2">
-        {Array.from({ length: lines }).map((_, i) => (
-          <div key={i} className="h-4 w-full rounded bg-muted/30" />
-        ))}
-        <div className="h-24 w-full rounded bg-muted/20" />
+      <div className="border-t border-border/80 bg-card/70 px-4 pb-4 pt-3 sm:px-6 sm:pb-6">
+        <div className="animate-pulse space-y-2">
+          {Array.from({ length: lines }).map((_, i) => (
+            <div key={i} className="h-4 w-full rounded bg-muted/30" />
+          ))}
+          <div className="h-24 w-full rounded bg-muted/20" />
+        </div>
       </div>
     </section>
   );

@@ -67,7 +67,7 @@ export function InsightsSections({
   density,
 }: InsightsSectionsProps) {
   return (
-    <div className="space-y-10">
+    <div className="space-y-12 lg:space-y-14">
       <Suspense fallback={<SectionSkeleton id="overview" title="Overview" />}>
         <OverviewSection envFilter={envFilter} daysFilter={daysFilter} scopeSummary={scopeSummary} />
       </Suspense>

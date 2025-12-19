@@ -9,6 +9,7 @@ import { MiniBar } from "../MiniBar";
 import { formatCompactNumber, formatScore, formatTimestampShort } from "../format";
 import { DataTable } from "../table/DataTable";
 import { MonoCell } from "../table/MonoCell";
+import { RowLimiter } from "../table/RowLimiter";
 import { StatusBadge } from "../table/StatusBadge";
 import { TableShell } from "../table/TableShell";
 import { TruncateCell } from "../table/TruncateCell";
@@ -99,47 +100,57 @@ export async function RagSection({
               minWidth="min-w-[1200px]"
               tableDensityClass={tableDensityClass}
             >
-              {lowScoreLogs.map((log) => (
-                <tr key={`low-${log.id}`}>
-                  <td className="whitespace-normal break-words leading-snug">
-                    <span title={String(log.created_at)} className="tabular-nums">
-                      {formatTimestampShort(String(log.created_at))}
-                    </span>
-                  </td>
-                  <td>
-                    <StatusBadge type="env" value={log.env} />
-                  </td>
-                  <td>
-                    {log.session_id ? (
-                      <Link
-                        href={`/admin/pgpt-insights/session/${encodeURIComponent(log.session_id)}`}
-                        className="text-blue-600 underline"
+              <RowLimiter colSpan={6} defaultVisible={10} label="logs">
+                {lowScoreLogs.map((log) => (
+                  <tr key={`low-${log.id}`} className="border-l-[5px] border-yellow-500/70">
+                    <td className="whitespace-normal break-words leading-snug">
+                      <span title={String(log.created_at)} className="tabular-nums">
+                        {formatTimestampShort(String(log.created_at))}
+                      </span>
+                    </td>
+                    <td>
+                      <StatusBadge type="env" value={log.env} />
+                    </td>
+                    <td>
+                      {log.session_id ? (
+                        <Link
+                          href={`/admin/pgpt-insights/session/${encodeURIComponent(log.session_id)}`}
+                          className="text-blue-600 underline"
+                        >
+                          <MonoCell>{log.session_id}</MonoCell>
+                        </Link>
+                      ) : (
+                        ""
+                      )}
+                    </td>
+                    <td className="align-top">
+                      <TruncateCell
+                        text={log.prompt ?? ""}
+                        previewChars={truncSecondary}
+                        defaultOpen={detailsDefaultOpen}
                       >
-                        <MonoCell>{log.session_id}</MonoCell>
-                      </Link>
-                    ) : (
-                      ""
-                    )}
-                  </td>
-                  <td className="align-top">
-                    <TruncateCell text={log.prompt ?? ""} previewChars={truncSecondary} defaultOpen={detailsDefaultOpen}>
-                      <pre className="max-h-[360px] overflow-auto whitespace-pre-wrap rounded-lg border border-border bg-background p-2 text-xs leading-snug text-foreground">
-                        {log.prompt ?? ""}
-                      </pre>
-                    </TruncateCell>
-                  </td>
-                  <td className="align-top">
-                    <TruncateCell text={log.response ?? ""} previewChars={truncSecondary} defaultOpen={detailsDefaultOpen}>
-                      <div className="max-h-[360px] overflow-auto rounded-lg border border-border bg-background p-3 text-xs text-foreground">
-                        <MarkdownView markdown={log.response ?? ""} />
-                      </div>
-                    </TruncateCell>
-                  </td>
-                  <td className="text-right">
-                    <StatusBadge type="score" value={log.max_score ?? null} />
-                  </td>
-                </tr>
-              ))}
+                        <pre className="max-h-[360px] overflow-auto whitespace-pre-wrap rounded-lg border border-border bg-background p-2 text-xs leading-snug text-foreground">
+                          {log.prompt ?? ""}
+                        </pre>
+                      </TruncateCell>
+                    </td>
+                    <td className="align-top">
+                      <TruncateCell
+                        text={log.response ?? ""}
+                        previewChars={truncSecondary}
+                        defaultOpen={detailsDefaultOpen}
+                      >
+                        <div className="max-h-[360px] overflow-auto rounded-lg border border-border bg-background p-3 text-xs text-foreground">
+                          <MarkdownView markdown={log.response ?? ""} />
+                        </div>
+                      </TruncateCell>
+                    </td>
+                    <td className="text-right">
+                      <StatusBadge type="score" value={log.max_score ?? null} />
+                    </td>
+                  </tr>
+                ))}
+              </RowLimiter>
             </DataTable>
           </div>
         )}
@@ -161,19 +172,21 @@ export async function RagSection({
               minWidth="min-w-[720px]"
               tableDensityClass={tableDensityClass}
             >
-              {(() => {
-                const maxHits = Math.max(...topChunks.map((c) => c.hits), 1);
-                return topChunks.map((chunk) => (
-                  <tr key={chunk.chunk_id}>
-                    <td className="break-words">
-                      <MonoCell>{chunk.chunk_id}</MonoCell>
-                    </td>
-                    <td>
-                      <MiniBar value={chunk.hits} max={maxHits} />
-                    </td>
-                  </tr>
-                ));
-              })()}
+              <RowLimiter colSpan={2} defaultVisible={12} label="chunks">
+                {(() => {
+                  const maxHits = Math.max(...topChunks.map((c) => c.hits), 1);
+                  return topChunks.map((chunk) => (
+                    <tr key={chunk.chunk_id}>
+                      <td className="break-words">
+                        <MonoCell>{chunk.chunk_id}</MonoCell>
+                      </td>
+                      <td>
+                        <MiniBar value={chunk.hits} max={maxHits} />
+                      </td>
+                    </tr>
+                  ));
+                })()}
+              </RowLimiter>
             </DataTable>
           </div>
         )}

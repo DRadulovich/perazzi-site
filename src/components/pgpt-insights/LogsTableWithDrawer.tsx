@@ -99,15 +99,15 @@ function getTokenMetrics(log: PerazziLogPreviewRow) {
 
 function rowToneClass(log: PerazziLogPreviewRow): string {
   if (log.guardrail_status === "blocked")
-    return "border-l-4 border-red-500/50 bg-red-500/5 dark:border-red-500/60 dark:bg-red-500/15";
+    return "border-l-[5px] border-red-500/70";
   if (log.low_confidence === true)
-    return "border-l-4 border-amber-500/50 bg-amber-500/5 dark:border-amber-500/60 dark:bg-amber-500/15";
+    return "border-l-[5px] border-amber-500/70";
 
   const s = parseScore(log.max_score);
   if (log.endpoint === "assistant" && s !== null && s < LOW_SCORE_THRESHOLD)
-    return "border-l-4 border-yellow-500/50 bg-yellow-500/5 dark:border-yellow-500/60 dark:bg-yellow-500/15";
+    return "border-l-[5px] border-yellow-500/70";
 
-  return "border-l-4 border-transparent";
+  return "border-l-[5px] border-transparent";
 }
 
 function DrawerSkeleton() {
@@ -338,7 +338,7 @@ export function LogsTableWithDrawer({
           const tone = rowToneClass(log);
           const rowClassName = cn(
             tone,
-            "cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring/40",
+            "group relative cursor-pointer overflow-hidden transition-colors hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-ring/40",
           );
 
           const scoreNum = parseScore(log.max_score);
@@ -421,27 +421,18 @@ export function LogsTableWithDrawer({
               <td className="align-top">
                 <div className="space-y-2">
                   <div className="space-y-1">
-                    <div className="text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground">P:</span>{" "}
-                      <span
-                        className={cn("break-words", promptStatus.isOmitted ? "text-muted-foreground" : undefined)}
-                      >
-                        {promptStatus.isOmitted ? "[omitted]" : promptPreview}
+                    <div className="flex items-start justify-between gap-2 text-xs text-muted-foreground">
+                      <span>
+                        <span className="font-medium text-foreground">P:</span>{" "}
+                        <span
+                          className={cn("break-words", promptStatus.isOmitted ? "text-muted-foreground" : undefined)}
+                        >
+                          {promptStatus.isOmitted ? "[omitted]" : promptPreview}
+                        </span>
                       </span>
-                      {promptStatus.badge ? (
-                        <span className="ml-2 inline-flex">
-                          <Badge tone={promptStatus.badgeTone ?? "default"} title={promptStatus.callout}>
-                            {promptStatus.badge}
-                          </Badge>
-                        </span>
-                      ) : null}
-                      {promptPreviewTruncated ? (
-                        <span className="ml-2 inline-flex">
-                          <Badge tone="default" title="Preview shortened for table">
-                            preview
-                          </Badge>
-                        </span>
-                      ) : null}
+                      <span className="text-[11px] uppercase tracking-wide text-muted-foreground/90 opacity-0 transition group-hover:opacity-100">
+                        Inspect →
+                      </span>
                     </div>
                     <div className="text-xs text-muted-foreground">
                       <span className="font-medium text-foreground">A:</span>{" "}
@@ -450,21 +441,38 @@ export function LogsTableWithDrawer({
                       >
                         {responseStatus.isOmitted ? "[omitted]" : responsePreview}
                       </span>
-                      {responseStatus.badge ? (
-                        <span className="ml-2 inline-flex">
-                          <Badge tone={responseStatus.badgeTone ?? "default"} title={responseStatus.callout}>
-                            {responseStatus.badge}
-                          </Badge>
-                        </span>
-                      ) : null}
-                      {responsePreviewTruncated ? (
-                        <span className="ml-2 inline-flex">
-                          <Badge tone="default" title="Preview shortened for table">
-                            preview
-                          </Badge>
-                        </span>
-                      ) : null}
                     </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                    {promptStatus.badge ? (
+                      <span className="inline-flex">
+                        <Badge tone={promptStatus.badgeTone ?? "default"} title={promptStatus.callout}>
+                          {promptStatus.badge}
+                        </Badge>
+                      </span>
+                    ) : null}
+                    {responseStatus.badge ? (
+                      <span className="inline-flex">
+                        <Badge tone={responseStatus.badgeTone ?? "default"} title={responseStatus.callout}>
+                          {responseStatus.badge}
+                        </Badge>
+                      </span>
+                    ) : null}
+                    {promptPreviewTruncated ? (
+                      <span className="inline-flex">
+                        <Badge tone="default" title="Preview shortened for table">
+                          prompt preview
+                        </Badge>
+                      </span>
+                    ) : null}
+                    {responsePreviewTruncated ? (
+                      <span className="inline-flex">
+                        <Badge tone="default" title="Preview shortened for table">
+                          response preview
+                        </Badge>
+                      </span>
+                    ) : null}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
@@ -513,7 +521,9 @@ export function LogsTableWithDrawer({
                     <span>Reasoning tokens: {reasoningTokens ?? "—"}</span>
                   </div>
 
-                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Inspect →</div>
+                  <div className="flex justify-end text-[11px] uppercase tracking-wide text-muted-foreground transition group-hover:text-foreground">
+                    Inspect →
+                  </div>
                 </div>
               </td>
             </tr>

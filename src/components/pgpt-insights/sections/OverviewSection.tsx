@@ -4,6 +4,7 @@ import { getDailyLowScoreRate, getDailyTrends, getGuardrailStats, getRagSummary 
 
 import { MiniTrend } from "../charts/MiniTrend";
 import { formatCompactNumber, formatDurationMs, formatScore } from "../format";
+import { SectionHeader } from "../SectionHeader";
 import { SectionError } from "./SectionError";
 
 export async function OverviewSection({
@@ -57,16 +58,17 @@ export async function OverviewSection({
     });
 
     return (
-      <section id="overview" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6 space-y-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
-          <div className="space-y-1">
-            <h2 className="text-sm font-semibold tracking-wide text-foreground">Overview</h2>
-            <p className="text-xs text-muted-foreground">High-level signals for the current scope.</p>
-          </div>
-          <p className="text-xs text-muted-foreground">{scopeSummary}</p>
-        </div>
+      <section
+        id="overview"
+        className="rounded-2xl border border-border/80 bg-gradient-to-b from-card via-card/80 to-muted/20 shadow-lg"
+      >
+        <SectionHeader
+          title="Overview"
+          description="High-level signals for the current scope."
+          rightMeta={<span className="text-[11px] uppercase tracking-wide text-muted-foreground">{scopeSummary}</span>}
+        />
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 border-t border-border/80 bg-card/70 px-4 py-4 sm:grid-cols-3 sm:px-6 sm:py-6 lg:grid-cols-6">
           <div className="flex h-full flex-col rounded-xl border border-border bg-background p-3">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Requests</div>
             <div className="mt-1 text-base font-semibold tabular-nums">{formatCompactNumber(totalRequests)}</div>

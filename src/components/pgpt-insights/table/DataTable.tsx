@@ -25,12 +25,15 @@ function withRowChrome(node: ReactNode, idx: number) {
   if (!isValidElement(node)) return node;
 
   const element = node as ReactElement<{ className?: string; ["data-no-zebra"]?: boolean }>;
+  const elementType = typeof element.type === "string" ? element.type : null;
+  if (elementType !== "tr") return element;
+
   const existing = element.props.className;
   const noZebra = Boolean(element.props["data-no-zebra"]);
 
   const baseRowClass = cn(
-    !noZebra && idx % 2 === 1 ? "bg-muted/30" : null,
-    "transition-colors hover:bg-muted/50",
+    !noZebra && idx % 2 === 1 ? "bg-muted/20" : null,
+    "transition-colors hover:bg-muted/40",
     existing,
   );
 
@@ -49,15 +52,20 @@ export function DataTable({
   bodyClassName,
 }: DataTableProps) {
   return (
-    <div className={cn("overflow-hidden rounded-xl border border-border bg-background/40 shadow-inner", maxHeightClassName ? "overflow-y-auto" : "overflow-x-auto")}>
+    <div
+      className={cn(
+        "overflow-hidden rounded-xl border border-border/80 bg-gradient-to-b from-card/90 via-card/80 to-muted/20 shadow-sm ring-1 ring-border/50",
+        maxHeightClassName ? "overflow-y-auto" : "overflow-x-auto",
+      )}
+    >
       <div className={cn("overflow-x-auto", maxHeightClassName && "min-w-full", maxHeightClassName)}>
         <table
           className={cn(
-            "w-full table-fixed border-collapse text-xs text-foreground",
+            "w-full table-fixed border-collapse text-[13px] text-foreground",
             minWidth,
-            "[&_th]:text-left [&_th]:font-medium [&_th]:text-muted-foreground [&_th]:leading-snug",
+            "[&_th]:text-left [&_th]:font-semibold [&_th]:text-muted-foreground/90 [&_th]:leading-snug [&_th]:tracking-wide [&_th]:uppercase [&_th]:text-[11px]",
             "[&_td]:align-top [&_td]:text-foreground [&_td]:leading-snug",
-            "[&_th]:px-3 [&_th]:py-2 [&_td]:px-3 [&_td]:py-2",
+            "[&_th]:px-3.5 [&_th]:py-3 [&_td]:px-3.5 [&_td]:py-2.5",
             tableDensityClass,
             className,
           )}
@@ -70,9 +78,13 @@ export function DataTable({
                   key={header.key}
                   scope="col"
                   className={cn(
-                    "border-b border-border/80 bg-card/90 backdrop-blur supports-[backdrop-filter]:bg-card/80",
+                    "border-b border-border/80 bg-card/90 backdrop-blur supports-[backdrop-filter]:bg-card/80 shadow-[0_1px_0_rgba(0,0,0,0.03)]",
                     stickyHeader && "sticky top-0 z-20",
-                    header.align === "right" ? "text-right" : header.align === "center" ? "text-center" : "text-left",
+                    header.align === "right"
+                      ? "text-right"
+                      : header.align === "center"
+                        ? "text-center"
+                        : "text-left",
                     header.className,
                   )}
                 >

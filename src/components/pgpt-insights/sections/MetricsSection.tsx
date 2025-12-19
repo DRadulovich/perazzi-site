@@ -9,6 +9,7 @@ import {
 
 import { formatCompactNumber, formatDurationMs } from "../format";
 import { DataTable } from "../table/DataTable";
+import { RowLimiter } from "../table/RowLimiter";
 import { StatusBadge } from "../table/StatusBadge";
 import { TableShell } from "../table/TableShell";
 
@@ -120,21 +121,23 @@ export async function MetricsSection({
               minWidth="min-w-[1120px]"
               tableDensityClass={tableDensityClass}
             >
-              {dailyTokenUsage.map((row, idx) => (
-                <tr key={`${row.day}-${row.env}-${row.endpoint}-${row.model ?? "unknown"}-${idx}`}>
-                  <td>{String(row.day)}</td>
-                  <td>
-                    <StatusBadge type="env" value={row.env} />
-                  </td>
-                  <td>
-                    <StatusBadge type="endpoint" value={row.endpoint} />
-                  </td>
-                  <td>{row.model ?? "(unknown)"}</td>
-                  <td className="text-right tabular-nums">{row.total_prompt_tokens}</td>
-                  <td className="text-right tabular-nums">{row.total_completion_tokens}</td>
-                  <td className="text-right tabular-nums">{row.request_count}</td>
-                </tr>
-              ))}
+              <RowLimiter colSpan={7} defaultVisible={12} label="days">
+                {dailyTokenUsage.map((row, idx) => (
+                  <tr key={`${row.day}-${row.env}-${row.endpoint}-${row.model ?? "unknown"}-${idx}`}>
+                    <td>{String(row.day)}</td>
+                    <td>
+                      <StatusBadge type="env" value={row.env} />
+                    </td>
+                    <td>
+                      <StatusBadge type="endpoint" value={row.endpoint} />
+                    </td>
+                    <td>{row.model ?? "(unknown)"}</td>
+                    <td className="text-right tabular-nums">{row.total_prompt_tokens}</td>
+                    <td className="text-right tabular-nums">{row.total_completion_tokens}</td>
+                    <td className="text-right tabular-nums">{row.request_count}</td>
+                  </tr>
+                ))}
+              </RowLimiter>
             </DataTable>
           </div>
         )}
@@ -166,27 +169,29 @@ export async function MetricsSection({
               minWidth="min-w-[1120px]"
               tableDensityClass={tableDensityClass}
             >
-              {avgMetrics.map((row, idx) => (
-                <tr key={`${row.env}-${row.endpoint}-${row.model ?? "unknown"}-${idx}`}>
-                  <td>
-                    <StatusBadge type="env" value={row.env} />
-                  </td>
-                  <td>
-                    <StatusBadge type="endpoint" value={row.endpoint} />
-                  </td>
-                  <td>{row.model ?? "(unknown)"}</td>
-                  <td className="text-right tabular-nums">
-                    {row.avg_prompt_tokens === null ? "—" : row.avg_prompt_tokens.toFixed(1)}
-                  </td>
-                  <td className="text-right tabular-nums">
-                    {row.avg_completion_tokens === null ? "—" : row.avg_completion_tokens.toFixed(1)}
-                  </td>
-                  <td className="text-right tabular-nums">
-                    {row.avg_latency_ms === null ? "—" : Math.round(row.avg_latency_ms)}
-                  </td>
-                  <td className="text-right tabular-nums">{row.request_count}</td>
-                </tr>
-              ))}
+              <RowLimiter colSpan={7} defaultVisible={10} label="rows">
+                {avgMetrics.map((row, idx) => (
+                  <tr key={`${row.env}-${row.endpoint}-${row.model ?? "unknown"}-${idx}`}>
+                    <td>
+                      <StatusBadge type="env" value={row.env} />
+                    </td>
+                    <td>
+                      <StatusBadge type="endpoint" value={row.endpoint} />
+                    </td>
+                    <td>{row.model ?? "(unknown)"}</td>
+                    <td className="text-right tabular-nums">
+                      {row.avg_prompt_tokens === null ? "—" : row.avg_prompt_tokens.toFixed(1)}
+                    </td>
+                    <td className="text-right tabular-nums">
+                      {row.avg_completion_tokens === null ? "—" : row.avg_completion_tokens.toFixed(1)}
+                    </td>
+                    <td className="text-right tabular-nums">
+                      {row.avg_latency_ms === null ? "—" : Math.round(row.avg_latency_ms)}
+                    </td>
+                    <td className="text-right tabular-nums">{row.request_count}</td>
+                  </tr>
+                ))}
+              </RowLimiter>
             </DataTable>
           </div>
         )}

@@ -66,7 +66,7 @@ export default async function PgptInsightsPage({
   ].join(" · ");
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10 pb-10">
       <AdminSidebarPortal>
         <div className="space-y-4">
           <InsightsOnPageRail isTriageView={isTriageView} density={density} />

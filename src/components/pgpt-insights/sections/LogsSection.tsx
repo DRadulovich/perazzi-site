@@ -150,7 +150,7 @@ export async function LogsSection({
       <TableShell
         id="logs"
         title="Recent Interactions"
-        description="Paginated log viewer (search applies only here). Rows are tinted for fast triage."
+        description="Paginated log viewer (search applies only here). Severity is conveyed via the left stripe."
         collapsible
         defaultOpen
         actions={
