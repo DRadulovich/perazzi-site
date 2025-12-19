@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import Providers from "@/app/providers";
 import { PrimaryNav } from "@/components/primary-nav";
+import { AdminShell } from "@/components/admin/AdminShell";
 import { resolveInitialTheme } from "@/lib/initial-theme";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
@@ -22,7 +23,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         <header className="sticky top-0 z-50">
           <PrimaryNav brandLabel={t("brand")} variant="transparent" />
         </header>
-        {children}
+        <AdminShell>{children}</AdminShell>
       </div>
     </Providers>
   );
