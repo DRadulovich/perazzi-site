@@ -116,7 +116,12 @@ export function InsightsSections({
 
       {!isTriageView ? (
         <Suspense fallback={<SectionSkeleton id="archetypes" title="Archetype & Intent Analytics" lines={6} />}>
-          <ArchetypesSection envFilter={envFilter} daysFilter={daysFilter} tableDensityClass={tableDensityClass} />
+          <ArchetypesSection
+            envFilter={envFilter}
+            daysFilter={daysFilter}
+            tableDensityClass={tableDensityClass}
+            density={density === "compact" ? "compact" : "comfortable"}
+          />
         </Suspense>
       ) : null}
 
