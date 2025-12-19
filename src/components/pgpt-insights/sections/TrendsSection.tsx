@@ -7,13 +7,37 @@ import {
   getDailyTrends,
 } from "../../../lib/pgpt-insights/cached";
 
-import { Sparkline } from "../Sparkline";
+import { DualAxisChart } from "../charts/DualAxisChart";
+import { HeatStrip } from "../charts/HeatStrip";
+import { Histogram } from "../charts/Histogram";
+import { KpiCard } from "../charts/KpiCard";
 import { formatCompactNumber, formatDurationMs } from "../format";
 import { SectionError } from "./SectionError";
 
 function pct(n: number | null) {
   if (n === null || !Number.isFinite(n)) return "—";
   return `${n.toFixed(1)}%`;
+}
+
+function calcDelta(series: Array<number | null | undefined>) {
+  const finite = series.filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+  if (finite.length < 2) return null;
+
+  const last = finite[finite.length - 1];
+  const prev = finite[finite.length - 2];
+  if (!Number.isFinite(last) || !Number.isFinite(prev)) return null;
+
+  const diff = last - prev;
+  const pctDiff = prev === 0 ? null : (diff / prev) * 100;
+  const tone = diff >= 0 ? "positive" : "negative";
+  const deltaLabel = pctDiff === null ? `${diff > 0 ? "+" : ""}${diff.toFixed(1)}` : `${diff > 0 ? "+" : ""}${pctDiff.toFixed(1)}%`;
+  return { deltaLabel, tone: tone as "positive" | "negative", diff, pctDiff };
+}
+
+function shortDayLabel(day: string | number | Date) {
+  const d = new Date(day);
+  if (Number.isNaN(d.getTime())) return String(day);
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
 export async function TrendsSection({
@@ -96,6 +120,24 @@ export async function TrendsSection({
       return null;
     };
 
+    const requestsDelta = calcDelta(requestsSeries);
+    const tokensDelta = calcDelta(tokensSeries);
+    const latencyDelta = calcDelta(latencySeries);
+    const lowRateDelta = calcDelta(lowRateSeries);
+
+    const heatLow = rows.slice(-60).map((r) => ({
+      label: shortDayLabel(r.day),
+      value: r.low_rate_pct ?? null,
+    }));
+    const heatTuning = tuningApplies
+      ? rows.slice(-60).map((r) => ({
+          label: shortDayLabel(r.day),
+          value: r.snap_rate_pct ?? null,
+        }))
+      : [];
+
+    const histogramValues = lowRateSeries.filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+
     return (
       <section id="trends" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6 space-y-4">
         <div className="space-y-1">
@@ -109,89 +151,92 @@ export async function TrendsSection({
           <p className="text-xs text-muted-foreground">No trend data available for the current scope.</p>
         ) : (
           <>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-border bg-background p-4">
-                <div className="flex items-baseline justify-between">
-                  <div className="text-xs font-semibold text-foreground">Requests/day</div>
-                  <div className="text-xs text-muted-foreground">
-                    latest: {last ? formatCompactNumber(last.requests) : "—"}
-                  </div>
-                </div>
-                <div className="mt-3 text-muted-foreground">
-                  <Sparkline values={requestsSeries} width={560} height={120} title="Requests per day" />
-                </div>
-              </div>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <KpiCard
+                title="Requests/day"
+                value={last ? formatCompactNumber(last.requests) : "—"}
+                deltaLabel={requestsDelta?.deltaLabel ?? null}
+                tone={requestsDelta?.tone}
+                trend={requestsSeries}
+              />
+              <KpiCard
+                title="Tokens/day"
+                value={last ? formatCompactNumber(last.tokens) : "—"}
+                deltaLabel={tokensDelta?.deltaLabel ?? null}
+                tone={tokensDelta?.tone}
+                trend={tokensSeries}
+              />
+              <KpiCard
+                title="Avg latency/day"
+                value={last ? formatDurationMs(last.latency_ms) : "—"}
+                deltaLabel={latencyDelta?.deltaLabel ?? null}
+                tone={latencyDelta ? (latencyDelta.diff <= 0 ? "positive" : "negative") : "default"}
+                trend={latencySeries}
+                subtitle="Lower is better"
+              />
+              <KpiCard
+                title="Low-score rate/day (assistant)"
+                value={last ? pct(last.low_rate_pct) : "—"}
+                deltaLabel={lowRateDelta?.deltaLabel ?? null}
+                tone={lowRateDelta ? (lowRateDelta.diff <= 0 ? "positive" : "negative") : "default"}
+                trend={lowRateSeries}
+                subtitle={`maxScore < ${LOW_SCORE_THRESHOLD}`}
+              />
+            </div>
 
-              <div className="rounded-xl border border-border bg-background p-4">
-                <div className="flex items-baseline justify-between">
-                  <div className="text-xs font-semibold text-foreground">Tokens/day</div>
-                  <div className="text-xs text-muted-foreground">
-                    latest: {last ? formatCompactNumber(last.tokens) : "—"}
-                  </div>
-                </div>
-                <div className="mt-3 text-muted-foreground">
-                  <Sparkline values={tokensSeries} width={560} height={120} title="Tokens per day" />
-                </div>
-              </div>
+            <DualAxisChart
+              data={rows.map((r) => ({
+                label: shortDayLabel(r.day),
+                bar: r.requests,
+                line: r.latency_ms ?? null,
+              }))}
+              barLabel="Requests/day"
+              lineLabel="Avg latency (ms)"
+              className="mt-2"
+            />
 
-              <div className="rounded-xl border border-border bg-background p-4">
-                <div className="flex items-baseline justify-between">
-                  <div className="text-xs font-semibold text-foreground">Avg latency/day</div>
-                  <div className="text-xs text-muted-foreground">
-                    latest: {last ? formatDurationMs(last.latency_ms) : "—"}
-                  </div>
-                </div>
-                <div className="mt-3 text-muted-foreground">
-                  <Sparkline values={latencySeries} width={560} height={120} title="Average latency per day" />
-                </div>
-              </div>
+            <div className="grid gap-4 lg:grid-cols-3">
+              <HeatStrip
+                title="Low-score rate by day"
+                subtitle={`% assistant interactions below maxScore ${LOW_SCORE_THRESHOLD}`}
+                data={heatLow}
+                valueSuffix="%"
+                invertColors
+                className="lg:col-span-1"
+              />
 
-              <div className="rounded-xl border border-border bg-background p-4">
-                <div className="flex items-baseline justify-between">
-                  <div className="text-xs font-semibold text-foreground">Low-score rate/day (assistant)</div>
-                  <div className="text-xs text-muted-foreground">
-                    latest: {last ? pct(last.low_rate_pct) : "—"}
-                  </div>
+              {tuningApplies ? (
+                <div className="grid gap-4 lg:col-span-1">
+                  <HeatStrip
+                    title="Archetype snapped rate"
+                    subtitle="Assistant only"
+                    data={heatTuning}
+                    valueSuffix="%"
+                  />
+                  <HeatStrip
+                    title="Rerank enabled rate"
+                    subtitle="Assistant only"
+                    data={rows.slice(-60).map((r) => ({
+                      label: shortDayLabel(r.day),
+                      value: r.rerank_rate_pct ?? null,
+                    }))}
+                    valueSuffix="%"
+                  />
                 </div>
-                <div className="mt-3 text-muted-foreground">
-                  <Sparkline values={lowRateSeries} width={560} height={120} title="Low-score rate per day (assistant)" />
+              ) : (
+                <div className="lg:col-span-1 rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground">
+                  Tuning metrics apply to assistant endpoint only.
                 </div>
-                <div className="mt-2 text-[11px] text-muted-foreground">
-                  rate = % of assistant interactions with maxScore &lt; {LOW_SCORE_THRESHOLD} (among those with maxScore)
-                </div>
-              </div>
+              )}
 
-              <div className="rounded-xl border border-border bg-background p-4">
-                <div className="flex items-baseline justify-between">
-                  <div className="text-xs font-semibold text-foreground">Archetype snapped rate/day (assistant)</div>
-                  <div className="text-xs text-muted-foreground">
-                    latest: {pct(lastNonNull(snapRateSeries))}
-                  </div>
-                </div>
-                <div className="mt-3 text-muted-foreground">
-                  {tuningApplies ? (
-                    <Sparkline values={snapRateSeries} width={560} height={120} title="Archetype snapped rate per day" />
-                  ) : (
-                    <div className="text-[11px] text-muted-foreground">Tuning metrics apply to assistant endpoint only.</div>
-                  )}
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-border bg-background p-4">
-                <div className="flex items-baseline justify-between">
-                  <div className="text-xs font-semibold text-foreground">Rerank enabled rate/day (assistant)</div>
-                  <div className="text-xs text-muted-foreground">
-                    latest: {pct(lastNonNull(rerankRateSeries))}
-                  </div>
-                </div>
-                <div className="mt-3 text-muted-foreground">
-                  {tuningApplies ? (
-                    <Sparkline values={rerankRateSeries} width={560} height={120} title="Rerank enabled rate per day" />
-                  ) : (
-                    <div className="text-[11px] text-muted-foreground">Tuning metrics apply to assistant endpoint only.</div>
-                  )}
-                </div>
-              </div>
+              <Histogram
+                title="Low-score rate distribution"
+                subtitle="Daily % of assistant interactions flagged as low-score"
+                values={histogramValues}
+                bins={[0, 5, 10, 20, 40]}
+                formatType="percent"
+                className="lg:col-span-1"
+              />
             </div>
 
             <div className="overflow-x-auto rounded-xl border border-border">
