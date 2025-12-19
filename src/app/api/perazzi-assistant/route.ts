@@ -1129,11 +1129,7 @@ export async function POST(request: Request) {
       sessionId: fullBody.sessionId ?? null,
     });
 
-    if (
-      retrievalAttempted &&
-      retrieval.chunks.length > 0 &&
-      retrieval.maxScore < getLowConfidenceThreshold()
-    ) {
+    if (retrievalAttempted && retrieval.maxScore < getLowConfidenceThreshold()) {
       logInteraction(
         fullBody,
         retrieval.chunks,
