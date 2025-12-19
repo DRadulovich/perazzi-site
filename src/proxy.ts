@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { isLocale } from "@/i18n/locales";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const localeParam = request.nextUrl.searchParams.get("locale");
 
   if (isLocale(localeParam?.toLowerCase())) {
