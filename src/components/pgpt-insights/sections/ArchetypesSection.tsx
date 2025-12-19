@@ -2,9 +2,10 @@
 import { CANONICAL_ARCHETYPE_ORDER } from "../../../lib/pgpt-insights/constants";
 import { getArchetypeIntentStats, getArchetypeSummary } from "../../../lib/pgpt-insights/cached";
 
-import { Chevron } from "../Chevron";
 import { MiniBar } from "../MiniBar";
 import { formatRate, formatScore } from "../format";
+import { DataTable } from "../table/DataTable";
+import { TableShell } from "../table/TableShell";
 
 import { SectionError } from "./SectionError";
 
@@ -44,96 +45,87 @@ export async function ArchetypesSection({
     });
 
     return (
-      <section id="archetypes" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6">
-        <details open className="group">
-          <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-1">
-                <h2 className="text-sm font-semibold tracking-wide text-foreground">Archetype &amp; Intent Analytics</h2>
-                <p className="text-xs text-muted-foreground">Volume by archetype/intent plus summary health.</p>
-              </div>
-              <Chevron />
-            </div>
-          </summary>
-
-          <div className="mt-4 space-y-3">
-            {orderedArchetypeIntentStats.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No archetype/intent data for the current filters.</p>
-            ) : (
-              <div className="space-y-2">
-                <h3 className="text-xs font-semibold">Interactions by archetype and intent</h3>
-                <div className="overflow-x-auto rounded-xl border border-border">
-                  <table className={`w-full min-w-[760px] table-fixed border-collapse text-xs ${tableDensityClass}`}>
-                    <colgroup>
-                      <col className="w-[220px]" />
-                      <col className="w-[400px]" />
-                      <col className="w-[140px]" />
-                    </colgroup>
-                    <thead>
-                      <tr>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">archetype</th>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">intent</th>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-right font-medium text-muted-foreground backdrop-blur">hits</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/60">
-                      {(() => {
-                        const maxHits = Math.max(...orderedArchetypeIntentStats.map((r) => r.hits), 1);
-                        return orderedArchetypeIntentStats.map((row, idx) => (
-                          <tr key={`${row.archetype ?? "unknown"}-${row.intent ?? "none"}-${idx}`}>
-                            <td className="px-3 py-2">{row.archetype ?? "(unknown)"}</td>
-                            <td className="px-3 py-2 break-words">{row.intent ?? "(none)"}</td>
-                            <td className="px-3 py-2">
-                              <MiniBar value={row.hits} max={maxHits} />
-                            </td>
-                          </tr>
-                        ));
-                      })()}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {orderedArchetypeSummaries.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="text-xs font-semibold">Archetype summary metrics</h3>
-                <div className="overflow-x-auto rounded-xl border border-border">
-                  <table className={`w-full min-w-[980px] table-fixed border-collapse text-xs ${tableDensityClass}`}>
-                    <colgroup>
-                      <col className="w-[220px]" />
-                      <col className="w-[160px]" />
-                      <col className="w-[220px]" />
-                      <col className="w-[220px]" />
-                      <col className="w-[140px]" />
-                    </colgroup>
-                    <thead>
-                      <tr>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">archetype</th>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-right font-medium text-muted-foreground backdrop-blur tabular-nums">avg maxScore</th>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-right font-medium text-muted-foreground backdrop-blur tabular-nums">guardrail block rate</th>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-right font-medium text-muted-foreground backdrop-blur tabular-nums">low-confidence rate</th>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-right font-medium text-muted-foreground backdrop-blur tabular-nums">total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/60">
-                      {orderedArchetypeSummaries.map((row, idx) => (
-                        <tr key={`${row.archetype ?? "unknown"}-${idx}`}>
-                          <td className="px-3 py-2">{row.archetype ?? "(unknown)"}</td>
-                          <td className="px-3 py-2 text-right tabular-nums">{formatScore(row.avg_max_score)}</td>
-                          <td className="px-3 py-2 text-right tabular-nums">{formatRate(row.guardrail_block_rate)}</td>
-                          <td className="px-3 py-2 text-right tabular-nums">{formatRate(row.low_confidence_rate)}</td>
-                          <td className="px-3 py-2 text-right tabular-nums">{row.total}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
+      <TableShell
+        id="archetypes"
+        title="Archetype & Intent Analytics"
+        description="Volume by archetype/intent plus summary health."
+        collapsible
+        defaultOpen
+        contentClassName="space-y-3"
+      >
+        {orderedArchetypeIntentStats.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No archetype/intent data for the current filters.</p>
+        ) : (
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold">Interactions by archetype and intent</h3>
+            <DataTable
+              headers={[
+                { key: "archetype", label: "archetype" },
+                { key: "intent", label: "intent" },
+                { key: "hits", label: "hits", align: "right" },
+              ]}
+              colgroup={
+                <colgroup>
+                  <col className="w-[220px]" />
+                  <col className="w-[400px]" />
+                  <col className="w-[140px]" />
+                </colgroup>
+              }
+              minWidth="min-w-[760px]"
+              tableDensityClass={tableDensityClass}
+            >
+              {(() => {
+                const maxHits = Math.max(...orderedArchetypeIntentStats.map((r) => r.hits), 1);
+                return orderedArchetypeIntentStats.map((row, idx) => (
+                  <tr key={`${row.archetype ?? "unknown"}-${row.intent ?? "none"}-${idx}`}>
+                    <td>{row.archetype ?? "(unknown)"}</td>
+                    <td className="break-words">{row.intent ?? "(none)"}</td>
+                    <td>
+                      <MiniBar value={row.hits} max={maxHits} />
+                    </td>
+                  </tr>
+                ));
+              })()}
+            </DataTable>
           </div>
-        </details>
-      </section>
+        )}
+
+        {orderedArchetypeSummaries.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold">Archetype summary metrics</h3>
+            <DataTable
+              headers={[
+                { key: "archetype", label: "archetype" },
+                { key: "avg", label: "avg maxScore", align: "right" },
+                { key: "guardrail", label: "guardrail block rate", align: "right" },
+                { key: "low", label: "low-confidence rate", align: "right" },
+                { key: "total", label: "total", align: "right" },
+              ]}
+              colgroup={
+                <colgroup>
+                  <col className="w-[220px]" />
+                  <col className="w-[160px]" />
+                  <col className="w-[220px]" />
+                  <col className="w-[220px]" />
+                  <col className="w-[140px]" />
+                </colgroup>
+              }
+              minWidth="min-w-[980px]"
+              tableDensityClass={tableDensityClass}
+            >
+              {orderedArchetypeSummaries.map((row, idx) => (
+                <tr key={`${row.archetype ?? "unknown"}-${idx}`}>
+                  <td>{row.archetype ?? "(unknown)"}</td>
+                  <td className="text-right tabular-nums">{formatScore(row.avg_max_score)}</td>
+                  <td className="text-right tabular-nums">{formatRate(row.guardrail_block_rate)}</td>
+                  <td className="text-right tabular-nums">{formatRate(row.low_confidence_rate)}</td>
+                  <td className="text-right tabular-nums">{row.total}</td>
+                </tr>
+              ))}
+            </DataTable>
+          </div>
+        )}
+      </TableShell>
     );
   } catch (error) {
     return <SectionError id="archetypes" title="Archetype & Intent Analytics" error={error} />;

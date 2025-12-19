@@ -2,7 +2,7 @@
 import { LOW_SCORE_THRESHOLD } from "../../../lib/pgpt-insights/constants";
 import { getDailyLowScoreRate, getDailyTrends, getGuardrailStats, getRagSummary } from "../../../lib/pgpt-insights/cached";
 
-import { Sparkline } from "../Sparkline";
+import { MiniTrend } from "../charts/MiniTrend";
 import { formatCompactNumber, formatDurationMs, formatScore } from "../format";
 import { SectionError } from "./SectionError";
 
@@ -67,36 +67,36 @@ export async function OverviewSection({
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          <div className="rounded-xl border border-border bg-background p-3">
+          <div className="flex h-full flex-col rounded-xl border border-border bg-background p-3">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Requests</div>
             <div className="mt-1 text-base font-semibold tabular-nums">{formatCompactNumber(totalRequests)}</div>
             <div className="mt-1 text-xs text-muted-foreground">in window</div>
-            <div className="mt-2 text-muted-foreground">
-              <Sparkline values={requestsSeries} title="Requests per day" />
+            <div className="mt-auto text-muted-foreground">
+              <MiniTrend values={requestsSeries} title="Requests per day" height={72} />
             </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-background p-3">
+          <div className="flex h-full flex-col rounded-xl border border-border bg-background p-3">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Tokens</div>
             <div className="mt-1 text-base font-semibold tabular-nums">{formatCompactNumber(totalTokens)}</div>
             <div className="mt-1 text-xs text-muted-foreground">
               {avgTokensPerRequest === null ? "—" : `~${Math.round(avgTokensPerRequest)} / req`}
             </div>
-            <div className="mt-2 text-muted-foreground">
-              <Sparkline values={tokensSeries} title="Tokens per day" />
+            <div className="mt-auto text-muted-foreground">
+              <MiniTrend values={tokensSeries} title="Tokens per day" height={72} />
             </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-background p-3">
+          <div className="flex h-full flex-col rounded-xl border border-border bg-background p-3">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Avg latency</div>
             <div className="mt-1 text-base font-semibold tabular-nums">{formatDurationMs(avgLatencyMs)}</div>
             <div className="mt-1 text-xs text-muted-foreground">rolling</div>
-            <div className="mt-2 text-muted-foreground">
-              <Sparkline values={latencySeries} title="Latency per day" />
+            <div className="mt-auto text-muted-foreground">
+              <MiniTrend values={latencySeries} title="Latency per day" height={72} />
             </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-background p-3">
+          <div className="flex h-full flex-col rounded-xl border border-border bg-background p-3">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Retrieval avg</div>
             <div className="mt-1 text-base font-semibold tabular-nums">
               {ragSummary ? formatScore(ragSummary.avg_max_score) : "—"}
@@ -104,18 +104,18 @@ export async function OverviewSection({
             <div className="mt-1 text-xs text-muted-foreground">assistant maxScore</div>
           </div>
 
-          <div className="rounded-xl border border-border bg-background p-3">
+          <div className="flex h-full flex-col rounded-xl border border-border bg-background p-3">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Low-score</div>
             <div className="mt-1 text-base font-semibold tabular-nums">
               {ragSummary ? formatCompactNumber(ragSummary.low_count) : "—"}
             </div>
             <div className="mt-1 text-xs text-muted-foreground">{`< ${LOW_SCORE_THRESHOLD}`}</div>
-            <div className="mt-2 text-muted-foreground">
-              <Sparkline values={lowRateSeries} title="Low-score rate per day (assistant)" />
+            <div className="mt-auto text-muted-foreground">
+              <MiniTrend values={lowRateSeries} title="Low-score rate per day (assistant)" height={72} />
             </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-background p-3">
+          <div className="flex h-full flex-col rounded-xl border border-border bg-background p-3">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Guardrail blocks</div>
             <div className="mt-1 text-base font-semibold tabular-nums">{formatCompactNumber(guardrailBlockedCount)}</div>
             <div className="mt-1 text-xs text-muted-foreground">assistant</div>

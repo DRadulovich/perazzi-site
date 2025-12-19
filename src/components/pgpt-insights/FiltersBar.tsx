@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Disclosure, Listbox, Transition } from "@headlessui/react";
+import { Check, ChevronDown, SlidersHorizontal } from "lucide-react";
 
 import { CANONICAL_ARCHETYPE_ORDER } from "../../lib/pgpt-insights/constants";
 import { cn } from "@/lib/utils";
@@ -16,6 +18,86 @@ type FiltersPanelProps = {
 function safeLabel(value: string, max = 36) {
   const s = String(value ?? "");
   return s.length > max ? `${s.slice(0, max)}…` : s;
+}
+
+type Option = { label: string; value: string };
+
+function FilterSelect({
+  value,
+  onChange,
+  options,
+  srLabel,
+  className,
+  buttonClassName,
+  fullWidth = false,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: Option[];
+  srLabel?: string;
+  className?: string;
+  buttonClassName?: string;
+  fullWidth?: boolean;
+}) {
+  const current = options.find((o) => o.value === value);
+  const displayLabel = current?.label ?? value;
+  const baseWidth = fullWidth ? "w-full" : "w-full min-w-[140px] sm:w-auto";
+
+  return (
+    <Listbox value={value} onChange={onChange}>
+      <div className={cn("relative", baseWidth, className)}>
+        <Listbox.Button
+          className={cn(
+            "inline-flex h-9 w-full items-center justify-between rounded-md border border-border bg-background px-3 text-sm text-foreground shadow-sm transition",
+            "hover:border-border/80 hover:bg-muted/30",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+            buttonClassName,
+          )}
+          aria-label={srLabel}
+        >
+          <span className="truncate text-left">{displayLabel}</span>
+          <span className="ml-2 flex items-center text-muted-foreground" aria-hidden="true">
+            <ChevronDown className="h-4 w-4" />
+          </span>
+          {srLabel ? <span className="sr-only">{srLabel}</span> : null}
+        </Listbox.Button>
+
+        <Transition
+          as={Fragment}
+          leave="transition ease-in duration-75"
+          leaveFrom="opacity-100 translate-y-0"
+          leaveTo="opacity-0 -translate-y-1"
+          enter="transition ease-out duration-100"
+          enterFrom="opacity-0 -translate-y-1"
+          enterTo="opacity-100 translate-y-0"
+        >
+          <Listbox.Options className="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-border bg-card text-sm shadow-xl focus:outline-none">
+            {options.map((option) => (
+              <Listbox.Option
+                key={option.value}
+                value={option.value}
+                className={({ active }) =>
+                  cn(
+                    "flex cursor-pointer items-center justify-between gap-3 px-3 py-2",
+                    active ? "bg-muted/60 text-foreground" : "text-muted-foreground",
+                  )
+                }
+              >
+                {({ selected }) => (
+                  <>
+                    <span className={cn("truncate", selected && "font-semibold text-foreground")}>
+                      {option.label}
+                    </span>
+                    {selected ? <Check className="h-4 w-4 text-blue-500" aria-hidden="true" /> : null}
+                  </>
+                )}
+              </Listbox.Option>
+            ))}
+          </Listbox.Options>
+        </Transition>
+      </div>
+    </Listbox>
+  );
 }
 
 export function PgptInsightsFiltersPanel({
@@ -285,6 +367,353 @@ export function PgptInsightsFiltersPanel({
     ? "mt-3 grid grid-cols-1 gap-3"
     : "mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end";
 
+  const chipsBlock =
+    chips.length > 0 ? (
+      <div className="flex flex-wrap gap-2">
+        {chips.map((chip) => (
+          <button
+            key={chip.key}
+            type="button"
+            onClick={chip.onRemove}
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground hover:bg-muted/20 hover:text-foreground"
+            title="Remove filter"
+          >
+            <span>{chip.label}</span>
+            <span className="text-[12px] leading-none">×</span>
+          </button>
+        ))}
+      </div>
+    ) : (
+      <div className="text-xs text-muted-foreground">No active filters.</div>
+    );
+
+  const controlRowClass = isSidebar ? "flex flex-col gap-1 text-sm" : "flex items-center gap-2 text-sm";
+  const controlSelectFullWidth = isSidebar;
+  const inputClass = cn(
+    "h-9 rounded-md border bg-background px-3 text-sm",
+    isSidebar ? "w-full" : "ml-2 w-[320px] max-w-full",
+  );
+  const inlineLabelClass = isSidebar ? "text-sm font-medium text-foreground" : undefined;
+
+  const controls = (
+    <>
+      <div className={primaryControls}>
+        <div className={controlRowClass}>
+          <span className={inlineLabelClass}>Env:</span>
+          <FilterSelect
+            value={env}
+            onChange={(val) => setParam("env", val)}
+            options={[
+              { value: "all", label: "all" },
+              { value: "local", label: "local" },
+              { value: "preview", label: "preview" },
+              { value: "production", label: "production" },
+            ]}
+            srLabel="Environment"
+            fullWidth={controlSelectFullWidth}
+          />
+        </div>
+
+        <div className={controlRowClass}>
+          <span className={inlineLabelClass}>Endpoint:</span>
+          <FilterSelect
+            value={endpoint}
+            onChange={(val) => setParam("endpoint", val)}
+            options={[
+              { value: "all", label: "all" },
+              { value: "assistant", label: "assistant" },
+              { value: "soul_journey", label: "soul_journey" },
+            ]}
+            srLabel="Endpoint"
+            fullWidth={controlSelectFullWidth}
+          />
+        </div>
+
+        <div className={controlRowClass}>
+          <span className={inlineLabelClass}>Time window:</span>
+          <FilterSelect
+            value={days}
+            onChange={(val) => setParam("days", val)}
+            options={[
+              { value: "7", label: "last 7 days" },
+              { value: String(defaultDays), label: `last ${defaultDays} days` },
+              { value: "90", label: "last 90 days" },
+              { value: "all", label: "all time" },
+            ]}
+            srLabel="Time window"
+            fullWidth={controlSelectFullWidth}
+          />
+        </div>
+
+        <div className={controlRowClass}>
+          <span className={inlineLabelClass}>Density:</span>
+          <FilterSelect
+            value={density}
+            onChange={(val) => setParam("density", val)}
+            options={[
+              { value: "comfortable", label: "comfortable" },
+              { value: "compact", label: "compact" },
+            ]}
+            srLabel="Table density"
+            fullWidth={controlSelectFullWidth}
+          />
+        </div>
+
+        <div className={controlRowClass}>
+          <span className={inlineLabelClass}>View:</span>
+          <FilterSelect
+            value={view}
+            onChange={(val) => setParam("view", val)}
+            options={[
+              { value: "full", label: "full" },
+              { value: "triage", label: "triage" },
+            ]}
+            srLabel="View mode"
+            fullWidth={controlSelectFullWidth}
+          />
+        </div>
+
+        <label className={controlRowClass}>
+          <span className={inlineLabelClass}>Search logs:</span>
+          <input
+            value={qInput}
+            onChange={(e) => setQInput(e.target.value)}
+            placeholder="Search prompts/responses…"
+            className={inputClass}
+          />
+        </label>
+      </div>
+
+      <details className="group rounded-xl border border-border bg-background p-3">
+        <summary className="cursor-pointer list-none text-xs text-muted-foreground [&::-webkit-details-marker]:hidden">
+          <span className="font-medium text-foreground">Advanced</span>{" "}
+          <span className="ml-2 text-muted-foreground">guardrails · QA · score · model/archetype</span>
+        </summary>
+
+        <div className={advancedControls}>
+          <div className={controlRowClass}>
+            <span className={inlineLabelClass}>Guardrail status:</span>
+            <FilterSelect
+              value={grStatus}
+              onChange={(val) => setParam("gr_status", val)}
+              options={[
+                { value: "any", label: "any" },
+                { value: "blocked", label: "blocked" },
+                { value: "not_blocked", label: "not blocked" },
+              ]}
+              srLabel="Guardrail status"
+              fullWidth={controlSelectFullWidth}
+            />
+          </div>
+
+          <label className={controlRowClass}>
+            <span className={inlineLabelClass}>Guardrail reason:</span>
+            <input
+              value={grReasonInput}
+              onChange={(e) => setGrReasonInput(e.target.value)}
+              onBlur={() => setParam("gr_reason", grReasonInput.trim())}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  setParam("gr_reason", grReasonInput.trim());
+                }
+              }}
+              placeholder="e.g. sexual_content"
+              className={inputClass}
+            />
+          </label>
+
+          <div className={controlRowClass}>
+            <span className={inlineLabelClass}>Low confidence:</span>
+            <FilterSelect
+              value={lowConf}
+              onChange={(val) => setParam("low_conf", val)}
+              options={[
+                { value: "any", label: "any" },
+                { value: "true", label: "true" },
+                { value: "false", label: "false" },
+              ]}
+              srLabel="Low confidence"
+              fullWidth={controlSelectFullWidth}
+            />
+          </div>
+
+          <div className={controlRowClass}>
+            <span className={inlineLabelClass}>maxScore:</span>
+            <FilterSelect
+              value={score}
+              onChange={(val) => setParam("score", val)}
+              options={[
+                { value: "any", label: "any" },
+                { value: "lt0.25", label: "< 0.25" },
+                { value: "lt0.5", label: "< 0.5" },
+                { value: "0.25-0.5", label: "0.25–0.5" },
+                { value: "0.5-0.75", label: "0.5–0.75" },
+                { value: "gte0.75", label: "≥ 0.75" },
+              ]}
+              srLabel="Max score"
+              fullWidth={controlSelectFullWidth}
+            />
+          </div>
+
+          <div className={controlRowClass}>
+            <span className={inlineLabelClass}>Archetype:</span>
+            <FilterSelect
+              value={archetype}
+              onChange={(val) => setParam("archetype", val)}
+              options={[
+                { value: "any", label: "any" },
+                ...CANONICAL_ARCHETYPE_ORDER.map((a) => ({ value: a, label: a })),
+              ]}
+              srLabel="Archetype"
+              fullWidth={controlSelectFullWidth}
+            />
+          </div>
+
+          <label className={controlRowClass}>
+            <span className={inlineLabelClass}>Model:</span>
+            <input
+              value={modelInput}
+              onChange={(e) => setModelInput(e.target.value)}
+              onBlur={() => setParam("model", modelInput.trim())}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  setParam("model", modelInput.trim());
+                }
+              }}
+              placeholder="e.g. gpt-4.1-mini"
+              className={inputClass}
+            />
+          </label>
+
+          <div className={controlRowClass}>
+            <span className={inlineLabelClass}>Used gateway:</span>
+            <FilterSelect
+              value={gateway}
+              onChange={(val) => setParam("gateway", val)}
+              options={[
+                { value: "any", label: "any" },
+                { value: "true", label: "true" },
+                { value: "false", label: "false" },
+              ]}
+              srLabel="Used gateway"
+              fullWidth={controlSelectFullWidth}
+            />
+          </div>
+
+          <div className={controlRowClass}>
+            <span className={inlineLabelClass}>QA status:</span>
+            <FilterSelect
+              value={qa}
+              onChange={(val) => setParam("qa", val)}
+              options={[
+                { value: "any", label: "any" },
+                { value: "open", label: "open" },
+                { value: "resolved", label: "resolved" },
+                { value: "none", label: "none" },
+              ]}
+              srLabel="QA status"
+              fullWidth={controlSelectFullWidth}
+            />
+          </div>
+
+          <div className={controlRowClass}>
+            <span className={inlineLabelClass}>Rerank:</span>
+            <FilterSelect
+              value={rerank}
+              onChange={(val) => setParam("rerank", val)}
+              options={[
+                { value: "any", label: "any" },
+                { value: "true", label: "enabled" },
+                { value: "false", label: "disabled" },
+              ]}
+              srLabel="Rerank"
+              fullWidth={controlSelectFullWidth}
+            />
+          </div>
+
+          <div className={controlRowClass}>
+            <span className={inlineLabelClass}>Confidence:</span>
+            <FilterSelect
+              value={snapped}
+              onChange={(val) => setParam("snapped", val)}
+              options={[
+                { value: "any", label: "any" },
+                { value: "true", label: "snapped" },
+                { value: "false", label: "mixed" },
+              ]}
+              srLabel="Confidence"
+              fullWidth={controlSelectFullWidth}
+            />
+          </div>
+
+          <div className={controlRowClass}>
+            <span className={inlineLabelClass}>Margin &lt;</span>
+            <FilterSelect
+              value={marginLt}
+              onChange={(val) => setParam("margin_lt", val)}
+              options={[
+                { value: "any", label: "any" },
+                { value: "0.08", label: "0.08" },
+                { value: "0.12", label: "0.12" },
+                { value: "0.20", label: "0.20" },
+              ]}
+              srLabel="Margin less than"
+              fullWidth={controlSelectFullWidth}
+            />
+          </div>
+        </div>
+      </details>
+    </>
+  );
+
+  if (isSidebar) {
+    return (
+      <div className={cn("space-y-3", className)}>
+        <Disclosure defaultOpen>
+          {({ open }) => (
+            <div className="space-y-3">
+              <Disclosure.Button className="flex w-full items-center justify-between rounded-xl border border-border/80 bg-background/80 px-3 py-3 text-left shadow-sm transition hover:border-border hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted/60 text-foreground/80">
+                    <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground">Filters</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Env/endpoint/time window scope analytics.
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown
+                  className={cn("h-4 w-4 text-muted-foreground transition-transform", open ? "rotate-180" : "rotate-0")}
+                  aria-hidden="true"
+                />
+              </Disclosure.Button>
+
+              <Disclosure.Panel className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs text-muted-foreground">Filters apply to analytics and logs.</p>
+                  <button
+                    type="button"
+                    onClick={resetAll}
+                    className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-background px-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted/20 hover:text-foreground"
+                  >
+                    Reset
+                  </button>
+                </div>
+
+                {chipsBlock}
+                {controls}
+              </Disclosure.Panel>
+            </div>
+          )}
+        </Disclosure>
+      </div>
+    );
+  }
+
   return (
     <div className={cn("space-y-3", className)}>
       <div className={headerLayout}>
@@ -307,269 +736,9 @@ export function PgptInsightsFiltersPanel({
         </button>
       </div>
 
-      {chips.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {chips.map((chip) => (
-            <button
-              key={chip.key}
-              type="button"
-              onClick={chip.onRemove}
-              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground hover:bg-muted/20 hover:text-foreground"
-              title="Remove filter"
-            >
-              <span>{chip.label}</span>
-              <span className="text-[12px] leading-none">×</span>
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="text-xs text-muted-foreground">No active filters.</div>
-      )}
+      {chipsBlock}
 
-      <div className={primaryControls}>
-        <label className="text-sm">
-          Env:
-          <select
-            value={env}
-            onChange={(e) => setParam("env", e.target.value)}
-            className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            <option value="all">all</option>
-            <option value="local">local</option>
-            <option value="preview">preview</option>
-            <option value="production">production</option>
-          </select>
-        </label>
-
-        <label className="text-sm">
-          Endpoint:
-          <select
-            value={endpoint}
-            onChange={(e) => setParam("endpoint", e.target.value)}
-            className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            <option value="all">all</option>
-            <option value="assistant">assistant</option>
-            <option value="soul_journey">soul_journey</option>
-          </select>
-        </label>
-
-        <label className="text-sm">
-          Time window:
-          <select
-            value={days}
-            onChange={(e) => setParam("days", e.target.value)}
-            className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            <option value="7">last 7 days</option>
-            <option value={String(defaultDays)}>{`last ${defaultDays} days`}</option>
-            <option value="90">last 90 days</option>
-            <option value="all">all time</option>
-          </select>
-        </label>
-
-        <label className="text-sm">
-          Density:
-          <select
-            value={density}
-            onChange={(e) => setParam("density", e.target.value)}
-            className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            <option value="comfortable">comfortable</option>
-            <option value="compact">compact</option>
-          </select>
-        </label>
-
-        <label className="text-sm">
-          View:
-          <select
-            value={view}
-            onChange={(e) => setParam("view", e.target.value)}
-            className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            <option value="full">full</option>
-            <option value="triage">triage</option>
-          </select>
-        </label>
-
-        <label className="text-sm">
-          Search logs:
-          <input
-            value={qInput}
-            onChange={(e) => setQInput(e.target.value)}
-            placeholder="Search prompts/responses…"
-            className="ml-2 h-9 w-[320px] max-w-full rounded-md border bg-background px-3 text-sm"
-          />
-        </label>
-      </div>
-
-      <details className="group rounded-xl border border-border bg-background p-3">
-        <summary className="cursor-pointer list-none text-xs text-muted-foreground [&::-webkit-details-marker]:hidden">
-          <span className="font-medium text-foreground">Advanced</span>{" "}
-          <span className="ml-2 text-muted-foreground">guardrails · QA · score · model/archetype</span>
-        </summary>
-
-        <div className={advancedControls}>
-          <label className="text-sm">
-            Guardrail status:
-            <select
-              value={grStatus}
-              onChange={(e) => setParam("gr_status", e.target.value)}
-              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-            >
-              <option value="any">any</option>
-              <option value="blocked">blocked</option>
-              <option value="not_blocked">not blocked</option>
-            </select>
-          </label>
-
-          <label className="text-sm">
-            Guardrail reason:
-            <input
-              value={grReasonInput}
-              onChange={(e) => setGrReasonInput(e.target.value)}
-              onBlur={() => setParam("gr_reason", grReasonInput.trim())}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  setParam("gr_reason", grReasonInput.trim());
-                }
-              }}
-              placeholder="e.g. sexual_content"
-              className="ml-2 h-9 w-[240px] max-w-full rounded-md border bg-background px-3 text-sm"
-            />
-          </label>
-
-          <label className="text-sm">
-            Low confidence:
-            <select
-              value={lowConf}
-              onChange={(e) => setParam("low_conf", e.target.value)}
-              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-            >
-              <option value="any">any</option>
-              <option value="true">true</option>
-              <option value="false">false</option>
-            </select>
-          </label>
-
-          <label className="text-sm">
-            maxScore:
-            <select
-              value={score}
-              onChange={(e) => setParam("score", e.target.value)}
-              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-            >
-              <option value="any">any</option>
-              <option value="lt0.25">&lt; 0.25</option>
-              <option value="lt0.5">&lt; 0.5</option>
-              <option value="0.25-0.5">0.25–0.5</option>
-              <option value="0.5-0.75">0.5–0.75</option>
-              <option value="gte0.75">≥ 0.75</option>
-            </select>
-          </label>
-
-          <label className="text-sm">
-            Archetype:
-            <select
-              value={archetype}
-              onChange={(e) => setParam("archetype", e.target.value)}
-              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-            >
-              <option value="any">any</option>
-              {CANONICAL_ARCHETYPE_ORDER.map((a) => (
-                <option key={a} value={a}>
-                  {a}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="text-sm">
-            Model:
-            <input
-              value={modelInput}
-              onChange={(e) => setModelInput(e.target.value)}
-              onBlur={() => setParam("model", modelInput.trim())}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  setParam("model", modelInput.trim());
-                }
-              }}
-              placeholder="e.g. gpt-4.1-mini"
-              className="ml-2 h-9 w-[220px] max-w-full rounded-md border bg-background px-3 text-sm"
-            />
-          </label>
-
-          <label className="text-sm">
-            Used gateway:
-            <select
-              value={gateway}
-              onChange={(e) => setParam("gateway", e.target.value)}
-              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-            >
-              <option value="any">any</option>
-              <option value="true">true</option>
-              <option value="false">false</option>
-            </select>
-          </label>
-
-          <label className="text-sm">
-            QA status:
-            <select
-              value={qa}
-              onChange={(e) => setParam("qa", e.target.value)}
-              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-            >
-              <option value="any">any</option>
-              <option value="open">open</option>
-              <option value="resolved">resolved</option>
-              <option value="none">none</option>
-            </select>
-          </label>
-
-          <label className="text-sm">
-            Rerank:
-            <select
-              value={rerank}
-              onChange={(e) => setParam("rerank", e.target.value)}
-              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-            >
-              <option value="any">any</option>
-              <option value="true">enabled</option>
-              <option value="false">disabled</option>
-            </select>
-          </label>
-
-          <label className="text-sm">
-            Confidence:
-            <select
-              value={snapped}
-              onChange={(e) => setParam("snapped", e.target.value)}
-              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-            >
-              <option value="any">any</option>
-              <option value="true">snapped</option>
-              <option value="false">mixed</option>
-            </select>
-          </label>
-
-          <label className="text-sm">
-            Margin &lt;
-            <select
-              value={marginLt}
-              onChange={(e) => setParam("margin_lt", e.target.value)}
-              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-            >
-              <option value="any">any</option>
-              <option value="0.08">0.08</option>
-              <option value="0.12">0.12</option>
-              <option value="0.20">0.20</option>
-            </select>
-          </label>
-        </div>
-      </details>
+      {controls}
     </div>
   );
 }

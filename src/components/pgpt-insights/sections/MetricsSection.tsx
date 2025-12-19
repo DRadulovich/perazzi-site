@@ -7,8 +7,10 @@ import {
   getRerankEnabledSummary,
 } from "../../../lib/pgpt-insights/cached";
 
-import { Chevron } from "../Chevron";
 import { formatCompactNumber, formatDurationMs } from "../format";
+import { DataTable } from "../table/DataTable";
+import { StatusBadge } from "../table/StatusBadge";
+import { TableShell } from "../table/TableShell";
 
 import { SectionError } from "./SectionError";
 
@@ -71,219 +73,220 @@ export async function MetricsSection({
     const maxBucketHits = marginBuckets.reduce((m, b) => Math.max(m, b.hits), 0) || 0;
 
     return (
-      <section id="metrics" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6">
-        <details open className="group">
-          <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-1">
-                <h2 className="text-sm font-semibold tracking-wide text-foreground">Metrics (Tokens &amp; Latency)</h2>
-            <p className="text-xs text-muted-foreground">Cost and responsiveness signals.</p>
+      <TableShell
+        id="metrics"
+        title="Metrics (Tokens & Latency)"
+        description="Cost and responsiveness signals."
+        collapsible
+        defaultOpen
+        actions={
+          <>
+            <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground tabular-nums">
+              latency {formatDurationMs(avgLatencyMs)}
+            </span>
+            <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground tabular-nums">
+              tokens {formatCompactNumber(totalTokens)}
+            </span>
+          </>
+        }
+        contentClassName="space-y-3"
+      >
+        {dailyTokenUsage.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No token usage data for the current filters.</p>
+        ) : (
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold">Daily token usage</h3>
+            <DataTable
+              headers={[
+                { key: "day", label: "day" },
+                { key: "env", label: "env" },
+                { key: "endpoint", label: "endpoint" },
+                { key: "model", label: "model" },
+                { key: "prompt", label: "prompt tokens", align: "right" },
+                { key: "completion", label: "completion tokens", align: "right" },
+                { key: "requests", label: "requests", align: "right" },
+              ]}
+              colgroup={
+                <colgroup>
+                  <col className="w-[160px]" />
+                  <col className="w-[110px]" />
+                  <col className="w-[160px]" />
+                  <col className="w-[260px]" />
+                  <col className="w-[170px]" />
+                  <col className="w-[190px]" />
+                  <col className="w-[140px]" />
+                </colgroup>
+              }
+              minWidth="min-w-[1120px]"
+              tableDensityClass={tableDensityClass}
+            >
+              {dailyTokenUsage.map((row, idx) => (
+                <tr key={`${row.day}-${row.env}-${row.endpoint}-${row.model ?? "unknown"}-${idx}`}>
+                  <td>{String(row.day)}</td>
+                  <td>
+                    <StatusBadge type="env" value={row.env} />
+                  </td>
+                  <td>
+                    <StatusBadge type="endpoint" value={row.endpoint} />
+                  </td>
+                  <td>{row.model ?? "(unknown)"}</td>
+                  <td className="text-right tabular-nums">{row.total_prompt_tokens}</td>
+                  <td className="text-right tabular-nums">{row.total_completion_tokens}</td>
+                  <td className="text-right tabular-nums">{row.request_count}</td>
+                </tr>
+              ))}
+            </DataTable>
           </div>
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground tabular-nums">
-                  latency {formatDurationMs(avgLatencyMs)}
-                </span>
-                <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground tabular-nums">
-                  tokens {formatCompactNumber(totalTokens)}
-                </span>
-                <Chevron />
+        )}
+
+        {avgMetrics.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-xs font-semibold">Average tokens &amp; latency per request</h3>
+            <DataTable
+              headers={[
+                { key: "env", label: "env" },
+                { key: "endpoint", label: "endpoint" },
+                { key: "model", label: "model" },
+                { key: "avg-prompt", label: "avg prompt tokens", align: "right" },
+                { key: "avg-completion", label: "avg completion tokens", align: "right" },
+                { key: "avg-latency", label: "avg latency (ms)", align: "right" },
+                { key: "requests", label: "requests", align: "right" },
+              ]}
+              colgroup={
+                <colgroup>
+                  <col className="w-[110px]" />
+                  <col className="w-[160px]" />
+                  <col className="w-[260px]" />
+                  <col className="w-[190px]" />
+                  <col className="w-[210px]" />
+                  <col className="w-[190px]" />
+                  <col className="w-[140px]" />
+                </colgroup>
+              }
+              minWidth="min-w-[1120px]"
+              tableDensityClass={tableDensityClass}
+            >
+              {avgMetrics.map((row, idx) => (
+                <tr key={`${row.env}-${row.endpoint}-${row.model ?? "unknown"}-${idx}`}>
+                  <td>
+                    <StatusBadge type="env" value={row.env} />
+                  </td>
+                  <td>
+                    <StatusBadge type="endpoint" value={row.endpoint} />
+                  </td>
+                  <td>{row.model ?? "(unknown)"}</td>
+                  <td className="text-right tabular-nums">
+                    {row.avg_prompt_tokens === null ? "—" : row.avg_prompt_tokens.toFixed(1)}
+                  </td>
+                  <td className="text-right tabular-nums">
+                    {row.avg_completion_tokens === null ? "—" : row.avg_completion_tokens.toFixed(1)}
+                  </td>
+                  <td className="text-right tabular-nums">
+                    {row.avg_latency_ms === null ? "—" : Math.round(row.avg_latency_ms)}
+                  </td>
+                  <td className="text-right tabular-nums">{row.request_count}</td>
+                </tr>
+              ))}
+            </DataTable>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold">Tuning (Archetype + Retrieval)</h3>
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+            <div className="rounded-xl border border-border bg-background p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="font-semibold text-foreground">Archetype snapped vs mixed</div>
+                <div className="text-muted-foreground">
+                  {snapPct !== null ? `${snapPct}% snapped` : "—"}
+                </div>
+              </div>
+              <div className="flex h-3 overflow-hidden rounded-full border border-border bg-muted/30">
+                <div
+                  className="bg-blue-500/70"
+                  style={{ width: `${snapDenom > 0 ? ((snapSummary?.snapped_count ?? 0) / snapDenom) * 100 : 0}%` }}
+                  aria-label="snapped share"
+                />
+                <div
+                  className="bg-amber-500/60"
+                  style={{ width: `${snapDenom > 0 ? ((snapSummary?.mixed_count ?? 0) / snapDenom) * 100 : 0}%` }}
+                  aria-label="mixed share"
+                />
+              </div>
+              <div className="text-[11px] text-muted-foreground flex flex-wrap gap-2">
+                <span>snapped {snapSummary?.snapped_count ?? 0}</span>
+                <span>mixed {snapSummary?.mixed_count ?? 0}</span>
+                <span>unknown {snapSummary?.unknown_count ?? 0}</span>
+                <span>total {snapSummary?.total ?? 0}</span>
               </div>
             </div>
-          </summary>
 
-          <div className="mt-4 space-y-3">
-            {dailyTokenUsage.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No token usage data for the current filters.</p>
+            <div className="rounded-xl border border-border bg-background p-3 space-y-2">
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <div className="font-semibold text-foreground">Rerank enabled</div>
+                <div className="text-muted-foreground">{rerankPct !== null ? `${rerankPct}% on` : "—"}</div>
+              </div>
+              <div className="flex h-3 overflow-hidden rounded-full border border-border bg-muted/30">
+                <div
+                  className="bg-emerald-500/70"
+                  style={{
+                    width: `${rerankDenom > 0 ? ((rerankSummary?.rerank_on_count ?? 0) / rerankDenom) * 100 : 0}%`,
+                  }}
+                  aria-label="rerank on share"
+                />
+                <div
+                  className="bg-slate-500/60"
+                  style={{
+                    width: `${rerankDenom > 0 ? ((rerankSummary?.rerank_off_count ?? 0) / rerankDenom) * 100 : 0}%`,
+                  }}
+                  aria-label="rerank off share"
+                />
+              </div>
+              <div className="text-[11px] text-muted-foreground flex flex-wrap gap-2">
+                <span>on {rerankSummary?.rerank_on_count ?? 0}</span>
+                <span>off {rerankSummary?.rerank_off_count ?? 0}</span>
+                <span>unknown {rerankSummary?.unknown_count ?? 0}</span>
+                <span>total {rerankSummary?.total ?? 0}</span>
+                {rerankSummary?.avg_candidate_limit !== null ? (
+                  <span>avg candidateLimit {Math.round(rerankSummary.avg_candidate_limit)}</span>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border bg-background p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2 text-xs">
+              <div className="font-semibold text-foreground">Archetype margin histogram</div>
+              <div className="text-muted-foreground text-[11px]">
+                Uses margin when present, otherwise legacy confidence.
+              </div>
+            </div>
+
+            {marginBuckets.length === 0 ? (
+              <div className="text-xs text-muted-foreground">No margin data for the current filters.</div>
             ) : (
-              <div className="space-y-2">
-                <h3 className="text-xs font-semibold">Daily token usage</h3>
-                <div className="overflow-x-auto rounded-xl border border-border">
-                  <table className={`w-full min-w-[1120px] table-fixed border-collapse text-xs ${tableDensityClass}`}>
-                    <colgroup>
-                      <col className="w-[160px]" />
-                      <col className="w-[110px]" />
-                      <col className="w-[160px]" />
-                      <col className="w-[260px]" />
-                      <col className="w-[170px]" />
-                      <col className="w-[190px]" />
-                      <col className="w-[140px]" />
-                    </colgroup>
-                    <thead>
-                      <tr>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">day</th>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">env</th>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">endpoint</th>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">model</th>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-right font-medium text-muted-foreground backdrop-blur tabular-nums">prompt tokens</th>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-right font-medium text-muted-foreground backdrop-blur tabular-nums">completion tokens</th>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-right font-medium text-muted-foreground backdrop-blur tabular-nums">requests</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/60">
-                      {dailyTokenUsage.map((row, idx) => (
-                        <tr key={`${row.day}-${row.env}-${row.endpoint}-${row.model ?? "unknown"}-${idx}`}>
-                          <td className="px-3 py-2">{String(row.day)}</td>
-                          <td className="px-3 py-2">{row.env}</td>
-                          <td className="px-3 py-2">{row.endpoint}</td>
-                          <td className="px-3 py-2">{row.model ?? "(unknown)"}</td>
-                          <td className="px-3 py-2 text-right tabular-nums">{row.total_prompt_tokens}</td>
-                          <td className="px-3 py-2 text-right tabular-nums">{row.total_completion_tokens}</td>
-                          <td className="px-3 py-2 text-right tabular-nums">{row.request_count}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {avgMetrics.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="text-xs font-semibold">Average tokens &amp; latency per request</h3>
-                <div className="overflow-x-auto rounded-xl border border-border">
-                  <table className={`w-full min-w-[1120px] table-fixed border-collapse text-xs ${tableDensityClass}`}>
-                    <colgroup>
-                      <col className="w-[110px]" />
-                      <col className="w-[160px]" />
-                      <col className="w-[260px]" />
-                      <col className="w-[190px]" />
-                      <col className="w-[210px]" />
-                      <col className="w-[190px]" />
-                      <col className="w-[140px]" />
-                    </colgroup>
-                    <thead>
-                      <tr>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">env</th>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">endpoint</th>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">model</th>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-right font-medium text-muted-foreground backdrop-blur tabular-nums">avg prompt tokens</th>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-right font-medium text-muted-foreground backdrop-blur tabular-nums">avg completion tokens</th>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-right font-medium text-muted-foreground backdrop-blur tabular-nums">avg latency (ms)</th>
-                            <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-right font-medium text-muted-foreground backdrop-blur tabular-nums">requests</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/60">
-                      {avgMetrics.map((row, idx) => (
-                        <tr key={`${row.env}-${row.endpoint}-${row.model ?? "unknown"}-${idx}`}>
-                          <td className="px-3 py-2">{row.env}</td>
-                          <td className="px-3 py-2">{row.endpoint}</td>
-                          <td className="px-3 py-2">{row.model ?? "(unknown)"}</td>
-                          <td className="px-3 py-2 text-right tabular-nums">
-                            {row.avg_prompt_tokens === null ? "—" : row.avg_prompt_tokens.toFixed(1)}
-                          </td>
-                          <td className="px-3 py-2 text-right tabular-nums">
-                            {row.avg_completion_tokens === null ? "—" : row.avg_completion_tokens.toFixed(1)}
-                          </td>
-                          <td className="px-3 py-2 text-right tabular-nums">
-                            {row.avg_latency_ms === null ? "—" : Math.round(row.avg_latency_ms)}
-                          </td>
-                          <td className="px-3 py-2 text-right tabular-nums">{row.request_count}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <h3 className="text-xs font-semibold">Tuning (Archetype + Retrieval)</h3>
-              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-                <div className="rounded-xl border border-border bg-background p-3 space-y-2">
-                  <div className="flex items-center justify-between gap-2 text-xs">
-                    <div className="font-semibold text-foreground">Archetype snapped vs mixed</div>
-                    <div className="text-muted-foreground">
-                      {snapPct !== null ? `${snapPct}% snapped` : "—"}
-                    </div>
-                  </div>
-                  <div className="flex h-3 overflow-hidden rounded-full border border-border bg-muted/30">
-                    <div
-                      className="bg-blue-500/70"
-                      style={{ width: `${snapDenom > 0 ? ((snapSummary?.snapped_count ?? 0) / snapDenom) * 100 : 0}%` }}
-                      aria-label="snapped share"
-                    />
-                    <div
-                      className="bg-amber-500/60"
-                      style={{ width: `${snapDenom > 0 ? ((snapSummary?.mixed_count ?? 0) / snapDenom) * 100 : 0}%` }}
-                      aria-label="mixed share"
-                    />
-                  </div>
-                  <div className="text-[11px] text-muted-foreground flex flex-wrap gap-2">
-                    <span>snapped {snapSummary?.snapped_count ?? 0}</span>
-                    <span>mixed {snapSummary?.mixed_count ?? 0}</span>
-                    <span>unknown {snapSummary?.unknown_count ?? 0}</span>
-                    <span>total {snapSummary?.total ?? 0}</span>
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-border bg-background p-3 space-y-2">
-                  <div className="flex items-center justify-between gap-2 text-xs">
-                    <div className="font-semibold text-foreground">Rerank enabled</div>
-                    <div className="text-muted-foreground">{rerankPct !== null ? `${rerankPct}% on` : "—"}</div>
-                  </div>
-                  <div className="flex h-3 overflow-hidden rounded-full border border-border bg-muted/30">
-                    <div
-                      className="bg-emerald-500/70"
-                      style={{
-                        width: `${rerankDenom > 0 ? ((rerankSummary?.rerank_on_count ?? 0) / rerankDenom) * 100 : 0}%`,
-                      }}
-                      aria-label="rerank on share"
-                    />
-                    <div
-                      className="bg-slate-500/60"
-                      style={{
-                        width: `${rerankDenom > 0 ? ((rerankSummary?.rerank_off_count ?? 0) / rerankDenom) * 100 : 0}%`,
-                      }}
-                      aria-label="rerank off share"
-                    />
-                  </div>
-                  <div className="text-[11px] text-muted-foreground flex flex-wrap gap-2">
-                    <span>on {rerankSummary?.rerank_on_count ?? 0}</span>
-                    <span>off {rerankSummary?.rerank_off_count ?? 0}</span>
-                    <span>unknown {rerankSummary?.unknown_count ?? 0}</span>
-                    <span>total {rerankSummary?.total ?? 0}</span>
-                    {rerankSummary?.avg_candidate_limit !== null ? (
-                      <span>avg candidateLimit {Math.round(rerankSummary.avg_candidate_limit)}</span>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-border bg-background p-3 space-y-2">
-                <div className="flex items-center justify-between gap-2 text-xs">
-                  <div className="font-semibold text-foreground">Archetype margin histogram</div>
-                  <div className="text-muted-foreground text-[11px]">
-                    Uses margin when present, otherwise legacy confidence.
-                  </div>
-                </div>
-
-                {marginBuckets.length === 0 ? (
-                  <div className="text-xs text-muted-foreground">No margin data for the current filters.</div>
-                ) : (
-                  <div className="space-y-1">
-                    {marginBuckets.map((b) => (
-                      <div key={b.bucket_order} className="flex items-center gap-3 text-xs">
-                        <div className="w-20 text-muted-foreground">{b.bucket_label}</div>
-                        <div className="flex-1">
-                          <div className="h-3 rounded-full border border-border bg-muted/20">
-                            <div
-                              className="h-3 rounded-full bg-foreground/60"
-                              style={{
-                                width: `${maxBucketHits > 0 ? (b.hits / maxBucketHits) * 100 : 0}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                        <div className="w-12 text-right tabular-nums text-muted-foreground">{b.hits}</div>
+              <div className="space-y-1">
+                {marginBuckets.map((b) => (
+                  <div key={b.bucket_order} className="flex items-center gap-3 text-xs">
+                    <div className="w-20 text-muted-foreground">{b.bucket_label}</div>
+                    <div className="flex-1">
+                      <div className="h-3 rounded-full border border-border bg-muted/20">
+                        <div
+                          className="h-3 rounded-full bg-foreground/60"
+                          style={{
+                            width: `${maxBucketHits > 0 ? (b.hits / maxBucketHits) * 100 : 0}%`,
+                          }}
+                        />
                       </div>
-                    ))}
+                    </div>
+                    <div className="w-12 text-right tabular-nums text-muted-foreground">{b.hits}</div>
                   </div>
-                )}
+                ))}
               </div>
-            </div>
+            )}
           </div>
-        </details>
-      </section>
+        </div>
+      </TableShell>
     );
   } catch (error) {
     return <SectionError id="metrics" title="Metrics (Tokens & Latency)" error={error} />;

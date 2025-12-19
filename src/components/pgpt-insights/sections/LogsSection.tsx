@@ -7,9 +7,9 @@ import { getOpenQaFlagCount } from "../../../lib/pgpt-insights/cached";
 import { fetchLogs } from "../../../lib/pgpt-insights/queries";
 import type { PerazziLogPreviewRow } from "../../../lib/pgpt-insights/types";
 
-import { Chevron } from "../Chevron";
 import { LogsTableWithDrawer } from "../LogsTableWithDrawer";
 import { formatCompactNumber } from "../format";
+import { TableShell } from "../table/TableShell";
 
 import { SectionError } from "./SectionError";
 
@@ -147,101 +147,94 @@ export async function LogsSection({
       : null;
 
     return (
-      <section id="logs" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6">
-        <details open className="group">
-          <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-            <div className="flex items-start justify-between gap-4">
-              <div className="space-y-1">
-                <h2 className="text-sm font-semibold tracking-wide text-foreground">Recent Interactions</h2>
-                <p className="text-xs text-muted-foreground">
-                  Paginated log viewer (search applies only here). Rows are tinted for fast triage.
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground tabular-nums">
-                  page {page}
-                </span>
-                <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground tabular-nums">
-                  shown {formatCompactNumber(logsWithQa.length)}
-                </span>
-                {q ? (
-                  <span
-                    className="inline-flex items-center rounded-full border border-border bg-background px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground"
-                    title={q}
-                  >
-                    search
-                  </span>
-                ) : null}
-                <Chevron />
-              </div>
-            </div>
-          </summary>
-
-          <div className="mt-4 space-y-3">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div className="text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">Page {page}</span>
-                {q ? (
-                  <>
-                    {" "}
-                    · Search: <span className="font-medium text-foreground">“{q}”</span>
-                  </>
-                ) : null}
-              </div>
-
-              <div className="flex items-center gap-2">
-                {prevHref ? (
-                  <Link href={prevHref} className="rounded-md border px-2 py-1 text-xs hover:bg-muted">
-                    Previous
-                  </Link>
-                ) : (
-                  <span className="rounded-md border px-2 py-1 text-xs text-muted-foreground opacity-60">Previous</span>
-                )}
-
-                {nextHref ? (
-                  <Link href={nextHref} className="rounded-md border px-2 py-1 text-xs hover:bg-muted">
-                    Next
-                  </Link>
-                ) : (
-                  <span className="rounded-md border px-2 py-1 text-xs text-muted-foreground opacity-60">Next</span>
-                )}
-
-                <Link href="/admin/pgpt-insights/qa" className="ml-2 text-xs text-blue-600 underline">
-                  QA Review{qaCountLabel}
-                </Link>
-              </div>
-            </div>
-
-            <LogsTableWithDrawer
-              logs={logsWithQa}
-              tableDensityClass={tableDensityClass}
-              truncPrimary={truncPrimary}
-            />
-
-            <div className="flex items-center justify-between pt-2 text-xs text-muted-foreground">
-              <div>
-                Showing <span className="font-medium text-foreground">{logsWithQa.length}</span> results on this page.
-              </div>
-              <div className="flex items-center gap-2">
-                {prevHref ? (
-                  <Link href={prevHref} className="rounded-md border px-2 py-1 hover:bg-muted">
-                    Previous
-                  </Link>
-                ) : (
-                  <span className="rounded-md border px-2 py-1 opacity-60">Previous</span>
-                )}
-                {nextHref ? (
-                  <Link href={nextHref} className="rounded-md border px-2 py-1 hover:bg-muted">
-                    Next
-                  </Link>
-                ) : (
-                  <span className="rounded-md border px-2 py-1 opacity-60">Next</span>
-                )}
-              </div>
-            </div>
+      <TableShell
+        id="logs"
+        title="Recent Interactions"
+        description="Paginated log viewer (search applies only here). Rows are tinted for fast triage."
+        collapsible
+        defaultOpen
+        actions={
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground tabular-nums">
+              page {page}
+            </span>
+            <span className="inline-flex items-center rounded-full border border-border bg-background px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground tabular-nums">
+              shown {formatCompactNumber(logsWithQa.length)}
+            </span>
+            {q ? (
+              <span
+                className="inline-flex items-center rounded-full border border-border bg-background px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground"
+                title={q}
+              >
+                search
+              </span>
+            ) : null}
           </div>
-        </details>
-      </section>
+        }
+        contentClassName="space-y-3"
+      >
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div className="text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">Page {page}</span>
+            {q ? (
+              <>
+                {" "}
+                · Search: <span className="font-medium text-foreground">“{q}”</span>
+              </>
+            ) : null}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {prevHref ? (
+              <Link href={prevHref} className="rounded-md border px-2 py-1 text-xs hover:bg-muted">
+                Previous
+              </Link>
+            ) : (
+              <span className="rounded-md border px-2 py-1 text-xs text-muted-foreground opacity-60">Previous</span>
+            )}
+
+            {nextHref ? (
+              <Link href={nextHref} className="rounded-md border px-2 py-1 text-xs hover:bg-muted">
+                Next
+              </Link>
+            ) : (
+              <span className="rounded-md border px-2 py-1 text-xs text-muted-foreground opacity-60">Next</span>
+            )}
+
+            <Link href="/admin/pgpt-insights/qa" className="ml-2 text-xs text-blue-600 underline">
+              QA Review{qaCountLabel}
+            </Link>
+          </div>
+        </div>
+
+        <LogsTableWithDrawer
+          logs={logsWithQa}
+          tableDensityClass={tableDensityClass}
+          truncPrimary={truncPrimary}
+        />
+
+        <div className="flex items-center justify-between pt-2 text-xs text-muted-foreground">
+          <div>
+            Showing <span className="font-medium text-foreground">{logsWithQa.length}</span> results on this page.
+          </div>
+          <div className="flex items-center gap-2">
+            {prevHref ? (
+              <Link href={prevHref} className="rounded-md border px-2 py-1 hover:bg-muted">
+                Previous
+              </Link>
+            ) : (
+              <span className="rounded-md border px-2 py-1 opacity-60">Previous</span>
+            )}
+            {nextHref ? (
+              <Link href={nextHref} className="rounded-md border px-2 py-1 hover:bg-muted">
+                Next
+              </Link>
+            ) : (
+              <span className="rounded-md border px-2 py-1 opacity-60">Next</span>
+            )}
+          </div>
+        </div>
+      </TableShell>
     );
   } catch (error) {
     return <SectionError id="logs" title="Recent Interactions" error={error} />;

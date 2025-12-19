@@ -21,7 +21,7 @@ function toneClass(tone?: KpiCardProps["tone"]) {
 
 export function KpiCard({ title, value, deltaLabel, trend, subtitle, tone = "default", density = "comfortable" }: KpiCardProps) {
   return (
-    <div className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-5 space-y-3">
+    <div className="flex h-full flex-col rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-5 space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <div className="text-xs font-semibold text-foreground">{title}</div>
@@ -40,7 +40,7 @@ export function KpiCard({ title, value, deltaLabel, trend, subtitle, tone = "def
         ) : null}
       </div>
 
-      <div className={cn("text-muted-foreground", density === "compact" ? "mt-1" : "mt-2")}>
+      <div className={cn("mt-auto text-muted-foreground", density === "compact" ? "pt-1" : "pt-2")}>
         <MiniTrend values={trend} title={`${title} trend`} />
       </div>
     </div>

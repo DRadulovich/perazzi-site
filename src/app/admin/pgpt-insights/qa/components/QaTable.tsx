@@ -1,6 +1,14 @@
 import type { JSX } from "react";
 import Link from "next/link";
 
+import { Badge } from "@/components/pgpt-insights/Badge";
+import { MonoCell } from "@/components/pgpt-insights/table/MonoCell";
+import { DataTable } from "@/components/pgpt-insights/table/DataTable";
+import { StatusBadge } from "@/components/pgpt-insights/table/StatusBadge";
+import { TableEmpty } from "@/components/pgpt-insights/table/TableEmpty";
+import { TableShell } from "@/components/pgpt-insights/table/TableShell";
+import { TruncateCell } from "@/components/pgpt-insights/table/TruncateCell";
+
 export type QaRow = {
   flag_id: string;
   flag_created_at: string;
@@ -370,169 +378,138 @@ function MarkdownView({ markdown }: Readonly<{ markdown: string }>) {
 
 export function QaTable({ rows, currentHref }: { rows: QaRow[]; currentHref: string }) {
   return (
-    <section className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6">
-      <div className="overflow-x-auto rounded-xl border border-border">
-        <table className="w-full min-w-[1280px] table-fixed border-collapse text-xs">
+    <TableShell
+      title="QA Flags"
+      description="Flagged interactions with reason + notes."
+      contentClassName="space-y-3"
+    >
+      <DataTable
+        headers={[
+          { key: "flagged_at", label: "flagged_at" },
+          { key: "status", label: "status" },
+          { key: "reason", label: "reason" },
+          { key: "notes", label: "notes" },
+          { key: "env", label: "env" },
+          { key: "endpoint", label: "endpoint" },
+          { key: "session", label: "session" },
+          { key: "prompt", label: "prompt" },
+          { key: "response", label: "response" },
+          { key: "signals", label: "signals" },
+          { key: "actions", label: "actions" },
+        ]}
+        colgroup={
           <colgroup>
-            <col className="w-[240px]" />
+            <col className="w-[200px]" />
             <col className="w-[90px]" />
             <col className="w-[150px]" />
-            <col className="w-[220px]" />
+            <col className="w-[200px]" />
             <col className="w-[120px]" />
             <col className="w-[120px]" />
             <col className="w-[210px]" />
             <col className="w-[320px]" />
             <col className="w-[360px]" />
-            <col className="w-[180px]" />
-            <col className="w-[120px]" />
+            <col className="w-[200px]" />
+            <col className="w-[140px]" />
           </colgroup>
-          <thead>
-            <tr>
-              <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                flagged_at
-              </th>
-              <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                status
-              </th>
-              <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                reason
-              </th>
-              <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                notes
-              </th>
-              <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                env
-              </th>
-              <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                endpoint
-              </th>
-              <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                session
-              </th>
-              <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                prompt
-              </th>
-              <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                response
-              </th>
-              <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                signals
-              </th>
-              <th className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                actions
-              </th>
+        }
+        minWidth="min-w-[1280px]"
+      >
+        {rows.map((row) => {
+          const score = parseScore(row.max_score);
+          const isOpen = row.flag_status === "open";
+          const rowTone = isOpen
+            ? "border-l-4 border-red-500/50 bg-red-500/5"
+            : row.flag_status === "resolved"
+              ? "border-l-4 border-emerald-500/30"
+              : "border-l-4 border-transparent";
+          const anchorId = `flag-${row.flag_id}`;
+
+          return (
+            <tr key={row.flag_id} id={anchorId} className={`${rowTone} scroll-mt-24`}>
+              <td className="whitespace-normal break-words leading-snug">
+                <span className="tabular-nums">{String(row.flag_created_at)}</span>
+              </td>
+              <td>
+                {isOpen ? (
+                  <Badge tone="red">open</Badge>
+                ) : (
+                  <Badge tone="purple">resolved</Badge>
+                )}
+              </td>
+              <td>{row.flag_reason ?? "(none)"}</td>
+              <td className="break-words">
+                {row.flag_notes ? (
+                  <TruncateCell text={row.flag_notes} previewChars={140}>
+                    <pre className="whitespace-pre-wrap rounded-lg border border-border bg-background p-2 text-xs leading-snug text-foreground">
+                      {row.flag_notes}
+                    </pre>
+                  </TruncateCell>
+                ) : (
+                  ""
+                )}
+              </td>
+              <td>
+                <StatusBadge type="env" value={row.env} />
+              </td>
+              <td>
+                <StatusBadge type="endpoint" value={row.endpoint} />
+              </td>
+              <td>
+                {row.session_id ? (
+                  <Link
+                    href={`/admin/pgpt-insights/session/${encodeURIComponent(row.session_id)}#interaction-${encodeURIComponent(row.interaction_id)}`}
+                    className="text-blue-600 underline"
+                  >
+                    <MonoCell>{row.session_id}</MonoCell>
+                  </Link>
+                ) : (
+                  ""
+                )}
+              </td>
+              <td className="align-top">
+                <TruncateCell text={row.prompt ?? ""} previewChars={180}>
+                  <pre className="whitespace-pre-wrap rounded-lg border border-border bg-background p-2 text-xs leading-snug text-foreground">
+                    {row.prompt ?? ""}
+                  </pre>
+                </TruncateCell>
+              </td>
+              <td className="align-top">
+                <TruncateCell text={row.response ?? ""} previewChars={180}>
+                  <div className="max-h-[480px] overflow-auto rounded-lg border border-border bg-background p-3 text-xs text-foreground">
+                    <MarkdownView markdown={row.response ?? ""} />
+                  </div>
+                </TruncateCell>
+              </td>
+              <td>
+                <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                  <StatusBadge type="score" value={score} />
+                  <StatusBadge type="guardrail" status={row.guardrail_status ?? undefined} reason={row.guardrail_reason ?? undefined} />
+                  {row.low_confidence === true ? <StatusBadge type="low_confidence" value /> : null}
+                  {row.archetype ? <Badge>{row.archetype}</Badge> : null}
+                </div>
+              </td>
+              <td>
+                {isOpen ? (
+                  <form method="POST" action="/admin/pgpt-insights/qa/resolve" className="inline-flex">
+                    <input type="hidden" name="flagId" value={row.flag_id} />
+                    <input type="hidden" name="returnTo" value={currentHref} />
+                    <button
+                      type="submit"
+                      className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1 text-[11px] text-muted-foreground hover:bg-muted"
+                    >
+                      Resolve
+                    </button>
+                  </form>
+                ) : (
+                  <span className="text-[11px] text-muted-foreground">—</span>
+                )}
+              </td>
             </tr>
-          </thead>
+          );
+        })}
 
-          <tbody className="divide-y divide-border/60">
-            {rows.map((row) => {
-              const score = parseScore(row.max_score);
-              const isOpen = row.flag_status === "open";
-              const rowTone = isOpen
-                ? "border-l-4 border-red-500/50 bg-red-500/5"
-                : row.flag_status === "resolved"
-                  ? "border-l-4 border-emerald-500/30"
-                  : "border-l-4 border-transparent";
-              const anchorId = `flag-${row.flag_id}`;
-
-              return (
-                <tr key={row.flag_id} id={anchorId} className={`${rowTone} scroll-mt-24 hover:bg-muted/20`}>
-                  <td className="px-3 py-2 whitespace-normal break-words leading-snug">{String(row.flag_created_at)}</td>
-                  <td className="px-3 py-2">
-                    {isOpen ? (
-                      <span className="inline-flex items-center rounded-full border border-red-500/20 bg-red-500/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-red-700">
-                        open
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] uppercase tracking-wide text-emerald-700">
-                        resolved
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-2">{row.flag_reason ?? "(none)"}</td>
-                  <td className="px-3 py-2 break-words">{row.flag_notes ? truncate(row.flag_notes, 120) : ""}</td>
-                  <td className="px-3 py-2">{row.env}</td>
-                  <td className="px-3 py-2">{row.endpoint}</td>
-                  <td className="px-3 py-2">
-                    {row.session_id ? (
-                      <Link
-                        href={`/admin/pgpt-insights/session/${encodeURIComponent(row.session_id)}#interaction-${encodeURIComponent(row.interaction_id)}`}
-                        className="text-blue-600 underline"
-                      >
-                        {row.session_id}
-                      </Link>
-                    ) : (
-                      ""
-                    )}
-                  </td>
-                  <td className="px-3 py-2 align-top">
-                    <details className="group">
-                      <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-                        <div className="break-words text-xs leading-snug text-foreground">
-                          {truncate(row.prompt ?? "", 180)}
-                        </div>
-                        <div className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground group-open:hidden">
-                          expand
-                        </div>
-                      </summary>
-                      <pre className="mt-2 whitespace-pre-wrap rounded-lg border border-border bg-background p-2 text-xs leading-snug text-foreground">
-                        {row.prompt ?? ""}
-                      </pre>
-                    </details>
-                  </td>
-                  <td className="px-3 py-2 align-top">
-                    <details className="group">
-                      <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-                        <div className="break-words text-xs leading-snug text-foreground">
-                          {truncate(row.response ?? "", 180)}
-                        </div>
-                        <div className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground group-open:hidden">
-                          expand
-                        </div>
-                      </summary>
-                      <div className="mt-2 max-h-[480px] overflow-auto rounded-lg border border-border bg-background p-3 text-xs text-foreground">
-                        <MarkdownView markdown={row.response ?? ""} />
-                      </div>
-                    </details>
-                  </td>
-                  <td className="px-3 py-2">
-                    <div className="space-y-1 text-[11px]">
-                      <div>maxScore: {score === null ? "—" : score.toFixed(3)}</div>
-                      {row.low_confidence === true ? <div className="text-amber-700">low_confidence</div> : null}
-                      {row.guardrail_status === "blocked" ? (
-                        <div className="text-red-700">{`blocked${row.guardrail_reason ? `: ${row.guardrail_reason}` : ""}`}</div>
-                      ) : null}
-                      {row.archetype ? <div>archetype: {row.archetype}</div> : null}
-                    </div>
-                  </td>
-                  <td className="px-3 py-2">
-                    {isOpen ? (
-                      <form method="POST" action="/admin/pgpt-insights/qa/resolve" className="inline-flex"><input type="hidden" name="flagId" value={row.flag_id} /><input type="hidden" name="returnTo" value={currentHref} />
-                        <button
-                          type="submit"
-                          className="inline-flex items-center rounded-md border border-border bg-background px-3 py-1 text-[11px] text-muted-foreground hover:bg-muted"
-                        >
-                          Resolve
-                        </button>
-                      </form>
-                    ) : (
-                      <span className="text-[11px] text-muted-foreground">—</span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
-
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={11} className="px-3 py-4 text-center text-xs text-muted-foreground">
-                  No QA flags for the current filter.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
-    </section>
+        {rows.length === 0 ? <TableEmpty colSpan={11} message="No QA flags for the current filter." /> : null}
+      </DataTable>
+    </TableShell>
   );
 }

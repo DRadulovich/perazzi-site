@@ -12,6 +12,9 @@ import { CopyButton } from "./CopyButton";
 import { formatCompactNumber, formatScore, formatTimestampShort } from "./format";
 import { LogSummaryPanel } from "./LogSummaryPanel";
 import { MarkdownViewClient } from "./MarkdownViewClient";
+import { DataTable } from "./table/DataTable";
+import { MonoCell } from "./table/MonoCell";
+import { StatusBadge } from "./table/StatusBadge";
 
 type TabKey = "summary" | "prompt" | "response" | "retrieval" | "qa";
 
@@ -311,8 +314,15 @@ export function LogsTableWithDrawer({
 
   return (
     <>
-      <div className="overflow-x-auto rounded-xl border border-border">
-        <table className={cn("w-full min-w-[1400px] table-fixed border-collapse text-xs", tableDensityClass)}>
+      <DataTable
+        headers={[
+          { key: "created_at", label: "created_at" },
+          { key: "env", label: "env" },
+          { key: "endpoint", label: "endpoint" },
+          { key: "session", label: "session_id" },
+          { key: "triage", label: "triage (Enter/Space to inspect)" },
+        ]}
+        colgroup={
           <colgroup>
             <col className="w-[200px]" />
             <col className="w-[100px]" />
@@ -320,211 +330,196 @@ export function LogsTableWithDrawer({
             <col className="w-[220px]" />
             <col className="w-[900px]" />
           </colgroup>
-          <thead>
-            <tr>
-              <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                created_at
-              </th>
-              <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                env
-              </th>
-              <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                endpoint
-              </th>
-              <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                session_id
-              </th>
-              <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                triage (Enter/Space to inspect)
-              </th>
-            </tr>
-          </thead>
+        }
+        minWidth="min-w-[1400px]"
+        tableDensityClass={tableDensityClass}
+      >
+        {logs.map((log) => {
+          const tone = rowToneClass(log);
+          const rowClassName = cn(
+            tone,
+            "cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring/40",
+          );
 
-          <tbody className="divide-y divide-border/60">
-            {logs.map((log) => {
-              const tone = rowToneClass(log);
-              const rowClassName = cn(
-                tone,
-                "hover:bg-muted/30 cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring/40",
-              );
+          const scoreNum = parseScore(log.max_score);
+          const isLowScore = log.endpoint === "assistant" && scoreNum !== null && scoreNum < LOW_SCORE_THRESHOLD;
+          const isBlocked = log.guardrail_status === "blocked";
+          const isLowConfidence = log.low_confidence === true;
 
-              const scoreNum = parseScore(log.max_score);
-              const isLowScore = log.endpoint === "assistant" && scoreNum !== null && scoreNum < LOW_SCORE_THRESHOLD;
-              const isBlocked = log.guardrail_status === "blocked";
-              const isLowConfidence = log.low_confidence === true;
+          const intentCount = log.intents?.length ?? 0;
+          const topicCount = log.topics?.length ?? 0;
 
-              const intentCount = log.intents?.length ?? 0;
-              const topicCount = log.topics?.length ?? 0;
+          const textStatus = getTextStorageBadges({
+            promptText: log.prompt_preview,
+            responseText: log.response_preview,
+            metadata: log.metadata,
+            logTextMode: log.log_text_mode,
+            logTextMaxChars: log.log_text_max_chars,
+            promptTextOmitted: log.prompt_text_omitted,
+            responseTextOmitted: log.response_text_omitted,
+            promptTextTruncated: log.prompt_text_truncated,
+            responseTextTruncated: log.response_text_truncated,
+          });
 
-              const textStatus = getTextStorageBadges({
-                promptText: log.prompt_preview,
-                responseText: log.response_preview,
-                metadata: log.metadata,
-                logTextMode: log.log_text_mode,
-                logTextMaxChars: log.log_text_max_chars,
-                promptTextOmitted: log.prompt_text_omitted,
-                responseTextOmitted: log.response_text_omitted,
-                promptTextTruncated: log.prompt_text_truncated,
-                responseTextTruncated: log.response_text_truncated,
-              });
+          const promptStatus = textStatus.prompt;
+          const responseStatus = textStatus.response;
 
-              const promptStatus = textStatus.prompt;
-              const responseStatus = textStatus.response;
+          const promptPreview = truncate(oneLine(promptStatus.displayValue), truncPrimary);
+          const responsePreview = truncate(oneLine(responseStatus.displayValue), truncPrimary);
 
-              const promptPreview = truncate(oneLine(promptStatus.displayValue), truncPrimary);
-              const responsePreview = truncate(oneLine(responseStatus.displayValue), truncPrimary);
+          const promptPreviewTruncated =
+            !promptStatus.isOmitted && (log.prompt_len ?? 0) > (log.prompt_preview?.length ?? 0);
+          const responsePreviewTruncated =
+            !responseStatus.isOmitted && (log.response_len ?? 0) > (log.response_preview?.length ?? 0);
 
-              const promptPreviewTruncated =
-                !promptStatus.isOmitted && (log.prompt_len ?? 0) > (log.prompt_preview?.length ?? 0);
-              const responsePreviewTruncated =
-                !responseStatus.isOmitted && (log.response_len ?? 0) > (log.response_preview?.length ?? 0);
+          const tokenMetrics = getTokenMetrics(log);
+          const { cachedTokens, reasoningTokens, totalTokens } = tokenMetrics;
 
-              const tokenMetrics = getTokenMetrics(log);
-              const { cachedTokens, reasoningTokens, totalTokens } = tokenMetrics;
-
-              return (
-                <tr
-                  key={log.id}
-                  className={rowClassName}
-                  tabIndex={0}
-                  role="button"
-                  aria-label="Open interaction inspector"
-                  onClick={(e) => {
-                    const target = e.target as HTMLElement | null;
-                    if (target?.closest("a,button,input,select,textarea")) return;
-                    openDrawer(log.id);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      openDrawer(log.id);
-                    }
-                  }}
-                >
-                  <td className="px-3 py-2 whitespace-normal break-words leading-snug">
-                    <span title={String(log.created_at)} className="tabular-nums">
-                      {formatTimestampShort(String(log.created_at))}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2">{log.env}</td>
-                  <td className="px-3 py-2">{log.endpoint}</td>
-                  <td className="px-3 py-2">
-                    {log.session_id ? (
-                      <Link
-                        href={`/admin/pgpt-insights/session/${encodeURIComponent(log.session_id)}`}
-                        className="text-blue-600 underline"
-                        onClick={(e) => e.stopPropagation()}
+          return (
+            <tr
+              key={log.id}
+              className={rowClassName}
+              tabIndex={0}
+              role="button"
+              aria-label="Open interaction inspector"
+              onClick={(e) => {
+                const target = e.target as HTMLElement | null;
+                if (target?.closest("a,button,input,select,textarea")) return;
+                openDrawer(log.id);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  openDrawer(log.id);
+                }
+              }}
+            >
+              <td className="whitespace-normal break-words leading-snug">
+                <span title={String(log.created_at)} className="tabular-nums">
+                  {formatTimestampShort(String(log.created_at))}
+                </span>
+              </td>
+              <td>
+                <StatusBadge type="env" value={log.env} />
+              </td>
+              <td>
+                <StatusBadge type="endpoint" value={log.endpoint} />
+              </td>
+              <td>
+                {log.session_id ? (
+                  <Link
+                    href={`/admin/pgpt-insights/session/${encodeURIComponent(log.session_id)}`}
+                    className="text-blue-600 underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MonoCell>{log.session_id}</MonoCell>
+                  </Link>
+                ) : (
+                  ""
+                )}
+              </td>
+              <td className="align-top">
+                <div className="space-y-2">
+                  <div className="space-y-1">
+                    <div className="text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">P:</span>{" "}
+                      <span
+                        className={cn("break-words", promptStatus.isOmitted ? "text-muted-foreground" : undefined)}
                       >
-                        {log.session_id}
-                      </Link>
-                    ) : (
-                      ""
-                    )}
-                  </td>
-                  <td className="px-3 py-2 align-top">
-                    <div className="space-y-2">
-                      <div className="space-y-1">
-                        <div className="text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground">P:</span>{" "}
-                          <span
-                            className={cn("break-words", promptStatus.isOmitted ? "text-muted-foreground" : undefined)}
-                          >
-                            {promptStatus.isOmitted ? "[omitted]" : promptPreview}
-                          </span>
-                          {promptStatus.badge ? (
-                            <span className="ml-2 inline-flex">
-                              <Badge tone={promptStatus.badgeTone ?? "default"} title={promptStatus.callout}>
-                                {promptStatus.badge}
-                              </Badge>
-                            </span>
-                          ) : null}
-                          {promptPreviewTruncated ? (
-                            <span className="ml-2 inline-flex">
-                              <Badge tone="default" title="Preview shortened for table">
-                                preview
-                              </Badge>
-                            </span>
-                          ) : null}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground">A:</span>{" "}
-                          <span
-                            className={cn("break-words", responseStatus.isOmitted ? "text-muted-foreground" : undefined)}
-                          >
-                            {responseStatus.isOmitted ? "[omitted]" : responsePreview}
-                          </span>
-                          {responseStatus.badge ? (
-                            <span className="ml-2 inline-flex">
-                              <Badge tone={responseStatus.badgeTone ?? "default"} title={responseStatus.callout}>
-                                {responseStatus.badge}
-                              </Badge>
-                            </span>
-                          ) : null}
-                          {responsePreviewTruncated ? (
-                            <span className="ml-2 inline-flex">
-                              <Badge tone="default" title="Preview shortened for table">
-                                preview
-                              </Badge>
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2">
-                        {log.archetype ? (
-                          <Badge
-                            title={
-                              log.archetype_confidence !== null && log.archetype_confidence !== undefined
-                                ? `margin ${(log.archetype_confidence * 100).toFixed(0)}pp`
-                                : undefined
-                            }
-                          >
-                            {log.archetype}
-                            {typeof log.archetype_confidence === "number" ? (
-                              <> · +{Math.round(log.archetype_confidence * 100)}pp</>
-                            ) : null}
+                        {promptStatus.isOmitted ? "[omitted]" : promptPreview}
+                      </span>
+                      {promptStatus.badge ? (
+                        <span className="ml-2 inline-flex">
+                          <Badge tone={promptStatus.badgeTone ?? "default"} title={promptStatus.callout}>
+                            {promptStatus.badge}
                           </Badge>
-                        ) : null}
-                        {log.model ? <Badge tone="blue">{log.model}</Badge> : null}
-                        {log.used_gateway ? <Badge>gateway</Badge> : null}
-
-                        {scoreNum !== null ? (
-                          <Badge tone={isLowScore ? "yellow" : "default"} title="assistant maxScore">
-                            maxScore {formatScore(scoreNum)}
+                        </span>
+                      ) : null}
+                      {promptPreviewTruncated ? (
+                        <span className="ml-2 inline-flex">
+                          <Badge tone="default" title="Preview shortened for table">
+                            preview
                           </Badge>
-                        ) : null}
-
-                        {isBlocked ? (
-                          <Badge tone="red" title={log.guardrail_reason ?? undefined}>
-                            blocked{log.guardrail_reason ? `: ${log.guardrail_reason}` : ""}
-                          </Badge>
-                        ) : null}
-
-                        {isLowConfidence ? <Badge tone="amber">low confidence</Badge> : null}
-
-                        {intentCount > 0 ? <Badge>intents {formatCompactNumber(intentCount)}</Badge> : null}
-                        {topicCount > 0 ? <Badge>topics {formatCompactNumber(topicCount)}</Badge> : null}
-
-                        {log.qa_flag_status ? (
-                          <Badge tone={log.qa_flag_status === "open" ? "purple" : "default"}>QA {log.qa_flag_status}</Badge>
-                        ) : null}
-                      </div>
-
-                      <div className="text-[11px] text-muted-foreground flex flex-wrap gap-3">
-                        <span>Total tokens: {totalTokens ?? "—"}</span>
-                        <span>Cached tokens: {cachedTokens ?? "—"}</span>
-                        <span>Reasoning tokens: {reasoningTokens ?? "—"}</span>
-                      </div>
-
-                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Inspect →</div>
+                        </span>
+                      ) : null}
                     </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                    <div className="text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">A:</span>{" "}
+                      <span
+                        className={cn("break-words", responseStatus.isOmitted ? "text-muted-foreground" : undefined)}
+                      >
+                        {responseStatus.isOmitted ? "[omitted]" : responsePreview}
+                      </span>
+                      {responseStatus.badge ? (
+                        <span className="ml-2 inline-flex">
+                          <Badge tone={responseStatus.badgeTone ?? "default"} title={responseStatus.callout}>
+                            {responseStatus.badge}
+                          </Badge>
+                        </span>
+                      ) : null}
+                      {responsePreviewTruncated ? (
+                        <span className="ml-2 inline-flex">
+                          <Badge tone="default" title="Preview shortened for table">
+                            preview
+                          </Badge>
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {log.archetype ? (
+                      <Badge
+                        title={
+                          log.archetype_confidence !== null && log.archetype_confidence !== undefined
+                            ? `margin ${(log.archetype_confidence * 100).toFixed(0)}pp`
+                            : undefined
+                        }
+                      >
+                        {log.archetype}
+                        {typeof log.archetype_confidence === "number" ? (
+                          <> · +{Math.round(log.archetype_confidence * 100)}pp</>
+                        ) : null}
+                      </Badge>
+                    ) : null}
+                    {log.model ? <Badge tone="blue">{log.model}</Badge> : null}
+                    {log.used_gateway ? <Badge>gateway</Badge> : null}
+
+                    {scoreNum !== null ? (
+                      <Badge tone={isLowScore ? "yellow" : "default"} title="assistant maxScore">
+                        maxScore {formatScore(scoreNum)}
+                      </Badge>
+                    ) : null}
+
+                    {isBlocked ? (
+                      <Badge tone="red" title={log.guardrail_reason ?? undefined}>
+                        blocked{log.guardrail_reason ? `: ${log.guardrail_reason}` : ""}
+                      </Badge>
+                    ) : null}
+
+                    {isLowConfidence ? <Badge tone="amber">low confidence</Badge> : null}
+
+                    {intentCount > 0 ? <Badge>intents {formatCompactNumber(intentCount)}</Badge> : null}
+                    {topicCount > 0 ? <Badge>topics {formatCompactNumber(topicCount)}</Badge> : null}
+
+                    {log.qa_flag_status ? (
+                      <Badge tone={log.qa_flag_status === "open" ? "purple" : "default"}>QA {log.qa_flag_status}</Badge>
+                    ) : null}
+                  </div>
+
+                  <div className="text-[11px] text-muted-foreground flex flex-wrap gap-3">
+                    <span>Total tokens: {totalTokens ?? "—"}</span>
+                    <span>Cached tokens: {cachedTokens ?? "—"}</span>
+                    <span>Reasoning tokens: {reasoningTokens ?? "—"}</span>
+                  </div>
+
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Inspect →</div>
+                </div>
+              </td>
+            </tr>
+          );
+        })}
+      </DataTable>
 
       {open ? (
         <div className="fixed inset-0 z-50">

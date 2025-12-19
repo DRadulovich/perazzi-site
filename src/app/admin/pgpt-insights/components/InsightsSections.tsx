@@ -9,7 +9,6 @@ import { RagSection } from "@/components/pgpt-insights/sections/RagSection";
 import { SectionSkeleton } from "@/components/pgpt-insights/sections/SectionError";
 import { TopIssuesSection } from "@/components/pgpt-insights/sections/TopIssuesSection";
 import { TrendsSection } from "@/components/pgpt-insights/sections/TrendsSection";
-import { InsightsOnPageRail } from "./InsightsOnPageRail";
 
 export type InsightsSearchParams = {
   env?: string;
@@ -68,95 +67,84 @@ export function InsightsSections({
   density,
 }: InsightsSectionsProps) {
   return (
-    <div className="space-y-6">
-      <div className="xl:hidden">
-        <InsightsOnPageRail isTriageView={isTriageView} density={density} />
-      </div>
+    <div className="space-y-10">
+      <Suspense fallback={<SectionSkeleton id="overview" title="Overview" />}>
+        <OverviewSection envFilter={envFilter} daysFilter={daysFilter} scopeSummary={scopeSummary} />
+      </Suspense>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_260px] xl:items-start">
-        <div className="space-y-10 min-w-0">
-          <Suspense fallback={<SectionSkeleton id="overview" title="Overview" />}>
-            <OverviewSection envFilter={envFilter} daysFilter={daysFilter} scopeSummary={scopeSummary} />
-          </Suspense>
+      {!isTriageView ? (
+        <Suspense fallback={<SectionSkeleton id="trends" title="Trends" lines={8} />}>
+          <TrendsSection
+            envFilter={envFilter}
+            endpointFilter={endpointFilter}
+            daysFilter={daysFilter}
+            rerankFilter={resolvedSearchParams.rerank}
+            snappedFilter={resolvedSearchParams.snapped}
+            marginLt={resolvedSearchParams.margin_lt}
+            tableDensityClass={tableDensityClass}
+          />
+        </Suspense>
+      ) : null}
 
-          {!isTriageView ? (
-            <Suspense fallback={<SectionSkeleton id="trends" title="Trends" lines={8} />}>
-              <TrendsSection
-                envFilter={envFilter}
-                endpointFilter={endpointFilter}
-                daysFilter={daysFilter}
-                rerankFilter={resolvedSearchParams.rerank}
-                snappedFilter={resolvedSearchParams.snapped}
-                marginLt={resolvedSearchParams.margin_lt}
-              />
-            </Suspense>
-          ) : null}
+      {!isTriageView ? (
+        <Suspense fallback={<SectionSkeleton id="top-issues" title="Top Issues" />}>
+          <TopIssuesSection envFilter={envFilter} daysFilter={daysFilter} resolvedSearchParams={resolvedSearchParams} />
+        </Suspense>
+      ) : null}
 
-          {!isTriageView ? (
-            <Suspense fallback={<SectionSkeleton id="top-issues" title="Top Issues" />}>
-              <TopIssuesSection envFilter={envFilter} daysFilter={daysFilter} resolvedSearchParams={resolvedSearchParams} />
-            </Suspense>
-          ) : null}
+      {!isTriageView ? (
+        <Suspense fallback={<SectionSkeleton id="rag" title="RAG Health (assistant)" lines={6} />}>
+          <RagSection
+            envFilter={envFilter}
+            daysFilter={daysFilter}
+            tableDensityClass={tableDensityClass}
+            detailsDefaultOpen={detailsDefaultOpen}
+            truncSecondary={truncSecondary}
+          />
+        </Suspense>
+      ) : null}
 
-          {!isTriageView ? (
-            <Suspense fallback={<SectionSkeleton id="rag" title="RAG Health (assistant)" lines={6} />}>
-              <RagSection
-                envFilter={envFilter}
-                daysFilter={daysFilter}
-                tableDensityClass={tableDensityClass}
-                detailsDefaultOpen={detailsDefaultOpen}
-                truncSecondary={truncSecondary}
-              />
-            </Suspense>
-          ) : null}
+      <Suspense fallback={<SectionSkeleton id="guardrails" title="Guardrail Analytics (assistant)" lines={6} />}>
+        <GuardrailsSection
+          envFilter={envFilter}
+          daysFilter={daysFilter}
+          tableDensityClass={tableDensityClass}
+          detailsDefaultOpen={detailsDefaultOpen}
+          truncSecondary={truncSecondary}
+        />
+      </Suspense>
 
-          <Suspense fallback={<SectionSkeleton id="guardrails" title="Guardrail Analytics (assistant)" lines={6} />}>
-            <GuardrailsSection
-              envFilter={envFilter}
-              daysFilter={daysFilter}
-              tableDensityClass={tableDensityClass}
-              detailsDefaultOpen={detailsDefaultOpen}
-              truncSecondary={truncSecondary}
-            />
-          </Suspense>
+      {!isTriageView ? (
+        <Suspense fallback={<SectionSkeleton id="archetypes" title="Archetype & Intent Analytics" lines={6} />}>
+          <ArchetypesSection envFilter={envFilter} daysFilter={daysFilter} tableDensityClass={tableDensityClass} />
+        </Suspense>
+      ) : null}
 
-          {!isTriageView ? (
-            <Suspense fallback={<SectionSkeleton id="archetypes" title="Archetype & Intent Analytics" lines={6} />}>
-              <ArchetypesSection envFilter={envFilter} daysFilter={daysFilter} tableDensityClass={tableDensityClass} />
-            </Suspense>
-          ) : null}
+      {!isTriageView ? (
+        <Suspense fallback={<SectionSkeleton id="metrics" title="Metrics (Tokens & Latency)" lines={6} />}>
+          <MetricsSection
+            envFilter={envFilter}
+            daysFilter={daysFilter}
+            tableDensityClass={tableDensityClass}
+            rerankFilter={resolvedSearchParams.rerank}
+            snappedFilter={resolvedSearchParams.snapped}
+            marginLt={resolvedSearchParams.margin_lt}
+          />
+        </Suspense>
+      ) : null}
 
-          {!isTriageView ? (
-            <Suspense fallback={<SectionSkeleton id="metrics" title="Metrics (Tokens & Latency)" lines={6} />}>
-              <MetricsSection
-                envFilter={envFilter}
-                daysFilter={daysFilter}
-                tableDensityClass={tableDensityClass}
-                rerankFilter={resolvedSearchParams.rerank}
-                snappedFilter={resolvedSearchParams.snapped}
-                marginLt={resolvedSearchParams.margin_lt}
-              />
-            </Suspense>
-          ) : null}
-
-          <Suspense fallback={<SectionSkeleton id="logs" title="Recent Interactions" lines={6} />}>
-            <LogsSection
-              envFilter={envFilter}
-              endpointFilter={endpointFilter}
-              daysFilter={daysFilter}
-              q={q}
-              page={page}
-              resolvedSearchParams={resolvedSearchParams}
-              tableDensityClass={tableDensityClass}
-              truncPrimary={truncPrimary}
-            />
-          </Suspense>
-        </div>
-
-        <div className="hidden xl:block xl:sticky xl:top-28">
-          <InsightsOnPageRail isTriageView={isTriageView} density={density} />
-        </div>
-      </div>
+      <Suspense fallback={<SectionSkeleton id="logs" title="Recent Interactions" lines={6} />}>
+        <LogsSection
+          envFilter={envFilter}
+          endpointFilter={endpointFilter}
+          daysFilter={daysFilter}
+          q={q}
+          page={page}
+          resolvedSearchParams={resolvedSearchParams}
+          tableDensityClass={tableDensityClass}
+          truncPrimary={truncPrimary}
+        />
+      </Suspense>
     </div>
   );
 }

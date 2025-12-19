@@ -6,6 +6,7 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { QaReviewLink } from "@/components/pgpt-insights/QaReviewLink";
 import { DEFAULT_DAYS_WINDOW } from "@/lib/pgpt-insights/constants";
 import { InsightsFilters, InsightsSidebarFilters } from "./components/InsightsFilters";
+import { InsightsOnPageRail } from "./components/InsightsOnPageRail";
 import { InsightsSections, type InsightsSearchParams } from "./components/InsightsSections";
 
 export const dynamic = "force-dynamic";
@@ -67,7 +68,10 @@ export default async function PgptInsightsPage({
   return (
     <div className="space-y-8">
       <AdminSidebarPortal>
-        <InsightsSidebarFilters defaultDays={DEFAULT_DAYS_WINDOW} />
+        <div className="space-y-4">
+          <InsightsOnPageRail isTriageView={isTriageView} density={density} />
+          <InsightsSidebarFilters defaultDays={DEFAULT_DAYS_WINDOW} />
+        </div>
       </AdminSidebarPortal>
 
       <AdminPageHeader

@@ -1,6 +1,72 @@
 "use client";
 
+import { Fragment } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Listbox, Transition } from "@headlessui/react";
+import { Check, ChevronDown } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+
+type Option = { value: string; label: string };
+
+function FilterSelect({
+  value,
+  onChange,
+  options,
+  srLabel,
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: Option[];
+  srLabel?: string;
+  className?: string;
+}) {
+  const current = options.find((o) => o.value === value);
+  return (
+    <Listbox value={value} onChange={onChange}>
+      <div className={cn("relative w-full min-w-[140px]", className)}>
+        <Listbox.Button className="flex h-9 w-full items-center justify-between rounded-md border border-border bg-background px-3 text-sm text-foreground shadow-sm transition hover:border-border/80 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+          <span className="truncate">{current?.label ?? value}</span>
+          <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          {srLabel ? <span className="sr-only">{srLabel}</span> : null}
+        </Listbox.Button>
+
+        <Transition
+          as={Fragment}
+          leave="transition ease-in duration-75"
+          leaveFrom="opacity-100 translate-y-0"
+          leaveTo="opacity-0 -translate-y-1"
+          enter="transition ease-out duration-100"
+          enterFrom="opacity-0 -translate-y-1"
+          enterTo="opacity-100 translate-y-0"
+        >
+          <Listbox.Options className="absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-border bg-card text-sm shadow-xl focus:outline-none">
+            {options.map((option) => (
+              <Listbox.Option
+                key={option.value}
+                value={option.value}
+                className={({ active }) =>
+                  cn(
+                    "flex cursor-pointer items-center justify-between gap-3 px-3 py-2",
+                    active ? "bg-muted/60 text-foreground" : "text-muted-foreground",
+                  )
+                }
+              >
+                {({ selected }) => (
+                  <>
+                    <span className={cn("truncate", selected && "font-semibold text-foreground")}>{option.label}</span>
+                    {selected ? <Check className="h-4 w-4 text-blue-500" aria-hidden="true" /> : null}
+                  </>
+                )}
+              </Listbox.Option>
+            ))}
+          </Listbox.Options>
+        </Transition>
+      </div>
+    </Listbox>
+  );
+}
 
 export function ArchetypeFiltersBar() {
   const router = useRouter();
@@ -41,79 +107,70 @@ export function ArchetypeFiltersBar() {
         <p className="text-xs text-muted-foreground">Query archetype behavior via logged distributions.</p>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-        <div className="text-sm">
-          <label htmlFor="arch-winner-changed" className="block text-xs text-muted-foreground">
-            Winner changed
-          </label>
-          <select
-            id="arch-winner-changed"
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="space-y-1 text-sm">
+          <span className="block text-xs text-muted-foreground">Winner changed</span>
+          <FilterSelect
             value={winnerChanged}
-            onChange={(e) => setParam("winner_changed", e.target.value)}
-            className="h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            <option value="any">any</option>
-            <option value="true">true</option>
-          </select>
+            onChange={(v) => setParam("winner_changed", v)}
+            options={[
+              { value: "any", label: "any" },
+              { value: "true", label: "true" },
+            ]}
+            srLabel="Winner changed"
+          />
         </div>
 
-        <div className="text-sm">
-          <label htmlFor="arch-margin" className="block text-xs text-muted-foreground">
-            Margin &lt;
-          </label>
-          <select
-            id="arch-margin"
+        <div className="space-y-1 text-sm">
+          <span className="block text-xs text-muted-foreground">Margin &lt;</span>
+          <FilterSelect
             value={marginLt}
-            onChange={(e) => setParam("margin_lt", e.target.value)}
-            className="h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            <option value="any">any</option>
-            <option value="0.08">0.08</option>
-            <option value="0.12">0.12</option>
-            <option value="0.20">0.20</option>
-          </select>
+            onChange={(v) => setParam("margin_lt", v)}
+            options={[
+              { value: "any", label: "any" },
+              { value: "0.08", label: "0.08" },
+              { value: "0.12", label: "0.12" },
+              { value: "0.20", label: "0.20" },
+            ]}
+            srLabel="Margin less than"
+          />
         </div>
 
-        <div className="text-sm">
-          <label htmlFor="arch-score" className="block text-xs text-muted-foreground">
-            Archetype score
-          </label>
-          <select
-            id="arch-score"
+        <div className="space-y-1 text-sm">
+          <span className="block text-xs text-muted-foreground">Archetype score</span>
+          <FilterSelect
             value={scoreArchetype}
-            onChange={(e) => {
-              const v = e.target.value;
+            onChange={(v) => {
               setParam("score_archetype", v);
               if (v === "any") setParam("min", "");
             }}
-            className="h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            <option value="any">any</option>
-            <option value="Loyalist">Loyalist</option>
-            <option value="Prestige">Prestige</option>
-            <option value="Analyst">Analyst</option>
-            <option value="Achiever">Achiever</option>
-            <option value="Legacy">Legacy</option>
-          </select>
+            options={[
+              { value: "any", label: "any" },
+              { value: "Loyalist", label: "Loyalist" },
+              { value: "Prestige", label: "Prestige" },
+              { value: "Analyst", label: "Analyst" },
+              { value: "Achiever", label: "Achiever" },
+              { value: "Legacy", label: "Legacy" },
+            ]}
+            srLabel="Archetype score"
+          />
         </div>
 
         {scoreArchetype !== "any" ? (
-          <div className="text-sm">
-            <label htmlFor="arch-min" className="block text-xs text-muted-foreground">
-              ≥ min
-            </label>
-            <select
-              id="arch-min"
+          <div className="space-y-1 text-sm">
+            <span className="block text-xs text-muted-foreground">≥ min</span>
+            <FilterSelect
               value={min}
-              onChange={(e) => setParam("min", e.target.value)}
-              className="h-9 rounded-md border bg-background px-2 text-sm"
-            >
-              <option value="0.20">0.20</option>
-              <option value="0.30">0.30</option>
-              <option value="0.40">0.40</option>
-              <option value="0.50">0.50</option>
-              <option value="0.60">0.60</option>
-            </select>
+              onChange={(v) => setParam("min", v)}
+              options={[
+                { value: "0.20", label: "0.20" },
+                { value: "0.30", label: "0.30" },
+                { value: "0.40", label: "0.40" },
+                { value: "0.50", label: "0.50" },
+                { value: "0.60", label: "0.60" },
+              ]}
+              srLabel="Minimum archetype score"
+            />
           </div>
         ) : null}
       </div>

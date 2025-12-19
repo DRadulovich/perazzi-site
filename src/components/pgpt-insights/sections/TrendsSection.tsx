@@ -12,6 +12,8 @@ import { HeatStrip } from "../charts/HeatStrip";
 import { Histogram } from "../charts/Histogram";
 import { KpiCard } from "../charts/KpiCard";
 import { formatCompactNumber, formatDurationMs } from "../format";
+import { DataTable } from "../table/DataTable";
+import { TableShell } from "../table/TableShell";
 import { SectionError } from "./SectionError";
 
 function pct(n: number | null) {
@@ -47,6 +49,7 @@ export async function TrendsSection({
   rerankFilter,
   snappedFilter,
   marginLt,
+  tableDensityClass,
 }: {
   envFilter?: string;
   endpointFilter?: string;
@@ -54,6 +57,7 @@ export async function TrendsSection({
   rerankFilter?: string;
   snappedFilter?: string;
   marginLt?: string;
+  tableDensityClass: string;
 }) {
   try {
     const capDays = typeof daysFilter === "number" && Number.isFinite(daysFilter) ? Math.min(Math.max(daysFilter, 7), 90) : 90;
@@ -139,14 +143,12 @@ export async function TrendsSection({
     const histogramValues = lowRateSeries.filter((v): v is number => typeof v === "number" && Number.isFinite(v));
 
     return (
-      <section id="trends" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6 space-y-4">
-        <div className="space-y-1">
-          <h2 className="text-sm font-semibold tracking-wide text-foreground">Trends</h2>
-          <p className="text-xs text-muted-foreground">
-            Lightweight charts for quick anomaly spotting. Table below is the fallback + exact values.
-          </p>
-        </div>
-
+      <TableShell
+        id="trends"
+        title="Trends"
+        description="Lightweight charts for quick anomaly spotting. Table below is the fallback + exact values."
+        contentClassName="space-y-4"
+      >
         {rows.length === 0 ? (
           <p className="text-xs text-muted-foreground">No trend data available for the current scope.</p>
         ) : (
@@ -239,8 +241,17 @@ export async function TrendsSection({
               />
             </div>
 
-            <div className="overflow-x-auto rounded-xl border border-border">
-              <table className="w-full min-w-[880px] table-fixed border-collapse text-xs">
+            <DataTable
+              headers={[
+                { key: "day", label: "day" },
+                { key: "requests", label: "requests", align: "right" },
+                { key: "tokens", label: "tokens", align: "right" },
+                { key: "latency", label: "avg latency", align: "right" },
+                { key: "low-rate", label: "low-score rate", align: "right" },
+                { key: "snapped-rate", label: "snapped rate", align: "right" },
+                { key: "rerank-rate", label: "rerank on rate", align: "right" },
+              ]}
+              colgroup={
                 <colgroup>
                   <col className="w-[160px]" />
                   <col className="w-[160px]" />
@@ -250,53 +261,29 @@ export async function TrendsSection({
                   <col className="w-[180px]" />
                   <col className="w-[180px]" />
                 </colgroup>
-                <thead>
-                  <tr>
-                    <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                      day
-                    </th>
-                    <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-right font-medium text-muted-foreground backdrop-blur">
-                      requests
-                    </th>
-                    <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-right font-medium text-muted-foreground backdrop-blur">
-                      tokens
-                    </th>
-                    <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-right font-medium text-muted-foreground backdrop-blur">
-                      avg latency
-                    </th>
-                    <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-right font-medium text-muted-foreground backdrop-blur">
-                      low-score rate
-                    </th>
-                    <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-right font-medium text-muted-foreground backdrop-blur">
-                      snapped rate
-                    </th>
-                    <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-right font-medium text-muted-foreground backdrop-blur">
-                      rerank on rate
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/60">
-                  {rows.map((r) => (
-                    <tr key={r.day}>
-                      <td className="px-3 py-2">{String(r.day)}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{formatCompactNumber(r.requests)}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{formatCompactNumber(r.tokens)}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{formatDurationMs(r.latency_ms)}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">{pct(r.low_rate_pct)}</td>
-                      <td className="px-3 py-2 text-right tabular-nums">
-                        {tuningApplies ? pct(r.snap_rate_pct ?? null) : "—"}
-                      </td>
-                      <td className="px-3 py-2 text-right tabular-nums">
-                        {tuningApplies ? pct(r.rerank_rate_pct ?? null) : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+              }
+              minWidth="min-w-[880px]"
+              tableDensityClass={tableDensityClass}
+            >
+              {rows.map((r) => (
+                <tr key={r.day}>
+                  <td>{String(r.day)}</td>
+                  <td className="text-right tabular-nums">{formatCompactNumber(r.requests)}</td>
+                  <td className="text-right tabular-nums">{formatCompactNumber(r.tokens)}</td>
+                  <td className="text-right tabular-nums">{formatDurationMs(r.latency_ms)}</td>
+                  <td className="text-right tabular-nums">{pct(r.low_rate_pct)}</td>
+                  <td className="text-right tabular-nums">
+                    {tuningApplies ? pct(r.snap_rate_pct ?? null) : "—"}
+                  </td>
+                  <td className="text-right tabular-nums">
+                    {tuningApplies ? pct(r.rerank_rate_pct ?? null) : "—"}
+                  </td>
+                </tr>
+              ))}
+            </DataTable>
           </>
         )}
-      </section>
+      </TableShell>
     );
   } catch (error) {
     return <SectionError id="trends" title="Trends" error={error} />;
