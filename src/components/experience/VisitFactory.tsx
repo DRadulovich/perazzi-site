@@ -3,6 +3,9 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import Image from "next/image";
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 import type { VisitFactoryData } from "@/types/experience";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -77,10 +80,12 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
             >
               {subheading}
             </h2>
-            <div
+            <ReactMarkdown
               className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg md:max-w-4xl lg:max-w-4xl prose-headings:text-ink prose-strong:text-ink"
-              dangerouslySetInnerHTML={{ __html: visit.introHtml }}
-            />
+              rehypePlugins={[rehypeRaw, rehypeSanitize]}
+            >
+              {visit.introHtml}
+            </ReactMarkdown>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
@@ -91,21 +96,27 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
               <h3 className="text-base sm:text-lg font-semibold text-ink">
                 {visit.location.name}
               </h3>
-              <div
+              <ReactMarkdown
                 className="text-sm leading-relaxed text-ink-muted"
-                dangerouslySetInnerHTML={{ __html: visit.location.addressHtml }}
-              />
+                rehypePlugins={[rehypeRaw, rehypeSanitize]}
+              >
+                {visit.location.addressHtml}
+              </ReactMarkdown>
               {visit.location.hoursHtml ? (
-                <div
+                <ReactMarkdown
                   className="text-[11px] sm:text-xs uppercase tracking-[0.25em] text-ink-muted"
-                  dangerouslySetInnerHTML={{ __html: visit.location.hoursHtml }}
-                />
+                  rehypePlugins={[rehypeRaw, rehypeSanitize]}
+                >
+                  {visit.location.hoursHtml}
+                </ReactMarkdown>
               ) : null}
               {visit.location.notesHtml ? (
-                <div
+                <ReactMarkdown
                   className="text-sm leading-relaxed text-ink-muted"
-                  dangerouslySetInnerHTML={{ __html: visit.location.notesHtml }}
-                />
+                  rehypePlugins={[rehypeRaw, rehypeSanitize]}
+                >
+                  {visit.location.notesHtml}
+                </ReactMarkdown>
               ) : null}
               <div className="space-y-3 pt-2">
                 <p id={mapNoteId} className="sr-only">
@@ -174,9 +185,9 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                     id="visit-expect-content"
                     className="mt-3 rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/75"
                   >
-                    <div
-                      dangerouslySetInnerHTML={{ __html: visit.whatToExpectHtml }}
-                    />
+                    <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+                      {visit.whatToExpectHtml}
+                    </ReactMarkdown>
                   </Collapsible.Content>
                 </Collapsible.Root>
               ) : null}

@@ -16,7 +16,7 @@ type FiltersPanelProps = {
 };
 
 function safeLabel(value: string, max = 36) {
-  const s = String(value ?? "");
+  const s = String(value);
   return s.length > max ? `${s.slice(0, max)}…` : s;
 }
 
@@ -154,7 +154,7 @@ export function PgptInsightsFiltersPanel({
     requestAnimationFrame(() => window.scrollTo({ top: y }));
   }, [searchParamsKey]);
 
-  function setParam(key: string, value: string) {
+  const setParam = useCallback((key: string, value: string) => {
     const next = new URLSearchParams(searchParams.toString());
 
     const deleteIfDefault = () => {
@@ -181,7 +181,7 @@ export function PgptInsightsFiltersPanel({
       }
     };
 
-    const v = String(value ?? "").trim();
+    const v = String(value).trim();
 
     if (v === "") {
       next.delete(key);
@@ -192,7 +192,7 @@ export function PgptInsightsFiltersPanel({
 
     next.delete("page");
     replaceParams(next);
-  }
+  }, [defaultDays, replaceParams, searchParams]);
 
   const removeParam = useCallback((key: string) => {
     const next = new URLSearchParams(searchParams.toString());
@@ -252,33 +252,27 @@ export function PgptInsightsFiltersPanel({
 
       if (changed) replaceParams(next);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [densityKey, replaceParams, searchParams, viewKey]);
 
   const [qInput, setQInput] = useState(qUrl);
-  useEffect(() => setQInput(qUrl), [qUrl]);
-
   useEffect(() => {
     if (qInput === qUrl) return;
     const t = globalThis.setTimeout(() => {
       setParam("q", qInput.trim());
-      if (!qInput.trim()) {
-        const next = new URLSearchParams(searchParams.toString());
-        next.delete("q");
-        next.delete("page");
-        replaceParams(next);
-      }
     }, 350);
 
     return () => globalThis.clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qInput, qUrl]);
+  }, [qInput, qUrl, setParam]);
 
   const [grReasonInput, setGrReasonInput] = useState(grReasonUrl);
-  useEffect(() => setGrReasonInput(grReasonUrl), [grReasonUrl]);
-
   const [modelInput, setModelInput] = useState(modelUrl);
-  useEffect(() => setModelInput(modelUrl), [modelUrl]);
+  /* eslint-disable react-hooks/set-state-in-effect -- syncing controlled inputs when URL params change */
+  useEffect(() => {
+    setQInput(qUrl);
+    setGrReasonInput(grReasonUrl);
+    setModelInput(modelUrl);
+  }, [grReasonUrl, modelUrl, qUrl]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
 
 
@@ -458,7 +452,9 @@ export function PgptInsightsFiltersPanel({
           <span className={inlineLabelClass}>Search logs:</span>
           <input
             value={qInput}
-            onChange={(e) => setQInput(e.target.value)}
+            onChange={(e) => {
+              setQInput(e.target.value);
+            }}
             placeholder="Search prompts/responses…"
             className={inputClass}
           />
@@ -555,7 +551,9 @@ export function PgptInsightsFiltersPanel({
             <span className={inlineLabelClass}>Model:</span>
             <input
               value={modelInput}
-              onChange={(e) => setModelInput(e.target.value)}
+              onChange={(e) => {
+                setModelInput(e.target.value);
+              }}
               onBlur={() => setParam("model", modelInput.trim())}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {

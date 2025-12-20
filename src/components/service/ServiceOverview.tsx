@@ -1,5 +1,8 @@
 "use client";
 
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 import type { ServiceOverviewSection } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
@@ -12,12 +15,8 @@ export function ServiceOverview({ overview }: ServiceOverviewProps) {
   const heading = overview.heading ?? "Overview";
   const subheading = overview.subheading ?? "Factory-level care, wherever you are";
   const checksHeading = overview.checksHeading ?? "Standard checks";
-  const checkItems =
-    overview.checks?.map((item) => `<li>${item}</li>`).join("") ?? "";
-  const checksContent =
-    checkItems && !overview.checksHtml
-      ? `<ul>${checkItems}</ul>`
-      : overview.checksHtml ?? "";
+  const hasCustomChecksHtml = Boolean(overview.checksHtml);
+  const checksList = !hasCustomChecksHtml ? overview.checks ?? [] : [];
 
   return (
     <section
@@ -36,19 +35,33 @@ export function ServiceOverview({ overview }: ServiceOverviewProps) {
         >
           {subheading}
         </h2>
-        <div
+        <ReactMarkdown
           className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg"
-          dangerouslySetInnerHTML={{ __html: overview.introHtml }}
-        />
+          rehypePlugins={[rehypeRaw, rehypeSanitize]}
+        >
+          {overview.introHtml}
+        </ReactMarkdown>
       </div>
       <div className="rounded-2xl border border-border/75 bg-card/75 p-5 shadow-sm sm:rounded-3xl md:p-6 lg:p-8">
         <h3 className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
           {checksHeading}
         </h3>
-        <div
-          className="prose prose-base max-w-none leading-relaxed text-ink md:prose-lg"
-          dangerouslySetInnerHTML={{ __html: checksContent || (overview.checksHtml ?? "") }}
-        />
+        {hasCustomChecksHtml ? (
+          <ReactMarkdown
+            className="prose prose-base max-w-none leading-relaxed text-ink md:prose-lg"
+            rehypePlugins={[rehypeRaw, rehypeSanitize]}
+          >
+            {overview.checksHtml ?? ""}
+          </ReactMarkdown>
+        ) : checksList.length ? (
+          <ul className="prose prose-base max-w-none list-disc pl-5 leading-relaxed text-ink md:prose-lg">
+            {checksList.map((item, index) => (
+              <li key={index} className="marker:text-ink-muted">
+                {item}
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
     </section>
   );

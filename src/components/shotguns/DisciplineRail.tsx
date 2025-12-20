@@ -2,6 +2,9 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 
 import type { Platform, ShotgunsLandingData } from "@/types/catalog";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -262,7 +265,7 @@ export function DisciplineRail({
                                       {discipline.name}
                                     </span>
                                     <span className="mt-0.5 block text-[11px] uppercase tracking-[0.25em] text-ink-muted group-hover:text-ink-muted/90">
-                                      {discipline.id.replaceAll("-", " ")}
+                                      {discipline.id.replace(/-/g, " ")}
                                     </span>
                                   </button>
                                 </li>
@@ -415,10 +418,12 @@ function DisciplineCard({
         </div>
       </div>
       <div className="flex flex-1 flex-col gap-6 p-6">
-        <div
+        <ReactMarkdown
           className="prose prose-sm italic max-w-none text-ink-muted"
-          dangerouslySetInnerHTML={{ __html: discipline.overviewHtml }}
-        />
+          rehypePlugins={[rehypeRaw, rehypeSanitize]}
+        >
+          {discipline.overviewHtml}
+        </ReactMarkdown>
         {discipline.recommendedPlatforms?.length ? (
           <div className="space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">

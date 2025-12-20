@@ -16,6 +16,7 @@ export function CategoryHub({ category, data }: HubProps) {
   const [visibleCount, setVisibleCount] = useState(2);
   const items = data.items.slice(0, visibleCount);
   const heading = getCategoryHeading(category);
+  const headerText = data.headerHtml ? stripHtml(data.headerHtml) : null;
 
   return (
     <section className="space-y-4" aria-labelledby={`category-${category}`}>
@@ -27,11 +28,8 @@ export function CategoryHub({ category, data }: HubProps) {
           <h2 id={`category-${category}`} className="text-2xl font-semibold text-ink">
             {heading}
           </h2>
-          {data.headerHtml ? (
-            <div
-              className="prose prose-sm max-w-2xl text-ink-muted"
-              dangerouslySetInnerHTML={{ __html: data.headerHtml }}
-            />
+          {headerText ? (
+            <p className="prose prose-sm max-w-2xl text-ink-muted">{headerText}</p>
           ) : null}
         </div>
         <Link

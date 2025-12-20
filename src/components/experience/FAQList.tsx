@@ -3,6 +3,9 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 import type { FAQItem } from "@/types/experience";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
@@ -139,7 +142,9 @@ function FAQItemCard({ item, index }: FAQItemCardProps) {
         </span>
       </Collapsible.Trigger>
       <Collapsible.Content className="mt-2 overflow-hidden rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted sm:bg-card/60">
-        <div dangerouslySetInnerHTML={{ __html: item.aHtml }} />
+        <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+          {item.aHtml}
+        </ReactMarkdown>
       </Collapsible.Content>
     </Collapsible.Root>
   );

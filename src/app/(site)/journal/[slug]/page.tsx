@@ -68,11 +68,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const { article, author, related } = data;
   const jsonLd = getArticleJsonLd(article, author?.name ?? article.authorRef.name);
   const breadcrumbs = getBreadcrumbJsonLd(article);
+  const jsonLdText = JSON.stringify(jsonLd);
+  const breadcrumbsText = JSON.stringify(breadcrumbs);
 
   return (
     <div className="space-y-10">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbs) }} />
+      <script type="application/ld+json">{jsonLdText}</script>
+      <script type="application/ld+json">{breadcrumbsText}</script>
       <ArticleHero article={article} />
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_260px]">
         <PortableBody blocks={article.bodyPortableText} />

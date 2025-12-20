@@ -3,6 +3,9 @@
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -35,10 +38,12 @@ function BookingOptionCard({ option }: BookingOptionCardProps) {
         <p className="text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink-muted">
           {option.durationLabel ?? (option.durationMins ? `${option.durationMins} minutes` : "")}
         </p>
-        <div
+        <ReactMarkdown
           className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg"
-          dangerouslySetInnerHTML={{ __html: option.descriptionHtml }}
-        />
+          rehypePlugins={[rehypeRaw, rehypeSanitize]}
+        >
+          {option.descriptionHtml}
+        </ReactMarkdown>
       </div>
       <div className="mt-auto pt-6">
         <Button
@@ -108,10 +113,12 @@ function WhatToExpectCollapsible({
             : "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
         )}
       >
-        <div
+        <ReactMarkdown
           className="prose prose-base max-w-none pb-4 leading-relaxed text-ink-muted md:prose-lg lg:pb-5"
-          dangerouslySetInnerHTML={{ __html: item.bodyHtml }}
-        />
+          rehypePlugins={[rehypeRaw, rehypeSanitize]}
+        >
+          {item.bodyHtml}
+        </ReactMarkdown>
       </Collapsible.Content>
     </Collapsible.Root>
   );

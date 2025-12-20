@@ -174,7 +174,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
         }}
       >
         <div
-          className="absolute inset-0 -z-10 bg-gradient-to-t from-black via-black/50 to-canvas"
+          className="absolute inset-0 -z-10 bg-linear-to-t from-black via-black/50 to-canvas"
           aria-hidden="true"
         />
         <div className="relative mx-auto flex max-w-6xl flex-col gap-8 px-6 text-white lg:flex-row lg:items-center lg:gap-12">
@@ -209,7 +209,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
                 className="h-auto w-full object-contain"
                 loading="lazy"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" aria-hidden="true" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-transparent" aria-hidden="true" />
             </div>
             <div className="mt-6 flex justify-center lg:hidden">
               <Link

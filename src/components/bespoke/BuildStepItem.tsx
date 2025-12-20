@@ -2,6 +2,9 @@
 
 import Image from "next/image";
 import { useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
@@ -106,10 +109,11 @@ export function BuildStepItem({
   );
 
   const caption = step.captionHtml ? (
-    <figcaption
-      className="rounded-2xl border border-border/60 bg-card/40 p-4 text-[11px] sm:text-xs leading-relaxed text-ink-muted"
-      dangerouslySetInnerHTML={{ __html: step.captionHtml }}
-    />
+    <figcaption className="rounded-2xl border border-border/60 bg-card/40 p-4 text-[11px] sm:text-xs leading-relaxed text-ink-muted">
+      <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+        {step.captionHtml}
+      </ReactMarkdown>
+    </figcaption>
   ) : null;
 
   const header = (
@@ -122,10 +126,12 @@ export function BuildStepItem({
   );
 
   const description = (
-    <div
+    <ReactMarkdown
       className="prose prose-sm max-w-none leading-relaxed text-ink-muted"
-      dangerouslySetInnerHTML={{ __html: step.bodyHtml }}
-    />
+      rehypePlugins={[rehypeRaw, rehypeSanitize]}
+    >
+      {step.bodyHtml}
+    </ReactMarkdown>
   );
 
   const cta =

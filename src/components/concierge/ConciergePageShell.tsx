@@ -52,7 +52,7 @@ type SavedBuild = {
   name: string;
   timestamp: number;
   buildState: BuildState;
-  selectedInfoByField?: Record<string, InfoCard[]>;
+  selectedInfoByField?: Partial<Record<string, InfoCard[]>>;
 };
 
 const FIELD_DESCRIPTIONS: Record<string, string> = {
@@ -144,6 +144,22 @@ const MODES = [
   { label: "Navigation / visit", value: "navigation" as const },
 ];
 
+const SAFE_ENGRAVING_QUERY = /^[\w\s\-./()']+$/;
+
+const buildSafeEngravingsUrl = (query: string, byGrade = false) => {
+  const cleaned = query.trim();
+  // Guard against protocol injection and unexpected characters to avoid SSRF-style input.
+  if (!cleaned || cleaned.length > 100 || cleaned.startsWith("//") || /https?:\/\//i.test(cleaned)) {
+    return null;
+  }
+  if (!SAFE_ENGRAVING_QUERY.test(cleaned)) {
+    return null;
+  }
+  const params = new URLSearchParams();
+  params.set(byGrade ? "grade" : "id", cleaned);
+  return `/api/engravings?${params.toString()}`;
+};
+
 export function ConciergePageShell() {
   const locale = useLocale();
   const [draft, setDraft] = useState("");
@@ -156,12 +172,12 @@ export function ConciergePageShell() {
   const [highlightedOption, setHighlightedOption] = useState<{ fieldId: string; value: string } | null>(null);
   const [infoLoading, setInfoLoading] = useState(false);
   const [infoCards, setInfoCards] = useState<InfoCard[]>([]);
-  const [infoByOption, setInfoByOption] = useState<Record<string, InfoCard[]>>({});
+  const [infoByOption, setInfoByOption] = useState<Partial<Record<string, InfoCard[]>>>({});
   const [infoError, setInfoError] = useState<string | null>(null);
   const [selectedInfoCard, setSelectedInfoCard] = useState<InfoCard | null>(null);
   const [detailsDrawerOpen, setDetailsDrawerOpen] = useState(false);
   const [buildSheetDrawerOpen, setBuildSheetDrawerOpen] = useState(false);
-  const [selectedInfoByField, setSelectedInfoByField] = useState<Record<string, InfoCard[]>>({});
+  const [selectedInfoByField, setSelectedInfoByField] = useState<Partial<Record<string, InfoCard[]>>>({});
   const [savedBuilds, setSavedBuilds] = useState<SavedBuild[]>([]);
   const SAVES_KEY = "perazzi-build-saves";
 
@@ -227,23 +243,28 @@ export function ConciergePageShell() {
     if (!input) return true;
     return input.includes("://") || input.startsWith("//");
   };
-  const buildSafeBuildInfoUrl = (fieldId: string, value: string, model?: string) => {
-    if (!fieldOrder.includes(fieldId) || isUnsafeQueryValue(value)) {
-      return null;
-    }
-    const allowedValues = getValidOptions(fieldId, buildState).map((opt) => opt.value);
-    if (allowedValues.length > 0 && !allowedValues.includes(value)) {
-      return null;
-    }
-    const params = new URLSearchParams({ field: fieldId, value });
-    if (model && !isUnsafeQueryValue(model)) {
-      const allowedModels = getValidOptions("MODEL", buildState).map((opt) => opt.value);
-      if (allowedModels.length === 0 || allowedModels.includes(model)) {
-        params.set("model", model);
+  const isSafeFieldId = (fieldId: string) =>
+    /^[A-Z0-9_]+$/.test(fieldId) && !["__proto__", "prototype", "constructor"].includes(fieldId);
+  const buildSafeBuildInfoUrl = useCallback(
+    (fieldId: string, value: string, model?: string) => {
+      if (!fieldOrder.includes(fieldId) || isUnsafeQueryValue(value)) {
+        return null;
       }
-    }
-    return `/api/build-info?${params.toString()}`;
-  };
+      const allowedValues = getValidOptions(fieldId, buildState).map((opt) => opt.value);
+      if (allowedValues.length > 0 && !allowedValues.includes(value)) {
+        return null;
+      }
+      const params = new URLSearchParams({ field: fieldId, value });
+      if (model && !isUnsafeQueryValue(model)) {
+        const allowedModels = getValidOptions("MODEL", buildState).map((opt) => opt.value);
+        if (allowedModels.length === 0 || allowedModels.includes(model)) {
+          params.set("model", model);
+        }
+      }
+      return `/api/build-info?${params.toString()}`;
+    },
+    [buildState, fieldOrder],
+  );
 
   useEffect(() => {
     if (nextField?.id !== "ENGRAVING") {
@@ -257,23 +278,18 @@ export function ConciergePageShell() {
   }, [nextField]);
 
   const nextFieldAfterCurrent = useMemo(() => {
-    if (!nextField) return undefined;
+    if (!nextField || !isSafeFieldId(nextField.id)) return undefined;
     const currentIndex = fieldOrder.indexOf(nextField.id);
     const hypotheticalState = { ...buildState, [nextField.id]: "__PENDING__" };
     for (let i = currentIndex + 1; i < fieldOrder.length; i += 1) {
       const candidateId = fieldOrder[i];
-      // Only allow string keys that match expected field IDs and prevent prototype pollution
-      if (
-        typeof candidateId !== "string" ||
-        !/^[A-Z0-9_]+$/.test(candidateId) ||
-        ["__proto__", "prototype", "constructor"].includes(candidateId)
-      ) {
+      if (typeof candidateId !== "string" || !isSafeFieldId(candidateId)) {
         continue;
       }
       const candidateField = gunOrderConfig.fields.find((f) => f.id === candidateId);
       if (!candidateField) continue;
       const depsMet = candidateField.dependsOn.every(
-        (dep) => hypotheticalState[dep] !== undefined,
+        (dep) => isSafeFieldId(dep) && hypotheticalState[dep] !== undefined,
       );
       if (Object.prototype.hasOwnProperty.call(hypotheticalState, candidateId) && depsMet) {
         return candidateField;
@@ -329,6 +345,10 @@ export function ConciergePageShell() {
   };
 
   const handleFieldSelection = (fieldId: string, value: string) => {
+    if (!isSafeFieldId(fieldId)) {
+      setBuildError("That choice is not compatible with current selections.");
+      return;
+    }
     const field = gunOrderConfig.fields.find((f) => f.id === fieldId);
     const hasStructuredOptions = (field?.options.length ?? 0) > 0;
     if (hasStructuredOptions) {
@@ -415,9 +435,15 @@ export function ConciergePageShell() {
       }
       setEngravingLoading(true);
       setEngravingError(null);
+      const url = buildSafeEngravingsUrl(trimmed, byGrade);
+      if (!url) {
+        setEngravingResults([]);
+        setEngravingError("Please enter a valid engraving search term.");
+        setEngravingLoading(false);
+        return;
+      }
       try {
-        const param = byGrade ? `grade=${encodeURIComponent(trimmed)}` : `id=${encodeURIComponent(trimmed)}`;
-        const res = await fetch(`/api/engravings?${param}`);
+        const res = await fetch(url);
         if (!res.ok) {
           setEngravingError("Unable to fetch engravings. Please try again.");
           setEngravingResults([]);
@@ -527,7 +553,7 @@ export function ConciergePageShell() {
     };
     void run();
     return () => controller.abort();
-  }, [nextField, nextFieldOptions, buildState.MODEL]);
+  }, [nextField, nextFieldOptions, buildState.MODEL, buildSafeBuildInfoUrl]);
 
   const handleExplainCurrent = async () => {
     if (!nextField) return;
@@ -545,10 +571,14 @@ export function ConciergePageShell() {
   };
 
   const handleRevisitField = (fieldId: string) => {
+    if (!isSafeFieldId(fieldId)) return;
     const targetIndex = fieldOrder.indexOf(fieldId);
     if (targetIndex === -1) return;
     const nextState: BuildState = {};
     fieldOrder.forEach((fid, idx) => {
+      if (!isSafeFieldId(fid)) {
+        return;
+      }
       if (idx < targetIndex && buildState[fid]) {
         nextState[fid] = buildState[fid];
       }
@@ -574,12 +604,15 @@ export function ConciergePageShell() {
 
   const fetchInfoForSelection = useCallback(
     async (fieldId: string, value: string): Promise<InfoCard[]> => {
+      if (!isSafeFieldId(fieldId)) return [];
       if (!value) return [];
       const gradeModel = buildState.MODEL;
       if (fieldId === "ENGRAVING") {
         const idPart = value.split(" ")[0];
+        const url = buildSafeEngravingsUrl(idPart);
+        if (!url) return [];
         try {
-          const res = await fetch(`/api/engravings?id=${encodeURIComponent(idPart)}`);
+          const res = await fetch(url);
           if (!res.ok) return [];
           const data = await res.json();
           return (data.engravings ?? []).map((engraving: EngravingResult) => ({
@@ -607,20 +640,26 @@ export function ConciergePageShell() {
         return [];
       }
     },
-    [buildState],
+    [buildState, buildSafeBuildInfoUrl],
   );
 
   useEffect(() => {
     if (!buildSheetDrawerOpen) return;
     const missing = fieldOrder
-      .filter((fid) => buildState[fid])
+      .filter((fid) => isSafeFieldId(fid) && buildState[fid])
       .filter((fid) => !selectedInfoByField[fid]);
     if (!missing.length) return;
     const controller = new AbortController();
     const run = async () => {
       const updates: Record<string, InfoCard[]> = {};
       for (const fid of missing) {
+        if (!isSafeFieldId(fid)) {
+          continue;
+        }
         const val = buildState[fid];
+        if (!val) {
+          continue;
+        }
         const cached = infoByOption[val];
         if (cached?.length) {
           updates[fid] = cached;
@@ -883,7 +922,9 @@ export function ConciergePageShell() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setDetailsDrawerOpen(true)}
+                        onClick={() => {
+                          setDetailsDrawerOpen(true);
+                        }}
                         className="mt-2 inline-flex w-full min-h-10 items-center justify-center rounded-full border border-subtle bg-card px-3 py-2 text-center text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
                       >
                         {infoLoading ? "Loading details…" : "View More Details"}
@@ -914,7 +955,9 @@ export function ConciergePageShell() {
               <div className="space-y-3 rounded-2xl border border-subtle px-3 py-3">
                 <button
                   type="button"
-                  onClick={() => setBuildSheetDrawerOpen(true)}
+                  onClick={() => {
+                    setBuildSheetDrawerOpen(true);
+                  }}
                   className="w-full rounded-full border border-perazzi-red bg-perazzi-red px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:border-ink hover:text-card"
                 >
                   View Build Sheet
@@ -934,23 +977,25 @@ export function ConciergePageShell() {
           <div className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-card shadow-2xl">
             <button
               type="button"
-              onClick={() => setSelectedInfoCard(null)}
+              onClick={() => {
+                setSelectedInfoCard(null);
+              }}
               className="absolute right-4 top-4 rounded-full border border-subtle bg-card px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
             >
               Close
             </button>
-            <div className="flex-1 space-y-4 overflow-y-auto p-6 pr-5">
-              {selectedInfoCard.imageUrl ? (
-                <Image
-                  src={selectedInfoCard.fullImageUrl ?? selectedInfoCard.imageUrl ?? ""}
-                  alt={selectedInfoCard.title}
-                  width={1600}
-                  height={1000}
-                  className="w-full rounded-2xl object-cover"
-                />
-              ) : null}
-              <div className="space-y-2">
-                <h3 className="text-xl font-semibold text-ink">{selectedInfoCard.title}</h3>
+              <div className="flex-1 space-y-4 overflow-y-auto p-6 pr-5">
+                {selectedInfoCard.imageUrl ? (
+                  <Image
+                    src={selectedInfoCard.fullImageUrl ?? selectedInfoCard.imageUrl}
+                    alt={selectedInfoCard.title}
+                    width={1600}
+                    height={1000}
+                    className="w-full rounded-2xl object-cover"
+                  />
+                ) : null}
+                <div className="space-y-2">
+                  <h3 className="text-xl font-semibold text-ink">{selectedInfoCard.title}</h3>
                 {selectedInfoCard.description ? (
                   <p className="text-sm text-ink-muted whitespace-pre-line">{selectedInfoCard.description}</p>
                 ) : null}
@@ -994,7 +1039,7 @@ export function ConciergePageShell() {
         <BuildSheetDrawer
           open={buildSheetDrawerOpen}
           entries={fieldOrder
-            .filter((fid) => buildState[fid])
+            .filter((fid) => isSafeFieldId(fid) && buildState[fid])
             .map((fid) => {
               const val = buildState[fid];
               const info = selectedInfoByField[fid] ?? infoByOption[val] ?? [];

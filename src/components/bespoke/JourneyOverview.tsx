@@ -1,6 +1,9 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize from "rehype-sanitize";
 import type { JourneyOverviewData } from "@/types/build";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
@@ -27,10 +30,12 @@ export function JourneyOverview({ journey }: JourneyOverviewProps) {
         <h2 id="journey-overview-heading" className="sr-only">
           Journey overview
         </h2>
-        <div
+        <ReactMarkdown
           className="prose prose-sm max-w-none leading-relaxed text-ink"
-          dangerouslySetInnerHTML={{ __html: journey.introHtml }}
-        />
+          rehypePlugins={[rehypeRaw, rehypeSanitize]}
+        >
+          {journey.introHtml}
+        </ReactMarkdown>
         <nav aria-label="Journey steps">
           <ol className="grid gap-2 sm:grid-cols-2">
             {journey.steps.map((step) => (
@@ -51,10 +56,12 @@ export function JourneyOverview({ journey }: JourneyOverviewProps) {
             ))}
           </ol>
         </nav>
-        <div
+        <ReactMarkdown
           className="text-[11px] sm:text-xs leading-relaxed text-ink-muted"
-          dangerouslySetInnerHTML={{ __html: journey.disclaimerHtml }}
-        />
+          rehypePlugins={[rehypeRaw, rehypeSanitize]}
+        >
+          {journey.disclaimerHtml}
+        </ReactMarkdown>
       </div>
     </motion.section>
   );

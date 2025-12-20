@@ -61,11 +61,9 @@ export function FAQList({
           </div>
         ))}
       </dl>
-      <script
-        id={scriptId}
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: schema }}
-      />
+      <script id={scriptId} type="application/ld+json">
+        {schema}
+      </script>
     </section>
   );
 }

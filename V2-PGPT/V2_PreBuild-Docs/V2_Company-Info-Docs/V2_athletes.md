@@ -95,7 +95,7 @@ All canonical names appear as section headings in Section 3.
 
 Wendell Cherry’s journey to the pinnacle of sporting clays is described as unique and inspiring. A professional musician in his early life, Wendell performed at iconic venues like the Grand Ole Opry and Ryman Auditorium before discovering clay shooting in the mid-1990s. Trading guitar strings for shotgun shells, he quickly proved a natural talent – shooting competitively by 2002 and never looking back[1].
 
-Wendell’s background instilled in him a quiet confidence and discipline; he balances a prolific competitive career with a passion for coaching, guiding countless shooters with the same calm, focused demeanor that defines his own style[2][3].
+Wendell’s background instilled in him a quiet confidence and discipline; he balances a prolific competitive career with a passion for coaching, guiding countless shooters with the same calm, focused demeanor that defines his own style.
 
 Over a career spanning decades, Wendell has amassed a resume described as one few can rival. Inducted into the NSCA Hall of Fame in 2012[4], he is a multi-time U.S. Open Sporting Clays Champion, most recently claiming the 2023 HOA title after a dramatic shoot-off in Arizona[5]. He has represented the United States internationally, earning a World Sporting Clays Silver Medal as the top American in 2015[6]. Wendell has shot a perfect 100-straight in competition on five separate occasions – presented as a testament to his precision and composure under pressure[7].
 
@@ -109,7 +109,7 @@ These achievements collectively position him as one of the most decorated sporti
 
 ##### 3.1.1.2 Relationship with Perazzi & Equipment
 
-Wendell is described as trusting Perazzi shotguns to perform at the highest level. His competition gun of choice is a custom-fitted Perazzi MX2000 with 34″ barrels and fixed chokes (Improved Mod and Full)[9].
+Wendell is described as trusting Perazzi shotguns to perform at the highest level. His competition gun of choice is a custom-fitted Perazzi MX2000 with 34″ barrels and fixed chokes (Improved Mod and Full).
 
 Key points:
 
@@ -129,7 +129,7 @@ Ian Lawrence is portrayed as a young but highly accomplished face in American Tr
 
 Early achievements:
 
-- At 13, he swept his Sub-Junior division at the Grand American, shooting a perfect 100/100 and winning three events (including the President’s Handicap) against fields of over a thousand competitors[11][12].  
+- At 13, he swept his Sub-Junior division at the Grand American, shooting a perfect 100/100 and winning three events (including the President’s Handicap) against fields of over a thousand competitors.  
 - This period is described as revealing a rising prodigy.  
 
 Ian is characterized by an earnest, authentic demeanor, balancing quiet confidence with relentless practice – summarized in the source as “practice, practice, practice” until he learned how to “focus and break ’em all”[13].
@@ -166,7 +166,7 @@ By his early twenties, he had amassed several major titles, signaling that a “
 - Two-time Northeast Regional Champion.  
 - 2018 South Central Regional Champion.  
 - PSCA Tour Stop Champion.  
-- Back-to-back Gamaliel Cup HOA winner[16][17].  
+- Back-to-back Gamaliel Cup HOA winner.  
 
 These victories, against some of the toughest fields in the nation, are presented as evidence of Tom’s consistency and competitive grit.
 
@@ -178,11 +178,11 @@ The source notes that those who know Tom describe him as:
 Additional milestones:
 
 - Multiple-time USA Junior Team Captain.  
-- World junior titles before transitioning successfully to the open/professional level[19][20].  
+- World junior titles before transitioning successfully to the open/professional level.  
 - In 2017, at just 21, Tom won the North East Regional Championship and a PSCA Tour stop in a dramatic shoot-off[21].  
 - By 2019, he was a fixture on Team USA and a multiple National Junior Champion[19].  
 
-The text also highlights Tom’s roles beyond competition, including coaching and guest podcast hosting – reflecting a maturity in giving back to the sport[22][23].
+The text also highlights Tom’s roles beyond competition, including coaching and guest podcast hosting – reflecting a maturity in giving back to the sport.
 
 ##### 3.1.3.2 Relationship with Perazzi & Equipment
 
@@ -210,14 +210,14 @@ Key early-career milestones:
 - Won his first major title at 16, becoming the youngest ever to take an HOA at a major championship[25].  
 - By 14, he had already captained Team USA, setting an age record that set the tone for his career[26].  
 
-The source states that David is a 14-time world champion across various disciplines and age categories[27][28]. His accolades include:
+The source states that David is a 14-time world champion across various disciplines and age categories. His accolades include:
 
 - World FITASC Champion.  
 - Three-time U.S. Open Sporting Clays Champion.  
 - Four Professional Clay Shooting Association (PCSA) tour titles[27].  
-- Representation of the United States on 15 international teams, ranging from junior world championships to senior world titles[29][30].  
+- Representation of the United States on 15 international teams, ranging from junior world championships to senior world titles.  
 
-David is described as a “thinking man’s shooter,” holding a degree in marketing and psychology and viewing clay shooting as both art and science[31][32]. His psychological and philosophical approach to shooting is mentioned in connection with his coaching and a popular podcast[33].
+David is described as a “thinking man’s shooter,” holding a degree in marketing and psychology and viewing clay shooting as both art and science. His psychological and philosophical approach to shooting is mentioned in connection with his coaching and a popular podcast[33].
 
 Additional achievements and notes:
 
@@ -226,7 +226,7 @@ Additional achievements and notes:
 - Multiple world titles as both junior and adult[29].  
 - Recognized for sportsmanship and innovative vision for the sport.  
 
-He is also described as founder of The Champions Network, an initiative aimed at growing shooting sports through media[35][36]. Through roles as competitor, coach, and entrepreneur, the source emphasizes that David remains “at heart, the wide-eyed kid who fell in love with a shotgun,” channeling that passion into everything he does.
+He is also described as founder of The Champions Network, an initiative aimed at growing shooting sports through media. Through roles as competitor, coach, and entrepreneur, the source emphasizes that David remains “at heart, the wide-eyed kid who fell in love with a shotgun,” channeling that passion into everything he does.
 
 ##### 3.1.4.2 Relationship with Perazzi & Equipment
 
@@ -234,12 +234,12 @@ David Radulovich is portrayed as synonymous with Perazzi.
 
 Key statements and equipment details:
 
-- He is quoted as saying a Perazzi isn’t just a shotgun, but “the tangible embodiment of my aspirations, dedication, and identity”[37][38].  
+- He is quoted as saying a Perazzi isn’t just a shotgun, but “the tangible embodiment of my aspirations, dedication, and identity.”  
 - He began his Perazzi journey as a teenager and now relies on a Perazzi High Tech Sporting gun at the highest level (including favored models such as the Perazzi MX12 and High Tech S, customized for his fit).  
-- With this shotgun, he won the 2017 World FITASC in Budapest, using Gamebore Black Gold cartridges, and felt the equipment gave him an edge[39][40].  
+- With this shotgun, he won the 2017 World FITASC in Budapest, using Gamebore Black Gold cartridges, and felt the equipment gave him an edge.  
 - His current Perazzi is described as featuring bespoke stock dimensions and balanced 34″ barrels, chosen to match his smooth, methodical style.
 
-The text characterizes David’s Perazzi as an “instrument of precision and quiet power.” When he shoulders it, he is said to embody the Perazzi brand tone – authentic, aspirational, and calmly confident – inviting others to feel excellence alongside him[41][42].
+The text characterizes David’s Perazzi as an “instrument of precision and quiet power.” When he shoulders it, he is said to embody the Perazzi brand tone – authentic, aspirational, and calmly confident – inviting others to feel excellence alongside him.
 
 ---
 
@@ -263,7 +263,7 @@ Paul began shooting at age 7, breaking records throughout his youth. By 16, he h
 
 He is also described as:
 
-- A sought-after instructor and author, sharing the fundamentals and mindset that made him a champion[46][47].  
+- A sought-after instructor and author, sharing the fundamentals and mindset that made him a champion.  
 - A coach whose students have gone on to win Open world titles, which he counts among his proudest achievements[48].  
 
 The source emphasizes his humble confidence and thoughtful precision, both as an athlete and mentor.
@@ -284,7 +284,7 @@ He praises:
 - Custom stock fit.  
 - The crisp dropout trigger that matches his timing[46].  
 
-With this High Tech 3, Paul has secured numerous championships, including world titles and historic 400×400 runs[44]. He notes that “when Perazzi builds you a gun, there are no alterations needed – it’s perfect from day one”[50][51].
+With this High Tech 3, Paul has secured numerous championships, including world titles and historic 400×400 runs[44]. He notes that “when Perazzi builds you a gun, there are no alterations needed – it’s perfect from day one.”
 
 On the skeet field, Paul is depicted as embodying calm focus, born of confidence in both shooter and gun. His ongoing legacy continues with Perazzi as a central component of his success.
 
@@ -320,7 +320,7 @@ George is characterized by:
   - Multiple European titles.  
   - The only person to win World Championships in five different decades.  
 
-He often shares insights with younger competitors, from mental focus to fundamentals like gun fit and follow-through[54][55]. He has also focused on coaching and producing instructional content.
+He often shares insights with younger competitors, from mental focus to fundamentals like gun fit and follow-through. He has also focused on coaching and producing instructional content.
 
 ##### 3.1.6.2 Relationship with Perazzi & Equipment
 
@@ -328,16 +328,16 @@ George’s relationship with Perazzi is depicted as a search for the perfect too
 
 Key equipment timeline:
 
-- Switched to Perazzi in 2001, adopting a Perazzi MX2000S with 32″ barrels and fixed Full chokes[56][57].  
+- Switched to Perazzi in 2001, adopting a Perazzi MX2000S with 32″ barrels and fixed Full chokes.  
 - With the MX2000S, he won championships for roughly 15 years; the gun became almost as legendary as George himself.  
-- In 2016, he tried the newer Perazzi High Tech model and captured three World Championships in a single year[58][59].  
-- Ultimately returned to the MX2000S, stating that its balance and feel were uniquely suited to him[59].  
+- In 2016, he tried the newer Perazzi High Tech model and captured three World Championships in a single year.  
+- Ultimately returned to the MX2000S, stating that its balance and feel were uniquely suited to him.  
 
 Customization details:
 
 - Parallel stock for a consistent mount.  
 - Tapered rib for a precise focal plane[60].  
-- Fixed chokes (Full and Full) used in all situations, reflecting his philosophy that if he does his job, the tight pattern will do the rest[61][62].  
+- Fixed chokes (Full and Full) used in all situations, reflecting his philosophy that if he does his job, the tight pattern will do the rest.  
 
 The source highlights the synergy between George and his Perazzi: smooth mount, intense focus, and decisive shooting, with observers describing his performances as a “master class in calm concentration.”
 
@@ -391,19 +391,19 @@ Dania Vizzi’s story is described as a graceful transformation from ballet danc
 Key elements from the source:
 
 - Nicknamed the “Shooterina” (shooter + ballerina).  
-- Spent childhood training in dance, including a Juilliard summer program, before discovering her true “stage” on the skeet range[67][68].  
+- Spent childhood training in dance, including a Juilliard summer program, before discovering her true “stage” on the skeet range.  
 - Became ISSF Women’s Skeet World Champion in 2017, winning gold in Moscow[69].  
 - First woman ever to win both a Junior World title (2014) and an Open World title in Women’s Skeet[70].  
 
 Additional achievements:
 
-- Multiple World Cup medals, including a silver in Lonato[71].  
+- Multiple World Cup medals, including a silver in Lonato.  
 - Several USA National Championships.  
 - Pan American Games gold medal in Mixed Team Skeet [2023](72).  
 
-Dania typically trains with high frequency [source notes: six days a week, ~250 targets a day](74)[71]. She narrowly missed the 2016 Olympic team but later made the Tokyo 2020 (held 2021) Olympic team as an alternate.
+Dania typically trains with high frequency (source notes: six days a week, ~250 targets a day). She narrowly missed the 2016 Olympic team but later made the Tokyo 2020 (held 2021) Olympic team as an alternate.
 
-The source underscores her role as an inspiration, particularly for young women, and notes her work speaking about mental health in sports and encouraging youth at clubs[68][73].
+The source underscores her role as an inspiration, particularly for young women, and notes her work speaking about mental health in sports and encouraging youth at clubs.
 
 ##### 3.2.1.2 Relationship with Perazzi & Equipment
 
@@ -434,7 +434,7 @@ Key points:
 
 His coaching philosophy centers on fundamentals, mental focus, and confidence in equipment. As assistant national coach, he has traveled with Team USA to numerous World Championships and Olympics. Many athletes credit his calm demeanor for their success, describing a sense of “calm confidence” when Mike is behind them on the line.
 
-Mike’s own background includes competition in American trap, skeet, and sporting clays. The source portrays him as a “true student of the shotgun” who experimented extensively and now passes that knowledge to students. In 2023, he was inducted into the NSSA–NSCA Hall of Fame as a coach, an honor he accepted humbly, crediting his students[79][80].
+Mike’s own background includes competition in American trap, skeet, and sporting clays. The source portrays him as a “true student of the shotgun” who experimented extensively and now passes that knowledge to students. In 2023, he was inducted into the NSSA–NSCA Hall of Fame as a coach, an honor he accepted humbly, crediting his students.
 
 ##### 3.2.2.2 Relationship with Perazzi & Equipment
 
@@ -449,7 +449,7 @@ Key equipment-related points:
 One notable example cited in the source:
 
 - He assisted a promising junior and her family in choosing a Perazzi High Tech.  
-- Under his coaching and with that shotgun, she won a national bunker trap title[79][80].  
+- Under his coaching and with that shotgun, she won a national bunker trap title.  
 
 Mike is said to treasure his own Perazzi collection and still competes in veteran events, occasionally running 100-straight in trap or skeet even in his 70s. His style is described as unflashy and solid, mirroring his coaching approach.
 
@@ -464,8 +464,8 @@ Keith Ditto is portrayed as a dominant figure in ATA trapshooting, especially in
 Key achievements:
 
 - Earned his way to the 27-yard line as a teenager.  
-- Completed the ATA Grand Slam in 2008 [200 straight singles, 100 straight doubles, 100 from 27 yards](81)[82].  
-- Five-time Kentucky State HOA Champion (2019–2023)[83].  
+- Completed the ATA Grand Slam in 2008 (200 straight singles, 100 straight doubles, 100 from 27 yards).  
+- Five-time Kentucky State HOA Champion (2019–2023).  
 - Maintained an “incredible” streak of state titles with aggregate scores near perfection (averaging over 1175×1200).  
 - In each of those wins, hit well over 97% of all targets thrown.  
 - At the 2023 Grand American, posted one of the highest overall averages (2556×2600) in the tournament[84].  
@@ -503,7 +503,7 @@ Key achievements from the source:
 - Inducted into the Ohio State Trapshooting Hall of Fame in 2023 at age 33[88].  
 - 10-time Ohio State Champion across various events[89].  
 - Multi-time ATA All-American.  
-- 354th person in history to complete the ATA Grand Slam, achieved as a teenager[90][91].  
+- 354th person in history to complete the ATA Grand Slam, achieved as a teenager.  
 - Named Trap & Field’s Rookie of the Year in 2003[92].  
 - Reached the 27-yard handicap mark at age 13[92].  
 - Recorded early 200-straight programs by age 18, regularly winning junior and open trophies.  
@@ -516,7 +516,7 @@ Additional performance notes:
 - In 2023, won Ohio State Singles, Doubles, and HOA championships in the same year[89].  
 - Routinely averages in the high 90s across all three trap disciplines, ranking among the top shooters nationally.  
 
-His demeanor is described as stoic, with little outward reaction whether he is shooting 25-straight or dropping a target. He credits faith and family support for keeping him grounded[93][94].
+His demeanor is described as stoic, with little outward reaction whether he is shooting 25-straight or dropping a target. He credits faith and family support for keeping him grounded.
 
 ##### 3.2.4.2 Relationship with Perazzi & Equipment
 
@@ -620,7 +620,7 @@ Key achievements:
 - Ranked #1 in the nation as a sub-junior and junior[108].  
 - Youngest shooter to record a 400×400 in an NSSA Championship (age 17).  
 - Multiple Collegiate and Junior World titles.  
-- Won the 2025 Texas State Skeet HOA Championship with a 400×400 (perfect in all four gauges)[109].  
+- Won the 2025 Texas State Skeet HOA Championship with a 400×400 (perfect in all four gauges).  
 
 Personality and philosophy:
 
