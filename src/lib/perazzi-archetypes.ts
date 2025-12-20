@@ -10,6 +10,7 @@ import {
   type ArchetypeScores,
   normalizeArchetypeScores,
 } from "@/lib/pgpt-insights/archetype-distribution";
+import { getArchetypeLexicon } from "@/config/archetype-lexicon";
 
 export interface ArchetypeContext {
   mode?: PerazziMode | null;
@@ -344,6 +345,49 @@ if (process.env.NODE_ENV === "development") {
     (hintsLegacyBreakdown.vector.legacy ?? 0) > 0.205,
     true
   );
+
+  // New Pass-2 tests
+  const scoresheetCtx: ArchetypeContext = {
+    mode: null,
+    pageUrl: null,
+    modelSlug: null,
+    platformSlug: null,
+    userMessage: "My scoresheet results dropped last season",
+  } as unknown as ArchetypeContext;
+  const scoresheetBreak = computeArchetypeBreakdown(scoresheetCtx, getNeutralArchetypeVector());
+  __assertEqual(
+    "scoresheet results should boost achiever",
+    (scoresheetBreak.vector.achiever ?? 0) > 0.3,
+    true,
+  );
+
+  const heirloomCtx: ArchetypeContext = {
+    mode: null,
+    pageUrl: null,
+    modelSlug: null,
+    platformSlug: null,
+    userMessage: "This gun is a family heirloom handed-down for generations",
+  } as unknown as ArchetypeContext;
+  const heirloomBreak = computeArchetypeBreakdown(heirloomCtx, getNeutralArchetypeVector());
+  __assertEqual(
+    "family heirloom should boost legacy",
+    (heirloomBreak.vector.legacy ?? 0) > 0.3,
+    true,
+  );
+
+  const loyaltyProgramCtx: ArchetypeContext = {
+    mode: null,
+    pageUrl: null,
+    modelSlug: null,
+    platformSlug: null,
+    userMessage: "Tell me about your loyalty program",
+  } as unknown as ArchetypeContext;
+  const loyaltyProgramBreak = computeArchetypeBreakdown(loyaltyProgramCtx, getNeutralArchetypeVector());
+  __assertEqual(
+    "loyalty program should NOT trigger loyalist boost",
+    (loyaltyProgramBreak.vector.loyalist ?? 0) < 0.25,
+    true,
+  );
 }
 
 function initZeroVector(): ArchetypeVector {
@@ -592,122 +636,35 @@ function applyLanguageSignals(
 
   if (!message) return;
 
-  // Prestige: aesthetics, luxury, status, craftsmanship.
-  if (
-    messageIncludesAny(message, [
-      "beautiful",
-      "engraving",
-      "engravings",
-      "wood",
-      "stock figure",
-      "aesthetic",
-      "aesthetics",
-      "finish",
-      "luxury",
-      "luxurious",
-      "bespoke",
-      "artisanal",
-      "craftsmanship",
-      "upgrade",
-      "presentation",
-    ])
-  ) {
-    delta.prestige += 0.4;
-    signals.push("language:prestige");
-  }
+  // --- Pass-2 lexicon-based detection ---
+  const lexicon = getArchetypeLexicon();
+  const BOOST_HIGH = 0.45;
+  const BOOST_MID = 0.3;
+  const BOOST_LOW = 0.15;
+  const MAX_BOOST_PER_ARCH = 0.6;
 
-  // Achiever: performance, scores, competition focus.
-  if (
-    messageIncludesAny(message, [
-      "score",
-      "scores",
-      "winning",
-      "nationals",
-      "world championship",
-      "competition",
-      "high score",
-      "performance",
-      "consistency",
-      "more consistent",
-      "tournament",
-      "major event",
-    ])
-  ) {
-    delta.achiever += 0.4;
-    signals.push("language:achiever");
-  }
+  (Object.keys(lexicon) as Archetype[]).forEach((key) => {
+    const entry = lexicon[key];
+    if (!entry) return;
+    const { high, mid, low, negatives } = entry as {
+      high: string[];
+      mid: string[];
+      low: string[];
+      negatives?: string[];
+    };
 
-  // Analyst: specs, mechanics, comparison, technical language.
-  if (
-    messageIncludesAny(message, [
-      "point of impact",
-      "poi",
-      "trigger weight",
-      "rib height",
-      "barrel convergence",
-      "pattern",
-      "patterning",
-      "choke",
-      "chokes",
-      "length of pull",
-      "lop",
-      "drop at comb",
-      "drop at heel",
-      "cast",
-      "toe",
-      "pitch",
-      "balance",
-      "weight distribution",
-      "spec",
-      "specs",
-      "compare",
-      "comparison",
-    ])
-  ) {
-    delta.analyst += 0.45;
-    signals.push("language:analyst");
-  }
+    if (negatives && negatives.length && messageIncludesAny(message, negatives)) return;
 
-  // Loyalist: emotional bond with brand/gun, long-term ownership.
-  if (
-    messageIncludesAny(message, [
-      "i've always",
-      "i have always",
-      "had this gun",
-      "my perazzi for",
-      "for years",
-      "for decades",
-      "love this gun",
-      "favorite gun",
-      "my dad's perazzi",
-      "my fathers perazzi",
-      "loyal",
-      "loyalty",
-    ])
-  ) {
-    delta.loyalist += 0.4;
-    signals.push("language:loyalist");
-  }
+    let boost = 0;
+    if (high?.length && messageIncludesAny(message, high)) boost = BOOST_HIGH;
+    else if (mid?.length && messageIncludesAny(message, mid)) boost = BOOST_MID;
+    else if (low?.length && messageIncludesAny(message, low)) boost = BOOST_LOW;
 
-  // Legacy: heirloom, passing down, multi-generational story.
-  if (
-    messageIncludesAny(message, [
-      "heirloom",
-      "pass it down",
-      "passing it down",
-      "my kids",
-      "my children",
-      "next generation",
-      "keep it original",
-      "preserve",
-      "preserving",
-      "history of this gun",
-      "family gun",
-    ])
-  ) {
-    delta.legacy += 0.4;
-    signals.push("language:legacy");
-  }
+    if (boost > 0) {
+      delta[key] += Math.min(boost, MAX_BOOST_PER_ARCH);
+      signals.push(`language:${key}`);
+    }
+  });
 
   // General signal for long, structured questions -> slight analyst bias.
   const wordCount = message.split(/\s+/).filter(Boolean).length;
