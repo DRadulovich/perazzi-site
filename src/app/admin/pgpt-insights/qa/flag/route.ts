@@ -1,9 +1,13 @@
 import { redirect } from "next/navigation";
 import { Pool } from "pg";
+import { getPgSslDiagnostics, getPgSslOptions } from "@/lib/pgSsl";
 import { logTlsDiagForDb } from "@/lib/tlsDiag";
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-logTlsDiagForDb("pg.qa.flag.pool", process.env.DATABASE_URL);
+const { sslMode: qaFlagSslMode, hasCa: qaFlagHasCa } = getPgSslDiagnostics();
+const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: getPgSslOptions() });
+logTlsDiagForDb("pg.qa.flag.pool", process.env.DATABASE_URL, qaFlagSslMode, {
+  hasCa: qaFlagHasCa,
+});
 
 const ALLOWED_REASONS = new Set([
   "hallucination",

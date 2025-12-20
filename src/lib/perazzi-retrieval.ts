@@ -2,6 +2,7 @@ import { Pool } from "pg";
 import type { PoolClient } from "pg";
 import { registerType } from "pgvector/pg";
 import { createEmbeddings } from "@/lib/aiClient";
+import { getPgSslDiagnostics, getPgSslOptions } from "@/lib/pgSsl";
 import type {
   PerazziAssistantRequest,
   RetrievedChunk,
@@ -957,11 +958,12 @@ async function getPgPool(): Promise<Pool> {
     );
   }
 
-  const sslMode = (process.env.PGSSL_MODE ?? "").toLowerCase();
-  logTlsDiagForDb("pg.retrieval.pool", connectionString, sslMode || undefined);
+  const sslOptions = getPgSslOptions();
+  const { sslMode, hasCa } = getPgSslDiagnostics();
+  logTlsDiagForDb("pg.retrieval.pool", connectionString, sslMode, { hasCa });
   pgPool = new Pool({
     connectionString,
-    ssl: sslMode && sslMode !== "disable" ? true : undefined,
+    ssl: sslOptions,
   });
 
   const client = await pgPool.connect();

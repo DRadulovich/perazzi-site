@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { getPgSslDiagnostics, getPgSslOptions } from "@/lib/pgSsl";
 import { logTlsDiagForDb } from "@/lib/tlsDiag";
 
 /**
@@ -15,9 +16,13 @@ export const pool =
   global.__perazziPgPool ??
   new Pool({
     connectionString: process.env.DATABASE_URL,
+    ssl: getPgSslOptions(),
   });
 
-logTlsDiagForDb("pg.shared.pool", process.env.DATABASE_URL);
+const { sslMode: sharedSslMode, hasCa: sharedHasCa } = getPgSslDiagnostics();
+logTlsDiagForDb("pg.shared.pool", process.env.DATABASE_URL, sharedSslMode, {
+  hasCa: sharedHasCa,
+});
 
 if (process.env.NODE_ENV !== "production") {
   global.__perazziPgPool = pool;

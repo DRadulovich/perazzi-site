@@ -7,6 +7,7 @@ import process from "node:process";
 import minimist from "minimist";
 import { Pool, PoolClient } from "pg";
 import { createEmbeddings } from "@/lib/aiClient";
+import { getPgSslOptions } from "@/lib/pgSsl";
 import stringify from "json-stable-stringify";
 
 type Status = "active" | "planned" | "deprecated";
@@ -1106,15 +1107,9 @@ function assertEnv() {
 }
 
 function createPool(): Pool {
-  const sslMode = (process.env.PGSSL_MODE ?? "").toLowerCase();
-  const ssl =
-    sslMode && sslMode !== "disable"
-      ? true
-      : undefined;
-
   return new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl,
+    ssl: getPgSslOptions(),
   });
 }
 

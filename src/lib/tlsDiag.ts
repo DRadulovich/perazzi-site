@@ -47,6 +47,7 @@ export function logTlsDiagForDb(
   target: string,
   connectionString?: string,
   sslMode?: string | boolean,
+  options?: { hasCa?: boolean },
 ): void {
   if (!TLS_DIAG_ENABLED) return;
 
@@ -63,5 +64,6 @@ export function logTlsDiagForDb(
     dbHost,
     sslMode: normalizedSslMode,
     usingProxy: Boolean(process.env.HTTPS_PROXY || process.env.HTTP_PROXY),
+    ...(typeof options?.hasCa === "boolean" ? { hasCa: options.hasCa } : {}),
   });
 }

@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { getPgSslDiagnostics, getPgSslOptions } from "@/lib/pgSsl";
 import { logTlsDiagForDb } from "@/lib/tlsDiag";
 import { type ArchetypeScores, withArchetypeDistribution } from "@/lib/pgpt-insights/archetype-distribution";
 
@@ -79,8 +80,10 @@ function getPool(): Pool | null {
   if (pool) return pool;
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) return null;
-  logTlsDiagForDb("pg.aiLogging.pool", connectionString);
-  pool = new Pool({ connectionString, max: 3 });
+  const sslOptions = getPgSslOptions();
+  const { sslMode, hasCa } = getPgSslDiagnostics();
+  logTlsDiagForDb("pg.aiLogging.pool", connectionString, sslMode, { hasCa });
+  pool = new Pool({ connectionString, ssl: sslOptions, max: 3 });
   return pool;
 }
 

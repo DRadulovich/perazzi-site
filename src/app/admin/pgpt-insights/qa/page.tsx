@@ -3,12 +3,14 @@ import { notFound } from "next/navigation";
 import { Pool } from "pg";
 
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { getPgSslDiagnostics, getPgSslOptions } from "@/lib/pgSsl";
 import { logTlsDiagForDb } from "@/lib/tlsDiag";
 import { QaFilters } from "./components/QaFilters";
 import { QaTable, type QaRow } from "./components/QaTable";
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-logTlsDiagForDb("pg.qa.page.pool", process.env.DATABASE_URL);
+const { sslMode: qaSslMode, hasCa: qaHasCa } = getPgSslDiagnostics();
+const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: getPgSslOptions() });
+logTlsDiagForDb("pg.qa.page.pool", process.env.DATABASE_URL, qaSslMode, { hasCa: qaHasCa });
 
 async function fetchOpenCount(): Promise<number> {
   const { rows } = await pool.query<{ open_count: string | number }>(
