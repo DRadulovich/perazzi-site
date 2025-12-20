@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { Pool } from "pg";
+import { logTlsDiagForDb } from "@/lib/tlsDiag";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+logTlsDiagForDb("pg.qa.flag.pool", process.env.DATABASE_URL);
 
 const ALLOWED_REASONS = new Set([
   "hallucination",

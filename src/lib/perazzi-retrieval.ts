@@ -9,6 +9,7 @@ import type {
   ArchetypeVector,
 } from "@/types/perazzi-assistant";
 import type { RetrievalHints } from "@/lib/perazzi-intents";
+import { logTlsDiagForDb } from "@/lib/tlsDiag";
 
 const EMBEDDING_MODEL = process.env.PERAZZI_EMBED_MODEL ?? "text-embedding-3-large";
 const CHUNK_LIMIT = Number(process.env.PERAZZI_RETRIEVAL_LIMIT ?? 12);
@@ -957,6 +958,7 @@ async function getPgPool(): Promise<Pool> {
   }
 
   const sslMode = (process.env.PGSSL_MODE ?? "").toLowerCase();
+  logTlsDiagForDb("pg.retrieval.pool", connectionString, sslMode || undefined);
   pgPool = new Pool({
     connectionString,
     ssl: sslMode && sslMode !== "disable" ? true : undefined,

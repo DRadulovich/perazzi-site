@@ -3,10 +3,12 @@ import { notFound } from "next/navigation";
 import { Pool } from "pg";
 
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { logTlsDiagForDb } from "@/lib/tlsDiag";
 import { QaFilters } from "./components/QaFilters";
 import { QaTable, type QaRow } from "./components/QaTable";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+logTlsDiagForDb("pg.qa.page.pool", process.env.DATABASE_URL);
 
 async function fetchOpenCount(): Promise<number> {
   const { rows } = await pool.query<{ open_count: string | number }>(

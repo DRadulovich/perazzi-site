@@ -1,5 +1,6 @@
-import OpenAI from "openai";
 import { logAiInteraction, type AiInteractionContext } from "@/lib/aiLogging";
+import { logTlsDiagForOpenAI } from "@/lib/tlsDiag";
+import OpenAI from "openai";
 
 type OpenAIConfig = {
   apiKey: string;
@@ -133,6 +134,7 @@ export type CreateResponseTextResult = {
 
 let client: OpenAI | null = null;
 let usingGateway = false;
+let openAiBaseUrl: string | undefined;
 
 function resolveOpenAIConfig(): OpenAIConfig {
   const forceDirect = process.env.AI_FORCE_DIRECT === "true";
@@ -144,14 +146,17 @@ function resolveOpenAIConfig(): OpenAIConfig {
     if (!apiKey) {
       throw new Error("AI_FORCE_DIRECT is true but OPENAI_API_KEY is missing");
     }
+    openAiBaseUrl = undefined;
     return { apiKey, usedGateway: false };
   }
 
   if (gatewayUrl && gatewayToken) {
+    openAiBaseUrl = gatewayUrl;
     return { apiKey: gatewayToken, baseURL: gatewayUrl, usedGateway: true };
   }
 
   if (apiKey) {
+    openAiBaseUrl = undefined;
     return { apiKey, usedGateway: false };
   }
 
@@ -309,6 +314,7 @@ export async function createResponseText(
   const allowSamplingParams = !isGpt5 ? true : samplingModelAllowed && reasoningAllowsSampling;
 
   const clientInstance = getOpenAIClient();
+  logTlsDiagForOpenAI("openai.responses", openAiBaseUrl, usingGateway);
   const requestPayload: Record<string, unknown> = {
     ...rest,
     ...(resolvedMaxTokens !== undefined ? { max_output_tokens: resolvedMaxTokens } : {}),
@@ -387,6 +393,7 @@ export async function createEmbeddings(
   };
 
   const clientInstance = getOpenAIClient();
+  logTlsDiagForOpenAI("openai.embeddings", openAiBaseUrl, usingGateway);
   return clientInstance.embeddings.create(embeddingParams);
 }
 

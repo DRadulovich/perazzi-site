@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { logTlsDiagForDb } from "@/lib/tlsDiag";
 
 /**
  * In dev, Next's hot reload can cause module re-evaluation and create many Pools.
@@ -15,6 +16,8 @@ export const pool =
   new Pool({
     connectionString: process.env.DATABASE_URL,
   });
+
+logTlsDiagForDb("pg.shared.pool", process.env.DATABASE_URL);
 
 if (process.env.NODE_ENV !== "production") {
   global.__perazziPgPool = pool;
