@@ -80,12 +80,11 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
             >
               {subheading}
             </h2>
-            <ReactMarkdown
-              className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg md:max-w-4xl lg:max-w-4xl prose-headings:text-ink prose-strong:text-ink"
-              rehypePlugins={[rehypeRaw, rehypeSanitize]}
-            >
-              {visit.introHtml}
-            </ReactMarkdown>
+            <div className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg md:max-w-4xl lg:max-w-4xl prose-headings:text-ink prose-strong:text-ink">
+              <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+                {visit.introHtml}
+              </ReactMarkdown>
+            </div>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
@@ -96,27 +95,24 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
               <h3 className="text-base sm:text-lg font-semibold text-ink">
                 {visit.location.name}
               </h3>
-              <ReactMarkdown
-                className="text-sm leading-relaxed text-ink-muted"
-                rehypePlugins={[rehypeRaw, rehypeSanitize]}
-              >
-                {visit.location.addressHtml}
-              </ReactMarkdown>
-              {visit.location.hoursHtml ? (
-                <ReactMarkdown
-                  className="text-[11px] sm:text-xs uppercase tracking-[0.25em] text-ink-muted"
-                  rehypePlugins={[rehypeRaw, rehypeSanitize]}
-                >
-                  {visit.location.hoursHtml}
+              <div className="text-sm leading-relaxed text-ink-muted">
+                <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+                  {visit.location.addressHtml}
                 </ReactMarkdown>
+              </div>
+              {visit.location.hoursHtml ? (
+                <div className="text-[11px] sm:text-xs uppercase tracking-[0.25em] text-ink-muted">
+                  <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+                    {visit.location.hoursHtml}
+                  </ReactMarkdown>
+                </div>
               ) : null}
               {visit.location.notesHtml ? (
-                <ReactMarkdown
-                  className="text-sm leading-relaxed text-ink-muted"
-                  rehypePlugins={[rehypeRaw, rehypeSanitize]}
-                >
-                  {visit.location.notesHtml}
-                </ReactMarkdown>
+                <div className="text-sm leading-relaxed text-ink-muted">
+                  <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+                    {visit.location.notesHtml}
+                  </ReactMarkdown>
+                </div>
               ) : null}
               <div className="space-y-3 pt-2">
                 <p id={mapNoteId} className="sr-only">

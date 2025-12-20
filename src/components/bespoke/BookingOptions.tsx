@@ -38,12 +38,11 @@ function BookingOptionCard({ option }: BookingOptionCardProps) {
         <p className="text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink-muted">
           {option.durationLabel ?? (option.durationMins ? `${option.durationMins} minutes` : "")}
         </p>
-        <ReactMarkdown
-          className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg"
-          rehypePlugins={[rehypeRaw, rehypeSanitize]}
-        >
-          {option.descriptionHtml}
-        </ReactMarkdown>
+        <div className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg">
+          <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+            {option.descriptionHtml}
+          </ReactMarkdown>
+        </div>
       </div>
       <div className="mt-auto pt-6">
         <Button
@@ -113,12 +112,11 @@ function WhatToExpectCollapsible({
             : "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
         )}
       >
-        <ReactMarkdown
-          className="prose prose-base max-w-none pb-4 leading-relaxed text-ink-muted md:prose-lg lg:pb-5"
-          rehypePlugins={[rehypeRaw, rehypeSanitize]}
-        >
-          {item.bodyHtml}
-        </ReactMarkdown>
+        <div className="prose prose-base max-w-none pb-4 leading-relaxed text-ink-muted md:prose-lg lg:pb-5">
+          <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+            {item.bodyHtml}
+          </ReactMarkdown>
+        </div>
       </Collapsible.Content>
     </Collapsible.Root>
   );
@@ -147,9 +145,7 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
             (fallback?.durationMins ? `${fallback.durationMins} minutes` : undefined),
           durationMins: fallback?.durationMins,
           descriptionHtml:
-            option.description
-              ? `<p>${option.description}</p>`
-              : fallback?.descriptionHtml ?? "",
+            option.description ?? fallback?.descriptionHtml ?? "",
           href: option.href ?? fallback?.href ?? "#",
         } satisfies BookingOption;
       })

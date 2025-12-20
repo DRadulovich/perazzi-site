@@ -418,12 +418,11 @@ function DisciplineCard({
         </div>
       </div>
       <div className="flex flex-1 flex-col gap-6 p-6">
-        <ReactMarkdown
-          className="prose prose-sm italic max-w-none text-ink-muted"
-          rehypePlugins={[rehypeRaw, rehypeSanitize]}
-        >
-          {discipline.overviewHtml}
-        </ReactMarkdown>
+        <div className="prose prose-sm italic max-w-none text-ink-muted">
+          <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+            {discipline.overviewHtml}
+          </ReactMarkdown>
+        </div>
         {discipline.recommendedPlatforms?.length ? (
           <div className="space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">

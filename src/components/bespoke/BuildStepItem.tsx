@@ -126,12 +126,11 @@ export function BuildStepItem({
   );
 
   const description = (
-    <ReactMarkdown
-      className="prose prose-sm max-w-none leading-relaxed text-ink-muted"
-      rehypePlugins={[rehypeRaw, rehypeSanitize]}
-    >
-      {step.bodyHtml}
-    </ReactMarkdown>
+    <div className="prose prose-sm max-w-none leading-relaxed text-ink-muted">
+      <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+        {step.bodyHtml}
+      </ReactMarkdown>
+    </div>
   );
 
   const cta =

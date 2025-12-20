@@ -35,24 +35,22 @@ export function ServiceOverview({ overview }: ServiceOverviewProps) {
         >
           {subheading}
         </h2>
-        <ReactMarkdown
-          className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg"
-          rehypePlugins={[rehypeRaw, rehypeSanitize]}
-        >
-          {overview.introHtml}
-        </ReactMarkdown>
+        <div className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg">
+          <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+            {overview.introHtml}
+          </ReactMarkdown>
+        </div>
       </div>
       <div className="rounded-2xl border border-border/75 bg-card/75 p-5 shadow-sm sm:rounded-3xl md:p-6 lg:p-8">
         <h3 className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
           {checksHeading}
         </h3>
         {hasCustomChecksHtml ? (
-          <ReactMarkdown
-            className="prose prose-base max-w-none leading-relaxed text-ink md:prose-lg"
-            rehypePlugins={[rehypeRaw, rehypeSanitize]}
-          >
-            {overview.checksHtml ?? ""}
-          </ReactMarkdown>
+          <div className="prose prose-base max-w-none leading-relaxed text-ink md:prose-lg">
+            <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+              {overview.checksHtml ?? ""}
+            </ReactMarkdown>
+          </div>
         ) : checksList.length ? (
           <ul className="prose prose-base max-w-none list-disc pl-5 leading-relaxed text-ink md:prose-lg">
             {checksList.map((item, index) => (

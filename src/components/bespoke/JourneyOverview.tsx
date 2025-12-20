@@ -30,12 +30,11 @@ export function JourneyOverview({ journey }: JourneyOverviewProps) {
         <h2 id="journey-overview-heading" className="sr-only">
           Journey overview
         </h2>
-        <ReactMarkdown
-          className="prose prose-sm max-w-none leading-relaxed text-ink"
-          rehypePlugins={[rehypeRaw, rehypeSanitize]}
-        >
-          {journey.introHtml}
-        </ReactMarkdown>
+        <div className="prose prose-sm max-w-none leading-relaxed text-ink">
+          <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+            {journey.introHtml}
+          </ReactMarkdown>
+        </div>
         <nav aria-label="Journey steps">
           <ol className="grid gap-2 sm:grid-cols-2">
             {journey.steps.map((step) => (
@@ -56,12 +55,11 @@ export function JourneyOverview({ journey }: JourneyOverviewProps) {
             ))}
           </ol>
         </nav>
-        <ReactMarkdown
-          className="text-[11px] sm:text-xs leading-relaxed text-ink-muted"
-          rehypePlugins={[rehypeRaw, rehypeSanitize]}
-        >
-          {journey.disclaimerHtml}
-        </ReactMarkdown>
+        <div className="text-[11px] sm:text-xs leading-relaxed text-ink-muted">
+          <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
+            {journey.disclaimerHtml}
+          </ReactMarkdown>
+        </div>
       </div>
     </motion.section>
   );
