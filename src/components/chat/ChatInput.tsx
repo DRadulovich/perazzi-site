@@ -4,12 +4,12 @@ import { FormEvent, useState } from "react";
 import { VerbosityToggle } from "@/components/chat/VerbosityToggle";
 import type { TextVerbosity } from "@/types/perazzi-assistant";
 
-interface ChatInputProps extends Readonly<{
+type ChatInputProps = Readonly<{
   onSend: (question: string) => void;
   pending: boolean;
   textVerbosity: TextVerbosity;
   onTextVerbosityChange: (verbosity: TextVerbosity) => void;
-}> {}
+}>;
 
 export function ChatInput({
   onSend,

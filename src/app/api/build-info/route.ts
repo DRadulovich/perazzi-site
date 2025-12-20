@@ -1,9 +1,60 @@
+import type { SanityClient } from "@sanity/client";
+import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import { NextRequest, NextResponse } from "next/server";
 import { groq } from "next-sanity";
 import { sanityClient as baseClient } from "../../../../sanity/client";
-import { getSanityImageUrl } from "@/lib/sanityImage";
+import { getSanityImageUrl, hasValidSanityImage } from "@/lib/sanityImage";
 
 const skipFields = new Set(["RIB_TAPER_20", "RIB_TAPER_28_410", "RIB_TAPER_SXS"]);
+
+type PortableTextChild = { text?: string | null };
+type PortableTextBlock = {
+  children?: PortableTextChild[];
+  text?: string | null;
+};
+type PortableTextValue = string | PortableTextBlock | Array<PortableTextBlock | string> | null | undefined;
+type ConfiguratorImage = SanityImageSource | { asset?: SanityImageSource | null } | null | undefined;
+type ConfiguratorItem = {
+  _id?: string;
+  stepId?: string;
+  optionValue?: string;
+  title?: string;
+  description?: PortableTextValue;
+  platform?: string | null;
+  grade?: string | null;
+  gauge?: string | null;
+  trigger?: string | null;
+  discipline?: string | null;
+  image?: ConfiguratorImage;
+};
+type BuildConfiguratorDoc = Record<string, ConfiguratorItem[] | undefined>;
+type SearchRow = {
+  _id?: string;
+  title?: string;
+  description?: PortableTextValue;
+  overview?: PortableTextValue;
+  platform?: string | null;
+  gauges?: Array<string | null | undefined>;
+  triggerTypes?: Array<string | null | undefined>;
+  grade?: string | null;
+  recommendedPlatforms?: string[];
+  popularModels?: string[];
+  image?: ConfiguratorImage;
+};
+type ModelGradeRow = { grade?: string | null };
+type BuildInfoItem = {
+  id: string;
+  title: string;
+  description: string;
+  platform: string | null;
+  gauges: string[];
+  triggerTypes: string[];
+  grade: string | null;
+  recommendedPlatforms: string[];
+  popularModels: string[];
+  imageUrl: string | null;
+  fullImageUrl: string | null;
+};
 
 const buildConfiguratorQuery = groq`*[_type == "buildConfigurator"][0]{
   FRAME_SIZE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
@@ -210,6 +261,20 @@ const PLATFORM_ALIASES: Record<string, string> = {
   HT: "High Tech",
 };
 
+function resolveImageSource(image?: ConfiguratorImage): SanityImageSource | null {
+  if (!image) return null;
+  if (hasValidSanityImage(image as SanityImageSource | null | undefined)) {
+    return image as SanityImageSource;
+  }
+  if (typeof image === "object" && "asset" in image) {
+    const asset = image.asset as SanityImageSource | null | undefined;
+    if (hasValidSanityImage(asset)) {
+      return asset as SanityImageSource;
+    }
+  }
+  return null;
+}
+
 function normalizeValue(field: string, value: string) {
   if (field === "PLATFORM") {
     const upper = value.trim().toUpperCase();
@@ -218,7 +283,7 @@ function normalizeValue(field: string, value: string) {
   return value;
 }
 
-function toPlainText(value: any): string {
+function toPlainText(value: PortableTextValue): string {
   if (!value) return "";
   if (typeof value === "string") return value;
   // Handle Sanity Portable Text blocks
@@ -226,34 +291,39 @@ function toPlainText(value: any): string {
     return value
       .map((block) => {
         if (typeof block === "string") return block;
-        if (block?.children && Array.isArray(block.children)) {
-          return block.children.map((child: any) => child?.text ?? "").join("");
+        if (Array.isArray(block.children)) {
+          return block.children.map((child: PortableTextChild) => child?.text ?? "").join("");
         }
-        if (block?.text) return block.text;
+        if (block.text) return block.text;
         return "";
       })
       .filter(Boolean)
       .join("\n")
       .trim();
   }
-  if (typeof value === "object" && value.text) return String(value.text);
+  if (value && typeof value === "object" && "text" in value && value.text) {
+    return String(value.text);
+  }
   return "";
 }
 
-function mapResult(rows: any[]) {
-  return (rows ?? []).map((row) => ({
-    id: row._id,
-    title: row.title ?? "",
-    description: toPlainText(row.description ?? row.overview ?? ""),
-    platform: row.platform ?? null,
-    gauges: (row.gauges ?? []).filter(Boolean),
-    triggerTypes: (row.triggerTypes ?? []).filter(Boolean),
-    grade: row.grade ?? null,
-    recommendedPlatforms: row.recommendedPlatforms ?? [],
-    popularModels: row.popularModels ?? [],
-    imageUrl: row.image ? getSanityImageUrl(row.image, { width: 400, quality: 80 }) : null,
-    fullImageUrl: row.image ? getSanityImageUrl(row.image, { width: 1600, quality: 90 }) : null,
-  }));
+function mapResult(rows: SearchRow[]): BuildInfoItem[] {
+  return (rows ?? []).map((row, idx) => {
+    const imageSource = resolveImageSource(row.image);
+    return {
+      id: row._id ?? `row-${idx}`,
+      title: row.title ?? "",
+      description: toPlainText(row.description ?? row.overview ?? ""),
+      platform: row.platform ?? null,
+      gauges: (row.gauges ?? []).filter(Boolean).map(String),
+      triggerTypes: (row.triggerTypes ?? []).filter(Boolean).map(String),
+      grade: row.grade ?? null,
+      recommendedPlatforms: row.recommendedPlatforms ?? [],
+      popularModels: row.popularModels ?? [],
+      imageUrl: imageSource ? getSanityImageUrl(imageSource, { width: 400, quality: 80 }) : null,
+      fullImageUrl: imageSource ? getSanityImageUrl(imageSource, { width: 1600, quality: 90 }) : null,
+    };
+  });
 }
 
 function buildTerms(rawValue: string) {
@@ -266,19 +336,15 @@ function buildTerms(rawValue: string) {
   return { term, altTerm, compactTerm, looseTerm };
 }
 
-async function fetchConfiguratorItems(client: any, field: string, value: string) {
-  const doc = await client.fetch(buildConfiguratorQuery);
-  if (!doc) return [];
-  const items = doc[field];
-  if (!Array.isArray(items)) return [];
-  const normField = field.trim().toUpperCase();
-  const normValue = value.trim().toUpperCase();
-  const filtered = items.filter((item: any) => {
-    const stepId = (item?.stepId ?? normField).toUpperCase();
-    const optionVal = (item?.optionValue ?? "").toUpperCase();
-    return stepId === normField && optionVal === normValue;
-  });
-  return filtered.map((item: any, idx: number) => ({
+function isMatchingConfiguratorItem(item: ConfiguratorItem, normField: string, normValue: string) {
+  const stepId = (item.stepId ?? normField).toUpperCase();
+  const optionVal = (item.optionValue ?? "").toUpperCase();
+  return stepId === normField && optionVal === normValue;
+}
+
+function toBuildInfoItem(item: ConfiguratorItem, field: string, value: string, idx: number): BuildInfoItem {
+  const imageSource = resolveImageSource(item.image);
+  return {
     id: item._id ?? `${field}-${value}-${idx}`,
     title: item.optionValue ?? item.title ?? value,
     description: toPlainText(item.description ?? ""),
@@ -288,9 +354,28 @@ async function fetchConfiguratorItems(client: any, field: string, value: string)
     triggerTypes: item.trigger ? [item.trigger] : [],
     recommendedPlatforms: item.discipline ? [item.discipline] : [],
     popularModels: [],
-    imageUrl: item.image ? getSanityImageUrl(item.image.asset ?? item.image, { width: 400, quality: 80 }) : null,
-    fullImageUrl: item.image ? getSanityImageUrl(item.image.asset ?? item.image, { width: 1600, quality: 90 }) : null,
-  }));
+    imageUrl: imageSource ? getSanityImageUrl(imageSource, { width: 400, quality: 80 }) : null,
+    fullImageUrl: imageSource ? getSanityImageUrl(imageSource, { width: 1600, quality: 90 }) : null,
+  };
+}
+
+async function fetchConfiguratorDoc(client: SanityClient): Promise<BuildConfiguratorDoc | null> {
+  return client.fetch<BuildConfiguratorDoc | null>(buildConfiguratorQuery);
+}
+
+function pickConfiguratorItems(doc: BuildConfiguratorDoc | null, field: string): ConfiguratorItem[] {
+  if (!doc) return [];
+  const items = doc[field];
+  return Array.isArray(items) ? items : [];
+}
+
+async function fetchConfiguratorItems(client: SanityClient, field: string, value: string): Promise<BuildInfoItem[]> {
+  const doc = await fetchConfiguratorDoc(client);
+  const items = pickConfiguratorItems(doc, field);
+  const normField = field.trim().toUpperCase();
+  const normValue = value.trim().toUpperCase();
+  const filtered = items.filter((item) => isMatchingConfiguratorItem(item, normField, normValue));
+  return filtered.map((item, idx) => toBuildInfoItem(item, field, value, idx));
 }
 
 function parseSearchParams(request: NextRequest) {
@@ -309,7 +394,7 @@ function buildSearchContext(normalizedValue: string) {
 }
 
 async function tryConfiguratorShortcut(
-  client: any,
+  client: SanityClient,
   field: string,
   rawValue: string,
   normalizedValue: string,
