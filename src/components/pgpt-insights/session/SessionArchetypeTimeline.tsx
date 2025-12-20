@@ -7,6 +7,10 @@ import { formatTimestampShort } from "../format";
 
 type Mode = "instant" | "rolling5";
 type EndpointFilter = "all" | "assistant" | "user";
+const archetypeKeys = ["Loyalist", "Prestige", "Analyst", "Achiever", "Legacy"] as const;
+type ArchetypeKey = (typeof archetypeKeys)[number];
+type ArchetypeScoreMap = Record<ArchetypeKey, number>;
+type ArchetypeScoreInput = Partial<Record<ArchetypeKey, number>> | Record<string, number> | null;
 
 function StatusBadge({ state }: { state: "snapped" | "mixed" | "unknown" }) {
   const cls =
@@ -36,10 +40,9 @@ function clamp01(n: number) {
   return n;
 }
 
-function normalize(scores: Record<string, number> | null) {
+function normalize(scores: ArchetypeScoreInput): ArchetypeScoreMap | null {
   if (!scores) return null;
-  const keys = ["Loyalist", "Prestige", "Analyst", "Achiever", "Legacy"] as const;
-  const arr = keys.map((k) => clamp01(Number(scores[k] ?? 0)));
+  const arr = archetypeKeys.map((k) => clamp01(Number(scores[k] ?? 0)));
   const sum = arr.reduce((a, b) => a + b, 0);
   if (sum <= 0) return null;
   return {
@@ -48,7 +51,7 @@ function normalize(scores: Record<string, number> | null) {
     Analyst: arr[2] / sum,
     Achiever: arr[3] / sum,
     Legacy: arr[4] / sum,
-  } as const;
+  };
 }
 
 export function SessionArchetypeTimeline({ rows }: { rows: PgptSessionTimelineRow[] }) {
@@ -70,7 +73,7 @@ export function SessionArchetypeTimeline({ rows }: { rows: PgptSessionTimelineRo
     for (let i = 0; i < filtered.length; i++) {
       const slice = filtered.slice(Math.max(0, i - window + 1), i + 1);
 
-      const agg: Record<string, number> = { Loyalist: 0, Prestige: 0, Analyst: 0, Achiever: 0, Legacy: 0 };
+      const agg: ArchetypeScoreMap = { Loyalist: 0, Prestige: 0, Analyst: 0, Achiever: 0, Legacy: 0 };
       let n = 0;
 
       for (const r of slice) {
@@ -97,7 +100,7 @@ export function SessionArchetypeTimeline({ rows }: { rows: PgptSessionTimelineRo
 
       out.push({
         ...filtered[i],
-        archetype_scores: normAgg ? (normAgg as any) : filtered[i].archetype_scores,
+        archetype_scores: (normAgg ?? filtered[i].archetype_scores) as PgptSessionTimelineRow["archetype_scores"],
       });
     }
 
@@ -177,12 +180,12 @@ export function SessionArchetypeTimeline({ rows }: { rows: PgptSessionTimelineRo
             </thead>
             <tbody className="divide-y divide-border/60">
               {computed.map((r, idx) => {
-                const snappedRaw = (r as any).archetype_snapped;
+                const snappedRaw = r.archetype_snapped;
                 const state: "snapped" | "mixed" | "unknown" =
                   snappedRaw === true ? "snapped" : snappedRaw === false ? "mixed" : "unknown";
 
                 const scores = isRecord(r.archetype_scores) ? r.archetype_scores : null;
-                const norm = normalize(scores as any);
+                const norm = normalize(scores);
 
                 let winnerText = r.archetype ?? "—";
                 let runnerText: string | null = null;
@@ -191,7 +194,7 @@ export function SessionArchetypeTimeline({ rows }: { rows: PgptSessionTimelineRo
                 let runnerPct: number | null = null;
 
                 if (norm) {
-                  const { winner, runner, margin } = computeWinnerAndRunner(norm as any);
+                  const { winner, runner, margin } = computeWinnerAndRunner(norm);
                   winnerText = winner.k;
                   runnerText = runner?.k ?? null;
                   computedMargin = margin;
@@ -200,8 +203,8 @@ export function SessionArchetypeTimeline({ rows }: { rows: PgptSessionTimelineRo
                 }
 
                 const rowMargin =
-                  typeof (r as any).archetype_confidence_margin === "number"
-                    ? (r as any).archetype_confidence_margin
+                  typeof r.archetype_confidence_margin === "number"
+                    ? r.archetype_confidence_margin
                     : null;
 
                 const marginToShow = rowMargin ?? computedMargin;
@@ -214,9 +217,9 @@ export function SessionArchetypeTimeline({ rows }: { rows: PgptSessionTimelineRo
                 if (idx > 0) {
                   const prev = computed[idx - 1];
                   const prevScores = isRecord(prev.archetype_scores) ? prev.archetype_scores : null;
-                  const prevNorm = normalize(prevScores as any);
+                  const prevNorm = normalize(prevScores);
                   if (prevNorm) {
-                    prevWinnerText = computeWinnerAndRunner(prevNorm as any).winner.k;
+                    prevWinnerText = computeWinnerAndRunner(prevNorm).winner.k;
                   } else if (prev.archetype) {
                     prevWinnerText = prev.archetype;
                   }

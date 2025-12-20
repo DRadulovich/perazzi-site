@@ -30,6 +30,14 @@ export type LogsFilters = {
   scoreArchetypeMin?: number | null;
 };
 
+type ScoreArchetypeKey = NonNullable<LogsFilters["scoreArchetype"]>;
+
+const SCORE_ARCHETYPE_KEYS = new Set<string>(["Loyalist", "Prestige", "Analyst", "Achiever", "Legacy"]);
+
+function isScoreArchetype(value: string): value is ScoreArchetypeKey {
+  return SCORE_ARCHETYPE_KEYS.has(value);
+}
+
 function normalizeShortText(value: unknown, maxLen: number): string {
   const s = String(value ?? "").trim();
   if (!s) return "";
@@ -83,8 +91,6 @@ export function parseLogsFilters(input: {
   rerank?: string;
   snapped?: string;
 }): LogsFilters {
-  const ARCH_KEYS = new Set(["Loyalist", "Prestige", "Analyst", "Achiever", "Legacy"]);
-
   function parseFloat01(v: string | undefined | null): number | null {
     const n = Number(v);
     if (!Number.isFinite(n)) return null;
@@ -94,16 +100,16 @@ export function parseLogsFilters(input: {
   }
 
   const qNorm = normalizeShortText(input.q, 500);
-  const winner_changed = String((input as any).winner_changed ?? "").trim();
-  const margin_lt = String((input as any).margin_lt ?? "").trim();
-  const score_archetype = String((input as any).score_archetype ?? "").trim();
-  const min = String((input as any).min ?? "").trim();
+  const winner_changed = String(input.winner_changed ?? "").trim();
+  const margin_lt = String(input.margin_lt ?? "").trim();
+  const score_archetype = String(input.score_archetype ?? "").trim();
+  const min = String(input.min ?? "").trim();
 
   const winnerChanged = winner_changed === "true";
 
   const marginLt = margin_lt ? parseFloat01(margin_lt) : null;
 
-  const scoreArchetype = ARCH_KEYS.has(score_archetype) ? (score_archetype as any) : null;
+  const scoreArchetype = isScoreArchetype(score_archetype) ? score_archetype : null;
   const scoreArchetypeMin = scoreArchetype && min ? parseFloat01(min) : null;
 
   return {
@@ -124,8 +130,8 @@ export function parseLogsFilters(input: {
     gateway: parseBoolFilter(input.gateway),
     qa: parseQaFilter(input.qa),
 
-    rerank: parseBoolFilter((input as any).rerank),
-    snapped: parseBoolFilter((input as any).snapped),
+    rerank: parseBoolFilter(input.rerank),
+    snapped: parseBoolFilter(input.snapped),
 
     winnerChanged,
     marginLt,

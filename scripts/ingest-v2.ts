@@ -433,7 +433,7 @@ function parseJsonArray<T>(
   try {
     parsed = JSON.parse(rawText);
   } catch {
-    console.warn(`[${contextLabel}] Failed to parse JSON`);
+    console.warn("Failed to parse JSON", { context: contextLabel });
     return [];
   }
 
@@ -828,9 +828,10 @@ async function replaceChunksAndEmbeddings(
   options: { dryRun: boolean },
 ): Promise<void> {
   if (options.dryRun) {
-    console.log(
-      `[dry-run] Would write ${chunks.length} chunks for ${doc.path}`,
-    );
+    console.log("[dry-run] Would write chunks", {
+      count: chunks.length,
+      path: doc.path,
+    });
     return;
   }
 
@@ -1064,11 +1065,11 @@ async function processDocument(
 
 function printIngestSummary(stats: IngestStats): void {
   console.log("---- Ingest Summary ----");
-  console.log(`Docs scanned: ${stats.scanned}`);
-  console.log(`Docs new: ${stats.newCount}`);
-  console.log(`Docs updated: ${stats.updated}`);
-  console.log(`Docs skipped: ${stats.skipped}`);
-  console.log(`Chunks written: ${stats.chunksWritten}`);
+  console.log("Docs scanned:", stats.scanned);
+  console.log("Docs new:", stats.newCount);
+  console.log("Docs updated:", stats.updated);
+  console.log("Docs skipped:", stats.skipped);
+  console.log("Chunks written:", stats.chunksWritten);
 }
 
 async function runIngest(
@@ -1099,16 +1100,16 @@ async function runIngest(
 function assertEnv() {
   const missing = REQUIRED_ENV.filter((key) => !process.env[key]);
   if (missing.length) {
-    console.error(`Missing required env vars: ${missing.join(", ")}`);
+    console.error("Missing required env vars:", missing.join(", "));
     process.exit(1);
   }
 }
 
 function createPool(): Pool {
-  const sslMode = process.env.PGSSL_MODE;
+  const sslMode = (process.env.PGSSL_MODE ?? "").toLowerCase();
   const ssl =
     sslMode && sslMode !== "disable"
-      ? { rejectUnauthorized: sslMode === "verify-full" }
+      ? true
       : undefined;
 
   return new Pool({

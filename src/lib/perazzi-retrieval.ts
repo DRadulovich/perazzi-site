@@ -29,12 +29,12 @@ export type RerankMetrics = {
   topReturnedChunks: RetrievedChunkScoreBreakdown[];
 };
 
-function isEnvTrue(value?: string): boolean {
+export function isEnvTrue(value?: string): boolean {
   const v = (value ?? "").trim().toLowerCase();
   return v === "1" || v === "true" || v === "yes" || v === "on";
 }
 
-function getRerankCandidateLimit(finalLimit: number): number {
+export function getRerankCandidateLimit(finalLimit: number): number {
   const raw = Number(process.env.PERAZZI_RERANK_CANDIDATE_LIMIT);
   const DEFAULT = 60;
   const MAX = 200;
@@ -956,9 +956,10 @@ async function getPgPool(): Promise<Pool> {
     );
   }
 
+  const sslMode = (process.env.PGSSL_MODE ?? "").toLowerCase();
   pgPool = new Pool({
     connectionString,
-    ssl: process.env.PGSSL_MODE === "require" ? { rejectUnauthorized: false } : undefined,
+    ssl: sslMode && sslMode !== "disable" ? true : undefined,
   });
 
   const client = await pgPool.connect();
@@ -971,7 +972,7 @@ async function getPgPool(): Promise<Pool> {
   return pgPool;
 }
 
-function extractLatestUserMessage(messages: PerazziAssistantRequest["messages"]): string | null {
+export function extractLatestUserMessage(messages: PerazziAssistantRequest["messages"]): string | null {
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     if (messages[i].role === "user") {
       return messages[i].content;

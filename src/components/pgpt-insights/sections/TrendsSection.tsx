@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/error-boundaries */
 import { LOW_SCORE_THRESHOLD } from "../../../lib/pgpt-insights/constants";
 import {
   getDailyArchetypeSnapRate,
@@ -60,6 +59,9 @@ export async function TrendsSection({
   marginLt?: string;
   tableDensityClass: string;
 }) {
+  type DailySnapRateRow = Awaited<ReturnType<typeof getDailyArchetypeSnapRate>>[number];
+  type DailyRerankRateRow = Awaited<ReturnType<typeof getDailyRerankEnabledRate>>[number];
+
   try {
     const capDays = typeof daysFilter === "number" && Number.isFinite(daysFilter) ? Math.min(Math.max(daysFilter, 7), 90) : 90;
 
@@ -81,15 +83,15 @@ export async function TrendsSection({
       getDailyLowScoreRate(envFilter, capDays, LOW_SCORE_THRESHOLD),
       tuningApplies
         ? getDailyArchetypeSnapRate(envFilter, capDays, rerankFilter, snappedFilter, marginLtNum)
-        : Promise.resolve([]),
+        : Promise.resolve<DailySnapRateRow[]>([]),
       tuningApplies
         ? getDailyRerankEnabledRate(envFilter, capDays, rerankFilter, snappedFilter, marginLtNum)
-        : Promise.resolve([]),
+        : Promise.resolve<DailyRerankRateRow[]>([]),
     ]);
 
     const lowMap = new Map(lowScore.map((r) => [r.day, r]));
-    const snapMap = new Map((snapDaily as any[]).map((r: any) => [r.day, r]));
-    const rerankMap = new Map((rerankDaily as any[]).map((r: any) => [r.day, r]));
+    const snapMap = new Map(snapDaily.map((r) => [r.day, r]));
+    const rerankMap = new Map(rerankDaily.map((r) => [r.day, r]));
 
     const rows = trends.map((t) => {
       const low = lowMap.get(t.day);
@@ -114,16 +116,8 @@ export async function TrendsSection({
     const tokensSeries = rows.map((r) => r.tokens);
     const latencySeries = rows.map((r) => (r.latency_ms === null ? null : r.latency_ms));
     const lowRateSeries = rows.map((r) => r.low_rate_pct);
-    const snapRateSeries = rows.map((r) => r.snap_rate_pct ?? null);
-    const rerankRateSeries = rows.map((r) => r.rerank_rate_pct ?? null);
 
     const last = rows[rows.length - 1];
-    const lastNonNull = (arr: Array<number | null>) => {
-      for (let i = arr.length - 1; i >= 0; i--) {
-        if (arr[i] !== null && arr[i] !== undefined) return arr[i];
-      }
-      return null;
-    };
 
     const requestsDelta = calcDelta(requestsSeries);
     const tokensDelta = calcDelta(tokensSeries);

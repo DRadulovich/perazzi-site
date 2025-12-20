@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import type { Article } from "@/types/journal";
 import { ArticleHero } from "@/components/journal/ArticleHero";
@@ -56,10 +57,10 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         <p className="text-base text-ink-muted">
           We&apos;re shaping this story now. Check back shortly or explore other Journal features.
         </p>
-        <a href="/journal" className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring">
+        <Link href="/journal" className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring">
           Return to Journal{" "}
           <span aria-hidden="true">→</span>
-        </a>
+        </Link>
       </div>
     );
   }

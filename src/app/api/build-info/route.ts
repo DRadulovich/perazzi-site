@@ -418,24 +418,24 @@ async function tryConfiguratorShortcut(
 
 // Helper functions for each field-specific query branch
 async function fetchPlatformRows(
-  client: any,
+  client: SanityClient,
   search: {
     term: string;
     altTerm: string;
     compactTerm: string;
     looseTerm: string;
   },
-): Promise<any[]> {
+): Promise<SearchRow[]> {
   const { term, altTerm, compactTerm, looseTerm } = search;
-  let rows = await client.fetch(platformQuery, { term, altTerm, compactTerm, looseTerm });
+  let rows = await client.fetch<SearchRow[]>(platformQuery, { term, altTerm, compactTerm, looseTerm });
   if (!rows.length) {
-    rows = await client.fetch(platformFallback);
+    rows = await client.fetch<SearchRow[]>(platformFallback);
   }
   return rows;
 }
 
 async function fetchModelRows(
-  client: any,
+  client: SanityClient,
   search: {
     term: string;
     altTerm: string;
@@ -443,17 +443,17 @@ async function fetchModelRows(
     looseTerm: string;
     lowerValue: string;
   },
-): Promise<any[]> {
+): Promise<SearchRow[]> {
   const { term, altTerm, compactTerm, looseTerm, lowerValue } = search;
-  let rows = await client.fetch(modelQuery, { term, altTerm, compactTerm, looseTerm });
+  let rows = await client.fetch<SearchRow[]>(modelQuery, { term, altTerm, compactTerm, looseTerm });
   if (!rows.length) {
-    rows = await client.fetch(modelFallback, { lowerValue, looseTerm });
+    rows = await client.fetch<SearchRow[]>(modelFallback, { lowerValue, looseTerm });
   }
   return rows;
 }
 
 async function fetchDisciplineRows(
-  client: any,
+  client: SanityClient,
   search: {
     term: string;
     altTerm: string;
@@ -461,17 +461,17 @@ async function fetchDisciplineRows(
     looseTerm: string;
     lowerValue: string;
   },
-): Promise<any[]> {
+): Promise<SearchRow[]> {
   const { term, altTerm, compactTerm, looseTerm, lowerValue } = search;
-  let rows = await client.fetch(disciplineQuery, { term, altTerm, compactTerm, looseTerm });
+  let rows = await client.fetch<SearchRow[]>(disciplineQuery, { term, altTerm, compactTerm, looseTerm });
   if (!rows.length) {
-    rows = await client.fetch(disciplineFallback, { lowerValue, looseTerm });
+    rows = await client.fetch<SearchRow[]>(disciplineFallback, { lowerValue, looseTerm });
   }
   return rows;
 }
 
 async function fetchGaugeRows(
-  client: any,
+  client: SanityClient,
   search: {
     term: string;
     altTerm: string;
@@ -479,17 +479,17 @@ async function fetchGaugeRows(
     looseTerm: string;
     lowerValue: string;
   },
-): Promise<any[]> {
+): Promise<SearchRow[]> {
   const { term, altTerm, compactTerm, looseTerm, lowerValue } = search;
-  let rows = await client.fetch(gaugeQuery, { term, altTerm, compactTerm, looseTerm });
+  let rows = await client.fetch<SearchRow[]>(gaugeQuery, { term, altTerm, compactTerm, looseTerm });
   if (!rows.length) {
-    rows = await client.fetch(gaugeFallback, { lowerValue, looseTerm });
+    rows = await client.fetch<SearchRow[]>(gaugeFallback, { lowerValue, looseTerm });
   }
   return rows;
 }
 
 async function fetchGradeRows(
-  client: any,
+  client: SanityClient,
   search: {
     term: string;
     altTerm: string;
@@ -498,9 +498,9 @@ async function fetchGradeRows(
     lowerValue: string;
   },
   rawModel: string,
-): Promise<any[]> {
+): Promise<SearchRow[]> {
   const { term, altTerm, compactTerm, looseTerm, lowerValue } = search;
-  let rows: any[] = [];
+  let rows: SearchRow[] = [];
 
   if (rawModel) {
     const {
@@ -509,35 +509,33 @@ async function fetchGradeRows(
       compactTerm: compactModelTerm,
       looseTerm: looseModelTerm,
     } = buildTerms(rawModel);
-    const modelGradeRows = await client.fetch(modelGradeQuery, {
+    const modelGradeRows = await client.fetch<ModelGradeRow[]>(modelGradeQuery, {
       modelTerm,
       altModelTerm,
       compactModelTerm,
       looseModelTerm,
     });
     const modelGradeNames = new Set(
-      (modelGradeRows ?? [])
-        .map((row: any) => String(row.grade ?? "").toLowerCase())
-        .filter(Boolean),
+      (modelGradeRows ?? []).map((row) => String(row.grade ?? "").toLowerCase()).filter(Boolean),
     );
     if (modelGradeNames.size && modelGradeNames.has(lowerValue)) {
-      rows = await client.fetch(gradeQuery, { term, altTerm, compactTerm, looseTerm });
+      rows = await client.fetch<SearchRow[]>(gradeQuery, { term, altTerm, compactTerm, looseTerm });
     }
   }
 
   if (!rows.length) {
-    rows = await client.fetch(gradeQuery, { term, altTerm, compactTerm, looseTerm });
+    rows = await client.fetch<SearchRow[]>(gradeQuery, { term, altTerm, compactTerm, looseTerm });
   }
 
   if (!rows.length) {
-    rows = await client.fetch(gradeFallback, { lowerValue, looseTerm });
+    rows = await client.fetch<SearchRow[]>(gradeFallback, { lowerValue, looseTerm });
   }
 
   return rows;
 }
 
 async function fetchTriggerTypeRows(
-  client: any,
+  client: SanityClient,
   search: {
     term: string;
     altTerm: string;
@@ -545,17 +543,17 @@ async function fetchTriggerTypeRows(
     looseTerm: string;
     lowerValue: string;
   },
-): Promise<any[]> {
+): Promise<SearchRow[]> {
   const { term, altTerm, compactTerm, looseTerm, lowerValue } = search;
-  let rows = await client.fetch(triggerTypeQuery, { term, altTerm, compactTerm, looseTerm });
+  let rows = await client.fetch<SearchRow[]>(triggerTypeQuery, { term, altTerm, compactTerm, looseTerm });
   if (!rows.length) {
-    rows = await client.fetch(modelFallback, { lowerValue, looseTerm });
+    rows = await client.fetch<SearchRow[]>(modelFallback, { lowerValue, looseTerm });
   }
   return rows;
 }
 
 async function fetchRowsForField(
-  client: any,
+  client: SanityClient,
   field: string,
   search: {
     term: string;
@@ -565,7 +563,7 @@ async function fetchRowsForField(
     lowerValue: string;
   },
   rawModel: string,
-): Promise<any[]> {
+): Promise<SearchRow[]> {
   switch (field) {
     case "PLATFORM":
       return fetchPlatformRows(client, search);

@@ -19,10 +19,21 @@ function toNumberOrNull(value: unknown): number | null {
   return null;
 }
 
+const PROTOTYPE_POLLUTION_KEYS = new Set(["__proto__", "prototype", "constructor"]);
+
+function isObjectWithSafeKey(value: unknown, key: string): value is Record<string, unknown> {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    !PROTOTYPE_POLLUTION_KEYS.has(key) &&
+    Object.prototype.hasOwnProperty.call(value, key)
+  );
+}
+
 function readNestedNumber(obj: unknown, path: string[]): number | null {
   let current: unknown = obj;
   for (const key of path) {
-    if (!current || typeof current !== "object" || !(key in (current as Record<string, unknown>))) return null;
+    if (!isObjectWithSafeKey(current, key)) return null;
     current = (current as Record<string, unknown>)[key];
   }
   return toNumberOrNull(current);

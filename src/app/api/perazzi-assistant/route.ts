@@ -73,6 +73,17 @@ type RateRecord = {
 };
 
 const ipRateLimit = new Map<string, RateRecord>();
+const PROJECT_ROOT = path.resolve(process.cwd());
+
+function resolveSafePath(basePath: string, ...segments: string[]): string {
+  const normalizedBase = path.resolve(basePath);
+  const resolved = path.resolve(normalizedBase, ...segments);
+  const relative = path.relative(normalizedBase, resolved);
+  if (relative.startsWith("..") || path.isAbsolute(relative)) {
+    throw new Error("Resolved path escapes base directory");
+  }
+  return resolved;
+}
 
 const ADMIN_DEBUG_HEADER = "x-perazzi-admin-debug";
 const ADMIN_DEBUG_TITLE_LIMIT = 5;
@@ -252,17 +263,15 @@ function getRetrievalPolicy(): RetrievalPolicy {
   return "hybrid";
 }
 
-const PHASE_ONE_SPEC = fs.readFileSync(
-  path.join(
-    process.cwd(),
-    "V2-PGPT",
-    "V2_PreBuild-Docs",
-    "V2_REDO_Docs",
-    "V2_REDO_Phase-1",
-    "V2_REDO_assistant-spec.md",
-  ),
-  "utf8",
+const PHASE_ONE_SPEC_PATH = resolveSafePath(
+  PROJECT_ROOT,
+  "V2-PGPT",
+  "V2_PreBuild-Docs",
+  "V2_REDO_Docs",
+  "V2_REDO_Phase-1",
+  "V2_REDO_assistant-spec.md",
 );
+const PHASE_ONE_SPEC = fs.readFileSync(PHASE_ONE_SPEC_PATH, "utf8");
 
 const STYLE_EXEMPLARS = `
 Tone & Style Exemplars (do not quote verbatim; use as a feel target)
@@ -319,12 +328,8 @@ const RETRIEVAL_TOTAL_CHAR_LIMIT = clampEnvInt(
   { min: 1000, max: 20000 },
 );
 const SAFE_DISPLAY_TITLES = parseEnvBoolDefaultTrue(process.env.PERAZZI_SAFE_DISPLAY_TITLES);
-const CONVERSATION_LOG_PATH = path.join(
-  process.cwd(),
-  "tmp",
-  "logs",
-  "perazzi-conversations.ndjson",
-);
+const LOG_DIR = resolveSafePath(PROJECT_ROOT, "tmp", "logs");
+const CONVERSATION_LOG_PATH = resolveSafePath(LOG_DIR, "perazzi-conversations.ndjson");
 
 const RELATABILITY_BLOCK = `
 Relatability and reframing guidelines:

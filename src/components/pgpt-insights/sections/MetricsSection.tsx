@@ -1,4 +1,4 @@
-/* eslint-disable react-hooks/error-boundaries */
+ 
 import {
   getArchetypeMarginHistogram,
   getArchetypeSnapSummary,

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { mockResponsesCreate } from "../mocks/openai";
-import { createResponseText } from "@/lib/aiClient";
+import { createResponseText, type CreateResponseTextParams } from "@/lib/aiClient";
 
 beforeEach(() => {
   mockResponsesCreate.mockReset();
@@ -22,7 +22,7 @@ describe("aiClient GPT-5.2 gotchas", () => {
       top_p: 0.2,
       logprobs: true,
       top_logprobs: 3,
-    } as any);
+    } satisfies CreateResponseTextParams);
 
     const payload = mockResponsesCreate.mock.calls[0]?.[0];
     expect(payload).toBeDefined();

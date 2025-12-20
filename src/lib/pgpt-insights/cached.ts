@@ -1,5 +1,6 @@
 import { cache } from "react";
 
+import type { BoolFilter } from "./log-filters";
 import {
   fetchArchetypeIntentStats,
   fetchArchetypeSummary,
@@ -24,6 +25,11 @@ import {
   fetchDailyArchetypeSnapRate,
   fetchDailyRerankEnabledRate,
 } from "./queries";
+
+const toBoolFilter = (value?: string): BoolFilter | undefined => {
+  if (value === "true" || value === "false" || value === "any") return value;
+  return undefined;
+};
 
 export const getRagSummary = cache(async (envFilter: string | undefined, daysFilter: number | undefined) =>
   fetchRagSummary(envFilter, daysFilter),
@@ -106,7 +112,14 @@ export const getArchetypeSnapSummary = cache(
     rerank?: string,
     snapped?: string,
     marginLt?: number | null,
-  ) => fetchArchetypeSnapSummary(envFilter, daysFilter, rerank as any, snapped as any, marginLt),
+  ) =>
+    fetchArchetypeSnapSummary(
+      envFilter,
+      daysFilter,
+      toBoolFilter(rerank),
+      toBoolFilter(snapped),
+      marginLt,
+    ),
 );
 
 export const getRerankEnabledSummary = cache(
@@ -116,7 +129,14 @@ export const getRerankEnabledSummary = cache(
     rerank?: string,
     snapped?: string,
     marginLt?: number | null,
-  ) => fetchRerankEnabledSummary(envFilter, daysFilter, rerank as any, snapped as any, marginLt),
+  ) =>
+    fetchRerankEnabledSummary(
+      envFilter,
+      daysFilter,
+      toBoolFilter(rerank),
+      toBoolFilter(snapped),
+      marginLt,
+    ),
 );
 
 export const getArchetypeMarginHistogram = cache(
@@ -126,15 +146,34 @@ export const getArchetypeMarginHistogram = cache(
     rerank?: string,
     snapped?: string,
     marginLt?: number | null,
-  ) => fetchArchetypeMarginHistogram(envFilter, daysFilter, rerank as any, snapped as any, marginLt),
+  ) =>
+    fetchArchetypeMarginHistogram(
+      envFilter,
+      daysFilter,
+      toBoolFilter(rerank),
+      toBoolFilter(snapped),
+      marginLt,
+    ),
 );
 
 export const getDailyArchetypeSnapRate = cache(
   async (envFilter: string | undefined, days: number, rerank?: string, snapped?: string, marginLt?: number | null) =>
-    fetchDailyArchetypeSnapRate({ envFilter, days, rerank: rerank as any, snapped: snapped as any, marginLt }),
+    fetchDailyArchetypeSnapRate({
+      envFilter,
+      days,
+      rerank: toBoolFilter(rerank),
+      snapped: toBoolFilter(snapped),
+      marginLt,
+    }),
 );
 
 export const getDailyRerankEnabledRate = cache(
   async (envFilter: string | undefined, days: number, rerank?: string, snapped?: string, marginLt?: number | null) =>
-    fetchDailyRerankEnabledRate({ envFilter, days, rerank: rerank as any, snapped: snapped as any, marginLt }),
+    fetchDailyRerankEnabledRate({
+      envFilter,
+      days,
+      rerank: toBoolFilter(rerank),
+      snapped: toBoolFilter(snapped),
+      marginLt,
+    }),
 );
