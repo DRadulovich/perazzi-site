@@ -1,5 +1,7 @@
 export type PerazziMode = "prospect" | "owner" | "navigation";
 
+export type TextVerbosity = "low" | "medium" | "high";
+
 export type Archetype =
   | "loyalist"
   | "prestige"
@@ -30,16 +32,21 @@ export interface ChatMessage {
 export interface PerazziAssistantRequest {
   messages: ChatMessage[];
   sessionId?: string;
+  /** Optional previous Responses ID to enable multi-turn state. */
+  previousResponseId?: string | null;
   context?: {
     pageUrl?: string | null;
     modelSlug?: string | null;
     platformSlug?: string | null;
     mode?: PerazziMode | null;
     locale?: string | null;
+    textVerbosity?: TextVerbosity;
     /** Sticky archetype hint from the client (e.g. last known primary archetype). */
     archetype?: Archetype | null;
     /** Previous archetype vector from the last interaction, for smoothing across turns. */
     archetypeVector?: ArchetypeVector | null;
+    /** Optional previous Responses ID to enable multi-turn state. */
+    previousResponseId?: string | null;
   };
   summaryIntent?: string | null;
 }
@@ -51,6 +58,71 @@ export interface Citation {
   excerpt?: string;
 }
 
+export type PerazziAdminDebugUsage = {
+  input_tokens?: number;
+  cached_tokens?: number;
+  output_tokens?: number;
+  total_tokens?: number;
+};
+
+export type PerazziAdminDebugPayload = {
+  thread: {
+    previous_response_id_present: boolean;
+    store_enabled: boolean;
+    thread_reset_required: boolean;
+    conversationStrategy: string | null;
+    enforced_thread_input: boolean;
+  };
+  /**
+   * Admin-only OpenAI request summary (never includes message text).
+   * Present only on OpenAI-backed responses (not early-return handlers).
+   */
+  openai?: {
+    input_item_count: number;
+    input_counts_by_role: Partial<Record<ChatRole, number>>;
+    input_items: Array<{
+      role: ChatRole;
+      chars: number;
+    }>;
+  } | null;
+  retrieval: {
+    attempted: boolean;
+    skipped: boolean;
+    reason: string | null;
+    chunk_count: number;
+    top_titles: string[];
+    rerank_enabled: boolean | null;
+    rerank_metrics_present: boolean;
+    models_registry_sot_enabled?: boolean;
+    models_registry_sot_applied?: boolean;
+    models_registry_chunk_count?: number;
+  };
+  usage: PerazziAdminDebugUsage | null;
+  flags: {
+    convo_strategy: string | null;
+    retrieval_policy: string | null;
+    text_verbosity: string | null;
+    reasoning_effort: string | null;
+    require_general_label: boolean;
+    postvalidate_enabled: boolean;
+    prompt_cache_retention: string | null;
+    prompt_cache_key_present: boolean;
+  };
+  /** Admin-only output summary signals for deterministic eval assertions. */
+  output?: {
+    general_unsourced_label_present: boolean;
+  } | null;
+  triggers?: {
+    blocked_intent?: string | null;
+    evidenceMode?: string | null;
+    evidenceReason?: string | null;
+    postvalidate?: {
+      triggered: boolean;
+      reasons: string[];
+    } | null;
+  };
+};
+
 export interface PerazziAssistantResponse {
   answer: string;
   citations: Citation[];
@@ -61,6 +133,21 @@ export interface PerazziAssistantResponse {
   intents: string[];
   topics: string[];
   templates: string[];
+
+  /**
+   * Admin-only structured debug payload (never sent to normal users).
+   * Present only when PERAZZI_ADMIN_DEBUG=true and x-perazzi-admin-debug is authorized.
+   */
+  debug?: PerazziAdminDebugPayload;
+
+  /**
+   * Indicates the server could not resume the provided `previous_response_id` and the client
+   * should clear its persisted thread state (but keep the visible chat log).
+   */
+  thread_reset_required?: boolean;
+
+  /** OpenAI Responses ID for this turn (when generated). */
+  responseId?: string | null;
 
   /**
    * Mode that PerazziGPT used when answering this request (prospect, owner, navigation).

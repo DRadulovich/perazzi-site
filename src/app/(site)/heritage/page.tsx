@@ -325,7 +325,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
 
             <div className="space-y-3 text-sm sm:text-base font-light italic text-gray-300">
             <p className="text-sm sm:text-base font-semibold not-italic text-white">
-              What you'll see below:
+              What you&apos;ll see below:
             </p>
             <ul className="space-y-2">
               {championsIntroBullets.map((bullet) => {
@@ -385,7 +385,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
 
             <div className="space-y-3 text-sm sm:text-base font-light italic text-gray-300">
             <p className="text-sm sm:text-base font-semibold not-italic text-white">
-              What you'll see below:
+              What you&apos;ll see below:
             </p>
             <ul className="space-y-2">
               {factoryBullets.map((bullet) => {

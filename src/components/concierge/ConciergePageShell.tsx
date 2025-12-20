@@ -223,6 +223,27 @@ export function ConciergePageShell() {
     [nextField, buildState],
   );
   const fieldOrder = useMemo(() => getFieldOrder(), []);
+  const isUnsafeQueryValue = (input?: string) => {
+    if (!input) return true;
+    return input.includes("://") || input.startsWith("//");
+  };
+  const buildSafeBuildInfoUrl = (fieldId: string, value: string, model?: string) => {
+    if (!fieldOrder.includes(fieldId) || isUnsafeQueryValue(value)) {
+      return null;
+    }
+    const allowedValues = getValidOptions(fieldId, buildState).map((opt) => opt.value);
+    if (allowedValues.length > 0 && !allowedValues.includes(value)) {
+      return null;
+    }
+    const params = new URLSearchParams({ field: fieldId, value });
+    if (model && !isUnsafeQueryValue(model)) {
+      const allowedModels = getValidOptions("MODEL", buildState).map((opt) => opt.value);
+      if (allowedModels.length === 0 || allowedModels.includes(model)) {
+        params.set("model", model);
+      }
+    }
+    return `/api/build-info?${params.toString()}`;
+  };
 
   useEffect(() => {
     if (nextField?.id !== "ENGRAVING") {
@@ -241,12 +262,20 @@ export function ConciergePageShell() {
     const hypotheticalState = { ...buildState, [nextField.id]: "__PENDING__" };
     for (let i = currentIndex + 1; i < fieldOrder.length; i += 1) {
       const candidateId = fieldOrder[i];
+      // Only allow string keys that match expected field IDs and prevent prototype pollution
+      if (
+        typeof candidateId !== "string" ||
+        !/^[A-Z0-9_]+$/.test(candidateId) ||
+        ["__proto__", "prototype", "constructor"].includes(candidateId)
+      ) {
+        continue;
+      }
       const candidateField = gunOrderConfig.fields.find((f) => f.id === candidateId);
       if (!candidateField) continue;
       const depsMet = candidateField.dependsOn.every(
         (dep) => hypotheticalState[dep] !== undefined,
       );
-      if (!hypotheticalState[candidateId] && depsMet) {
+      if (Object.prototype.hasOwnProperty.call(hypotheticalState, candidateId) && depsMet) {
         return candidateField;
       }
     }
@@ -463,14 +492,15 @@ export function ConciergePageShell() {
       try {
         const results = await Promise.all(
           options.map(async (opt) => {
-            const modelParam =
-              nextField.id === "GRADE" && buildState.MODEL
-                ? `&model=${encodeURIComponent(buildState.MODEL)}`
-                : "";
-            const res = await fetch(
-              `/api/build-info?field=${encodeURIComponent(nextField.id)}&value=${encodeURIComponent(opt)}${modelParam}`,
-              { signal: controller.signal },
+            const url = buildSafeBuildInfoUrl(
+              nextField.id,
+              opt,
+              nextField.id === "GRADE" ? buildState.MODEL : undefined,
             );
+            if (!url) {
+              return { option: opt, items: [] };
+            }
+            const res = await fetch(url, { signal: controller.signal });
             if (!res.ok) {
               throw new Error("fetch_failed");
             }
@@ -566,11 +596,9 @@ export function ConciergePageShell() {
         }
       }
       try {
-        const modelParam =
-          fieldId === "GRADE" && gradeModel ? `&model=${encodeURIComponent(gradeModel)}` : "";
-        const res = await fetch(
-          `/api/build-info?field=${encodeURIComponent(fieldId)}&value=${encodeURIComponent(value)}${modelParam}`,
-        );
+        const url = buildSafeBuildInfoUrl(fieldId, value, fieldId === "GRADE" ? gradeModel : undefined);
+        if (!url) return [];
+        const res = await fetch(url);
         if (!res.ok) return [];
         const data = await res.json();
         const rawItems = (data.items ?? []) as InfoCard[];
@@ -579,7 +607,7 @@ export function ConciergePageShell() {
         return [];
       }
     },
-    [buildState.MODEL],
+    [buildState],
   );
 
   useEffect(() => {

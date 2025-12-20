@@ -1,0 +1,3 @@
+@@ -95,1 +95,1 @@
+-    if (!activeGradeId && firstCategory?.grades[0]) {
++    if (!activeGradeId && firstCategory.grades[0]) {

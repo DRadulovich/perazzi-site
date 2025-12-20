@@ -61,24 +61,39 @@ export function BuildJourneyClient({ stations }: BuildJourneyClientProps) {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    try {
-      const raw = window.localStorage.getItem(SOUL_JOURNEY_STORAGE_KEY);
-      if (!raw) return;
+    const hydrateFromStorage = () => {
+      try {
+        const raw = window.localStorage.getItem(SOUL_JOURNEY_STORAGE_KEY);
+        if (!raw) return;
 
-      const parsed = JSON.parse(raw) as {
-        answers?: Record<StepKey, string>;
-        artisanParagraphs?: Record<StepKey, string>;
-      };
+        const parsed = JSON.parse(raw) as {
+          answers?: Record<StepKey, string>;
+          artisanParagraphs?: Record<StepKey, string>;
+        };
 
-      if (parsed.answers && typeof parsed.answers === "object") {
-        setAnswers(parsed.answers);
+        if (parsed.answers && typeof parsed.answers === "object") {
+          setAnswers(parsed.answers);
+        }
+        if (parsed.artisanParagraphs && typeof parsed.artisanParagraphs === "object") {
+          setArtisanParagraphs(parsed.artisanParagraphs);
+        }
+      } catch (error) {
+        console.error("[SoulJourney] Failed to load saved state from localStorage:", error);
       }
-      if (parsed.artisanParagraphs && typeof parsed.artisanParagraphs === "object") {
-        setArtisanParagraphs(parsed.artisanParagraphs);
+    };
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === null || event.key === SOUL_JOURNEY_STORAGE_KEY) {
+        hydrateFromStorage();
       }
-    } catch (error) {
-      console.error("[SoulJourney] Failed to load saved state from localStorage:", error);
-    }
+    };
+
+    hydrateFromStorage();
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+    };
   }, []);
 
   // Persist answers and artisan paragraphs to localStorage on changes

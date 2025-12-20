@@ -81,7 +81,7 @@ export function ThemeProvider({
       }
     });
 
-    return () => window.cancelAnimationFrame(raf);
+    return () => { window.cancelAnimationFrame(raf); };
   }, [applyTheme, forcedTheme, initialTheme]);
 
   const value = useMemo(

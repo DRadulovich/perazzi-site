@@ -187,7 +187,7 @@ export function BuildStepsScroller({
                         <button
                           key={step.id}
                           type="button"
-                          onClick={() => handleRailClick(index)}
+                          onClick={() => { handleRailClick(index); }}
                           aria-label={`Go to step ${stepNumber}: ${step.title}`}
                           aria-current={isActive ? "step" : undefined}
                           className={`group flex w-full justify-center items-center gap-2 rounded-full border border-transparent px-3 py-1.5 transition focus-ring ${
@@ -240,7 +240,7 @@ export function BuildStepsScroller({
                             ? undefined
                             : { duration: 0.35, ease: "easeOut" }
                         }
-                        onViewportEnter={() => handleStepEnter(step.id)}
+                        onViewportEnter={() => { handleStepEnter(step.id); }}
                       >
                         <div className="relative flex min-h-[80vh]">
                           {/* Step background */}
@@ -274,7 +274,7 @@ export function BuildStepsScroller({
                                 type="button"
                                 className="flex w-full flex-col items-start gap-3 text-left"
                                 aria-expanded={openStepId === step.id}
-                                onClick={() => toggleStepOpen(step.id)}
+                                onClick={() => { toggleStepOpen(step.id); }}
                               >
                                 <div className="w-full space-y-1">
                                   <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
@@ -339,7 +339,7 @@ export function BuildStepsScroller({
                                                 key={s.id}
                                                 type="button"
                                                 onClick={(event) =>
-                                                  handleMobileDotClick(event, s.id)
+                                                  { handleMobileDotClick(event, s.id); }
                                                 }
                                                 aria-label={`Go to step ${
                                                   mappedSteps.findIndex(

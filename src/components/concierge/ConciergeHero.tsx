@@ -105,13 +105,13 @@ export function ConciergeHero({ hero }: ConciergeHeroProps) {
             brief in one place while you explore.
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-transparent px-3 py-3">
+            <div className="rounded-2xl border border-white/10 bg-linear-to-br from-white/10 via-white/5 to-transparent px-3 py-3">
               <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-white/70">Context</p>
               <p className="mt-1 text-sm leading-relaxed font-semibold text-white">
                 Carries selections and history into every reply.
               </p>
             </div>
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-perazzi-red/20 via-white/5 to-transparent px-3 py-3">
+            <div className="rounded-2xl border border-white/10 bg-linear-to-br from-perazzi-red/20 via-white/5 to-transparent px-3 py-3">
               <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-white/70">Navigator</p>
               <p className="mt-1 text-sm leading-relaxed font-semibold text-white">
                 Step-by-step path from frame size to engraving.

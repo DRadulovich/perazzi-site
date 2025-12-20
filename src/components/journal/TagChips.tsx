@@ -35,7 +35,7 @@ export function TagChips({ tags, onChange }: TagChipsProps) {
               ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
               : "border-border bg-card text-ink"
           }`}
-          onClick={() => toggle(tag.id)}
+          onClick={() => { toggle(tag.id); }}
         >
           {tag.label}
         </button>

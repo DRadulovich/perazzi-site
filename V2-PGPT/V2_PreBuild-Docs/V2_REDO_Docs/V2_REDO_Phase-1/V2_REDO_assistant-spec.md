@@ -408,12 +408,18 @@ At runtime, the backend will:
      - Prestige Buyers → stronger bias toward ownership experience and curated overviews.  
    - Always obey the source-corpus manifest’s `Status` and pricing-sensitivity rules.
 
-4. **Build a system prompt using**  
-   - This assistant spec.  
-   - A condensed guardrails summary.  
-   - Voice calibration snippets.  
-   - A short guidance string derived from the Mode × Archetype matrix row.  
-   - Retrieved RAG chunks (with minimal metadata for internal logging).
+4. **Build instructions as a stable CORE plus per-request DYNAMIC context**  
+   - CORE is static and reused across turns:
+     - This assistant spec (behavioral contract).
+     - Style exemplars / tone calibration.
+     - Relatability + reframing guidelines.
+     - Output format rules.
+     - A condensed hard-rule recap, placed last in CORE as a tie-breaker.
+   - DYNAMIC context is computed per request (turn) and includes only per-turn material:
+     - A brief context line (mode + page/model context if available).
+     - Retrieved RAG chunks (references).
+     - Response templates / structure guidance (if any).
+     - Mode × archetype guidance and bridge guidance.
 
 PerazziGPT must then:
 

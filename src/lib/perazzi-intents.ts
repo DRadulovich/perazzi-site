@@ -177,6 +177,13 @@ const TEMPLATE_GUIDES_BY_ARCHETYPE: Partial<Record<string, Partial<Record<Archet
   },
 };
 
+const MAX_QUESTION_LENGTH = 500;
+
+// Clamp user input before running regex checks to keep regex processing predictable.
+function clampQuestionLength(input: string): string {
+  return input.length > MAX_QUESTION_LENGTH ? input.slice(0, MAX_QUESTION_LENGTH) : input;
+}
+
 const ALLOWED_MODES: PerazziMode[] = ["prospect", "owner", "navigation"];
 
 function normalizeMode(input: unknown): PerazziMode | null {
@@ -190,7 +197,7 @@ function inferMode(
   contextMode: PerazziMode | null,
   intents: Set<string>,
 ): PerazziMode {
-  const q = latestQuestion.toLowerCase();
+  const q = clampQuestionLength(latestQuestion).toLowerCase();
 
   const hasNavigationSignal =
     intents.has("dealers") ||
@@ -230,18 +237,19 @@ export function detectRetrievalHints(
   if (!latestQuestion) {
     return { mode: contextMode ?? "prospect", intents: [], topics: [], focusEntities: [], keywords: [] };
   }
-  const lowerQuestion = latestQuestion.toLowerCase();
+  const safeQuestion = clampQuestionLength(latestQuestion);
+  const lowerQuestion = safeQuestion.toLowerCase();
   const intents = new Set<string>();
   const topics = new Set<string>();
 
   INTENT_DEFINITIONS.forEach((intent) => {
-    if (intent.pattern.test(latestQuestion)) {
+    if (intent.pattern.test(safeQuestion)) {
       intents.add(intent.name);
       intent.topics.forEach((topic) => topics.add(topic));
     }
   });
 
-  const mode = inferMode(latestQuestion, contextMode, intents);
+  const mode = inferMode(safeQuestion, contextMode, intents);
   const focusEntities = new Set<string>();
   const keywords = new Set<string>();
 

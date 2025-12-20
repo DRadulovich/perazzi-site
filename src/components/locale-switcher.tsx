@@ -32,7 +32,7 @@ export function LocaleSwitcher() {
       <select
         className="min-h-10 rounded-xl border border-border bg-transparent px-3 py-2 text-sm sm:text-base focus-ring"
         value={locale}
-        onChange={(event) => handleChange(event.target.value)}
+        onChange={(event) => { handleChange(event.target.value); }}
         disabled={isPending}
       >
         {locales.map((value) => (

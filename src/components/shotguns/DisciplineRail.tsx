@@ -109,7 +109,7 @@ export function DisciplineRail({
       return;
     }
     globalThis.addEventListener("keydown", handleKey);
-    return () => globalThis.removeEventListener("keydown", handleKey);
+    return () => { globalThis.removeEventListener("keydown", handleKey); };
   }, [modelModalOpen]);
 
   const disciplineLookup = useMemo(() => {
@@ -137,7 +137,7 @@ export function DisciplineRail({
 
   useEffect(() => {
     const firstCategory = categories[0];
-    if (!activeDisciplineId && firstCategory?.disciplines[0]) {
+    if (!activeDisciplineId && firstCategory.disciplines[0]) {
       setActiveDisciplineId(firstCategory.disciplines[0].id);
       setOpenCategory(firstCategory.label);
     }
@@ -249,7 +249,7 @@ export function DisciplineRail({
                                 <li key={discipline.id}>
                                   <button
                                     type="button"
-                                    onClick={() => setActiveDisciplineId(discipline.id)}
+                                    onClick={() => { setActiveDisciplineId(discipline.id); }}
                                     className={cn(
                                       "group w-full rounded-2xl px-3 py-2 text-left text-sm transition-colors focus-ring",
                                       isActive
@@ -307,7 +307,7 @@ export function DisciplineRail({
               type="button"
               className="absolute inset-0 cursor-default bg-transparent border-none"
               aria-label="Close modal"
-              onClick={() => setModelModalOpen(false)}
+              onClick={() => { setModelModalOpen(false); }}
             />
             <div className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]">
               <button
@@ -446,8 +446,7 @@ function DisciplineCard({
                 <button
                   type="button"
                   key={model.idLegacy ?? model.id}
-                  onClick={() => onSelectModel(model.idLegacy ?? model.id)}
-                  className="group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card/75 focus:outline-none focus:ring-2 focus:ring-perazzi-red"
+                  onClick={() => { onSelectModel(model.idLegacy ?? model.id); }}                  className="group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card/75 focus:outline-none focus:ring-2 focus:ring-perazzi-red"
                 >
                   {model.hero ? (
                     <Image

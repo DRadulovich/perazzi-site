@@ -67,7 +67,7 @@ function FAQItemCard({
   return (
     <details
       open={open}
-      onToggle={(event) => setOpen(event.currentTarget.open)}
+      onToggle={(event) => { setOpen(event.currentTarget.open); }}
       className="rounded-2xl border border-border/75 bg-card/75 p-4 shadow-sm focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-perazzi-red"
     >
       <summary className="cursor-pointer text-sm font-semibold text-ink">

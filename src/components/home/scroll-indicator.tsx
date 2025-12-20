@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
 type ScrollIndicatorProps = Readonly<{
@@ -9,17 +8,10 @@ type ScrollIndicatorProps = Readonly<{
 
 export function ScrollIndicator({ className }: ScrollIndicatorProps) {
   const prefersReducedMotion = useReducedMotion();
-  const [showIndicator, setShowIndicator] = useState(true);
 
-  // Defer honoring the user's reduced-motion preference until after hydration
-  // so the server and client markup stay in sync.
-  useEffect(() => {
-    if (prefersReducedMotion) {
-      setShowIndicator(false);
-    }
-  }, [prefersReducedMotion]);
-
-  if (!showIndicator) {
+  // useReducedMotion defaults to false on the server, then updates after hydration,
+  // so this still renders initially and disappears for users preferring reduced motion.
+  if (prefersReducedMotion) {
     return null;
   }
 

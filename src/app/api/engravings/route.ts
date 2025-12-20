@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { groq } from "next-sanity";
 import { sanityClient as baseClient } from "../../../../sanity/client";
 
+type EngravingRow = {
+  _id: string;
+  engravingId?: string | null;
+  engravingSide?: string | null;
+  gradeName?: string | null;
+  image?: unknown;
+  imageAlt?: string | null;
+};
+
 const engravingByIdQuery = groq`*[_type == "engravings" && engraving_id match $pattern]{
   _id,
   "engravingId": engraving_id,
@@ -38,13 +47,13 @@ export async function GET(request: NextRequest) {
       if (grade) {
         const gradePattern = `${grade}*`;
         const gradeLower = grade.toLowerCase();
-        return client.fetch(engravingByGradeQuery, { gradePattern, gradeLower });
+        return client.fetch<EngravingRow[]>(engravingByGradeQuery, { gradePattern, gradeLower });
       }
       const pattern = `${id}*`;
-      return client.fetch(engravingByIdQuery, { pattern });
+      return client.fetch<EngravingRow[]>(engravingByIdQuery, { pattern });
     })();
 
-    const engravings = (rows ?? []).map((row: any) => ({
+    const engravings = (rows ?? []).map((row: EngravingRow) => ({
       _id: row._id,
       engravingId: row.engravingId ?? "",
       engravingSide: row.engravingSide ?? "",

@@ -318,7 +318,7 @@ function mapStages(stages?: HomeSanityResponse["timelineStages"] | null): HomeDa
   const mapped: FittingStage[] = stages
     .map((stage, index) => {
       const media = mapImageResult(stage.media ?? null);
-      if (!stage?.title || !media) return null;
+      if (!stage.title || !media) return null;
       return {
         id: stage._key ?? `stage-${index}`,
         order: index + 1,
@@ -346,14 +346,14 @@ function mapGuideSection(input?: HomeSanityResponse["guideSection"] | null): Hom
 }
 
 function mapFinale(input?: HomeSanityResponse["finale"] | null): HomeData["finale"] | undefined {
-  if (!input?.text || !input.ctaPrimary?.href || !input.ctaPrimary?.label) return undefined;
+  if (!input?.text || !input.ctaPrimary?.href || !input.ctaPrimary.label) return undefined;
   return {
     text: input.text,
     ctaPrimary: {
       label: input.ctaPrimary.label,
       href: input.ctaPrimary.href,
     },
-    ctaSecondary: input.ctaSecondary?.href && input.ctaSecondary?.label
+    ctaSecondary: input.ctaSecondary?.href && input.ctaSecondary.label
       ? {
           label: input.ctaSecondary.label,
           href: input.ctaSecondary.href,

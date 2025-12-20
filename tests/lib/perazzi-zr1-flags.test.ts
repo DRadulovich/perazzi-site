@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getZr1FeatureFlags } from "@/lib/perazzi-zr1-flags";
 
-vi.mock("server-only", () => ({}), { virtual: true });
+vi.mock("server-only", () => ({}));
 
 const flagKeys = [
   "PERAZZI_ENABLE_RERANK",

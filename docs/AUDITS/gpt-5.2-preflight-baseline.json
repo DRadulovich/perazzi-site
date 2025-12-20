@@ -1,0 +1,196 @@
+{
+  "timestamp": "2025-12-16T13:35:42-06:00",
+  "git": {
+    "branch": "GPT-5.2",
+    "head_sha": "66aa4520bb6df39f613ee13a51279fddf2dc4579",
+    "status_clean": true
+  },
+  "tooling": {
+    "node_version": "v24.10.0",
+    "pnpm_version": "10.20.0"
+  },
+  "pnpm": {
+    "scripts": {
+      "dev": "next dev",
+      "build": "next build",
+      "start": "next start",
+      "lint": "eslint",
+      "ingest:chunks": "tsx scripts/ingest.ts",
+      "ingest:validate": "tsx scripts/ingest.ts --dry-run --lint --strict",
+      "lint:chunks": "tsx scripts/ingest.ts --dry-run --lint",
+      "emit:chunks": "tsx scripts/ingest.ts --dry-run --emit-metadata",
+      "test": "vitest",
+      "ingest:v2": "tsx scripts/ingest-v2.ts",
+      "ingest:v2:full": "tsx scripts/ingest-v2.ts --full",
+      "ingest:v2:dry-run": "tsx scripts/ingest-v2.ts --dry-run"
+    }
+  },
+  "env_presence": {
+    "OPENAI_API_KEY_set": false,
+    "AI_GATEWAY_URL_set": false,
+    "AI_GATEWAY_TOKEN_set": false,
+    "DATABASE_URL_set": false,
+    "PERAZZI_AI_LOGGING_ENABLED_value": "",
+    "PERAZZI_LOG_TEXT_MODE_value": "",
+    "PERAZZI_PROMPT_CACHE_RETENTION_value": "",
+    "PERAZZI_REASONING_EFFORT_value": "",
+    "PERAZZI_ASSISTANT_TEMPERATURE_value": "",
+    "PERAZZI_SOUL_JOURNEY_TEMPERATURE_value": ""
+  },
+  "tests": {
+    "pnpm_test_exit_code": 1,
+    "pnpm_test_failed_files": [
+      "tests/lib/dealer-brief.test.ts"
+    ]
+  },
+  "endpoints": {
+    "root": {
+      "status": 200
+    },
+    "perazzi_assistant": {
+      "meta_origin": {
+        "status": 200,
+        "keys": [
+          "answer",
+          "guardrail",
+          "citations",
+          "intents",
+          "topics",
+          "templates",
+          "similarity",
+          "mode",
+          "archetype",
+          "archetypeBreakdown"
+        ],
+        "keyTypes": {
+          "answer": "string",
+          "guardrail": "object",
+          "citations": "array",
+          "intents": "array",
+          "topics": "array",
+          "templates": "array",
+          "similarity": "number",
+          "mode": "string",
+          "archetype": "null",
+          "archetypeBreakdown": "object"
+        }
+      },
+      "meta_training": {
+        "status": 200,
+        "keys": [
+          "answer",
+          "guardrail",
+          "citations",
+          "intents",
+          "topics",
+          "templates",
+          "similarity",
+          "mode",
+          "archetype",
+          "archetypeBreakdown"
+        ],
+        "keyTypes": {
+          "answer": "string",
+          "guardrail": "object",
+          "citations": "array",
+          "intents": "array",
+          "topics": "array",
+          "templates": "array",
+          "similarity": "number",
+          "mode": "string",
+          "archetype": "null",
+          "archetypeBreakdown": "object"
+        }
+      },
+      "guardrail_pricing": {
+        "status": 200,
+        "keys": [
+          "answer",
+          "guardrail",
+          "citations",
+          "intents",
+          "topics",
+          "templates",
+          "similarity",
+          "mode",
+          "archetype",
+          "archetypeBreakdown"
+        ],
+        "keyTypes": {
+          "answer": "string",
+          "guardrail": "object",
+          "citations": "array",
+          "intents": "array",
+          "topics": "array",
+          "templates": "array",
+          "similarity": "number",
+          "mode": "string",
+          "archetype": "null",
+          "archetypeBreakdown": "object"
+        }
+      },
+      "platform_compare": {
+        "status": 500,
+        "keys": [
+          "error"
+        ],
+        "keyTypes": {
+          "error": "string"
+        },
+        "notes": "Failed without OpenAI/gateway credentials; server returned error payload."
+      }
+    },
+    "soul_journey_step": {
+      "missing_step": {
+        "status": 400,
+        "keys": [
+          "error"
+        ],
+        "keyTypes": {
+          "error": "string"
+        }
+      },
+      "missing_userAnswer": {
+        "status": 400,
+        "keys": [
+          "error"
+        ],
+        "keyTypes": {
+          "error": "string"
+        }
+      },
+      "unknown_step": {
+        "status": 400,
+        "keys": [
+          "error"
+        ],
+        "keyTypes": {
+          "error": "string"
+        }
+      },
+      "success_example": {
+        "status": null,
+        "keys": [],
+        "keyTypes": {},
+        "notes": "Not attempted; OPENAI_API_KEY_set=false and no gateway configured."
+      }
+    }
+  },
+  "pgpt_insights": {
+    "db_connected": false,
+    "table_columns_expected": [
+      "perazzi_conversation_logs columns used: id, created_at, env, endpoint, page_url, archetype, session_id, user_id, model, used_gateway, prompt, response, prompt_tokens, completion_tokens, low_confidence, intents, topics, metadata",
+      "metadata keys referenced in filters/queries: maxScore, guardrailStatus, guardrailReason, latencyMs, rerankEnabled, candidateLimit, archetypeSnapped, archetypeConfidenceMargin/archetypeConfidence, archetypeScores map, retrievedChunks",
+      "token metrics aggregated from prompt_tokens and completion_tokens; latencyMs averaged when present",
+      "QA insights join qa_flags table on interaction_id for id/status/reason/notes/created_at"
+    ],
+    "ui_routes_found": [
+      "/admin/pgpt-insights",
+      "/admin/pgpt-insights/qa"
+    ],
+    "api_routes_found": [
+      "/api/admin/pgpt-insights/log/[id]"
+    ],
+    "notes": "DATABASE_URL not set; runtime DB query skipped. Metadata decoding expects rerank/archetype fields when present."
+  }
+}

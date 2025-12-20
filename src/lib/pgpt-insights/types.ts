@@ -1,4 +1,14 @@
-export type PerazziLogBase = {
+export type LogTextMetadata = {
+  metadata?: unknown | null;
+  log_text_mode?: string | null;
+  log_text_max_chars?: number | null;
+  prompt_text_truncated?: boolean | null;
+  response_text_truncated?: boolean | null;
+  prompt_text_omitted?: boolean | null;
+  response_text_omitted?: boolean | null;
+};
+
+export type PerazziLogBase = LogTextMetadata & {
   id: string;
   created_at: string;
   env: string;
@@ -15,6 +25,12 @@ export type PerazziLogBase = {
   max_score: string | null;
   guardrail_status: string | null;
   guardrail_reason: string | null;
+
+  prompt_tokens?: number | null;
+  completion_tokens?: number | null;
+  cached_tokens?: number | null;
+  reasoning_tokens?: number | null;
+  total_tokens?: number | null;
 
   // Optional context fields (may be absent on older logs)
   page_url?: string | null;
@@ -40,7 +56,6 @@ export type PerazziLogPreviewRow = PerazziLogBase & {
   prompt_len: number;
   response_len: number;
   archetype_confidence?: number | null;
-  metadata?: unknown | null;
   rerank_enabled?: boolean | null;
   archetype_snapped?: boolean | null;
   archetype_confidence_margin?: number | null;
@@ -78,6 +93,13 @@ export type GuardrailLogRow = {
   env: string;
   archetype: string | null;
   session_id: string | null;
+  metadata?: unknown | null;
+  log_text_mode?: string | null;
+  log_text_max_chars?: number | null;
+  prompt_text_truncated?: boolean | null;
+  response_text_truncated?: boolean | null;
+  prompt_text_omitted?: boolean | null;
+  response_text_omitted?: boolean | null;
   prompt: string;
   response: string;
   guardrail_reason: string | null;
@@ -137,6 +159,9 @@ export type QaFlagRow = {
 export type PgptLogDetail = PerazziLogRow & {
   prompt_tokens: number | null;
   completion_tokens: number | null;
+  cached_tokens?: number | null;
+  reasoning_tokens?: number | null;
+  total_tokens?: number | null;
   latency_ms: number | null;
   retrieved_chunks: unknown[];
   metadata?: unknown | null;
@@ -201,6 +226,10 @@ export type PgptSessionLogRow = {
   qa_flag_reason?: string | null;
   qa_flag_notes?: string | null;
   qa_flag_created_at?: string | null;
+
+  cached_tokens?: number | null;
+  reasoning_tokens?: number | null;
+  total_tokens?: number | null;
 };
 
 export type QaFlagLatestRow = {

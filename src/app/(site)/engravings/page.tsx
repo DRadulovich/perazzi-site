@@ -5,7 +5,7 @@ import { SanityImageSource } from "@sanity/image-url/lib/types/types";
 
 import { EngravingSearchTable } from "@/components/engravings/EngravingSearchTable";
 import { client } from "@/sanity/lib/client";
-import engravingHero from "@/../Photos/ENGRAVINGS/p-web-d-2.jpg";
+import engravingHero from "@/../Photos/p-web-d-2.jpg";
 
 const engravingsQuery = groq`*[_type == "engravings"] | order(engraving_grade->name asc, engraving_id asc, engraving_side asc) {
   _id,

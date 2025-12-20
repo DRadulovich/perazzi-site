@@ -393,7 +393,7 @@ export async function getExperienceHome(): Promise<ExperienceHomePayload | null>
         }
       : undefined,
     picker: data.picker
-      ?.filter((item): item is typeof item & { _key: string } => Boolean(item?._key))
+      ?.filter((item): item is typeof item & { _key: string } => Boolean(item._key))
       .map((item) => ({
         id: item._key as string,
         title: item.title ?? undefined,
@@ -416,8 +416,8 @@ export async function getExperienceHome(): Promise<ExperienceHomePayload | null>
           heading: data.faqSection.heading ?? undefined,
           lead: data.faqSection.lead ?? undefined,
           items: data.faqSection.items?.map((item) => ({
-            question: item?.question ?? undefined,
-            answerHtml: item?.answerHtml ?? undefined,
+            question: item.question ?? undefined,
+            answerHtml: item.answerHtml ?? undefined,
           })),
         }
       : undefined,
@@ -445,11 +445,11 @@ export async function getExperienceHome(): Promise<ExperienceHomePayload | null>
           heading: data.bookingSection.heading ?? undefined,
           subheading: data.bookingSection.subheading ?? undefined,
           options: data.bookingSection.options?.map((option) => ({
-            id: option?._key ?? undefined,
-            title: option?.title ?? undefined,
-            durationLabel: option?.durationLabel ?? undefined,
-            descriptionHtml: option?.descriptionHtml ?? undefined,
-            href: option?.href ?? undefined,
+            id: option._key ?? undefined,
+            title: option.title ?? undefined,
+            durationLabel: option.durationLabel ?? undefined,
+            descriptionHtml: option.descriptionHtml ?? undefined,
+            href: option.href ?? undefined,
           })),
           optionCtaLabel: data.bookingSection.optionCtaLabel ?? undefined,
           scheduler: data.bookingSection.scheduler
@@ -498,7 +498,7 @@ export async function getExperienceNetworkData(): Promise<ExperienceNetworkData>
 
   const scheduledEvents = (data?.scheduledEvents ?? [])
     .map((item) => {
-      if (!item?._id || !item.eventName || !item.eventLocation) return null;
+      if (!item._id || !item.eventName || !item.eventLocation) return null;
       return {
         _id: item._id,
         eventName: item.eventName,
@@ -512,7 +512,7 @@ export async function getExperienceNetworkData(): Promise<ExperienceNetworkData>
 
   const dealers = (data?.dealers ?? [])
     .map((item) => {
-      if (!item?._id || !item.dealerName || !item.state) return null;
+      if (!item._id || !item.dealerName || !item.state) return null;
       return {
         _id: item._id,
         dealerName: item.dealerName,
@@ -525,7 +525,7 @@ export async function getExperienceNetworkData(): Promise<ExperienceNetworkData>
 
   const serviceCenters = (data?.serviceCenters ?? [])
     .map((item) => {
-      if (!item?._id || !item.centerName || !item.state) return null;
+      if (!item._id || !item.centerName || !item.state) return null;
       return {
         _id: item._id,
         centerName: item.centerName,

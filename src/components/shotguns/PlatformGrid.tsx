@@ -146,7 +146,7 @@ const PlatformTabs = ({ platforms, activeIndex, onSelect }: PlatformTabsProps) =
               ? "border-perazzi-red bg-[color:var(--color-canvas)]/40 text-perazzi-red backdrop-blur-sm shadow-elevated"
               : "border-border/70 bg-transparent text-ink-muted hover:border-ink/60"
           }`}
-          onClick={() => onSelect(index)}
+          onClick={() => { onSelect(index); }}
         >
           {platform.name}
         </button>

@@ -7,6 +7,7 @@ import process from "node:process";
 import minimist from "minimist";
 import { Pool, PoolClient } from "pg";
 import { createEmbeddings } from "@/lib/aiClient";
+import stringify from "json-stable-stringify";
 
 type Status = "active" | "planned" | "deprecated";
 type EmbedMode = "full" | "metadata-only" | "ignore";
@@ -35,6 +36,30 @@ interface DocumentMetadata {
   platforms?: string[] | null;
   audiences?: string[] | null;
   tags?: string[] | null;
+}
+
+interface ModelDetailsRecord {
+  name?: string;
+  slug?: string;
+  id?: string;
+  platform?: string;
+  platformSlug?: string;
+  category?: string;
+  specText?: string;
+  disciplines?: string[];
+  gauges?: string[];
+  barrelConfig?: string;
+}
+
+interface OlympicMedalEntry {
+  Athlete?: string;
+  Event?: string;
+  Medal?: string;
+  Olympics?: string;
+  "Perazzi Model"?: string;
+  Country?: string;
+  Evidence?: string;
+  Sources?: Array<string | number | boolean | null | undefined>;
 }
 
 interface ChunkInput {
@@ -72,6 +97,16 @@ function slugify(value: string | undefined): string | undefined {
 
 function sanitizePricingText(text: string): string {
   return text.replaceAll(/[$€£]?\d[\d,]*(\.\d+)?/g, "<NUM>");
+}
+
+function stableStringify(value: unknown): string {
+  // Ensure deterministic ordering for objects before persistence
+  const serialized = stringify(value);
+  if (serialized === undefined) {
+    // json-stable-stringify can yield undefined (e.g., for top-level undefined); fall back to empty string
+    return "";
+  }
+  return serialized;
 }
 
 function preprocessForEmbedding(text: string, pricingSensitive: boolean): string {
@@ -309,10 +344,10 @@ async function upsertDocumentRow(
     meta.series_chapter_global_index ?? null,
     meta.series_chapter_part_index ?? null,
     meta.language ?? null,
-    meta.disciplines ? JSON.stringify(meta.disciplines) : null,
-    meta.platforms ? JSON.stringify(meta.platforms) : null,
-    meta.audiences ? JSON.stringify(meta.audiences) : null,
-    meta.tags ? JSON.stringify(meta.tags) : null,
+    meta.disciplines ? stableStringify(meta.disciplines) : null,
+    meta.platforms ? stableStringify(meta.platforms) : null,
+    meta.audiences ? stableStringify(meta.audiences) : null,
+    meta.tags ? stableStringify(meta.tags) : null,
     checksum,
   ];
 
@@ -331,16 +366,92 @@ function defaultArchetypes(): string[] {
   return ["Loyalist", "Prestige", "Analyst", "Achiever", "Legacy"];
 }
 
-function chunkModelDetailsV2(rawText: string): ChunkInput[] {
-  let records: any[];
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+function isModelDetailsRecord(value: unknown): value is ModelDetailsRecord {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  const stringFields = [
+    "name",
+    "slug",
+    "id",
+    "platform",
+    "platformSlug",
+    "category",
+    "specText",
+    "barrelConfig",
+  ] as const;
+  if (
+    stringFields.some(
+      (field) =>
+        record[field] !== undefined && typeof record[field] !== "string",
+    )
+  ) {
+    return false;
+  }
+
+  const arrayFields = ["disciplines", "gauges"] as const;
+  return arrayFields.every((field) => {
+    const valueAt = record[field];
+    return valueAt === undefined || isStringArray(valueAt);
+  });
+}
+
+function isOlympicMedalEntry(value: unknown): value is OlympicMedalEntry {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  const stringFields = [
+    "Athlete",
+    "Event",
+    "Medal",
+    "Olympics",
+    "Perazzi Model",
+    "Country",
+    "Evidence",
+  ] as const;
+  if (
+    stringFields.some(
+      (field) =>
+        record[field] !== undefined && typeof record[field] !== "string",
+    )
+  ) {
+    return false;
+  }
+
+  const sources = record.Sources;
+  return sources === undefined || Array.isArray(sources);
+}
+
+function parseJsonArray<T>(
+  rawText: string,
+  guard: (value: unknown) => value is T,
+  contextLabel: string,
+): T[] {
+  let parsed: unknown;
   try {
-    records = JSON.parse(rawText);
+    parsed = JSON.parse(rawText);
   } catch {
-    console.warn("[chunkModelDetailsV2] Failed to parse JSON");
+    console.warn("Failed to parse JSON", { context: contextLabel });
     return [];
   }
 
-  if (!Array.isArray(records) || records.length === 0) {
+  if (!Array.isArray(parsed) || parsed.length === 0) {
+    return [];
+  }
+
+  return parsed.filter((entry): entry is T => guard(entry));
+}
+
+function chunkModelDetailsV2(rawText: string): ChunkInput[] {
+  const records = parseJsonArray<ModelDetailsRecord>(
+    rawText,
+    isModelDetailsRecord,
+    "chunkModelDetailsV2",
+  );
+
+  if (!records.length) {
     return [];
   }
 
@@ -363,12 +474,10 @@ function chunkModelDetailsV2(rawText: string): ChunkInput[] {
         name ? `Model name: ${name}` : "",
         platform ? `Platform: ${platform}` : "",
         category ? `Category: ${category}` : "",
-        Array.isArray(record.disciplines) && record.disciplines.length
-          ? `Disciplines: ${(record.disciplines as any[]).join(", ")}`
+        record.disciplines?.length
+          ? `Disciplines: ${record.disciplines.join(", ")}`
           : "",
-        Array.isArray(record.gauges) && record.gauges.length
-          ? `Gauges: ${(record.gauges as any[]).join(", ")}`
-          : "",
+        record.gauges?.length ? `Gauges: ${record.gauges.join(", ")}` : "",
         record.barrelConfig ? `Barrel: ${record.barrelConfig}` : "",
       ]
         .filter(Boolean)
@@ -400,16 +509,100 @@ function chunkModelDetailsV2(rawText: string): ChunkInput[] {
   return chunks;
 }
 
-function chunkOlympicMedalsV2(rawText: string): ChunkInput[] {
-  let records: any[];
-  try {
-    records = JSON.parse(rawText);
-  } catch {
-    console.warn("[chunkOlympicMedalsV2] Failed to parse JSON");
-    return [];
+function buildHelperSectionLabels(
+  doc: ActiveDoc,
+  heading?: string,
+  headingPath?: string,
+): string[] {
+  const labels: string[] = [];
+  labels.push(doc.docType);
+  if (heading) {
+    const headingSlug = slugify(heading);
+    if (headingSlug) labels.push(headingSlug);
+  }
+  if (headingPath) {
+    const pathSlug = slugify(headingPath);
+    if (pathSlug) labels.push(pathSlug);
   }
 
-  if (!Array.isArray(records) || records.length === 0) {
+  if (doc.docType === "discipline-index" && heading) {
+    const normalized = heading.toLowerCase().replace(/\s+/g, "-");
+    labels.push(`disciplines:${normalized}`);
+  }
+
+  if (doc.docType === "platform-guide" && heading) {
+    const match = /platform:\s*(.+)/i.exec(heading);
+    const platformSlug = slugify(match ? match[1] : heading);
+    if (platformSlug) labels.push(`platform:${platformSlug}`);
+  }
+
+  if (doc.docType === "base-model-index" && heading) {
+    const baseSlug = slugify(heading);
+    if (baseSlug) labels.push(`base-model:${baseSlug}`);
+  }
+
+  if (doc.docType === "model-spec-text" && heading) {
+    const modelSlug = slugify(heading);
+    if (modelSlug) labels.push(`model:${modelSlug}`);
+  }
+
+  return labels;
+}
+
+function chunkHeadingBlocksForHelperDocs(
+  doc: ActiveDoc,
+  rawText: string,
+): ChunkInput[] {
+  const sections = parseSections(rawText);
+  const chunks: ChunkInput[] = [];
+  let chunkIndex = 0;
+  const primaryModes = ["Prospect", "Owner"];
+  const archetypeBias: string[] = []; // neutral unless content skews otherwise
+
+  for (const section of sections) {
+    const content = section.content.join("\n").trim();
+    const hasHeading = Boolean(section.heading);
+    if (!hasHeading && !content) continue;
+
+    const text = [
+      section.heading ? section.heading.trim() : "",
+      content,
+    ]
+      .filter(Boolean)
+      .join("\n\n")
+      .trim();
+
+    if (!text) continue;
+
+    const labels = buildHelperSectionLabels(
+      doc,
+      section.heading,
+      section.headingPath,
+    );
+
+    chunks.push({
+      text,
+      chunkIndex,
+      heading: section.heading ?? undefined,
+      headingPath: section.headingPath ?? undefined,
+      sectionLabels: labels.length ? labels : undefined,
+      primaryModes,
+      archetypeBias,
+    });
+    chunkIndex += 1;
+  }
+
+  return chunks;
+}
+
+function chunkOlympicMedalsV2(rawText: string): ChunkInput[] {
+  const records = parseJsonArray<OlympicMedalEntry>(
+    rawText,
+    isOlympicMedalEntry,
+    "chunkOlympicMedalsV2",
+  );
+
+  if (!records.length) {
     return [];
   }
 
@@ -437,10 +630,10 @@ function chunkOlympicMedalsV2(rawText: string): ChunkInput[] {
 
     if (Array.isArray(entry.Sources) && entry.Sources.length) {
       lines.push("**Sources:**");
-      entry.Sources.forEach((source: string) => {
-        if (source?.toString().trim()) {
-          lines.push(`- ${source.toString().trim()}`);
-        }
+      entry.Sources.forEach((source) => {
+        if (source === null || source === undefined) return;
+        const text = source.toString().trim();
+        if (text) lines.push(`- ${text}`);
       });
     }
 
@@ -598,6 +791,17 @@ function chunkMarkdownLike(doc: ActiveDoc, rawText: string): ChunkInput[] {
 
 function chunkDocument(doc: ActiveDoc, rawText: string): ChunkInput[] {
   const lowerPath = doc.path.toLowerCase();
+  const helperDocTypes = new Set([
+    "model-spec-text",
+    "base-model-index",
+    "discipline-index",
+    "platform-guide",
+  ]);
+
+  if (helperDocTypes.has(doc.docType)) {
+    return chunkHeadingBlocksForHelperDocs(doc, rawText);
+  }
+
   if (lowerPath.endsWith(".json")) {
     if (
       doc.path.includes(
@@ -624,9 +828,10 @@ async function replaceChunksAndEmbeddings(
   options: { dryRun: boolean },
 ): Promise<void> {
   if (options.dryRun) {
-    console.log(
-      `[dry-run] Would write ${chunks.length} chunks for ${doc.path}`,
-    );
+    console.log("[dry-run] Would write chunks", {
+      count: chunks.length,
+      path: doc.path,
+    });
     return;
   }
 
@@ -667,9 +872,9 @@ async function replaceChunksAndEmbeddings(
           chunk.text,
           chunk.heading ?? null,
           chunk.headingPath ?? null,
-          chunk.sectionLabels ? JSON.stringify(chunk.sectionLabels) : null,
-          chunk.primaryModes ? JSON.stringify(chunk.primaryModes) : null,
-          chunk.archetypeBias ? JSON.stringify(chunk.archetypeBias) : null,
+          chunk.sectionLabels ? stableStringify(chunk.sectionLabels) : null,
+          chunk.primaryModes ? stableStringify(chunk.primaryModes) : null,
+          chunk.archetypeBias ? stableStringify(chunk.archetypeBias) : null,
         ],
       );
       insertedChunks.push({ id: res.rows[0].id, text: chunk.text });
@@ -692,7 +897,7 @@ async function embedChunks(
   options: { dryRun: boolean },
 ): Promise<void> {
   if (options.dryRun) {
-    console.log(`[dry-run] Would embed ${chunks.length} chunks`);
+    console.log("[dry-run] Would embed chunks", { count: chunks.length });
     return;
   }
 
@@ -714,7 +919,7 @@ async function embedChunks(
       if (!embedding) {
         throw new Error("Missing embedding in response");
       }
-      const embeddingText = JSON.stringify(embedding); // "[0.1,0.2,...]"
+      const embeddingText = stableStringify(embedding); // "[0.1,0.2,...]"
 
       await client.query(
         `
@@ -752,7 +957,7 @@ async function handleDryRunDocument(
     statusLabel = "NEW";
     stats.newCount += 1;
   }
-  console.log(`[dry-run] ${statusLabel} ${doc.path}`);
+  console.log("[dry-run]", statusLabel, doc.path);
 }
 
 async function processDocumentChunks(
@@ -763,9 +968,7 @@ async function processDocumentChunks(
   opts: IngestOptions,
 ): Promise<number> {
   if (doc.embedMode === "metadata-only") {
-    console.log(
-      `[info] Metadata-only doc, skipping chunking: ${doc.path}`,
-    );
+    console.log("[info] Metadata-only doc, skipping chunking:", doc.path);
     return 0;
   }
 
@@ -790,9 +993,10 @@ async function processDocumentChunks(
     chunkInputs,
     { dryRun: opts.dryRun },
   );
-  console.log(
-    `[ok] Ingested ${chunkInputs.length} chunks for ${doc.path}`,
-  );
+  console.log("[ok] Ingested chunks", {
+    count: chunkInputs.length,
+    path: doc.path,
+  });
   return chunkInputs.length;
 }
 
@@ -811,7 +1015,7 @@ async function processDocument(
     rawText = res.rawText;
     checksum = res.checksum;
   } catch (err) {
-    console.error(`Error reading ${doc.path}:`, err);
+    console.error("Error reading document", { path: doc.path, err });
     return;
   }
 
@@ -861,11 +1065,11 @@ async function processDocument(
 
 function printIngestSummary(stats: IngestStats): void {
   console.log("---- Ingest Summary ----");
-  console.log(`Docs scanned: ${stats.scanned}`);
-  console.log(`Docs new: ${stats.newCount}`);
-  console.log(`Docs updated: ${stats.updated}`);
-  console.log(`Docs skipped: ${stats.skipped}`);
-  console.log(`Chunks written: ${stats.chunksWritten}`);
+  console.log("Docs scanned:", stats.scanned);
+  console.log("Docs new:", stats.newCount);
+  console.log("Docs updated:", stats.updated);
+  console.log("Docs skipped:", stats.skipped);
+  console.log("Chunks written:", stats.chunksWritten);
 }
 
 async function runIngest(
@@ -885,7 +1089,7 @@ async function runIngest(
     try {
       await processDocument(pool, doc, opts, stats);
     } catch (err) {
-      console.error(`Error processing ${doc.path}:`, err);
+      console.error("Error processing document", { path: doc.path, err });
       throw err;
     }
   }
@@ -896,16 +1100,16 @@ async function runIngest(
 function assertEnv() {
   const missing = REQUIRED_ENV.filter((key) => !process.env[key]);
   if (missing.length) {
-    console.error(`Missing required env vars: ${missing.join(", ")}`);
+    console.error("Missing required env vars:", missing.join(", "));
     process.exit(1);
   }
 }
 
 function createPool(): Pool {
-  const sslMode = process.env.PGSSL_MODE;
+  const sslMode = (process.env.PGSSL_MODE ?? "").toLowerCase();
   const ssl =
     sslMode && sslMode !== "disable"
-      ? { rejectUnauthorized: sslMode === "verify-full" }
+      ? true
       : undefined;
 
   return new Pool({

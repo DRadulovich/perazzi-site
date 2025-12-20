@@ -51,7 +51,7 @@ export function ServiceRequest({
           className="space-y-3"
           onSubmit={(event) => {
             event.preventDefault();
-            if (!email?.includes("@")) {
+            if (!email.includes("@")) {
               setError("Enter a valid email so we can reply.");
               return;
             }
@@ -65,7 +65,7 @@ export function ServiceRequest({
             <input
               type="email"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => { setEmail(event.target.value); }}
               className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 text-sm text-ink focus-ring"
               required
             />

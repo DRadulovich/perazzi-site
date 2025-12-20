@@ -606,7 +606,7 @@ export async function getPlatforms(): Promise<ShotgunsPlatformPayload[]> {
   const data = (result?.data as PlatformResponse[] | null) ?? null;
 
   return (data ?? [])
-    .filter((platform): platform is PlatformResponse & { _id: string } => Boolean(platform?._id))
+    .filter((platform): platform is PlatformResponse & { _id: string } => Boolean(platform._id))
     .map((platform) => ({
       id: platform._id as string,
       name: platform.name ?? undefined,
@@ -634,7 +634,7 @@ export async function getPlatforms(): Promise<ShotgunsPlatformPayload[]> {
         : undefined,
       disciplines: platform.disciplines
         ?.map((ref) =>
-          ref?._id
+          ref._id
             ? {
                 id: ref._id as string,
                 name: ref.name ?? undefined,
@@ -667,7 +667,7 @@ export async function getDisciplines(): Promise<ShotgunsDisciplinePayload[]> {
   const data = (result?.data as DisciplineResponse[] | null) ?? null;
 
   return (data ?? [])
-    .filter((discipline): discipline is DisciplineResponse & { _id: string } => Boolean(discipline?._id))
+    .filter((discipline): discipline is DisciplineResponse & { _id: string } => Boolean(discipline._id))
     .map((discipline) => ({
       id: discipline._id as string,
       name: discipline.name ?? undefined,
@@ -680,7 +680,7 @@ export async function getDisciplines(): Promise<ShotgunsDisciplinePayload[]> {
         .filter(Boolean) as string[] | undefined,
       popularModels: discipline.popularModels
         ?.map((model) =>
-          model?._id
+          model._id
             ? {
                 id: model._id as string,
                 name: model.name ?? undefined,
@@ -709,7 +709,7 @@ export async function getGrades(): Promise<ShotgunsGradePayload[]> {
   };
 
   return (data ?? [])
-    .filter((grade): grade is GradeResponse & { _id: string } => Boolean(grade?._id))
+    .filter((grade): grade is GradeResponse & { _id: string } => Boolean(grade._id))
     .map((grade) => ({
       id: slugifyGradeId(grade.name, grade._id as string) as string,
       name: grade.name ?? undefined,
@@ -718,7 +718,7 @@ export async function getGrades(): Promise<ShotgunsGradePayload[]> {
       engravingGallery: (
         grade.engravingGallery?.length
           ? grade.engravingGallery
-          : grade.engravingLibrary?.map((entry) => entry?.engraving_photo) ?? []
+          : grade.engravingLibrary?.map((entry) => entry.engraving_photo) ?? []
       )
         .map((asset) => mapImageResult(asset ?? null))
         .filter(Boolean) as FactoryAsset[] | undefined,

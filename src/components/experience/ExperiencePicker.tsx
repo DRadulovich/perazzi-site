@@ -128,7 +128,7 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
               />
             ))}
           </div>
-          {faqItems?.length ? (
+          {faqItems.length ? (
             <div className="pt-4">
               <FAQList items={faqItems} embedded heading={faqHeading} lead={faqLead} />
             </div>

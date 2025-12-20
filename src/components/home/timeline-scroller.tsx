@@ -128,7 +128,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                           label={stage.title}
                           order={stage.order}
                           active={activeStage === index}
-                          onSelect={() => setActiveStage(index)}
+                          onSelect={() => { setActiveStage(index); }}
                           animationsEnabled={animationsEnabled}
                         />
                       ))}
@@ -177,7 +177,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                             aria-expanded={expanded}
                             aria-controls={panelId}
                             onClick={() =>
-                              setActiveStage(expanded ? -1 : index)
+                              { setActiveStage(expanded ? -1 : index); }
                             }
                             className="flex w-full items-center justify-between gap-3 text-left focus-ring"
                           >

@@ -16,7 +16,7 @@ export function HeritageEventSlide({
   event,
   className,
 }: HeritageEventSlideProps) {
-  const hasMedia = Boolean(event.media?.url);
+  const mediaUrl = event.media?.url;
   const analyticsRef = useAnalyticsObserver<HTMLElement>(`HeritageEventSeen:${event.id}`);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [isClient, setIsClient] = React.useState(false);
@@ -46,14 +46,14 @@ export function HeritageEventSlide({
           <div
             className={cn(
               "flex w-full items-stretch p-4 sm:p-6 lg:p-8",
-              "border-b border-white/10 md:w-1/2 md:border-b-0 md:border-r md:border-white/10",
+            "border-b border-white/10 md:w-1/2 md:border-b-0 md:border-r md:border-white/10",
             )}
           >
-            {hasMedia ? (
+            {mediaUrl ? (
               <div className="relative h-full w-full min-h-[240px] overflow-hidden rounded-2xl border border-white/15 bg-[color:var(--color-canvas)]">
                 <Image
-                  src={event.media!.url}
-                  alt={event.media!.alt ?? event.title}
+                  src={mediaUrl}
+                  alt={event.media?.alt ?? event.title}
                   fill
                   sizes="(min-width: 1024px) 50vw, 100vw"
                   className="object-cover"
@@ -95,7 +95,7 @@ export function HeritageEventSlide({
                 <button
                   type="button"
                   className="mt-2 inline-flex md:hidden min-h-10 items-center justify-center rounded-full border border-white/30 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-neutral-100 focus-ring"
-                  onClick={() => setIsModalOpen(true)}
+                  onClick={() => { setIsModalOpen(true); }}
                 >
                   Read full story
                 </button>
@@ -139,7 +139,7 @@ export function HeritageEventSlide({
                 tabIndex={-1}
                 className="absolute inset-0 bg-black/60"
                 aria-hidden="true"
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => { setIsModalOpen(false); }}
               />
 
               {/* Dialog */}
@@ -147,7 +147,7 @@ export function HeritageEventSlide({
                 open
                 aria-modal="true"
                 aria-labelledby={`heritage-event-modal-${event.id}`}
-                onCancel={() => setIsModalOpen(false)}
+                onCancel={() => { setIsModalOpen(false); }}
                 className="relative z-10 m-0 flex h-full w-full items-end justify-center bg-transparent p-4"
               >
                 <div className="max-h-[80vh] w-full max-w-lg overflow-hidden rounded-2xl bg-black text-neutral-100 shadow-lg">

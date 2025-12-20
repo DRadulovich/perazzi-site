@@ -19,7 +19,7 @@ type FAQListProps = Readonly<{
 export function FAQList({ items, embedded = false, heading, lead }: FAQListProps) {
   const analyticsRef = useAnalyticsObserver<HTMLDivElement>("ExperienceFAQSeen");
 
-  const faqItems = items?.length ? items : faqFixture;
+  const faqItems = items.length ? items : faqFixture;
 
   if (!faqItems.length) return null;
 

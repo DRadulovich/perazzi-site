@@ -2,8 +2,9 @@
 import { LOW_SCORE_THRESHOLD } from "../../../lib/pgpt-insights/constants";
 import { getDailyLowScoreRate, getDailyTrends, getGuardrailStats, getRagSummary } from "../../../lib/pgpt-insights/cached";
 
-import { Sparkline } from "../Sparkline";
+import { MiniTrend } from "../charts/MiniTrend";
 import { formatCompactNumber, formatDurationMs, formatScore } from "../format";
+import { SectionHeader } from "../SectionHeader";
 import { SectionError } from "./SectionError";
 
 export async function OverviewSection({
@@ -57,46 +58,47 @@ export async function OverviewSection({
     });
 
     return (
-      <section id="overview" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6 space-y-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
-          <div className="space-y-1">
-            <h2 className="text-sm font-semibold tracking-wide text-foreground">Overview</h2>
-            <p className="text-xs text-muted-foreground">High-level signals for the current scope.</p>
-          </div>
-          <p className="text-xs text-muted-foreground">{scopeSummary}</p>
-        </div>
+      <section
+        id="overview"
+        className="rounded-2xl border border-border/80 bg-gradient-to-b from-card via-card/80 to-muted/20 shadow-lg"
+      >
+        <SectionHeader
+          title="Overview"
+          description="High-level signals for the current scope."
+          rightMeta={<span className="text-[11px] uppercase tracking-wide text-muted-foreground">{scopeSummary}</span>}
+        />
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          <div className="rounded-xl border border-border bg-background p-3">
+        <div className="grid grid-cols-2 gap-3 border-t border-border/80 bg-card/70 px-4 py-4 sm:grid-cols-3 sm:px-6 sm:py-6 lg:grid-cols-6">
+          <div className="flex h-full flex-col rounded-xl border border-border bg-background p-3">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Requests</div>
             <div className="mt-1 text-base font-semibold tabular-nums">{formatCompactNumber(totalRequests)}</div>
             <div className="mt-1 text-xs text-muted-foreground">in window</div>
-            <div className="mt-2 text-muted-foreground">
-              <Sparkline values={requestsSeries} title="Requests per day" />
+            <div className="mt-auto text-muted-foreground">
+              <MiniTrend values={requestsSeries} title="Requests per day" height={72} />
             </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-background p-3">
+          <div className="flex h-full flex-col rounded-xl border border-border bg-background p-3">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Tokens</div>
             <div className="mt-1 text-base font-semibold tabular-nums">{formatCompactNumber(totalTokens)}</div>
             <div className="mt-1 text-xs text-muted-foreground">
               {avgTokensPerRequest === null ? "—" : `~${Math.round(avgTokensPerRequest)} / req`}
             </div>
-            <div className="mt-2 text-muted-foreground">
-              <Sparkline values={tokensSeries} title="Tokens per day" />
+            <div className="mt-auto text-muted-foreground">
+              <MiniTrend values={tokensSeries} title="Tokens per day" height={72} />
             </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-background p-3">
+          <div className="flex h-full flex-col rounded-xl border border-border bg-background p-3">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Avg latency</div>
             <div className="mt-1 text-base font-semibold tabular-nums">{formatDurationMs(avgLatencyMs)}</div>
             <div className="mt-1 text-xs text-muted-foreground">rolling</div>
-            <div className="mt-2 text-muted-foreground">
-              <Sparkline values={latencySeries} title="Latency per day" />
+            <div className="mt-auto text-muted-foreground">
+              <MiniTrend values={latencySeries} title="Latency per day" height={72} />
             </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-background p-3">
+          <div className="flex h-full flex-col rounded-xl border border-border bg-background p-3">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Retrieval avg</div>
             <div className="mt-1 text-base font-semibold tabular-nums">
               {ragSummary ? formatScore(ragSummary.avg_max_score) : "—"}
@@ -104,18 +106,18 @@ export async function OverviewSection({
             <div className="mt-1 text-xs text-muted-foreground">assistant maxScore</div>
           </div>
 
-          <div className="rounded-xl border border-border bg-background p-3">
+          <div className="flex h-full flex-col rounded-xl border border-border bg-background p-3">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Low-score</div>
             <div className="mt-1 text-base font-semibold tabular-nums">
               {ragSummary ? formatCompactNumber(ragSummary.low_count) : "—"}
             </div>
             <div className="mt-1 text-xs text-muted-foreground">{`< ${LOW_SCORE_THRESHOLD}`}</div>
-            <div className="mt-2 text-muted-foreground">
-              <Sparkline values={lowRateSeries} title="Low-score rate per day (assistant)" />
+            <div className="mt-auto text-muted-foreground">
+              <MiniTrend values={lowRateSeries} title="Low-score rate per day (assistant)" height={72} />
             </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-background p-3">
+          <div className="flex h-full flex-col rounded-xl border border-border bg-background p-3">
             <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Guardrail blocks</div>
             <div className="mt-1 text-base font-semibold tabular-nums">{formatCompactNumber(guardrailBlockedCount)}</div>
             <div className="mt-1 text-xs text-muted-foreground">assistant</div>

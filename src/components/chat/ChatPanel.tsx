@@ -23,10 +23,12 @@ import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import { ChatInput } from "@/components/chat/ChatInput";
+import { ADMIN_DEBUG_TOKEN_STORAGE_KEY } from "@/components/chat/useChatState";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
 import { cn } from "@/lib/utils";
 import { usePerazziAssistant } from "@/hooks/usePerazziAssistant";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import type { PerazziAdminDebugPayload } from "@/types/perazzi-assistant";
 
 const QUICK_STARTS = [
   {
@@ -110,6 +112,150 @@ const markdownComponents = {
   ),
 };
 
+function formatDebugValue(value: unknown): string {
+  if (value === null || value === undefined) return "—";
+  if (typeof value === "boolean") return value ? "true" : "false";
+  if (typeof value === "number") return Number.isFinite(value) ? String(value) : "—";
+  if (typeof value === "string") return value.length ? value : "—";
+  if (Array.isArray(value)) return value.length ? `[${value.length}]` : "[]";
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function DebugRow(props: { label: string; value: unknown }) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <dt className="text-ink-muted">{props.label}</dt>
+      <dd className="text-right font-mono text-[11px] sm:text-xs text-ink">{formatDebugValue(props.value)}</dd>
+    </div>
+  );
+}
+
+function AdminDebugPanel(props: {
+  debug: PerazziAdminDebugPayload | null;
+  onClearToken: () => void;
+}) {
+  const debug = props.debug;
+  const titles = debug?.retrieval?.top_titles ?? [];
+
+  return (
+    <div className="border-b border-subtle bg-subtle/30 px-6 py-4 text-[11px] sm:text-xs text-ink">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.25em] text-ink-muted">
+          Admin Debug
+        </p>
+        <button
+          type="button"
+          className="rounded-full border border-subtle px-2 py-1 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+          onClick={props.onClearToken}
+        >
+          Clear admin debug token
+        </button>
+      </div>
+      {!debug ? (
+        <p className="text-ink-muted">
+          No debug payload in the last response (server debug disabled or token not authorized).
+        </p>
+      ) : (
+        <div className="grid gap-4">
+          <section>
+            <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+              Thread
+            </p>
+            <dl className="mt-2 grid gap-1">
+              <DebugRow
+                label="previous_response_id_present"
+                value={debug.thread.previous_response_id_present}
+              />
+              <DebugRow label="store_enabled" value={debug.thread.store_enabled} />
+              <DebugRow label="thread_reset_required" value={debug.thread.thread_reset_required} />
+              <DebugRow label="conversationStrategy" value={debug.thread.conversationStrategy} />
+              <DebugRow label="enforced_thread_input" value={debug.thread.enforced_thread_input} />
+            </dl>
+          </section>
+
+          <section>
+            <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+              Retrieval
+            </p>
+            <dl className="mt-2 grid gap-1">
+              <DebugRow label="attempted" value={debug.retrieval.attempted} />
+              <DebugRow label="skipped" value={debug.retrieval.skipped} />
+              <DebugRow label="reason" value={debug.retrieval.reason} />
+              <DebugRow label="chunk_count" value={debug.retrieval.chunk_count} />
+              <DebugRow label="rerank_enabled" value={debug.retrieval.rerank_enabled} />
+              <DebugRow
+                label="rerank_metrics_present"
+                value={debug.retrieval.rerank_metrics_present}
+              />
+              <div className="mt-2">
+                <p className="text-ink-muted">top_titles</p>
+                {titles.length ? (
+                  <ul className="mt-1 list-disc space-y-1 pl-5 font-mono text-[11px] sm:text-xs">
+                    {titles.map((title) => (
+                      <li key={title}>{title}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-1 font-mono text-[11px] sm:text-xs text-ink-muted">[]</p>
+                )}
+              </div>
+            </dl>
+          </section>
+
+          <section>
+            <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+              Usage
+            </p>
+            <dl className="mt-2 grid gap-1">
+              <DebugRow label="input_tokens" value={debug.usage?.input_tokens} />
+              <DebugRow label="cached_tokens" value={debug.usage?.cached_tokens} />
+              <DebugRow label="output_tokens" value={debug.usage?.output_tokens} />
+              <DebugRow label="total_tokens" value={debug.usage?.total_tokens} />
+            </dl>
+          </section>
+
+          <section>
+            <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+              Flags
+            </p>
+            <dl className="mt-2 grid gap-1">
+              <DebugRow label="convo_strategy" value={debug.flags.convo_strategy} />
+              <DebugRow label="retrieval_policy" value={debug.flags.retrieval_policy} />
+              <DebugRow label="text_verbosity" value={debug.flags.text_verbosity} />
+              <DebugRow label="reasoning_effort" value={debug.flags.reasoning_effort} />
+              <DebugRow label="require_general_label" value={debug.flags.require_general_label} />
+              <DebugRow label="postvalidate_enabled" value={debug.flags.postvalidate_enabled} />
+              <DebugRow label="prompt_cache_retention" value={debug.flags.prompt_cache_retention} />
+              <DebugRow
+                label="prompt_cache_key_present"
+                value={debug.flags.prompt_cache_key_present}
+              />
+            </dl>
+          </section>
+
+          {debug.triggers && (
+            <section>
+              <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+                Triggers
+              </p>
+              <dl className="mt-2 grid gap-1">
+                <DebugRow label="blocked_intent" value={debug.triggers.blocked_intent} />
+                <DebugRow label="evidenceMode" value={debug.triggers.evidenceMode} />
+                <DebugRow label="evidenceReason" value={debug.triggers.evidenceReason} />
+                <DebugRow label="postvalidate" value={debug.triggers.postvalidate} />
+              </dl>
+            </section>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ChatPanel({
   open,
   onClose,
@@ -126,6 +272,7 @@ export function ChatPanel({
     pending,
     isTyping,
     error,
+    lastAdminDebug,
     sendMessage,
     context,
     updateContext,
@@ -144,6 +291,27 @@ export function ChatPanel({
   const [sessionPromptOpen, setSessionPromptOpen] = useState(false);
   const [sessionLabel, setSessionLabel] = useState("");
   const sessionInputRef = useRef<HTMLInputElement | null>(null);
+  const [hasAdminDebugToken, setHasAdminDebugToken] = useState(() => {
+    if (!("localStorage" in globalThis) || typeof window === "undefined") return false;
+    try {
+      const url = new URL(window.location.href);
+      const token = url.searchParams.get("adminDebugToken");
+      if (token && token.trim().length > 0) {
+        globalThis.localStorage.setItem(ADMIN_DEBUG_TOKEN_STORAGE_KEY, token.trim());
+        url.searchParams.delete("adminDebugToken");
+        globalThis.history.replaceState({}, "", url.toString());
+      } else if (url.searchParams.has("adminDebugToken")) {
+        url.searchParams.delete("adminDebugToken");
+        globalThis.history.replaceState({}, "", url.toString());
+      }
+
+      return Boolean(globalThis.localStorage.getItem(ADMIN_DEBUG_TOKEN_STORAGE_KEY));
+    } catch (error) {
+      console.warn("Failed to bootstrap admin debug token", error);
+      return false;
+    }
+  });
+  const [adminDebugOpen, setAdminDebugOpen] = useState(false);
 
   const legacyQuestions = useMemo(
     () => [
@@ -160,6 +328,18 @@ export function ChatPanel({
       sessionInputRef.current.select();
     }
   }, [sessionPromptOpen]);
+
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== ADMIN_DEBUG_TOKEN_STORAGE_KEY) return;
+      setHasAdminDebugToken(Boolean(event.newValue));
+      if (!event.newValue) setAdminDebugOpen(false);
+    };
+    globalThis.addEventListener?.("storage", handleStorage);
+    return () => {
+      globalThis.removeEventListener?.("storage", handleStorage);
+    };
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -432,6 +612,16 @@ export function ChatPanel({
             <h2 className="text-xl font-semibold">Where shall we begin?</h2>
           </div>
           <div className="flex items-center gap-2">
+            {hasAdminDebugToken && (
+              <button
+                type="button"
+                className="rounded-full border border-subtle px-3 py-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted transition hover:border-ink hover:text-ink"
+                onClick={() => setAdminDebugOpen((prev) => !prev)}
+                aria-expanded={adminDebugOpen}
+              >
+                Admin Debug
+              </button>
+            )}
             {showResetButton && (
               <button
                 type="button"
@@ -463,6 +653,22 @@ export function ChatPanel({
           </div>
         </div>
       </div>
+      {hasAdminDebugToken && adminDebugOpen && (
+        <AdminDebugPanel
+          debug={lastAdminDebug}
+          onClearToken={() => {
+            if (!("localStorage" in globalThis)) return;
+            try {
+              globalThis.localStorage.removeItem(ADMIN_DEBUG_TOKEN_STORAGE_KEY);
+            } catch (error) {
+              console.warn("Failed to clear admin debug token", error);
+            } finally {
+              setHasAdminDebugToken(false);
+              setAdminDebugOpen(false);
+            }
+          }}
+        />
+      )}
       <div className="flex flex-1 flex-col overflow-hidden">
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-10 text-sm text-ink">
           <div className={cn("flex flex-col gap-6", legacyMode ? "bg-subtle/20 rounded-3xl p-4" : "")}>
@@ -502,7 +708,7 @@ export function ChatPanel({
             )}
         {messages.length === 0 ? (
           <p className="text-ink-muted">
-            Ask about heritage, platforms, or service, and I'll help you connect the craft to your own journey.
+            Ask about heritage, platforms, or service, and I’ll help you connect the craft to your own journey.
           </p>
         ) : (
           <ul className="flex flex-col gap-6">
@@ -595,7 +801,17 @@ export function ChatPanel({
       </div>
         <div className="border-t border-subtle px-6 py-4">
           {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
-          <ChatInput pending={pending} onSend={handleSend} />
+          <ChatInput
+            pending={pending}
+            onSend={handleSend}
+            textVerbosity={context.textVerbosity ?? "medium"}
+            onTextVerbosityChange={(verbosity) =>
+              setContext((prev) => ({
+                ...prev,
+                textVerbosity: verbosity,
+              }))
+            }
+          />
         </div>
       </div>
       </div>

@@ -1,22 +1,111 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Disclosure, DisclosureButton, DisclosurePanel, Listbox, ListboxButton, ListboxOption, ListboxOptions, Transition } from "@headlessui/react";
+import { Check, ChevronDown, SlidersHorizontal } from "lucide-react";
 
 import { CANONICAL_ARCHETYPE_ORDER } from "../../lib/pgpt-insights/constants";
+import { cn } from "@/lib/utils";
 
 type Chip = { key: string; label: string; onRemove: () => void };
+type FiltersPanelProps = {
+  readonly defaultDays: number;
+  readonly variant?: "default" | "sidebar";
+  readonly className?: string;
+};
 
 function safeLabel(value: string, max = 36) {
   const s = String(value ?? "");
   return s.length > max ? `${s.slice(0, max)}…` : s;
 }
 
-export function FiltersBar({ defaultDays }: { defaultDays: number }) {
+type Option = { label: string; value: string };
+
+function FilterSelect({
+  value,
+  onChange,
+  options,
+  srLabel,
+  className,
+  buttonClassName,
+  fullWidth = false,
+}: {
+  readonly value: string;
+  readonly onChange: (value: string) => void;
+  readonly options: Option[];
+  readonly srLabel?: string;
+  readonly className?: string;
+  readonly buttonClassName?: string;
+  readonly fullWidth?: boolean;
+}) {
+  const current = options.find((o) => o.value === value);
+  const displayLabel = current?.label ?? value;
+  const baseWidth = fullWidth ? "w-full" : "w-full min-w-[140px] sm:w-auto";
+
+  return (
+    <Listbox value={value} onChange={onChange}>
+      <div className={cn("relative", baseWidth, className)}>
+        <ListboxButton
+          className={cn(
+            "inline-flex h-9 w-full items-center justify-between rounded-md border border-border bg-background px-3 text-sm text-foreground shadow-sm transition",
+            "hover:border-border/80 hover:bg-muted/30",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+            buttonClassName,
+          )}
+          aria-label={srLabel}
+        >
+          <span className="truncate text-left">{displayLabel}</span>
+          <span className="ml-2 flex items-center text-muted-foreground" aria-hidden="true">
+            <ChevronDown className="h-4 w-4" />
+          </span>
+          {srLabel ? <span className="sr-only">{srLabel}</span> : null}
+        </ListboxButton>
+
+        <Transition
+          as={Fragment}
+          leave="transition ease-in duration-75"
+          leaveFrom="opacity-100 translate-y-0"
+          leaveTo="opacity-0 -translate-y-1"
+          enter="transition ease-out duration-100"
+          enterFrom="opacity-0 -translate-y-1"
+          enterTo="opacity-100 translate-y-0"
+        >
+          <ListboxOptions className="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-border bg-card text-sm shadow-xl focus:outline-none">
+            {options.map((option) => (
+              <ListboxOption
+                key={option.value}
+                value={option.value}
+                className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 data-active:bg-muted/60 data-active:text-foreground text-muted-foreground"
+              >
+                {({ selected }) => (
+                  <>
+                    <span className={cn("truncate", selected && "font-semibold text-foreground")}>
+                      {option.label}
+                    </span>
+                    {selected ? <Check className="h-4 w-4 text-blue-500" aria-hidden="true" /> : null}
+                  </>
+                )}
+              </ListboxOption>
+            ))}
+          </ListboxOptions>
+        </Transition>
+      </div>
+    </Listbox>
+  );
+}
+
+export function PgptInsightsFiltersPanel({
+  defaultDays,
+  variant = "default",
+  className,
+}: FiltersPanelProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const searchParamsKey = searchParams.toString();
 
+  const pendingScrollRef = useRef<number | null>(null);
   const densityKey = "pgptInsights.density";
   const viewKey = "pgptInsights.view";
 
@@ -46,10 +135,24 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
   const snapped = get("snapped") || "any";
   const marginLt = get("margin_lt") || "any";
 
-  function replaceParams(next: URLSearchParams) {
+  const replaceParams = useCallback((next: URLSearchParams) => {
     const qs = next.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-  }
+    const baseHref = qs ? `${pathname}?${qs}` : pathname;
+    const hash = typeof globalThis === "undefined" ? "" : globalThis.location.hash;
+
+    if (typeof globalThis !== "undefined") {
+      pendingScrollRef.current = globalThis.scrollY;
+    }
+
+    router.replace(`${baseHref}${hash}`, { scroll: false });
+  }, [pathname, router]);
+
+  useEffect(() => {
+    if (pendingScrollRef.current === null) return;
+    const y = pendingScrollRef.current;
+    pendingScrollRef.current = null;
+    requestAnimationFrame(() => window.scrollTo({ top: y }));
+  }, [searchParamsKey]);
 
   function setParam(key: string, value: string) {
     const next = new URLSearchParams(searchParams.toString());
@@ -80,7 +183,7 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
 
     const v = String(value ?? "").trim();
 
-    if (!v) {
+    if (v === "") {
       next.delete(key);
     } else {
       next.set(key, v);
@@ -91,16 +194,16 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
     replaceParams(next);
   }
 
-  function removeParam(key: string) {
+  const removeParam = useCallback((key: string) => {
     const next = new URLSearchParams(searchParams.toString());
     next.delete(key);
     next.delete("page");
     replaceParams(next);
-  }
+  }, [searchParams, replaceParams]);
 
   function resetAll() {
-    const storedDensity = typeof window !== "undefined" ? window.localStorage.getItem(densityKey) : null;
-    const storedView = typeof window !== "undefined" ? window.localStorage.getItem(viewKey) : null;
+    const storedDensity = typeof globalThis === "undefined" ? null : globalThis.localStorage.getItem(densityKey);
+    const storedView = typeof globalThis === "undefined" ? null : globalThis.localStorage.getItem(viewKey);
 
     const keepDensity = storedDensity || density || "comfortable";
     const keepView = storedView || view || "full";
@@ -114,40 +217,41 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(densityKey, density);
+      globalThis.localStorage.setItem(densityKey, density);
     } catch {}
   }, [density]);
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(viewKey, view);
+      globalThis.localStorage.setItem(viewKey, view);
     } catch {}
   }, [view]);
 
   const didHydrateRef = useRef(false);
   useEffect(() => {
-    if (didHydrateRef.current) return;
-    didHydrateRef.current = true;
+    if (!didHydrateRef.current) {
+      didHydrateRef.current = true;
 
-    let changed = false;
-    const next = new URLSearchParams(searchParams.toString());
+      let changed = false;
+      const next = new URLSearchParams(searchParams.toString());
 
-    try {
-      const storedDensity = window.localStorage.getItem(densityKey);
-      const storedView = window.localStorage.getItem(viewKey);
+      try {
+        const storedDensity = globalThis.localStorage.getItem(densityKey);
+        const storedView = globalThis.localStorage.getItem(viewKey);
 
-      if (!searchParams.get("density") && storedDensity && storedDensity !== "comfortable") {
-        next.set("density", storedDensity);
-        changed = true;
-      }
+        if (searchParams.get("density") === null && storedDensity && storedDensity !== "comfortable") {
+          next.set("density", storedDensity);
+          changed = true;
+        }
 
-      if (!searchParams.get("view") && storedView && storedView !== "full") {
-        next.set("view", storedView);
-        changed = true;
-      }
-    } catch {}
+        if (searchParams.get("view") === null && storedView && storedView !== "full") {
+          next.set("view", storedView);
+          changed = true;
+        }
+      } catch {}
 
-    if (changed) replaceParams(next);
+      if (changed) replaceParams(next);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -156,7 +260,7 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
 
   useEffect(() => {
     if (qInput === qUrl) return;
-    const t = window.setTimeout(() => {
+    const t = globalThis.setTimeout(() => {
       setParam("q", qInput.trim());
       if (!qInput.trim()) {
         const next = new URLSearchParams(searchParams.toString());
@@ -166,7 +270,7 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
       }
     }, 350);
 
-    return () => window.clearTimeout(t);
+    return () => globalThis.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qInput, qUrl]);
 
@@ -176,72 +280,38 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
   const [modelInput, setModelInput] = useState(modelUrl);
   useEffect(() => setModelInput(modelUrl), [modelUrl]);
 
-  const chips: Chip[] = useMemo(() => {
-    const out: Chip[] = [];
 
-    if (env && env !== "all") out.push({ key: "env", label: `env: ${env}`, onRemove: () => removeParam("env") });
-    if (endpoint && endpoint !== "all")
-      out.push({ key: "endpoint", label: `endpoint: ${endpoint}`, onRemove: () => removeParam("endpoint") });
 
-    if (days === "all") out.push({ key: "days", label: `time: all`, onRemove: () => removeParam("days") });
-    else if (days && days !== String(defaultDays))
-      out.push({ key: "days", label: `last ${days} days`, onRemove: () => removeParam("days") });
+  const buildChips = useCallback(() => {
+        const createChip = (key: string, label: string, condition: boolean) => {
+          if (condition) {
+            return { key, label, onRemove: () => removeParam(key) };
+          }
+          return null;
+        };
+    const chipConfigs = [
+      { key: "env", label: `env: ${env}`, condition: env && env !== "all" },
+      { key: "endpoint", label: `endpoint: ${endpoint}`, condition: endpoint && endpoint !== "all" },
+      { key: "days", label: days === "all" ? `time: all` : `last ${days} days`, condition: days === "all" || (days && days !== String(defaultDays)) },
+      { key: "density", label: `density: ${density}`, condition: density && density !== "comfortable" },
+      { key: "view", label: `view: ${view}`, condition: view && view !== "full" },
+      { key: "q", label: `q: “${safeLabel(qUrl, 28)}”`, condition: !!qUrl },
+      { key: "gr_status", label: `guardrail: ${grStatus}`, condition: grStatus !== "any" },
+      { key: "gr_reason", label: `reason: ${safeLabel(grReasonUrl, 28)}`, condition: !!grReasonUrl },
+      { key: "low_conf", label: `low_conf: ${lowConf}`, condition: lowConf !== "any" },
+      { key: "score", label: `score: ${score}`, condition: score !== "any" },
+      { key: "archetype", label: `archetype: ${archetype}`, condition: archetype !== "any" },
+      { key: "model", label: `model: ${safeLabel(modelUrl, 28)}`, condition: !!modelUrl },
+      { key: "gateway", label: `gateway: ${gateway}`, condition: gateway !== "any" },
+      { key: "qa", label: `qa: ${qa}`, condition: qa !== "any" },
+      { key: "rerank", label: `rerank: ${rerank === "true" ? "on" : "off"}`, condition: rerank !== "any" },
+      { key: "snapped", label: `confidence: ${snapped === "true" ? "snapped" : "mixed"}`, condition: snapped !== "any" },
+      { key: "margin_lt", label: `margin < ${marginLt}`, condition: marginLt !== "any" },
+    ];
 
-    if (density && density !== "comfortable")
-      out.push({ key: "density", label: `density: ${density}`, onRemove: () => removeParam("density") });
-    if (view && view !== "full") out.push({ key: "view", label: `view: ${view}`, onRemove: () => removeParam("view") });
-
-    if (qUrl) out.push({ key: "q", label: `q: “${safeLabel(qUrl, 28)}”`, onRemove: () => removeParam("q") });
-
-    if (grStatus !== "any")
-      out.push({
-        key: "gr_status",
-        label: `guardrail: ${grStatus}`,
-        onRemove: () => removeParam("gr_status"),
-      });
-
-    if (grReasonUrl)
-      out.push({
-        key: "gr_reason",
-        label: `reason: ${safeLabel(grReasonUrl, 28)}`,
-        onRemove: () => removeParam("gr_reason"),
-      });
-
-    if (lowConf !== "any")
-      out.push({ key: "low_conf", label: `low_conf: ${lowConf}`, onRemove: () => removeParam("low_conf") });
-
-    if (score !== "any") out.push({ key: "score", label: `score: ${score}`, onRemove: () => removeParam("score") });
-
-    if (archetype !== "any")
-      out.push({ key: "archetype", label: `archetype: ${archetype}`, onRemove: () => removeParam("archetype") });
-
-    if (modelUrl)
-      out.push({ key: "model", label: `model: ${safeLabel(modelUrl, 28)}`, onRemove: () => removeParam("model") });
-
-    if (gateway !== "any")
-      out.push({ key: "gateway", label: `gateway: ${gateway}`, onRemove: () => removeParam("gateway") });
-
-    if (qa !== "any") out.push({ key: "qa", label: `qa: ${qa}`, onRemove: () => removeParam("qa") });
-
-    if (rerank !== "any")
-      out.push({ key: "rerank", label: `rerank: ${rerank === "true" ? "on" : "off"}`, onRemove: () => removeParam("rerank") });
-
-    if (snapped !== "any")
-      out.push({
-        key: "snapped",
-        label: `confidence: ${snapped === "true" ? "snapped" : "mixed"}`,
-        onRemove: () => removeParam("snapped"),
-      });
-
-    if (marginLt !== "any")
-      out.push({
-        key: "margin_lt",
-        label: `margin < ${marginLt}`,
-        onRemove: () => removeParam("margin_lt"),
-      });
-
-    return out;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return chipConfigs
+      .map(config => createChip(config.key, config.label, Boolean(config.condition)))
+      .filter(Boolean) as Chip[];
   }, [
     env,
     endpoint,
@@ -261,119 +331,136 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
     snapped,
     marginLt,
     defaultDays,
+    removeParam,
   ]);
 
-  return (
-    <section id="filters" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6 space-y-3">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div className="space-y-1">
-          <h2 className="text-sm font-semibold tracking-wide text-foreground">Filters</h2>
-          <p className="text-xs text-muted-foreground">
-            Env/endpoint/time window scope analytics. Advanced filters + search apply to the log viewer.
-          </p>
-        </div>
+  const chips: Chip[] = useMemo(() => buildChips(), [buildChips]);
 
-        <button
-          type="button"
-          onClick={resetAll}
-          className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-3 text-xs text-muted-foreground hover:bg-muted/20 hover:text-foreground"
-        >
-          Reset
-        </button>
+  const isSidebar = variant === "sidebar";
+  const headerLayout = cn(
+    "flex flex-col gap-2",
+    isSidebar ? "sm:items-start" : "sm:flex-row sm:items-start sm:justify-between",
+  );
+  const primaryControls = isSidebar
+    ? "grid grid-cols-1 gap-3"
+    : "flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end";
+  const advancedControls = isSidebar
+    ? "mt-3 grid grid-cols-1 gap-3"
+    : "mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end";
+
+  const chipsBlock =
+    chips.length > 0 ? (
+      <div className="flex flex-wrap gap-2">
+        {chips.map((chip) => (
+          <button
+            key={chip.key}
+            type="button"
+            onClick={chip.onRemove}
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground hover:bg-muted/20 hover:text-foreground"
+            title="Remove filter"
+          >
+            <span>{chip.label}</span>
+            <span className="text-[12px] leading-none">×</span>
+          </button>
+        ))}
       </div>
+    ) : (
+      <div className="text-xs text-muted-foreground">No active filters.</div>
+    );
 
-      {chips.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {chips.map((chip) => (
-            <button
-              key={chip.key}
-              type="button"
-              onClick={chip.onRemove}
-              className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground hover:bg-muted/20 hover:text-foreground"
-              title="Remove filter"
-            >
-              <span>{chip.label}</span>
-              <span className="text-[12px] leading-none">×</span>
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="text-xs text-muted-foreground">No active filters.</div>
-      )}
+  const controlRowClass = isSidebar ? "flex flex-col gap-1 text-sm" : "flex items-center gap-2 text-sm";
+  const controlSelectFullWidth = isSidebar;
+  const inputClass = cn(
+    "h-9 rounded-md border bg-background px-3 text-sm",
+    isSidebar ? "w-full" : "ml-2 w-[320px] max-w-full",
+  );
+  const inlineLabelClass = isSidebar ? "text-sm font-medium text-foreground" : undefined;
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-        <label className="text-sm">
-          Env:
-          <select
+  const controls = (
+    <>
+      <div className={primaryControls}>
+        <div className={controlRowClass}>
+          <span className={inlineLabelClass}>Env:</span>
+          <FilterSelect
             value={env}
-            onChange={(e) => setParam("env", e.target.value)}
-            className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            <option value="all">all</option>
-            <option value="local">local</option>
-            <option value="preview">preview</option>
-            <option value="production">production</option>
-          </select>
-        </label>
+            onChange={(val) => setParam("env", val)}
+            options={[
+              { value: "all", label: "all" },
+              { value: "local", label: "local" },
+              { value: "preview", label: "preview" },
+              { value: "production", label: "production" },
+            ]}
+            srLabel="Environment"
+            fullWidth={controlSelectFullWidth}
+          />
+        </div>
 
-        <label className="text-sm">
-          Endpoint:
-          <select
+        <div className={controlRowClass}>
+          <span className={inlineLabelClass}>Endpoint:</span>
+          <FilterSelect
             value={endpoint}
-            onChange={(e) => setParam("endpoint", e.target.value)}
-            className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            <option value="all">all</option>
-            <option value="assistant">assistant</option>
-            <option value="soul_journey">soul_journey</option>
-          </select>
-        </label>
+            onChange={(val) => setParam("endpoint", val)}
+            options={[
+              { value: "all", label: "all" },
+              { value: "assistant", label: "assistant" },
+              { value: "soul_journey", label: "soul_journey" },
+            ]}
+            srLabel="Endpoint"
+            fullWidth={controlSelectFullWidth}
+          />
+        </div>
 
-        <label className="text-sm">
-          Time window:
-          <select
+        <div className={controlRowClass}>
+          <span className={inlineLabelClass}>Time window:</span>
+          <FilterSelect
             value={days}
-            onChange={(e) => setParam("days", e.target.value)}
-            className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            <option value="7">last 7 days</option>
-            <option value={String(defaultDays)}>{`last ${defaultDays} days`}</option>
-            <option value="90">last 90 days</option>
-            <option value="all">all time</option>
-          </select>
-        </label>
+            onChange={(val) => setParam("days", val)}
+            options={[
+              { value: "7", label: "last 7 days" },
+              { value: String(defaultDays), label: `last ${defaultDays} days` },
+              { value: "90", label: "last 90 days" },
+              { value: "all", label: "all time" },
+            ]}
+            srLabel="Time window"
+            fullWidth={controlSelectFullWidth}
+          />
+        </div>
 
-        <label className="text-sm">
-          Density:
-          <select
+        <div className={controlRowClass}>
+          <span className={inlineLabelClass}>Density:</span>
+          <FilterSelect
             value={density}
-            onChange={(e) => setParam("density", e.target.value)}
-            className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            <option value="comfortable">comfortable</option>
-            <option value="compact">compact</option>
-          </select>
-        </label>
+            onChange={(val) => setParam("density", val)}
+            options={[
+              { value: "comfortable", label: "comfortable" },
+              { value: "compact", label: "compact" },
+            ]}
+            srLabel="Table density"
+            fullWidth={controlSelectFullWidth}
+          />
+        </div>
 
-        <label className="text-sm">
-          View:
-          <select
+        <div className={controlRowClass}>
+          <span className={inlineLabelClass}>View:</span>
+          <FilterSelect
             value={view}
-            onChange={(e) => setParam("view", e.target.value)}
-            className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            <option value="full">full</option>
-            <option value="triage">triage</option>
-          </select>
-        </label>
+            onChange={(val) => setParam("view", val)}
+            options={[
+              { value: "full", label: "full" },
+              { value: "triage", label: "triage" },
+            ]}
+            srLabel="View mode"
+            fullWidth={controlSelectFullWidth}
+          />
+        </div>
 
-        <label className="text-sm">
-          Search logs:
+        <label className={controlRowClass}>
+          <span className={inlineLabelClass}>Search logs:</span>
           <input
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
             placeholder="Search prompts/responses…"
-            className="ml-2 h-9 w-[320px] max-w-full rounded-md border bg-background px-3 text-sm"
+            className={inputClass}
           />
         </label>
       </div>
@@ -384,22 +471,24 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
           <span className="ml-2 text-muted-foreground">guardrails · QA · score · model/archetype</span>
         </summary>
 
-        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
-          <label className="text-sm">
-            Guardrail status:
-            <select
+        <div className={advancedControls}>
+          <div className={controlRowClass}>
+            <span className={inlineLabelClass}>Guardrail status:</span>
+            <FilterSelect
               value={grStatus}
-              onChange={(e) => setParam("gr_status", e.target.value)}
-              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-            >
-              <option value="any">any</option>
-              <option value="blocked">blocked</option>
-              <option value="not_blocked">not blocked</option>
-            </select>
-          </label>
+              onChange={(val) => setParam("gr_status", val)}
+              options={[
+                { value: "any", label: "any" },
+                { value: "blocked", label: "blocked" },
+                { value: "not_blocked", label: "not blocked" },
+              ]}
+              srLabel="Guardrail status"
+              fullWidth={controlSelectFullWidth}
+            />
+          </div>
 
-          <label className="text-sm">
-            Guardrail reason:
+          <label className={controlRowClass}>
+            <span className={inlineLabelClass}>Guardrail reason:</span>
             <input
               value={grReasonInput}
               onChange={(e) => setGrReasonInput(e.target.value)}
@@ -411,57 +500,59 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
                 }
               }}
               placeholder="e.g. sexual_content"
-              className="ml-2 h-9 w-[240px] max-w-full rounded-md border bg-background px-3 text-sm"
+              className={inputClass}
             />
           </label>
 
-          <label className="text-sm">
-            Low confidence:
-            <select
+          <div className={controlRowClass}>
+            <span className={inlineLabelClass}>Low confidence:</span>
+            <FilterSelect
               value={lowConf}
-              onChange={(e) => setParam("low_conf", e.target.value)}
-              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-            >
-              <option value="any">any</option>
-              <option value="true">true</option>
-              <option value="false">false</option>
-            </select>
-          </label>
+              onChange={(val) => setParam("low_conf", val)}
+              options={[
+                { value: "any", label: "any" },
+                { value: "true", label: "true" },
+                { value: "false", label: "false" },
+              ]}
+              srLabel="Low confidence"
+              fullWidth={controlSelectFullWidth}
+            />
+          </div>
 
-          <label className="text-sm">
-            maxScore:
-            <select
+          <div className={controlRowClass}>
+            <span className={inlineLabelClass}>maxScore:</span>
+            <FilterSelect
               value={score}
-              onChange={(e) => setParam("score", e.target.value)}
-              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-            >
-              <option value="any">any</option>
-              <option value="lt0.25">&lt; 0.25</option>
-              <option value="lt0.5">&lt; 0.5</option>
-              <option value="0.25-0.5">0.25–0.5</option>
-              <option value="0.5-0.75">0.5–0.75</option>
-              <option value="gte0.75">≥ 0.75</option>
-            </select>
-          </label>
+              onChange={(val) => setParam("score", val)}
+              options={[
+                { value: "any", label: "any" },
+                { value: "lt0.25", label: "< 0.25" },
+                { value: "lt0.5", label: "< 0.5" },
+                { value: "0.25-0.5", label: "0.25–0.5" },
+                { value: "0.5-0.75", label: "0.5–0.75" },
+                { value: "gte0.75", label: "≥ 0.75" },
+              ]}
+              srLabel="Max score"
+              fullWidth={controlSelectFullWidth}
+            />
+          </div>
 
-          <label className="text-sm">
-            Archetype:
-            <select
+          <div className={controlRowClass}>
+            <span className={inlineLabelClass}>Archetype:</span>
+            <FilterSelect
               value={archetype}
-              onChange={(e) => setParam("archetype", e.target.value)}
-              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-            >
-              <option value="any">any</option>
-              {CANONICAL_ARCHETYPE_ORDER.map((a) => (
-                <option key={a} value={a}>
-                  {a}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={(val) => setParam("archetype", val)}
+              options={[
+                { value: "any", label: "any" },
+                ...CANONICAL_ARCHETYPE_ORDER.map((a) => ({ value: a, label: a })),
+              ]}
+              srLabel="Archetype"
+              fullWidth={controlSelectFullWidth}
+            />
+          </div>
 
-          <label className="text-sm">
-            Model:
+          <label className={controlRowClass}>
+            <span className={inlineLabelClass}>Model:</span>
             <input
               value={modelInput}
               onChange={(e) => setModelInput(e.target.value)}
@@ -473,78 +564,170 @@ export function FiltersBar({ defaultDays }: { defaultDays: number }) {
                 }
               }}
               placeholder="e.g. gpt-4.1-mini"
-              className="ml-2 h-9 w-[220px] max-w-full rounded-md border bg-background px-3 text-sm"
+              className={inputClass}
             />
           </label>
 
-          <label className="text-sm">
-            Used gateway:
-            <select
+          <div className={controlRowClass}>
+            <span className={inlineLabelClass}>Used gateway:</span>
+            <FilterSelect
               value={gateway}
-              onChange={(e) => setParam("gateway", e.target.value)}
-              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-            >
-              <option value="any">any</option>
-              <option value="true">true</option>
-              <option value="false">false</option>
-            </select>
-          </label>
+              onChange={(val) => setParam("gateway", val)}
+              options={[
+                { value: "any", label: "any" },
+                { value: "true", label: "true" },
+                { value: "false", label: "false" },
+              ]}
+              srLabel="Used gateway"
+              fullWidth={controlSelectFullWidth}
+            />
+          </div>
 
-          <label className="text-sm">
-            QA status:
-            <select
+          <div className={controlRowClass}>
+            <span className={inlineLabelClass}>QA status:</span>
+            <FilterSelect
               value={qa}
-              onChange={(e) => setParam("qa", e.target.value)}
-              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-            >
-              <option value="any">any</option>
-              <option value="open">open</option>
-              <option value="resolved">resolved</option>
-              <option value="none">none</option>
-            </select>
-          </label>
+              onChange={(val) => setParam("qa", val)}
+              options={[
+                { value: "any", label: "any" },
+                { value: "open", label: "open" },
+                { value: "resolved", label: "resolved" },
+                { value: "none", label: "none" },
+              ]}
+              srLabel="QA status"
+              fullWidth={controlSelectFullWidth}
+            />
+          </div>
 
-          <label className="text-sm">
-            Rerank:
-            <select
+          <div className={controlRowClass}>
+            <span className={inlineLabelClass}>Rerank:</span>
+            <FilterSelect
               value={rerank}
-              onChange={(e) => setParam("rerank", e.target.value)}
-              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-            >
-              <option value="any">any</option>
-              <option value="true">enabled</option>
-              <option value="false">disabled</option>
-            </select>
-          </label>
+              onChange={(val) => setParam("rerank", val)}
+              options={[
+                { value: "any", label: "any" },
+                { value: "true", label: "enabled" },
+                { value: "false", label: "disabled" },
+              ]}
+              srLabel="Rerank"
+              fullWidth={controlSelectFullWidth}
+            />
+          </div>
 
-          <label className="text-sm">
-            Confidence:
-            <select
+          <div className={controlRowClass}>
+            <span className={inlineLabelClass}>Confidence:</span>
+            <FilterSelect
               value={snapped}
-              onChange={(e) => setParam("snapped", e.target.value)}
-              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-            >
-              <option value="any">any</option>
-              <option value="true">snapped</option>
-              <option value="false">mixed</option>
-            </select>
-          </label>
+              onChange={(val) => setParam("snapped", val)}
+              options={[
+                { value: "any", label: "any" },
+                { value: "true", label: "snapped" },
+                { value: "false", label: "mixed" },
+              ]}
+              srLabel="Confidence"
+              fullWidth={controlSelectFullWidth}
+            />
+          </div>
 
-          <label className="text-sm">
-            Margin &lt;
-            <select
+          <div className={controlRowClass}>
+            <span className={inlineLabelClass}>Margin &lt;</span>
+            <FilterSelect
               value={marginLt}
-              onChange={(e) => setParam("margin_lt", e.target.value)}
-              className="ml-2 h-9 rounded-md border bg-background px-2 text-sm"
-            >
-              <option value="any">any</option>
-              <option value="0.08">0.08</option>
-              <option value="0.12">0.12</option>
-              <option value="0.20">0.20</option>
-            </select>
-          </label>
+              onChange={(val) => setParam("margin_lt", val)}
+              options={[
+                { value: "any", label: "any" },
+                { value: "0.08", label: "0.08" },
+                { value: "0.12", label: "0.12" },
+                { value: "0.20", label: "0.20" },
+              ]}
+              srLabel="Margin less than"
+              fullWidth={controlSelectFullWidth}
+            />
+          </div>
         </div>
       </details>
+    </>
+  );
+
+  if (isSidebar) {
+    return (
+      <div className={cn("space-y-3", className)}>
+        <Disclosure defaultOpen>
+          {({ open }) => (
+            <div className="space-y-3">
+              <DisclosureButton className="flex w-full items-center justify-between rounded-xl border border-border/80 bg-background/80 px-3 py-3 text-left shadow-sm transition hover:border-border hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted/60 text-foreground/80">
+                    <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground">Filters</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Env/endpoint/time window scope analytics.
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown
+                  className={cn("h-4 w-4 text-muted-foreground transition-transform", open ? "rotate-180" : "rotate-0")}
+                  aria-hidden="true"
+                />
+              </DisclosureButton>
+
+              <DisclosurePanel className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs text-muted-foreground">Filters apply to analytics and logs.</p>
+                  <button
+                    type="button"
+                    onClick={resetAll}
+                    className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-background px-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted/20 hover:text-foreground"
+                  >
+                    Reset
+                  </button>
+                </div>
+
+                {chipsBlock}
+                {controls}
+              </DisclosurePanel>
+            </div>
+          )}
+        </Disclosure>
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("space-y-3", className)}>
+      <div className={headerLayout}>
+        <div className="space-y-1">
+          <h2 className="text-sm font-semibold tracking-wide text-foreground">Filters</h2>
+          <p className="text-xs text-muted-foreground">
+            Env/endpoint/time window scope analytics. Advanced filters + search apply to the log viewer.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={resetAll}
+          className={cn(
+            "inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-3 text-xs text-muted-foreground hover:bg-muted/20 hover:text-foreground",
+            isSidebar && "w-full sm:w-auto",
+          )}
+        >
+          Reset
+        </button>
+      </div>
+
+      {chipsBlock}
+
+      {controls}
+    </div>
+  );
+}
+
+export function FiltersBar({ defaultDays }: { readonly defaultDays: number }) {
+  return (
+    <section id="filters" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6">
+      <PgptInsightsFiltersPanel defaultDays={defaultDays} />
     </section>
   );
 }

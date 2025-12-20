@@ -18,14 +18,14 @@ export function SessionLogsViewSwitcher({
   truncPrimary,
   hasMore,
   sessionId,
-}: {
+}: Readonly<{
   tableLogs: PerazziLogPreviewRow[];
   conversationLogs: PerazziLogRow[];
   tableDensityClass: string;
   truncPrimary: number;
   hasMore: boolean;
   sessionId: string;
-}) {
+}>) {
   const [view, setView] = useState<"table" | "conversation">("table");
 
   return (

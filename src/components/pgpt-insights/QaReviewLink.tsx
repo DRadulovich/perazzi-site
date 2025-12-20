@@ -5,10 +5,10 @@ import { getOpenQaFlagCount } from "../../lib/pgpt-insights/cached";
 export async function QaReviewLink({
   prefix,
   className,
-}: {
+}: Readonly<{
   prefix: string;
   className: string;
-}) {
+}>) {
   const count = await getOpenQaFlagCount();
   const label = count > 0 ? ` (${count})` : "";
 

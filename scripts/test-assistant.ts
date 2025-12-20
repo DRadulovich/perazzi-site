@@ -3,7 +3,8 @@ import fetch from "node-fetch";
 import minimist from "minimist";
 
 const argv = minimist(process.argv.slice(2), {
-  string: ["question", "mode", "locale", "modelSlug", "pageUrl"],
+  string: ["question", "mode", "locale", "modelSlug", "pageUrl", "baseUrl"],
+  alias: { baseUrl: "base-url" },
   default: {
     question: "Help me understand the difference between MX2000 and High Tech",
     mode: "prospect",
@@ -11,6 +12,19 @@ const argv = minimist(process.argv.slice(2), {
     pageUrl: "/shotguns",
   },
 });
+
+function resolveAssistantUrl(): URL {
+  const baseUrl =
+    (argv.baseUrl as string | undefined) ?? process.env.PERAZZI_ASSISTANT_URL ?? "http://localhost:3000";
+  const url = new URL("/api/perazzi-assistant", baseUrl);
+  const isLocalHost = url.hostname === "localhost" || url.hostname === "127.0.0.1";
+
+  if (url.protocol !== "https:" && !isLocalHost) {
+    throw new Error(`Refusing to call assistant over insecure protocol: ${url.href}`);
+  }
+
+  return url;
+}
 
 async function main() {
   const payload = {
@@ -23,7 +37,9 @@ async function main() {
     },
   };
 
-  const res = await fetch("http://localhost:3000/api/perazzi-assistant", {
+  const assistantUrl = resolveAssistantUrl();
+
+  const res = await fetch(assistantUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -31,7 +47,7 @@ async function main() {
 
   if (!res.ok) {
     const text = await res.text();
-    console.error(`Request failed (${res.status}):`, text);
+    console.error("Request failed (%s): %s", res.status, text);
     process.exit(1);
   }
 

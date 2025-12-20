@@ -1,13 +1,22 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { VerbosityToggle } from "@/components/chat/VerbosityToggle";
+import type { TextVerbosity } from "@/types/perazzi-assistant";
 
-interface ChatInputProps extends Readonly<{
+type ChatInputProps = Readonly<{
   onSend: (question: string) => void;
   pending: boolean;
-}> {}
+  textVerbosity: TextVerbosity;
+  onTextVerbosityChange: (verbosity: TextVerbosity) => void;
+}>;
 
-export function ChatInput({ onSend, pending }: ChatInputProps) {
+export function ChatInput({
+  onSend,
+  pending,
+  textVerbosity,
+  onTextVerbosityChange,
+}: ChatInputProps) {
   const [value, setValue] = useState("");
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -18,7 +27,8 @@ export function ChatInput({ onSend, pending }: ChatInputProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-2">
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <VerbosityToggle value={textVerbosity} onChange={onTextVerbosityChange} disabled={pending} />
       <div className="relative">
         <label htmlFor="perazzi-chat-input" className="sr-only">
           Ask the Perazzi concierge

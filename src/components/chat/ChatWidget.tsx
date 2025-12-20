@@ -18,7 +18,7 @@ export function ChatWidget() {
   const [isResizing, setIsResizing] = useState(false);
   const [pendingPrompt, setPendingPrompt] = useState<ChatTriggerPayload | null>(null);
   const pathname = usePathname();
-  const hideTrigger = pathname?.startsWith("/the-build/why-a-perazzi-has-a-soul");
+  const hideTrigger = pathname.startsWith("/the-build/why-a-perazzi-has-a-soul");
 
   useEffect(() => {
     if (typeof globalThis.matchMedia !== "function") return;
@@ -27,9 +27,9 @@ export function ChatWidget() {
       setIsMobile(event.matches);
     };
     updateMatch(query);
-    const listener = (event: MediaQueryListEvent) => updateMatch(event);
+    const listener = (event: MediaQueryListEvent) => { updateMatch(event); };
     query.addEventListener("change", listener);
-    return () => query.removeEventListener("change", listener);
+    return () => { query.removeEventListener("change", listener); };
   }, []);
 
   useEffect(() => {
@@ -60,7 +60,7 @@ export function ChatWidget() {
       setPanelWidth(clamped);
     };
 
-    const stopResizing = () => setIsResizing(false);
+    const stopResizing = () => { setIsResizing(false); };
 
     globalThis.addEventListener("mousemove", handleMouseMove);
     globalThis.addEventListener("mouseup", stopResizing);
@@ -144,10 +144,10 @@ export function ChatWidget() {
     };
 
     globalThis.addEventListener(CHAT_TRIGGER_EVENT, handler as EventListener);
-    return () => globalThis.removeEventListener(CHAT_TRIGGER_EVENT, handler as EventListener);
+    return () => { globalThis.removeEventListener(CHAT_TRIGGER_EVENT, handler as EventListener); };
   }, []);
 
-  const consumePrompt = () => setPendingPrompt(null);
+  const consumePrompt = () => { setPendingPrompt(null); };
 
   return (
     <>
@@ -157,7 +157,7 @@ export function ChatWidget() {
             <button
               type="button"
               aria-label="Open Perazzi Concierge"
-              onClick={() => setIsOpen(true)}
+              onClick={() => { setIsOpen(true); }}
               className="fixed bottom-5 right-5 z-40 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm sm:text-base font-semibold text-card shadow-elevated transition hover:bg-brand-hover focus-ring"
             >
               Perazzi Guide
@@ -191,7 +191,7 @@ export function ChatWidget() {
             >
               <div
                 className="absolute left-0 top-0 z-50 h-full w-2 cursor-col-resize border-l border-transparent transition hover:border-l-subtle"
-                onMouseDown={() => setIsResizing(true)}
+                onMouseDown={() => { setIsResizing(true); }}
                 aria-hidden="true"
               />
               <ChatPanel

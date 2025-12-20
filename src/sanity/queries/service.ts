@@ -257,10 +257,10 @@ export async function getServiceHome(): Promise<ServiceHomePayload | null> {
           intro: data.partsEditorialSection.intro ?? undefined,
           parts:
             data.partsEditorialSection.parts?.map((part) => ({
-              name: part?.name ?? "",
-              purpose: part?.purpose ?? "",
-              fitment: part?.fitment ?? "",
-              notesHtml: part?.notesHtml ?? undefined,
+              name: part.name ?? "",
+              purpose: part.purpose ?? "",
+              fitment: part.fitment ?? "",
+              notesHtml: part.notesHtml ?? undefined,
             })) ?? [],
         }
       : undefined,
@@ -275,11 +275,11 @@ export async function getServiceHome(): Promise<ServiceHomePayload | null> {
           downloadButtonLabel: data.guidesSection.downloadButtonLabel ?? undefined,
           guides:
             data.guidesSection.guides?.map((guide, index) => ({
-              id: guide?.title ? `${guide.title}-${index}` : `guide-${index}`,
-              title: guide?.title ?? "",
-              summaryHtml: guide?.summaryHtml ?? "",
-              fileUrl: guide?.fileUrl ?? "",
-              fileSize: guide?.fileSize ?? undefined,
+              id: guide.title ? `${guide.title}-${index}` : `guide-${index}`,
+              title: guide.title ?? "",
+              summaryHtml: guide.summaryHtml ?? "",
+              fileUrl: guide.fileUrl ?? "",
+              fileSize: guide.fileSize ?? undefined,
             })) ?? [],
         }
       : undefined,
@@ -290,7 +290,7 @@ export async function getServiceHome(): Promise<ServiceHomePayload | null> {
           items:
             data.faqSection.items
               ?.map((item) => {
-                if (!item?.question && !item?.answerHtml) return null;
+                if (!item.question && !item?.answerHtml) return null;
                 return { q: item.question ?? "", aHtml: item.answerHtml ?? "" };
               })
               .filter(Boolean) as FAQItem[] | undefined,
@@ -310,7 +310,7 @@ export async function getRecommendedServiceCenters(): Promise<RecommendedService
     data
       ?.filter(
         (center): center is RecommendedServiceCenterResponse & { _id: string; centerName: string; address: string; city: string } =>
-          Boolean(center?._id && center?.centerName && center?.address && center?.city),
+          Boolean(center._id && center?.centerName && center?.address && center?.city),
       )
       .map((center) => ({
         id: center._id as string,

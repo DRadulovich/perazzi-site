@@ -12,6 +12,7 @@ import {
 } from "../../../lib/pgpt-insights/cached";
 
 import { formatDeltaMs, formatDeltaPp, formatRate } from "../format";
+import { SectionHeader } from "../SectionHeader";
 import { SectionError } from "./SectionError";
 
 type SearchParams = {
@@ -90,7 +91,7 @@ export async function TopIssuesSection({
     type Issue = {
       key: "guardrails" | "rag" | "latency";
       title: string;
-      tone: string;
+      tone: "danger" | "warn" | "neutral";
       nowLine: string;
       deltaLine: string;
       whyLine: string;
@@ -134,8 +135,8 @@ export async function TopIssuesSection({
         const tone =
           guardrailRateNow >= GUARDRAIL_ALERT_RATE ||
           (guardrailDeltaPp !== null && guardrailDeltaPp >= GUARDRAIL_ALERT_DELTA_PP && blockedNow >= 5)
-            ? "border-l-4 border-red-500/50 bg-red-500/5 dark:border-red-500/60 dark:bg-red-500/15"
-            : "border-l-4 border-amber-500/50 bg-amber-500/5 dark:border-amber-500/60 dark:bg-amber-500/15";
+            ? "danger"
+            : "warn";
 
         const nowLine = `${blockedNow} blocks (${formatRate(guardrailRateNow)})`;
         const deltaLine =
@@ -155,9 +156,7 @@ export async function TopIssuesSection({
 
       if (ragSummary && ragSummary.total > 0 && lowRateNow !== null) {
         const needsAttention = lowRateNow >= LOWSCORE_WARN_RATE || (lowDeltaPp !== null && lowDeltaPp >= LOWSCORE_WARN_DELTA_PP);
-        const tone = needsAttention
-          ? "border-l-4 border-yellow-500/50 bg-yellow-500/5 dark:border-yellow-500/60 dark:bg-yellow-500/15"
-          : "border-l-4 border-border";
+        const tone = needsAttention ? "warn" : "neutral";
 
         const nowLine = `${ragSummary.low_count} low (${formatRate(lowRateNow)})`;
         const deltaLine =
@@ -178,8 +177,8 @@ export async function TopIssuesSection({
       if (latNow !== null && latencyDeltaMs !== null) {
         const tone =
           latencyDeltaMs >= LATENCY_WARN_DELTA_MS
-            ? "border-l-4 border-amber-500/50 bg-amber-500/5 dark:border-amber-500/60 dark:bg-amber-500/15"
-            : "border-l-4 border-border";
+            ? "warn"
+            : "neutral";
 
         const nowLine = `~${Math.round(latNow)}ms avg`;
         const deltaLine = `Δ ${formatDeltaMs(latencyDeltaMs)} vs prior ${daysFilter}d`;
@@ -199,49 +198,79 @@ export async function TopIssuesSection({
     const visible = issues.slice(0, 6);
 
     return (
-      <section id="top-issues" className="rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-6 space-y-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
-          <div className="space-y-1">
-            <h2 className="text-sm font-semibold tracking-wide text-foreground">Top Issues</h2>
-            <p className="text-xs text-muted-foreground">Signals compared to the prior window (counts + rates).</p>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {comparisonEnabled ? `last ${daysFilter}d vs prior ${daysFilter}d` : "comparison unavailable"}
-          </p>
-        </div>
+      <section
+        id="top-issues"
+        className="rounded-2xl border border-border/80 bg-gradient-to-b from-card via-card/80 to-muted/20 shadow-lg"
+      >
+        <SectionHeader
+          title="Top Issues"
+          description="Signals compared to the prior window (counts + rates)."
+          rightMeta={
+            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+              {comparisonEnabled ? `last ${daysFilter}d vs prior ${daysFilter}d` : "comparison unavailable"}
+            </span>
+          }
+        />
 
-        {!comparisonEnabled ? (
-          <p className="text-xs text-muted-foreground">
-            Set a bounded time window (e.g. 7/30/90 days) to see deltas vs the previous window.
-          </p>
-        ) : visible.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No obvious regressions vs the previous window for the current scope.</p>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {visible.map((issue) => (
-              <div key={issue.key} className={`rounded-xl border border-border bg-background p-4 ${issue.tone}`}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <div className="text-sm font-semibold text-foreground">{issue.title}</div>
-                    <div className="text-xs text-muted-foreground">{issue.nowLine}</div>
-                    <div className="text-xs text-muted-foreground">{issue.deltaLine}</div>
+        <div className="space-y-3 border-t border-border/80 bg-card/70 px-4 py-4 sm:px-6 sm:py-6">
+          {!comparisonEnabled ? (
+            <p className="text-xs text-muted-foreground">
+              Set a bounded time window (e.g. 7/30/90 days) to see deltas vs the previous window.
+            </p>
+          ) : visible.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              No obvious regressions vs the previous window for the current scope.
+            </p>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {visible.map((issue) => {
+                const stripe =
+                  issue.tone === "danger"
+                    ? "bg-red-500/70"
+                    : issue.tone === "warn"
+                      ? "bg-amber-500/80"
+                      : "bg-border";
+                const ring =
+                  issue.tone === "danger"
+                    ? "ring-red-500/15"
+                    : issue.tone === "warn"
+                      ? "ring-amber-500/15"
+                      : "ring-border/60";
+
+                return (
+                  <div
+                    key={issue.key}
+                    className={`relative overflow-hidden rounded-xl border border-border bg-background/80 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${ring}`}
+                  >
+                    <span className={`absolute left-0 top-0 h-full w-[4px] ${stripe}`} aria-hidden="true" />
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <div className="text-sm font-semibold text-foreground">{issue.title}</div>
+                        <div className="text-xs text-foreground">{issue.nowLine}</div>
+                        <div className="text-xs text-muted-foreground">{issue.deltaLine}</div>
+                      </div>
+                      <Link
+                        href={issue.href}
+                        className="text-xs text-muted-foreground underline underline-offset-4 transition hover:text-foreground"
+                      >
+                        View →
+                      </Link>
+                    </div>
+
+                    <div className="mt-3 text-[11px] text-muted-foreground">{issue.whyLine}</div>
+
+                    <div className="mt-3 flex items-center justify-between text-xs">
+                      <Link href={issue.examplesHref} className="text-blue-600 underline underline-offset-4">
+                        View examples →
+                      </Link>
+                      <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Inspect</span>
+                    </div>
                   </div>
-                  <Link href={issue.href} className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4">
-                    View →
-                  </Link>
-                </div>
-
-                <div className="mt-3 text-[11px] text-muted-foreground">{issue.whyLine}</div>
-
-                <div className="mt-3">
-                  <Link href={issue.examplesHref} className="text-xs text-blue-600 underline underline-offset-4">
-                    View examples →
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          )}
+        </div>
       </section>
     );
   } catch (error) {

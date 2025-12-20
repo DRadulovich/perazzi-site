@@ -33,7 +33,7 @@ export function WoodCarousel({ grades }: WoodCarouselProps) {
           <button
             type="button"
             className="rounded-full border border-border px-3 py-2 text-xs uppercase tracking-[0.3em] text-ink focus-ring"
-            onClick={() => scrollBy("prev")}
+            onClick={() => { scrollBy("prev"); }}
             aria-label="Scroll wood carousel left"
           >
             Prev
@@ -41,7 +41,7 @@ export function WoodCarousel({ grades }: WoodCarouselProps) {
           <button
             type="button"
             className="rounded-full border border-border px-3 py-2 text-xs uppercase tracking-[0.3em] text-ink focus-ring"
-            onClick={() => scrollBy("next")}
+            onClick={() => { scrollBy("next"); }}
             aria-label="Scroll wood carousel right"
           >
             Next

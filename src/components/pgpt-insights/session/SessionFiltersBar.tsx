@@ -7,7 +7,9 @@ export function SessionFiltersBar() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const searchParamsKey = searchParams.toString();
 
+  const pendingScrollRef = useRef<number | null>(null);
   const densityKey = "pgptInsights.density";
 
   const get = (k: string) => searchParams.get(k) ?? "";
@@ -27,8 +29,22 @@ export function SessionFiltersBar() {
 
   function replaceParams(next: URLSearchParams) {
     const qs = next.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    const baseHref = qs ? `${pathname}?${qs}` : pathname;
+    const hash = typeof window !== "undefined" ? window.location.hash : "";
+
+    if (typeof window !== "undefined") {
+      pendingScrollRef.current = window.scrollY;
+    }
+
+    router.replace(`${baseHref}${hash}`, { scroll: false });
   }
+
+  useEffect(() => {
+    if (pendingScrollRef.current === null) return;
+    const y = pendingScrollRef.current;
+    pendingScrollRef.current = null;
+    requestAnimationFrame(() => window.scrollTo({ top: y }));
+  }, [searchParamsKey]);
 
   function setParam(key: string, value: string) {
     const next = new URLSearchParams(searchParams.toString());

@@ -32,7 +32,7 @@ export function NewsletterSignup() {
               type="email"
               required
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => { setEmail(event.target.value); }}
               className="mt-1 w-full rounded-2xl border border-border/70 bg-card px-3 py-2 text-sm text-ink focus-ring"
               placeholder="you@example.com"
             />

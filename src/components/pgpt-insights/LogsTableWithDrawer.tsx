@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { LOW_SCORE_THRESHOLD } from "../../lib/pgpt-insights/constants";
+import { getLogTextCalloutToneClass, getTextStorageBadges } from "../../lib/pgpt-insights/logTextStatus";
 import type { PerazziLogPreviewRow, PgptLogDetailResponse } from "../../lib/pgpt-insights/types";
 
 import { Badge } from "./Badge";
@@ -11,6 +12,9 @@ import { CopyButton } from "./CopyButton";
 import { formatCompactNumber, formatScore, formatTimestampShort } from "./format";
 import { LogSummaryPanel } from "./LogSummaryPanel";
 import { MarkdownViewClient } from "./MarkdownViewClient";
+import { DataTable } from "./table/DataTable";
+import { MonoCell } from "./table/MonoCell";
+import { StatusBadge } from "./table/StatusBadge";
 
 type TabKey = "summary" | "prompt" | "response" | "retrieval" | "qa";
 
@@ -46,17 +50,69 @@ function parseScore(score: string | null | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function toNumberOrNull(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+const POLLUTION_KEYS = new Set(["__proto__", "prototype", "constructor"]);
+
+function readNestedNumber(obj: unknown, path: string[]): number | null {
+  let current: unknown = obj;
+  for (const key of path) {
+    if (POLLUTION_KEYS.has(key)) return null;
+    if (!current || typeof current !== "object") return null;
+    const descriptor = Object.getOwnPropertyDescriptor(current as object, key);
+    if (!descriptor) return null;
+    current = descriptor.value as unknown;
+  }
+  return toNumberOrNull(current);
+}
+
+function getTokenMetrics(log: PerazziLogPreviewRow) {
+  const promptTokens = toNumberOrNull((log as { prompt_tokens?: unknown }).prompt_tokens);
+  const completionTokens = toNumberOrNull((log as { completion_tokens?: unknown }).completion_tokens);
+  const metadataObj =
+    log.metadata && typeof log.metadata === "object" ? (log.metadata as Record<string, unknown>) : null;
+  const responseUsage =
+    metadataObj && typeof (metadataObj as { responseUsage?: unknown }).responseUsage === "object"
+      ? (metadataObj as { responseUsage: unknown }).responseUsage
+      : null;
+
+  const cachedTokens =
+    toNumberOrNull((log as { cached_tokens?: unknown }).cached_tokens) ??
+    readNestedNumber(metadataObj, ["cachedTokens"]) ??
+    readNestedNumber(responseUsage, ["input_tokens_details", "cached_tokens"]);
+
+  const reasoningTokens =
+    toNumberOrNull((log as { reasoning_tokens?: unknown }).reasoning_tokens) ??
+    readNestedNumber(metadataObj, ["reasoningTokens"]) ??
+    readNestedNumber(responseUsage, ["output_tokens_details", "reasoning_tokens"]);
+
+  const totalTokens =
+    toNumberOrNull((log as { total_tokens?: unknown }).total_tokens) ??
+    readNestedNumber(metadataObj, ["totalTokens"]) ??
+    readNestedNumber(responseUsage, ["total_tokens"]) ??
+    (promptTokens !== null && completionTokens !== null ? promptTokens + completionTokens : null);
+
+  return { promptTokens, completionTokens, cachedTokens, reasoningTokens, totalTokens };
+}
+
 function rowToneClass(log: PerazziLogPreviewRow): string {
   if (log.guardrail_status === "blocked")
-    return "border-l-4 border-red-500/50 bg-red-500/5 dark:border-red-500/60 dark:bg-red-500/15";
+    return "border-l-[5px] border-red-500/70";
   if (log.low_confidence === true)
-    return "border-l-4 border-amber-500/50 bg-amber-500/5 dark:border-amber-500/60 dark:bg-amber-500/15";
+    return "border-l-[5px] border-amber-500/70";
 
   const s = parseScore(log.max_score);
   if (log.endpoint === "assistant" && s !== null && s < LOW_SCORE_THRESHOLD)
-    return "border-l-4 border-yellow-500/50 bg-yellow-500/5 dark:border-yellow-500/60 dark:bg-yellow-500/15";
+    return "border-l-[5px] border-yellow-500/70";
 
-  return "border-l-4 border-transparent";
+  return "border-l-[5px] border-transparent";
 }
 
 function DrawerSkeleton() {
@@ -83,15 +139,17 @@ function getFocusable(container: HTMLElement): HTMLElement[] {
   return Array.from(container.querySelectorAll(selectors)).filter((el): el is HTMLElement => el instanceof HTMLElement);
 }
 
+type LogsTableWithDrawerProps = Readonly<{
+  logs: ReadonlyArray<PerazziLogPreviewRow>;
+  tableDensityClass: string;
+  truncPrimary: number;
+}>;
+
 export function LogsTableWithDrawer({
   logs,
   tableDensityClass,
   truncPrimary,
-}: {
-  logs: PerazziLogPreviewRow[];
-  tableDensityClass: string;
-  truncPrimary: number;
-}) {
+}: LogsTableWithDrawerProps) {
   const cacheRef = useRef(new Map<string, PgptLogDetailResponse>());
 
   const [open, setOpen] = useState(false);
@@ -103,7 +161,7 @@ export function LogsTableWithDrawer({
   const [error, setError] = useState<string | null>(null);
   const [detail, setDetail] = useState<PgptLogDetailResponse | null>(null);
 
-  const drawerRef = useRef<HTMLDivElement | null>(null);
+  const drawerRef = useRef<HTMLDialogElement | null>(null);
   const closeBtnRef = useRef<HTMLButtonElement | null>(null);
   const lastFocusRef = useRef<HTMLElement | null>(null);
 
@@ -112,18 +170,40 @@ export function LogsTableWithDrawer({
     return logs.find((l) => l.id === selectedId) ?? null;
   }, [logs, selectedId]);
 
-  const fallbackMetadata = (selectedPreview as { metadata?: unknown } | null | undefined)?.metadata;
+  const fallbackMetadata = selectedPreview?.metadata;
 
   const qaReturnTo = useMemo(() => {
     if (!open) return "";
-    if (typeof window === "undefined") return "";
+    if (typeof globalThis.window === "undefined") return "";
     try {
-      const base = window.location.href.split("#")[0];
+      const base = globalThis.window.location.href.split("#")[0];
       return `${base}#logs`;
     } catch {
       return "";
     }
   }, [open]);
+
+  const detailTextStatus = useMemo(() => {
+    if (!detail?.log) return null;
+    return getTextStorageBadges({
+      promptText: detail.log.prompt,
+      responseText: detail.log.response,
+      metadata: detail.log.metadata ?? fallbackMetadata,
+      logTextMode: detail.log.log_text_mode,
+      logTextMaxChars: detail.log.log_text_max_chars,
+      promptTextOmitted: detail.log.prompt_text_omitted,
+      responseTextOmitted: detail.log.response_text_omitted,
+      promptTextTruncated: detail.log.prompt_text_truncated,
+      responseTextTruncated: detail.log.response_text_truncated,
+    });
+  }, [detail, fallbackMetadata]);
+
+  let interactionSummary = "";
+  if (detail?.log) {
+    interactionSummary = `${formatTimestampShort(detail.log.created_at)} · ${detail.log.env} · ${detail.log.endpoint}`;
+  } else if (selectedPreview) {
+    interactionSummary = `${formatTimestampShort(selectedPreview.created_at)} · ${selectedPreview.env} · ${selectedPreview.endpoint}`;
+  }
 
   function closeDrawer() {
     setOpen(false);
@@ -152,12 +232,15 @@ export function LogsTableWithDrawer({
 
     lastFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
 
-    const t = window.setTimeout(() => {
+    const win = typeof globalThis.window === "undefined" ? null : globalThis.window;
+    if (!win) return;
+
+    const t = win.setTimeout(() => {
       closeBtnRef.current?.focus();
     }, 0);
 
     return () => {
-      window.clearTimeout(t);
+      win.clearTimeout(t);
       lastFocusRef.current?.focus?.();
     };
   }, [open]);
@@ -165,11 +248,14 @@ export function LogsTableWithDrawer({
   // Escape to close (global)
   useEffect(() => {
     if (!open) return;
+    const win = typeof globalThis.window === "undefined" ? null : globalThis.window;
+    if (!win) return;
+
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") closeDrawer();
     };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    win.addEventListener("keydown", onKeyDown);
+    return () => win.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
   // Focus trap (inside drawer)
@@ -184,8 +270,9 @@ export function LogsTableWithDrawer({
       const focusables = getFocusable(el);
       if (focusables.length === 0) return;
 
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
+      const first = focusables.at(0);
+      const last = focusables.at(-1);
+      if (!first || !last) return;
       const active = document.activeElement;
 
       if (!e.shiftKey && active === last) {
@@ -248,8 +335,15 @@ export function LogsTableWithDrawer({
 
   return (
     <>
-      <div className="overflow-x-auto rounded-xl border border-border">
-        <table className={cn("w-full min-w-[1400px] table-fixed border-collapse text-xs", tableDensityClass)}>
+      <DataTable
+        headers={[
+          { key: "created_at", label: "created_at" },
+          { key: "env", label: "env" },
+          { key: "endpoint", label: "endpoint" },
+          { key: "session", label: "session_id" },
+          { key: "triage", label: "triage (Enter/Space to inspect)" },
+        ]}
+        colgroup={
           <colgroup>
             <col className="w-[200px]" />
             <col className="w-[100px]" />
@@ -257,163 +351,209 @@ export function LogsTableWithDrawer({
             <col className="w-[220px]" />
             <col className="w-[900px]" />
           </colgroup>
-          <thead>
-            <tr>
-              <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                created_at
-              </th>
-              <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                env
-              </th>
-              <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                endpoint
-              </th>
-              <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                session_id
-              </th>
-              <th scope="col" className="sticky top-0 z-10 border-b border-border bg-card/95 px-3 py-2 text-left font-medium text-muted-foreground backdrop-blur">
-                triage (Enter/Space to inspect)
-              </th>
-            </tr>
-          </thead>
+        }
+        minWidth="min-w-[1400px]"
+        tableDensityClass={tableDensityClass}
+      >
+        {logs.map((log) => {
+          const tone = rowToneClass(log);
+          const rowClassName = cn(
+            tone,
+            "group relative cursor-pointer overflow-hidden transition-colors hover:bg-muted/30 focus:outline-none focus:ring-2 focus:ring-ring/40",
+          );
 
-          <tbody className="divide-y divide-border/60">
-            {logs.map((log) => {
-              const tone = rowToneClass(log);
-              const rowClassName = cn(
-                tone,
-                "hover:bg-muted/30 cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring/40",
-              );
+          const scoreNum = parseScore(log.max_score);
+          const isLowScore = log.endpoint === "assistant" && scoreNum !== null && scoreNum < LOW_SCORE_THRESHOLD;
+          const isBlocked = log.guardrail_status === "blocked";
+          const isLowConfidence = log.low_confidence === true;
 
-              const scoreNum = parseScore(log.max_score);
-              const isLowScore = log.endpoint === "assistant" && scoreNum !== null && scoreNum < LOW_SCORE_THRESHOLD;
-              const isBlocked = log.guardrail_status === "blocked";
-              const isLowConfidence = log.low_confidence === true;
+          const intentCount = log.intents?.length ?? 0;
+          const topicCount = log.topics?.length ?? 0;
 
-              const intentCount = log.intents?.length ?? 0;
-              const topicCount = log.topics?.length ?? 0;
+          const textStatus = getTextStorageBadges({
+            promptText: log.prompt_preview,
+            responseText: log.response_preview,
+            metadata: log.metadata,
+            logTextMode: log.log_text_mode,
+            logTextMaxChars: log.log_text_max_chars,
+            promptTextOmitted: log.prompt_text_omitted,
+            responseTextOmitted: log.response_text_omitted,
+            promptTextTruncated: log.prompt_text_truncated,
+            responseTextTruncated: log.response_text_truncated,
+          });
 
-              const p1 = oneLine(log.prompt_preview ?? "");
-              const a1 = oneLine(log.response_preview ?? "");
+          const promptStatus = textStatus.prompt;
+          const responseStatus = textStatus.response;
 
-              const promptTruncated = (log.prompt_len ?? 0) > (log.prompt_preview?.length ?? 0);
-              const responseTruncated = (log.response_len ?? 0) > (log.response_preview?.length ?? 0);
+          const promptPreview = truncate(oneLine(promptStatus.displayValue), truncPrimary);
+          const responsePreview = truncate(oneLine(responseStatus.displayValue), truncPrimary);
 
-              return (
-                <tr
-                  key={log.id}
-                  className={rowClassName}
-                  tabIndex={0}
-                  role="button"
-                  aria-label="Open interaction inspector"
-                  onClick={(e) => {
-                    const target = e.target as HTMLElement | null;
-                    if (target?.closest("a,button,input,select,textarea")) return;
-                    openDrawer(log.id);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      openDrawer(log.id);
-                    }
-                  }}
-                >
-                  <td className="px-3 py-2 whitespace-normal break-words leading-snug">
-                    <span title={String(log.created_at)} className="tabular-nums">
-                      {formatTimestampShort(String(log.created_at))}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2">{log.env}</td>
-                  <td className="px-3 py-2">{log.endpoint}</td>
-                  <td className="px-3 py-2">
-                    {log.session_id ? (
-                      <Link
-                        href={`/admin/pgpt-insights/session/${encodeURIComponent(log.session_id)}`}
-                        className="text-blue-600 underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {log.session_id}
-                      </Link>
-                    ) : (
-                      ""
-                    )}
-                  </td>
-                  <td className="px-3 py-2 align-top">
-                    <div className="space-y-2">
-                      <div className="space-y-1">
-                        <div className="text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground">P:</span>{" "}
-                          <span className="break-words">{truncate(p1, truncPrimary)}</span>
-                          {promptTruncated ? (
-                            <span className="ml-2 text-[10px] uppercase tracking-wide text-muted-foreground">truncated</span>
-                          ) : null}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground">A:</span>{" "}
-                          <span className="break-words">{truncate(a1, truncPrimary)}</span>
-                          {responseTruncated ? (
-                            <span className="ml-2 text-[10px] uppercase tracking-wide text-muted-foreground">truncated</span>
-                          ) : null}
-                        </div>
-                      </div>
+          const promptPreviewTruncated =
+            !promptStatus.isOmitted && (log.prompt_len ?? 0) > (log.prompt_preview?.length ?? 0);
+          const responsePreviewTruncated =
+            !responseStatus.isOmitted && (log.response_len ?? 0) > (log.response_preview?.length ?? 0);
 
-                      <div className="flex flex-wrap items-center gap-2">
-                        {log.archetype ? (
-                          <Badge
-                            title={
-                              log.archetype_confidence !== null && log.archetype_confidence !== undefined
-                                ? `margin ${(log.archetype_confidence * 100).toFixed(0)}pp`
-                                : undefined
-                            }
-                          >
-                            {log.archetype}
-                            {typeof log.archetype_confidence === "number" ? (
-                              <> · +{Math.round(log.archetype_confidence * 100)}pp</>
-                            ) : null}
-                          </Badge>
-                        ) : null}
-                        {log.model ? <Badge tone="blue">{log.model}</Badge> : null}
-                        {log.used_gateway ? <Badge>gateway</Badge> : null}
+          const tokenMetrics = getTokenMetrics(log);
+          const { cachedTokens, reasoningTokens, totalTokens } = tokenMetrics;
 
-                        {scoreNum !== null ? (
-                          <Badge tone={isLowScore ? "yellow" : "default"} title="assistant maxScore">
-                            maxScore {formatScore(scoreNum)}
-                          </Badge>
-                        ) : null}
-
-                        {isBlocked ? (
-                          <Badge tone="red" title={log.guardrail_reason ?? undefined}>
-                            blocked{log.guardrail_reason ? `: ${log.guardrail_reason}` : ""}
-                          </Badge>
-                        ) : null}
-
-                        {isLowConfidence ? <Badge tone="amber">low confidence</Badge> : null}
-
-                        {intentCount > 0 ? <Badge>intents {formatCompactNumber(intentCount)}</Badge> : null}
-                        {topicCount > 0 ? <Badge>topics {formatCompactNumber(topicCount)}</Badge> : null}
-
-                        {log.qa_flag_status ? (
-                          <Badge tone={log.qa_flag_status === "open" ? "purple" : "default"}>QA {log.qa_flag_status}</Badge>
-                        ) : null}
-                      </div>
-
-                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">Inspect →</div>
+          return (
+            <tr
+              key={log.id}
+              className={rowClassName}
+              tabIndex={0}
+              aria-label="Open interaction inspector"
+              onClick={(e) => {
+                const target = e.target as HTMLElement | null;
+                if (target?.closest("a,button,input,select,textarea")) return;
+                openDrawer(log.id);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  openDrawer(log.id);
+                }
+              }}
+            >
+              <td className="whitespace-normal wrap-break-word leading-snug">
+                <span title={String(log.created_at)} className="tabular-nums">
+                  {formatTimestampShort(String(log.created_at))}
+                </span>
+              </td>
+              <td>
+                <StatusBadge type="env" value={log.env} />
+              </td>
+              <td>
+                <StatusBadge type="endpoint" value={log.endpoint} />
+              </td>
+              <td>
+                {log.session_id ? (
+                  <Link
+                    href={`/admin/pgpt-insights/session/${encodeURIComponent(log.session_id)}`}
+                    className="text-blue-600 underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MonoCell>{log.session_id}</MonoCell>
+                  </Link>
+                ) : (
+                  ""
+                )}
+              </td>
+              <td className="align-top">
+                <div className="space-y-2">
+                  <div className="space-y-1">
+                    <div className="flex items-start justify-between gap-2 text-xs text-muted-foreground">
+                      <span>
+                        <span className="font-medium text-foreground">P:</span>{" "}
+                        <span className={cn("wrap-break-word", promptStatus.isOmitted ? "text-muted-foreground" : undefined)}>
+                          {promptStatus.isOmitted ? "[omitted]" : promptPreview}
+                        </span>
+                      </span>
+                      <span className="text-[11px] uppercase tracking-wide text-muted-foreground/90 opacity-0 transition group-hover:opacity-100">
+                        Inspect →
+                      </span>
                     </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                    <div className="text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground">A:</span>{" "}
+                      <span className={cn("wrap-break-word", responseStatus.isOmitted ? "text-muted-foreground" : undefined)}>
+                        {responseStatus.isOmitted ? "[omitted]" : responsePreview}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                    {promptStatus.badge ? (
+                      <span className="inline-flex">
+                        <Badge tone={promptStatus.badgeTone ?? "default"} title={promptStatus.callout}>
+                          {promptStatus.badge}
+                        </Badge>
+                      </span>
+                    ) : null}
+                    {responseStatus.badge ? (
+                      <span className="inline-flex">
+                        <Badge tone={responseStatus.badgeTone ?? "default"} title={responseStatus.callout}>
+                          {responseStatus.badge}
+                        </Badge>
+                      </span>
+                    ) : null}
+                    {promptPreviewTruncated ? (
+                      <span className="inline-flex">
+                        <Badge tone="default" title="Preview shortened for table">
+                          prompt preview
+                        </Badge>
+                      </span>
+                    ) : null}
+                    {responsePreviewTruncated ? (
+                      <span className="inline-flex">
+                        <Badge tone="default" title="Preview shortened for table">
+                          response preview
+                        </Badge>
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {log.archetype ? (
+                      <Badge
+                        title={
+                          log.archetype_confidence !== null && log.archetype_confidence !== undefined
+                            ? `margin ${(log.archetype_confidence * 100).toFixed(0)}pp`
+                            : undefined
+                        }
+                      >
+                        {log.archetype}
+                        {typeof log.archetype_confidence === "number" ? (
+                          <> · +{Math.round(log.archetype_confidence * 100)}pp</>
+                        ) : null}
+                      </Badge>
+                    ) : null}
+                    {log.model ? <Badge tone="blue">{log.model}</Badge> : null}
+                    {log.used_gateway ? <Badge>gateway</Badge> : null}
+
+                    {scoreNum !== null ? (
+                      <Badge tone={isLowScore ? "yellow" : "default"} title="assistant maxScore">
+                        maxScore {formatScore(scoreNum)}
+                      </Badge>
+                    ) : null}
+
+                    {isBlocked ? (
+                      <Badge tone="red" title={log.guardrail_reason ?? undefined}>
+                        blocked{log.guardrail_reason ? `: ${log.guardrail_reason}` : ""}
+                      </Badge>
+                    ) : null}
+
+                    {isLowConfidence ? <Badge tone="amber">low confidence</Badge> : null}
+
+                    {intentCount > 0 ? <Badge>intents {formatCompactNumber(intentCount)}</Badge> : null}
+                    {topicCount > 0 ? <Badge>topics {formatCompactNumber(topicCount)}</Badge> : null}
+
+                    {log.qa_flag_status ? (
+                      <Badge tone={log.qa_flag_status === "open" ? "purple" : "default"}>QA {log.qa_flag_status}</Badge>
+                    ) : null}
+                  </div>
+
+                  <div className="text-[11px] text-muted-foreground flex flex-wrap gap-3">
+                    <span>Total tokens: {totalTokens ?? "—"}</span>
+                    <span>Cached tokens: {cachedTokens ?? "—"}</span>
+                    <span>Reasoning tokens: {reasoningTokens ?? "—"}</span>
+                  </div>
+
+                  <div className="flex justify-end text-[11px] uppercase tracking-wide text-muted-foreground transition group-hover:text-foreground">
+                    Inspect →
+                  </div>
+                </div>
+              </td>
+            </tr>
+          );
+        })}
+      </DataTable>
 
       {open ? (
         <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/50" onClick={closeDrawer} aria-hidden="true" />
 
-          <div
+          <dialog
             ref={drawerRef}
-            role="dialog"
+            open
             aria-modal="true"
             aria-labelledby="pgpt-drawer-title"
             className="absolute inset-y-0 right-0 flex w-full max-w-[760px] flex-col border-l border-border bg-card shadow-2xl"
@@ -426,11 +566,7 @@ export function LogsTableWithDrawer({
                   {detail?.log?.session_id ? detail.log.session_id : selectedId}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {detail?.log
-                    ? `${formatTimestampShort(detail.log.created_at)} · ${detail.log.env} · ${detail.log.endpoint}`
-                    : selectedPreview
-                      ? `${formatTimestampShort(selectedPreview.created_at)} · ${selectedPreview.env} · ${selectedPreview.endpoint}`
-                      : ""}
+                  {interactionSummary}
                 </div>
               </div>
 
@@ -525,10 +661,25 @@ export function LogsTableWithDrawer({
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="text-xs font-semibold text-foreground">Prompt</div>
-                        <CopyButton value={detail.log.prompt ?? ""} label="Copy prompt" />
+                        <CopyButton
+                          value={detail.log.prompt ?? ""}
+                          label={detailTextStatus?.prompt.copyLabel ?? "Copy prompt"}
+                          disabled={detailTextStatus ? !detailTextStatus.prompt.copyAllowed : false}
+                          title={detailTextStatus?.prompt.callout}
+                        />
                       </div>
+                      {detailTextStatus?.prompt.callout ? (
+                        <div
+                          className={cn(
+                            "rounded-lg border px-3 py-2 text-[11px] leading-snug",
+                            getLogTextCalloutToneClass(detailTextStatus.prompt),
+                          )}
+                        >
+                          {detailTextStatus.prompt.callout}
+                        </div>
+                      ) : null}
                       <pre className="max-h-[70vh] overflow-auto whitespace-pre-wrap rounded-xl border border-border bg-background p-3 text-xs leading-snug text-foreground">
-                        {detail.log.prompt ?? ""}
+                        {detailTextStatus?.prompt.displayValue ?? detail.log.prompt ?? ""}
                       </pre>
                     </div>
                   ) : null}
@@ -537,16 +688,34 @@ export function LogsTableWithDrawer({
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <div className="text-xs font-semibold text-foreground">Response</div>
-                        <CopyButton value={detail.log.response ?? ""} label="Copy response" />
+                        <CopyButton
+                          value={detail.log.response ?? ""}
+                          label={detailTextStatus?.response.copyLabel ?? "Copy response"}
+                          disabled={detailTextStatus ? !detailTextStatus.response.copyAllowed : false}
+                          title={detailTextStatus?.response.callout}
+                        />
                       </div>
+
+                      {detailTextStatus?.response.callout ? (
+                        <div
+                          className={cn(
+                            "rounded-lg border px-3 py-2 text-[11px] leading-snug",
+                            getLogTextCalloutToneClass(detailTextStatus.response),
+                          )}
+                        >
+                          {detailTextStatus.response.callout}
+                        </div>
+                      ) : null}
 
                       {responseMode === "raw" ? (
                         <pre className="max-h-[70vh] overflow-auto whitespace-pre-wrap rounded-xl border border-border bg-background p-3 text-xs leading-snug text-foreground">
-                          {detail.log.response ?? ""}
+                          {detailTextStatus?.response.displayValue ?? detail.log.response ?? ""}
                         </pre>
                       ) : (
                         <div className="max-h-[70vh] overflow-auto rounded-xl border border-border bg-background p-3">
-                          <MarkdownViewClient markdown={detail.log.response ?? ""} />
+                          <MarkdownViewClient
+                            markdown={detailTextStatus?.response.displayValue ?? detail.log.response ?? ""}
+                          />
                         </div>
                       )}
                     </div>
@@ -568,9 +737,11 @@ export function LogsTableWithDrawer({
                             const chunkId = typeof chunkIdRaw === "string" || typeof chunkIdRaw === "number" ? chunkIdRaw : null;
                             const scoreRaw = (chunk.score ?? chunk.similarity ?? chunk.maxScore) as string | number | undefined;
                             const score = typeof scoreRaw === "string" || typeof scoreRaw === "number" ? scoreRaw : null;
+                            const chunkKey =
+                              chunkId !== null ? String(chunkId) : JSON.stringify(chunk) ?? `chunk-${String(score ?? "unknown")}`;
 
                             return (
-                              <div key={`chunk-${idx}`} className="rounded-xl border border-border bg-background p-4">
+                              <div key={chunkKey} className="rounded-xl border border-border bg-background p-4">
                                 <div className="flex items-start justify-between gap-3">
                                   <div className="space-y-1">
                                     <div className="text-xs font-semibold text-foreground">
@@ -645,7 +816,7 @@ export function LogsTableWithDrawer({
                                 aria-label="Resolution notes"
                                 placeholder="resolution notes…"
                                 maxLength={200}
-                                className="h-9 w-[320px] max-w-full rounded-md border bg-background px-3 text-xs"
+                                className="h-9 w-80 max-w-full rounded-md border bg-background px-3 text-xs"
                               />
 
                               <button
@@ -678,7 +849,7 @@ export function LogsTableWithDrawer({
                                 aria-label="QA notes"
                                 placeholder="notes…"
                                 maxLength={200}
-                                className="h-9 w-[320px] max-w-full rounded-md border bg-background px-3 text-xs"
+                                className="h-9 w-80 max-w-full rounded-md border bg-background px-3 text-xs"
                               />
 
                               <button
@@ -724,7 +895,7 @@ export function LogsTableWithDrawer({
                 </>
               ) : null}
             </div>
-          </div>
+          </dialog>
         </div>
       ) : null}
     </>

@@ -1,12 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { fetchSessionConversationLogs, fetchSessionLogsPreview, fetchSessionTimelineRows } from "../../../../../lib/pgpt-insights/queries";
-import { CopyButton } from "../../../../../components/pgpt-insights/CopyButton";
-import { SessionArchetypeTimeline } from "../../../../../components/pgpt-insights/session/SessionArchetypeTimeline";
-import { SessionFiltersBar } from "../../../../../components/pgpt-insights/session/SessionFiltersBar";
-import { SessionLogsViewSwitcher } from "../../../../../components/pgpt-insights/session/SessionLogsViewSwitcher";
-import { SessionSummarySection } from "../../../../../components/pgpt-insights/session/SessionSummarySection";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import {
+  fetchSessionConversationLogs,
+  fetchSessionLogsPreview,
+  fetchSessionTimelineRows,
+} from "@/lib/pgpt-insights/queries";
+import { ArchetypeTimeline } from "./components/ArchetypeTimeline";
+import { SessionFilters } from "./components/SessionFilters";
+import { SessionIdentity } from "./components/SessionIdentity";
+import { SessionLogsView } from "./components/SessionLogsView";
+import { SessionSummary } from "./components/SessionSummary";
 
 export const dynamic = "force-dynamic";
 
@@ -100,57 +105,55 @@ export default async function PgptInsightsSessionPage({
   const timelineRows = await fetchSessionTimelineRows({ sessionId, limit: 2000, offset: 0 });
 
   return (
-    <div className="min-h-screen bg-canvas text-ink overflow-x-hidden">
-      <main className="mx-auto w-full max-w-6xl min-w-0 px-6 py-12 md:py-14 space-y-8">
-        <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Perazzi · Workshop</p>
-            <h1 className="text-2xl font-semibold tracking-tight">Session Explorer</h1>
-            <p className="text-xs text-muted-foreground flex flex-wrap items-center gap-2">
-              <span>Session:</span>
-              <span className="font-medium text-foreground break-all">{sessionId}</span>
-              <CopyButton value={sessionId} label="Copy" ariaLabel="Copy session id" />
-              <span className="text-muted-foreground">·</span>
-              <span className="font-medium text-foreground">
-                {hasMore ? `${SESSION_LOGS_LIMIT}+` : String(logs.length)}
-              </span>{" "}
-              interactions
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link href="/admin/pgpt-insights" className="rounded-md border px-3 py-1 text-xs hover:bg-muted">
-              Back to Insights
+    <div className="space-y-8">
+      <AdminPageHeader
+        breadcrumb="Session"
+        title="Session Explorer"
+        description="Per-session summary, timeline, and logs."
+        actions={
+          <div className="flex items-center gap-2">
+            <Link
+              href="/admin/pgpt-insights"
+              className="inline-flex h-9 items-center rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground transition hover:bg-muted"
+            >
+              Insights
             </Link>
-            <Link href="/admin/pgpt-insights/qa" className="text-xs text-blue-600 underline">
+            <Link href="/admin/pgpt-insights/qa" className="text-xs font-medium text-blue-600 underline">
               QA Review
             </Link>
           </div>
-        </header>
+        }
+      />
 
-        <SessionSummarySection sessionId={sessionId} />
+      <SessionIdentity
+        sessionId={sessionId}
+        interactionCount={logs.length}
+        hasMore={hasMore}
+        limit={SESSION_LOGS_LIMIT}
+      />
 
-        <SessionArchetypeTimeline rows={timelineRows} />
+      <SessionSummary sessionId={sessionId} />
 
-        <SessionFiltersBar />
+      <ArchetypeTimeline rows={timelineRows} />
 
-        <section id="logs" className="space-y-3 min-w-0">
-          {logs.length === 0 ? (
-            <div className="rounded-2xl border border-border bg-card shadow-sm p-6 text-sm text-muted-foreground">
-              No interactions match the current filters.
-            </div>
-          ) : (
-            <SessionLogsViewSwitcher
-              tableLogs={logs}
-              conversationLogs={conversationLogs}
-              tableDensityClass={tableDensityClass}
-              truncPrimary={truncPrimary}
-              hasMore={hasMore}
-              sessionId={sessionId}
-            />
-          )}
-        </section>
-      </main>
+      <SessionFilters />
+
+      <section id="logs" className="space-y-3 min-w-0">
+        {logs.length === 0 ? (
+          <div className="rounded-2xl border border-border bg-card shadow-sm p-6 text-sm text-muted-foreground">
+            No interactions match the current filters.
+          </div>
+        ) : (
+          <SessionLogsView
+            tableLogs={logs}
+            conversationLogs={conversationLogs}
+            tableDensityClass={tableDensityClass}
+            truncPrimary={truncPrimary}
+            hasMore={hasMore}
+            sessionId={sessionId}
+          />
+        )}
+      </section>
     </div>
   );
 }

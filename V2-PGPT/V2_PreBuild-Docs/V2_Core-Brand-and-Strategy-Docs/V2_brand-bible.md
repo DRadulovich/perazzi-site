@@ -65,7 +65,7 @@ The document prioritizes **factual completeness, structural clarity, and canonic
 
 - **DC Platform**  
   - Canonical term: **DC series**.  
-  - Description: “Detachable coil” builds where the removable trigger group uses coil mainsprings; emphasizes rugged use and serviceability.
+  - Description: Side by side (SxS) with “Detachable coil” builds where the removable trigger group uses coil mainsprings; emphasizes rugged use and serviceability.
 
 - **SHO Platform**  
   - Canonical term: **SHO series**.  
@@ -190,7 +190,7 @@ All Perazzi shotguns derive from the **MX-style low-profile O/U action**, extend
   - Typically fixed triggers with high combs and specialized ribs.
 
 - **DC Platform**  
-  - Emphasizes detachable trigger groups using coil mainsprings for rugged, high-volume use.
+  - Side by side double gun with detachable trigger group using coil mainsprings for rugged, high-volume use.
 
 - **SHO Platform (Sidelock)**  
   - Sidelock designs with removable triggers; more aligned with traditional high-art gunmaking.
@@ -452,7 +452,7 @@ Perazzi’s brand identity extends beyond engineering into legacy, exclusivity, 
 #### 3.6.2 Configuration Steps (High-Level)
 
 1. **Choose platform and discipline**
-   - Decide between MX, High Tech, TM, DC, or SHO.  
+   - Decide between MX, HT, TM, DC, or SHO.  
    - Choose intended use: trap, skeet, sporting clays, live pigeon, game, etc.[16]
 
 2. **Select gauge and frame**
@@ -460,7 +460,7 @@ Perazzi’s brand identity extends beyond engineering into legacy, exclusivity, 
    - Optional: 20, 28, .410 – either on a **scaled frame** or as sub-gauge barrels for a 12-gauge frame.[27][31]
 
 3. **Specify barrels**[27][28][70][71][72]
-   - Length (e.g. 75, 78, 80 cm / 29.5", 30.75", 31.5").  
+   - Length (28", 29.5", 30.75", 31.5", 32", 33", 34").  
    - Barrel weight and profile (for desired balance).  
    - Chamber length (70mm or 76mm).  
    - Chokes: fixed constrictions or multi-choke system.  
@@ -469,20 +469,20 @@ Perazzi’s brand identity extends beyond engineering into legacy, exclusivity, 
 
 4. **Define stock and forend**[75][76][77][78][79][80]
    - Stock dimensions: drop at comb/heel, length of pull, cast, toe, pitch.  
-   - Stock style: Monte Carlo, parallel comb, field-style, or game-specific shapes.  
+   - Stock style: sporting, monte carlo, parallel comb, field-style, or game-specific shapes.  
    - Adjustable comb: optional hardware for vertical adjustment and fine tuning.  
    - Grip type: standard pistol, palm swell, or **glove grip** sculpted to the shooter’s hand.  
-   - Forend style: slim beavertail, wide beavertail (trap), Schnabel, or rounded field forend.
+   - Forend style: english, slim beavertail, wide beavertail (trap), Schnabel, or rounded field forend.
 
 5. **Choose wood grade and finish**[81][82][83][84][85]
    - Wood grades: standard (Grade 1), **SC2**, **SC3**, **SCO** (exhibition).  
    - Higher grades add visually striking figure and cost.  
    - Finish: oil, lacquer, or unfinished (for local finishing).  
-   - Butt treatment: rubber recoil pad, leather-covered pad, or checkered wood butt.
+   - Pad style: rubber recoil pad, leather-covered pad, or checkered wood butt.
 
 6. **Select aesthetics and personalization**[86][87][88][89][90]
-   - Receiver finish: blued or nickel/coin.  
-   - Engraving pattern: from minimal scroll to SC3/SCO and custom commissions.  
+   - Receiver finish: blued, nickel/coin, case color hardened.  
+   - Engraving pattern: from Standard Grade to SC3/SCO and custom commissions.  
    - Gold inlays, sideplates, personal monograms or crests.  
    - Colored logo lettering, flag inlays on High Tech receivers.  
    - Trigger blade shape and finish.

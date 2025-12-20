@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import type { ChampionEvergreen, ChampionsGalleryUi } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -35,21 +35,15 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
     return filteredChampions[0]?.id ?? null;
   });
 
-  // Ensure selected champion stays in sync with the filtered set
-  useEffect(() => {
-    if (!filteredChampions.length) {
-      setSelectedChampionId(null);
-      return;
-    }
+  const activeChampionId = useMemo(() => {
+    if (!filteredChampions.length) return null;
 
-    // If the currently selected champion is no longer in the filtered list, fall back to the first
-    const stillPresent = filteredChampions.some(
-      (champion) => champion.id === selectedChampionId,
-    );
+    const stillPresent = selectedChampionId
+      ? filteredChampions.some((champion) => champion.id === selectedChampionId)
+      : false;
 
-    if (!stillPresent) {
-      setSelectedChampionId(filteredChampions[0].id);
-    }
+    if (stillPresent) return selectedChampionId;
+    return filteredChampions[0].id;
   }, [filteredChampions, selectedChampionId]);
 
   if (!verified.length) {
@@ -63,9 +57,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
   }
 
   const selectedChampion =
-    filteredChampions.find((champion) => champion.id === selectedChampionId) ??
-    filteredChampions[0] ??
-    null;
+    filteredChampions.find((champion) => champion.id === activeChampionId) ?? null;
 
   const heading = ui.heading ?? "Perazzi Champions";
   const subheading = ui.subheading ?? "The athletes who shaped our lineage";
@@ -139,7 +131,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
                     ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
                     : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
                 )}
-                onClick={() => setActiveDiscipline(null)}
+                onClick={() => { setActiveDiscipline(null); }}
               >
                 All
               </button>
@@ -180,7 +172,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
                     <ChampionNameItem
                       key={champion.id}
                       champion={champion}
-                      isActive={champion.id === selectedChampionId}
+                      isActive={champion.id === activeChampionId}
                       onSelect={() => {
                         setSelectedChampionId(champion.id);
                         logAnalytics(`ChampionProfileSelected:${champion.id}`);

@@ -232,7 +232,7 @@ export async function getBespokeHome(): Promise<BespokeHomePayload | null> {
         }
       : undefined,
     steps: data.steps
-      ?.filter((step): step is typeof step & { _key: string } => Boolean(step?._key))
+      ?.filter((step): step is typeof step & { _key: string } => Boolean(step._key))
       .map((step) => ({
         id: step._key as string,
         title: step.title ?? undefined,
@@ -246,7 +246,7 @@ export async function getBespokeHome(): Promise<BespokeHomePayload | null> {
     })),
     expertsIntro: data.expertsIntro,
     experts: data.experts
-      ?.filter((expert): expert is typeof expert & { _key: string } => Boolean(expert?._key))
+      ?.filter((expert): expert is typeof expert & { _key: string } => Boolean(expert._key))
       .map((expert) => ({
         id: expert._key as string,
         name: expert.name ?? undefined,

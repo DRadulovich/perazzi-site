@@ -1,6 +1,12 @@
 import { pool } from "../db";
 import { LOW_SCORE_THRESHOLD } from "./constants";
-import { buildLogsQueryParts, buildLogsQueryPartsWithBase, parseLogsFilters, type LogsFilters } from "./log-filters";
+import {
+  buildLogsQueryParts,
+  buildLogsQueryPartsWithBase,
+  parseLogsFilters,
+  type BoolFilter,
+  type LogsFilters,
+} from "./log-filters";
 import type {
   PerazziLogRow,
   PerazziLogPreviewRow,
@@ -22,7 +28,8 @@ import type {
   PgptSessionSummary,
   PgptSessionTimelineRow,
 } from "./types";
-import type { BoolFilter } from "./log-filters";
+type PgNumeric = string | number;
+type PgNumericNullable = PgNumeric | null;
 
 function isUuidLike(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
@@ -118,15 +125,21 @@ export async function fetchLogs(args: {
       l.model,
       l.used_gateway,
       l.metadata as metadata,
+      l.metadata->>'logTextMode' as log_text_mode,
+      (l.metadata->>'logTextMaxChars')::int as log_text_max_chars,
+      (l.metadata->>'promptTextTruncated')::boolean as prompt_text_truncated,
+      (l.metadata->>'responseTextTruncated')::boolean as response_text_truncated,
+      (l.metadata->>'promptTextOmitted')::boolean as prompt_text_omitted,
+      (l.metadata->>'responseTextOmitted')::boolean as response_text_omitted,
       (l.metadata->>'rerankEnabled')::boolean as rerank_enabled,
       (l.metadata->>'archetypeSnapped')::boolean as archetype_snapped,
       coalesce((l.metadata->>'archetypeConfidenceMargin')::float, (l.metadata->>'archetypeConfidence')::float) as archetype_confidence_margin,
       (l.metadata->>'archetypeConfidence')::float as archetype_confidence,
 
-      left(l.prompt, 800) as prompt_preview,
-      left(l.response, 800) as response_preview,
-      char_length(l.prompt) as prompt_len,
-      char_length(l.response) as response_len,
+      left(coalesce(l.prompt, ''), 800) as prompt_preview,
+      left(coalesce(l.response, ''), 800) as response_preview,
+      char_length(coalesce(l.prompt, '')) as prompt_len,
+      char_length(coalesce(l.response, '')) as response_len,
 
       l.low_confidence,
       l.intents,
@@ -134,6 +147,13 @@ export async function fetchLogs(args: {
       l.metadata->>'maxScore' as max_score,
       l.metadata->>'guardrailStatus' as guardrail_status,
       l.metadata->>'guardrailReason' as guardrail_reason,
+      coalesce((l.metadata->>'cachedTokens')::int, (l.metadata->'responseUsage'->'input_tokens_details'->>'cached_tokens')::int) as cached_tokens,
+      coalesce((l.metadata->>'reasoningTokens')::int, (l.metadata->'responseUsage'->'output_tokens_details'->>'reasoning_tokens')::int) as reasoning_tokens,
+      coalesce(
+        (l.metadata->>'totalTokens')::int,
+        (l.metadata->'responseUsage'->>'total_tokens')::int,
+        case when l.prompt_tokens is null or l.completion_tokens is null then null else l.prompt_tokens + l.completion_tokens end
+      ) as total_tokens,
 
       qf.qa_flag_id,
       qf.qa_flag_status,
@@ -155,7 +175,7 @@ export async function fetchLogs(args: {
 export async function fetchRagSummary(envFilter?: string, daysFilter?: number): Promise<RagSummary | null> {
   const threshold = LOW_SCORE_THRESHOLD;
   const conditions: string[] = ["endpoint = 'assistant'", "metadata->>'maxScore' is not null"];
-  const params: (string | number)[] = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -166,7 +186,6 @@ export async function fetchRagSummary(envFilter?: string, daysFilter?: number): 
   if (daysFilter) {
     conditions.push(`created_at >= now() - ($${idx} || ' days')::interval`);
     params.push(daysFilter);
-    idx += 1;
   }
 
   const thresholdParamIndex = idx;
@@ -185,11 +204,11 @@ export async function fetchRagSummary(envFilter?: string, daysFilter?: number): 
 
   const { rows } = await pool.query(query, params);
   const row = rows[0] as {
-    avg_max_score: number | string | null;
-    min_max_score: number | string | null;
-    max_max_score: number | string | null;
-    total: number | string;
-    low_count: number | string | null;
+    avg_max_score: PgNumericNullable;
+    min_max_score: PgNumericNullable;
+    max_max_score: PgNumericNullable;
+    total: PgNumeric;
+    low_count: PgNumericNullable;
   } | undefined;
 
   if (!row || Number(row.total) === 0) return null;
@@ -214,7 +233,7 @@ export async function fetchLowScoreLogs(
     "metadata->>'maxScore' is not null",
     `(metadata->>'maxScore')::float < $THRESHOLD`,
   ];
-  const params: (string | number)[] = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -225,7 +244,6 @@ export async function fetchLowScoreLogs(
   if (daysFilter) {
     conditions.push(`created_at >= now() - ($${idx} || ' days')::interval`);
     params.push(daysFilter);
-    idx += 1;
   }
 
   const thresholdParamIndex = idx;
@@ -262,7 +280,7 @@ export async function fetchLowScoreLogs(
 
 export async function fetchTopChunks(envFilter?: string, limit = 20, daysFilter?: number): Promise<TopChunkRow[]> {
   const conditions: string[] = ["l.endpoint = 'assistant'"];
-  const params: (string | number)[] = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -291,13 +309,13 @@ export async function fetchTopChunks(envFilter?: string, limit = 20, daysFilter?
     limit $${limitParamIndex};
   `;
 
-  const { rows } = await pool.query<{ chunk_id: string; hits: string | number }>(query, params);
+  const { rows } = await pool.query<{ chunk_id: string; hits: PgNumeric }>(query, params);
   return rows.map((row) => ({ chunk_id: row.chunk_id, hits: Number(row.hits) }));
 }
 
 export async function fetchGuardrailStats(envFilter?: string, daysFilter?: number): Promise<GuardrailStatRow[]> {
   const conditions: string[] = ["endpoint = 'assistant'", "metadata->>'guardrailStatus' = 'blocked'"];
-  const params: (string | number)[] = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -308,7 +326,6 @@ export async function fetchGuardrailStats(envFilter?: string, daysFilter?: numbe
   if (daysFilter) {
     conditions.push(`created_at >= now() - ($${idx} || ' days')::interval`);
     params.push(daysFilter);
-    idx += 1;
   }
 
   const query = `
@@ -322,7 +339,7 @@ export async function fetchGuardrailStats(envFilter?: string, daysFilter?: numbe
     order by hits desc;
   `;
 
-  const { rows } = await pool.query<{ guardrail_reason: string | null; env: string; hits: string | number }>(
+  const { rows } = await pool.query<{ guardrail_reason: string | null; env: string; hits: PgNumeric }>(
     query,
     params,
   );
@@ -331,7 +348,7 @@ export async function fetchGuardrailStats(envFilter?: string, daysFilter?: numbe
 
 export async function fetchGuardrailByArchetype(envFilter?: string, daysFilter?: number): Promise<GuardrailByArchetypeRow[]> {
   const conditions: string[] = ["endpoint = 'assistant'", "metadata->>'guardrailStatus' = 'blocked'"];
-  const params: (string | number)[] = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -342,7 +359,6 @@ export async function fetchGuardrailByArchetype(envFilter?: string, daysFilter?:
   if (daysFilter) {
     conditions.push(`created_at >= now() - ($${idx} || ' days')::interval`);
     params.push(daysFilter);
-    idx += 1;
   }
 
   const query = `
@@ -359,7 +375,7 @@ export async function fetchGuardrailByArchetype(envFilter?: string, daysFilter?:
   const { rows } = await pool.query<{
     guardrail_reason: string | null;
     archetype: string | null;
-    hits: string | number;
+    hits: PgNumeric;
   }>(query, params);
 
   return rows.map((row) => ({
@@ -375,7 +391,7 @@ export async function fetchRecentGuardrailBlocks(
   daysFilter?: number,
 ): Promise<GuardrailLogRow[]> {
   const conditions: string[] = ["endpoint = 'assistant'", "metadata->>'guardrailStatus' = 'blocked'"];
-  const params: (string | number)[] = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -386,7 +402,6 @@ export async function fetchRecentGuardrailBlocks(
   if (daysFilter) {
     conditions.push(`created_at >= now() - ($${idx} || ' days')::interval`);
     params.push(daysFilter);
-    idx += 1;
   }
 
   const limitParamIndex = idx;
@@ -399,6 +414,13 @@ export async function fetchRecentGuardrailBlocks(
       env,
       archetype,
       session_id,
+      metadata as metadata,
+      metadata->>'logTextMode' as log_text_mode,
+      (metadata->>'logTextMaxChars')::int as log_text_max_chars,
+      (metadata->>'promptTextTruncated')::boolean as prompt_text_truncated,
+      (metadata->>'responseTextTruncated')::boolean as response_text_truncated,
+      (metadata->>'promptTextOmitted')::boolean as prompt_text_omitted,
+      (metadata->>'responseTextOmitted')::boolean as response_text_omitted,
       prompt,
       response,
       metadata->>'guardrailReason' as guardrail_reason
@@ -414,7 +436,7 @@ export async function fetchRecentGuardrailBlocks(
 
 export async function fetchArchetypeIntentStats(envFilter?: string, daysFilter?: number): Promise<ArchetypeIntentRow[]> {
   const conditions: string[] = ["endpoint = 'assistant'", "archetype is not null", "intents is not null"];
-  const params: (string | number)[] = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -425,7 +447,6 @@ export async function fetchArchetypeIntentStats(envFilter?: string, daysFilter?:
   if (daysFilter) {
     conditions.push(`created_at >= now() - ($${idx} || ' days')::interval`);
     params.push(daysFilter);
-    idx += 1;
   }
 
   const query = `
@@ -439,7 +460,7 @@ export async function fetchArchetypeIntentStats(envFilter?: string, daysFilter?:
     order by hits desc;
   `;
 
-  const { rows } = await pool.query<{ archetype: string | null; intent: string | null; hits: string | number }>(
+  const { rows } = await pool.query<{ archetype: string | null; intent: string | null; hits: PgNumeric }>(
     query,
     params,
   );
@@ -452,7 +473,7 @@ export async function fetchArchetypeIntentStats(envFilter?: string, daysFilter?:
 
 export async function fetchArchetypeSummary(envFilter?: string, daysFilter?: number): Promise<ArchetypeSummaryRow[]> {
   const conditions: string[] = ["endpoint = 'assistant'", "archetype is not null"];
-  const params: (string | number)[] = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -463,7 +484,6 @@ export async function fetchArchetypeSummary(envFilter?: string, daysFilter?: num
   if (daysFilter) {
     conditions.push(`created_at >= now() - ($${idx} || ' days')::interval`);
     params.push(daysFilter);
-    idx += 1;
   }
 
   const query = `
@@ -485,10 +505,10 @@ export async function fetchArchetypeSummary(envFilter?: string, daysFilter?: num
 
   const { rows } = await pool.query<{
     archetype: string | null;
-    avg_max_score: string | number | null;
-    guardrail_block_rate: string | number | null;
-    low_confidence_rate: string | number | null;
-    total: string | number;
+    avg_max_score: PgNumericNullable;
+    guardrail_block_rate: PgNumericNullable;
+    low_confidence_rate: PgNumericNullable;
+    total: PgNumeric;
   }>(query, params);
 
   return rows.map((row) => ({
@@ -506,7 +526,7 @@ export async function fetchArchetypeSummary(envFilter?: string, daysFilter?: num
 
 export async function fetchDailyTokenUsage(envFilter?: string, daysFilter?: number): Promise<DailyTokenUsageRow[]> {
   const conditions: string[] = ["endpoint in ('assistant', 'soul_journey')"];
-  const params: (string | number)[] = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -517,7 +537,6 @@ export async function fetchDailyTokenUsage(envFilter?: string, daysFilter?: numb
   if (daysFilter) {
     conditions.push(`created_at >= now() - ($${idx} || ' days')::interval`);
     params.push(daysFilter);
-    idx += 1;
   }
 
   const query = `
@@ -540,9 +559,9 @@ export async function fetchDailyTokenUsage(envFilter?: string, daysFilter?: numb
     env: string;
     endpoint: string;
     model: string | null;
-    total_prompt_tokens: string | number;
-    total_completion_tokens: string | number;
-    request_count: string | number;
+    total_prompt_tokens: PgNumeric;
+    total_completion_tokens: PgNumeric;
+    request_count: PgNumeric;
   }>(query, params);
 
   return rows.map((row) => ({
@@ -558,7 +577,7 @@ export async function fetchDailyTokenUsage(envFilter?: string, daysFilter?: numb
 
 export async function fetchAvgMetrics(envFilter?: string, daysFilter?: number): Promise<AvgMetricsRow[]> {
   const conditions: string[] = ["endpoint in ('assistant', 'soul_journey')"];
-  const params: (string | number)[] = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -569,7 +588,6 @@ export async function fetchAvgMetrics(envFilter?: string, daysFilter?: number): 
   if (daysFilter) {
     conditions.push(`created_at >= now() - ($${idx} || ' days')::interval`);
     params.push(daysFilter);
-    idx += 1;
   }
 
   const query = `
@@ -591,10 +609,10 @@ export async function fetchAvgMetrics(envFilter?: string, daysFilter?: number): 
     env: string;
     endpoint: string;
     model: string | null;
-    avg_prompt_tokens: string | number | null;
-    avg_completion_tokens: string | number | null;
-    avg_latency_ms: string | number | null;
-    request_count: string | number;
+    avg_prompt_tokens: PgNumericNullable;
+    avg_completion_tokens: PgNumericNullable;
+    avg_latency_ms: PgNumericNullable;
+    request_count: PgNumeric;
   }>(query, params);
 
   return rows.map((row) => ({
@@ -610,7 +628,7 @@ export async function fetchAvgMetrics(envFilter?: string, daysFilter?: number): 
 
 export async function fetchOpenQaFlagCount(): Promise<number> {
   try {
-    const { rows } = await pool.query<{ open_count: string | number }>(
+    const { rows } = await pool.query<{ open_count: PgNumeric }>(
       `select count(*) as open_count from qa_flags where status = 'open';`,
     );
     return Number(rows[0]?.open_count ?? 0);
@@ -627,7 +645,7 @@ export async function fetchGuardrailBlockedCountWindow(
   endDaysAgo: number,
 ): Promise<number> {
   const conditions: string[] = ["endpoint = 'assistant'", "metadata->>'guardrailStatus' = 'blocked'"];
-  const params: (string | number)[] = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -643,7 +661,6 @@ export async function fetchGuardrailBlockedCountWindow(
 
   conditions.push(`created_at < now() - ($${idx} || ' days')::interval`);
   params.push(endDaysAgo);
-  idx += 1;
 
   const query = `
     select count(*) as hits
@@ -651,7 +668,7 @@ export async function fetchGuardrailBlockedCountWindow(
     where ${conditions.join(" and ")};
   `;
 
-  const { rows } = await pool.query<{ hits: string | number }>(query, params);
+  const { rows } = await pool.query<{ hits: PgNumeric }>(query, params);
   return Number(rows[0]?.hits ?? 0);
 }
 
@@ -661,7 +678,7 @@ export async function fetchAvgLatencyMsWindow(
   endDaysAgo: number,
 ): Promise<number | null> {
   const conditions: string[] = ["endpoint in ('assistant', 'soul_journey')", "metadata->>'latencyMs' is not null"];
-  const params: (string | number)[] = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -676,7 +693,6 @@ export async function fetchAvgLatencyMsWindow(
 
   conditions.push(`created_at < now() - ($${idx} || ' days')::interval`);
   params.push(endDaysAgo);
-  idx += 1;
 
   const query = `
     select avg((metadata->>'latencyMs')::float) as avg_latency_ms
@@ -684,7 +700,7 @@ export async function fetchAvgLatencyMsWindow(
     where ${conditions.join(" and ")};
   `;
 
-  const { rows } = await pool.query<{ avg_latency_ms: string | number | null }>(query, params);
+  const { rows } = await pool.query<{ avg_latency_ms: PgNumericNullable }>(query, params);
   const v = rows[0]?.avg_latency_ms;
   if (v === null || v === undefined) return null;
   const n = Number(v);
@@ -698,7 +714,7 @@ export async function fetchRagSummaryWindow(
   endDaysAgo: number,
 ): Promise<RagSummary | null> {
   const conditions: string[] = ["endpoint = 'assistant'", "metadata->>'maxScore' is not null"];
-  const params: (string | number)[] = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -731,11 +747,11 @@ export async function fetchRagSummaryWindow(
 
   const { rows } = await pool.query(query, params);
   const row = rows[0] as {
-    avg_max_score: number | string | null;
-    min_max_score: number | string | null;
-    max_max_score: number | string | null;
-    total: number | string;
-    low_count: number | string | null;
+    avg_max_score: PgNumericNullable;
+    min_max_score: PgNumericNullable;
+    max_max_score: PgNumericNullable;
+    total: PgNumeric;
+    low_count: PgNumericNullable;
   } | undefined;
 
   if (!row || Number(row.total) === 0) return null;
@@ -758,7 +774,7 @@ export async function fetchDailyTrends(args: {
   const { envFilter, endpointFilter, days } = args;
 
   const conditions: string[] = [];
-  const params: Array<string | number> = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -791,10 +807,10 @@ export async function fetchDailyTrends(args: {
 
   const { rows } = await pool.query<{
     day: string;
-    request_count: string | number;
-    total_prompt_tokens: string | number;
-    total_completion_tokens: string | number;
-    avg_latency_ms: string | number | null;
+    request_count: PgNumeric;
+    total_prompt_tokens: PgNumeric;
+    total_completion_tokens: PgNumeric;
+    avg_latency_ms: PgNumericNullable;
   }>(query, params);
 
   return rows.map((r) => ({
@@ -814,7 +830,7 @@ export async function fetchDailyLowScoreRate(args: {
   const { envFilter, days, threshold } = args;
 
   const conditions: string[] = [`endpoint = 'assistant'`];
-  const params: Array<string | number> = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -841,7 +857,7 @@ export async function fetchDailyLowScoreRate(args: {
     order by day asc;
   `;
 
-  const { rows } = await pool.query<{ day: string; total_scored: string | number; low_count: string | number }>(
+  const { rows } = await pool.query<{ day: string; total_scored: PgNumeric; low_count: PgNumeric }>(
     query,
     params,
   );
@@ -860,7 +876,7 @@ export async function fetchAssistantRequestCountWindow(
   endDaysAgo: number,
 ): Promise<number> {
   const conditions: string[] = [`endpoint = 'assistant'`];
-  const params: Array<string | number> = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -880,7 +896,7 @@ export async function fetchAssistantRequestCountWindow(
     where ${conditions.join(" and ")};
   `;
 
-  const { rows } = await pool.query<{ hits: string | number }>(query, params);
+  const { rows } = await pool.query<{ hits: PgNumeric }>(query, params);
   return Number(rows[0]?.hits ?? 0);
 }
 
@@ -892,7 +908,7 @@ export async function fetchArchetypeSnapSummary(
   marginLt?: number | null,
 ): Promise<{ total: number; snapped_count: number; mixed_count: number; unknown_count: number }> {
   const conditions: string[] = ["endpoint = 'assistant'"];
-  const params: Array<string | number> = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -957,7 +973,7 @@ export async function fetchRerankEnabledSummary(
   avg_candidate_limit: number | null;
 }> {
   const conditions: string[] = ["endpoint = 'assistant'"];
-  const params: Array<string | number> = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -1019,7 +1035,7 @@ export async function fetchArchetypeMarginHistogram(
   marginLt?: number | null,
 ): Promise<Array<{ bucket_order: number; bucket_label: string; hits: number }>> {
   const conditions: string[] = ["endpoint = 'assistant'"];
-  const params: Array<string | number> = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -1089,9 +1105,9 @@ export async function fetchArchetypeMarginHistogram(
   `;
 
   const { rows } = await pool.query<{
-    bucket_order: number | string | null;
+    bucket_order: PgNumericNullable;
     bucket_label: string | null;
-    hits: number | string | null;
+    hits: PgNumericNullable;
   }>(query, params);
   return rows.map((r) => ({
     bucket_order: Number(r.bucket_order ?? 0),
@@ -1110,7 +1126,7 @@ export async function fetchDailyArchetypeSnapRate(args: {
   const { envFilter, days, rerank, snapped, marginLt } = args;
 
   const conditions: string[] = ["endpoint = 'assistant'"];
-  const params: Array<string | number> = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -1154,9 +1170,9 @@ export async function fetchDailyArchetypeSnapRate(args: {
 
   const { rows } = await pool.query<{
     day: string;
-    snapped_count: number | string | null;
-    mixed_count: number | string | null;
-    total_classified: number | string | null;
+    snapped_count: PgNumericNullable;
+    mixed_count: PgNumericNullable;
+    total_classified: PgNumericNullable;
   }>(query, params);
   return rows.map((r) => ({
     day: String(r.day),
@@ -1184,7 +1200,7 @@ export async function fetchDailyRerankEnabledRate(args: {
   const { envFilter, days, rerank, snapped, marginLt } = args;
 
   const conditions: string[] = ["endpoint = 'assistant'"];
-  const params: Array<string | number> = [];
+  const params: PgNumeric[] = [];
   let idx = 1;
 
   if (envFilter) {
@@ -1229,10 +1245,10 @@ export async function fetchDailyRerankEnabledRate(args: {
 
   const { rows } = await pool.query<{
     day: string;
-    rerank_on_count: number | string | null;
-    rerank_off_count: number | string | null;
-    total_flagged: number | string | null;
-    avg_candidate_limit: number | string | null;
+    rerank_on_count: PgNumericNullable;
+    rerank_off_count: PgNumericNullable;
+    total_flagged: PgNumericNullable;
+    avg_candidate_limit: PgNumericNullable;
   }>(query, params);
   return rows.map((r) => {
     const avg =
@@ -1278,7 +1294,14 @@ export async function fetchSessionLogsFull(sessionId: string): Promise<PgptSessi
         topics,
         metadata->>'maxScore' as max_score,
         metadata->>'guardrailStatus' as guardrail_status,
-        metadata->>'guardrailReason' as guardrail_reason
+        metadata->>'guardrailReason' as guardrail_reason,
+        coalesce((metadata->>'cachedTokens')::int, (metadata->'responseUsage'->'input_tokens_details'->>'cached_tokens')::int) as cached_tokens,
+        coalesce((metadata->>'reasoningTokens')::int, (metadata->'responseUsage'->'output_tokens_details'->>'reasoning_tokens')::int) as reasoning_tokens,
+        coalesce(
+          (metadata->>'totalTokens')::int,
+          (metadata->'responseUsage'->>'total_tokens')::int,
+          case when prompt_tokens is null or completion_tokens is null then null else prompt_tokens + completion_tokens end
+        ) as total_tokens
       from perazzi_conversation_logs
       where session_id = $1
       order by created_at asc;
@@ -1380,15 +1403,21 @@ export async function fetchSessionLogsPreview(args: {
       l.model,
       l.used_gateway,
       l.metadata as metadata,
+      l.metadata->>'logTextMode' as log_text_mode,
+      (l.metadata->>'logTextMaxChars')::int as log_text_max_chars,
+      (l.metadata->>'promptTextTruncated')::boolean as prompt_text_truncated,
+      (l.metadata->>'responseTextTruncated')::boolean as response_text_truncated,
+      (l.metadata->>'promptTextOmitted')::boolean as prompt_text_omitted,
+      (l.metadata->>'responseTextOmitted')::boolean as response_text_omitted,
       (l.metadata->>'rerankEnabled')::boolean as rerank_enabled,
       (l.metadata->>'archetypeSnapped')::boolean as archetype_snapped,
       coalesce((l.metadata->>'archetypeConfidenceMargin')::float, (l.metadata->>'archetypeConfidence')::float) as archetype_confidence_margin,
       (l.metadata->>'archetypeConfidence')::float as archetype_confidence,
 
-      left(l.prompt, 800) as prompt_preview,
-      left(l.response, 800) as response_preview,
-      char_length(l.prompt) as prompt_len,
-      char_length(l.response) as response_len,
+      left(coalesce(l.prompt, ''), 800) as prompt_preview,
+      left(coalesce(l.response, ''), 800) as response_preview,
+      char_length(coalesce(l.prompt, '')) as prompt_len,
+      char_length(coalesce(l.response, '')) as response_len,
 
       l.low_confidence,
       l.intents,
@@ -1396,6 +1425,13 @@ export async function fetchSessionLogsPreview(args: {
       l.metadata->>'maxScore' as max_score,
       l.metadata->>'guardrailStatus' as guardrail_status,
       l.metadata->>'guardrailReason' as guardrail_reason,
+      coalesce((l.metadata->>'cachedTokens')::int, (l.metadata->'responseUsage'->'input_tokens_details'->>'cached_tokens')::int) as cached_tokens,
+      coalesce((l.metadata->>'reasoningTokens')::int, (l.metadata->'responseUsage'->'output_tokens_details'->>'reasoning_tokens')::int) as reasoning_tokens,
+      coalesce(
+        (l.metadata->>'totalTokens')::int,
+        (l.metadata->'responseUsage'->>'total_tokens')::int,
+        case when l.prompt_tokens is null or l.completion_tokens is null then null else l.prompt_tokens + l.completion_tokens end
+      ) as total_tokens,
 
       qf.qa_flag_id,
       qf.qa_flag_status,
@@ -1470,6 +1506,13 @@ export async function fetchSessionConversationLogs(args: {
       l.session_id,
       l.model,
       l.used_gateway,
+      l.metadata as metadata,
+      l.metadata->>'logTextMode' as log_text_mode,
+      (l.metadata->>'logTextMaxChars')::int as log_text_max_chars,
+      (l.metadata->>'promptTextTruncated')::boolean as prompt_text_truncated,
+      (l.metadata->>'responseTextTruncated')::boolean as response_text_truncated,
+      (l.metadata->>'promptTextOmitted')::boolean as prompt_text_omitted,
+      (l.metadata->>'responseTextOmitted')::boolean as response_text_omitted,
       l.prompt,
       l.response,
       l.low_confidence,
@@ -1477,7 +1520,14 @@ export async function fetchSessionConversationLogs(args: {
       l.topics,
       l.metadata->>'maxScore' as max_score,
       l.metadata->>'guardrailStatus' as guardrail_status,
-      l.metadata->>'guardrailReason' as guardrail_reason
+      l.metadata->>'guardrailReason' as guardrail_reason,
+      coalesce((l.metadata->>'cachedTokens')::int, (l.metadata->'responseUsage'->'input_tokens_details'->>'cached_tokens')::int) as cached_tokens,
+      coalesce((l.metadata->>'reasoningTokens')::int, (l.metadata->'responseUsage'->'output_tokens_details'->>'reasoning_tokens')::int) as reasoning_tokens,
+      coalesce(
+        (l.metadata->>'totalTokens')::int,
+        (l.metadata->'responseUsage'->>'total_tokens')::int,
+        case when l.prompt_tokens is null or l.completion_tokens is null then null else l.prompt_tokens + l.completion_tokens end
+      ) as total_tokens
     from perazzi_conversation_logs l
     ${joinSql}
     ${whereClause}
@@ -1496,7 +1546,7 @@ export async function fetchSessionConversationLogs(args: {
 export async function fetchSessionMeta(sessionId: string): Promise<PgptSessionMeta> {
   const { rows } = await pool.query<{
     session_id: string;
-    interaction_count: string | number;
+    interaction_count: PgNumeric;
     started_at: string | null;
     ended_at: string | null;
     envs: string[] | null;
@@ -1568,17 +1618,17 @@ export async function fetchSessionSummary(
   const { rows } = await pool.query<{
     session_id: string;
 
-    interaction_count: string | number;
+    interaction_count: PgNumeric;
     started_at: string | null;
     ended_at: string | null;
 
-    assistant_count: string | number;
+    assistant_count: PgNumeric;
 
-    blocked_count: string | number;
-    scored_count: string | number;
-    low_score_count: string | number;
+    blocked_count: PgNumeric;
+    scored_count: PgNumeric;
+    low_score_count: PgNumeric;
 
-    open_qa_count: string | number;
+    open_qa_count: PgNumeric;
 
     top_archetype: string | null;
     top_model: string | null;

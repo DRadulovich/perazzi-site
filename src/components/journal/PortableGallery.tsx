@@ -30,7 +30,7 @@ export function PortableGallery({ items }: PortableGalleryProps) {
     setOpenIndex(index);
   }, []);
 
-  const close = useCallback(() => setOpenIndex(null), []);
+  const close = useCallback(() => { setOpenIndex(null); }, []);
 
   const goTo = useCallback(
     (direction: 1 | -1) => {
@@ -52,7 +52,7 @@ export function PortableGallery({ items }: PortableGalleryProps) {
             key={asset.id}
             type="button"
             className="text-left"
-            onClick={() => handleOpen(index)}
+            onClick={() => { handleOpen(index); }}
           >
             <figure className="rounded-2xl border border-border/60 bg-card/70 p-3 shadow-sm">
               <div
@@ -116,14 +116,14 @@ export function PortableGallery({ items }: PortableGalleryProps) {
                   <button
                     type="button"
                     className="focus-ring rounded-full border border-border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink"
-                    onClick={() => goTo(-1)}
+                    onClick={() => { goTo(-1); }}
                   >
                     Previous
                   </button>
                   <button
                     type="button"
                     className="focus-ring rounded-full border border-border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink"
-                    onClick={() => goTo(1)}
+                    onClick={() => { goTo(1); }}
                   >
                     Next
                   </button>

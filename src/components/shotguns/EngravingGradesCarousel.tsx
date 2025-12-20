@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import type { GradeSeries, ShotgunsLandingData } from "@/types/catalog";
 import { getGradeAnchorId } from "@/lib/grade-anchors";
@@ -90,16 +90,26 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
     }).filter((category) => category.grades.length);
   }, [groupedGrades, tabs]);
 
-  useEffect(() => {
-    const firstCategory = categories[0];
-    if (!activeGradeId && firstCategory?.grades[0]) {
-      setActiveGradeId(firstCategory.grades[0].id);
-      setOpenCategory(firstCategory.label);
+  const resolvedOpenCategory = useMemo(() => {
+    if (!openCategory) return null;
+    if (categories.some((category) => category.label === openCategory)) {
+      return openCategory;
     }
-  }, [categories, activeGradeId]);
+    return categories[0]?.label ?? null;
+  }, [categories, openCategory]);
+
+  const resolvedActiveGradeId = useMemo(() => {
+    if (activeGradeId) {
+      const inCategories = categories.some((category) =>
+        category.grades.some((grade) => grade.id === activeGradeId),
+      );
+      if (inCategories) return activeGradeId;
+    }
+    return categories[0]?.grades[0]?.id ?? null;
+  }, [activeGradeId, categories]);
 
   const selectedGrade =
-    grades.find((grade) => grade.id === activeGradeId) ??
+    grades.find((grade) => grade.id === resolvedActiveGradeId) ??
     categories[0]?.grades[0] ??
     grades[0] ??
     null;
@@ -158,7 +168,7 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
               </p>
               <div className="space-y-3">
                 {categories.map((category) => {
-                  const isOpen = openCategory === category.label;
+                  const isOpen = resolvedOpenCategory === category.label;
                   return (
                     <div
                       key={category.label}
@@ -189,12 +199,12 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
                         <div className="border-t border-border/60">
                           <ul className="space-y-1 p-3">
                             {category.grades.map((grade) => {
-                              const isActive = grade.id === activeGradeId;
+                              const isActive = grade.id === resolvedActiveGradeId;
                               return (
                                 <li key={grade.id}>
                                   <button
                                     type="button"
-                                    onClick={() => setActiveGradeId(grade.id)}
+                                    onClick={() => { setActiveGradeId(grade.id); }}
                                     className={cn(
                                       "group w-full rounded-2xl px-3 py-2 text-left text-sm transition-colors focus-ring",
                                       isActive

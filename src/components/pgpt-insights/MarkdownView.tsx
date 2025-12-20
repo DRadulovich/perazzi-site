@@ -1,9 +1,22 @@
 import type { ReactNode } from "react";
 
 // --- Minimal Markdown renderer (safe, server-side) ---
-function isSafeHref(href: string): boolean {
-  const trimmed = href.trim();
-  return trimmed.startsWith("https://") || trimmed.startsWith("http://") || trimmed.startsWith("mailto:");
+function sanitizeHref(href: string): string | null {
+  const trimmed = (href ?? "").trim();
+  if (!trimmed) return null;
+
+  const lower = trimmed.toLowerCase();
+  if (lower.startsWith("javascript:") || lower.startsWith("data:")) return null;
+
+  if (lower.startsWith("http://") || lower.startsWith("https://") || lower.startsWith("mailto:")) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith("/") || trimmed.startsWith("./") || trimmed.startsWith("../") || trimmed.startsWith("#")) {
+    return trimmed;
+  }
+
+  return null;
 }
 
 function renderInlineMarkdown(text: string): ReactNode[] {
@@ -28,8 +41,8 @@ function renderInlineMarkdown(text: string): ReactNode[] {
       | null = null;
 
     for (const p of patterns) {
-      const m = remaining.match(p.re);
-      if (!m || m.index === undefined) continue;
+      const m = p.re.exec(remaining);
+      if (m?.index === undefined) continue;
       if (!earliest || m.index < earliest.index) earliest = { type: p.type, match: m, index: m.index };
     }
 
@@ -45,21 +58,25 @@ function renderInlineMarkdown(text: string): ReactNode[] {
     if (earliest.type === "link") {
       const label = earliest.match[1] ?? "";
       const href = earliest.match[2] ?? "";
-      if (isSafeHref(href)) {
-        out.push(
-          <a
-            key={`md-link-${key++}`}
-            href={href}
-            className="text-blue-600 underline underline-offset-4 hover:text-blue-700"
-            target={href.startsWith("http") ? "_blank" : undefined}
-            rel={href.startsWith("http") ? "noreferrer" : undefined}
-          >
-            {label}
-          </a>,
-        );
-      } else {
+      const safeHref = sanitizeHref(href);
+      if (!safeHref) {
         out.push(label);
+        remaining = remaining.slice(earliest.index + full.length);
+        continue;
       }
+
+      const isExternal = /^https?:\/\//i.test(safeHref);
+      out.push(
+        <a
+          key={`md-link-${key++}`}
+          href={safeHref}
+          className="text-blue-600 underline underline-offset-4 hover:text-blue-700"
+          target={isExternal ? "_blank" : undefined}
+          rel={isExternal ? "noreferrer noopener" : undefined}
+        >
+          {label}
+        </a>,
+      );
     } else if (earliest.type === "code") {
       const code = earliest.match[1] ?? "";
       out.push(
@@ -112,6 +129,7 @@ type MarkdownBlock =
   | { type: "code"; lang: string | null; code: string }
   | { type: "ul"; items: string[] }
   | { type: "ol"; items: string[] };
+type MarkdownViewProps = Readonly<{ markdown: string }>;
 
 function parseMarkdownBlocks(markdown: string): MarkdownBlock[] {
   const src = String(markdown ?? "").replace(/\r\n/g, "\n");
@@ -130,21 +148,24 @@ function parseMarkdownBlocks(markdown: string): MarkdownBlock[] {
     para = [];
   };
 
+  const fenceRe = /^```\s*(\w+)?\s*$/;
+  const headingRe = /^(#{1,6})\s+(.*)$/;
+
   let i = 0;
   while (i < lines.length) {
     const line = lines[i] ?? "";
 
-    const fenceMatch = line.match(/^```\s*(\w+)?\s*$/);
+    const fenceMatch = fenceRe.exec(line);
     if (fenceMatch) {
-      if (!inFence) {
-        flushPara();
-        inFence = true;
-        fenceLang = fenceMatch[1] ?? null;
-        fenceLines = [];
-      } else {
+      if (inFence) {
         blocks.push({ type: "code", lang: fenceLang, code: fenceLines.join("\n") });
         inFence = false;
         fenceLang = null;
+        fenceLines = [];
+      } else {
+        flushPara();
+        inFence = true;
+        fenceLang = fenceMatch[1] ?? null;
         fenceLines = [];
       }
       i += 1;
@@ -157,7 +178,7 @@ function parseMarkdownBlocks(markdown: string): MarkdownBlock[] {
       continue;
     }
 
-    const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
+    const headingMatch = headingRe.exec(line);
     if (headingMatch) {
       flushPara();
       const level = Math.min(6, headingMatch[1]?.length ?? 1);
@@ -206,7 +227,30 @@ function parseMarkdownBlocks(markdown: string): MarkdownBlock[] {
   return blocks;
 }
 
-export function MarkdownView({ markdown }: { markdown: string }) {
+function getBlockKeySuffix(b: MarkdownBlock): string {
+  if (b.type === "code") {
+    return b.code.slice(0, 50);
+  }
+  if (b.type === "ul" || b.type === "ol") {
+    return b.items.join("-").slice(0, 50);
+  }
+  if ("text" in b) {
+    return b.text.slice(0, 50);
+  }
+  return "";
+}
+
+function getHeadingClass(level: number): string {
+  if (level <= 2) {
+    return "text-sm font-semibold";
+  }
+  if (level === 3) {
+    return "text-xs font-semibold";
+  }
+  return "text-xs font-medium";
+}
+
+export function MarkdownView({ markdown }: MarkdownViewProps) {
   const blocks = parseMarkdownBlocks(markdown);
 
   if (blocks.length === 0) {
@@ -215,13 +259,14 @@ export function MarkdownView({ markdown }: { markdown: string }) {
 
   return (
     <div className="space-y-3">
-      {blocks.map((b, idx) => {
+      {blocks.map((b, blockIdx) => {
+        const blockKey = `${b.type}-${blockIdx}-${getBlockKeySuffix(b)}`;
+
         if (b.type === "heading") {
-          const base =
-            b.level <= 2 ? "text-sm font-semibold" : b.level === 3 ? "text-xs font-semibold" : "text-xs font-medium";
+          const base = getHeadingClass(b.level);
 
           return (
-            <div key={`md-h-${idx}`} className={`${base} text-foreground`}>
+            <div key={`md-h-${blockKey}`} className={`${base} text-foreground`}>
               {renderInlineMarkdown(b.text)}
             </div>
           );
@@ -230,7 +275,7 @@ export function MarkdownView({ markdown }: { markdown: string }) {
         if (b.type === "code") {
           return (
             <pre
-              key={`md-codeblock-${idx}`}
+              key={`md-codeblock-${blockKey}`}
               className="overflow-x-auto rounded-lg border border-border bg-muted/30 p-3 text-[11px] leading-snug text-foreground"
             >
               <code className="font-mono">{b.code}</code>
@@ -240,9 +285,11 @@ export function MarkdownView({ markdown }: { markdown: string }) {
 
         if (b.type === "ul") {
           return (
-            <ul key={`md-ul-${idx}`} className="list-disc space-y-1 pl-5 text-xs leading-relaxed text-foreground">
-              {b.items.map((it, j) => (
-                <li key={`md-ul-${idx}-${j}`}>{renderInlineMarkdown(it)}</li>
+            <ul key={`md-ul-${blockKey}`} className="list-disc space-y-1 pl-5 text-xs leading-relaxed text-foreground">
+              {b.items.map((it, itemIdx) => (
+                <li key={`md-ul-item-${blockIdx}-${itemIdx}-${it.slice(0, 50)}`}>
+                  {renderInlineMarkdown(it)}
+                </li>
               ))}
             </ul>
           );
@@ -250,16 +297,18 @@ export function MarkdownView({ markdown }: { markdown: string }) {
 
         if (b.type === "ol") {
           return (
-            <ol key={`md-ol-${idx}`} className="list-decimal space-y-1 pl-5 text-xs leading-relaxed text-foreground">
-              {b.items.map((it, j) => (
-                <li key={`md-ol-${idx}-${j}`}>{renderInlineMarkdown(it)}</li>
+            <ol key={`md-ol-${blockKey}`} className="list-decimal space-y-1 pl-5 text-xs leading-relaxed text-foreground">
+              {b.items.map((it, itemIdx) => (
+                <li key={`md-ol-item-${blockIdx}-${itemIdx}-${it.slice(0, 50)}`}>
+                  {renderInlineMarkdown(it)}
+                </li>
               ))}
             </ol>
           );
         }
 
         return (
-          <p key={`md-p-${idx}`} className="text-xs leading-relaxed text-foreground">
+          <p key={`md-p-${blockKey}`} className="text-xs leading-relaxed text-foreground">
             {renderInlineMarkdown(b.text)}
           </p>
         );

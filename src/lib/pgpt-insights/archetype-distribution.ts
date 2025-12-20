@@ -13,6 +13,12 @@ function clamp01(n: number): number {
   return n;
 }
 
+function toNumber(v: unknown): number {
+  if (typeof v === "number") return v;
+  if (typeof v === "string") return Number(v);
+  return Number.NaN;
+}
+
 /**
  * Accepts:
  *  - { Loyalist: 0.1, ... } already in 0..1
@@ -29,7 +35,7 @@ export function normalizeArchetypeScores(raw: unknown): ArchetypeScores | null {
 
   for (const k of ARCHETYPE_KEYS) {
     const v = raw[k];
-    const n = typeof v === "number" ? v : typeof v === "string" ? Number(v) : NaN;
+    const n = toNumber(v);
     const safe = Number.isFinite(n) ? n : 0;
     out[k] = safe;
     values.push(safe);
@@ -95,7 +101,7 @@ export function pickArchetypeWinner(scores: ArchetypeScores): ArchetypeKey {
  * - If raw scores are invalid, metadata is returned unchanged.
  * - If decision is undefined, it is not written.
  */
-export function withArchetypeDistribution<T extends Record<string, any>>(
+export function withArchetypeDistribution<T extends Record<string, unknown>>(
   metadata: T,
   rawScores: unknown,
   decision?: unknown,
@@ -109,7 +115,11 @@ export function withArchetypeDistribution<T extends Record<string, any>>(
 
   const confidence = computeArchetypeConfidence(normalized);
 
-  const next: any = { ...metadata, archetypeScores: normalized, archetypeConfidence: confidence };
+  const next = { ...metadata, archetypeScores: normalized, archetypeConfidence: confidence } as T & {
+    archetypeScores: ArchetypeScores;
+    archetypeConfidence: number;
+    archetypeDecision?: unknown;
+  };
   if (decision !== undefined) next.archetypeDecision = decision;
 
   return next;
