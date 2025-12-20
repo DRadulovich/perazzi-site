@@ -16,7 +16,7 @@ export function HeritageEventSlide({
   event,
   className,
 }: HeritageEventSlideProps) {
-  const hasMedia = Boolean(event.media?.url);
+  const mediaUrl = event.media?.url;
   const analyticsRef = useAnalyticsObserver<HTMLElement>(`HeritageEventSeen:${event.id}`);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [isClient, setIsClient] = React.useState(false);
@@ -46,13 +46,13 @@ export function HeritageEventSlide({
           <div
             className={cn(
               "flex w-full items-stretch p-4 sm:p-6 lg:p-8",
-              "border-b border-white/10 md:w-1/2 md:border-b-0 md:border-r md:border-white/10",
+            "border-b border-white/10 md:w-1/2 md:border-b-0 md:border-r md:border-white/10",
             )}
           >
-            {hasMedia ? (
+            {mediaUrl ? (
               <div className="relative h-full w-full min-h-[240px] overflow-hidden rounded-2xl border border-white/15 bg-[color:var(--color-canvas)]">
                 <Image
-                  src={event.media?.url}
+                  src={mediaUrl}
                   alt={event.media?.alt ?? event.title}
                   fill
                   sizes="(min-width: 1024px) 50vw, 100vw"

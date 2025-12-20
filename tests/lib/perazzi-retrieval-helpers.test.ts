@@ -11,6 +11,8 @@ import {
   extractLatestUserMessage,
   parseJsonbStringArray,
 } from "@/lib/perazzi-retrieval";
+import type { RetrievalHints } from "@/lib/perazzi-intents";
+import type { ChatMessage } from "@/types/perazzi-assistant";
 
 type RetrievedRow = Parameters<typeof computeBoostV2>[0];
 
@@ -25,6 +27,17 @@ function buildRow(overrides: Partial<RetrievedRow> = {}): RetrievedRow {
     doc_type: null,
     distance: 0.1,
     score: 0.9,
+    ...overrides,
+  };
+}
+
+function buildHints(overrides: Partial<RetrievalHints> = {}): RetrievalHints {
+  return {
+    mode: "prospect",
+    intents: [],
+    topics: [],
+    focusEntities: [],
+    keywords: [],
     ...overrides,
   };
 }
@@ -99,14 +112,15 @@ describe("cosineSimilarity", () => {
 
 describe("extractLatestUserMessage", () => {
   it("returns the last user message or null", () => {
-    const msgs = [
+    const msgs: ChatMessage[] = [
       { role: "assistant", content: "hi" },
       { role: "user", content: "first" },
       { role: "assistant", content: "ok" },
       { role: "user", content: "last" },
     ];
     expect(extractLatestUserMessage(msgs)).toBe("last");
-    expect(extractLatestUserMessage([{ role: "assistant", content: "only assistant" }])).toBeNull();
+    const assistantOnly: ChatMessage[] = [{ role: "assistant", content: "only assistant" }];
+    expect(extractLatestUserMessage(assistantOnly)).toBeNull();
   });
 });
 
@@ -129,7 +143,7 @@ describe("computeBoost", () => {
     const boost = computeBoost(
       { platform_tags: ["ht"] },
       { platformSlug: "ht" },
-      {},
+      buildHints(),
     );
     expect(boost).toBeCloseTo(0.1, 5);
   });
@@ -138,7 +152,7 @@ describe("computeBoost", () => {
     const boost = computeBoost(
       { entity_ids: ["mx8"] },
       {},
-      { focusEntities: ["mx8"] },
+      buildHints({ focusEntities: ["mx8"] }),
     );
     expect(boost).toBeCloseTo(0.15, 5);
   });
@@ -151,13 +165,13 @@ describe("computeBoost", () => {
         summary: "Fit and balance",
       },
       {},
-      { topics: ["discipline_trap"], keywords: ["balance"] },
+      buildHints({ topics: ["discipline_trap"], keywords: ["balance"] }),
     );
     expect(boost).toBeGreaterThan(0);
   });
 
   it("applies negative adjustment for sanity info", () => {
-    const boost = computeBoost({ source_path: "foo/sanity_info/bar.md" }, {}, {});
+    const boost = computeBoost({ source_path: "foo/sanity_info/bar.md" }, {}, buildHints());
     expect(boost).toBeLessThan(0);
   });
 });
@@ -179,7 +193,7 @@ describe("computeBoostV2", () => {
     const boost = computeBoostV2(
       row,
       { mode: "prospect", platformSlug: "ht" },
-      { topics: ["platform_ht", "discipline_trap", "fit", "service"], keywords: ["care"] },
+      buildHints({ topics: ["platform_ht", "discipline_trap", "fit", "service"], keywords: ["care"] }),
     );
 
     expect(boost).toBeCloseTo(0.43, 2);
@@ -204,11 +218,11 @@ describe("computeBoostV2", () => {
     const boost = computeBoostV2(
       row,
       { mode: "prospect", platformSlug: "ht", modelSlug: "mx8" },
-      {
+      buildHints({
         topics: ["platform_ht", "discipline_trap", "fit", "service", "warranty"],
         keywords: ["warranty", "service", "fit", "doc"],
         focusEntities: ["mx8"],
-      },
+      }),
     );
 
     expect(boost).toBeCloseTo(0.5, 5);
@@ -223,7 +237,7 @@ describe("computeBoostV2", () => {
     const boost = computeBoostV2(
       row,
       { mode: "prospect" },
-      { topics: [], keywords: ["fit", "service", "warranty", "care", "detail"] },
+      buildHints({ keywords: ["fit", "service", "warranty", "care", "detail"] }),
     );
 
     expect(boost).toBeGreaterThan(0); // mode + keyword clamp at 0.06
