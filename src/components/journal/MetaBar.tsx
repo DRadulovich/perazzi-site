@@ -40,11 +40,11 @@ export function MetaBar({ article }: MetaBarProps) {
         }
       });
     };
-    const listener = () => handleScroll();
+    const listener = () => { handleScroll(); };
     const scrollContext = globalThis;
     scrollContext.addEventListener("scroll", listener);
     handleScroll();
-    return () => scrollContext.removeEventListener("scroll", listener);
+    return () => { scrollContext.removeEventListener("scroll", listener); };
   }, [reduceMotion]);
 
   return (
@@ -69,8 +69,8 @@ export function MetaBar({ article }: MetaBarProps) {
         className="text-perazzi-red focus-ring"
         onClick={() => {
           const globalWindow = globalThis;
-          const shareUrl = globalWindow.location?.href;
-          if (shareUrl) globalWindow.navigator?.clipboard?.writeText(shareUrl);
+          const shareUrl = globalWindow.location.href;
+          if (shareUrl) globalWindow.navigator.clipboard?.writeText(shareUrl);
           logAnalytics(`CategoryTabClick:share-${article.slug}`);
         }}
       >

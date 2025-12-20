@@ -117,7 +117,7 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
                   inputMode="numeric"
                   pattern="[0-9]*"
                   value={serial}
-                  onChange={(event) => setSerial(event.target.value)}
+                  onChange={(event) => { setSerial(event.target.value); }}
                   className={cn(
                     "mt-2 w-full rounded-xl border border-perazzi-black/50 bg-white/25 px-4 py-3 text-sm sm:text-base text-white",
                     "placeholder:text-white/70 focus:border-perazzi-red focus:outline-none focus:ring-2 focus:ring-perazzi-red/40",

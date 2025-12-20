@@ -32,7 +32,7 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
     [assets],
   );
 
-  const closeLightbox = useCallback(() => setOpenIndex(null), []);
+  const closeLightbox = useCallback(() => { setOpenIndex(null); }, []);
 
   const goTo = useCallback(
     (direction: 1 | -1) => {
@@ -81,7 +81,7 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
               type="button"
               className="group relative w-full overflow-hidden rounded-2xl border border-border/60 bg-card/10 focus-ring sm:border-border/70 sm:bg-card"
               style={{ aspectRatio: asset.aspectRatio ?? 4 / 3 }}
-              onClick={() => openLightbox(index)}
+              onClick={() => { openLightbox(index); }}
               aria-label={`Open photo ${index + 1}`}
             >
               <Image
@@ -137,7 +137,7 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
                   <button
                     type="button"
                     className="focus-ring rounded-full border border-border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink"
-                    onClick={() => goTo(-1)}
+                    onClick={() => { goTo(-1); }}
                     aria-label="Previous photo"
                   >
                     Previous
@@ -145,7 +145,7 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
                   <button
                     type="button"
                     className="focus-ring rounded-full border border-border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink"
-                    onClick={() => goTo(1)}
+                    onClick={() => { goTo(1); }}
                     aria-label="Next photo"
                   >
                     Next

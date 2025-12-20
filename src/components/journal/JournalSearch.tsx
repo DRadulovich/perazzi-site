@@ -10,7 +10,7 @@ export function JournalSearch() {
     const preview = setTimeout(() => {
       logAnalytics("SearchPreview");
     }, 300);
-    return () => clearTimeout(preview);
+    return () => { clearTimeout(preview); };
   }, [term]);
 
   return (
@@ -27,7 +27,7 @@ export function JournalSearch() {
         <input
           type="search"
           value={term}
-          onChange={(event) => setTerm(event.target.value)}
+          onChange={(event) => { setTerm(event.target.value); }}
           className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 text-sm text-ink focus-ring"
           placeholder="Stories, interviews, news…"
         />

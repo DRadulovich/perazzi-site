@@ -131,7 +131,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
                     ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
                     : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
                 )}
-                onClick={() => { setActiveDiscipline(null); }}
+                onClick={() => setActiveDiscipline(null)}
               >
                 All
               </button>

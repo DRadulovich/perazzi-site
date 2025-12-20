@@ -112,7 +112,7 @@ export function ArticleGrid({
                 page === pagination.page ? "border-perazzi-red text-perazzi-red" : "border-border text-ink"
               }`}
               aria-current={page === pagination.page ? "page" : undefined}
-              onClick={() => handlePageChange(page)}
+              onClick={() => { handlePageChange(page); }}
             >
               {page}
             </button>

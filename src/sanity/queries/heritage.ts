@@ -370,7 +370,7 @@ export async function getHeritageHome(): Promise<HeritageHomePayload | null> {
         }
       : undefined,
     photoEssay: data.photoEssay
-      ?.filter((item): item is typeof item & { _key: string } => Boolean(item?._key))
+      ?.filter((item): item is typeof item & { _key: string } => Boolean(item._key))
       .map((item) => ({
         id: item._key as string,
         image: mapImageResult(item ?? null),
@@ -384,7 +384,7 @@ export async function getHeritageHome(): Promise<HeritageHomePayload | null> {
         }
       : undefined,
     erasConfig: data.erasConfig
-      ?.filter((era): era is NonNullable<typeof era> & { id: string } => Boolean(era?.id))
+      ?.filter((era): era is NonNullable<typeof era> & { id: string } => Boolean(era.id))
       .map(
         (era): HeritageEra => ({
           id: era.id,
@@ -435,13 +435,13 @@ export async function getHeritageHome(): Promise<HeritageHomePayload | null> {
       ? {
           heading: data.relatedSection.heading ?? undefined,
           items: data.relatedSection.items?.map((item) => ({
-            title: item?.title ?? "",
-            slug: item?.slug ?? "",
+            title: item.title ?? "",
+            slug: item.slug ?? "",
           })),
         }
       : undefined,
     oralHistories: data.oralHistories
-      ?.filter((entry): entry is typeof entry & { _key: string } => Boolean(entry?._key))
+      ?.filter((entry): entry is typeof entry & { _key: string } => Boolean(entry._key))
       .map((entry) => ({
         id: entry._key as string,
         title: entry.title ?? undefined,
@@ -460,7 +460,7 @@ export async function getHeritageEvents(): Promise<HeritageEventPayload[]> {
   const data = (result?.data as HeritageEventResponse[] | null) ?? null;
 
   return (data ?? [])
-    .filter((event): event is HeritageEventResponse & { _id: string } => Boolean(event?._id))
+    .filter((event): event is HeritageEventResponse & { _id: string } => Boolean(event._id))
     .map((event) => ({
       id: event._id as string,
       title: event.title ?? undefined,
@@ -468,13 +468,13 @@ export async function getHeritageEvents(): Promise<HeritageEventPayload[]> {
       bodyPortableText: event.body,
       media: mapImageResult(event.media ?? null),
       champions: event.champions
-        ?.filter((champion): champion is { _id: string; name?: string } => Boolean(champion?._id))
+        ?.filter((champion): champion is { _id: string; name?: string } => Boolean(champion._id))
         .map((champion) => ({
           id: champion._id as string,
           name: champion.name ?? undefined,
         })),
       platforms: event.platforms
-        ?.filter((platform): platform is { _id: string; name?: string; slug?: { current?: string } } => Boolean(platform?._id))
+        ?.filter((platform): platform is { _id: string; name?: string; slug?: { current?: string } } => Boolean(platform._id))
         .map((platform) => ({
           id: platform._id as string,
           name: platform.name ?? undefined,
@@ -491,17 +491,17 @@ export async function getHeritageChampions(): Promise<ChampionPayload[]> {
   const data = (result?.data as ChampionResponse[] | null) ?? null;
 
   return (data ?? [])
-    .filter((champion): champion is ChampionResponse & { _id: string } => Boolean(champion?._id))
+    .filter((champion): champion is ChampionResponse & { _id: string } => Boolean(champion._id))
     .map((champion) => {
-      const article = champion.articles?.find((item) => item?._id);
+      const article = champion.articles?.find((item) => item._id);
       return {
         id: champion._id as string,
         name: champion.name ?? undefined,
         title: champion.title ?? undefined,
         quote: champion.quote ?? undefined,
         image: mapImageResult(champion.image ?? null),
-        disciplines: champion.disciplines?.map((discipline) => discipline?.name).filter(Boolean) as string[] | undefined,
-        platforms: champion.platforms?.map((platform) => platform?.name).filter(Boolean) as string[] | undefined,
+        disciplines: champion.disciplines?.map((discipline) => discipline.name).filter(Boolean) as string[] | undefined,
+        platforms: champion.platforms?.map((platform) => platform.name).filter(Boolean) as string[] | undefined,
         bio: champion.bio?.text ?? undefined,
         resume: champion.resume,
         article: article

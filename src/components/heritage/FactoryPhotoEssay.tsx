@@ -33,7 +33,7 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
     [items],
   );
 
-  const close = useCallback(() => setOpenIndex(null), []);
+  const close = useCallback(() => { setOpenIndex(null); }, []);
 
   const goTo = useCallback(
     (direction: 1 | -1) => {
@@ -84,7 +84,7 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((item, index) => (
           <li key={item.id}>
-            <PhotoCard item={item} onOpen={() => handleOpen(index)} />
+            <PhotoCard item={item} onOpen={() => { handleOpen(index); }} />
           </li>
         ))}
       </ul>
@@ -143,7 +143,7 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
                       type="button"
                       className="focus-ring rounded-full border border-border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink"
                       aria-label="Previous photo"
-                      onClick={() => goTo(-1)}
+                      onClick={() => { goTo(-1); }}
                     >
                       Previous
                     </button>
@@ -151,7 +151,7 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
                       type="button"
                       className="focus-ring rounded-full border border-border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink"
                       aria-label="Next photo"
-                      onClick={() => goTo(1)}
+                      onClick={() => { goTo(1); }}
                     >
                       Next
                     </button>

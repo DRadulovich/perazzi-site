@@ -76,7 +76,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
   const modalRef = useRef<HTMLDialogElement | null>(null);
   const [heroLoaded, setHeroLoaded] = useState(false);
   const analyticsRef = useAnalyticsObserver<HTMLElement>("ModelSearchTableSeen");
-  const resetVisibleCount = useCallback(() => setVisibleCount(PAGE_SIZE), []);
+  const resetVisibleCount = useCallback(() => { setVisibleCount(PAGE_SIZE); }, []);
   const closeModal = useCallback(() => {
     setSelectedModel(null);
     setHeroLoaded(false);
@@ -88,7 +88,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
       if (event.key === "Escape") closeModal();
     };
     globalThis.addEventListener("keydown", handleKey);
-    return () => globalThis.removeEventListener("keydown", handleKey);
+    return () => { globalThis.removeEventListener("keydown", handleKey); };
   }, [selectedModel, closeModal]);
 
   useEffect(() => {
@@ -125,7 +125,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
     };
 
     modalNode.addEventListener("keydown", handleTrap);
-    return () => modalNode.removeEventListener("keydown", handleTrap);
+    return () => { modalNode.removeEventListener("keydown", handleTrap); };
   }, [selectedModel]);
 
   useEffect(() => {
@@ -242,7 +242,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
     const observer = new IntersectionObserver(handleIntersection, { threshold: 0.25 });
 
     observer.observe(node);
-    return () => observer.disconnect();
+    return () => { observer.disconnect(); };
   }, [incrementVisibleCount]);
 
   const handleQueryChange = (value: string) => {
@@ -337,7 +337,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
               type="search"
               placeholder="Search models, gauges, triggers..."
               value={query}
-              onChange={(event) => handleQueryChange(event.target.value)}
+              onChange={(event) => { handleQueryChange(event.target.value); }}
               className="w-full bg-transparent text-base text-white placeholder:text-neutral-600 focus:outline-none"
             />
           </label>
@@ -352,31 +352,31 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
             label="Platform"
             options={platformOptions}
             values={platformFilters}
-            onToggle={(value) => toggleFilter(value, setPlatformFilters)}
+            onToggle={(value) => { toggleFilter(value, setPlatformFilters); }}
           />
           <FilterGroup
             label="Gauge"
             options={gaugeOptions}
             values={gaugeFilters}
-            onToggle={(value) => toggleFilter(value, setGaugeFilters)}
+            onToggle={(value) => { toggleFilter(value, setGaugeFilters); }}
           />
           <FilterGroup
             label="Use"
             options={useOptions}
             values={useFilters}
-            onToggle={(value) => toggleFilter(value, setUseFilters)}
+            onToggle={(value) => { toggleFilter(value, setUseFilters); }}
           />
           <FilterGroup
             label="Trigger"
             options={triggerTypeOptions}
             values={triggerTypeFilters}
-            onToggle={(value) => toggleFilter(value, setTriggerTypeFilters)}
+            onToggle={(value) => { toggleFilter(value, setTriggerTypeFilters); }}
           />
           <FilterGroup
             label="Rib"
             options={ribTypeOptions}
             values={ribTypeFilters}
-            onToggle={(value) => toggleFilter(value, setRibTypeFilters)}
+            onToggle={(value) => { toggleFilter(value, setRibTypeFilters); }}
           />
           {hasActiveFilters && (
             <button
@@ -526,7 +526,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                       heroLoaded ? "opacity-100" : "opacity-0",
                     )}
                     priority
-                    onLoadingComplete={() => setHeroLoaded(true)}
+                    onLoadingComplete={() => { setHeroLoaded(true); }}
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-neutral-600">
@@ -619,7 +619,7 @@ function FilterGroup({
             key={option.value}
             active={values.includes(option.value)}
             label={option.value}
-            onClick={() => onToggle(option.value)}
+            onClick={() => { onToggle(option.value); }}
           />
         ))}
       </div>

@@ -179,7 +179,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
           priority
           sizes="(min-width: 1536px) 1400px, (min-width: 1280px) 1200px, (min-width: 1024px) 90vw, 100vw"
           className="object-cover"
-          onLoad={() => setMediaLoaded(true)}
+          onLoad={() => { setMediaLoaded(true); }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/75 to-black/0" />
       </motion.div>

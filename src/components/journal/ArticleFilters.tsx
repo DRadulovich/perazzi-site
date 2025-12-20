@@ -54,7 +54,7 @@ export function ArticleFilters({
         <select
           className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 text-sm text-ink focus-ring"
           value={value.sort}
-          onChange={(event) => update({ sort: event.target.value as JournalFilterState["sort"] })}
+          onChange={(event) => { update({ sort: event.target.value as JournalFilterState["sort"] }); }}
         >
           {JOURNAL_SORTS.map((sort) => (
             <option key={sort.value} value={sort.value}>
@@ -68,7 +68,7 @@ export function ArticleFilters({
         <select
           className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 text-sm text-ink focus-ring"
           value={value.tag}
-          onChange={(event) => update({ tag: event.target.value })}
+          onChange={(event) => { update({ tag: event.target.value }); }}
         >
           <option value="">All</option>
           {tags.map((tag) => (
@@ -83,7 +83,7 @@ export function ArticleFilters({
         <select
           className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 text-sm text-ink focus-ring"
           value={value.author}
-          onChange={(event) => update({ author: event.target.value })}
+          onChange={(event) => { update({ author: event.target.value }); }}
         >
           <option value="">All</option>
           {authors.map((author) => (

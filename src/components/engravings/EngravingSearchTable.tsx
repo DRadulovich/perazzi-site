@@ -72,7 +72,7 @@ function trapFocus(container: HTMLElement | null) {
   };
 
   container.addEventListener("keydown", handleTrap);
-  return () => container.removeEventListener("keydown", handleTrap);
+  return () => { container.removeEventListener("keydown", handleTrap); };
 }
 
 function filterByQuery(engravings: EngravingRow[], query: string) {
@@ -146,7 +146,7 @@ function observeLoadMore(
     { threshold: 0.25 },
   );
   observer.observe(node);
-  return () => observer.disconnect();
+  return () => { observer.disconnect(); };
 }
 
 export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchProps>) {
@@ -163,7 +163,7 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
   const [lastFocusedId, setLastFocusedId] = useState<string | null>(null);
   const analyticsRef = useAnalyticsObserver<HTMLElement>("EngravingSearchTableSeen");
 
-  const closeModal = useCallback(() => setSelected(null), []);
+  const closeModal = useCallback(() => { setSelected(null); }, []);
   const openDetails = useCallback((engraving: EngravingRow) => {
     setSelected(engraving);
     setLastFocusedId(engraving._id);
@@ -179,7 +179,7 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
         return prev.filter((fav) => fav._id !== engraving._id);
       }
       if (prev.length >= 6) {
-        globalThis.alert?.("You can only favorite up to 6 engravings.");
+        globalThis.alert("You can only favorite up to 6 engravings.");
         return prev;
       }
       return [...prev, engraving];
@@ -194,8 +194,8 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
         if (compareOpen) setCompareOpen(false);
       }
     };
-    globalThis.addEventListener?.("keydown", handleKey);
-    return () => globalThis.removeEventListener?.("keydown", handleKey);
+    globalThis.addEventListener("keydown", handleKey);
+    return () => { globalThis.removeEventListener?.("keydown", handleKey); };
   }, [selected, compareOpen, closeModal]);
 
   useEffect(() => {
@@ -275,7 +275,7 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
               type="search"
               placeholder="Search engraving ID or grade…"
               value={query}
-              onChange={(event) => handleQueryChange(event.target.value)}
+              onChange={(event) => { handleQueryChange(event.target.value); }}
               className="w-full bg-transparent text-sm sm:text-base text-white placeholder:text-neutral-600 focus:outline-none"
             />
           </label>
@@ -285,20 +285,20 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
           </p>
         </div>
 
-        <FavoritesPanel favorites={favorites} onCompare={() => setCompareOpen(true)} onToggle={toggleFavorite} onSelect={openDetails} />
+        <FavoritesPanel favorites={favorites} onCompare={() => { setCompareOpen(true); }} onToggle={toggleFavorite} onSelect={openDetails} />
 
         <div className="flex flex-wrap gap-4">
           <FilterGroup
             label="Grade"
             options={gradeOptions}
             values={gradeFilters}
-            onToggle={(value) => toggleMultiFilter(gradeFilters, setGradeFilters, value)}
+            onToggle={(value) => { toggleMultiFilter(gradeFilters, setGradeFilters, value); }}
           />
           <FilterGroup
             label="Side"
             options={sideOptions}
             values={sideFilters}
-            onToggle={(value) => toggleMultiFilter(sideFilters, setSideFilters, value)}
+            onToggle={(value) => { toggleMultiFilter(sideFilters, setSideFilters, value); }}
           />
           {hasFilters && (
             <button
@@ -329,7 +329,7 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
       <EngravingCompareDialog
         open={compareOpen}
         favorites={favorites}
-        onClose={() => setCompareOpen(false)}
+        onClose={() => { setCompareOpen(false); }}
       />
     </section>
   );
@@ -372,13 +372,13 @@ function FilterGroup({
         {label}
       </span>
       <div className="flex flex-wrap gap-2">
-        <FilterChip active={!values.length} label={`All (${total})`} onClick={() => onToggle("__reset__")} />
+        <FilterChip active={!values.length} label={`All (${total})`} onClick={() => { onToggle("__reset__"); }} />
         {options.map((option) => (
           <FilterChip
             key={option.value}
             active={values.includes(option.value)}
             label={`${option.value} (${option.count})`}
-            onClick={() => onToggle(option.value)}
+            onClick={() => { onToggle(option.value); }}
             tone={tone}
           />
         ))}
@@ -478,7 +478,7 @@ function FavoritesPanel({
               <button
                 type="button"
                 className="relative h-16 w-16 overflow-hidden rounded-full border border-white/20 bg-white"
-                onClick={() => onSelect(fav)}
+                onClick={() => { onSelect(fav); }}
               >
                 {previewUrl ? (
                   <Image src={previewUrl} alt={fav.imageAlt || fav.engravingId} fill className="object-cover" />
@@ -490,7 +490,7 @@ function FavoritesPanel({
               <button
                 type="button"
                 className="text-[11px] sm:text-xs uppercase tracking-[0.3em] text-white/60 hover:text-white"
-                onClick={() => onToggle(fav)}
+                onClick={() => { onToggle(fav); }}
               >
                 Remove
               </button>
@@ -620,7 +620,7 @@ function EngravingCard({
       <div className="flex items-center justify-between gap-3 border-t border-white/5 bg-black/50 px-6 py-4">
         <button
           type="button"
-          onClick={() => onToggleFavorite(engraving)}
+          onClick={() => { onToggleFavorite(engraving); }}
           className={clsx(
             "rounded-full border px-5 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-widest transition focus-ring",
             isFavorite
@@ -634,7 +634,7 @@ function EngravingCard({
           ref={(node) => {
             onRegisterDetailButton(engraving._id, node);
           }}
-          onClick={() => onSelect(engraving)}
+          onClick={() => { onSelect(engraving); }}
           className="rounded-full border border-white/30 px-5 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-white transition hover:border-white hover:text-white focus-ring"
         >
           View details
@@ -698,7 +698,7 @@ function EngravingDetailDialog({
                   objectPosition: selected.engravingSide === "Under" ? "right center" : "center",
                 }}
                 priority
-                onLoadingComplete={() => setHeroLoaded(true)}
+                onLoadingComplete={() => { setHeroLoaded(true); }}
               />
             ) : (
               <div className="flex h-full items-center justify-center text-neutral-600">No Image Available</div>

@@ -59,7 +59,7 @@ const fetchManufactureYears = cache(async () => {
   const data = (result?.data as ManufactureYearDoc[] | null) ?? null;
 
   return (data ?? []).filter((doc): doc is Required<Pick<ManufactureYearDoc, "year" | "primaryRange">> & ManufactureYearDoc =>
-    typeof doc?.year === "number" && typeof doc?.primaryRange?.start === "number",
+    typeof doc.year === "number" && typeof doc?.primaryRange?.start === "number",
   );
 });
 
@@ -81,7 +81,7 @@ export async function getManufactureYearBySerial(serial: number, model?: string)
 
   for (const doc of docs) {
     const specialMatch = (doc.specialRanges ?? []).find((range) => {
-      if (typeof range?.rangeStart !== "number") return false;
+      if (typeof range.rangeStart !== "number") return false;
       if (modelFilter && range.model?.trim().toLowerCase() !== modelFilter) return false;
       return isWithinRange(serialNumber, range.rangeStart, range.rangeEnd ?? undefined);
     });

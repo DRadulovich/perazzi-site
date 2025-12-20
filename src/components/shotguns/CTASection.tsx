@@ -56,7 +56,7 @@ export function CTASection({
             asChild
             variant="primary"
             size="lg"
-            onClick={() => logClick("primary")}
+            onClick={() => { logClick("primary"); }}
           >
             <a href={primary.href}>{primary.label}</a>
           </Button>
@@ -65,7 +65,7 @@ export function CTASection({
               asChild
               variant="secondary"
               size="lg"
-              onClick={() => logClick("secondary")}
+              onClick={() => { logClick("secondary"); }}
             >
               <a href={secondary.href}>{secondary.label}</a>
             </Button>

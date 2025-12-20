@@ -169,7 +169,7 @@ export async function getArticles(): Promise<JournalArticlePayload[]> {
   const data = (result?.data as JournalArticleResponse[] | null) ?? null;
 
   return (data ?? [])
-    .filter((article): article is JournalArticleResponse & { _id: string } => Boolean(article?._id))
+    .filter((article): article is JournalArticleResponse & { _id: string } => Boolean(article._id))
     .map((article) => ({
       id: article._id as string,
       title: article.title ?? undefined,

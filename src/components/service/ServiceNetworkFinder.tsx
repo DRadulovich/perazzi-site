@@ -28,7 +28,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
       setDebouncedSearch(search.toLowerCase());
       logAnalytics("FinderFilterChange");
     }, 200);
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(timer); };
   }, [search]);
 
   const filteredLocations = useMemo(() => {
@@ -105,7 +105,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
             type="search"
             className="mt-1 min-h-10 rounded-2xl border border-border/60 bg-card px-3 py-2 text-sm sm:text-base text-ink focus-ring sm:border-border/70"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => { setSearch(event.target.value); }}
             placeholder="e.g. FL, TX"
           />
         </label>

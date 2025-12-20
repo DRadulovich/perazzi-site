@@ -125,7 +125,7 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
                     ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
                     : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
                 )}
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => { setActiveTab(tab.key); }}
               >
                 {tab.label}
                 <span className="ml-2 text-[0.8em] text-ink-muted">({tab.count})</span>
