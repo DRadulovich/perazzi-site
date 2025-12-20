@@ -168,6 +168,12 @@ export interface PerazziAssistantResponse {
   archetypeBreakdown?: ArchetypeBreakdown;
 
   similarity?: number;
+
+  /**
+   * Optional list of top base retrieval scores (descending, 0–1).
+   * Used client-side for retrieval confidence labeling only.
+   */
+  retrievalScores?: number[];
 }
 
 export interface RetrievedChunk extends Citation {

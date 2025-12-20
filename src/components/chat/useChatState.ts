@@ -11,6 +11,7 @@ import type {
   TextVerbosity,
 } from "@/types/perazzi-assistant";
 import { getOrCreateSessionId } from "@/lib/session";
+import { getRetrievalLabelFromScores } from "@/lib/retrieval-label";
 
 type ApiMode = NonNullable<PerazziAssistantResponse["mode"]>;
 
@@ -32,6 +33,8 @@ export type ChatEntry = {
   role: "system" | "assistant" | "user";
   content: string;
   similarity?: number;
+  retrievalLabel?: string;
+  retrievalScores?: number[];
   /** Mode used by the assistant when generating this message (if any). */
   mode?: string | null;
   /** Primary archetype used for voice/tone on this message (if any). */
@@ -60,6 +63,8 @@ export type AssistantResponseMeta = {
   citations?: Citation[];
   guardrail?: PerazziAssistantResponse["guardrail"];
   similarity?: number;
+  retrievalLabel?: string;
+  retrievalScores?: number[];
   intents?: string[];
   topics?: string[];
   templates?: string[];
@@ -301,11 +306,17 @@ export function useChatState(
       }
       const data: PerazziAssistantResponse = await res.json();
       setLastAdminDebug(data.debug ?? null);
+      const retrievalScores = Array.isArray(data.retrievalScores) ? data.retrievalScores : undefined;
+      const retrievalLabel = getRetrievalLabelFromScores(
+        retrievalScores ?? (data.similarity !== undefined ? [data.similarity] : []),
+      );
       const assistantEntry: ChatEntry = {
         id: crypto.randomUUID(),
         role: "assistant",
         content: data.answer,
         similarity: data.similarity,
+        retrievalLabel,
+        retrievalScores,
         mode: data.mode ?? null,
         archetype: data.archetype ?? null,
         archetypeBreakdown: data.archetypeBreakdown,
@@ -358,6 +369,8 @@ export function useChatState(
         citations: data.citations,
         guardrail: data.guardrail,
         similarity: data.similarity,
+        retrievalLabel,
+        retrievalScores,
         intents: data.intents,
         topics: data.topics,
         templates: data.templates,

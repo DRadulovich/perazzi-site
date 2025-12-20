@@ -1110,6 +1110,8 @@ export async function POST(request: Request) {
       ...modelsRegistryResult,
     });
 
+    const retrievalScores = getTopBaseScores(retrieval.chunks);
+
     const retrievalChunkCount = retrievalAttempted ? retrieval.chunks.length : 0;
     const { evidenceMode, evidenceReason } = computeEvidenceMode({
       retrievalAttempted,
@@ -1214,6 +1216,7 @@ export async function POST(request: Request) {
         topics: hints.topics,
         templates: responseTemplates,
         similarity: retrieval.maxScore,
+        retrievalScores,
         mode: effectiveMode,
         archetype: effectiveArchetype,
         archetypeBreakdown,
@@ -1376,6 +1379,7 @@ export async function POST(request: Request) {
       topics: hints.topics,
       templates: responseTemplates,
       similarity: retrieval.maxScore,
+      retrievalScores,
       mode: effectiveMode,
       archetype: effectiveArchetype,
       archetypeBreakdown,
@@ -2161,6 +2165,23 @@ function buildExcerpt(content: string, limit = 320): string {
     return `${truncated.slice(0, lastSentence + 1).trim()}`;
   }
   return `${truncated.trim()}…`;
+}
+
+function clampScore(value: unknown): number | null {
+  const num = typeof value === "string" ? Number(value) : (value as number | null | undefined);
+  if (typeof num !== "number" || !Number.isFinite(num)) return null;
+  return Math.max(0, Math.min(1, num));
+}
+
+function getTopBaseScores(chunks: RetrievedChunk[], limit = 3): number[] {
+  const scores = chunks
+    .map((chunk) => clampScore(chunk.baseScore ?? chunk.score))
+    .filter((score): score is number => score !== null);
+
+  if (!scores.length) return [];
+
+  const sorted = scores.sort((a, b) => b - a);
+  return sorted.slice(0, Math.max(0, limit));
 }
 
 function mapChunkToCitation(chunk: RetrievedChunk) {

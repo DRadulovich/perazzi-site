@@ -43,7 +43,12 @@ export const NEUTRAL_ARCHETYPE_VECTOR: ArchetypeVector = {
   legacy: 0.2,
 };
 
-const DEFAULT_SMOOTHING = 0.75; // 75% previous, 25% new per message
+export function getSmoothingFactor(): number {
+  const raw = Number(process.env.PERAZZI_SMOOTHING_FACTOR);
+  if (Number.isFinite(raw) && raw >= 0 && raw <= 1) return raw;
+  return 0.75; // 75% previous, 25% new per message
+}
+
 const ARCHETYPE_ORDER: Archetype[] = [
   "loyalist",
   "prestige",
@@ -71,7 +76,7 @@ export function normalizeArchetypeVector(vec: ArchetypeVector): ArchetypeVector 
 export function smoothUpdateArchetypeVector(
   previous: ArchetypeVector,
   delta: ArchetypeVector,
-  smoothingFactor: number = DEFAULT_SMOOTHING
+  smoothingFactor: number = getSmoothingFactor()
 ): ArchetypeVector {
   const updated: ArchetypeVector = { ...previous };
 
