@@ -662,6 +662,17 @@ export async function POST(request: Request) {
     }
     // -------------------------
 
+    // --- Archetype tiered boost A/B bucket ---
+    const abPercent = Number(process.env.ARCHETYPE_AB_PERCENT ?? 0);
+    const isTierBucket = Number.isFinite(abPercent) && abPercent > 0 && Math.random() * 100 < abPercent;
+    const archetypeVariant = isTierBucket ? "tiered" : "baseline";
+
+    // expose variant in context for logging / downstream use
+    fullBody.context = {
+      ...(fullBody.context as NonNullable<PerazziAssistantRequest["context"]>),
+      archetypeVariant,
+    };
+
     const sanitizedMessages = sanitizeMessages(fullBody.messages);
     const latestQuestion = getLatestUserContent(sanitizedMessages);
     const hints: RetrievalHints = detectRetrievalHints(latestQuestion, body?.context);
@@ -1014,6 +1025,10 @@ export async function POST(request: Request) {
               textVerbosity: effectiveTextVerbosity,
               guardrailStatus: "blocked",
               guardrailReason: guardrailBlock.reason ?? null,
+              archetypeVariant: fullBody.context?.archetypeVariant ?? null,
+              signalsUsed: Array.isArray(archetypeClassification?.archetypeDecision?.signals)
+                ? archetypeClassification?.archetypeDecision?.signals
+                : undefined,
               ...archetypeMetrics,
             },
           },
@@ -1756,6 +1771,15 @@ async function generateAssistantAnswer(
     guardrailStatus: guardrailInfo.status,
     guardrailReason: guardrailInfo.reason ?? null,
   };
+  if (context?.archetypeVariant) {
+    metadata.archetypeVariant = context.archetypeVariant;
+  }
+  if (Array.isArray(archetypeClassification?.archetypeDecision?.signals)) {
+    metadata.signalsUsed = archetypeClassification?.archetypeDecision?.signals;
+  }
+  if (Array.isArray(templates) && templates.length > 0) {
+    metadata.templates = templates;
+  }
   if (typeof maxScore === "number") {
     metadata.maxScore = maxScore;
   }

@@ -27,6 +27,11 @@ import type {
   DailyLowScoreRateRow,
   PgptSessionSummary,
   PgptSessionTimelineRow,
+  ArchetypeDailyRow,
+  TriggerTermRow,
+  TemplateUsageRow,
+  LowMarginSessionRow,
+  ArchetypeVariantSplitRow,
 } from "./types";
 type PgNumeric = string | number;
 type PgNumericNullable = PgNumeric | null;
@@ -868,6 +873,289 @@ export async function fetchDailyLowScoreRate(args: {
     low_count: Number(r.low_count ?? 0),
     threshold,
   }));
+}
+
+export async function fetchArchetypeDailySeries(days: number): Promise<ArchetypeDailyRow[]> {
+  const capDays = Math.max(1, Math.min(days, 180));
+  try {
+    const { rows } = await pool.query<{
+      day: string;
+      archetype: string | null;
+      cnt: PgNumeric;
+      avg_margin: PgNumericNullable;
+    }>(
+      `
+        select
+          day::date as day,
+          archetype,
+          cnt,
+          avg_margin
+        from vw_archetype_daily
+        where day >= current_date - ($1 || ' days')::interval
+        order by day asc, archetype;
+      `,
+      [capDays],
+    );
+
+    return rows.map((r) => ({
+      day: String(r.day),
+      archetype: r.archetype,
+      cnt: Number(r.cnt ?? 0),
+      avg_margin: r.avg_margin === null || r.avg_margin === undefined ? null : Number(r.avg_margin),
+    }));
+  } catch (error) {
+    console.error("[pgpt-insights] fetchArchetypeDailySeries failed", error);
+    return [];
+  }
+}
+
+export async function fetchArchetypeMarginSummary(days: number): Promise<number | null> {
+  const capDays = Math.max(1, Math.min(days, 180));
+  try {
+    const { rows } = await pool.query<{ avg_margin: PgNumericNullable }>(
+      `
+        select avg(
+          coalesce((metadata->>'archetypeConfidenceMargin')::float, (metadata->>'archetypeConfidence')::float)
+        ) as avg_margin
+        from perazzi_conversation_logs
+        where endpoint = 'assistant'
+          and created_at >= now() - ($1 || ' days')::interval;
+      `,
+      [capDays],
+    );
+    const value = rows[0]?.avg_margin;
+    if (value === null || value === undefined) return null;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  } catch (error) {
+    console.error("[pgpt-insights] fetchArchetypeMarginSummary failed", error);
+    return null;
+  }
+}
+
+export async function fetchArchetypeVariantSplit(days: number): Promise<ArchetypeVariantSplitRow[]> {
+  const capDays = Math.max(1, Math.min(days, 180));
+  try {
+    const { rows } = await pool.query<{
+      variant: string | null;
+      total: PgNumeric;
+      avg_margin: PgNumericNullable;
+    }>(
+      `
+        select
+          coalesce(metadata->>'archetypeVariant', 'unknown') as variant,
+          count(*) as total,
+          avg(coalesce((metadata->>'archetypeConfidenceMargin')::float, (metadata->>'archetypeConfidence')::float)) as avg_margin
+        from perazzi_conversation_logs
+        where endpoint = 'assistant'
+          and created_at >= now() - ($1 || ' days')::interval
+        group by variant
+        order by total desc;
+      `,
+      [capDays],
+    );
+
+    return rows.map((r) => ({
+      variant: r.variant,
+      total: Number(r.total ?? 0),
+      avg_margin: r.avg_margin === null || r.avg_margin === undefined ? null : Number(r.avg_margin),
+    }));
+  } catch (error) {
+    console.error("[pgpt-insights] fetchArchetypeVariantSplit failed", error);
+    return [];
+  }
+}
+
+export async function fetchTriggerTermWeeks(limit = 12): Promise<string[]> {
+  try {
+    const capped = Math.max(1, Math.min(limit, 52));
+    const { rows } = await pool.query<{ week: string }>(
+      `
+        select distinct week::date as week
+        from vw_trigger_terms_weekly
+        order by week desc
+        limit $1;
+      `,
+      [capped],
+    );
+    return rows.map((r) => String(r.week));
+  } catch (error) {
+    console.error("[pgpt-insights] fetchTriggerTermWeeks failed", error);
+    return [];
+  }
+}
+
+export async function fetchTriggerTermsForWeek(week: string, limit = 20): Promise<TriggerTermRow[]> {
+  const safeLimit = Math.max(1, Math.min(limit, 100));
+  try {
+    const { rows } = await pool.query<{
+      week: string;
+      token: string;
+      hits: PgNumeric;
+    }>(
+      `
+        select week::date as week, token, hits
+        from vw_trigger_terms_weekly
+        where week = date_trunc('week', $1::date)
+        order by hits desc
+        limit $2;
+      `,
+      [week, safeLimit],
+    );
+    return rows.map((r) => ({
+      week: String(r.week),
+      token: r.token,
+      hits: Number(r.hits ?? 0),
+    }));
+  } catch (error) {
+    console.error("[pgpt-insights] fetchTriggerTermsForWeek failed", error);
+    return [];
+  }
+}
+
+export async function fetchTemplateUsageHeatmap(days: number): Promise<TemplateUsageRow[]> {
+  const capDays = Math.max(1, Math.min(days, 180));
+  try {
+    const { rows } = await pool.query<{
+      archetype: string | null;
+      intent: string | null;
+      template: string | null;
+      hits: PgNumeric;
+    }>(
+      `
+        select
+          archetype,
+          intent,
+          template,
+          count(*) as hits
+        from (
+          select
+            archetype,
+            unnest(intents) as intent,
+            jsonb_array_elements_text(metadata->'templates') as template
+          from perazzi_conversation_logs
+          where endpoint = 'assistant'
+            and metadata ? 'templates'
+            and created_at >= now() - ($1 || ' days')::interval
+        ) t
+        where template is not null and trim(template) <> ''
+        group by archetype, intent, template
+        order by hits desc;
+      `,
+      [capDays],
+    );
+
+    return rows.map((r) => ({
+      archetype: r.archetype,
+      intent: r.intent,
+      template: r.template,
+      hits: Number(r.hits ?? 0),
+    }));
+  } catch (error) {
+    console.error("[pgpt-insights] fetchTemplateUsageHeatmap failed", error);
+    return [];
+  }
+}
+
+export async function fetchLowMarginSessions(args: {
+  days: number;
+  marginThreshold?: number;
+  minStreak?: number;
+  limit?: number;
+  rowLimit?: number;
+}): Promise<LowMarginSessionRow[]> {
+  const days = Math.max(1, Math.min(args.days, 180));
+  const marginThreshold = args.marginThreshold ?? 0.05;
+  const minStreak = Math.max(1, args.minStreak ?? 3);
+  const limit = Math.max(1, Math.min(args.limit ?? 50, 500));
+  const rowLimit = Math.max(1000, Math.min(args.rowLimit ?? 50000, 200000));
+
+  const { rows } = await pool.query<{
+    session_id: string | null;
+    env: string | null;
+    created_at: string;
+    margin: PgNumericNullable;
+  }>(
+    `
+      select
+        session_id,
+        env,
+        created_at::text as created_at,
+        coalesce((metadata->>'archetypeConfidenceMargin')::float, (metadata->>'archetypeConfidence')::float) as margin
+      from perazzi_conversation_logs
+      where endpoint = 'assistant'
+        and session_id is not null
+        and created_at >= now() - ($1 || ' days')::interval
+      order by session_id asc, created_at asc
+      limit $2;
+    `,
+    [days, rowLimit],
+  );
+
+  type SessionState = {
+    env: string | null;
+    first: string | null;
+    last: string | null;
+    longest: number;
+    lowCount: number;
+    lastMargin: number | null;
+    streak: number;
+  };
+
+  const sessions = new Map<string, SessionState>();
+
+  rows.forEach((row) => {
+    const sessionId = row.session_id;
+    if (!sessionId) return;
+    const margin =
+      row.margin === null || row.margin === undefined ? null : Number(row.margin);
+    const isLow = margin !== null && Number.isFinite(margin) && margin < marginThreshold;
+
+    const state: SessionState = sessions.get(sessionId) ?? {
+      env: row.env ?? null,
+      first: null,
+      last: null,
+      longest: 0,
+      lowCount: 0,
+      lastMargin: null,
+      streak: 0,
+    };
+
+    state.first = state.first ?? row.created_at;
+    state.last = row.created_at;
+    state.env = state.env ?? row.env ?? null;
+    state.lastMargin = margin;
+
+    if (isLow) {
+      state.streak += 1;
+      state.lowCount += 1;
+      if (state.streak > state.longest) state.longest = state.streak;
+    } else {
+      state.streak = 0;
+    }
+
+    sessions.set(sessionId, state);
+  });
+
+  const filtered = Array.from(sessions.entries())
+    .filter(([, state]) => state.longest >= minStreak)
+    .map<LowMarginSessionRow>(([session_id, state]) => ({
+      session_id,
+      env: state.env,
+      first_seen: state.first,
+      last_seen: state.last,
+      longest_streak: state.longest,
+      low_turn_count: state.lowCount,
+      last_margin: state.lastMargin,
+    }))
+    .sort((a, b) => {
+      if (b.longest_streak !== a.longest_streak) return b.longest_streak - a.longest_streak;
+      const dateA = a.last_seen ? Date.parse(a.last_seen) : 0;
+      const dateB = b.last_seen ? Date.parse(b.last_seen) : 0;
+      return dateB - dateA;
+    });
+
+  return filtered.slice(0, limit);
 }
 
 export async function fetchAssistantRequestCountWindow(

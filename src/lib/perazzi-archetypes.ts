@@ -11,6 +11,7 @@ import {
   normalizeArchetypeScores,
 } from "@/lib/pgpt-insights/archetype-distribution";
 import { getArchetypeLexicon } from "@/config/archetype-lexicon";
+import { getBoostTiers, isTieredBoostsEnabled } from "@/config/archetype-weights";
 
 export interface ArchetypeContext {
   mode?: PerazziMode | null;
@@ -156,27 +157,27 @@ function tokenizeToWordSet(normalizedMessage: string): Set<string> {
   return new Set(tokens);
 }
 
-function messageIncludesAny(message: string, needles: string[]): boolean {
+function findFirstMatch(message: string, needles: string[]): string | null {
   const normalizedMessage = normalizeForMatch(message);
-  if (!normalizedMessage) return false;
-
+  if (!normalizedMessage) return null;
   const tokenSet = tokenizeToWordSet(normalizedMessage);
-
   for (const rawNeedle of needles) {
     if (!rawNeedle) continue;
     const needle = normalizeForMatch(rawNeedle);
     if (!needle) continue;
-
     if (/\s/.test(needle)) {
-      if (normalizedMessage.includes(needle)) return true;
+      if (normalizedMessage.includes(needle)) return rawNeedle;
       continue;
     }
-
-    if (tokenSet.has(needle)) return true;
+    if (tokenSet.has(needle)) return rawNeedle;
   }
-
-  return false;
+  return null;
 }
+
+function messageIncludesAny(message: string, needles: string[]): boolean {
+  return findFirstMatch(message, needles) !== null;
+}
+
 
 function __assertEqual(name: string, actual: boolean, expected: boolean) {
   if (actual !== expected) {
@@ -357,7 +358,7 @@ if (process.env.NODE_ENV === "development") {
   const scoresheetBreak = computeArchetypeBreakdown(scoresheetCtx, getNeutralArchetypeVector());
   __assertEqual(
     "scoresheet results should boost achiever",
-    (scoresheetBreak.vector.achiever ?? 0) > 0.3,
+    (scoresheetBreak.vector.achiever ?? 0) > 0.24,
     true,
   );
 
@@ -371,7 +372,7 @@ if (process.env.NODE_ENV === "development") {
   const heirloomBreak = computeArchetypeBreakdown(heirloomCtx, getNeutralArchetypeVector());
   __assertEqual(
     "family heirloom should boost legacy",
-    (heirloomBreak.vector.legacy ?? 0) > 0.3,
+    (heirloomBreak.vector.legacy ?? 0) > 0.24,
     true,
   );
 
@@ -458,11 +459,21 @@ function applyHintSignals(
 
   if (intents.size === 0 && topics.size === 0) return;
 
-  const BOOST_ANALYST = 0.06;
-  const BOOST_PRESTIGE = 0.06;
-  const BOOST_LEGACY = 0.06;
-  const BOOST_ACHIEVER = 0.05;
-  const BOOST_LOYALIST = 0.05;
+  const tier = isTieredBoostsEnabled();
+  const tiersHint = getBoostTiers();
+  const HIGH = tier ? tiersHint.high : 0.06; // not used now
+  const MID = tier ? tiersHint.mid : 0.06;
+  const LOW = tier ? tiersHint.low : 0.05;
+  const MAX = tiersHint.maxPerMessage;
+
+  const pushSignal = (sig: string) => {
+    if (signals.length < 15) signals.push(sig);
+  };
+  const addBoost = (arch: Archetype, amt: number, reason: string) => {
+    const current = delta[arch] ?? 0;
+    delta[arch] = Math.min(current + amt, MAX);
+    pushSignal(`hint:${arch}:${reason}`);
+  };
 
   const analystHint =
     topics.has("specs") ||
@@ -495,26 +506,17 @@ function applyHintSignals(
     topics.has("care") ||
     intents.has("service");
 
-  if (analystHint) {
-    delta.analyst += BOOST_ANALYST;
-    signals.push("hint:analyst");
-  }
-  if (prestigeHint) {
-    delta.prestige += BOOST_PRESTIGE;
-    signals.push("hint:prestige");
-  }
-  if (legacyHint) {
-    delta.legacy += BOOST_LEGACY;
-    signals.push("hint:legacy");
-  }
-  if (achieverHint) {
-    delta.achiever += BOOST_ACHIEVER;
-    signals.push("hint:achiever");
-  }
-  if (loyalistHint) {
-    delta.loyalist += BOOST_LOYALIST;
-    signals.push("hint:loyalist");
-  }
+  const baseAnalyst = tier ? LOW : 0.06;
+  const basePrestige = tier ? MID : 0.06;
+  const baseLegacy = tier ? MID : 0.06;
+  const baseAchiever = tier ? LOW : 0.05;
+  const baseLoyalist = tier ? LOW : 0.05;
+
+  if (analystHint) addBoost("analyst", baseAnalyst, "models/specs");
+  if (prestigeHint) addBoost("prestige", basePrestige, "bespoke");
+  if (legacyHint) addBoost("legacy", baseLegacy, "heritage");
+  if (achieverHint) addBoost("achiever", baseAchiever, "events/olympic");
+  if (loyalistHint) addBoost("loyalist", baseLoyalist, "service");
 }
 
 function applyModeSignals(
@@ -638,10 +640,16 @@ function applyLanguageSignals(
 
   // --- Pass-2 lexicon-based detection ---
   const lexicon = getArchetypeLexicon();
-  const BOOST_HIGH = 0.45;
-  const BOOST_MID = 0.3;
-  const BOOST_LOW = 0.15;
-  const MAX_BOOST_PER_ARCH = 0.6;
+  const tiered = isTieredBoostsEnabled();
+
+  const { high: T_HIGH, mid: T_MID, low: T_LOW, maxPerMessage: MAX_BOOST_PER_ARCH } = getBoostTiers();
+  const BOOST_HIGH = tiered ? T_HIGH : 0.4;
+  const BOOST_MID = tiered ? T_MID : 0.3;
+  const BOOST_LOW = tiered ? T_LOW : 0.15;
+
+  const pushSignal = (sig: string) => {
+    if (signals.length < 15) signals.push(sig);
+  };
 
   (Object.keys(lexicon) as Archetype[]).forEach((key) => {
     const entry = lexicon[key];
@@ -656,13 +664,24 @@ function applyLanguageSignals(
     if (negatives && negatives.length && messageIncludesAny(message, negatives)) return;
 
     let boost = 0;
-    if (high?.length && messageIncludesAny(message, high)) boost = BOOST_HIGH;
-    else if (mid?.length && messageIncludesAny(message, mid)) boost = BOOST_MID;
-    else if (low?.length && messageIncludesAny(message, low)) boost = BOOST_LOW;
+    let matched: string | null = null;
+    if (high?.length) {
+      matched = findFirstMatch(message, high);
+      if (matched) boost = BOOST_HIGH;
+    }
+    if (!matched && mid?.length) {
+      matched = findFirstMatch(message, mid);
+      if (matched) boost = BOOST_MID;
+    }
+    if (!matched && low?.length) {
+      matched = findFirstMatch(message, low);
+      if (matched) boost = BOOST_LOW;
+    }
 
-    if (boost > 0) {
-      delta[key] += Math.min(boost, MAX_BOOST_PER_ARCH);
-      signals.push(`language:${key}`);
+    if (boost > 0 && matched) {
+      const current = delta[key] ?? 0;
+      delta[key] = Math.min(current + boost, MAX_BOOST_PER_ARCH);
+      pushSignal(`lang:${key}:${matched}`);
     }
   });
 

@@ -45,6 +45,8 @@ export interface PerazziAssistantRequest {
     archetype?: Archetype | null;
     /** Previous archetype vector from the last interaction, for smoothing across turns. */
     archetypeVector?: ArchetypeVector | null;
+    /** A/B experiment flag: "tiered" vs "baseline" archetype boost logic. */
+    archetypeVariant?: "tiered" | "baseline";
     /** Optional previous Responses ID to enable multi-turn state. */
     previousResponseId?: string | null;
   };
@@ -72,6 +74,13 @@ export type PerazziAdminDebugPayload = {
     thread_reset_required: boolean;
     conversationStrategy: string | null;
     enforced_thread_input: boolean;
+  };
+  /** Personality-engine metrics for this turn (optional) */
+  archetypeAnalytics?: {
+    variant: "tiered" | "baseline";
+    margin: number | null;
+    signalsUsed: string[];
+    templates: string[];
   };
   /**
    * Admin-only OpenAI request summary (never includes message text).
