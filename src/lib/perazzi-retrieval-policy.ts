@@ -8,42 +8,84 @@ export type ShouldRetrieveInput = {
 
 export type ShouldRetrieveResult = { retrieve: boolean; reason: string };
 
+const MODEL_OR_BRAND_TOKENS = [
+  "perazzi",
+  "mx 8",
+  "mx8",
+  "mx 2000",
+  "mx2000",
+  "mx",
+  "high tech",
+  "hightech",
+  "ht",
+  "tm",
+  "dc",
+  "sco",
+  "mirage",
+];
+
+const GUN_TERM_TOKENS = [
+  "fitting",
+  "fit",
+  "balance",
+  "weight",
+  "poi",
+  "point of impact",
+  "trigger",
+  "detachable trigger",
+  "group",
+  "barrel",
+  "rib",
+  "choke",
+  "stock",
+  "comb",
+  "forend",
+  "forearm",
+  "service",
+  "servicing",
+  "maintenance",
+  "repair",
+  "warranty",
+];
+
 function normalizeText(value: string | null | undefined): string {
   return (value ?? "").trim().replace(/\s+/g, " ");
 }
 
-function escapeRegex(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function isAlphaNumeric(char: string): boolean {
+  if (!char) return false;
+  const code = char.charCodeAt(0);
+  return (code >= 48 && code <= 57) || (code >= 97 && code <= 122);
 }
 
 function hasLooseToken(haystackLower: string, tokenLower: string): boolean {
-  const token = escapeRegex(tokenLower);
+  const token = tokenLower.toLowerCase();
+  if (!token) return false;
+
   // Token must be delimited by non-alphanumerics so we don't match e.g. "ht" inside "http".
-  const re = new RegExp(`(?:^|[^a-z0-9])${token}(?:[^a-z0-9]|$)`, "i");
-  return re.test(haystackLower);
+  let idx = haystackLower.indexOf(token);
+  while (idx !== -1) {
+    const before = idx === 0 ? "" : haystackLower.charAt(idx - 1);
+    const afterIdx = idx + token.length;
+    const after = afterIdx >= haystackLower.length ? "" : haystackLower.charAt(afterIdx);
+    const hasBoundaryBefore = !before || !isAlphaNumeric(before);
+    const hasBoundaryAfter = !after || !isAlphaNumeric(after);
+
+    if (hasBoundaryBefore && hasBoundaryAfter) return true;
+
+    idx = haystackLower.indexOf(token, idx + token.length);
+  }
+
+  return false;
 }
 
 function hasDomainSignal(text: string, pageUrl?: string | null): boolean {
   const lower = text.toLowerCase();
 
   // Perazzi brand / platform / model signals (keep this broad; false positives are OK because default=retrieve).
-  const modelOrBrand =
-    /\bperazzi\b/.test(lower) ||
-    /\bmx\s?8\b/.test(lower) ||
-    /\bmx\s?2000\b/.test(lower) ||
-    /\bmx\b/.test(lower) ||
-    /\bhigh\s?tech\b/.test(lower) ||
-    /\bht\b/.test(lower) ||
-    /\btm\b/.test(lower) ||
-    /\bdc\b/.test(lower) ||
-    /\bsco\b/.test(lower) ||
-    /\bmirage\b/.test(lower);
+  const modelOrBrand = MODEL_OR_BRAND_TOKENS.some((token) => hasLooseToken(lower, token));
 
-  const gunTerms =
-    /\b(fitting|fit|balance|weight|poi|point of impact)\b/.test(lower) ||
-    /\b(trigger|detachable trigger|group)\b/.test(lower) ||
-    /\b(barrel|rib|choke|stock|comb|forend|forearm)\b/.test(lower) ||
-    /\b(service|servicing|maintenance|repair|warranty)\b/.test(lower);
+  const gunTerms = GUN_TERM_TOKENS.some((token) => hasLooseToken(lower, token));
 
   let urlSignals = false;
   if (typeof pageUrl === "string" && pageUrl.trim().length > 0) {

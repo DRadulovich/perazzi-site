@@ -30,10 +30,13 @@ function toNumberOrNull(value: unknown): number | null {
   return null;
 }
 
+const PROTOTYPE_KEYS = new Set(["__proto__", "prototype", "constructor"]);
+
 function readNestedNumber(obj: unknown, path: string[]): number | null {
   let current: unknown = obj;
   for (const key of path) {
-    if (!current || typeof current !== "object" || !(key in (current as Record<string, unknown>))) return null;
+    if (!current || typeof current !== "object" || PROTOTYPE_KEYS.has(key)) return null;
+    if (!Object.prototype.hasOwnProperty.call(current, key)) return null;
     current = (current as Record<string, unknown>)[key];
   }
   return toNumberOrNull(current);

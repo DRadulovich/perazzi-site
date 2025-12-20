@@ -75,14 +75,31 @@ type RateRecord = {
 const ipRateLimit = new Map<string, RateRecord>();
 const PROJECT_ROOT = path.resolve(process.cwd());
 
+function ensurePathWithinBase(basePath: string, targetPath: string): string {
+  const normalizedBase = path.resolve(basePath);
+  const normalizedTarget = path.normalize(targetPath);
+  const relative = path.relative(normalizedBase, normalizedTarget);
+  if (relative.startsWith("..") || path.isAbsolute(relative)) {
+    throw new Error("Resolved path escapes base directory");
+  }
+  return normalizedTarget;
+}
+
 function resolveSafePath(basePath: string, ...segments: string[]): string {
   const normalizedBase = path.resolve(basePath);
-  const resolved = path.resolve(normalizedBase, ...segments);
+  const joinedPath = path.join(normalizedBase, ...segments);
+  const resolved = path.normalize(joinedPath);
   const relative = path.relative(normalizedBase, resolved);
   if (relative.startsWith("..") || path.isAbsolute(relative)) {
     throw new Error("Resolved path escapes base directory");
   }
   return resolved;
+}
+
+function readFileWithinBase(basePath: string, targetPath: string): string {
+  const safePath = ensurePathWithinBase(basePath, targetPath);
+  // nosemgrep: javascript_pathtraversal_rule-non-literal-fs-filename -- path is constructed from fixed segments and validated to stay under the allowed base.
+  return fs.readFileSync(safePath, "utf8");
 }
 
 const ADMIN_DEBUG_HEADER = "x-perazzi-admin-debug";
@@ -263,15 +280,15 @@ function getRetrievalPolicy(): RetrievalPolicy {
   return "hybrid";
 }
 
-const PHASE_ONE_SPEC_PATH = resolveSafePath(
+const PHASE_ONE_SPEC_BASE = resolveSafePath(
   PROJECT_ROOT,
   "V2-PGPT",
   "V2_PreBuild-Docs",
   "V2_REDO_Docs",
   "V2_REDO_Phase-1",
-  "V2_REDO_assistant-spec.md",
 );
-const PHASE_ONE_SPEC = fs.readFileSync(PHASE_ONE_SPEC_PATH, "utf8");
+const PHASE_ONE_SPEC_PATH = resolveSafePath(PHASE_ONE_SPEC_BASE, "V2_REDO_assistant-spec.md");
+const PHASE_ONE_SPEC = readFileWithinBase(PHASE_ONE_SPEC_BASE, PHASE_ONE_SPEC_PATH);
 
 const STYLE_EXEMPLARS = `
 Tone & Style Exemplars (do not quote verbatim; use as a feel target)
@@ -2340,8 +2357,9 @@ function logPostValidate(params: {
 
 function appendEvalLog(entry: Record<string, unknown>) {
   try {
-    fs.mkdirSync(path.dirname(CONVERSATION_LOG_PATH), { recursive: true });
-    fs.appendFileSync(CONVERSATION_LOG_PATH, `${JSON.stringify(entry)}\n`, "utf8");
+    const safeLogPath = ensurePathWithinBase(LOG_DIR, CONVERSATION_LOG_PATH);
+    fs.mkdirSync(LOG_DIR, { recursive: true });
+    fs.appendFileSync(safeLogPath, `${JSON.stringify(entry)}\n`, "utf8");
   } catch {
     // Ignore logging failures to avoid impacting response flow
   }

@@ -34,7 +34,9 @@ function readNestedNumber(obj: unknown, path: string[]): number | null {
   let current: unknown = obj;
   for (const key of path) {
     if (!isObjectWithSafeKey(current, key)) return null;
-    current = (current as Record<string, unknown>)[key];
+    const descriptor = Object.getOwnPropertyDescriptor(current as Record<string, unknown>, key);
+    if (!descriptor || descriptor.get || descriptor.set) return null;
+    current = descriptor.value as unknown;
   }
   return toNumberOrNull(current);
 }
