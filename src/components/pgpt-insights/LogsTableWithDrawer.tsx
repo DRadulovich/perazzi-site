@@ -38,9 +38,9 @@ function truncate(text: string, length = 200) {
 
 function oneLine(text: string): string {
   return String(text ?? "")
-    .replaceAll("\r\n", "\n")
-    .replaceAll(/\s*\n\s*/g, " ")
-    .replaceAll(/\s+/g, " ")
+    .replace(/\r\n/g, "\n")
+    .replace(/\s*\n\s*/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
@@ -59,11 +59,16 @@ function toNumberOrNull(value: unknown): number | null {
   return null;
 }
 
+const POLLUTION_KEYS = new Set(["__proto__", "prototype", "constructor"]);
+
 function readNestedNumber(obj: unknown, path: string[]): number | null {
   let current: unknown = obj;
   for (const key of path) {
-    if (!current || typeof current !== "object" || !(key in (current as Record<string, unknown>))) return null;
-    current = (current as Record<string, unknown>)[key];
+    if (POLLUTION_KEYS.has(key)) return null;
+    if (!current || typeof current !== "object") return null;
+    const descriptor = Object.getOwnPropertyDescriptor(current as object, key);
+    if (!descriptor) return null;
+    current = descriptor.value as unknown;
   }
   return toNumberOrNull(current);
 }
