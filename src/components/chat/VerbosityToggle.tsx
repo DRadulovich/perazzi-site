@@ -41,7 +41,7 @@ export function VerbosityToggle({ value, onChange, disabled = false }: Verbosity
                 "block rounded-full px-3 py-1 text-xs font-semibold transition",
                 "text-ink-muted hover:bg-subtle",
                 "peer-checked:bg-ink peer-checked:text-card peer-checked:shadow-sm",
-                "peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink",
+                "peer-focus-visible:outline peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink",
                 "peer-disabled:cursor-not-allowed peer-disabled:opacity-60",
               ].join(" ")}
               title={option.title}

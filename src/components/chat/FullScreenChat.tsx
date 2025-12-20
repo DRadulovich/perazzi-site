@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
 
@@ -9,11 +9,17 @@ type FullScreenChatProps = Readonly<{
 }>;
 
 export function FullScreenChat({ initialPrompt = null }: FullScreenChatProps) {
-  const [pendingPrompt, setPendingPrompt] = useState<ChatTriggerPayload | null>(initialPrompt);
+  const promptKey = initialPrompt ? JSON.stringify(initialPrompt) : "no-initial-prompt";
 
-  useEffect(() => {
-    setPendingPrompt(initialPrompt ?? null);
-  }, [initialPrompt]);
+  return <KeyedFullScreenChat key={promptKey} initialPrompt={initialPrompt} />;
+}
+
+type KeyedFullScreenChatProps = {
+  readonly initialPrompt: ChatTriggerPayload | null;
+};
+
+function KeyedFullScreenChat({ initialPrompt }: KeyedFullScreenChatProps) {
+  const [pendingPrompt, setPendingPrompt] = useState<ChatTriggerPayload | null>(initialPrompt);
 
   return (
     <div className="flex flex-1">
@@ -21,7 +27,9 @@ export function FullScreenChat({ initialPrompt = null }: FullScreenChatProps) {
         open
         variant="sheet"
         pendingPrompt={pendingPrompt}
-        onPromptConsumed={() => setPendingPrompt(null)}
+        onPromptConsumed={() => {
+          setPendingPrompt(null);
+        }}
         className="h-full w-full"
         showResetButton
       />
