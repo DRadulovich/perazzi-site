@@ -55,7 +55,6 @@ import {
 } from "@/lib/perazziAiConfig";
 import { isTieredBoostsEnabled } from "@/config/archetype-weights";
 
-const LOW_CONFIDENCE_THRESHOLD = Number(process.env.PERAZZI_LOW_CONF_THRESHOLD ?? 0.1);
 const LOW_CONFIDENCE_MESSAGE =
   "I’m not certain enough to answer this accurately from the information I have. For a definitive answer, please contact Perazzi directly or consider rephrasing your question.";
 
@@ -419,8 +418,9 @@ const ARCHETYPE_TONE_GUIDANCE: Record<Archetype, string> = {
 };
 
 function getLowConfidenceThreshold() {
-  const value = Number(process.env.PERAZZI_LOW_CONF_THRESHOLD ?? 0);
-  return Number.isFinite(value) ? value : 0;
+  const value = Number(process.env.PERAZZI_LOW_CONF_THRESHOLD ?? 0.1);
+  if (!Number.isFinite(value)) return 0.1;
+  return Math.max(0, Math.min(1, value));
 }
 
 function getArchetypeConfidenceMin(): number {
@@ -683,12 +683,13 @@ export async function POST(request: Request) {
 
     // --- Archetype tiered boost A/B bucket (secure RNG) ---
     // Use cryptographically secure RNG for A/B bucketing to satisfy security linters
-const abPercent = Number(process.env.ARCHETYPE_AB_PERCENT ?? 0);
-const isTierBucket =
-  Number.isFinite(abPercent) &&
-  abPercent > 0 &&
-  randomInt(0, 100) < abPercent;
-    const archetypeVariant = isTierBucket ? "tiered" : "baseline";
+    const abPercent = Number(process.env.ARCHETYPE_AB_PERCENT ?? 0);
+    const isTierBucket =
+      Number.isFinite(abPercent) &&
+      abPercent > 0 &&
+      randomInt(0, 100) < abPercent;
+    const useTieredBoosts = isTieredBoostsEnabled() || isTierBucket;
+    const archetypeVariant = useTieredBoosts ? "tiered" : "baseline";
 
     // expose variant in context for logging / downstream use
     fullBody.context = {
@@ -962,6 +963,7 @@ const isTierBucket =
     const archetypeBreakdown = computeArchetypeBreakdown(
       archetypeContext,
       previousVector,
+      { useTieredBoosts },
     );
     const archetypeMetrics = computeArchetypeConfidenceMetrics(archetypeBreakdown.vector);
     const archetypeClassification = buildArchetypeClassification(archetypeBreakdown);

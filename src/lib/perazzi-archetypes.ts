@@ -147,6 +147,7 @@ function getWinnerRunnerUpAndMargin(vector: ArchetypeVector): {
 function normalizeForMatch(input: string): string {
   return input
     .toLowerCase()
+    .replace(/[-–—]/g, " ")
     .replace(/[’‘]/g, "'")
     .replace(/\s+/g, " ")
     .trim();
@@ -226,6 +227,11 @@ if (__DEV__ && typeof (globalThis as any).jest === "undefined") {
   __assertEqual(
     "phrase match across whitespace normalization",
     messageIncludesAny("point\nof\timpact", ["point of impact"]),
+    true
+  );
+  __assertEqual(
+    "hyphenated phrases normalize to spaced tokens",
+    messageIncludesAny("handed-down heirloom", ["handed-down"]),
     true
   );
 
@@ -493,13 +499,14 @@ function applyHintSignals(
   ctx: ArchetypeContext,
   delta: ArchetypeVector,
   signals: string[],
+  useTieredBoosts: boolean,
 ) {
   const intents = normalizeHintList(ctx.intents);
   const topics = normalizeHintList(ctx.topics);
 
   if (intents.size === 0 && topics.size === 0) return;
 
-  const tieredBoostsEnabled = isTieredBoostsEnabled();
+  const tieredBoostsEnabled = useTieredBoosts;
   const tiersHint = getBoostTiers();
   // (high-tier value reserved for future use)
   const MID = tieredBoostsEnabled ? tiersHint.mid : 0.06;
@@ -670,7 +677,8 @@ function applyModelSignals(
 function applyLanguageSignals(
   ctx: ArchetypeContext,
   delta: ArchetypeVector,
-  signals: string[]
+  signals: string[],
+  useTieredBoosts: boolean,
 ) {
   const message = ctx.userMessage.toLowerCase();
 
@@ -678,7 +686,7 @@ function applyLanguageSignals(
 
   // --- Pass-2 lexicon-based detection ---
   const lexicon = getArchetypeLexicon();
-  const tiered = isTieredBoostsEnabled();
+  const tiered = useTieredBoosts;
 
   const { high: T_HIGH, mid: T_MID, low: T_LOW, maxPerMessage: MAX_BOOST_PER_ARCH } = getBoostTiers();
   const BOOST_HIGH = tiered ? T_HIGH : 0.4;
@@ -731,8 +739,10 @@ function applyLanguageSignals(
 
 export function computeArchetypeBreakdown(
   ctx: ArchetypeContext,
-  previousVector?: ArchetypeVector | null
+  previousVector?: ArchetypeVector | null,
+  options?: { useTieredBoosts?: boolean },
 ): ArchetypeBreakdown {
+  const useTieredBoosts = options?.useTieredBoosts ?? isTieredBoostsEnabled();
   const startingVector = previousVector
     ? { ...previousVector }
     : getNeutralArchetypeVector();
@@ -745,8 +755,8 @@ export function computeArchetypeBreakdown(
   applyModeSignals(ctx, priorDelta, signalsUsed);
   applyPageUrlSignals(ctx, priorDelta, signalsUsed);
   applyModelSignals(ctx, priorDelta, signalsUsed);
-  applyLanguageSignals(ctx, languageDelta, signalsUsed);
-  applyHintSignals(ctx, languageDelta, signalsUsed);
+  applyLanguageSignals(ctx, languageDelta, signalsUsed, useTieredBoosts);
+  applyHintSignals(ctx, languageDelta, signalsUsed, useTieredBoosts);
 
   const priorScale = computePriorScale(startingVector, languageDelta);
   if (hasAnyDelta(priorDelta) && priorScale < 1) {
