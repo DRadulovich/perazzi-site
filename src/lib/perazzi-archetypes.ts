@@ -162,20 +162,35 @@ function escapeRegex(input: string): string {
   return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function isWordBoundary(char: string | undefined): boolean {
+  // Treat start/end of string or any non-alphanumeric / apostrophe char as a boundary.
+  return !char || !/[a-z0-9']/i.test(char);
+}
+
 function findFirstMatch(message: string, needles: string[]): string | null {
   const normalizedMessage = normalizeForMatch(message);
   if (!normalizedMessage) return null;
   const tokenSet = tokenizeToWordSet(normalizedMessage);
+
   for (const rawNeedle of needles) {
     if (!rawNeedle) continue;
     const needle = normalizeForMatch(rawNeedle);
     if (!needle) continue;
+
     if (/\s/.test(needle)) {
-      // Multi-word phrase: require word boundaries at both ends to avoid substring false positives.
-      const re = new RegExp(`\\b${escapeRegex(needle)}\\b`, "i");
-      if (re.test(normalizedMessage)) return rawNeedle;
+      // Multi-word phrase: use indexOf + boundary checks instead of dynamic RegExp.
+      let idx = normalizedMessage.indexOf(needle);
+      while (idx !== -1) {
+        const before = normalizedMessage[idx - 1];
+        const after = normalizedMessage[idx + needle.length];
+        if (isWordBoundary(before) && isWordBoundary(after)) {
+          return rawNeedle;
+        }
+        idx = normalizedMessage.indexOf(needle, idx + needle.length);
+      }
       continue;
     }
+
     if (tokenSet.has(needle)) return rawNeedle;
   }
   return null;
@@ -203,7 +218,7 @@ function __assertEqual(name: string, actual: boolean, expected: boolean) {
 const __DEV__ = process.env.NODE_ENV === "development";
 
 // Self-test block executes only in local dev (not in Jest or prod bundle)
-if (__DEV__ && typeof (globalThis as any).jest === "undefined") {
+if (__DEV__ && typeof (globalThis as { jest?: unknown }).jest === "undefined") {
   __assertEqual(
     "broadcast should not match cast",
     messageIncludesAny("broadcast", ["cast"]),

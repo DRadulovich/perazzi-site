@@ -6,6 +6,9 @@ export type StackedAreaPoint = {
   line?: number | null;
 };
 
+// Minimum number of points required to render a trend area chart
+const MIN_POINTS = 2;
+
 type StackedAreaChartProps = {
   points: StackedAreaPoint[];
   order: string[];
@@ -64,15 +67,17 @@ export function StackedAreaChart({
   height = 320,
   className,
 }: StackedAreaChartProps) {
-  if (!points.length || order.length === 0) {
+  // Fail-soft when there are no points or not enough data to construct a trend
+  if (points.length < MIN_POINTS || order.length === 0) {
     return (
       <div className={cn("rounded-2xl border border-border bg-card/80 p-4 text-xs text-muted-foreground", className)}>
-        No archetype data available for this range.
+        Need at least 2 data points to draw a trend.
       </div>
     );
   }
 
-  const width = 920;
+  // Virtual SVG width – keeps math deterministic while allowing responsive scaling via width="100%"
+  const width = 1000;
   const padX = 52;
   const padY = 36;
   const innerHeight = height - padY * 2;
@@ -103,6 +108,7 @@ export function StackedAreaChart({
     return { key, path };
   }).filter(Boolean) as Array<{ key: string; path: string }>;
 
+  // Build margin overlay path
   const marginPath = points.reduce((acc, point, idx) => {
     if (point.line === null || point.line === undefined || !Number.isFinite(point.line)) return acc;
     const x = padX + idx * step;
@@ -113,6 +119,9 @@ export function StackedAreaChart({
 
   const labelEvery = points.length <= 12 ? 1 : Math.ceil(points.length / 12);
 
+  // Determine if we have a usable margin line (>=2 points)
+  const showMarginLegend = marginPath !== "";
+
   return (
     <div className={cn("rounded-2xl border border-border bg-card shadow-sm p-4", className)}>
       <div className="flex items-start justify-between gap-3">
@@ -121,10 +130,12 @@ export function StackedAreaChart({
           {subtitle ? <div className="text-[11px] text-muted-foreground">{subtitle}</div> : null}
         </div>
         <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <span className="h-2 w-3 rounded-sm bg-blue-500/80" aria-hidden="true" />
-            {lineLabel}
-          </span>
+          {showMarginLegend ? (
+            <span className="inline-flex items-center gap-1">
+              <span className="h-2 w-3 rounded-sm bg-blue-500/80" aria-hidden="true" />
+              {lineLabel}
+            </span>
+          ) : null}
           {order.map((key) => (
             <span key={key} className="inline-flex items-center gap-1">
               <span
@@ -138,7 +149,7 @@ export function StackedAreaChart({
         </div>
       </div>
 
-      <svg viewBox={`0 0 ${width} ${height}`} className="mt-3 w-full" role="img" aria-label="Archetype trend stacked area">
+      <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={height} className="mt-3 w-full" role="img" aria-label="Archetype trend stacked area">
         <defs>
           <linearGradient id="margin-line" x1="0" x2="0" y1="0" y2="1">
             <stop stopColor="#3b82f6" stopOpacity="0.9" offset="0%" />

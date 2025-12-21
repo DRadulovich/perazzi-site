@@ -16,8 +16,14 @@ type BarChartProps = {
 };
 
 export function BarChart({ title, subtitle, data, className, maxBars }: BarChartProps) {
-  const rows = maxBars ? data.slice(0, maxBars) : data;
-  const maxVal = Math.max(...rows.map((d) => d.value), 1);
+    // Trim list to maxBars (if provided) and ensure values are finite numbers
+  const rows = (maxBars ? data.slice(0, maxBars) : data).map((d) => ({
+    ...d,
+    value: typeof d.value === "number" && Number.isFinite(d.value) ? d.value : 0,
+  }));
+
+  // Compute the maximum value after sanitisation; if all zeros treat as 0
+  const maxVal = rows.length ? Math.max(...rows.map((d) => d.value), 0) : 0;
 
   return (
     <div className={cn("rounded-2xl border border-border bg-card shadow-sm p-4", className)}>
@@ -26,7 +32,7 @@ export function BarChart({ title, subtitle, data, className, maxBars }: BarChart
         {subtitle ? <div className="text-[11px] text-muted-foreground">{subtitle}</div> : null}
       </div>
 
-      {rows.length === 0 ? (
+      {rows.length === 0 || maxVal === 0 ? (
         <p className="mt-4 text-xs text-muted-foreground">No data available.</p>
       ) : (
         <div className="mt-3 space-y-2">

@@ -28,7 +28,11 @@ export default async function QualityPage({
   const streakRaw = Number.parseInt(resolvedSearchParams.streak ?? "3", 10);
   const minStreak = Number.isFinite(streakRaw) && streakRaw > 0 ? streakRaw : 3;
 
-  const rows = await getLowMarginSessions(days, threshold, minStreak, 80);
+  // NOTE: We intentionally cap the result set to the most recent 50 sessions for now.
+  // This avoids silent truncation at an arbitrary number (was 80) and keeps UI fast.
+  // Future improvement: add pagination or total-count display.
+  const limit = 50;
+  const rows = await getLowMarginSessions(days, threshold, minStreak, limit);
 
   return (
     <div className="space-y-6">
@@ -36,7 +40,7 @@ export default async function QualityPage({
         breadcrumb="Quality"
         title="Low-Margin Sessions"
         description="Sessions with ≥ consecutive low-margin archetype calls. Useful for drift and A/B regressions."
-        kicker={`Margin < ${(threshold * 100).toFixed(1)}% · streak ≥ ${minStreak} · last ${days} days`}
+        kicker={`Margin < ${(threshold * 100).toFixed(1)}% · streak ≥ ${minStreak} · last ${days} days · latest ${limit}`}
       />
 
       <div className="rounded-2xl border border-border bg-card shadow-sm">

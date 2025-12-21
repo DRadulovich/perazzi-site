@@ -12,14 +12,15 @@ export async function GET(request: Request) {
 
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
-    return NextResponse.json({ error: "DATABASE_URL not set" }, { status: 500 });
+    return NextResponse.json({ error: "CONFIG_MISSING", detail: "DATABASE_URL not set" }, { status: 503 });
   }
 
   const ssl = getPgSslOptions();
   const { sslMode, hasCa } = getPgSslDiagnostics();
   logTlsDiagForDb("pg.alert.stream", connectionString, sslMode, { hasCa });
 
-  const client = new Client({ connectionString, ssl });
+  // 5-second connection timeout to fail fast on network issues
+  const client = new Client({ connectionString, ssl, connectionTimeoutMillis: 5_000 });
 
   try {
     await client.connect();
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("[pgpt-insights] failed to LISTEN archetype_alert", error);
     await client.end().catch(() => {});
-    return NextResponse.json({ error: "Could not connect to Postgres channel" }, { status: 500 });
+    return NextResponse.json({ error: "PG_LISTEN_FAILED", detail: (error as Error).message }, { status: 503 });
   }
 
   const stream = new ReadableStream({

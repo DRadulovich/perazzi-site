@@ -15,7 +15,13 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const headerList = await headers();
   const initialTheme = resolveInitialTheme(headerList);
   const t = await getTranslations("Header");
-  const qaOpenCount = await fetchOpenQaFlagCount();
+  let qaOpenCount: number = 0;
+  try {
+    qaOpenCount = await fetchOpenQaFlagCount();
+  } catch (error) {
+    // Fail-soft: keep the admin shell alive even if the count query fails
+    console.error("[admin-layout] failed to fetch QA open flag count", error);
+  }
 
   const navItems: AdminSidebarNavItem[] = [
     {
@@ -34,13 +40,12 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       matchers: [{ type: "startsWith", prefix: "/admin/pgpt-insights/qa" }],
     },
     {
-      href: "/admin/pgpt-insights?view=triage#logs",
+      href: "/admin/pgpt-insights/session",
       label: "Sessions",
       description: "Per-session explorer & timelines",
       icon: <Clock3 className="h-4 w-4" strokeWidth={2} />,
       matchers: [
         { type: "startsWith", prefix: "/admin/pgpt-insights/session" },
-        { type: "searchParam", key: "view", value: "triage", path: "/admin/pgpt-insights" },
       ],
     },
     {

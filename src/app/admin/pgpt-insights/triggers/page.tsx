@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { WeekNav } from "./WeekNav";
 
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { BarChart } from "@/components/pgpt-insights/charts/BarChart";
@@ -17,6 +17,23 @@ export default async function TriggerTermsPage({
   const resolvedSearchParams = (await searchParams) ?? {};
 
   const weeks = await getTriggerTermWeeks(16);
+
+  // Graceful early exit when the materialized view returns no weeks
+  if (weeks.length === 0) {
+    return (
+      <div className="space-y-6">
+        <AdminPageHeader
+          breadcrumb="Triggers"
+          title="Trigger Terms"
+          description="Weekly signals driving archetype selection."
+          kicker="No data"
+        />
+        <div className="rounded-xl border border-dashed border-border/70 bg-muted/30 p-6 text-xs text-muted-foreground">
+          No trigger-term weeks found. The underlying view may be disabled.
+        </div>
+      </div>
+    );
+  }
   const selectedWeek =
     weeks.find((w) => w === resolvedSearchParams.week) ??
     weeks[0] ??
@@ -38,28 +55,7 @@ export default async function TriggerTermsPage({
         kicker={selectedWeek ? `Week of ${new Date(selectedWeek).toLocaleDateString()}` : "No week selected"}
       />
 
-      <div className="flex flex-wrap items-center gap-2">
-        {weeks.length === 0 ? (
-          <span className="text-xs text-muted-foreground">No weeks found.</span>
-        ) : (
-          weeks.map((week) => {
-            const isActive = week === selectedWeek;
-            return (
-              <Link
-                key={week}
-                href={`/admin/pgpt-insights/triggers?week=${week}`}
-                className={`inline-flex items-center rounded-lg border px-3 py-1 text-[11px] font-semibold transition ${
-                  isActive
-                    ? "border-blue-500/60 bg-blue-500/10 text-blue-700"
-                    : "border-border bg-muted/40 text-foreground hover:bg-muted/60"
-                }`}
-              >
-                {new Date(week).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-              </Link>
-            );
-          })
-        )}
-      </div>
+      <WeekNav weeks={weeks} />
 
       <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
         <BarChart
@@ -87,7 +83,7 @@ export default async function TriggerTermsPage({
                 <tbody>
                   {tokens.map((row) => (
                     <tr key={row.token} className="border-b border-border/50">
-                      <td className="px-3 py-2">{row.token}</td>
+                      <td className="px-3 py-2 max-w-[160px] truncate" title={row.token}>{row.token}</td>
                       <td className="px-3 py-2 text-right tabular-nums">{formatCompactNumber(row.hits)}</td>
                     </tr>
                   ))}

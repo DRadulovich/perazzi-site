@@ -21,9 +21,16 @@ function normalizeIntentLabel(intent: string | null) {
   return label || "(none)";
 }
 
-export function buildHeatmap(rows: TemplateUsageRow[]) {
+type HeatmapColumn = { key: string; label: string; tooltip?: string };
+
+export function buildHeatmap(rows: TemplateUsageRow[], maxRows = 40): {
+  columns: HeatmapColumn[];
+  rows: Array<{ archetype: string; total: number; cells: Array<{ key: string; hits: number }> }>;
+  omitted: number;
+  rowOmitted: number;
+} {
   if (rows.length === 0) {
-    return { columns: [], rows: [], omitted: 0 };
+    return { columns: [], rows: [], omitted: 0, rowOmitted: 0 };
   }
 
   const cellMap = new Map<string, number>();
@@ -47,7 +54,7 @@ export function buildHeatmap(rows: TemplateUsageRow[]) {
   const maxColumns = 10;
   const primaryTemplates = sortedTemplates.slice(0, maxColumns);
   const omittedTemplates = sortedTemplates.slice(maxColumns);
-  const columns = primaryTemplates.map(([template]) => ({ key: template, label: template }));
+  const columns: HeatmapColumn[] = primaryTemplates.map(([template]) => ({ key: template, label: template }));
 
   if (omittedTemplates.length > 0) {
     columns.push({
@@ -57,7 +64,10 @@ export function buildHeatmap(rows: TemplateUsageRow[]) {
   }
 
   const rowEntries = [...rowTotals.entries()].sort((a, b) => b[1] - a[1]);
-  const rowsPrepared = rowEntries.map(([key, total]) => {
+  const limitedRowEntries = rowEntries.slice(0, maxRows);
+  const rowOmitted = rowEntries.length - limitedRowEntries.length;
+
+  const rowsPrepared = limitedRowEntries.map(([key, total]) => {
     const baseCells = primaryTemplates.map(([template]) => ({
       key: template,
       hits: cellMap.get(`${key}||${template}`) ?? 0,
@@ -70,21 +80,32 @@ export function buildHeatmap(rows: TemplateUsageRow[]) {
     return { archetype: key, total, cells };
   });
 
-  return { columns, rows: rowsPrepared, omitted: omittedTemplates.length };
+  // Attach tooltip listing omitted template names (comma-separated, truncated)
+  if (omittedTemplates.length > 0) {
+    const tooltip = omittedTemplates.map(([name]) => name).join(", ").slice(0, 200);
+    const otherCol = columns.find((c) => c.key === "__other__");
+    if (otherCol) otherCol.tooltip = tooltip;
+  }
+
+  return { columns, rows: rowsPrepared, omitted: omittedTemplates.length, rowOmitted };
 }
 
 export default async function TemplateHeatmapPage({
   searchParams,
 }: Readonly<{
-  searchParams?: Promise<{ days?: string }>;
+  searchParams?: Promise<{ days?: string; rows?: string }>;
 }>) {
   await withAdminAuth();
   const resolvedSearchParams = (await searchParams) ?? {};
   const daysRaw = Number.parseInt(resolvedSearchParams.days ?? "45", 10);
   const days = Number.isFinite(daysRaw) && daysRaw > 0 ? Math.min(daysRaw, 120) : 45;
 
+  const paramsTyped = resolvedSearchParams as { days?: string; rows?: string };
+  const rowLimitRaw = Number.parseInt(paramsTyped.rows ?? "40", 10);
+  const rowLimit = Number.isFinite(rowLimitRaw) && rowLimitRaw > 0 ? Math.min(rowLimitRaw, 200) : 40;
+
   const templateRows = await getTemplateUsageHeatmap(days);
-  const dataset = buildHeatmap(templateRows);
+  const dataset = buildHeatmap(templateRows, rowLimit);
 
   return (
     <div className="space-y-6">
@@ -97,11 +118,7 @@ export default async function TemplateHeatmapPage({
 
       <HeatMapGrid
         title="Template usage"
-        subtitle={
-          dataset.omitted > 0
-            ? `Top ${dataset.columns.length - 1} templates · ${dataset.omitted} grouped into Other`
-            : `Top ${dataset.columns.length} templates`
-        }
+        subtitle={`Top ${dataset.columns.length} templates · showing ${dataset.rows.length}${dataset.rowOmitted && dataset.rowOmitted > 0 ? ` ( ${dataset.rowOmitted} more rows hidden )` : ""}`}
         columns={dataset.columns}
         rows={dataset.rows}
         className="min-w-0"

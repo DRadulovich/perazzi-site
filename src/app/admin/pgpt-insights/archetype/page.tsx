@@ -2,7 +2,7 @@ import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { BarChart } from "@/components/pgpt-insights/charts/BarChart";
 import { StackedAreaChart, type StackedAreaPoint } from "@/components/pgpt-insights/charts/StackedAreaChart";
 import { ValueCard } from "@/components/pgpt-insights/charts/ValueCard";
-import { CANONICAL_ARCHETYPE_ORDER } from "@/lib/pgpt-insights/constants";
+import { CANONICAL_ARCHETYPE_ORDER, UI_TIMEZONE } from "@/lib/pgpt-insights/constants";
 import {
   getArchetypeDailySeries,
   getArchetypeMarginSummary,
@@ -23,10 +23,12 @@ const ARCHETYPE_COLORS: Record<string, string> = {
   Unknown: "#94a3b8",
 };
 
-function shortDayLabel(day: string) {
+// Format YYYY-MM-DD strings into "Apr 16" using the canonical UI time-zone so
+// server-side and client-side renders match and avoid hydration warnings.
+function formatDayLabel(day: string, tz: string = UI_TIMEZONE) {
   const d = new Date(day);
   if (Number.isNaN(d.getTime())) return day;
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return d.toLocaleDateString("en-US", { timeZone: tz, month: "short", day: "numeric" });
 }
 
 function normalizeArchetype(label: string | null): string {
@@ -81,7 +83,7 @@ export function buildTrendPoints(
       segments[key] = entry.segments[key];
     });
     return {
-      label: shortDayLabel(day),
+      label: formatDayLabel(day),
       segments,
       line: margin,
     };
@@ -114,12 +116,12 @@ function formatVariantData(rows: ArchetypeVariantSplitRow[]): ArchetypeVariantSp
 }
 
 export default async function ArchetypePage({
-  searchParams,
+  searchParams = {},
 }: Readonly<{
-  searchParams?: Promise<{ days?: string }>;
+  searchParams?: { days?: string };
 }>) {
   await withAdminAuth();
-  const resolvedSearchParams = (await searchParams) ?? {};
+  const resolvedSearchParams = searchParams ?? {};
   const daysRaw = Number.parseInt(resolvedSearchParams.days ?? "45", 10);
   const days = Number.isFinite(daysRaw) && daysRaw > 0 ? Math.min(daysRaw, 120) : 45;
 

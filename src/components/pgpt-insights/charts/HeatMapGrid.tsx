@@ -3,6 +3,7 @@ import { HeatmapMatrix } from "./HeatmapMatrix";
 export type HeatMapColumn = {
   key: string;
   label: string;
+  tooltip?: string;
 };
 
 export type HeatMapRow = {

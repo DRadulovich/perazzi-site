@@ -9,7 +9,7 @@ type AlertEvent = {
   ref?: number | null;
 };
 
-type StreamStatus = "connecting" | "open" | "closed";
+type StreamStatus = "connecting" | "open" | "reconnecting" | "closed";
 
 function formatTime(iso: string) {
   const date = new Date(iso);
@@ -17,15 +17,32 @@ function formatTime(iso: string) {
   return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
+function formatPct(value: unknown): string {
+  return typeof value === "number" && Number.isFinite(value) ? `${(value * 100).toFixed(1)}%` : "—";
+}
+
 export function AlertStream() {
   const [events, setEvents] = useState<AlertEvent[]>([]);
   const [status, setStatus] = useState<StreamStatus>("connecting");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     const source = new EventSource("/api/admin/pgpt-insights/alerts");
 
+    // Connection successfully (re)established
     source.onopen = () => setStatus("open");
-    source.onerror = () => setStatus("closed");
+
+    // onerror fires for transient issues; EventSource keeps trying.
+    source.onerror = () => {
+      if (source.readyState === EventSource.CLOSED) {
+        setStatus("closed");
+        setErrorMsg(
+          "Real-time alerts offline. Ensure LISTEN privilege on channel archetype_alert and verify DATABASE_URL."
+        );
+      } else {
+        setStatus("reconnecting");
+      }
+    };
 
     source.onmessage = (event) => {
       try {
@@ -49,8 +66,20 @@ export function AlertStream() {
   }, []);
 
   const tone =
-    status === "open" ? "bg-emerald-500" : status === "connecting" ? "bg-amber-500" : "bg-red-500";
-  const statusLabel = status === "open" ? "Connected" : status === "connecting" ? "Connecting" : "Disconnected";
+    status === "open"
+      ? "bg-emerald-500"
+      : status === "reconnecting" || status === "connecting"
+      ? "bg-amber-500"
+      : "bg-red-500";
+
+  const statusLabel =
+    status === "open"
+      ? "Connected"
+      : status === "reconnecting"
+      ? "Reconnecting"
+      : status === "connecting"
+      ? "Connecting"
+      : "Disconnected";
 
   return (
     <div className="rounded-2xl border border-border bg-card shadow-sm p-4">
@@ -65,7 +94,9 @@ export function AlertStream() {
         </div>
       </div>
 
-      {events.length === 0 ? (
+      {errorMsg ? (
+        <p className="mt-4 rounded-md border border-red-300/60 bg-red-50 p-3 text-xs text-red-700">{errorMsg}</p>
+      ) : events.length === 0 ? (
         <p className="mt-4 text-xs text-muted-foreground">Waiting for alerts...</p>
       ) : (
         <div className="mt-3 space-y-2">
@@ -80,8 +111,8 @@ export function AlertStream() {
               </div>
               {(evt.curr !== undefined || evt.ref !== undefined) && (
                 <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
-                  {evt.curr !== undefined && evt.curr !== null ? <span>curr: {(evt.curr * 100).toFixed(1)}%</span> : null}
-                  {evt.ref !== undefined && evt.ref !== null ? <span>ref: {(evt.ref * 100).toFixed(1)}%</span> : null}
+                  {evt.curr !== undefined ? <span>curr: {formatPct(evt.curr)}</span> : null}
+                  {evt.ref !== undefined ? <span>ref: {formatPct(evt.ref)}</span> : null}
                 </div>
               )}
             </div>
