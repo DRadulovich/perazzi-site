@@ -4,6 +4,8 @@ type ProcessNoteProps = {
   dataAnalyticsId?: string;
 };
 
+import SafeHtml from "@/components/SafeHtml";
+
 export function ProcessNote({
   title,
   html,
@@ -22,9 +24,9 @@ export function ProcessNote({
         >
           {title}
         </p>
-        <div
+        <SafeHtml
           className="prose prose-sm max-w-none leading-relaxed text-ink md:prose-lg"
-          dangerouslySetInnerHTML={{ __html: html }}
+          html={html}
         />
       </div>
     </section>

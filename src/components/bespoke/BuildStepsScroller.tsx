@@ -2,6 +2,7 @@
 
 import NextImage from "next/image";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import SafeHtml from "@/components/SafeHtml";
 import { useMemo, useRef, useState, type MouseEvent } from "react";
 import type { FittingStage } from "@/types/build";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -29,10 +30,11 @@ export function BuildStepsScroller({
   initialStepId,
   onStepView,
   onStepCta,
-  pinnedBreakpoint = "lg",
+  pinnedBreakpoint: _pinnedBreakpoint = "lg",
   reduceMotion,
   skipTargetId = "build-steps-end",
 }: BuildStepsScrollerProps) {
+  void _pinnedBreakpoint; // reserved for future responsive layout options
   const trackerRef = useAnalyticsObserver("BuildStepsSeen");
   const prefersReducedMotion = useReducedMotion();
   const shouldReduceMotion = reduceMotion ?? prefersReducedMotion;
@@ -304,11 +306,9 @@ export function BuildStepsScroller({
                                   >
                                     <div className="space-y-4 pt-4">
                                       {step.bodyHtml ? (
-                                        <div
+                                        <SafeHtml
                                           className="prose prose-sm max-w-none text-ink-muted sm:prose"
-                                          dangerouslySetInnerHTML={{
-                                            __html: step.bodyHtml,
-                                          }}
+                                          html={step.bodyHtml}
                                         />
                                       ) : null}
                                       <div className="flex flex-wrap items-center justify-between gap-4 pt-2">

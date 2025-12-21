@@ -1,4 +1,5 @@
 import type { ShotgunsSeriesEntry } from "@/types/catalog";
+import SafeHtml from "@/components/SafeHtml";
 
 type SeriesStoryProps = {
   html: ShotgunsSeriesEntry["storyHtml"];
@@ -7,7 +8,7 @@ type SeriesStoryProps = {
 export function SeriesStory({ html }: SeriesStoryProps) {
   return (
     <section className="prose prose-sm max-w-none text-ink">
-      <div dangerouslySetInnerHTML={{ __html: html }} />
+      <SafeHtml html={html} />
     </section>
   );
 }

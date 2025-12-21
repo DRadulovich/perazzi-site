@@ -1,6 +1,7 @@
 "use client";
 
 import type { GuidesSection } from "@/types/service";
+import SafeHtml from "@/components/SafeHtml";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 
@@ -48,9 +49,9 @@ export function CareGuidesDownloads({ guidesSection }: CareGuidesDownloadsProps)
             className="rounded-2xl border border-border/75 bg-card/75 p-4 shadow-sm"
           >
             <h3 className="text-lg font-semibold text-ink">{guide.title}</h3>
-            <div
+            <SafeHtml
               className="text-sm leading-relaxed text-ink-muted"
-              dangerouslySetInnerHTML={{ __html: guide.summaryHtml }}
+              html={guide.summaryHtml}
             />
             <a
               href={guide.fileUrl}

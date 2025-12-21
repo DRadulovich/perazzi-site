@@ -1,4 +1,5 @@
 import Image from "next/image";
+import SafeHtml from "@/components/SafeHtml";
 import type { AssuranceContent } from "@/types/build";
 
 type AssuranceBlockProps = Readonly<{
@@ -30,9 +31,9 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
           <p className="text-lg font-semibold text-ink">{label}</p>
         ) : null}
         {body ? (
-          <div
+          <SafeHtml
             className="prose prose-base max-w-none leading-relaxed text-ink md:prose-lg"
-            dangerouslySetInnerHTML={{ __html: body }}
+            html={body}
           />
         ) : null}
         {quote ? (

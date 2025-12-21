@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
+import SafeHtml from "@/components/SafeHtml";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -92,9 +93,9 @@ export function ArticleGrid({
                 </p>
                 <h3 className="text-lg font-semibold text-ink">{item.title}</h3>
                 {item.excerptHtml ? (
-                  <div
+                  <SafeHtml
                     className="prose prose-sm text-ink-muted"
-                    dangerouslySetInnerHTML={{ __html: item.excerptHtml }}
+                    html={item.excerptHtml}
                   />
                 ) : null}
               </div>

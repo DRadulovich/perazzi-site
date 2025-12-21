@@ -1,6 +1,7 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
+import SafeHtml from "@/components/SafeHtml";
 import { useEffect, useId, useState } from "react";
 import Image from "next/image";
 import { useReducedMotion } from "framer-motion";
@@ -179,14 +180,12 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
                 : "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
             )}
           >
-            <div
-              dangerouslySetInnerHTML={{ __html: history.transcriptHtml }}
-            />
+            <SafeHtml html={history.transcriptHtml} />
           </Collapsible.Content>
           <noscript>
-            <div
+            <SafeHtml
               className="mt-4 rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted sm:bg-card/70"
-              dangerouslySetInnerHTML={{ __html: history.transcriptHtml }}
+              html={history.transcriptHtml}
             />
           </noscript>
         </Collapsible.Root>

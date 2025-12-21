@@ -2,6 +2,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { useCallback, useMemo, useState } from "react";
+import SafeHtml from "@/components/SafeHtml";
 import Image from "next/image";
 import type { FactoryEssayItem, FactoryEssayUi } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -75,9 +76,9 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
           {heading}
         </h2>
         {introHtml ? (
-          <div
+          <SafeHtml
             className="prose prose-sm max-w-3xl leading-relaxed text-ink-muted md:prose-lg"
-            dangerouslySetInnerHTML={{ __html: introHtml }}
+            html={introHtml}
           />
         ) : null}
       </div>

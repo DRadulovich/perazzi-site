@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SafeHtml from "@/components/SafeHtml";
 import type { JournalCategoryData } from "@/types/journal";
 
 type CategoryHeaderProps = Readonly<{
@@ -13,9 +14,9 @@ export function CategoryHeader({ header }: CategoryHeaderProps) {
       </p>
       <h1 className="text-3xl font-semibold text-ink">{header.title}</h1>
       {header.subtitleHtml ? (
-        <div
+        <SafeHtml
           className="prose prose-sm text-ink-muted"
-          dangerouslySetInnerHTML={{ __html: header.subtitleHtml }}
+          html={header.subtitleHtml}
         />
       ) : null}
       {header.featured ? (

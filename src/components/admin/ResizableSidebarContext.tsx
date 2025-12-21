@@ -15,18 +15,33 @@ interface ResizableCtx {
 const Ctx = createContext<ResizableCtx | null>(null);
 
 export function ResizableSidebarProvider({ children }: { children: ReactNode }) {
-  const [width, _setWidth] = useState<number>(DEFAULT_W);
-
-  // hydrate from localStorage once in browser
-  useEffect(() => {
+  // Initialise width from localStorage (client-side) once, using lazy initializer to
+  // avoid a redundant render after mount.
+  const [width, _setWidth] = useState<number>(() => {
+    if (typeof window === "undefined") return DEFAULT_W;
     try {
       const stored = window.localStorage.getItem(LS_KEY);
       if (stored) {
         const num = Number(stored);
-        if (!Number.isNaN(num)) _setWidth(clamp(num));
+        if (!Number.isNaN(num)) return clamp(num);
       }
-    } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    } catch {
+      // ignore
+    }
+    return DEFAULT_W;
+  });
+
+  // Listen for width updates from other tabs / windows.
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== LS_KEY || event.newValue == null) return;
+      const num = Number(event.newValue);
+      if (!Number.isNaN(num)) _setWidth(clamp(num));
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+    };
   }, []);
 
   const setWidth = useCallback((w: number) => {

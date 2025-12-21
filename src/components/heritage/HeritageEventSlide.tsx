@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Image from "next/image";
+import SafeHtml from "@/components/SafeHtml";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import type { HeritageEvent, HeritageEventLink } from "@/types/heritage";
@@ -84,9 +85,9 @@ export function HeritageEventSlide({
               </header>
 
               {event.summaryHtml ? (
-                <div
+                <SafeHtml
                   className="hidden md:block prose prose-invert max-w-none text-sm leading-relaxed text-neutral-200 prose-p:mb-3 prose-p:mt-0 prose-strong:text-neutral-50 prose-em:text-neutral-200"
-                  dangerouslySetInnerHTML={{ __html: event.summaryHtml }}
+                  html={event.summaryHtml}
                 />
               ) : null}
 
@@ -171,9 +172,9 @@ export function HeritageEventSlide({
                       {event.title}
                     </h3>
                     {event.summaryHtml ? (
-                      <div
+                      <SafeHtml
                         className="prose prose-invert max-w-none text-sm leading-relaxed text-neutral-200 prose-p:mb-3 prose-p:mt-0 prose-strong:text-neutral-50 prose-em:text-neutral-200"
-                        dangerouslySetInnerHTML={{ __html: event.summaryHtml }}
+                        html={event.summaryHtml}
                       />
                     ) : null}
                   </div>
