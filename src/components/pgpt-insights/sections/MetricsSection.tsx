@@ -14,6 +14,7 @@ import { StatusBadge } from "../table/StatusBadge";
 import { TableShell } from "../table/TableShell";
 
 import { SectionError } from "./SectionError";
+import { NoDataCard } from "@/components/pgpt-insights/common/NoDataCard";
 
 export async function MetricsSection({
   envFilter,
@@ -72,6 +73,14 @@ export async function MetricsSection({
     const rerankPct = rerankDenom > 0 ? Math.round(((rerankSummary?.rerank_on_count ?? 0) / rerankDenom) * 100) : null;
 
     const maxBucketHits = marginBuckets.reduce((m, b) => Math.max(m, b.hits), 0) || 0;
+
+    const hasAnyData = dailyTokenUsage.length > 0 || avgMetrics.length > 0 || (snapSummary?.total ?? 0) > 0 || (rerankSummary?.total ?? 0) > 0 || marginBuckets.length > 0;
+
+    if (!hasAnyData) {
+      return (
+        <NoDataCard title="Metrics (Tokens & Latency)" hint="Adjust filters to see data." />
+      );
+    }
 
     return (
       <TableShell

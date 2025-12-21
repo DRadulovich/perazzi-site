@@ -138,7 +138,8 @@ export function PgptInsightsFiltersPanel({
   const replaceParams = useCallback((next: URLSearchParams) => {
     const qs = next.toString();
     const baseHref = qs ? `${pathname}?${qs}` : pathname;
-    const hash = typeof globalThis === "undefined" ? "" : globalThis.location.hash;
+    // Prevent browser auto-scroll to hash target; we'll manage scroll manually.
+    const hash = "";
 
     if (typeof globalThis !== "undefined") {
       pendingScrollRef.current = globalThis.scrollY;

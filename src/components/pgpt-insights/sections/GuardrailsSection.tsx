@@ -6,6 +6,7 @@ import { getGuardrailByArchetype, getGuardrailStats, getRecentGuardrailBlocks } 
 import { getLogTextCalloutToneClass, getTextStorageBadges } from "../../../lib/pgpt-insights/logTextStatus";
 
 import { Badge } from "../Badge";
+import { NoDataCard } from "@/components/pgpt-insights/common/NoDataCard";
 import { MiniBar } from "../MiniBar";
 import { formatCompactNumber, formatTimestampShort } from "../format";
 import { DataTable } from "../table/DataTable";
@@ -55,6 +56,10 @@ export async function GuardrailsSection({
       if (b.hits !== a.hits) return b.hits - a.hits;
       return String(a.guardrail_reason ?? "").localeCompare(String(b.guardrail_reason ?? ""));
     });
+
+    if (guardrailStats.length === 0 && orderedGuardrailByArchetype.length === 0 && recentGuardrailBlocks.length === 0) {
+      return <NoDataCard title="Guardrail Analytics" hint="Adjust filters" />;
+    }
 
     const guardrailBlockedCount = guardrailStats.reduce((sum, row) => sum + row.hits, 0);
 

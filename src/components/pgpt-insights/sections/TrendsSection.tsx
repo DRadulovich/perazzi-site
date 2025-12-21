@@ -7,6 +7,7 @@ import {
 } from "../../../lib/pgpt-insights/cached";
 
 import { DualAxisChart } from "../charts/DualAxisChart";
+import { NoDataCard } from "@/components/pgpt-insights/common/NoDataCard";
 import { HeatStrip } from "../charts/HeatStrip";
 import { Histogram } from "../charts/Histogram";
 import { KpiCard } from "../charts/KpiCard";
@@ -145,7 +146,7 @@ export async function TrendsSection({
         contentClassName="space-y-4"
       >
         {rows.length === 0 ? (
-          <p className="text-xs text-muted-foreground">No trend data available for the current scope.</p>
+          <NoDataCard title="Trends" hint="Adjust filters" />
         ) : (
           <>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

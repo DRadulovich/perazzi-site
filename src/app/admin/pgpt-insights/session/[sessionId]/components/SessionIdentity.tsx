@@ -8,11 +8,12 @@ type SessionIdentityProps = {
 };
 
 export function SessionIdentity({ sessionId, interactionCount, hasMore, limit }: SessionIdentityProps) {
+  const displayId = sessionId.length > 12 ? `${sessionId.slice(0, 4)}…${sessionId.slice(-4)}` : sessionId;
   return (
     <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-sm shadow-sm">
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Session</span>
-        <span className="font-mono text-xs text-foreground break-all">{sessionId}</span>
+        <span className="font-mono text-xs text-foreground break-all" title={sessionId}>{displayId}</span>
         <CopyButton value={sessionId} label="Copy" ariaLabel="Copy session id" />
       </div>
 

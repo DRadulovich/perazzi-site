@@ -14,6 +14,7 @@ import { TableShell } from "../table/TableShell";
 
 import { Chevron } from "../Chevron";
 import { SectionError } from "./SectionError";
+import { NoDataCard } from "@/components/pgpt-insights/common/NoDataCard";
 
 const CANONICAL_MAP = new Map(CANONICAL_ARCHETYPE_ORDER.map((name) => [name.toLowerCase(), name]));
 
@@ -175,6 +176,12 @@ export async function ArchetypesSection({
 
     const hasAnyChartData = normalizedIntentStats.length > 0 || normalizedSummaries.length > 0;
     const maxHits = Math.max(...orderedArchetypeIntentStats.map((r) => r.hits), 1);
+
+    if (!hasAnyChartData) {
+      return (
+        <NoDataCard title="Archetype & Intent Analytics" hint="Adjust filters to see data." />
+      );
+    }
 
     return (
       <TableShell

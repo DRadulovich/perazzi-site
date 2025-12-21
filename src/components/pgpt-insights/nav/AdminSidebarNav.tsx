@@ -170,7 +170,7 @@ export function AdminSidebarNav({ items, extraContent, onNavigate }: AdminSideba
       className={cn(
         "rounded-2xl border border-border/80 bg-card/80 shadow-sm backdrop-blur",
         "p-3 sm:p-4",
-        "max-h-[70vh] overflow-y-auto lg:sticky lg:top-28 lg:max-h-[calc(100vh-7.5rem)]",
+        "h-full overflow-y-auto",
       )}
     >
       <div className="flex items-center justify-between gap-3 pb-3 sm:pb-4">

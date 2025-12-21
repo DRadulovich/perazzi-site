@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { Dialog, Transition } from "@headlessui/react";
+import { Fragment } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { LOW_SCORE_THRESHOLD } from "../../lib/pgpt-insights/constants";
@@ -245,48 +247,9 @@ export function LogsTableWithDrawer({
     };
   }, [open]);
 
-  // Escape to close (global)
-  useEffect(() => {
-    if (!open) return;
-    const win = typeof globalThis.window === "undefined" ? null : globalThis.window;
-    if (!win) return;
+  // Headless UI Dialog handles Escape key and focus trapping.
 
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeDrawer();
-    };
-    win.addEventListener("keydown", onKeyDown);
-    return () => win.removeEventListener("keydown", onKeyDown);
-  }, [open]);
-
-  // Focus trap (inside drawer)
-  useEffect(() => {
-    if (!open) return;
-    const el = drawerRef.current;
-    if (!el) return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "Tab") return;
-
-      const focusables = getFocusable(el);
-      if (focusables.length === 0) return;
-
-      const first = focusables.at(0);
-      const last = focusables.at(-1);
-      if (!first || !last) return;
-      const active = document.activeElement;
-
-      if (!e.shiftKey && active === last) {
-        e.preventDefault();
-        first.focus();
-      } else if (e.shiftKey && active === first) {
-        e.preventDefault();
-        last.focus();
-      }
-    };
-
-    el.addEventListener("keydown", onKeyDown);
-    return () => el.removeEventListener("keydown", onKeyDown);
-  }, [open]);
+  /* focus trap now provided by Headless UI Dialog */
 
   // Fetch detail on-demand with in-component cache
   useEffect(() => {
@@ -547,17 +510,16 @@ export function LogsTableWithDrawer({
         })}
       </DataTable>
 
-      {open ? (
-        <div className="fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/50" onClick={closeDrawer} aria-hidden="true" />
+      <Transition appear show={open} as={Fragment}>
+        <Dialog as="div" className="fixed inset-0 z-50" onClose={closeDrawer} initialFocus={closeBtnRef}>
+          <Transition.Child as={Fragment} enter="ease-out duration-200" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-100" leaveFrom="opacity-100" leaveTo="opacity-0">
+            <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
+          </Transition.Child>
 
-          <dialog
-            ref={drawerRef}
-            open
-            aria-modal="true"
-            aria-labelledby="pgpt-drawer-title"
-            className="absolute inset-y-0 right-0 flex w-full max-w-[760px] flex-col border-l border-border bg-card shadow-2xl"
-          >
+          <div className="fixed inset-y-0 right-0 flex w-full max-w-[760px] flex-col outline-none">
+            <Transition.Child as={Fragment} enter="ease-out duration-200" enterFrom="translate-x-full" enterTo="translate-x-0" leave="ease-in duration-150" leaveFrom="translate-x-0" leaveTo="translate-x-full">
+              <Dialog.Panel ref={drawerRef} className="flex h-full flex-col border-l border-border bg-card shadow-2xl outline-none">
+
             {/* Header */}
             <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
               <div className="space-y-1">
@@ -895,9 +857,11 @@ export function LogsTableWithDrawer({
                 </>
               ) : null}
             </div>
-          </dialog>
-        </div>
-      ) : null}
+                        </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </Dialog>
+      </Transition>
     </>
   );
 }

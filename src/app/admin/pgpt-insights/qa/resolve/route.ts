@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/requireAdmin";
 import { pool } from "../../../../../lib/db";
 
 export const runtime = "nodejs";
@@ -15,6 +16,8 @@ function safeReturnTo(reqUrl: string, returnTo: string | null): URL {
 }
 
 export async function POST(req: Request) {
+  const authResp = await requireAdmin();
+  if (authResp) return authResp;
   const form = await req.formData();
 
   const flagId = String(form.get("flagId") ?? "").trim();

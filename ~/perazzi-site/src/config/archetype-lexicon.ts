@@ -97,7 +97,7 @@ export const DEFAULT_LEXICON: ArchetypeKeywordLexicon = {
  * defaults so behaviour is unchanged.
  */
 export function getArchetypeLexicon(): ArchetypeKeywordLexicon {
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+   
   const flag = (process.env.PERAZZI_ENABLE_EXPANDED_LEXICON ?? "").toLowerCase();
   if (flag === "1" || flag === "true" || flag === "yes" || flag === "on") {
     // Placeholder: later passes may load a custom lexicon here.

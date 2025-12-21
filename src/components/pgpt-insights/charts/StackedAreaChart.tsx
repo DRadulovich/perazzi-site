@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { safeMax } from "@/lib/safeMax";
 
 export type StackedAreaPoint = {
   label: string;
@@ -47,12 +48,12 @@ export function buildStackedAreaDataset(
   const totals = points.map((p) =>
     order.reduce((sum, key) => sum + (p.segments[key] ?? 0), 0),
   );
-  const maxTotal = Math.max(...totals, 1);
+  const maxTotal = Math.max(safeMax(totals), 1);
 
   const marginValues = points
     .map((p) => (p.line === null || p.line === undefined ? null : Number(p.line)))
     .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
-  const maxMargin = Math.max(...marginValues, 0.2);
+  const maxMargin = Math.max(safeMax(marginValues), 0.2);
 
   return { bounds, maxTotal, maxMargin };
 }

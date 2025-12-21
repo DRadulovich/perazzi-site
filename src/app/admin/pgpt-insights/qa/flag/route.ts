@@ -65,13 +65,11 @@ function safeReturnTo(value: unknown, fallback: string): string {
   return fallback;
 }
 
-export async function POST(req: Request) {
-  const env = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "development";
-  const allowInProd = process.env.PGPT_INSIGHTS_ALLOW_PROD === "true";
-  if (env === "production" && !allowInProd) {
-    return new Response("Not found", { status: 404 });
-  }
+import { requireAdmin } from "@/lib/requireAdmin";
 
+export async function POST(req: Request) {
+  const authResp = await requireAdmin();
+  if (authResp) return authResp;
   const formData = await req.formData();
 
   const interactionIdRaw = String(formData.get("interactionId") ?? "").trim();

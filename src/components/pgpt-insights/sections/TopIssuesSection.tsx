@@ -12,6 +12,7 @@ import {
 } from "../../../lib/pgpt-insights/cached";
 
 import { formatDeltaMs, formatDeltaPp, formatRate } from "../format";
+import { NoDataCard } from "@/components/pgpt-insights/common/NoDataCard";
 import { SectionHeader } from "../SectionHeader";
 import { SectionError } from "./SectionError";
 
@@ -196,6 +197,12 @@ export async function TopIssuesSection({
     }
 
     const visible = issues.slice(0, 6);
+
+    if (comparisonEnabled && issues.length === 0) {
+      return (
+        <NoDataCard title="Top Issues" hint="Adjust filters to see data." />
+      );
+    }
 
     return (
       <section

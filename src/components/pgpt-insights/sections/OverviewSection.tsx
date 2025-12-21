@@ -3,6 +3,7 @@ import { LOW_SCORE_THRESHOLD } from "../../../lib/pgpt-insights/constants";
 import { getDailyLowScoreRate, getDailyTrends, getGuardrailStats, getRagSummary } from "../../../lib/pgpt-insights/cached";
 
 import { MiniTrend } from "../charts/MiniTrend";
+import { NoDataCard } from "@/components/pgpt-insights/common/NoDataCard";
 import { formatCompactNumber, formatDurationMs, formatScore } from "../format";
 import { SectionHeader } from "../SectionHeader";
 import { SectionError } from "./SectionError";
@@ -26,6 +27,10 @@ export async function OverviewSection({
       getDailyTrends(envFilter, undefined, capDays),
       getDailyLowScoreRate(envFilter, capDays, LOW_SCORE_THRESHOLD),
     ]);
+
+    if (trends.length === 0) {
+      return <NoDataCard title="Overview" hint="Adjust filters" />;
+    }
 
     const totalRequests = trends.reduce((sum, r) => sum + r.request_count, 0);
     const totalPromptTokens = trends.reduce((sum, r) => sum + r.total_prompt_tokens, 0);
