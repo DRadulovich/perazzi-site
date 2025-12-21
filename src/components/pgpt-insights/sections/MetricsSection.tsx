@@ -118,9 +118,9 @@ export async function MetricsSection({
               ]}
               colgroup={
                 <colgroup>
-                  <col className="w-[160px]" />
+                  <col className="w-40" />
                   <col className="w-[110px]" />
-                  <col className="w-[160px]" />
+                  <col className="w-40" />
                   <col className="w-[260px]" />
                   <col className="w-[170px]" />
                   <col className="w-[190px]" />
@@ -167,7 +167,7 @@ export async function MetricsSection({
               colgroup={
                 <colgroup>
                   <col className="w-[110px]" />
-                  <col className="w-[160px]" />
+                  <col className="w-40" />
                   <col className="w-[260px]" />
                   <col className="w-[190px]" />
                   <col className="w-[210px]" />

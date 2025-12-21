@@ -204,7 +204,9 @@ export function AdminSidebarNav({ items, extraContent, onNavigate }: AdminSideba
         ))}
       </div>
 
-      {extraContent && !collapsed ? <div className="mt-3">{extraContent}</div> : null}
+      {extraContent && !collapsed ? (
+        <div className="mt-3">{extraContent}</div>
+      ) : null}
     </nav>
   );
 }

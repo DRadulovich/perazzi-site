@@ -985,8 +985,27 @@ export async function fetchTriggerTermWeeks(limit = 12): Promise<string[]> {
   }
 }
 
-export async function fetchTriggerTermsForWeek(week: string, limit = 20): Promise<TriggerTermRow[]> {
-  const safeLimit = Math.max(1, Math.min(limit, 100));
+export async function fetchTriggerTermsForWeek(rawWeek: string, limit = 20): Promise<TriggerTermRow[]> {
+    const safeLimit = Math.max(1, Math.min(limit, 100));
+
+  // Ensure the week string is in ISO YYYY-MM-DD format to avoid Postgres
+  // time-zone parsing errors such as "time zone \"gmt-0600\" not recognized".
+  const isoWeek = (() => {
+    // Fast, regex-free ISO date check: YYYY-MM-DD.
+    const isIso = (s: string): boolean =>
+      s.length === 10 && s[4] === "-" && s[7] === "-" &&
+      !Number.isNaN(Date.parse(s));
+
+    if (isIso(rawWeek)) return rawWeek;
+
+    const parsed = new Date(rawWeek);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return parsed.toISOString().slice(0, 10);
+  })();
+  if (!isoWeek) {
+    console.warn("[pgpt-insights] fetchTriggerTermsForWeek called with unparseable week:", rawWeek);
+    return [];
+  }
   try {
     const { rows } = await pool.query<{
       week: string;
@@ -1000,7 +1019,7 @@ export async function fetchTriggerTermsForWeek(week: string, limit = 20): Promis
         order by hits desc
         limit $2;
       `,
-      [week, safeLimit],
+            [isoWeek, safeLimit],
     );
     return rows.map((r) => ({
       week: String(r.week),

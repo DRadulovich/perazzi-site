@@ -5,6 +5,11 @@ import Providers from "@/app/providers";
 import { PrimaryNav } from "@/components/primary-nav";
 import { AdminShell } from "@/components/admin/AdminShell";
 import type { AdminSidebarNavItem } from "@/components/pgpt-insights/nav/AdminSidebarNav";
+import { AdminDrawerProvider } from "@/components/admin/AdminDrawerContext";
+import { SidebarContentProvider } from "@/components/admin/AdminSidebarContext";
+import { SidebarDrawerHost } from "@/components/admin/SidebarDrawerHost";
+import { ResizableSidebarProvider } from "@/components/admin/ResizableSidebarContext";
+import { ResizableSidebarHost } from "@/components/admin/ResizableSidebarHost";
 import { fetchOpenQaFlagCount } from "@/lib/pgpt-insights/queries";
 import { resolveInitialTheme } from "@/lib/initial-theme";
 import { Activity, AlertTriangle, BarChart2, Clock3, Flag, Grid2X2, ListChecks } from "lucide-react";
@@ -85,12 +90,26 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       initialTheme={initialTheme}
     >
       <div className="min-h-screen bg-canvas text-ink">
-        <header className="sticky top-0 z-50">
-          <PrimaryNav brandLabel={t("brand")} variant="transparent" />
-        </header>
-        <AdminShell navItems={navItems}>
-          {children}
-        </AdminShell>
+        <SidebarContentProvider>
+          <AdminDrawerProvider>
+            <ResizableSidebarProvider>
+              {/* Mobile drawer */}
+              <SidebarDrawerHost navItems={navItems} />
+
+              {/* Header */}
+              <header className="sticky top-0 z-50">
+                <PrimaryNav brandLabel={t("brand")} variant="transparent" />
+              </header>
+
+              {/* Desktop resizable layout & page content */}
+              <AdminShell>
+                <ResizableSidebarHost navItems={navItems}>
+                  {children}
+                </ResizableSidebarHost>
+              </AdminShell>
+            </ResizableSidebarProvider>
+          </AdminDrawerProvider>
+        </SidebarContentProvider>
       </div>
     </Providers>
   );
