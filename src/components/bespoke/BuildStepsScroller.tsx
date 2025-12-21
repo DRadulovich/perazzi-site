@@ -124,7 +124,7 @@ export function BuildStepsScroller({
           loading="lazy"
         />
         <div
-          className="absolute inset-0 bg-[color:var(--scrim-soft)]"
+          className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
         <div
