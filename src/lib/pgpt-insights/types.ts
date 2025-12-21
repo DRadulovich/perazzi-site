@@ -194,6 +194,42 @@ export type DailyLowScoreRateRow = {
   threshold: number;
 };
 
+export type ArchetypeDailyRow = {
+  day: string;
+  archetype: string | null;
+  cnt: number;
+  avg_margin: number | null;
+};
+
+export type ArchetypeVariantSplitRow = {
+  variant: string | null;
+  total: number;
+  avg_margin: number | null;
+};
+
+export type TriggerTermRow = {
+  week: string;
+  token: string;
+  hits: number;
+};
+
+export type TemplateUsageRow = {
+  archetype: string | null;
+  intent: string | null;
+  template: string | null;
+  hits: number;
+};
+
+export type LowMarginSessionRow = {
+  session_id: string;
+  env: string | null;
+  first_seen: string | null;
+  last_seen: string | null;
+  longest_streak: number;
+  low_turn_count: number;
+  last_margin: number | null;
+};
+
 // -----------------------------------------------------------------------------
 // Session Explorer (full rows + QA lookup)
 // -----------------------------------------------------------------------------

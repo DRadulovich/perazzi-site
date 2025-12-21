@@ -2,6 +2,7 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import Image from "next/image";
+import SafeHtml from "@/components/SafeHtml";
 import { useState } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import type { ShotgunsLandingData } from "@/types/catalog";
@@ -47,7 +48,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
           className="object-cover"
           priority={false}
         />
-        <div className="absolute inset-0 bg-[color:var(--scrim-soft)]" aria-hidden />
+        <div className="absolute inset-0 bg-(--scrim-soft)" aria-hidden />
         <div
           className="pointer-events-none absolute inset-0"
           style={{
@@ -94,9 +95,9 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
               className="grid gap-6 overflow-hidden transition-all duration-300 data-[state=closed]:h-0 data-[state=closed]:opacity-0 data-[state=open]:h-auto data-[state=open]:opacity-100 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start"
             >
               <div className="rounded-2xl border border-border/0 bg-card/0 p-4 sm:rounded-3xl sm:p-6 lg:flex lg:h-full lg:flex-col lg:justify-start">
-                <div
+                <SafeHtml
                   className="prose prose-sm max-w-none text-ink prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4"
-                  dangerouslySetInnerHTML={{ __html: explainer.copyHtml }}
+                  html={explainer.copyHtml}
                 />
                 <div className="mt-5 flex flex-wrap gap-3">
                   {explainer.links.map((link) => (
@@ -118,7 +119,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
 
               <figure className="rounded-2xl border border-border/60 bg-card/40 p-3 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/50">
                 <div
-                  className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
+                  className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
                   style={{ aspectRatio: ratio }}
                 >
                   <Image
@@ -129,7 +130,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                     className="object-contain"
                   />
                   <div
-                    className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[color:var(--scrim-strong)]/60 via-[color:var(--scrim-strong)]/40 to-transparent"
+                    className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/60 via-(--scrim-strong)/40 to-transparent"
                     aria-hidden
                   />
                 </div>

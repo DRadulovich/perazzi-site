@@ -1,4 +1,5 @@
 import Image from "next/image";
+import SafeHtml from "@/components/SafeHtml";
 import type { Article } from "@/types/journal";
 
 type ArticleHeroProps = Readonly<{
@@ -14,9 +15,9 @@ export function ArticleHero({ article }: ArticleHeroProps) {
       </p>
       <h1 className="text-4xl font-semibold text-ink">{article.title}</h1>
       {article.dekHtml ? (
-        <div
+        <SafeHtml
           className="prose prose-lg text-ink-muted"
-          dangerouslySetInnerHTML={{ __html: article.dekHtml }}
+          html={article.dekHtml}
         />
       ) : null}
       <div className="text-sm text-ink-muted">

@@ -14,6 +14,7 @@ import { StatusBadge } from "../table/StatusBadge";
 import { TableShell } from "../table/TableShell";
 
 import { SectionError } from "./SectionError";
+import { NoDataCard } from "@/components/pgpt-insights/common/NoDataCard";
 
 export async function MetricsSection({
   envFilter,
@@ -73,6 +74,14 @@ export async function MetricsSection({
 
     const maxBucketHits = marginBuckets.reduce((m, b) => Math.max(m, b.hits), 0) || 0;
 
+    const hasAnyData = dailyTokenUsage.length > 0 || avgMetrics.length > 0 || (snapSummary?.total ?? 0) > 0 || (rerankSummary?.total ?? 0) > 0 || marginBuckets.length > 0;
+
+    if (!hasAnyData) {
+      return (
+        <NoDataCard title="Metrics (Tokens & Latency)" hint="Adjust filters to see data." />
+      );
+    }
+
     return (
       <TableShell
         id="metrics"
@@ -109,9 +118,9 @@ export async function MetricsSection({
               ]}
               colgroup={
                 <colgroup>
-                  <col className="w-[160px]" />
+                  <col className="w-40" />
                   <col className="w-[110px]" />
-                  <col className="w-[160px]" />
+                  <col className="w-40" />
                   <col className="w-[260px]" />
                   <col className="w-[170px]" />
                   <col className="w-[190px]" />
@@ -158,7 +167,7 @@ export async function MetricsSection({
               colgroup={
                 <colgroup>
                   <col className="w-[110px]" />
-                  <col className="w-[160px]" />
+                  <col className="w-40" />
                   <col className="w-[260px]" />
                   <col className="w-[190px]" />
                   <col className="w-[210px]" />

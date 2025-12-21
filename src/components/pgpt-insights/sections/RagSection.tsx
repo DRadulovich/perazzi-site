@@ -15,6 +15,7 @@ import { TableShell } from "../table/TableShell";
 import { TruncateCell } from "../table/TruncateCell";
 
 import { SectionError } from "./SectionError";
+import { NoDataCard } from "@/components/pgpt-insights/common/NoDataCard";
 
 export async function RagSection({
   envFilter,
@@ -35,6 +36,12 @@ export async function RagSection({
       getLowScoreLogs(envFilter, LOW_SCORE_THRESHOLD, daysFilter),
       getTopChunks(envFilter, 20, daysFilter),
     ]);
+
+    if (!ragSummary && lowScoreLogs.length === 0 && topChunks.length === 0) {
+      return (
+        <NoDataCard title="RAG Health (assistant)" hint="Adjust filters to see data." />
+      );
+    }
 
     return (
       <TableShell

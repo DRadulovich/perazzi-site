@@ -1,6 +1,7 @@
 "use client";
 
 import type { PartsEditorialSection } from "@/types/service";
+import SafeHtml from "@/components/SafeHtml";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 type PartsEditorialProps = Readonly<{
@@ -47,9 +48,9 @@ export function PartsEditorial({ partsEditorialSection }: PartsEditorialProps) {
             </div>
             <p className="text-sm leading-relaxed text-ink-muted">{part.purpose}</p>
             {part.notesHtml ? (
-              <div
+              <SafeHtml
                 className="mt-2 text-sm leading-relaxed text-ink-muted"
-                dangerouslySetInnerHTML={{ __html: part.notesHtml }}
+                html={part.notesHtml}
               />
             ) : null}
           </li>

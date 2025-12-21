@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
+  getArchetypeBoostK,
   computeArchetypeBoost,
   computeBoost,
   computeBoostV2,
@@ -41,6 +42,34 @@ function buildHints(overrides: Partial<RetrievalHints> = {}): RetrievalHints {
     ...overrides,
   };
 }
+
+describe("getArchetypeBoostK", () => {
+  const original = process.env.PERAZZI_ARCHETYPE_BOOST_K;
+
+  afterEach(() => {
+    if (original === undefined) {
+      delete process.env.PERAZZI_ARCHETYPE_BOOST_K;
+    } else {
+      process.env.PERAZZI_ARCHETYPE_BOOST_K = original;
+    }
+  });
+
+  it("returns default when unset or invalid", () => {
+    delete process.env.PERAZZI_ARCHETYPE_BOOST_K;
+    expect(getArchetypeBoostK()).toBeCloseTo(0.08);
+
+    process.env.PERAZZI_ARCHETYPE_BOOST_K = "-1";
+    expect(getArchetypeBoostK()).toBeCloseTo(0.08);
+
+    process.env.PERAZZI_ARCHETYPE_BOOST_K = "1.5";
+    expect(getArchetypeBoostK()).toBeCloseTo(0.08);
+  });
+
+  it("uses a valid in-range value", () => {
+    process.env.PERAZZI_ARCHETYPE_BOOST_K = "0.12";
+    expect(getArchetypeBoostK()).toBeCloseTo(0.12);
+  });
+});
 
 describe("isEnvTrue / getRerankCandidateLimit", () => {
   it("parses truthy strings and ignores falsy", () => {

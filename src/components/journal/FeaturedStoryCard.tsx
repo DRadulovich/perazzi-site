@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import SafeHtml from "@/components/SafeHtml";
 import Link from "next/link";
 import type { ArticleRef } from "@/types/journal";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -42,9 +43,10 @@ export function FeaturedStoryCard({ article, hero, summary }: FeaturedStoryCardP
             />
           </div>
           {summary ? (
-            <figcaption
+            <SafeHtml
+              as="figcaption"
               className="px-6 text-sm text-ink-muted"
-              dangerouslySetInnerHTML={{ __html: summary }}
+              html={summary}
             />
           ) : null}
         </figure>

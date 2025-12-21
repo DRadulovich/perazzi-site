@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import SafeHtml from "@/components/SafeHtml";
 import Image from "next/image";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import type { BuildHero } from "@/types/build";
@@ -69,9 +70,9 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
         <h1 className="mt-1 mb-10 flex flex-wrap justify-center gap-2 text-balance text-2xl font-bold leading-[1.12] text-white transition-opacity duration-700 motion-reduce:transition-none sm:text-3xl lg:text-4xl">
           {hero.title}
         </h1>
-        <div
+        <SafeHtml
           className="prose prose-base prose-invert italic font-light mx-auto mt-3 mb-3 max-w-2xl text-white/80 md:prose-lg md:max-w-4xl lg:max-w-4xl"
-          dangerouslySetInnerHTML={{ __html: hero.introHtml }}
+          html={hero.introHtml}
         />
       </motion.div>
       <div

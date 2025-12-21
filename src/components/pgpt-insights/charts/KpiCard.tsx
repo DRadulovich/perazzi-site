@@ -16,7 +16,7 @@ type KpiCardProps = {
 function toneClass(tone?: KpiCardProps["tone"]) {
   if (tone === "positive") return "text-emerald-600 bg-emerald-500/10 border-emerald-500/30";
   if (tone === "negative") return "text-amber-600 bg-amber-500/10 border-amber-500/30";
-  return "text-muted-foreground border-border/60 bg-background";
+  return "text-slate-700 border-border/60 bg-background";
 }
 
 export function KpiCard({ title, value, deltaLabel, trend, subtitle, tone = "default", density = "comfortable" }: KpiCardProps) {

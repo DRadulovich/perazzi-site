@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import SafeHtml from "@/components/SafeHtml";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
@@ -87,9 +88,9 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
                   <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
                     {option.durationLabel ?? (option.durationMins ? `${option.durationMins} minutes` : "")}
                   </p>
-                  <div
+                  <SafeHtml
                     className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg prose-headings:text-ink prose-strong:text-ink"
-                    dangerouslySetInnerHTML={{ __html: option.descriptionHtml }}
+                    html={option.descriptionHtml}
                   />
                 </div>
                 <div className="mt-auto pt-6">

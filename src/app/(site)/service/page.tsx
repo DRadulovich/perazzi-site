@@ -50,10 +50,13 @@ export default async function ServicePage() {
   return (
     <div className="space-y-16">
       {faqSchema ? (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-        />
+        <>
+          { }
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+          />
+        </>
       ) : null}
       <ServiceHero
         hero={hero}

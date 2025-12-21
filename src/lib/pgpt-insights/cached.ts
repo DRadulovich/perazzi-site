@@ -24,6 +24,13 @@ import {
   fetchArchetypeMarginHistogram,
   fetchDailyArchetypeSnapRate,
   fetchDailyRerankEnabledRate,
+  fetchArchetypeDailySeries,
+  fetchTriggerTermWeeks,
+  fetchTriggerTermsForWeek,
+  fetchTemplateUsageHeatmap,
+  fetchLowMarginSessions,
+  fetchArchetypeMarginSummary,
+  fetchArchetypeVariantSplit,
 } from "./queries";
 
 const toBoolFilter = (value?: string): BoolFilter | undefined => {
@@ -175,5 +182,29 @@ export const getDailyRerankEnabledRate = cache(
       rerank: toBoolFilter(rerank),
       snapped: toBoolFilter(snapped),
       marginLt,
+    }),
+);
+
+export const getArchetypeDailySeries = cache(async (days: number) => fetchArchetypeDailySeries(days));
+
+export const getArchetypeMarginSummary = cache(async (days: number) => fetchArchetypeMarginSummary(days));
+
+export const getArchetypeVariantSplit = cache(async (days: number) => fetchArchetypeVariantSplit(days));
+
+export const getTriggerTermWeeks = cache(async (limit?: number) => fetchTriggerTermWeeks(limit ?? 12));
+
+export const getTriggerTermsForWeek = cache(async (week: string, limit?: number) =>
+  fetchTriggerTermsForWeek(week, limit ?? 20),
+);
+
+export const getTemplateUsageHeatmap = cache(async (days: number) => fetchTemplateUsageHeatmap(days));
+
+export const getLowMarginSessions = cache(
+  async (days: number, marginThreshold?: number, minStreak?: number, limit?: number) =>
+    fetchLowMarginSessions({
+      days,
+      marginThreshold,
+      minStreak,
+      limit,
     }),
 );

@@ -625,6 +625,12 @@ function getArchetypeConfidenceMin(): number {
   return 0.08;
 }
 
+export function getArchetypeBoostK(): number {
+  const raw = Number(process.env.PERAZZI_ARCHETYPE_BOOST_K);
+  if (Number.isFinite(raw) && raw >= 0 && raw <= 1) return raw;
+  return 0.08; // safe default
+}
+
 export function computeArchetypeBoost(
   userVector: ArchetypeVector | null | undefined,
   chunkArchetypeBias: unknown,
@@ -671,8 +677,8 @@ export function computeArchetypeBoost(
   const confidenceFactor =
     confMin > 0 ? clamp(margin / confMin, 0, 1) : 1;
 
-  // K: tune later; start with roadmap guidance
-  const K = 0.08;
+  // Boost coefficient K now tunable via ENV
+  const K = getArchetypeBoostK();
 
   const boost = K * alignment * specialization * confidenceFactor;
 

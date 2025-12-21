@@ -1,6 +1,7 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
+import SafeHtml from "@/components/SafeHtml";
 import { useState } from "react";
 import type { GuideDownload, MaintenanceSection } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -37,9 +38,9 @@ export function MaintenanceRepairs({ maintenanceSection, guide }: MaintenanceRep
           {subheading}
         </h2>
       </div>
-      <div
+      <SafeHtml
         className="prose prose-sm max-w-none leading-relaxed text-ink-muted md:prose-lg"
-        dangerouslySetInnerHTML={{ __html: overviewHtml }}
+        html={overviewHtml}
       />
       {guide ? (
         <a

@@ -39,7 +39,6 @@ type JourneyChaptersProps = {
   isSubmitting: Record<StepKey, boolean>;
   setIsSubmitting: React.Dispatch<React.SetStateAction<Record<StepKey, boolean>>>;
   allComplete: boolean;
-  activeStepIndex: number;
 };
 
 type JourneyChapterBarProps = {
@@ -197,7 +196,6 @@ export function BuildJourneyClient({ stations }: BuildJourneyClientProps) {
         isSubmitting={isSubmitting}
         setIsSubmitting={setIsSubmitting}
         allComplete={allComplete}
-        activeStepIndex={activeStepIndex}
       />
       <JourneyChapterBar
         stations={stations}
@@ -217,7 +215,6 @@ function JourneyChapters({
   isSubmitting,
   setIsSubmitting,
   allComplete,
-  activeStepIndex,
 }: JourneyChaptersProps) {
   const orderedArtisanParagraphs = stations.map((station, index) => {
     const stepNumber = index + 1;

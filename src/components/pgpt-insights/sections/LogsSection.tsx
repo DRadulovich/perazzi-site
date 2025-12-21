@@ -8,6 +8,7 @@ import { fetchLogs } from "../../../lib/pgpt-insights/queries";
 import type { PerazziLogPreviewRow } from "../../../lib/pgpt-insights/types";
 
 import { LogsTableWithDrawer } from "../LogsTableWithDrawer";
+import { NoDataCard } from "@/components/pgpt-insights/common/NoDataCard";
 import { formatCompactNumber } from "../format";
 import { TableShell } from "../table/TableShell";
 
@@ -89,6 +90,10 @@ export async function LogsSection({
     const logs = logsMaybeMore.slice(0, LOGS_PAGE_SIZE);
 
     const logsWithQa: PerazziLogPreviewRow[] = logs;
+
+    if (logsWithQa.length === 0) {
+      return <NoDataCard title="Recent Interactions" hint="Adjust filters" />;
+    }
 
     const qaOpenFlagCount = await getOpenQaFlagCount();
     const qaCountLabel = qaOpenFlagCount > 0 ? ` (${qaOpenFlagCount})` : "";

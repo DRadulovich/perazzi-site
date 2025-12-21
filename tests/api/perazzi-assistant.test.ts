@@ -138,6 +138,41 @@ it("blocks legal advice requests", async () => {
   expect(body.answer).toContain("legal guidance");
 });
 
+it("returns archetype analytics in debug payload on early return", async () => {
+  const originalDebug = process.env.PERAZZI_ADMIN_DEBUG;
+  const originalToken = process.env.PERAZZI_ADMIN_DEBUG_TOKEN;
+  process.env.PERAZZI_ADMIN_DEBUG = "true";
+  process.env.PERAZZI_ADMIN_DEBUG_TOKEN = "test-token";
+
+  const request = new Request("http://localhost/api/perazzi-assistant", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-perazzi-admin-debug": "test-token",
+    },
+    body: JSON.stringify({
+      messages: [{ role: "user", content: "How much does an MX8 cost?" }],
+    }),
+  });
+
+  const response = await routeModule.POST(request);
+  const body = await response.json();
+
+  expect(body.debug?.archetypeAnalytics?.variant).toBeDefined();
+
+  if (originalDebug === undefined) {
+    delete process.env.PERAZZI_ADMIN_DEBUG;
+  } else {
+    process.env.PERAZZI_ADMIN_DEBUG = originalDebug;
+  }
+
+  if (originalToken === undefined) {
+    delete process.env.PERAZZI_ADMIN_DEBUG_TOKEN;
+  } else {
+    process.env.PERAZZI_ADMIN_DEBUG_TOKEN = originalToken;
+  }
+});
+
 describe("prompt cache wiring", () => {
   const originalRetention = process.env.PERAZZI_PROMPT_CACHE_RETENTION;
   const originalKey = process.env.PERAZZI_PROMPT_CACHE_KEY;

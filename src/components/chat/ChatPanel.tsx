@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { usePerazziAssistant } from "@/hooks/usePerazziAssistant";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import type { PerazziAdminDebugPayload } from "@/types/perazzi-assistant";
+import { getRetrievalLabelFromScores } from "@/lib/retrieval-label";
 
 const QUICK_STARTS = [
   {
@@ -764,11 +765,24 @@ export function ChatPanel({
                         </div>
                       )}
 
-                      {msg.similarity !== undefined && (
-                        <p className="mt-2 text-[11px] sm:text-xs text-ink-muted">
-                          Similarity: {(msg.similarity * 100).toFixed(1)}%
-                        </p>
-                      )}
+                      {(() => {
+                        const hasRetrievalData =
+                          (Array.isArray(msg.retrievalScores) && msg.retrievalScores.length > 0) ||
+                          msg.retrievalLabel !== undefined ||
+                          msg.similarity !== undefined;
+                        if (!hasRetrievalData) return null;
+
+                        const retrievalLabel =
+                          msg.retrievalLabel ??
+                          getRetrievalLabelFromScores(
+                            msg.retrievalScores ?? (msg.similarity !== undefined ? [msg.similarity] : []),
+                          );
+                        return (
+                          <p className="mt-2 text-[11px] sm:text-xs text-ink-muted">
+                            Retrieval: {retrievalLabel}
+                          </p>
+                        );
+                      })()}
 
                       {isAssistant && (
                         <div className="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em]">

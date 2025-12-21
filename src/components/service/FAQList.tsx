@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import SafeHtml from "@/components/SafeHtml";
 import type { FAQItem } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
@@ -73,9 +74,9 @@ function FAQItemCard({
       <summary className="cursor-pointer text-sm font-semibold text-ink">
         {item.q}
       </summary>
-      <div
+      <SafeHtml
         className={cn("mt-2 text-sm leading-relaxed text-ink-muted")}
-        dangerouslySetInnerHTML={{ __html: item.aHtml }}
+        html={item.aHtml}
       />
     </details>
   );

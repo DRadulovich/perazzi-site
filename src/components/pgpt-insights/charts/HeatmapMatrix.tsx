@@ -9,6 +9,7 @@ import { formatCompactNumber } from "../format";
 type HeatmapColumn = {
   key: string;
   label: string;
+  tooltip?: string;
 };
 
 type HeatmapRow = {
@@ -95,11 +96,12 @@ export function HeatmapMatrix({
     setHover(null);
   }
 
+  const TOOLTIP_HEIGHT = 120; // px – estimated fixed height of tooltip
   const tooltipStyle =
     hover && globalThis.window !== undefined
       ? {
           left: `${Math.min(globalThis.window.innerWidth - 220, hover.clientX + 12)}px`,
-          top: `${hover.clientY + 14}px`,
+          top: `${Math.min(hover.clientY + 14, globalThis.window.innerHeight - TOOLTIP_HEIGHT - 16)}px`,
         }
       : undefined;
 
@@ -133,7 +135,7 @@ export function HeatmapMatrix({
                 key={col.key}
                 className="flex h-10 items-center justify-center border-b border-border/60 bg-muted/30 px-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
               >
-                <span className="truncate" title={String(col.label)}>
+                <span className="truncate" title={col.tooltip ?? String(col.label)}>
                   {col.label}
                 </span>
               </div>
@@ -157,6 +159,7 @@ export function HeatmapMatrix({
                   const hits = row.cellMap.get(col.key) ?? 0;
                   const pct = row.total > 0 ? hits / row.total : 0;
                   const label = pctLabel(pct);
+                  const isDark = maxCellValue > 0 && hits / maxCellValue > 0.5;
 
                   return (
                     <button
@@ -185,9 +188,9 @@ export function HeatmapMatrix({
                         className="absolute inset-0 bg-[radial-gradient(circle_at_35%_30%,rgba(255,255,255,0.14),transparent_52%)] mix-blend-soft-light"
                         aria-hidden="true"
                       />
-                      <div className="relative flex flex-col items-center justify-center gap-0.5 px-2 text-foreground drop-shadow-sm">
+                      <div className={cn("relative flex flex-col items-center justify-center gap-0.5 px-2 drop-shadow-sm", isDark ? "text-white" : "text-foreground")}>
                         <span className="text-sm font-semibold tabular-nums">{hits > 0 ? formatCompactNumber(hits) : "—"}</span>
-                        <span className="text-[11px] text-foreground/80">{label}</span>
+                        <span className={cn("text-[11px]", isDark ? "text-white/80" : "text-foreground/80")}>{label}</span>
                       </div>
                     </button>
                   );

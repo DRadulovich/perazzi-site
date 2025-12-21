@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import SafeHtml from "@/components/SafeHtml";
 
 import type { NetworkFinderUi, ServiceLocation, ServiceLocationType } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -142,9 +143,9 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
                       {location.type}
                     </p>
                     <h3 className="text-lg font-semibold text-ink">{location.name}</h3>
-                    <div
+                    <SafeHtml
                       className="text-sm leading-relaxed text-ink-muted"
-                      dangerouslySetInnerHTML={{ __html: location.addressHtml }}
+                      html={location.addressHtml}
                     />
                     <div className="text-sm leading-relaxed text-ink">
                       {location.contact ? (
@@ -174,9 +175,9 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
                       ) : null}
                     </div>
                     {location.notesHtml ? (
-                      <div
+                      <SafeHtml
                         className="text-[11px] sm:text-xs leading-relaxed text-ink-muted"
-                        dangerouslySetInnerHTML={{ __html: location.notesHtml }}
+                        html={location.notesHtml}
                       />
                     ) : null}
                   </button>

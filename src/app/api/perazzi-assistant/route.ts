@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import crypto from "node:crypto";
+import crypto, { randomInt } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { APIError } from "openai";
@@ -53,8 +53,8 @@ import {
   parseTemperature,
   isUsingGateway,
 } from "@/lib/perazziAiConfig";
+import { isTieredBoostsEnabled } from "@/config/archetype-weights";
 
-const LOW_CONFIDENCE_THRESHOLD = Number(process.env.PERAZZI_LOW_CONF_THRESHOLD ?? 0.1);
 const LOW_CONFIDENCE_MESSAGE =
   "I’m not certain enough to answer this accurately from the information I have. For a definitive answer, please contact Perazzi directly or consider rephrasing your question.";
 
@@ -157,6 +157,7 @@ function buildDebugPayload(params: {
   retrieval: PerazziAdminDebugPayload["retrieval"];
   usage: OpenAI.Responses.ResponseUsage | null | undefined;
   flags: PerazziAdminDebugPayload["flags"];
+  archetypeAnalytics?: PerazziAdminDebugPayload["archetypeAnalytics"];
   output?: PerazziAdminDebugPayload["output"];
   triggers?: PerazziAdminDebugPayload["triggers"];
 }): PerazziAdminDebugPayload {
@@ -183,6 +184,9 @@ function buildDebugPayload(params: {
     },
     usage: extractAdminDebugUsage(params.usage),
     flags: params.flags,
+    ...(typeof params.archetypeAnalytics === "undefined"
+      ? {}
+      : { archetypeAnalytics: params.archetypeAnalytics }),
     ...(typeof params.output === "undefined" ? {} : { output: params.output }),
     ...(params.triggers ? { triggers: params.triggers } : {}),
   };
@@ -414,8 +418,9 @@ const ARCHETYPE_TONE_GUIDANCE: Record<Archetype, string> = {
 };
 
 function getLowConfidenceThreshold() {
-  const value = Number(process.env.PERAZZI_LOW_CONF_THRESHOLD ?? 0);
-  return Number.isFinite(value) ? value : 0;
+  const value = Number(process.env.PERAZZI_LOW_CONF_THRESHOLD ?? 0.1);
+  if (!Number.isFinite(value)) return 0.1;
+  return Math.max(0, Math.min(1, value));
 }
 
 function getArchetypeConfidenceMin(): number {
@@ -455,6 +460,20 @@ function computeArchetypeConfidenceMetrics(vector: Record<string, unknown> | nul
     archetypeRunnerUp: runnerUp,
     archetypeConfidenceMargin: margin,
     archetypeSnapped: margin >= threshold,
+  };
+}
+
+function buildArchetypeAnalytics(
+  variantHint: "tiered" | "baseline" | null,
+  margin: number | null,
+  signals: string[],
+  templates: string[],
+): PerazziAdminDebugPayload["archetypeAnalytics"] {
+  return {
+    variant: variantHint ?? (isTieredBoostsEnabled() ? "tiered" : "baseline"),
+    margin,
+    signalsUsed: signals.slice(0, 50),
+    templates,
   };
 }
 
@@ -662,6 +681,22 @@ export async function POST(request: Request) {
     }
     // -------------------------
 
+    // --- Archetype tiered boost A/B bucket (secure RNG) ---
+    // Use cryptographically secure RNG for A/B bucketing to satisfy security linters
+    const abPercent = Number(process.env.ARCHETYPE_AB_PERCENT ?? 0);
+    const isTierBucket =
+      Number.isFinite(abPercent) &&
+      abPercent > 0 &&
+      randomInt(0, 100) < abPercent;
+    const useTieredBoosts = isTieredBoostsEnabled() || isTierBucket;
+    const archetypeVariant = useTieredBoosts ? "tiered" : "baseline";
+
+    // expose variant in context for logging / downstream use
+    fullBody.context = {
+      ...(fullBody.context as NonNullable<PerazziAssistantRequest["context"]>),
+      archetypeVariant,
+    };
+
     const sanitizedMessages = sanitizeMessages(fullBody.messages);
     const latestQuestion = getLatestUserContent(sanitizedMessages);
     const hints: RetrievalHints = detectRetrievalHints(latestQuestion, body?.context);
@@ -731,6 +766,12 @@ export async function POST(request: Request) {
                   .startsWith(GENERAL_UNSOURCED_LABEL_PREFIX),
               }
             : null,
+        archetypeAnalytics: buildArchetypeAnalytics(
+          fullBody.context?.archetypeVariant ?? null,
+          null,
+          [],
+          [],
+        ),
         triggers: {
           blocked_intent: blockedIntent ?? null,
           evidenceMode,
@@ -922,6 +963,7 @@ export async function POST(request: Request) {
     const archetypeBreakdown = computeArchetypeBreakdown(
       archetypeContext,
       previousVector,
+      { useTieredBoosts },
     );
     const archetypeMetrics = computeArchetypeConfidenceMetrics(archetypeBreakdown.vector);
     const archetypeClassification = buildArchetypeClassification(archetypeBreakdown);
@@ -1014,6 +1056,10 @@ export async function POST(request: Request) {
               textVerbosity: effectiveTextVerbosity,
               guardrailStatus: "blocked",
               guardrailReason: guardrailBlock.reason ?? null,
+              archetypeVariant: fullBody.context?.archetypeVariant ?? null,
+              signalsUsed: Array.isArray(archetypeClassification?.archetypeDecision?.signals)
+                ? archetypeClassification?.archetypeDecision?.signals
+                : undefined,
               ...archetypeMetrics,
             },
           },
@@ -1110,6 +1156,8 @@ export async function POST(request: Request) {
       ...modelsRegistryResult,
     });
 
+    const retrievalScores = getTopBaseScores(retrieval.chunks);
+
     const retrievalChunkCount = retrievalAttempted ? retrieval.chunks.length : 0;
     const { evidenceMode, evidenceReason } = computeEvidenceMode({
       retrievalAttempted,
@@ -1198,6 +1246,12 @@ export async function POST(request: Request) {
           prompt_cache_key_present: Boolean(PROMPT_CACHE_KEY),
         },
         output: { general_unsourced_label_present: false },
+        archetypeAnalytics: buildArchetypeAnalytics(
+          fullBody.context?.archetypeVariant ?? null,
+          null,
+          [],
+          [],
+        ),
         triggers: {
           blocked_intent: null,
           evidenceMode,
@@ -1214,6 +1268,7 @@ export async function POST(request: Request) {
         topics: hints.topics,
         templates: responseTemplates,
         similarity: retrieval.maxScore,
+        retrievalScores,
         mode: effectiveMode,
         archetype: effectiveArchetype,
         archetypeBreakdown,
@@ -1304,6 +1359,13 @@ export async function POST(request: Request) {
       });
     }
 
+    const archetypeAnalytics = buildArchetypeAnalytics(
+      fullBody.context?.archetypeVariant ?? null,
+      archetypeMetrics.archetypeConfidenceMargin ?? null,
+      archetypeClassification?.archetypeDecision?.signals ?? [],
+      responseTemplates,
+    );
+
     logInteraction(
       fullBody,
       retrieval.chunks,
@@ -1353,6 +1415,7 @@ export async function POST(request: Request) {
       output: {
         general_unsourced_label_present: answer.trimStart().startsWith(GENERAL_UNSOURCED_LABEL_PREFIX),
       },
+      archetypeAnalytics,
       triggers: {
         blocked_intent: null,
         evidenceMode,
@@ -1376,6 +1439,7 @@ export async function POST(request: Request) {
       topics: hints.topics,
       templates: responseTemplates,
       similarity: retrieval.maxScore,
+      retrievalScores,
       mode: effectiveMode,
       archetype: effectiveArchetype,
       archetypeBreakdown,
@@ -1752,6 +1816,15 @@ async function generateAssistantAnswer(
     guardrailStatus: guardrailInfo.status,
     guardrailReason: guardrailInfo.reason ?? null,
   };
+  if (context?.archetypeVariant) {
+    metadata.archetypeVariant = context.archetypeVariant;
+  }
+  if (Array.isArray(archetypeClassification?.archetypeDecision?.signals)) {
+    metadata.signalsUsed = archetypeClassification?.archetypeDecision?.signals;
+  }
+  if (Array.isArray(templates) && templates.length > 0) {
+    metadata.templates = templates;
+  }
   if (typeof maxScore === "number") {
     metadata.maxScore = maxScore;
   }
@@ -2161,6 +2234,23 @@ function buildExcerpt(content: string, limit = 320): string {
     return `${truncated.slice(0, lastSentence + 1).trim()}`;
   }
   return `${truncated.trim()}…`;
+}
+
+function clampScore(value: unknown): number | null {
+  const num = typeof value === "string" ? Number(value) : (value as number | null | undefined);
+  if (typeof num !== "number" || !Number.isFinite(num)) return null;
+  return Math.max(0, Math.min(1, num));
+}
+
+function getTopBaseScores(chunks: RetrievedChunk[], limit = 3): number[] {
+  const scores = chunks
+    .map((chunk) => clampScore(chunk.baseScore ?? chunk.score))
+    .filter((score): score is number => score !== null);
+
+  if (!scores.length) return [];
+
+  const sorted = scores.sort((a, b) => b - a);
+  return sorted.slice(0, Math.max(0, limit));
 }
 
 function mapChunkToCitation(chunk: RetrievedChunk) {

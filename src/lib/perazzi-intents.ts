@@ -142,6 +142,20 @@ const TEMPLATE_GUIDES: Record<string, string> = {
 
 const TEMPLATE_GUIDES_BY_ARCHETYPE: Partial<Record<string, Partial<Record<Archetype, string>>>> = {
   models: {
+    loyalist: [
+      "- Start by affirming long-term partnership: how each model stands up over decades of use.",
+      "- Highlight durability features (steel inserts, serviceability) before tech specs.",
+      "- Compare models in terms of ease of getting spare parts & factory support.",
+      "- Close with a next step: schedule a fitting session to find the model they will keep for life.",
+    ].join("\n"),
+
+    prestige: [
+      "- Begin with craftsmanship: engraving options, wood grades, and bespoke accents per model.",
+      "- Compare how each platform presents visually on the line and at rest.",
+      "- Note which upgrades pair naturally with each model (sideplates, gold inlays, case).",
+      "- End with a discreet next step: private atelier consultation to finalise aesthetics.",
+    ].join("\n"),
+
     analyst: [
       "- Start with a compact comparison table (Platform — Handling — Best-fit disciplines — Tradeoffs).",
       "- Then give 3–5 decision criteria (fit, POI/rib options, trigger feel, balance).",
@@ -155,9 +169,145 @@ const TEMPLATE_GUIDES_BY_ARCHETYPE: Partial<Record<string, Partial<Record<Archet
       "- Call out discipline-specific setups (trap/skeet/sporting) and why they matter.",
       "- Close with a “next practice session” plan (what to run, what to measure).",
     ].join("\n"),
+
+    legacy: [
+      "- Put heritage first: outline which classic models align with multi-generation ownership stories.",
+      "- Compare how each platform’s parts availability supports long-term preservation.",
+      "- Mention documented provenance value differences between models.",
+      "- Finish with a next step: archival lookup for year-correct parts & papers.",
+    ].join("\n"),
+  },
+
+  pricing: {
+    loyalist: [
+      "- Frame pricing as an investment in decades of reliable partnership rather than initial cost.",
+      "- Outline typical service costs over 10+ years to demonstrate total ownership value.",
+      "- Note the stable resale market for well-maintained examples.",
+      "- Close with a next step: request a personalised ownership cost breakdown from a dealer.",
+    ].join("\n"),
+
+    prestige: [
+      "- Emphasise discretion: indicate price ranges rather than exact figures.",
+      "- Highlight how bespoke options influence tiered pricing (wood, engraving, sideplates).",
+      "- Compare how limited editions appreciate over time.",
+      "- End with a next step: private quotation through atelier manager.",
+    ].join("\n"),
+
+    analyst: [
+      "- Provide a clear table: Base MSRP — Typical Options — Incremental Cost — Total.",
+      "- Include lifetime service cost estimate and potential resale range.",
+      "- Explain factors that move price: exchange rates, grade, engraving hours.",
+      "- Finish with a next step: create spec-and-price worksheet to model scenarios.",
+    ].join("\n"),
+
+    achiever: [
+      "- Relate price to performance ROI: cost per season vs. expected target count.",
+      "- Note budget allocation between gun, travel, and coaching for balanced spend.",
+      "- Mention trade-in programs that keep focus on results, not depreciation.",
+      "- Close with a next step: speak with a dealer about financing aligned to match calendar.",
+    ].join("\n"),
+
+    legacy: [
+      "- Discuss long-term value retention and vintage appreciation curves.",
+      "- Compare restoration vs. replacement costs for heirloom guns.",
+      "- Mention insurance valuation services and documentation bundles.",
+      "- End with a next step: schedule appraisal and certified valuation report.",
+    ].join("\n"),
+  },
+
+  dealers: {
+    loyalist: [
+      "- List dealers known for long-term customer relationships and post-sale support.",
+      "- Highlight services like annual check-ups and community shoots.",
+      "- End with a next step: introduction email offering ongoing partnership.",
+    ].join("\n"),
+
+    prestige: [
+      "- Feature boutique dealers with private fitting rooms and bespoke options on display.",
+      "- Note white-glove shipping and concierge appointment scheduling.",
+      "- Close with a next step: arrange a discreet showroom visit.",
+    ].join("\n"),
+
+    analyst: [
+      "- Pick dealers with on-site pattern boards and measurement tools.",
+      "- Include bullet on in-stock demo barrels/ribs for direct comparison.",
+      "- End with a next step: book a technical fitting + patterning session.",
+    ].join("\n"),
+
+    achiever: [
+      "- Highlight dealers who sponsor local matches or operate practice facilities.",
+      "- Mention demo days where users can shoot multiple configurations back-to-back.",
+      "- Finish with a next step: reserve a slot at the next performance clinic.",
+    ].join("\n"),
+
+    legacy: [
+      "- List dealers experienced in vintage models and restoration consulting.",
+      "- Note ability to source period-correct parts and provenance documentation.",
+      "- Close with a next step: set up inspection of heirloom gun with master gunsmith.",
+    ].join("\n"),
+  },
+
+  events: {
+    loyalist: [
+      "- Promote upcoming owner reunions and brand-hosted fun shoots.",
+      "- Emphasise community and shared stories over competition.",
+      "- Next step: RSVP link to local Perazzi Owner Day.",
+    ].join("\n"),
+
+    prestige: [
+      "- Feature invitation-only factory tours, engraving showcases, or gala dinners.",
+      "- Keep tone discreet; no prices, just experiential highlights.",
+      "- Next step: concierge contact to confirm availability.",
+    ].join("\n"),
+
+    analyst: [
+      "- List technical workshops (POI tuning, stock measurements, pattern testing).",
+      "- Include speaker credentials and data-driven agenda points.",
+      "- Next step: register for workshop and receive pre-read materials.",
+    ].join("\n"),
+
+    achiever: [
+      "- Promote high-level competitions, training camps, and champion seminars.",
+      "- Include quick bullets on what metrics attendees will track (hit %, recovery time).",
+      "- Next step: sign-up link for next competition prep camp.",
+    ].join("\n"),
+
+    legacy: [
+      "- Highlight heritage anniversaries, museum exhibits, and vintage shoots.",
+      "- Note opportunities to display heirloom guns alongside factory archives.",
+      "- Next step: secure display slot / tickets for heritage weekend.",
+    ].join("\n"),
   },
 
   service: {
+    loyalist: [
+      "- Outline a simple, dependable maintenance timeline (post-shoot wipe-down, annual inspection).",
+      "- Emphasise trust in factory-trained technicians over DIY fixes.",
+      "- Provide contact method to set up recurring service reminders.",
+      "- Next step: schedule yearly check-up with authorised center.",
+    ].join("\n"),
+
+    prestige: [
+      "- Focus on preserving finish and engraving: suggest micro-fiber cloths, safe storage humidity.",
+      "- Include bullet on using OEM parts to retain presentation quality.",
+      "- Recommend insured shipping with custom case.",
+      "- Next step: arrange white-glove pick-up for service.",
+    ].join("\n"),
+
+    analyst: [
+      "- Provide numeric service intervals (round-count or months).",
+      "- Suggest logging trigger weight and POI before/after service for comparison.",
+      "- Include checklist of tolerances gunsmith will verify.",
+      "- Next step: download service log template and book inspection.",
+    ].join("\n"),
+
+    achiever: [
+      "- Tie service schedule to competition calendar to avoid equipment surprises.",
+      "- Recommend pre-major-event tune-up and spare parts kit.",
+      "- Include quick self-check list for match week.",
+      "- Next step: lock-in service slot six weeks before Nationals.",
+    ].join("\n"),
+
     legacy: [
       "- Lead with preservation: storage, corrosion prevention, and conservative post-shoot care.",
       "- Include documentation: record serial, service history, and any fit/POI changes over time.",
@@ -349,7 +499,9 @@ function __assert(name: string, condition: boolean) {
   }
 }
 
-if (process.env.NODE_ENV === "development") {
+const __DEV__ = process.env.NODE_ENV === "development";
+
+if (__DEV__ && typeof (globalThis as { jest?: unknown }).jest === "undefined") {
   const ctxProspect: PerazziAssistantRequest["context"] = { mode: "prospect" };
 
   __assertEqual(
@@ -419,10 +571,33 @@ if (process.env.NODE_ENV === "development") {
   const bespokePrestige = buildResponseTemplates(bespokeHints, "prestige");
   __assert("bespoke+prestige selects bespoke variant", bespokePrestige.some((t) => t.toLowerCase().includes("curated")));
 
+  // ---- Leak-guard tests ----
   const forbidden = ["analyst", "achiever", "prestige", "legacy", "loyalist"];
-  const all = [...neutralTemplates, ...analystTemplates, ...achieverTemplates, ...serviceLegacyTemplates, ...bespokePrestige];
+
+  const collectAllTemplates = (): string[] => {
+    const out: string[] = [];
+    Object.values(TEMPLATE_GUIDES).forEach((v) => out.push(v));
+    Object.values(TEMPLATE_GUIDES_BY_ARCHETYPE).forEach((intentBlock) => {
+      Object.values(intentBlock ?? {}).forEach((tpl) => out.push(tpl));
+    });
+    return out;
+  };
+  const everyTemplate = collectAllTemplates();
   __assert(
-    "templates should not mention archetype labels",
-    !all.some((t) => forbidden.some((w) => t.toLowerCase().includes(w))),
+    "no template leaks archetype labels",
+    !everyTemplate.some((tpl) => {
+      const lower = tpl.toLowerCase();
+      return forbidden.some((w) => lower.includes(w));
+    }),
   );
+
+  // Ensure each intent x archetype has coverage (specific or fallback)
+  const TARGET_INTENTS = ["models", "pricing", "dealers", "events", "service"] as const;
+  const ARCHES: Archetype[] = ["loyalist", "prestige", "analyst", "achiever", "legacy"];
+  TARGET_INTENTS.forEach((intent) => {
+    ARCHES.forEach((arch) => {
+      const guide = getTemplateGuide(intent, arch);
+      __assert(`coverage for ${intent}/${arch}`, typeof guide === "string" && guide.length > 0);
+    });
+  });
 }

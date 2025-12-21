@@ -10,6 +10,8 @@ import {
   type ArchetypeScores,
   normalizeArchetypeScores,
 } from "@/lib/pgpt-insights/archetype-distribution";
+import { getArchetypeLexicon } from "@/config/archetype-lexicon";
+import { getBoostTiers, isTieredBoostsEnabled } from "@/config/archetype-weights";
 
 export interface ArchetypeContext {
   mode?: PerazziMode | null;
@@ -43,7 +45,12 @@ export const NEUTRAL_ARCHETYPE_VECTOR: ArchetypeVector = {
   legacy: 0.2,
 };
 
-const DEFAULT_SMOOTHING = 0.75; // 75% previous, 25% new per message
+export function getSmoothingFactor(): number {
+  const raw = Number(process.env.PERAZZI_SMOOTHING_FACTOR);
+  if (Number.isFinite(raw) && raw >= 0 && raw <= 1) return raw;
+  return 0.75; // 75% previous, 25% new per message
+}
+
 const ARCHETYPE_ORDER: Archetype[] = [
   "loyalist",
   "prestige",
@@ -71,7 +78,7 @@ export function normalizeArchetypeVector(vec: ArchetypeVector): ArchetypeVector 
 export function smoothUpdateArchetypeVector(
   previous: ArchetypeVector,
   delta: ArchetypeVector,
-  smoothingFactor: number = DEFAULT_SMOOTHING
+  smoothingFactor: number = getSmoothingFactor()
 ): ArchetypeVector {
   const updated: ArchetypeVector = { ...previous };
 
@@ -140,6 +147,7 @@ function getWinnerRunnerUpAndMargin(vector: ArchetypeVector): {
 function normalizeForMatch(input: string): string {
   return input
     .toLowerCase()
+    .replace(/[-–—]/g, " ")
     .replace(/[’‘]/g, "'")
     .replace(/\s+/g, " ")
     .trim();
@@ -150,10 +158,18 @@ function tokenizeToWordSet(normalizedMessage: string): Set<string> {
   return new Set(tokens);
 }
 
-function messageIncludesAny(message: string, needles: string[]): boolean {
-  const normalizedMessage = normalizeForMatch(message);
-  if (!normalizedMessage) return false;
+function escapeRegex(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
+function isWordBoundary(char: string | undefined): boolean {
+  // Treat start/end of string or any non-alphanumeric / apostrophe char as a boundary.
+  return !char || !/[a-z0-9']/i.test(char);
+}
+
+function findFirstMatch(message: string, needles: string[]): string | null {
+  const normalizedMessage = normalizeForMatch(message);
+  if (!normalizedMessage) return null;
   const tokenSet = tokenizeToWordSet(normalizedMessage);
 
   for (const rawNeedle of needles) {
@@ -162,15 +178,34 @@ function messageIncludesAny(message: string, needles: string[]): boolean {
     if (!needle) continue;
 
     if (/\s/.test(needle)) {
-      if (normalizedMessage.includes(needle)) return true;
+      // Multi-word phrase: use indexOf + boundary checks instead of dynamic RegExp.
+      let idx = normalizedMessage.indexOf(needle);
+      while (idx !== -1) {
+        const before = normalizedMessage[idx - 1];
+        const after = normalizedMessage[idx + needle.length];
+        if (isWordBoundary(before) && isWordBoundary(after)) {
+          return rawNeedle;
+        }
+        idx = normalizedMessage.indexOf(needle, idx + needle.length);
+      }
       continue;
     }
 
-    if (tokenSet.has(needle)) return true;
+    if (tokenSet.has(needle)) return rawNeedle;
   }
-
-  return false;
+  return null;
 }
+
+function messageIncludesAny(message: string, needles: string[]): boolean {
+  return findFirstMatch(message, needles) !== null;
+}
+
+// ---------------------------------------------------------------------------
+// Utility helper: push a signal only if collection is below the 15-item cap.
+function pushSignal(signals: string[], sig: string): void {
+  if (signals.length < 15) signals.push(sig);
+}
+
 
 function __assertEqual(name: string, actual: boolean, expected: boolean) {
   if (actual !== expected) {
@@ -180,7 +215,10 @@ function __assertEqual(name: string, actual: boolean, expected: boolean) {
   }
 }
 
-if (process.env.NODE_ENV === "development") {
+const __DEV__ = process.env.NODE_ENV === "development";
+
+// Self-test block executes only in local dev (not in Jest or prod bundle)
+if (__DEV__ && typeof (globalThis as { jest?: unknown }).jest === "undefined") {
   __assertEqual(
     "broadcast should not match cast",
     messageIncludesAny("broadcast", ["cast"]),
@@ -204,6 +242,11 @@ if (process.env.NODE_ENV === "development") {
   __assertEqual(
     "phrase match across whitespace normalization",
     messageIncludesAny("point\nof\timpact", ["point of impact"]),
+    true
+  );
+  __assertEqual(
+    "hyphenated phrases normalize to spaced tokens",
+    messageIncludesAny("handed-down heirloom", ["handed-down"]),
     true
   );
 
@@ -339,6 +382,66 @@ if (process.env.NODE_ENV === "development") {
     (hintsLegacyBreakdown.vector.legacy ?? 0) > 0.205,
     true
   );
+
+  // New Pass-2 tests
+  const scoresheetCtx: ArchetypeContext = {
+    mode: null,
+    pageUrl: null,
+    modelSlug: null,
+    platformSlug: null,
+    userMessage: "My scoresheet results dropped last season",
+  } as unknown as ArchetypeContext;
+  const scoresheetBreak = computeArchetypeBreakdown(scoresheetCtx, getNeutralArchetypeVector());
+  __assertEqual(
+    "scoresheet results should boost achiever",
+    (scoresheetBreak.vector.achiever ?? 0) > 0.24,
+    true,
+  );
+
+  const heirloomCtx: ArchetypeContext = {
+    mode: null,
+    pageUrl: null,
+    modelSlug: null,
+    platformSlug: null,
+    userMessage: "This gun is a family heirloom handed-down for generations",
+  } as unknown as ArchetypeContext;
+  const heirloomBreak = computeArchetypeBreakdown(heirloomCtx, getNeutralArchetypeVector());
+  __assertEqual(
+    "family heirloom should boost legacy",
+    (heirloomBreak.vector.legacy ?? 0) > 0.24,
+    true,
+  );
+
+  const loyaltyProgramCtx: ArchetypeContext = {
+    mode: null,
+    pageUrl: null,
+    modelSlug: null,
+    platformSlug: null,
+    userMessage: "Tell me about your loyalty program",
+  } as unknown as ArchetypeContext;
+  const loyaltyProgramBreak = computeArchetypeBreakdown(loyaltyProgramCtx, getNeutralArchetypeVector());
+  __assertEqual(
+    "loyalty program should NOT trigger loyalist boost",
+    (loyaltyProgramBreak.vector.loyalist ?? 0) < 0.25,
+    true,
+  );
+
+  // Phrase plural edge-case test
+  __assertEqual(
+    "plural phrase should not match singular needle",
+    messageIncludesAny("impact points are tricky", ["impact point"]),
+    false,
+  );
+
+  // Ensure max boost env var respects values >1.0
+  const originalMaxEnv = process.env.ARCHETYPE_BOOST_MAX;
+  process.env.ARCHETYPE_BOOST_MAX = "1.2";
+  __assertEqual(
+    "env max boost allows >1.0",
+    getBoostTiers().maxPerMessage > 1,
+    true,
+  );
+  process.env.ARCHETYPE_BOOST_MAX = originalMaxEnv;
 }
 
 function initZeroVector(): ArchetypeVector {
@@ -362,6 +465,14 @@ function sumDelta(vec: ArchetypeVector): number {
 function scaleVectorInPlace(vec: ArchetypeVector, factor: number): void {
   ARCHETYPE_ORDER.forEach((k) => {
     vec[k] = (vec[k] ?? 0) * factor;
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Utility: clamp any delta so it never exceeds the per-message cap.
+function clampDeltaInPlace(vec: ArchetypeVector, cap: number): void {
+  ARCHETYPE_ORDER.forEach((k) => {
+    if ((vec[k] ?? 0) > cap) vec[k] = cap;
   });
 }
 
@@ -403,17 +514,26 @@ function applyHintSignals(
   ctx: ArchetypeContext,
   delta: ArchetypeVector,
   signals: string[],
+  useTieredBoosts: boolean,
 ) {
   const intents = normalizeHintList(ctx.intents);
   const topics = normalizeHintList(ctx.topics);
 
   if (intents.size === 0 && topics.size === 0) return;
 
-  const BOOST_ANALYST = 0.06;
-  const BOOST_PRESTIGE = 0.06;
-  const BOOST_LEGACY = 0.06;
-  const BOOST_ACHIEVER = 0.05;
-  const BOOST_LOYALIST = 0.05;
+  const tieredBoostsEnabled = useTieredBoosts;
+  const tiersHint = getBoostTiers();
+  // (high-tier value reserved for future use)
+  const MID = tieredBoostsEnabled ? tiersHint.mid : 0.06;
+  const LOW = tieredBoostsEnabled ? tiersHint.low : 0.05;
+  const MAX = tiersHint.maxPerMessage;
+
+  // local pushSignal removed – using shared helper
+  const addBoost = (arch: Archetype, amt: number, reason: string) => {
+    const current = delta[arch] ?? 0;
+    delta[arch] = Math.min(current + amt, MAX);
+    pushSignal(signals, `hint:${arch}:${reason}`);
+  };
 
   const analystHint =
     topics.has("specs") ||
@@ -446,26 +566,17 @@ function applyHintSignals(
     topics.has("care") ||
     intents.has("service");
 
-  if (analystHint) {
-    delta.analyst += BOOST_ANALYST;
-    signals.push("hint:analyst");
-  }
-  if (prestigeHint) {
-    delta.prestige += BOOST_PRESTIGE;
-    signals.push("hint:prestige");
-  }
-  if (legacyHint) {
-    delta.legacy += BOOST_LEGACY;
-    signals.push("hint:legacy");
-  }
-  if (achieverHint) {
-    delta.achiever += BOOST_ACHIEVER;
-    signals.push("hint:achiever");
-  }
-  if (loyalistHint) {
-    delta.loyalist += BOOST_LOYALIST;
-    signals.push("hint:loyalist");
-  }
+  const baseAnalyst = tieredBoostsEnabled ? LOW : 0.06;
+  const basePrestige = tieredBoostsEnabled ? MID : 0.06;
+  const baseLegacy = tieredBoostsEnabled ? MID : 0.06;
+  const baseAchiever = tieredBoostsEnabled ? LOW : 0.05;
+  const baseLoyalist = tieredBoostsEnabled ? LOW : 0.05;
+
+  if (analystHint) addBoost("analyst", baseAnalyst, "models/specs");
+  if (prestigeHint) addBoost("prestige", basePrestige, "bespoke");
+  if (legacyHint) addBoost("legacy", baseLegacy, "heritage");
+  if (achieverHint) addBoost("achiever", baseAchiever, "events/olympic");
+  if (loyalistHint) addBoost("loyalist", baseLoyalist, "service");
 }
 
 function applyModeSignals(
@@ -480,19 +591,19 @@ function applyModeSignals(
       delta.prestige += 0.3;
       delta.analyst += 0.2;
       delta.achiever += 0.1;
-      signals.push("mode:prospect");
+      pushSignal(signals, "mode:prospect");
       break;
     }
     case "owner": {
       delta.loyalist += 0.25;
       delta.legacy += 0.2;
       delta.analyst += 0.15;
-      signals.push("mode:owner");
+      pushSignal(signals, "mode:owner");
       break;
     }
     case "navigation": {
       delta.analyst += 0.2;
-      signals.push("mode:navigation");
+      pushSignal(signals, "mode:navigation");
       break;
     }
   }
@@ -510,7 +621,7 @@ function applyPageUrlSignals(
   if (url.includes("heritage") || url.includes("history")) {
     delta.legacy += 0.3;
     delta.loyalist += 0.2;
-    signals.push("page:heritage");
+    pushSignal(signals, "page:heritage");
   }
 
   if (
@@ -519,7 +630,7 @@ function applyPageUrlSignals(
     url.includes("gallery")
   ) {
     delta.prestige += 0.3;
-    signals.push("page:bespoke");
+    pushSignal(signals, "page:bespoke");
   }
 
   if (
@@ -529,7 +640,7 @@ function applyPageUrlSignals(
     url.includes("spec")
   ) {
     delta.analyst += 0.25;
-    signals.push("page:technical");
+    pushSignal(signals, "page:technical");
   }
 
   if (
@@ -538,7 +649,7 @@ function applyPageUrlSignals(
     url.includes("athletes")
   ) {
     delta.achiever += 0.25;
-    signals.push("page:competition");
+    pushSignal(signals, "page:competition");
   }
 }
 
@@ -554,7 +665,7 @@ function applyModelSignals(
   // Very rough, heuristic mapping for now. This can be refined from real data later.
   if (modelSlug.includes("sco") || modelSlug.includes("extra")) {
     delta.prestige += 0.35;
-    signals.push("model:high-grade");
+    pushSignal(signals, "model:high-grade");
   }
 
   if (
@@ -565,7 +676,7 @@ function applyModelSignals(
   ) {
     delta.achiever += 0.25;
     delta.analyst += 0.15;
-    signals.push("model:competition-workhorse");
+    pushSignal(signals, "model:competition-workhorse");
   }
 
   if (
@@ -574,148 +685,79 @@ function applyModelSignals(
     modelSlug.includes("mx3")
   ) {
     delta.legacy += 0.3;
-    signals.push("model:vintage-heritage");
+    pushSignal(signals, "model:vintage-heritage");
   }
 }
 
 function applyLanguageSignals(
   ctx: ArchetypeContext,
   delta: ArchetypeVector,
-  signals: string[]
+  signals: string[],
+  useTieredBoosts: boolean,
 ) {
   const message = ctx.userMessage.toLowerCase();
 
   if (!message) return;
 
-  // Prestige: aesthetics, luxury, status, craftsmanship.
-  if (
-    messageIncludesAny(message, [
-      "beautiful",
-      "engraving",
-      "engravings",
-      "wood",
-      "stock figure",
-      "aesthetic",
-      "aesthetics",
-      "finish",
-      "luxury",
-      "luxurious",
-      "bespoke",
-      "artisanal",
-      "craftsmanship",
-      "upgrade",
-      "presentation",
-    ])
-  ) {
-    delta.prestige += 0.4;
-    signals.push("language:prestige");
-  }
+  // --- Pass-2 lexicon-based detection ---
+  const lexicon = getArchetypeLexicon();
+  const tiered = useTieredBoosts;
 
-  // Achiever: performance, scores, competition focus.
-  if (
-    messageIncludesAny(message, [
-      "score",
-      "scores",
-      "winning",
-      "nationals",
-      "world championship",
-      "competition",
-      "high score",
-      "performance",
-      "consistency",
-      "more consistent",
-      "tournament",
-      "major event",
-    ])
-  ) {
-    delta.achiever += 0.4;
-    signals.push("language:achiever");
-  }
+  const { high: T_HIGH, mid: T_MID, low: T_LOW, maxPerMessage: MAX_BOOST_PER_ARCH } = getBoostTiers();
+  const BOOST_HIGH = tiered ? T_HIGH : 0.4;
+  const BOOST_MID = tiered ? T_MID : 0.3;
+  const BOOST_LOW = tiered ? T_LOW : 0.15;
 
-  // Analyst: specs, mechanics, comparison, technical language.
-  if (
-    messageIncludesAny(message, [
-      "point of impact",
-      "poi",
-      "trigger weight",
-      "rib height",
-      "barrel convergence",
-      "pattern",
-      "patterning",
-      "choke",
-      "chokes",
-      "length of pull",
-      "lop",
-      "drop at comb",
-      "drop at heel",
-      "cast",
-      "toe",
-      "pitch",
-      "balance",
-      "weight distribution",
-      "spec",
-      "specs",
-      "compare",
-      "comparison",
-    ])
-  ) {
-    delta.analyst += 0.45;
-    signals.push("language:analyst");
-  }
+  // local pushSignal removed – using shared helper
 
-  // Loyalist: emotional bond with brand/gun, long-term ownership.
-  if (
-    messageIncludesAny(message, [
-      "i've always",
-      "i have always",
-      "had this gun",
-      "my perazzi for",
-      "for years",
-      "for decades",
-      "love this gun",
-      "favorite gun",
-      "my dad's perazzi",
-      "my fathers perazzi",
-      "loyal",
-      "loyalty",
-    ])
-  ) {
-    delta.loyalist += 0.4;
-    signals.push("language:loyalist");
-  }
+  (Object.keys(lexicon) as Archetype[]).forEach((key) => {
+    const entry = lexicon[key];
+    if (!entry) return;
+    const { high, mid, low, negatives } = entry as {
+      high: string[];
+      mid: string[];
+      low: string[];
+      negatives?: string[];
+    };
 
-  // Legacy: heirloom, passing down, multi-generational story.
-  if (
-    messageIncludesAny(message, [
-      "heirloom",
-      "pass it down",
-      "passing it down",
-      "my kids",
-      "my children",
-      "next generation",
-      "keep it original",
-      "preserve",
-      "preserving",
-      "history of this gun",
-      "family gun",
-    ])
-  ) {
-    delta.legacy += 0.4;
-    signals.push("language:legacy");
-  }
+    if (negatives && negatives.length && messageIncludesAny(message, negatives)) return;
+
+    let boost = 0;
+    let matched: string | null = null;
+    if (high?.length) {
+      matched = findFirstMatch(message, high);
+      if (matched) boost = BOOST_HIGH;
+    }
+    if (!matched && mid?.length) {
+      matched = findFirstMatch(message, mid);
+      if (matched) boost = BOOST_MID;
+    }
+    if (!matched && low?.length) {
+      matched = findFirstMatch(message, low);
+      if (matched) boost = BOOST_LOW;
+    }
+
+    if (boost > 0 && matched) {
+      const current = delta[key] ?? 0;
+      delta[key] = Math.min(current + boost, MAX_BOOST_PER_ARCH);
+      pushSignal(signals, `lang:${key}:${matched}`);
+    }
+  });
 
   // General signal for long, structured questions -> slight analyst bias.
   const wordCount = message.split(/\s+/).filter(Boolean).length;
   if (wordCount > 40) {
     delta.analyst += 0.1;
-    signals.push("language:long-form-analytic");
+    pushSignal(signals, "language:long-form-analytic");
   }
 }
 
 export function computeArchetypeBreakdown(
   ctx: ArchetypeContext,
-  previousVector?: ArchetypeVector | null
+  previousVector?: ArchetypeVector | null,
+  options?: { useTieredBoosts?: boolean },
 ): ArchetypeBreakdown {
+  const useTieredBoosts = options?.useTieredBoosts ?? isTieredBoostsEnabled();
   const startingVector = previousVector
     ? { ...previousVector }
     : getNeutralArchetypeVector();
@@ -728,12 +770,12 @@ export function computeArchetypeBreakdown(
   applyModeSignals(ctx, priorDelta, signalsUsed);
   applyPageUrlSignals(ctx, priorDelta, signalsUsed);
   applyModelSignals(ctx, priorDelta, signalsUsed);
-  applyLanguageSignals(ctx, languageDelta, signalsUsed);
-  applyHintSignals(ctx, languageDelta, signalsUsed);
+  applyLanguageSignals(ctx, languageDelta, signalsUsed, useTieredBoosts);
+  applyHintSignals(ctx, languageDelta, signalsUsed, useTieredBoosts);
 
   const priorScale = computePriorScale(startingVector, languageDelta);
   if (hasAnyDelta(priorDelta) && priorScale < 1) {
-    signalsUsed.push(`priors:scaled:${priorScale.toFixed(2)}`);
+    pushSignal(signalsUsed, `priors:scaled:${priorScale.toFixed(2)}`);
   }
   scaleVectorInPlace(priorDelta, priorScale);
 
@@ -741,6 +783,9 @@ export function computeArchetypeBreakdown(
   ARCHETYPE_ORDER.forEach((k) => {
     combinedDelta[k] = (priorDelta[k] ?? 0) + (languageDelta[k] ?? 0);
   });
+
+  // Enforce per-archetype cap across all delta sources before smoothing.
+  clampDeltaInPlace(combinedDelta, getBoostTiers().maxPerMessage);
 
   let updatedVector = smoothUpdateArchetypeVector(startingVector, combinedDelta);
 
@@ -762,7 +807,7 @@ export function computeArchetypeBreakdown(
     });
 
     updatedVector = normalizeArchetypeVector(overridden);
-    signalsUsed.push(`override:${override}`);
+    pushSignal(signalsUsed, `override:${override}`);
     reasoningParts.push(
       `Archetype manually overridden to "${override}" via dev override phrase.`
     );
