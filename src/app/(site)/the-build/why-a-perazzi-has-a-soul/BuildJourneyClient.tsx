@@ -25,20 +25,18 @@ export type BuildJourneyArticle = {
   soulQuestion?: string;
 };
 
-type StepKey = string;
-
 type BuildJourneyClientProps = {
   stations: BuildJourneyArticle[];
 };
 
 type JourneyChaptersProps = {
   stations: BuildJourneyArticle[];
-  answers: Record<StepKey, string>;
-  setAnswers: React.Dispatch<React.SetStateAction<Record<StepKey, string>>>;
-  artisanParagraphs: Record<StepKey, string>;
-  setArtisanParagraphs: React.Dispatch<React.SetStateAction<Record<StepKey, string>>>;
-  isSubmitting: Record<StepKey, boolean>;
-  setIsSubmitting: React.Dispatch<React.SetStateAction<Record<StepKey, boolean>>>;
+  answers: Record<string, string>;
+  setAnswers: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  artisanParagraphs: Record<string, string>;
+  setArtisanParagraphs: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  isSubmitting: Record<string, boolean>;
+  setIsSubmitting: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   allComplete: boolean;
 };
 
@@ -64,24 +62,26 @@ function getSanityImageAspectRatio(assetId?: string) {
 }
 
 export function BuildJourneyClient({ stations }: BuildJourneyClientProps) {
-  const [answers, setAnswers] = useState<Record<StepKey, string>>({});
-  const [artisanParagraphs, setArtisanParagraphs] = useState<Record<StepKey, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState<Record<StepKey, boolean>>({});
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [artisanParagraphs, setArtisanParagraphs] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState<Record<string, boolean>>({});
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [isNavVisible, setIsNavVisible] = useState(true);
 
   // Hydrate answers and artisan paragraphs from localStorage (if present)
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (globalThis.window === undefined) return;
+
+    const browserWindow = globalThis.window;
 
     const hydrateFromStorage = () => {
       try {
-        const raw = window.localStorage.getItem(SOUL_JOURNEY_STORAGE_KEY);
+        const raw = browserWindow.localStorage.getItem(SOUL_JOURNEY_STORAGE_KEY);
         if (!raw) return;
 
         const parsed = JSON.parse(raw) as {
-          answers?: Record<StepKey, string>;
-          artisanParagraphs?: Record<StepKey, string>;
+          answers?: Record<string, string>;
+          artisanParagraphs?: Record<string, string>;
         };
 
         if (parsed.answers && typeof parsed.answers === "object") {
@@ -102,55 +102,53 @@ export function BuildJourneyClient({ stations }: BuildJourneyClientProps) {
     };
 
     hydrateFromStorage();
-    window.addEventListener("storage", handleStorage);
+    browserWindow.addEventListener("storage", handleStorage);
 
     return () => {
-      window.removeEventListener("storage", handleStorage);
+      browserWindow.removeEventListener("storage", handleStorage);
     };
   }, []);
 
   // Persist answers and artisan paragraphs to localStorage on changes
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (globalThis.window === undefined) return;
 
     try {
       const payload = JSON.stringify({
         answers,
         artisanParagraphs,
       });
-      window.localStorage.setItem(SOUL_JOURNEY_STORAGE_KEY, payload);
+      globalThis.window.localStorage.setItem(SOUL_JOURNEY_STORAGE_KEY, payload);
     } catch (error) {
       console.error("[SoulJourney] Failed to save state to localStorage:", error);
     }
   }, [answers, artisanParagraphs]);
   useEffect(() => {
-    let lastY = window.scrollY;
+    if (globalThis.window === undefined) return;
+
+    const browserWindow = globalThis.window;
+    let lastY = browserWindow.scrollY;
 
     const handleScroll = () => {
-      const currentY = window.scrollY;
+      const currentY = browserWindow.scrollY;
       const delta = currentY - lastY;
 
       // Always show near the very top of the page
       if (currentY < 80) {
         setIsNavVisible(true);
-      } else {
-        // Scrolling down more than a small threshold -> hide on mobile
-        if (delta > 5) {
-          setIsNavVisible(false);
-        }
-        // Scrolling up more than a small threshold -> show
-        else if (delta < -5) {
-          setIsNavVisible(true);
-        }
+      } else if (delta > 5) {
+        setIsNavVisible(false);
+      } else if (delta < -5) {
+        setIsNavVisible(true);
       }
 
       lastY = currentY;
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    browserWindow.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
-      window.removeEventListener("scroll", handleScroll);
+      browserWindow.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
@@ -181,7 +179,9 @@ export function BuildJourneyClient({ stations }: BuildJourneyClientProps) {
 
         if (!bestEntry) return;
 
-        const stepAttr = bestEntry.target.getAttribute("data-build-step");
+        if (!(bestEntry.target instanceof HTMLElement)) return;
+
+        const stepAttr = bestEntry.target.dataset.buildStep;
         if (!stepAttr) return;
 
         const idx = Number.parseInt(stepAttr, 10) - 1;
@@ -247,11 +247,12 @@ function JourneyChapters({
         const stepNumber = index + 1;
         const stepLabel = stepNumber.toString().padStart(2, "0");
         const stepKey = stepLabel;
-        const bodyBlocks = Array.isArray(station.body)
-          ? station.body
-          : station.body
-            ? [station.body]
-            : [];
+        let bodyBlocks: PortableBlock[] = [];
+        if (Array.isArray(station.body)) {
+          bodyBlocks = station.body;
+        } else if (station.body) {
+          bodyBlocks = [station.body];
+        }
         const heroUrl = station.heroImage?.asset?.url;
         const heroAspectRatio = getSanityImageAspectRatio(station.heroImage?.asset?._id);
         const sectionId = station.slug?.current ?? `step-${stepNumber}`;
@@ -270,8 +271,8 @@ function JourneyChapters({
             >
               {/* Overlapping vertical gradients using theme-aware overlays */}
               <div className="pointer-events-none absolute inset-0">
-                <div className="absolute inset-0 bg-gradient-to-b from-[color:var(--color-canvas)] to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[color:var(--color-canvas)] to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-b from-(--color-canvas) to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-(--color-canvas) to-transparent" />
               </div>
 
               <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-10 sm:px-6 sm:py-16 lg:px-6 lg:py-20">
@@ -397,7 +398,7 @@ function JourneyChapters({
                   className="absolute inset-0 bg-cover bg-center bg-no-repeat"
                   style={{ backgroundImage: `url(${heroUrl})` }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-b from-[color:var(--color-perazzi-black)]/100 via-[color:var(--color-perazzi-black)]/60 to-[color:var(--color-perazzi-black)]/100" />
+                  <div className="absolute inset-0 bg-linear-to-b from-(--color-perazzi-black) via-perazzi-black/60 to-(--color-perazzi-black)" />
                 </div>
                 <div className="relative flex min-h-[50vh] sm:min-h-[60vh] lg:min-h-screen w-full items-center justify-center px-4 py-16 sm:py-24">
                   {stations[index + 1]?.excerpt ? (
@@ -427,7 +428,7 @@ function JourneyChapters({
         className="relative scroll-mt-24 min-h-screen bg-canvas"
       >
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-[color:var(--color-canvas)]/10 via-[color:var(--color-canvas)]/10 to-[color:var(--color-canvas)]/10" />
+          <div className="absolute inset-0 bg-linear-to-b from-canvas/10 via-canvas/10 to-canvas/10" />
         </div>
 
         {!allComplete && (
@@ -517,20 +518,26 @@ function JourneyChapterBar({ stations, activeStepIndex, isNavVisible }: JourneyC
   if (!stations.length) return null;
 
   const total = stations.length;
-  const clampedIndex =
-    activeStepIndex < 0 ? 0 : activeStepIndex >= total ? total - 1 : activeStepIndex;
+  let clampedIndex = activeStepIndex;
+  if (activeStepIndex < 0) {
+    clampedIndex = 0;
+  } else if (activeStepIndex >= total) {
+    clampedIndex = total - 1;
+  }
 
   const active = stations[clampedIndex];
   const stepNumber = clampedIndex + 1;
   const stepLabel = stepNumber.toString().padStart(2, "0");
 
-  const prevIndex = clampedIndex > 0 ? clampedIndex - 1 : null;
-  const nextIndex = clampedIndex < total - 1 ? clampedIndex + 1 : null;
+  const hasPrev = clampedIndex > 0;
+  const hasNext = clampedIndex < total - 1;
 
-  const prevTargetId =
-    prevIndex !== null ? stations[prevIndex].slug?.current ?? `step-${prevIndex + 1}` : null;
-  const nextTargetId =
-    nextIndex !== null ? stations[nextIndex].slug?.current ?? `step-${nextIndex + 1}` : "step-12";
+  const prevTargetId = hasPrev
+    ? stations[clampedIndex - 1].slug?.current ?? `step-${clampedIndex}`
+    : null;
+  const nextTargetId = hasNext
+    ? stations[clampedIndex + 1].slug?.current ?? `step-${clampedIndex + 2}`
+    : "step-12";
 
   return (
     <div

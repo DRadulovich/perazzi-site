@@ -1,3 +1,4 @@
+import { isPromptDebugEnabled, summarizeResponsesCreatePayload } from "@/lib/aiDebug";
 import { logAiInteraction, type AiInteractionContext } from "@/lib/aiLogging";
 import { logTlsDiagForOpenAI } from "@/lib/tlsDiag";
 import OpenAI from "openai";
@@ -7,95 +8,6 @@ type OpenAIConfig = {
   baseURL?: string;
   usedGateway: boolean;
 };
-
-function isPromptDebugEnabled(): boolean {
-  return process.env.PERAZZI_DEBUG_PROMPT === "true";
-}
-
-function countTextChars(value: unknown): number {
-  if (typeof value === "string") return value.length;
-  return 0;
-}
-
-function countContentChars(content: unknown): number {
-  if (typeof content === "string") return content.length;
-  if (Array.isArray(content)) {
-    return content.reduce((sum, part) => {
-      if (typeof part === "string") return sum + part.length;
-      if (part && typeof part === "object") {
-        const candidate = part as Record<string, unknown>;
-        if (typeof candidate.text === "string") return sum + candidate.text.length;
-        if (typeof candidate.input_text === "string") return sum + candidate.input_text.length;
-        if (typeof candidate.content === "string") return sum + candidate.content.length;
-      }
-      return sum;
-    }, 0);
-  }
-  return 0;
-}
-
-function summarizeResponsesCreatePayload(payload: Record<string, unknown>) {
-  const instructions = payload.instructions;
-  const input = payload.input;
-  const previousResponseId = payload.previous_response_id;
-  const store = payload.store;
-  const promptCacheKey = payload.prompt_cache_key;
-
-  const inputItems: Array<{ type: string; role?: string; chars: number }> = [];
-  const countsByType: Record<string, number> = {};
-  const countsByRole: Record<string, number> = {};
-  let inputTotalChars = 0;
-
-  if (typeof input === "string") {
-    inputItems.push({ type: "input_text", chars: input.length });
-    inputTotalChars += input.length;
-    countsByType.input_text = 1;
-  } else if (Array.isArray(input)) {
-    input.forEach((item) => {
-      if (typeof item === "string") {
-        inputItems.push({ type: "input_text", chars: item.length });
-        inputTotalChars += item.length;
-        countsByType.input_text = (countsByType.input_text ?? 0) + 1;
-        return;
-      }
-      if (item && typeof item === "object") {
-        const obj = item as Record<string, unknown>;
-        const role = typeof obj.role === "string" ? obj.role : undefined;
-        const type = typeof obj.type === "string" ? obj.type : role ? "message" : "object";
-        const chars = countContentChars(obj.content);
-        inputItems.push({ type, role, chars });
-        inputTotalChars += chars;
-        countsByType[type] = (countsByType[type] ?? 0) + 1;
-        if (role) {
-          countsByRole[role] = (countsByRole[role] ?? 0) + 1;
-        }
-        return;
-      }
-      inputItems.push({ type: "unknown", chars: 0 });
-      countsByType.unknown = (countsByType.unknown ?? 0) + 1;
-    });
-  }
-
-  const instructionsChars = countTextChars(instructions);
-
-  return {
-    keys: Object.keys(payload).sort(),
-    model: typeof payload.model === "string" ? payload.model : null,
-    hasInstructions: instructionsChars > 0,
-    instructionsChars,
-    inputItemCount: inputItems.length,
-    inputItems,
-    inputTotalChars,
-    inputCountsByType: countsByType,
-    inputCountsByRole: Object.keys(countsByRole).length ? countsByRole : undefined,
-    previous_response_id_present: typeof previousResponseId === "string" && previousResponseId.length > 0,
-    store_present: Object.prototype.hasOwnProperty.call(payload, "store"),
-    store_value:
-      typeof store === "boolean" || store === null ? (store as boolean | null) : undefined,
-    prompt_cache_key_present: typeof promptCacheKey === "string" && promptCacheKey.length > 0,
-    prompt_cache_key_chars: countTextChars(promptCacheKey),
-  };
-}
 
 export type RunChatCompletionParams = OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming & {
   maxCompletionTokens?: number;
@@ -136,31 +48,31 @@ let client: OpenAI | null = null;
 let usingGateway = false;
 let openAiBaseUrl: string | undefined;
 
+function ensureApiKey(apiKey: string | undefined): string {
+  if (!apiKey) {
+    throw new Error("Missing OpenAI API key or Gateway token");
+  }
+  return apiKey;
+}
+
+function resolveGatewayConfig(url?: string, token?: string): OpenAIConfig | null {
+  if (!url || !token) return null;
+  openAiBaseUrl = url;
+  return { apiKey: token, baseURL: url, usedGateway: true };
+}
+
+function resolveDirectConfig(apiKey: string | undefined): OpenAIConfig {
+  const resolvedKey = ensureApiKey(apiKey);
+  openAiBaseUrl = undefined;
+  return { apiKey: resolvedKey, usedGateway: false };
+}
+
 function resolveOpenAIConfig(): OpenAIConfig {
   const forceDirect = process.env.AI_FORCE_DIRECT === "true";
-  const gatewayUrl = process.env.AI_GATEWAY_URL;
-  const gatewayToken = process.env.AI_GATEWAY_TOKEN;
-  const apiKey = process.env.OPENAI_API_KEY;
-
-  if (forceDirect) {
-    if (!apiKey) {
-      throw new Error("AI_FORCE_DIRECT is true but OPENAI_API_KEY is missing");
-    }
-    openAiBaseUrl = undefined;
-    return { apiKey, usedGateway: false };
-  }
-
-  if (gatewayUrl && gatewayToken) {
-    openAiBaseUrl = gatewayUrl;
-    return { apiKey: gatewayToken, baseURL: gatewayUrl, usedGateway: true };
-  }
-
-  if (apiKey) {
-    openAiBaseUrl = undefined;
-    return { apiKey, usedGateway: false };
-  }
-
-  throw new Error("Missing OpenAI API key or Gateway token");
+  const gatewayConfig = resolveGatewayConfig(process.env.AI_GATEWAY_URL, process.env.AI_GATEWAY_TOKEN);
+  if (forceDirect) return resolveDirectConfig(process.env.OPENAI_API_KEY);
+  if (gatewayConfig) return gatewayConfig;
+  return resolveDirectConfig(process.env.OPENAI_API_KEY);
 }
 
 function getOpenAIClient(): OpenAI {
@@ -172,6 +84,95 @@ function getOpenAIClient(): OpenAI {
   return client;
 }
 
+function resolveChatPrompt(
+  messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] | undefined,
+  contextForLog: AiInteractionContext,
+): string {
+  const userMessages = (messages ?? []).filter((msg) => msg.role === "user");
+  const lastUserMessages = userMessages.slice(-1);
+  const fallbackPrompt = lastUserMessages
+    .map((msg) => normalizeMessageContent(msg.content))
+    .filter(Boolean)
+    .join("\n\n");
+
+  const metadata = contextForLog.metadata as { loggedPrompt?: unknown } | undefined;
+  if (metadata && typeof metadata.loggedPrompt === "string") {
+    return metadata.loggedPrompt;
+  }
+
+  return fallbackPrompt;
+}
+
+function buildChatLogContext(context?: AiInteractionContext): AiInteractionContext | null {
+  if (!context) return null;
+  const defaultEnv = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local";
+  return {
+    ...context,
+    env: context.env ?? defaultEnv,
+  };
+}
+
+function buildChatLogPayload(options: {
+  model: string;
+  messages?: OpenAI.Chat.Completions.ChatCompletionMessageParam[];
+  completion: OpenAI.Chat.Completions.ChatCompletion;
+  contextForLog: AiInteractionContext;
+  latencyMs: number;
+}) {
+  const { model, messages, completion, contextForLog, latencyMs } = options;
+  const prompt = resolveChatPrompt(messages, contextForLog);
+  const responseText = normalizeMessageContent(completion.choices?.[0]?.message?.content);
+  const promptTokens = completion.usage?.prompt_tokens ?? undefined;
+  const completionTokens = completion.usage?.completion_tokens ?? undefined;
+  const responseId = completion.id ?? undefined;
+  const baseMetadata: Record<string, unknown> = contextForLog.metadata ?? {};
+  const metadataWithLatency = {
+    ...baseMetadata,
+    latencyMs,
+  };
+
+  return {
+    context: { ...contextForLog, metadata: metadataWithLatency },
+    model,
+    usedGateway: usingGateway,
+    prompt,
+    response: responseText,
+    promptTokens,
+    completionTokens,
+    responseId,
+    usage: completion.usage,
+  };
+}
+
+async function safeLogAiInteraction(payload: Parameters<typeof logAiInteraction>[0]) {
+  try {
+    await logAiInteraction(payload);
+  } catch (error) {
+    console.error("logAiInteraction failed", error);
+  }
+}
+
+async function logChatCompletionInteraction(options: {
+  context?: AiInteractionContext;
+  model: string;
+  messages?: OpenAI.Chat.Completions.ChatCompletionMessageParam[];
+  completion: OpenAI.Chat.Completions.ChatCompletion;
+  latencyMs: number;
+}) {
+  const { context, model, messages, completion, latencyMs } = options;
+  const contextForLog = buildChatLogContext(context);
+  if (contextForLog) {
+    const logPayload = buildChatLogPayload({
+      model,
+      messages,
+      completion,
+      contextForLog,
+      latencyMs,
+    });
+    await safeLogAiInteraction(logPayload);
+  }
+}
+
 /**
  * @deprecated Legacy Chat Completions path. Prefer createResponseText() (Responses API).
  * Disabled by default to prevent accidental regressions.
@@ -181,7 +182,7 @@ export async function runChatCompletion(
   params: RunChatCompletionParams,
 ): Promise<OpenAI.Chat.Completions.ChatCompletion> {
   const allow = process.env.PERAZZI_ALLOW_CHAT_COMPLETIONS === "true";
-  if (!allow) {
+  if (allow !== true) {
     throw new Error(
       "runChatCompletion is deprecated and disabled by default. " +
         "Set PERAZZI_ALLOW_CHAT_COMPLETIONS=true to enable (local/dev only).",
@@ -193,71 +194,189 @@ export async function runChatCompletion(
     model,
     messages,
     ...rest,
-    ...(maxCompletionTokens !== undefined ? { max_completion_tokens: maxCompletionTokens } : {}),
   };
+  if (maxCompletionTokens !== undefined) {
+    completionParams.max_completion_tokens = maxCompletionTokens;
+  }
 
   const clientInstance = getOpenAIClient();
   const start = Date.now();
   const completion = await clientInstance.chat.completions.create(completionParams);
   const latencyMs = Date.now() - start;
 
-  if (context) {
-    const defaultEnv = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local";
-    const contextForLog: AiInteractionContext = {
-      ...context,
-      env: context.env ?? defaultEnv,
-    };
-
-    const userMessages = (messages ?? []).filter((msg) => msg.role === "user");
-    const lastUserMessages = userMessages.slice(-1);
-
-    const fallbackPrompt = lastUserMessages
-      .map((msg) => normalizeMessageContent(msg.content))
-      .filter(Boolean)
-      .join("\n\n");
-
-    let overridePrompt: string | undefined;
-    const metadata = contextForLog.metadata as { loggedPrompt?: unknown } | undefined;
-    if (metadata && typeof metadata.loggedPrompt === "string") {
-      overridePrompt = metadata.loggedPrompt;
-    }
-
-    const prompt = overridePrompt ?? fallbackPrompt;
-
-    const responseText = normalizeMessageContent(completion.choices?.[0]?.message?.content);
-    const promptTokens = completion.usage?.prompt_tokens ?? undefined;
-    const completionTokens = completion.usage?.completion_tokens ?? undefined;
-    const responseId = completion.id ?? undefined;
-
-    const baseMetadata = (contextForLog.metadata ?? {}) as Record<string, unknown>;
-    const metadataWithLatency = {
-      ...baseMetadata,
-      latencyMs,
-    };
-
-    try {
-      await logAiInteraction({
-        context: { ...contextForLog, metadata: metadataWithLatency },
-        model,
-        usedGateway: usingGateway,
-        prompt,
-        response: responseText,
-        promptTokens,
-        completionTokens,
-        responseId,
-        usage: completion.usage,
-      });
-    } catch (error) {
-      console.error("logAiInteraction failed", error);
-    }
-  }
-
+  await logChatCompletionInteraction({ context, model, messages, completion, latencyMs });
   return completion;
 }
 
-export async function createResponseText(
+function buildReasoningConfig(
+  reasoning?: ResponseCreateParams["reasoning"] | null,
+  reasoningEffort?: OpenAI.ReasoningEffort | null,
+): ResponseCreateParams["reasoning"] | undefined {
+  if (reasoningEffort === undefined && !reasoning) return undefined;
+
+  const mergedReasoning = reasoning ? { ...reasoning } : undefined;
+  if (reasoningEffort !== undefined) {
+    return mergedReasoning ? { ...mergedReasoning, effort: reasoningEffort } : { effort: reasoningEffort };
+  }
+  return mergedReasoning;
+}
+
+function buildTextConfig(
+  text?: ResponseCreateParams["text"],
+  textVerbosity?: OpenAI.Responses.ResponseTextConfig["verbosity"],
+): ResponseCreateParams["text"] | undefined {
+  if (textVerbosity === undefined && !text) return undefined;
+
+  const mergedText = text ? { ...text } : undefined;
+  if (textVerbosity !== undefined) {
+    return mergedText ? { ...mergedText, verbosity: textVerbosity } : { verbosity: textVerbosity };
+  }
+  return mergedText;
+}
+
+function normalizeModel(rest: Record<string, unknown>): string {
+  const modelValue = rest.model;
+  return typeof modelValue === "string" ? modelValue.toLowerCase() : "";
+}
+
+function isGpt5SamplingAllowed(model: string, effortValue: string | undefined): boolean {
+  if (effortValue && effortValue !== "none") return false;
+  if (model.startsWith("gpt-5.2-pro")) return false;
+  return model.startsWith("gpt-5.2") || model.startsWith("gpt-5.1");
+}
+
+function shouldAllowSampling(
+  model: string,
+  resolvedReasoning?: ResponseCreateParams["reasoning"] | null,
+): boolean {
+  if (!model.startsWith("gpt-5")) return true;
+
+  const effortValue =
+    typeof resolvedReasoning?.effort === "string"
+      ? resolvedReasoning.effort.toLowerCase()
+      : undefined;
+
+  return isGpt5SamplingAllowed(model, effortValue);
+}
+
+function resolveAlias<T>(primary: T | undefined | null, alias: T | undefined | null): T | undefined | null {
+  return primary ?? alias;
+}
+
+function isOpenAiStoreEnabled(): boolean {
+  return process.env.PERAZZI_OPENAI_STORE === "true";
+}
+
+type BuildResponsesPayloadOptions = {
+  baseParams: Record<string, unknown>;
+  resolvedMaxTokens?: number | null;
+  resolvedReasoning?: ResponseCreateParams["reasoning"] | null;
+  resolvedText?: ResponseCreateParams["text"];
+  resolvedPromptCacheRetention?: ResponseCreateParams["prompt_cache_retention"];
+  resolvedPromptCacheKey?: string | null;
+  resolvedPreviousResponseId?: string | null;
+  allowSamplingParams: boolean;
+  temperature?: number | null;
+  top_p?: number | null;
+  logprobs?: number | boolean | null;
+  top_logprobs?: number | null;
+  openAiStoreEnabled: boolean;
+};
+
+function setIfDefined(payload: Record<string, unknown>, key: string, value: unknown) {
+  if (value !== undefined) {
+    payload[key] = value;
+  }
+}
+
+function applyOptionalFields(payload: Record<string, unknown>, fields: Record<string, unknown>) {
+  Object.entries(fields).forEach(([key, value]) => setIfDefined(payload, key, value));
+}
+
+function applySamplingParams(
+  payload: Record<string, unknown>,
+  options: Pick<
+    BuildResponsesPayloadOptions,
+    "allowSamplingParams" | "temperature" | "top_p" | "logprobs" | "top_logprobs"
+  >,
+) {
+  if (!options.allowSamplingParams) return;
+  setIfDefined(payload, "temperature", options.temperature ?? undefined);
+  setIfDefined(payload, "top_p", options.top_p ?? undefined);
+  setIfDefined(payload, "logprobs", options.logprobs);
+  setIfDefined(payload, "top_logprobs", options.top_logprobs ?? undefined);
+}
+
+function buildResponsesRequestPayload(options: BuildResponsesPayloadOptions): Record<string, unknown> {
+  const {
+    baseParams,
+    allowSamplingParams,
+    openAiStoreEnabled,
+    ...rest
+  } = options;
+
+  const requestPayload: Record<string, unknown> = { ...baseParams };
+
+  applyOptionalFields(requestPayload, {
+    max_output_tokens: rest.resolvedMaxTokens ?? undefined,
+    reasoning: rest.resolvedReasoning ?? undefined,
+    text: rest.resolvedText ?? undefined,
+    prompt_cache_retention: rest.resolvedPromptCacheRetention,
+    prompt_cache_key: rest.resolvedPromptCacheKey ?? undefined,
+    previous_response_id: rest.resolvedPreviousResponseId ?? undefined,
+  });
+  applySamplingParams(requestPayload, {
+    allowSamplingParams,
+    temperature: rest.temperature,
+    top_p: rest.top_p,
+    logprobs: rest.logprobs,
+    top_logprobs: rest.top_logprobs,
+  });
+  if (openAiStoreEnabled) {
+    requestPayload.store = true;
+  }
+
+  return requestPayload;
+}
+
+function logResponsesRequestDebug(requestPayload: Record<string, unknown>) {
+  if (!isPromptDebugEnabled()) return;
+  try {
+    console.info(
+      "[PERAZZI_DEBUG_PROMPT] openai.responses.create request",
+      JSON.stringify(summarizeResponsesCreatePayload(requestPayload)),
+    );
+  } catch (error) {
+    console.warn("[PERAZZI_DEBUG_PROMPT] Failed to summarize OpenAI request payload", error);
+  }
+}
+
+function logResponsesResponseDebug(
+  response: OpenAI.Responses.Response,
+  requestId: string | undefined,
+) {
+  if (!isPromptDebugEnabled()) return;
+  console.info(
+    "[PERAZZI_DEBUG_PROMPT] openai.responses.create response",
+    JSON.stringify({
+      responseId: response.id ?? null,
+      requestId: requestId ?? null,
+      usage: response.usage ?? null,
+    }),
+  );
+}
+
+function ensureNonEmptyOutput(outputText: string, responseId?: string, requestId?: string) {
+  if (!outputText.trim()) {
+    throw new Error(
+      `OpenAI returned empty output_text (responseId=${responseId ?? "unknown"}, requestId=${requestId ?? "unknown"})`,
+    );
+  }
+}
+
+function resolveResponsesOptions(
   params: CreateResponseTextParams,
-): Promise<CreateResponseTextResult> {
+): BuildResponsesPayloadOptions {
   const {
     temperature,
     top_p,
@@ -278,98 +397,41 @@ export async function createResponseText(
     ...rest
   } = params;
 
-  const resolvedMaxTokens = maxOutputTokens ?? max_output_tokens;
-  const resolvedReasoning =
-    reasoningEffort !== undefined || reasoning
-      ? {
-          ...(reasoning ?? {}),
-          ...(reasoningEffort !== undefined ? { effort: reasoningEffort } : {}),
-        }
-      : undefined;
-  const resolvedText =
-    textVerbosity !== undefined || text
-      ? {
-          ...(text ?? {}),
-          ...(textVerbosity !== undefined ? { verbosity: textVerbosity } : {}),
-        }
-      : undefined;
-  const resolvedPromptCacheRetention = promptCacheRetention ?? prompt_cache_retention;
-  const resolvedPromptCacheKey = promptCacheKey ?? prompt_cache_key;
-  const resolvedPreviousResponseId = previousResponseId ?? previous_response_id;
-  const openAiStoreEnabled = process.env.PERAZZI_OPENAI_STORE === "true";
-  const model = typeof (rest as Record<string, unknown>).model === "string"
-    ? (rest as Record<string, string>).model.toLowerCase()
-    : "";
+  const baseParams = rest as Record<string, unknown>;
+  const resolvedReasoning = buildReasoningConfig(reasoning, reasoningEffort);
+  const model = normalizeModel(baseParams);
 
-  const isGpt5 = model.startsWith("gpt-5");
-  const isGpt52Pro = model.startsWith("gpt-5.2-pro");
-  const isGpt52 = model.startsWith("gpt-5.2") && !isGpt52Pro;
-  const isGpt51 = model.startsWith("gpt-5.1");
-  const samplingModelAllowed = isGpt52 || isGpt51;
+  return {
+    baseParams,
+    resolvedMaxTokens: resolveAlias(maxOutputTokens, max_output_tokens),
+    resolvedReasoning,
+    resolvedText: buildTextConfig(text, textVerbosity),
+    resolvedPromptCacheRetention: resolveAlias(promptCacheRetention, prompt_cache_retention),
+    resolvedPromptCacheKey: resolveAlias(promptCacheKey, prompt_cache_key),
+    resolvedPreviousResponseId: resolveAlias(previousResponseId, previous_response_id),
+    allowSamplingParams: shouldAllowSampling(model, resolvedReasoning),
+    temperature,
+    top_p,
+    logprobs,
+    top_logprobs,
+    openAiStoreEnabled: isOpenAiStoreEnabled(),
+  };
+}
 
-  const effortValue = (resolvedReasoning as { effort?: unknown } | undefined)?.effort;
-  const effort = typeof effortValue === "string" ? effortValue.toLowerCase() : undefined;
-  const reasoningAllowsSampling = !resolvedReasoning || effort === "none";
-
-  const allowSamplingParams = !isGpt5 ? true : samplingModelAllowed && reasoningAllowsSampling;
+export async function createResponseText(
+  params: CreateResponseTextParams,
+): Promise<CreateResponseTextResult> {
+  const requestPayload = buildResponsesRequestPayload(resolveResponsesOptions(params));
 
   const clientInstance = getOpenAIClient();
   logTlsDiagForOpenAI("openai.responses", openAiBaseUrl, usingGateway);
-  const requestPayload: Record<string, unknown> = {
-    ...rest,
-    ...(resolvedMaxTokens !== undefined ? { max_output_tokens: resolvedMaxTokens } : {}),
-    ...(resolvedReasoning ? { reasoning: resolvedReasoning } : {}),
-    ...(resolvedText ? { text: resolvedText } : {}),
-    ...(resolvedPromptCacheRetention !== undefined
-      ? { prompt_cache_retention: resolvedPromptCacheRetention }
-      : {}),
-    ...(resolvedPromptCacheKey !== undefined ? { prompt_cache_key: resolvedPromptCacheKey } : {}),
-    ...(resolvedPreviousResponseId !== undefined
-      ? { previous_response_id: resolvedPreviousResponseId }
-      : {}),
-    ...(allowSamplingParams && temperature !== undefined ? { temperature } : {}),
-    ...(allowSamplingParams && top_p !== undefined ? { top_p } : {}),
-    ...(allowSamplingParams && logprobs !== undefined ? { logprobs } : {}),
-    ...(allowSamplingParams && top_logprobs !== undefined ? { top_logprobs } : {}),
-    ...(openAiStoreEnabled ? { store: true } : {}),
-  };
-
-  if (isPromptDebugEnabled()) {
-    try {
-      console.info(
-        "[PERAZZI_DEBUG_PROMPT] openai.responses.create request",
-        JSON.stringify(summarizeResponsesCreatePayload(requestPayload)),
-      );
-    } catch (error) {
-      console.warn("[PERAZZI_DEBUG_PROMPT] Failed to summarize OpenAI request payload", error);
-    }
-  }
-
+  logResponsesRequestDebug(requestPayload);
   const response = await clientInstance.responses.create(requestPayload as ResponseCreateParams);
 
   const requestId = (response as { _request_id?: string })._request_id;
   const outputText = response.output_text ?? "";
-
-  if (isPromptDebugEnabled()) {
-    try {
-      console.info(
-        "[PERAZZI_DEBUG_PROMPT] openai.responses.create response",
-        JSON.stringify({
-          responseId: response.id ?? null,
-          requestId: requestId ?? null,
-          usage: response.usage ?? null,
-        }),
-      );
-    } catch (error) {
-      console.warn("[PERAZZI_DEBUG_PROMPT] Failed to serialize OpenAI response usage", error);
-    }
-  }
-
-  if (!outputText.trim()) {
-    throw new Error(
-      `OpenAI returned empty output_text (responseId=${response.id ?? "unknown"}, requestId=${requestId ?? "unknown"})`,
-    );
-  }
+  logResponsesResponseDebug(response, requestId);
+  ensureNonEmptyOutput(outputText, response.id, requestId);
 
   return {
     text: outputText,
@@ -383,14 +445,8 @@ export async function createResponseText(
 export async function createEmbeddings(
   params: CreateEmbeddingsParams,
 ): Promise<OpenAI.Embeddings.CreateEmbeddingResponse> {
-  const { model, input, context: _context, ...rest } = params;
-  void _context;
-
-  const embeddingParams: OpenAI.Embeddings.EmbeddingCreateParams = {
-    model,
-    input,
-    ...rest,
-  };
+  const embeddingParams: CreateEmbeddingsParams = { ...params };
+  delete embeddingParams.context;
 
   const clientInstance = getOpenAIClient();
   logTlsDiagForOpenAI("openai.embeddings", openAiBaseUrl, usingGateway);
