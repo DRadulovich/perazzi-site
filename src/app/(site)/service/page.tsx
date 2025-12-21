@@ -51,7 +51,7 @@ export default async function ServicePage() {
     <div className="space-y-16">
       {faqSchema ? (
         <>
-          {/* eslint-disable-next-line react/no-danger -- JSON-LD for SEO, stringified server-side */}
+          { }
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
