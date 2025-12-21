@@ -12,9 +12,9 @@ export function truncate(text: string, length = 200) {
 
 export function oneLine(text: string): string {
   return text
-    .replaceAll("\r\n", "\n")
-    .replaceAll(/\s*\n\s*/g, " ")
-    .replaceAll(/\s+/g, " ")
+    .replace(/\r\n/g, "\n")
+    .replace(/\s*\n\s*/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
@@ -34,24 +34,25 @@ export function toNumberOrNull(value: unknown): number | null {
 }
 
 const POLLUTION_KEYS = new Set(["__proto__", "prototype", "constructor"]);
+type SafeValue = Record<string, unknown> | Array<unknown> | string | number | boolean | null | undefined;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object";
 }
 
-function stepIntoOwnValue(current: unknown, key: string): unknown | null {
-  if (POLLUTION_KEYS.has(key)) return null;
-  if (!isRecord(current)) return null;
+function stepIntoOwnValue(current: SafeValue, key: string): SafeValue {
+  if (POLLUTION_KEYS.has(key)) return undefined;
+  if (!isRecord(current)) return undefined;
   const descriptor = Object.getOwnPropertyDescriptor(current, key);
-  if (!descriptor) return null;
-  return descriptor.value;
+  if (!descriptor) return undefined;
+  return descriptor.value as SafeValue;
 }
 
-function readNestedValue(obj: unknown, path: string[]): unknown | null {
-  let current: unknown = obj;
+function readNestedValue(obj: unknown, path: string[]): SafeValue {
+  let current: SafeValue = obj as SafeValue;
   for (const key of path) {
     const next = stepIntoOwnValue(current, key);
-    if (next === null) return null;
+    if (typeof next === "undefined") return undefined;
     current = next;
   }
   return current;
@@ -61,27 +62,38 @@ export function readNestedNumber(obj: unknown, path: string[]): number | null {
   return toNumberOrNull(readNestedValue(obj, path));
 }
 
+function firstNumber(...values: Array<unknown>): number | null {
+  for (const value of values) {
+    const n = toNumberOrNull(value);
+    if (n !== null) return n;
+  }
+  return null;
+}
+
 export function getTokenMetrics(log: PerazziLogPreviewRow) {
-  const promptTokens = toNumberOrNull((log as { prompt_tokens?: unknown }).prompt_tokens);
-  const completionTokens = toNumberOrNull((log as { completion_tokens?: unknown }).completion_tokens);
+  const promptTokens = firstNumber((log as { prompt_tokens?: unknown }).prompt_tokens);
+  const completionTokens = firstNumber((log as { completion_tokens?: unknown }).completion_tokens);
   const metadataObj = isRecord(log.metadata) ? log.metadata : null;
   const responseUsage = metadataObj && isRecord(metadataObj.responseUsage) ? metadataObj.responseUsage : null;
 
-  const cachedTokens =
-    toNumberOrNull((log as { cached_tokens?: unknown }).cached_tokens) ??
-    readNestedNumber(metadataObj, ["cachedTokens"]) ??
-    readNestedNumber(responseUsage, ["input_tokens_details", "cached_tokens"]);
+  const cachedTokens = firstNumber(
+    (log as { cached_tokens?: unknown }).cached_tokens,
+    readNestedNumber(metadataObj, ["cachedTokens"]),
+    readNestedNumber(responseUsage, ["input_tokens_details", "cached_tokens"]),
+  );
 
-  const reasoningTokens =
-    toNumberOrNull((log as { reasoning_tokens?: unknown }).reasoning_tokens) ??
-    readNestedNumber(metadataObj, ["reasoningTokens"]) ??
-    readNestedNumber(responseUsage, ["output_tokens_details", "reasoning_tokens"]);
+  const reasoningTokens = firstNumber(
+    (log as { reasoning_tokens?: unknown }).reasoning_tokens,
+    readNestedNumber(metadataObj, ["reasoningTokens"]),
+    readNestedNumber(responseUsage, ["output_tokens_details", "reasoning_tokens"]),
+  );
 
-  const totalTokens =
-    toNumberOrNull((log as { total_tokens?: unknown }).total_tokens) ??
-    readNestedNumber(metadataObj, ["totalTokens"]) ??
-    readNestedNumber(responseUsage, ["total_tokens"]) ??
-    (promptTokens !== null && completionTokens !== null ? promptTokens + completionTokens : null);
+  const totalTokens = firstNumber(
+    (log as { total_tokens?: unknown }).total_tokens,
+    readNestedNumber(metadataObj, ["totalTokens"]),
+    readNestedNumber(responseUsage, ["total_tokens"]),
+    promptTokens !== null && completionTokens !== null ? promptTokens + completionTokens : null,
+  );
 
   return { promptTokens, completionTokens, cachedTokens, reasoningTokens, totalTokens };
 }
