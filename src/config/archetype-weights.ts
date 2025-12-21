@@ -6,7 +6,12 @@ export interface ArchetypeBoostTiers {
   high: number; // strong, unambiguous signal (e.g., "family heirloom")
   mid: number;  // moderate, supportive signal (e.g., "pre-shot routine")
   low: number;  // weak, contextual signal (e.g., "average")
-  maxPerMessage: number; // cap per archetype per message
+  /**
+   * Hard cap applied AFTER all sources (mode, page, hints, language) are combined for a single
+   * message. May legitimately exceed 1.0 because priors can also add weight.
+   * Only requirement: value must be ≥ 0.
+   */
+  maxPerMessage: number;
 }
 
 const DEFAULT_TIERS: ArchetypeBoostTiers = {
@@ -16,13 +21,20 @@ const DEFAULT_TIERS: ArchetypeBoostTiers = {
   maxPerMessage: 0.6,
 };
 
-function clamp(n: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, n));
+// Clamp helper for tier values (0–1 range)
+function clamp01(n: number): number {
+  return Math.max(0, Math.min(1, n));
 }
 
-function readEnvNumber(key: string, fallback: number): number {
+function readTierValue(key: string, fallback: number): number {
   const raw = Number(process.env[key]);
-  return Number.isFinite(raw) ? clamp(raw, 0, 1) : fallback;
+  return Number.isFinite(raw) ? clamp01(raw) : fallback;
+}
+
+// Max cap may exceed 1.0; only guard against negatives / NaN
+function readMaxValue(key: string, fallback: number): number {
+  const raw = Number(process.env[key]);
+  return Number.isFinite(raw) && raw >= 0 ? raw : fallback;
 }
 
 /**
@@ -39,9 +51,10 @@ export function isTieredBoostsEnabled(): boolean {
 }
 
 export function getBoostTiers(): ArchetypeBoostTiers {
-  const high = readEnvNumber("ARCHETYPE_BOOST_HIGH", DEFAULT_TIERS.high);
-  const mid = readEnvNumber("ARCHETYPE_BOOST_MID", DEFAULT_TIERS.mid);
-  const low = readEnvNumber("ARCHETYPE_BOOST_LOW", DEFAULT_TIERS.low);
-  const max = readEnvNumber("ARCHETYPE_BOOST_MAX", DEFAULT_TIERS.maxPerMessage);
-  return { high, mid, low, maxPerMessage: max };
+  return {
+    high: readTierValue("ARCHETYPE_BOOST_HIGH", DEFAULT_TIERS.high),
+    mid: readTierValue("ARCHETYPE_BOOST_MID", DEFAULT_TIERS.mid),
+    low: readTierValue("ARCHETYPE_BOOST_LOW", DEFAULT_TIERS.low),
+    maxPerMessage: readMaxValue("ARCHETYPE_BOOST_MAX", DEFAULT_TIERS.maxPerMessage),
+  };
 }

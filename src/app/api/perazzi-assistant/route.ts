@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import crypto from "node:crypto";
+import crypto, { randomInt } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { APIError } from "openai";
@@ -53,6 +53,7 @@ import {
   parseTemperature,
   isUsingGateway,
 } from "@/lib/perazziAiConfig";
+import { isTieredBoostsEnabled } from "@/config/archetype-weights";
 
 const LOW_CONFIDENCE_THRESHOLD = Number(process.env.PERAZZI_LOW_CONF_THRESHOLD ?? 0.1);
 const LOW_CONFIDENCE_MESSAGE =
@@ -157,6 +158,7 @@ function buildDebugPayload(params: {
   retrieval: PerazziAdminDebugPayload["retrieval"];
   usage: OpenAI.Responses.ResponseUsage | null | undefined;
   flags: PerazziAdminDebugPayload["flags"];
+  archetypeAnalytics?: PerazziAdminDebugPayload["archetypeAnalytics"];
   output?: PerazziAdminDebugPayload["output"];
   triggers?: PerazziAdminDebugPayload["triggers"];
 }): PerazziAdminDebugPayload {
@@ -183,6 +185,9 @@ function buildDebugPayload(params: {
     },
     usage: extractAdminDebugUsage(params.usage),
     flags: params.flags,
+    ...(typeof params.archetypeAnalytics === "undefined"
+      ? {}
+      : { archetypeAnalytics: params.archetypeAnalytics }),
     ...(typeof params.output === "undefined" ? {} : { output: params.output }),
     ...(params.triggers ? { triggers: params.triggers } : {}),
   };
@@ -458,6 +463,20 @@ function computeArchetypeConfidenceMetrics(vector: Record<string, unknown> | nul
   };
 }
 
+function buildArchetypeAnalytics(
+  variantHint: "tiered" | "baseline" | null,
+  margin: number | null,
+  signals: string[],
+  templates: string[],
+): PerazziAdminDebugPayload["archetypeAnalytics"] {
+  return {
+    variant: variantHint ?? (isTieredBoostsEnabled() ? "tiered" : "baseline"),
+    margin,
+    signalsUsed: signals.slice(0, 50),
+    templates,
+  };
+}
+
 const ALLOWED_MODES: PerazziMode[] = ["prospect", "owner", "navigation"];
 
 function normalizeArchetype(input: string): Archetype | null {
@@ -662,9 +681,13 @@ export async function POST(request: Request) {
     }
     // -------------------------
 
-    // --- Archetype tiered boost A/B bucket ---
-    const abPercent = Number(process.env.ARCHETYPE_AB_PERCENT ?? 0);
-    const isTierBucket = Number.isFinite(abPercent) && abPercent > 0 && Math.random() * 100 < abPercent;
+    // --- Archetype tiered boost A/B bucket (secure RNG) ---
+    // Use cryptographically secure RNG for A/B bucketing to satisfy security linters
+const abPercent = Number(process.env.ARCHETYPE_AB_PERCENT ?? 0);
+const isTierBucket =
+  Number.isFinite(abPercent) &&
+  abPercent > 0 &&
+  randomInt(0, 100) < abPercent;
     const archetypeVariant = isTierBucket ? "tiered" : "baseline";
 
     // expose variant in context for logging / downstream use
@@ -742,6 +765,12 @@ export async function POST(request: Request) {
                   .startsWith(GENERAL_UNSOURCED_LABEL_PREFIX),
               }
             : null,
+        archetypeAnalytics: buildArchetypeAnalytics(
+          fullBody.context?.archetypeVariant ?? null,
+          null,
+          [],
+          [],
+        ),
         triggers: {
           blocked_intent: blockedIntent ?? null,
           evidenceMode,
@@ -1215,6 +1244,12 @@ export async function POST(request: Request) {
           prompt_cache_key_present: Boolean(PROMPT_CACHE_KEY),
         },
         output: { general_unsourced_label_present: false },
+        archetypeAnalytics: buildArchetypeAnalytics(
+          fullBody.context?.archetypeVariant ?? null,
+          null,
+          [],
+          [],
+        ),
         triggers: {
           blocked_intent: null,
           evidenceMode,
@@ -1322,6 +1357,13 @@ export async function POST(request: Request) {
       });
     }
 
+    const archetypeAnalytics = buildArchetypeAnalytics(
+      fullBody.context?.archetypeVariant ?? null,
+      archetypeMetrics.archetypeConfidenceMargin ?? null,
+      archetypeClassification?.archetypeDecision?.signals ?? [],
+      responseTemplates,
+    );
+
     logInteraction(
       fullBody,
       retrieval.chunks,
@@ -1371,6 +1413,7 @@ export async function POST(request: Request) {
       output: {
         general_unsourced_label_present: answer.trimStart().startsWith(GENERAL_UNSOURCED_LABEL_PREFIX),
       },
+      archetypeAnalytics,
       triggers: {
         blocked_intent: null,
         evidenceMode,

@@ -36,7 +36,10 @@ function normalizeArchetype(label: string | null): string {
   return match ?? raw;
 }
 
-export function buildTrendPoints(rows: ArchetypeDailyRow[], order: string[]): StackedAreaPoint[] {
+export function buildTrendPoints(
+  rows: ArchetypeDailyRow[],
+  order: readonly string[],
+): StackedAreaPoint[] {
   const byDay = new Map<
     string,
     {

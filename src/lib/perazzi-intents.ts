@@ -499,7 +499,9 @@ function __assert(name: string, condition: boolean) {
   }
 }
 
-if (process.env.NODE_ENV === "development") {
+const __DEV__ = process.env.NODE_ENV === "development";
+
+if (__DEV__ && typeof (globalThis as any).jest === "undefined") {
   const ctxProspect: PerazziAssistantRequest["context"] = { mode: "prospect" };
 
   __assertEqual(
