@@ -1,6 +1,7 @@
 // NOTE: Audited for mobile behavior per docs/GUIDES/Mobile-Design-Guide.md
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 import { PortableBody } from "@/components/journal/PortableBody";
@@ -48,6 +49,19 @@ type JourneyChapterBarProps = {
 };
 
 const SOUL_JOURNEY_STORAGE_KEY = "perazzi_soul_journey_v1";
+
+function getSanityImageAspectRatio(assetId?: string) {
+  if (!assetId) return undefined;
+
+  const match = assetId.match(/-(\d+)x(\d+)-/);
+  if (!match) return undefined;
+
+  const width = Number.parseInt(match[1], 10);
+  const height = Number.parseInt(match[2], 10);
+  if (!Number.isFinite(width) || !Number.isFinite(height) || height === 0) return undefined;
+
+  return width / height;
+}
 
 export function BuildJourneyClient({ stations }: BuildJourneyClientProps) {
   const [answers, setAnswers] = useState<Record<StepKey, string>>({});
@@ -239,6 +253,7 @@ function JourneyChapters({
             ? [station.body]
             : [];
         const heroUrl = station.heroImage?.asset?.url;
+        const heroAspectRatio = getSanityImageAspectRatio(station.heroImage?.asset?._id);
         const sectionId = station.slug?.current ?? `step-${stepNumber}`;
         const hasHero = Boolean(heroUrl);
         const answer = answers[stepKey] ?? "";
@@ -274,11 +289,17 @@ function JourneyChapters({
                   </header>
 
                   {hasHero ? (
-                    <figure className="overflow-hidden rounded-xl bg-card/0">
-                      <img
+                    <figure
+                      className="relative overflow-hidden rounded-xl bg-card/0"
+                      style={{ aspectRatio: heroAspectRatio ?? 3 / 2 }}
+                    >
+                      <Image
                         src={heroUrl!}
                         alt={station.heroImage?.alt ?? station.title ?? "Build journey image"}
-                        className="h-auto w-full object-cover"
+                        fill
+                        sizes="(min-width: 1280px) 1100px, (min-width: 1024px) 900px, 100vw"
+                        className="object-cover"
+                        priority={index === 0}
                       />
                     </figure>
                   ) : null}

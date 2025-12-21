@@ -20,7 +20,6 @@ export function HeritageEventRail({
   events,
   className,
   scrollProgress,
-  activeEventIndex = 0,
   prefersReducedMotion = false,
 }: HeritageEventRailProps) {
   const analyticsRef = useAnalyticsObserver<HTMLDivElement>("HeritageEventRailSeen");

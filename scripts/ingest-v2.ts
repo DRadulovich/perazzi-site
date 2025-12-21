@@ -527,7 +527,7 @@ function buildHelperSectionLabels(
   }
 
   if (doc.docType === "discipline-index" && heading) {
-    const normalized = heading.toLowerCase().replace(/\s+/g, "-");
+    const normalized = heading.toLowerCase().replaceAll(/\s+/g, "-");
     labels.push(`disciplines:${normalized}`);
   }
 

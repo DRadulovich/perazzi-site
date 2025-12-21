@@ -158,10 +158,6 @@ function tokenizeToWordSet(normalizedMessage: string): Set<string> {
   return new Set(tokens);
 }
 
-function escapeRegex(input: string): string {
-  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
 function isWordBoundary(char: string | undefined): boolean {
   // Treat start/end of string or any non-alphanumeric / apostrophe char as a boundary.
   return !char || !/[a-z0-9']/i.test(char);

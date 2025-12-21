@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import clsx from "clsx";
 import { FiChevronUp } from "react-icons/fi";
 
@@ -132,7 +133,14 @@ function BuildSheetEntryCard({
           {isExpanded ? (
             <div className="space-y-2">
               {imageUrl ? (
-                <img src={imageUrl} alt={entry.label} className="w-full max-h-48 rounded-lg object-cover" />
+                <Image
+                  src={imageUrl}
+                  alt={entry.label}
+                  width={1600}
+                  height={1000}
+                  className="w-full max-h-48 rounded-lg object-cover"
+                  sizes="(max-width: 768px) 100vw, 768px"
+                />
               ) : null}
               <div className="space-y-1 text-[11px] sm:text-xs leading-relaxed text-ink">
                 {detailLines.map((detail) =>
