@@ -85,5 +85,10 @@
     "typescript": "5.9.3",
     "vitest": "4.0.15"
   },
+  "pnpm": {
+    "overrides": {
+      "parse5": "7.3.0"
+    }
+  },
   "type": "module"
 }
