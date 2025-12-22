@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 
 import { ArchetypesSection } from "@/components/pgpt-insights/sections/ArchetypesSection";
+import { DataHealthSection } from "@/components/pgpt-insights/sections/DataHealthSection";
 import { GuardrailsSection } from "@/components/pgpt-insights/sections/GuardrailsSection";
 import { LogsSection } from "@/components/pgpt-insights/sections/LogsSection";
 import { MetricsSection } from "@/components/pgpt-insights/sections/MetricsSection";
@@ -68,6 +69,10 @@ export function InsightsSections({
 }: InsightsSectionsProps) {
   return (
     <div className="space-y-12 lg:space-y-14">
+      <Suspense fallback={<SectionSkeleton id="data-health" title="Data Health" lines={4} />}>
+        <DataHealthSection envFilter={envFilter} />
+      </Suspense>
+
       <Suspense fallback={<SectionSkeleton id="overview" title="Overview" />}>
         <OverviewSection envFilter={envFilter} daysFilter={daysFilter} scopeSummary={scopeSummary} />
       </Suspense>

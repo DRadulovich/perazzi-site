@@ -59,11 +59,13 @@ For each case below:
 #### 2.2.1 Prospect – Platform differentiation
 
 **Query:**  
-> “What’s the difference between the MX8 and the High Tech platforms?”
+> “What’s the difference between the MX and the HT platforms?”
 
 **Expected doc families:**
 
-- `V2_Gun-Info-Docs/V2_RAG_corpus-models-details.json`  
+- `V2_Gun-Info-Docs/V2_RAG_corpus-models-details.json`
+- `V2-PGPT/V2_PreBuild-Docs/V2_Gun-Info-Docs/V2_RAG_corpus-base-models.md`
+- `V2_Gun-Info-Docs/V2_RAG_corpus-platforms.md`
 - `V2_Making-a-Perazzi-Docs/1_Product-and-System-Overview.md`  
 - Possibly relevant extract from `V2_brand-ethos.md` for identity framing.
 

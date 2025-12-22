@@ -14,6 +14,7 @@ import { logTlsDiagForDb } from "@/lib/tlsDiag";
 
 const EMBEDDING_MODEL = process.env.PERAZZI_EMBED_MODEL ?? "text-embedding-3-large";
 const CHUNK_LIMIT = Number(process.env.PERAZZI_RETRIEVAL_LIMIT ?? 12);
+const TOP_RETURNED_CHUNKS_CAP = 15;
 
 type RetrievedChunkScoreBreakdown = {
   chunkId: string;
@@ -93,6 +94,61 @@ export async function retrievePerazziContext(
       hints,
       candidateLimit,
       context: body.context,
+      rerankEnabled,
+    });
+    return { chunks, maxScore: maxBaseScore, rerankMetrics };
+  } finally {
+    client.release();
+  }
+}
+
+export async function retrievePerazziContextWithEmbedding(opts: {
+  queryEmbedding: number[];
+  limit?: number;
+  candidateLimit?: number;
+  hints?: RetrievalHints;
+  context?: PerazziAssistantRequest["context"];
+  rerankEnabled?: boolean;
+}): Promise<{ chunks: RetrievedChunk[]; maxScore: number; rerankMetrics: RerankMetrics }> {
+  const {
+    queryEmbedding,
+    limit,
+    candidateLimit,
+    hints,
+    context,
+    rerankEnabled = isEnvTrue(process.env.PERAZZI_ENABLE_RERANK),
+  } = opts;
+
+  const effectiveLimit = Number.isFinite(limit) && Number(limit) > 0
+    ? Math.floor(Number(limit))
+    : CHUNK_LIMIT;
+  const effectiveCandidateLimit = rerankEnabled
+    ? Number.isFinite(candidateLimit) && Number(candidateLimit) > 0
+        ? Math.floor(Number(candidateLimit))
+        : getRerankCandidateLimit(effectiveLimit)
+    : effectiveLimit;
+
+  const emptyMetrics: RerankMetrics = {
+    rerankEnabled,
+    candidateLimit: effectiveCandidateLimit,
+    topReturnedChunks: [],
+  };
+
+  if (!queryEmbedding.length) {
+    return { chunks: [], maxScore: 0, rerankMetrics: emptyMetrics };
+  }
+
+  const pool = await getPgPool();
+  const client = await pool.connect();
+
+  try {
+    const { chunks, maxBaseScore, rerankMetrics } = await fetchV2Chunks({
+      client,
+      queryEmbedding,
+      limit: effectiveLimit,
+      hints,
+      candidateLimit: effectiveCandidateLimit,
+      context,
       rerankEnabled,
     });
     return { chunks, maxScore: maxBaseScore, rerankMetrics };
@@ -1161,7 +1217,7 @@ async function fetchV2Chunks(opts: {
       returnedCount: sliced.length,
       limit,
       effectiveCandidateLimit,
-      top: typedRows.slice(0, Math.min(limit, 12)).map((row, idx) => {
+      top: typedRows.slice(0, Math.min(limit, TOP_RETURNED_CHUNKS_CAP)).map((row, idx) => {
         const baseScore = Number(row.score ?? 0);
         return {
           rank: idx + 1,
@@ -1178,7 +1234,7 @@ async function fetchV2Chunks(opts: {
     });
 
     const topReturnedChunks: RetrievedChunkScoreBreakdown[] = sliced
-      .slice(0, Math.min(12, sliced.length))
+      .slice(0, Math.min(TOP_RETURNED_CHUNKS_CAP, sliced.length))
       .map((c) => ({
         chunkId: c.chunkId,
         baseScore: Number(c.baseScore ?? 0),
@@ -1249,7 +1305,7 @@ async function fetchV2Chunks(opts: {
     returnedCount: top.length,
     limit,
     effectiveCandidateLimit,
-    top: top.slice(0, 12).map((item, idx) => ({
+    top: top.slice(0, TOP_RETURNED_CHUNKS_CAP).map((item, idx) => ({
       rank: idx + 1,
       chunkId: item.row.chunk_id,
       documentPath: item.row.document_path ?? null,
@@ -1286,7 +1342,7 @@ async function fetchV2Chunks(opts: {
   });
 
   const topReturnedChunks: RetrievedChunkScoreBreakdown[] = top
-    .slice(0, Math.min(12, top.length))
+    .slice(0, Math.min(TOP_RETURNED_CHUNKS_CAP, top.length))
     .map((item) => ({
       chunkId: item.row.chunk_id,
       baseScore: Number(item.baseScore ?? 0),

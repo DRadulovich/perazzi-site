@@ -470,7 +470,7 @@ export function LogSummaryPanel({
                           </tr>
                         </thead>
                         <tbody>
-                          {rerankDiag.topReturnedChunks.slice(0, 12).map((c, idx) => (
+                          {rerankDiag.topReturnedChunks.slice(0, 15).map((c, idx) => (
                             <tr key={`${c.chunkId}-${idx}`} className="border-t border-border/60">
                               <td className="truncate px-2 py-1 font-medium text-foreground" title={c.chunkId}>
                                 {c.chunkId}

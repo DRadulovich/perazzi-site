@@ -1,5 +1,6 @@
 import { pool } from "../db";
 import { LOW_SCORE_THRESHOLD } from "./constants";
+import { errorMessage } from "./error-utils";
 import {
   buildLogsQueryParts,
   buildLogsQueryPartsWithBase,
@@ -7,6 +8,7 @@ import {
   type BoolFilter,
   type LogsFilters,
 } from "./log-filters";
+import { appendDaysFilter } from "./query-helpers";
 import type {
   PerazziLogRow,
   PerazziLogPreviewRow,
@@ -35,6 +37,18 @@ import type {
 } from "./types";
 type PgNumeric = string | number;
 type PgNumericNullable = PgNumeric | null;
+
+export type DataHealthSnapshot = {
+  ok: boolean;
+  checked_at: string;
+  latency_ms: number | null;
+  last_log_at: string | null;
+  total: number | null;
+  last_hour: number | null;
+  last_24h: number | null;
+  last_7d: number | null;
+  error?: string;
+};
 
 function isUuidLike(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
@@ -188,10 +202,7 @@ export async function fetchRagSummary(envFilter?: string, daysFilter?: number): 
     params.push(envFilter);
     idx += 1;
   }
-  if (daysFilter) {
-    conditions.push(`created_at >= now() - ($${idx} || ' days')::interval`);
-    params.push(daysFilter);
-  }
+  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const thresholdParamIndex = idx;
   params.push(threshold);
@@ -246,10 +257,7 @@ export async function fetchLowScoreLogs(
     params.push(envFilter);
     idx += 1;
   }
-  if (daysFilter) {
-    conditions.push(`created_at >= now() - ($${idx} || ' days')::interval`);
-    params.push(daysFilter);
-  }
+  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const thresholdParamIndex = idx;
   params.push(threshold);
@@ -293,11 +301,7 @@ export async function fetchTopChunks(envFilter?: string, limit = 20, daysFilter?
     params.push(envFilter);
     idx += 1;
   }
-  if (daysFilter) {
-    conditions.push(`l.created_at >= now() - ($${idx} || ' days')::interval`);
-    params.push(daysFilter);
-    idx += 1;
-  }
+  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter, column: "l.created_at" });
 
   const limitParamIndex = idx;
   params.push(limit);
@@ -328,10 +332,7 @@ export async function fetchGuardrailStats(envFilter?: string, daysFilter?: numbe
     params.push(envFilter);
     idx += 1;
   }
-  if (daysFilter) {
-    conditions.push(`created_at >= now() - ($${idx} || ' days')::interval`);
-    params.push(daysFilter);
-  }
+  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const query = `
     select
@@ -361,10 +362,7 @@ export async function fetchGuardrailByArchetype(envFilter?: string, daysFilter?:
     params.push(envFilter);
     idx += 1;
   }
-  if (daysFilter) {
-    conditions.push(`created_at >= now() - ($${idx} || ' days')::interval`);
-    params.push(daysFilter);
-  }
+  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const query = `
     select
@@ -404,10 +402,7 @@ export async function fetchRecentGuardrailBlocks(
     params.push(envFilter);
     idx += 1;
   }
-  if (daysFilter) {
-    conditions.push(`created_at >= now() - ($${idx} || ' days')::interval`);
-    params.push(daysFilter);
-  }
+  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const limitParamIndex = idx;
   params.push(limit);
@@ -432,7 +427,7 @@ export async function fetchRecentGuardrailBlocks(
     from perazzi_conversation_logs
     where ${conditions.join(" and ")}
     order by created_at desc
-    limit $${limitParamIndex};
+    limit $${limitParamIndex}::int;
   `;
 
   const { rows } = await pool.query<GuardrailLogRow>(query, params);
@@ -449,10 +444,7 @@ export async function fetchArchetypeIntentStats(envFilter?: string, daysFilter?:
     params.push(envFilter);
     idx += 1;
   }
-  if (daysFilter) {
-    conditions.push(`created_at >= now() - ($${idx} || ' days')::interval`);
-    params.push(daysFilter);
-  }
+  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const query = `
     select
@@ -486,10 +478,7 @@ export async function fetchArchetypeSummary(envFilter?: string, daysFilter?: num
     params.push(envFilter);
     idx += 1;
   }
-  if (daysFilter) {
-    conditions.push(`created_at >= now() - ($${idx} || ' days')::interval`);
-    params.push(daysFilter);
-  }
+  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const query = `
     select
@@ -539,10 +528,7 @@ export async function fetchDailyTokenUsage(envFilter?: string, daysFilter?: numb
     params.push(envFilter);
     idx += 1;
   }
-  if (daysFilter) {
-    conditions.push(`created_at >= now() - ($${idx} || ' days')::interval`);
-    params.push(daysFilter);
-  }
+  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const query = `
     select
@@ -590,10 +576,7 @@ export async function fetchAvgMetrics(envFilter?: string, daysFilter?: number): 
     params.push(envFilter);
     idx += 1;
   }
-  if (daysFilter) {
-    conditions.push(`created_at >= now() - ($${idx} || ' days')::interval`);
-    params.push(daysFilter);
-  }
+  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const query = `
     select
@@ -640,6 +623,67 @@ export async function fetchOpenQaFlagCount(): Promise<number> {
   } catch (error) {
     console.error("[pgpt-insights] Failed to fetch open QA flag count", error);
     return 0;
+  }
+}
+
+export async function fetchDataHealth(envFilter?: string): Promise<DataHealthSnapshot> {
+  const startedAt = Date.now();
+  const params: PgNumeric[] = [];
+  const conditions: string[] = [];
+  let idx = 1;
+
+  if (envFilter) {
+    conditions.push(`env = $${idx++}`);
+    params.push(envFilter);
+  }
+
+  const whereClause = conditions.length ? `where ${conditions.join(" and ")}` : "";
+
+  try {
+    const { rows } = await pool.query<{
+      last_log_at: string | null;
+      total: PgNumericNullable;
+      last_hour: PgNumericNullable;
+      last_24h: PgNumericNullable;
+      last_7d: PgNumericNullable;
+    }>(
+      `
+        select
+          max(created_at)::text as last_log_at,
+          count(*) as total,
+          count(*) filter (where created_at >= now() - interval '1 hour') as last_hour,
+          count(*) filter (where created_at >= now() - interval '24 hours') as last_24h,
+          count(*) filter (where created_at >= now() - interval '7 days') as last_7d
+        from perazzi_conversation_logs
+        ${whereClause};
+      `,
+      params,
+    );
+
+    const row = rows[0] ?? {};
+    return {
+      ok: true,
+      checked_at: new Date().toISOString(),
+      latency_ms: Date.now() - startedAt,
+      last_log_at: row.last_log_at ?? null,
+      total: row.total === null || row.total === undefined ? null : Number(row.total),
+      last_hour: row.last_hour === null || row.last_hour === undefined ? null : Number(row.last_hour),
+      last_24h: row.last_24h === null || row.last_24h === undefined ? null : Number(row.last_24h),
+      last_7d: row.last_7d === null || row.last_7d === undefined ? null : Number(row.last_7d),
+    };
+  } catch (error) {
+    console.error("[pgpt-insights] fetchDataHealth failed", error);
+    return {
+      ok: false,
+      checked_at: new Date().toISOString(),
+      latency_ms: Date.now() - startedAt,
+      last_log_at: null,
+      total: null,
+      last_hour: null,
+      last_24h: null,
+      last_7d: null,
+      error: errorMessage(error),
+    };
   }
 }
 
@@ -794,8 +838,7 @@ export async function fetchDailyTrends(args: {
     conditions.push(`endpoint in ('assistant', 'soul_journey')`);
   }
 
-  conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
-  params.push(days);
+  idx = appendDaysFilter({ conditions, params, idx, days });
 
   const query = `
     select
@@ -843,8 +886,7 @@ export async function fetchDailyLowScoreRate(args: {
     params.push(envFilter);
   }
 
-  conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
-  params.push(days);
+  idx = appendDaysFilter({ conditions, params, idx, days });
 
   const thresholdIndex = idx++;
   params.push(threshold);
@@ -1222,10 +1264,7 @@ export async function fetchArchetypeSnapSummary(
     conditions.push(`env = $${idx++}`);
     params.push(envFilter);
   }
-  if (daysFilter) {
-    conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
-    params.push(daysFilter);
-  }
+  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   if (rerank === "true") {
     conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = true`);
@@ -1287,10 +1326,7 @@ export async function fetchRerankEnabledSummary(
     conditions.push(`env = $${idx++}`);
     params.push(envFilter);
   }
-  if (daysFilter) {
-    conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
-    params.push(daysFilter);
-  }
+  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   if (rerank === "true") {
     conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = true`);
@@ -1349,10 +1385,7 @@ export async function fetchArchetypeMarginHistogram(
     conditions.push(`env = $${idx++}`);
     params.push(envFilter);
   }
-  if (daysFilter) {
-    conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
-    params.push(daysFilter);
-  }
+  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   if (rerank === "true") {
     conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = true`);
@@ -1441,8 +1474,7 @@ export async function fetchDailyArchetypeSnapRate(args: {
     params.push(envFilter);
   }
 
-  conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
-  params.push(days);
+  idx = appendDaysFilter({ conditions, params, idx, days });
 
   if (rerank === "true") {
     conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = true`);
@@ -1515,8 +1547,7 @@ export async function fetchDailyRerankEnabledRate(args: {
     params.push(envFilter);
   }
 
-  conditions.push(`created_at >= now() - ($${idx++} || ' days')::interval`);
-  params.push(days);
+  idx = appendDaysFilter({ conditions, params, idx, days });
 
   if (rerank === "true") {
     conditions.push(`coalesce((metadata->>'rerankEnabled')::boolean, false) = true`);

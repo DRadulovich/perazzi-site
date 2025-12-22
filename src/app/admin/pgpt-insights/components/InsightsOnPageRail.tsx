@@ -33,11 +33,13 @@ export function InsightsOnPageRail({
 }>) {
   const links: Link[] = isTriageView
     ? [
+        { href: "#data-health", label: "Data Health" },
         { href: "#overview", label: "Overview" },
         { href: "#guardrails", label: "Guardrails" },
         { href: "#logs", label: "Logs" },
       ]
     : [
+        { href: "#data-health", label: "Data Health" },
         { href: "#top-issues", label: "Top Issues" },
         { href: "#rag", label: "RAG" },
         { href: "#guardrails", label: "Guardrails" },

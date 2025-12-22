@@ -32,6 +32,75 @@ function maybe(condition: boolean, node: ReactNode): ReactNode {
   return condition ? node : null;
 }
 
+type RetrievalDebugRow = {
+  rank: number;
+  documentPath: string | null;
+  headingPath: string | null;
+  baseScore: number;
+  boost: number;
+  archetypeBoost: number;
+  finalScore: number;
+  chunkId: string | null;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function toStringOrNull(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+function toNumberOrZero(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const n = Number(value);
+    if (Number.isFinite(n)) return n;
+  }
+  return 0;
+}
+
+function decodeRetrievalDebugRows(metadata: unknown): RetrievalDebugRow[] {
+  if (!isRecord(metadata)) return [];
+  const retrievalDebug = metadata.retrievalDebug;
+  if (!isRecord(retrievalDebug)) return [];
+  const rawChunks = retrievalDebug.chunks;
+  if (!Array.isArray(rawChunks)) return [];
+
+  const rows: RetrievalDebugRow[] = [];
+  rawChunks.forEach((raw, idx) => {
+    if (!isRecord(raw)) return;
+    const chunkIdRaw = raw.chunkId ?? raw.chunk_id ?? raw.id;
+    const chunkId =
+      typeof chunkIdRaw === "string" || typeof chunkIdRaw === "number" ? String(chunkIdRaw) : null;
+    const documentPath = toStringOrNull(
+      raw.documentPath ?? raw.document_path ?? raw.sourcePath ?? raw.source_path,
+    );
+    const headingPath = toStringOrNull(raw.headingPath ?? raw.heading_path);
+    const baseScore = toNumberOrZero(raw.baseScore);
+    const boost = toNumberOrZero(raw.boost);
+    const archetypeBoost = toNumberOrZero(raw.archetypeBoost);
+    const finalScore = toNumberOrZero(raw.finalScore);
+    const rankRaw = toNumberOrZero(raw.rank);
+    const rank = rankRaw > 0 ? Math.max(1, Math.floor(rankRaw)) : idx + 1;
+
+    rows.push({
+      rank,
+      documentPath,
+      headingPath,
+      baseScore,
+      boost,
+      archetypeBoost,
+      finalScore,
+      chunkId,
+    });
+  });
+
+  return rows;
+}
+
 function isInteractiveElement(target: HTMLElement | null): boolean {
   return !!target?.closest("a,button,input,select,textarea");
 }
@@ -462,6 +531,7 @@ export function ResponseTab({
 
 export function RetrievalTab({ detail }: Readonly<{ detail: PgptLogDetailResponse }>) {
   const retrievedChunks = Array.isArray(detail.log.retrieved_chunks) ? detail.log.retrieved_chunks : [];
+  const retrievalDebugRows = decodeRetrievalDebugRows(detail.log.metadata).slice(0, 15);
 
   return (
     <div className="space-y-3">
@@ -510,6 +580,73 @@ export function RetrievalTab({ detail }: Readonly<{ detail: PgptLogDetailRespons
               </div>
             );
           })}
+        </div>
+      )}
+
+      <div className="text-xs font-semibold text-foreground">Retrieval Debug</div>
+
+      {retrievalDebugRows.length === 0 ? (
+        <div className="rounded-xl border border-border bg-background p-4 text-xs text-muted-foreground">
+          Not available for this interaction.
+        </div>
+      ) : (
+        <div className="overflow-auto rounded-xl border border-border bg-background">
+          <table className="w-full min-w-[980px] table-fixed border-collapse text-[11px]">
+            <colgroup>
+              <col className="w-[60px]" />
+              <col className="w-[240px]" />
+              <col className="w-[240px]" />
+              <col className="w-[90px]" />
+              <col className="w-[80px]" />
+              <col className="w-[90px]" />
+              <col className="w-[90px]" />
+              <col className="w-[190px]" />
+            </colgroup>
+            <thead>
+              <tr className="bg-muted/40 text-muted-foreground">
+                <th className="px-2 py-1 text-left font-medium">rank</th>
+                <th className="px-2 py-1 text-left font-medium">documentPath</th>
+                <th className="px-2 py-1 text-left font-medium">headingPath</th>
+                <th className="px-2 py-1 text-right font-medium">baseScore</th>
+                <th className="px-2 py-1 text-right font-medium">boost</th>
+                <th className="px-2 py-1 text-right font-medium">archBoost</th>
+                <th className="px-2 py-1 text-right font-medium">finalScore</th>
+                <th className="px-2 py-1 text-left font-medium">chunkId</th>
+              </tr>
+            </thead>
+            <tbody>
+              {retrievalDebugRows.map((row, idx) => {
+                const chunkIdKey = row.chunkId ?? "unknown";
+                return (
+                  <tr key={`${chunkIdKey}-${idx}`} className="border-t border-border/60">
+                    <td className="px-2 py-1 text-left text-muted-foreground">{row.rank}</td>
+                    <td className="px-2 py-1 text-left text-muted-foreground">
+                      <div className="truncate" title={row.documentPath ?? undefined}>
+                        {row.documentPath ?? "—"}
+                      </div>
+                    </td>
+                    <td className="px-2 py-1 text-left text-muted-foreground">
+                      <div className="truncate" title={row.headingPath ?? undefined}>
+                        {row.headingPath ?? "—"}
+                      </div>
+                    </td>
+                    <td className="px-2 py-1 text-right text-muted-foreground">{formatScore(row.baseScore)}</td>
+                    <td className="px-2 py-1 text-right text-muted-foreground">{formatScore(row.boost)}</td>
+                    <td className="px-2 py-1 text-right text-muted-foreground">{formatScore(row.archetypeBoost)}</td>
+                    <td className="px-2 py-1 text-right font-semibold text-foreground">{formatScore(row.finalScore)}</td>
+                    <td className="px-2 py-1 text-left">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate font-medium text-foreground" title={row.chunkId ?? undefined}>
+                          {row.chunkId ?? "—"}
+                        </span>
+                        {row.chunkId ? <CopyButton value={row.chunkId} label="Copy chunk id" /> : null}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

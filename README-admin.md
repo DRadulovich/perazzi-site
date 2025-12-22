@@ -30,3 +30,60 @@ These flags help tune retrieval reranking/scoring. They only affect ordering (no
   - `PERAZZI_RERANK_TUNING_V2_BOOST_RAMP=0.35` ramps boosts up as base similarity improves.
 - `PERAZZI_ENABLE_RETRIEVAL_DEBUG=true` logs a compact, no-content JSON summary per retrieval call.
 - `PERAZZI_RERANK_DEBUG_BREAKDOWN=true` adds `boostParts`, `boostRaw`, and `boostScale` to the retrieval debug payload (still no chunk content).
+
+## Retrieval Evaluation Harness (Regression)
+
+Use this retrieval-only harness to confirm canonical queries still hit the expected doc families and catch regressions after chunking/metadata changes. The canonical test cases live in `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-2/V2_REDO_validation.md`.
+
+### Run
+
+```bash
+pnpm perazzi:eval:retrieval --k 12 --rerank on --candidate-limit 60 --json tmp/retrieval-report.json
+```
+
+### Requirements
+
+- `DATABASE_URL` (read-only); the script only queries `documents/chunks/embeddings`.
+- Embeddings:
+  - Online (default): `OPENAI_API_KEY` (or `AI_GATEWAY_URL` + `AI_GATEWAY_TOKEN`), optional `PERAZZI_EMBED_MODEL`.
+  - Offline: provide `--embedding-cache <path>` with precomputed vectors.
+
+### Options
+
+- `--k <number>`: top-k results to return (default `12`).
+- `--candidate-limit <number>`: candidate pool size when rerank is enabled (default uses `PERAZZI_RERANK_CANDIDATE_LIMIT` logic).
+- `--rerank on|off`: toggles reranking (default: env `PERAZZI_ENABLE_RERANK` or `on`).
+- `--min-hits <number>`: minimum expected-family hits in top-k to PASS.
+- `--json <path>`: JSON report output (default `retrieval-report.json`).
+- `--embedding-cache <path>`: offline embeddings JSON (see formats below).
+
+### Embedding Cache Formats
+
+Any of the following JSON shapes are accepted:
+
+```json
+{
+  "queries": {
+    "What's the difference between the MX and the HT platforms?": [0.1, 0.2, 0.3]
+  }
+}
+```
+
+```json
+{
+  "byId": {
+    "prospect-platform-diff": [0.1, 0.2, 0.3]
+  }
+}
+```
+
+```json
+[
+  { "id": "prospect-platform-diff", "embedding": [0.1, 0.2, 0.3] }
+]
+```
+
+### Output
+
+- Console: PASS/FAIL per query, rerank status, and top-k `document.path` + `heading_path` with base/final scores.
+- JSON report: includes scores, expected-family matches, and summary totals for diffing runs.

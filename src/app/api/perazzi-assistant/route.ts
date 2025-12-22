@@ -18,6 +18,7 @@ import {
   retrievePerazziContext,
   OpenAIConnectionError,
   isConnectionError,
+  type RerankMetrics,
 } from "@/lib/perazzi-retrieval";
 import {
   applyModelsRegistrySot,
@@ -106,6 +107,10 @@ const ADMIN_DEBUG_HEADER = "x-perazzi-admin-debug";
 const ADMIN_DEBUG_TITLE_LIMIT = 5;
 const ADMIN_DEBUG_TITLE_MAX_CHARS = 160;
 
+const RETRIEVAL_DEBUG_CHUNKS_CAP = 15;
+const RETRIEVAL_DEBUG_PATH_MAX_CHARS = 300;
+const RETRIEVAL_DEBUG_UNSAFE_CHUNK_KEYS = ["content", "excerpt", "excerptChars", "excerpt_chars"];
+
 function isAdminDebugAuthorized(req: Request): boolean {
   if (process.env.PERAZZI_ADMIN_DEBUG !== "true") return false;
   const expectedToken = (process.env.PERAZZI_ADMIN_DEBUG_TOKEN ?? "").trim();
@@ -128,6 +133,138 @@ function isAdminDebugAuthorized(req: Request): boolean {
 function capString(value: string, maxChars: number): string {
   if (value.length <= maxChars) return value;
   return `${value.slice(0, maxChars - 1)}…`;
+}
+
+function toFiniteNumberOrFallback(value: unknown, fallback: number): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const n = Number(value);
+    if (Number.isFinite(n)) return n;
+  }
+  return fallback;
+}
+
+function toOptionalCappedString(value: unknown, maxChars: number): string | null {
+  if (typeof value !== "string") return null;
+  const s = value.trim();
+  if (!s) return null;
+  return capString(s, maxChars);
+}
+
+type RetrievalDebugChunk = {
+  chunkId: string;
+  documentPath: string | null;
+  headingPath: string | null;
+  baseScore: number;
+  boost: number;
+  archetypeBoost: number;
+  finalScore: number;
+  rank: number;
+};
+
+type RetrievalDebugPayload = {
+  version: 1;
+  rerankEnabled: boolean;
+  candidateLimit: number;
+  finalLimit: number;
+  maxScore: number | null;
+  chunks: RetrievalDebugChunk[];
+};
+
+type RetrievalDebugChunkSource = {
+  chunkId: string;
+  documentPath?: unknown;
+  sourcePath?: unknown;
+  headingPath?: unknown;
+  baseScore?: unknown;
+  score?: unknown;
+};
+
+function pickRetrievalDebugChunkSource(chunk: RetrievedChunk): RetrievalDebugChunkSource {
+  const record = chunk as unknown as Record<string, unknown>;
+  for (const key of RETRIEVAL_DEBUG_UNSAFE_CHUNK_KEYS) {
+    if (Object.prototype.hasOwnProperty.call(record, key)) {
+      // Intentionally ignore content/excerpt fields to avoid logging text.
+      break;
+    }
+  }
+
+  return {
+    chunkId: chunk.chunkId,
+    documentPath: chunk.documentPath,
+    sourcePath: chunk.sourcePath,
+    headingPath: chunk.headingPath,
+    baseScore: chunk.baseScore,
+    score: chunk.score,
+  };
+}
+
+function buildRetrievalDebugPayload(params: {
+  enabled: boolean;
+  chunks: RetrievedChunk[];
+  rerankMetrics?: RerankMetrics | null;
+  maxScore?: number;
+}): RetrievalDebugPayload | null {
+  if (!params.enabled) return null;
+
+  const finalLimit = clampEnvInt(process.env.PERAZZI_RETRIEVAL_LIMIT, 12, { min: 1, max: 50 });
+  const rerankEnabled =
+    typeof params.rerankMetrics?.rerankEnabled === "boolean" ? params.rerankMetrics.rerankEnabled : false;
+  const candidateLimit =
+    typeof params.rerankMetrics?.candidateLimit === "number"
+      ? toFiniteNumberOrFallback(params.rerankMetrics.candidateLimit, finalLimit)
+      : finalLimit;
+
+  const breakdown = new Map<string, { baseScore: number; boost: number; archetypeBoost: number; finalScore: number }>();
+  const topReturnedChunks = params.rerankMetrics?.topReturnedChunks ?? [];
+  for (const rec of topReturnedChunks) {
+    if (!rec || typeof rec.chunkId !== "string") continue;
+    const baseScore = toFiniteNumberOrFallback(rec.baseScore, 0);
+    const boost = toFiniteNumberOrFallback(rec.boost, 0);
+    const archetypeBoost = toFiniteNumberOrFallback(rec.archetypeBoost, 0);
+    const finalScore = toFiniteNumberOrFallback(rec.finalScore, baseScore + boost + archetypeBoost);
+    breakdown.set(rec.chunkId, { baseScore, boost, archetypeBoost, finalScore });
+  }
+
+  const debugChunks: RetrievalDebugChunk[] = params.chunks
+    .slice(0, RETRIEVAL_DEBUG_CHUNKS_CAP)
+    .map((chunk, idx): RetrievalDebugChunk => {
+      const source = pickRetrievalDebugChunkSource(chunk);
+      const byId = breakdown.get(source.chunkId);
+      const baseScoreFallback = toFiniteNumberOrFallback(
+        source.baseScore,
+        toFiniteNumberOrFallback(source.score, 0),
+      );
+      const baseScore = byId?.baseScore ?? baseScoreFallback;
+      const boost = byId?.boost ?? 0;
+      const archetypeBoost = byId?.archetypeBoost ?? 0;
+      const finalScore = byId?.finalScore ?? baseScore;
+
+      const documentPath =
+        toOptionalCappedString(source.documentPath, RETRIEVAL_DEBUG_PATH_MAX_CHARS) ??
+        toOptionalCappedString(source.sourcePath, RETRIEVAL_DEBUG_PATH_MAX_CHARS);
+      const headingPath = toOptionalCappedString(source.headingPath, RETRIEVAL_DEBUG_PATH_MAX_CHARS);
+
+      return {
+        chunkId: source.chunkId,
+        documentPath,
+        headingPath,
+        baseScore,
+        boost,
+        archetypeBoost,
+        finalScore,
+        rank: idx + 1,
+      };
+    });
+
+  return {
+    version: 1,
+    rerankEnabled,
+    candidateLimit,
+    finalLimit,
+    maxScore: typeof params.maxScore === "number" && Number.isFinite(params.maxScore) ? params.maxScore : null,
+    chunks: debugChunks,
+  };
 }
 
 function extractAdminDebugUsage(
@@ -1294,6 +1431,7 @@ export async function POST(request: Request) {
         archetypeClassification,
         effectiveTextVerbosity,
         retrieval.maxScore,
+        rerankMetrics,
         guardrail,
         hints,
         fullBody.sessionId ?? null,
@@ -1693,6 +1831,7 @@ async function generateAssistantAnswer(
   archetypeClassification: ArchetypeClassification | null,
   textVerbosity: CreateResponseTextParams["textVerbosity"],
   maxScore?: number,
+  rerankMetrics?: RerankMetrics | null,
   guardrail?: { status: "ok" | "blocked"; reason: string | null },
   hints?: RetrievalHints,
   sessionId?: string | null,
@@ -1845,6 +1984,18 @@ async function generateAssistantAnswer(
   }
   if (extraMetadata && typeof extraMetadata === "object") {
     Object.assign(metadata, extraMetadata);
+  }
+
+  const retrievalDebug = buildRetrievalDebugPayload({
+    enabled:
+      process.env.PERAZZI_AI_LOGGING_ENABLED === "true" &&
+      process.env.PERAZZI_LOG_RETRIEVAL_DEBUG === "true",
+    chunks,
+    rerankMetrics,
+    maxScore,
+  });
+  if (retrievalDebug) {
+    metadata.retrievalDebug = retrievalDebug;
   }
 
   const interactionContext: AiInteractionContext = {
