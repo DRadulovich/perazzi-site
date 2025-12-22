@@ -16,7 +16,7 @@ This document is the **map of maps** for PerazziGPT v2. It explains:
 
 PerazziGPT v2 is defined only by the documents under `V2-PGPT/*`; legacy v1 materials are intentionally excluded from this manifest. The v2 system is organized in three phases: Phase 1 sets behavior and voice, Phase 2 defines the corpus and RAG plumbing, and Phase 3 captures runtime and API contracts. The assistant runs only on what is described here.
 
-Phase 1 establishes the conversational contract: the assistant spec codifies mission, scope, and the 3 interaction modes (Prospect, Owner, Navigation/Guide), while archetype nuance is handled through the five motivational patterns (Loyalist, Prestige, Analyst, Achiever, Legacy). Guardrails set hard legal and safety boundaries, voice calibration keeps tone aligned to brand ethos, and use-case depth documents spell out success paths per mode.
+Phase 1 establishes the conversational contract: the assistant spec codifies mission, scope, and the 3 interaction modes (Prospect, Owner, Navigation), while archetype nuance is handled through the five motivational patterns (Loyalist, Prestige, Analyst, Achiever, Legacy). Guardrails set hard legal and safety boundaries, voice calibration keeps tone aligned to brand ethos, and use-case depth documents spell out success paths per mode.
 
 Phase 2 turns brand, craft, and operational content into a structured RAG corpus. The source-corpus manifest lists every eligible document and its ingestion status; the metadata schema defines Supabase tables for documents, chunks, and embeddings; and chunking guidelines dictate how text is split with heading paths, mode/archetype hints, and guardrail flags. Optional configs (chunking overrides, embedding stack, infra, rerun process, validation) keep ingestion reproducible and auditable.
 
@@ -37,6 +37,7 @@ Phase 1 defines the mission and scope of the assistant, the three interaction mo
 | `V2_REDO_voice-calibration.md` | Assistant voice & tone guidelines | Translates brand writing tone into conversational patterns per mode and archetype, with do/don’t phrasing. | Uses `V2_brand-ethos.md`, `V2_writing-tone.md`, and aligns with the assistant spec. |
 | `V2_REDO_use-case-depth.md` | Scenario-level behavior by mode & archetype | Details canonical questions, flows, success/failure signals, and corpus touchpoints for Prospect, Owner, and Navigation modes. | Builds on the assistant spec and references corpus categories from Phase 2. |
 | `V2_REDO_system-manifest.md` | This doc | System-wide map of v2 documents, phases, and their relationships. | References all Phase-1 docs and Phase-2/3 interfaces. |
+| `V2_REDO_archetype-implementation-notes.md` | Code ↔ brand bridge | Explains how keyword lexicon, vector maths & retrieval bias map to the five archetypes; governance for lexicon edits. | Depends on assistant-spec, voice-calibration, rerank doc |
 
 ---
 
@@ -64,10 +65,11 @@ Phase 3 captures how the application talks to the assistant and RAG at runtime: 
 | File | Role | Summary | Notes |
 |------|------|---------|-------|
 | `V2_REDO_api-contract.md` | API & runtime contract | Defines request/response schemas, prompt assembly, and Supabase retrieval orchestration. | Canonical runtime surface for mode/archetype packaging and citations. |
+| `V2_REDO_rerank-algorithm.md` | Retrieval tuning spec | Documents second-pass rerank math, env-var knobs, and tuning rules. | Works with Supabase retrieval layer and API contract |
 
 **Observability / Tuning**
 
-- Server-side logging captures rerank + archetype confidence telemetry in metadata.
+- Server-side logging captures rerank + archetype confidence telemetry in `perazzi_conversation_logs` (see API-contract *Observability* appendix).
 - Admin Insights UI is the intended tuning surface.
 
 ---
@@ -80,7 +82,7 @@ Ingestion begins with `V2_REDO_source-corpus.md`, which selects eligible documen
 
 Runtime retrieval pulls chunks from Supabase based on the user message, guided by metadata from the schema and chunking rules. Phase 1 docs (assistant spec, guardrails, voice, use-case depth) provide the behavioral layer, while Phase 3 defines the exact API contract that binds requests, retrieval payloads, and system prompt assembly.
 
-When responding, the assistant applies the 3 modes and 5 archetypes matrix from the assistant spec as a lens on top of retrieved corpus chunks. Mode influences intent handling (Prospect, Owner, Navigation/Guide), archetype steers structure + tone + emphasis (without labeling the user) gated by confidence, and guardrails enforce hard boundaries while RAG keeps facts anchored in the V2 corpus.
+When responding, the assistant applies the 3 modes and 5 archetypes matrix from the assistant spec as a lens on top of retrieved corpus chunks. Mode influences intent handling (Prospect, Owner, Navigation), archetype steers structure + tone + emphasis (without labeling the user) gated by confidence, and guardrails enforce hard boundaries while RAG keeps facts anchored in the V2 corpus.
 
 ---
 
