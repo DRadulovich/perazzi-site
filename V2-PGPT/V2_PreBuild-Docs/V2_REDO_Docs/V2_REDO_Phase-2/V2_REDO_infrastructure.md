@@ -102,15 +102,27 @@ PerazziGPT v2 continues to use the existing `.env.local` variables from v1 where
 | `PGSSL_MODE`          | SSL mode (`require` for Supabase)                     | `.env.local`         | Vercel env var                   |
 | `SANITY_TOKEN` (future) | Token for reading CMS content (if needed)          | `.env.local`         | Vercel Secret                    |
 
-**Optional v2-specific variables (if you choose to use them):**
+**Optional v2-specific variables (tables):**
 
 | Variable                    | Description                                   |
-|----------------------------|-----------------------------------------------|
-| `PERAZZI_DOCUMENTS_TABLE`  | Name of the documents table (default `documents`) |
-| `PERAZZI_CHUNKS_TABLE`     | Name of the chunks table (default `chunks`)   |
-| `PERAZZI_EMBEDDINGS_TABLE` | Name of the embeddings table (default `embeddings`) |
+|-----------------------------|-----------------------------------------------|
+| `PERAZZI_DOCUMENTS_TABLE`   | Name of the documents table (default `documents`) |
+| `PERAZZI_CHUNKS_TABLE`      | Name of the chunks table (default `chunks`)   |
+| `PERAZZI_EMBEDDINGS_TABLE`  | Name of the embeddings table (default `embeddings`) |
 
 You *can* continue to use `PGVECTOR_TABLE` from v1 as an alias for the chunks table if existing code expects it. For v2, the preferred pattern is to use the explicit per-table names above (or hard-code the names in the ingestion/runtime code).
+
+**Retrieval & rerank toggles (runtime):**
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `PERAZZI_ENABLE_RERANK` | `true` | Master on/off switch for second-pass rerank. Set `false` to return pure similarity order. |
+| `PERAZZI_RERANK_CANDIDATE_LIMIT` | `60` | Number of chunks fetched from pgvector before rerank (must be ≥ final limit). |
+| `PERAZZI_ENABLE_RETRIEVAL_DEBUG` | `false` | When `true`, server logs JSON objects showing baseScore/boost/finalScore for top chunks (dev/preview only). |
+| `PERAZZI_ARCHETYPE_BOOST_K` | `0.08` | Global coefficient (0–1) applied in `computeArchetypeBoost`. Keeps archetype influence small. |
+| `PERAZZI_ARCHETYPE_CONFIDENCE_MIN` | `0.08` | Minimum margin required before we consider archetype signal “confident”. Lower margins dampen archetype boost. |
+
+All new vars must be added to `.env.example` and described here when introduced.
 
 **Guidelines:**
 

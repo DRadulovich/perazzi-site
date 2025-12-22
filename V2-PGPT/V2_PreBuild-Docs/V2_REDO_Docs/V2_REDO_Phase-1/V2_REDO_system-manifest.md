@@ -89,11 +89,19 @@ When responding, the assistant applies the 3 modes and 5 archetypes matrix from 
 - Adding a new domain doc: list it in `V2_REDO_source-corpus.md` with Status, Category, Doc_Type, pricing sensitivity, and embed mode before ingestion.
 - Changing behavior or voice: update `V2_REDO_assistant-spec.md`, `V2_REDO_non-negotiable-guardrails.md`, and `V2_REDO_voice-calibration.md` together, then adjust use-case depth if flows change.
 - Changing how data is stored: update `V2_REDO_metadata-schema.md` (and related Supabase migrations) plus any chunking rules that rely on schema fields.
-- Rerunning ingestion: follow `V2_REDO_rerun-process.md` once populated; ensure embeddings and chunking configs are in sync.
-- Changing request/response or orchestration: update `V2_REDO_api-contract.md` and ensure it matches the canonical TS contract.
+- Rerunning ingestion: follow `V2_REDO_rerun-process.md` once populated; ensure embeddings, chunking configs, **and rerank env vars** are in sync.
+- Changing request/response or orchestration: update `V2_REDO_api-contract.md` (and its *Observability* appendix) and ensure it matches the canonical TS contract.
+- Updating rerank logic or env-var knobs: update `V2_REDO_rerank-algorithm.md`, append new variables to the env-var table in `V2_REDO_infrastructure.md`, and add or modify validation tests.
 - Updating this manifest: bump the version above and briefly note what changed so contributors can track the map itself.
 
 ## 7. Changelog
+
+- 0.3 (Draft)
+  - Added `V2_REDO_rerank-algorithm.md` (Phase-3) and env-var reference table in infrastructure doc.
+  - Added `V2_REDO_archetype-implementation-notes.md` (Phase-1) linking brand theory to code lexicon.
+  - Appended Observability appendix to API contract and rerank toggle tests to validation doc.
+  - Inserted version header into guardrails doc.
+  - Expanded change-management section for rerank/env-var updates.
 
 - 0.2 (Draft)
   - Phase 3 documented as the runtime/API contract layer (no longer a placeholder).

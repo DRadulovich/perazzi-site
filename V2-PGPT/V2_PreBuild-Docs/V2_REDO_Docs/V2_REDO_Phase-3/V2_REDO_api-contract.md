@@ -358,6 +358,28 @@ The response structure will remain compatible; only delivery will change.
   - The version header.  
   - A short “Changelog” section noting what changed (e.g., model changes, new fields, streaming support).
 
+## 8. Observability & Telemetry (server-side)
+
+The backend records each interaction in `perazzi_conversation_logs` (Supabase). Key JSONB fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `archetypeScores` | object | Full motivational vector `{ loyalist: 0.18, prestige: … }`. |
+| `archetypeConfidence` | float | Margin between winner and runner-up (0‒1). Same value returned to clients in `archetypeBreakdown`. |
+| `rerank` | object | Snapshot `{ enabled, candidateLimit, topReturned:[{chunkId, baseScore, boost,…}] }` for audit. |
+| `guardrail` | object | `{ status: "ok" \| "blocked" \| "low_confidence", reason: "pricing" \| "gunsmithing" \| … }`. |
+| `retrievalMaxSimilarity` | float | Highest raw similarity score among candidates. |
+| `tokens` | object | Usage meta `{ prompt, completion }` from OpenAI. |
+
+These metrics feed the `/admin/pgpt-insights` dashboard and regression alerts.
+
+**Schema governance**: Adding or renaming telemetry columns requires:
+1. Supabase migration script.  
+2. Update of this appendix.  
+3. Validation query update (see `V2_REDO_validation.md` § Observability checks).
+
+---
+
 ## 7. Changelog
 
 - 0.2 (Draft):
