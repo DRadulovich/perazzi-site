@@ -18,3 +18,15 @@ This admin-only slice of the site surfaces PerazziGPT observability and archetyp
 - SQL views required: `vw_archetype_daily`, `vw_trigger_terms_weekly`.
 - Alert stream assumes database role can `LISTEN archetype_alert` (see `sql/20251220_archetype_margin_alert.sql`).
 - Pages reuse the shared admin sidebar; all routes live under `/admin/pgpt-insights/*`.
+
+## Rerank Tuning (Debug)
+
+These flags help tune retrieval reranking/scoring. They only affect ordering (no DB writes) and are intended for local/staging.
+
+- `PERAZZI_ENABLE_RERANK=true` enables reranking (otherwise results remain ordered by vector similarity only).
+- `PERAZZI_RERANK_TUNING_V2=true` enables safer “less spiky” boost behavior.
+  - `PERAZZI_RERANK_TUNING_V2_MAX_BOOST=0.25` caps total non-semantic boost.
+  - `PERAZZI_RERANK_TUNING_V2_BOOST_MIN_BASE=0.15` suppresses boosts for low base similarity.
+  - `PERAZZI_RERANK_TUNING_V2_BOOST_RAMP=0.35` ramps boosts up as base similarity improves.
+- `PERAZZI_ENABLE_RETRIEVAL_DEBUG=true` logs a compact, no-content JSON summary per retrieval call.
+- `PERAZZI_RERANK_DEBUG_BREAKDOWN=true` adds `boostParts`, `boostRaw`, and `boostScale` to the retrieval debug payload (still no chunk content).
