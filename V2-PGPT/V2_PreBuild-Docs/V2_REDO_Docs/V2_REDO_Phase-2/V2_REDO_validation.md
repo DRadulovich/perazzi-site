@@ -191,6 +191,22 @@ Reranking pulls more candidates (`candidateLimit`), reorders them, then returns 
   - Expect: rerank reorders grounding only; it does not swap in a different template or alter guardrails.  
   - Never: rerank pulling in hidden or inactive chunks.
 
+### 2.4 Rerank toggle sanity test
+
+Purpose: confirm that enabling or disabling rerank only re-orders existing candidates and never surfaces forbidden content.
+
+Steps (script `scripts/validate-rerank.js`):
+1. Hit `/api/perazzi-assistant` with a representative query while `PERAZZI_ENABLE_RERANK=false`.
+2. Capture ordered list of `chunkId`s.
+3. Set `PERAZZI_ENABLE_RERANK=true` and repeat the same request.
+4. Assertions:
+   • Set difference between both lists is **empty** (same candidates).  
+   • Ordering has changed in at least one position.  
+   • `guardrail.status` is identical (`ok` \| `low_confidence` \| `blocked`).
+5. Run for three canonical queries: platform comparison, owner safety, dealer locator.
+
+Add this script to CI; build must fail if any assertion breaks.
+
 ---
 
 ## 3. Guardrail Validation

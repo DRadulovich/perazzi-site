@@ -274,6 +274,98 @@ describe("computeBoostV2", () => {
   });
 });
 
+describe("computeBoostV2 (rerank tuning v2)", () => {
+  const originalEnabled = process.env.PERAZZI_RERANK_TUNING_V2;
+  const originalMaxBoost = process.env.PERAZZI_RERANK_TUNING_V2_MAX_BOOST;
+
+  afterEach(() => {
+    if (originalEnabled === undefined) {
+      delete process.env.PERAZZI_RERANK_TUNING_V2;
+    } else {
+      process.env.PERAZZI_RERANK_TUNING_V2 = originalEnabled;
+    }
+    if (originalMaxBoost === undefined) {
+      delete process.env.PERAZZI_RERANK_TUNING_V2_MAX_BOOST;
+    } else {
+      process.env.PERAZZI_RERANK_TUNING_V2_MAX_BOOST = originalMaxBoost;
+    }
+  });
+
+  it("uses max-style platform alignment (no double counting)", () => {
+    process.env.PERAZZI_RERANK_TUNING_V2 = "true";
+    delete process.env.PERAZZI_RERANK_TUNING_V2_MAX_BOOST;
+
+    const row = buildRow({
+      doc_platforms: ["ht"],
+      chunk_platforms: ["ht"],
+    });
+
+    const boost = computeBoostV2(
+      row,
+      { platformSlug: "ht" },
+      buildHints({ topics: ["platform_ht"] }),
+    );
+
+    expect(boost).toBeCloseTo(0.08, 5);
+  });
+
+  it("avoids stacking topical matches across tags/labels", () => {
+    process.env.PERAZZI_RERANK_TUNING_V2 = "true";
+
+    const row = buildRow({
+      chunk_context_tags: ["service"],
+      chunk_section_labels: ["service"],
+      doc_tags: ["service"],
+    });
+
+    const boost = computeBoostV2(row, {}, buildHints({ topics: ["service"] }));
+    expect(boost).toBeCloseTo(0.05, 5);
+  });
+
+  it("uses strict keyword matching to avoid substring noise", () => {
+    process.env.PERAZZI_RERANK_TUNING_V2 = "true";
+
+    const row = buildRow({
+      doc_summary: "outfit options",
+    });
+
+    const boost = computeBoostV2(row, {}, buildHints({ keywords: ["fit"] }));
+    expect(boost).toBe(0);
+  });
+
+  it("caps overall boost lower (as a nudge)", () => {
+    process.env.PERAZZI_RERANK_TUNING_V2 = "true";
+    delete process.env.PERAZZI_RERANK_TUNING_V2_MAX_BOOST;
+
+    const row = buildRow({
+      chunk_primary_modes: ["prospect"],
+      doc_platforms: ["ht"],
+      chunk_platforms: ["ht"],
+      doc_disciplines: ["trap"],
+      chunk_disciplines: ["trap"],
+      chunk_context_tags: ["fit", "service"],
+      chunk_section_labels: ["service"],
+      doc_tags: ["warranty"],
+      chunk_related_entities: ["mx8"],
+      doc_summary: "warranty fit service",
+      heading_path: "Fit",
+      document_title: "HT MX8 warranty fit service",
+    });
+
+    const boost = computeBoostV2(
+      row,
+      { mode: "prospect", platformSlug: "ht", modelSlug: "mx8" },
+      buildHints({
+        topics: ["platform_ht", "discipline_trap", "fit", "service", "warranty"],
+        keywords: ["warranty", "service", "fit", "doc"],
+        focusEntities: ["mx8"],
+      }),
+    );
+
+    expect(boost).toBeCloseTo(0.25, 5);
+  });
+});
+
 describe("computeArchetypeBoost", () => {
   it("returns a positive boost when user vector aligns with biased archetype", () => {
     const boost = computeArchetypeBoost(

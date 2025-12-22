@@ -8,7 +8,6 @@ import rehypeSanitize from "rehype-sanitize";
 
 import type { Platform, ShotgunsLandingData } from "@/types/catalog";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
-import { useTheme } from "@/components/theme/ThemeProvider";
 import { cn } from "@/lib/utils";
 
 type DisciplineCard = ShotgunsLandingData["disciplines"][number];
@@ -32,8 +31,6 @@ type ModelDetail = {
 type DisciplineRailProps = Readonly<{
   disciplines: readonly DisciplineCard[];
   platforms: readonly Platform[];
-  ariaPrevLabel?: string;
-  ariaNextLabel?: string;
   ui?: ShotgunsLandingData["disciplineRailUi"];
 }>;
 
@@ -65,13 +62,8 @@ const DISCIPLINE_TABS = [
 export function DisciplineRail({
   disciplines,
   platforms,
-  ariaPrevLabel = "Previous slide",
-  ariaNextLabel = "Next slide",
   ui,
 }: DisciplineRailProps) {
-  const { theme } = useTheme();
-  const isDarkTheme = theme === "dark";
-
   const [selectedModel, setSelectedModel] = useState<ModelDetail | null>(null);
   const [modelModalOpen, setModelModalOpen] = useState(false);
   const [modelLoadingId, setModelLoadingId] = useState<string | null>(null);
@@ -287,7 +279,6 @@ export function DisciplineRail({
                   index={0}
                   total={1}
                   platformName={platformName}
-                  isDarkTheme={isDarkTheme}
                   onSelectModel={handleModelSelect}
                   loadingModelId={modelLoadingId}
                 />
@@ -374,7 +365,6 @@ type DisciplineCardProps = Readonly<{
   index: number;
   total: number;
   platformName: (id: string) => string;
-  isDarkTheme: boolean;
   onSelectModel: (id: string) => void;
   loadingModelId: string | null;
 }>;
@@ -384,7 +374,6 @@ function DisciplineCard({
   index,
   total,
   platformName,
-  isDarkTheme,
   onSelectModel,
   loadingModelId,
 }: DisciplineCardProps) {

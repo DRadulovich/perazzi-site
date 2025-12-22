@@ -1,3 +1,9 @@
+# PerazziGPT v2 – Non-negotiable Guardrails
+
+> Version: 0.2 (Draft)  
+> Owner: David Radulovich  
+> File: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-1/V2_REDO_non-negotiable-guardrails.md`
+
 ## Non-negotiable Guardrails
 
 PerazziGPT must operate inside strict boundaries to protect brand positioning, user safety, and legal integrity.

@@ -1,6 +1,6 @@
 import { Pool } from "pg";
 import type { PoolClient } from "pg";
-import { registerType } from "pgvector/pg";
+import { registerType, toSql } from "pgvector/pg";
 import { createEmbeddings } from "@/lib/aiClient";
 import { getPgSslDiagnostics, getPgSslOptions } from "@/lib/pgSsl";
 import type {
@@ -427,6 +427,71 @@ function clamp(n: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, n));
 }
 
+function getSortedFiniteNumbers(values: unknown[]): number[] {
+  const out: number[] = [];
+  for (const v of values) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) continue;
+    out.push(n);
+  }
+  out.sort((a, b) => a - b);
+  return out;
+}
+
+function quantileSorted(valuesAsc: number[], p: number): number | null {
+  if (!valuesAsc.length) return null;
+  const clampedP = clamp(p, 0, 1);
+  const idx = Math.floor((valuesAsc.length - 1) * clampedP);
+  return valuesAsc[idx] ?? null;
+}
+
+function summarizeScoresForDebug(values: unknown[]): {
+  count: number;
+  min: number | null;
+  p50: number | null;
+  p90: number | null;
+  max: number | null;
+} {
+  const sorted = getSortedFiniteNumbers(values);
+  return {
+    count: sorted.length,
+    min: sorted.length ? (sorted[0] ?? null) : null,
+    p50: quantileSorted(sorted, 0.5),
+    p90: quantileSorted(sorted, 0.9),
+    max: sorted.length ? (sorted[sorted.length - 1] ?? null) : null,
+  };
+}
+
+function getRerankTuningV2Enabled(): boolean {
+  return isEnvTrue(process.env.PERAZZI_RERANK_TUNING_V2);
+}
+
+function getRerankTuningV2MaxBoost(): number {
+  const raw = Number(process.env.PERAZZI_RERANK_TUNING_V2_MAX_BOOST);
+  if (Number.isFinite(raw) && raw > 0 && raw <= 0.5) return raw;
+  return 0.25;
+}
+
+function getRerankTuningV2BoostMinBase(): number {
+  const raw = Number(process.env.PERAZZI_RERANK_TUNING_V2_BOOST_MIN_BASE);
+  if (Number.isFinite(raw) && raw >= -1 && raw <= 1) return raw;
+  return 0.15;
+}
+
+function getRerankTuningV2BoostRamp(): number {
+  const raw = Number(process.env.PERAZZI_RERANK_TUNING_V2_BOOST_RAMP);
+  if (Number.isFinite(raw) && raw > 0 && raw <= 2) return raw;
+  return 0.35;
+}
+
+function getRerankTuningV2BoostScale(baseScore: number): number {
+  const minBase = getRerankTuningV2BoostMinBase();
+  const ramp = getRerankTuningV2BoostRamp();
+  if (!Number.isFinite(baseScore)) return 0;
+  if (baseScore <= minBase) return 0;
+  return clamp((baseScore - minBase) / ramp, 0, 1);
+}
+
 function countOverlap(a: string[], b: string[]): number {
   if (!a.length || !b.length) return 0;
   const setB = new Set(b);
@@ -451,12 +516,96 @@ function normalizeStringArray(values: unknown[] | undefined): string[] {
   return out;
 }
 
-export function computeBoostV2(
+type BoostV2Parts = {
+  mode: number;
+  platform: number;
+  discipline: number;
+  entity: number;
+  topical: number;
+  keywords: number;
+  total: number;
+  cappedTotal: number;
+  maxBoost: number;
+};
+
+const KEYWORD_STOPWORDS = new Set([
+  "the",
+  "a",
+  "an",
+  "and",
+  "or",
+  "but",
+  "to",
+  "of",
+  "in",
+  "on",
+  "at",
+  "for",
+  "from",
+  "with",
+  "without",
+  "by",
+  "as",
+  "is",
+  "are",
+  "was",
+  "were",
+  "be",
+  "been",
+  "being",
+  "it",
+  "its",
+  "this",
+  "that",
+  "these",
+  "those",
+  "how",
+  "what",
+  "which",
+  "why",
+  "when",
+  "where",
+  "who",
+]);
+
+function tokenizeKeywordText(value: string): string[] {
+  const matches = value.toLowerCase().match(/[a-z0-9]+/g) ?? [];
+  return matches.filter((t) => t.length >= 3 && !KEYWORD_STOPWORDS.has(t));
+}
+
+function countKeywordMatchesStrict(keywords: string[], haystackText: string): number {
+  if (!keywords.length) return 0;
+  const haystackTokens = new Set(tokenizeKeywordText(haystackText));
+  let matchCount = 0;
+  for (const kw of keywords) {
+    const kwTokens = tokenizeKeywordText(kw);
+    if (!kwTokens.length) continue;
+    if (kwTokens.every((t) => haystackTokens.has(t))) matchCount += 1;
+  }
+  return matchCount;
+}
+
+function computeBoostV2WithParts(
   row: RetrievedRow,
   context?: PerazziAssistantRequest["context"],
   hints?: RetrievalHints,
-): number {
+  opts?: { tuningV2Enabled?: boolean },
+): { boost: number; parts: BoostV2Parts } {
+  const tuningV2Enabled = opts?.tuningV2Enabled ?? getRerankTuningV2Enabled();
+  const maxBoost = tuningV2Enabled ? getRerankTuningV2MaxBoost() : 0.5;
+
   let boost = 0;
+  const parts: BoostV2Parts = {
+    mode: 0,
+    platform: 0,
+    discipline: 0,
+    entity: 0,
+    topical: 0,
+    keywords: 0,
+    total: 0,
+    cappedTotal: 0,
+    maxBoost,
+  };
 
   const mode = normalizeStringToken(context?.mode);
   const contextPlatform = normalizeStringToken(context?.platformSlug);
@@ -488,21 +637,42 @@ export function computeBoostV2(
 
   // ---------- Mode alignment ----------
   if (mode && chunkModes.includes(mode)) {
-    boost += 0.06; // guideline: +0.03 to +0.08
+    const v = tuningV2Enabled ? 0.05 : 0.06;
+    parts.mode = v;
+    boost += v; // guideline: +0.03 to +0.08
   }
 
   // ---------- Platform alignment ----------
-  if (contextPlatform && allPlatforms.includes(contextPlatform)) {
-    boost += 0.1; // guideline: +0.05 to +0.12
-  }
-  if (topics.length) {
-    const hintPlatforms = topics
-      .filter((t) => t.startsWith("platform_"))
-      .map((t) => t.replace("platform_", ""))
-      .filter(Boolean);
-    if (countOverlap(hintPlatforms, allPlatforms) > 0) {
-      boost += 0.08;
+  if (!tuningV2Enabled) {
+    if (contextPlatform && allPlatforms.includes(contextPlatform)) {
+      parts.platform += 0.1; // guideline: +0.05 to +0.12
+      boost += 0.1;
     }
+    if (topics.length) {
+      const hintPlatforms = topics
+        .filter((t) => t.startsWith("platform_"))
+        .map((t) => t.replace("platform_", ""))
+        .filter(Boolean);
+      if (countOverlap(hintPlatforms, allPlatforms) > 0) {
+        parts.platform += 0.08;
+        boost += 0.08;
+      }
+    }
+  } else {
+    const platformContextMatch = contextPlatform && allPlatforms.includes(contextPlatform);
+    if (platformContextMatch) {
+      parts.platform = Math.max(parts.platform, 0.08);
+    }
+    if (topics.length) {
+      const hintPlatforms = topics
+        .filter((t) => t.startsWith("platform_"))
+        .map((t) => t.replace("platform_", ""))
+        .filter(Boolean);
+      if (countOverlap(hintPlatforms, allPlatforms) > 0) {
+        parts.platform = Math.max(parts.platform, 0.06);
+      }
+    }
+    boost += parts.platform;
   }
 
   // ---------- Discipline alignment ----------
@@ -512,7 +682,9 @@ export function computeBoostV2(
       .map((t) => t.replace("discipline_", ""))
       .filter(Boolean);
     if (countOverlap(hintDisciplines, allDisciplines) > 0) {
-      boost += 0.06; // guideline: +0.03 to +0.08
+      const v = tuningV2Enabled ? 0.05 : 0.06;
+      parts.discipline = v;
+      boost += v; // guideline: +0.03 to +0.08
     }
   }
 
@@ -523,8 +695,9 @@ export function computeBoostV2(
     entityBoost = Math.max(entityBoost, 0.12);
   }
   if (focusEntities.length && countOverlap(focusEntities, relatedEntityIds) > 0) {
-    entityBoost = Math.max(entityBoost, 0.15);
+    entityBoost = Math.max(entityBoost, tuningV2Enabled ? 0.12 : 0.15);
   }
+  parts.entity = entityBoost;
   boost += entityBoost; // guideline: +0.10 to +0.20
 
   // ---------- Topic alignment (tags/labels) ----------
@@ -533,43 +706,97 @@ export function computeBoostV2(
     (t) => !t.startsWith("platform_") && !t.startsWith("discipline_"),
   );
   if (topicalTopics.length) {
-    if (countOverlap(topicalTopics, chunkContextTags) > 0) boost += 0.06;
-    if (countOverlap(topicalTopics, chunkSectionLabels) > 0) boost += 0.04;
-    if (countOverlap(topicalTopics, docTags) > 0) boost += 0.04;
+    if (!tuningV2Enabled) {
+      if (countOverlap(topicalTopics, chunkContextTags) > 0) {
+        parts.topical += 0.06;
+        boost += 0.06;
+      }
+      if (countOverlap(topicalTopics, chunkSectionLabels) > 0) {
+        parts.topical += 0.04;
+        boost += 0.04;
+      }
+      if (countOverlap(topicalTopics, docTags) > 0) {
+        parts.topical += 0.04;
+        boost += 0.04;
+      }
+    } else {
+      const inContextTags = countOverlap(topicalTopics, chunkContextTags) > 0;
+      const inSectionLabels = countOverlap(topicalTopics, chunkSectionLabels) > 0;
+      const inDocTags = countOverlap(topicalTopics, docTags) > 0;
+      parts.topical = Math.max(
+        inContextTags ? 0.05 : 0,
+        inSectionLabels ? 0.03 : 0,
+        inDocTags ? 0.03 : 0,
+      );
+      boost += parts.topical;
+    }
   }
 
   // ---------- Keyword alignment ----------
   if (keywords.length) {
-    const haystackParts: string[] = [];
+    if (!tuningV2Enabled) {
+      const haystackParts: string[] = [];
 
-    haystackParts.push(String(row.document_title ?? ""));
-    haystackParts.push(String(row.document_path ?? ""));
-    haystackParts.push(String(row.heading_path ?? ""));
-    haystackParts.push(String(row.doc_summary ?? ""));
+      haystackParts.push(String(row.document_title ?? ""));
+      haystackParts.push(String(row.document_path ?? ""));
+      haystackParts.push(String(row.heading_path ?? ""));
+      haystackParts.push(String(row.doc_summary ?? ""));
 
-    // Include tags/labels as text
-    haystackParts.push(chunkContextTags.join(" "));
-    haystackParts.push(chunkSectionLabels.join(" "));
-    haystackParts.push(docTags.join(" "));
+      // Include tags/labels as text
+      haystackParts.push(chunkContextTags.join(" "));
+      haystackParts.push(chunkSectionLabels.join(" "));
+      haystackParts.push(docTags.join(" "));
 
-    const haystack = haystackParts.join(" ").toLowerCase();
+      const haystack = haystackParts.join(" ").toLowerCase();
 
-    let matchCount = 0;
-    for (const kw of keywords) {
-      if (haystack.includes(kw)) matchCount += 1;
-    }
+      let matchCount = 0;
+      for (const kw of keywords) {
+        if (haystack.includes(kw)) matchCount += 1;
+      }
 
-    // Small, bounded keyword boost
-    if (matchCount > 0) {
-      // 1 match => 0.03, 2 => 0.04, 3 => 0.05, 4+ => 0.06
-      boost += clamp(0.02 + 0.01 * Math.min(matchCount, 4), 0, 0.06);
+      // Small, bounded keyword boost
+      if (matchCount > 0) {
+        // 1 match => 0.03, 2 => 0.04, 3 => 0.05, 4+ => 0.06
+        parts.keywords = clamp(0.02 + 0.01 * Math.min(matchCount, 4), 0, 0.06);
+        boost += parts.keywords;
+      }
+    } else {
+      // Strict keyword matching to reduce substring noise and double-counting with tags/topics.
+      const haystack = [
+        String(row.document_title ?? ""),
+        String(row.document_path ?? ""),
+        String(row.heading_path ?? ""),
+        String(row.doc_summary ?? ""),
+      ].join(" ");
+
+      const matchCount = countKeywordMatchesStrict(keywords, haystack);
+      if (matchCount > 0) {
+        // 1 match => 0.02, 2 => 0.03, 3+ => 0.04
+        parts.keywords = clamp(0.01 + 0.01 * Math.min(matchCount, 3), 0, 0.04);
+        boost += parts.keywords;
+      }
     }
   }
 
-  if (!Number.isFinite(boost)) return 0;
+  if (!Number.isFinite(boost)) {
+    parts.total = 0;
+    parts.cappedTotal = 0;
+    return { boost: 0, parts };
+  }
 
   // Hard clamp to keep this a "nudge", not an override
-  return clamp(boost, -0.1, 0.5);
+  parts.total = boost;
+  const capped = clamp(boost, -0.1, maxBoost);
+  parts.cappedTotal = capped;
+  return { boost: capped, parts };
+}
+
+export function computeBoostV2(
+  row: RetrievedRow,
+  context?: PerazziAssistantRequest["context"],
+  hints?: RetrievalHints,
+): number {
+  return computeBoostV2WithParts(row, context, hints).boost;
 }
 
 const ARCHETYPE_KEYS_LOWER: Archetype[] = [
@@ -707,66 +934,184 @@ async function fetchV2Chunks(opts: {
     rerankEnabled,
   } = opts;
   const retrievalDebugEnabled = isEnvTrue(process.env.PERAZZI_ENABLE_RETRIEVAL_DEBUG);
-  const embeddingParam = JSON.stringify(queryEmbedding);
+  const rerankTuningV2Enabled = getRerankTuningV2Enabled();
+  const rerankDebugBreakdownEnabled =
+    retrievalDebugEnabled && isEnvTrue(process.env.PERAZZI_RERANK_DEBUG_BREAKDOWN);
+  const rerankTuningV2Config = rerankTuningV2Enabled
+    ? {
+        maxBoost: getRerankTuningV2MaxBoost(),
+        boostMinBase: getRerankTuningV2BoostMinBase(),
+        boostRamp: getRerankTuningV2BoostRamp(),
+      }
+    : null;
+  const embeddingParam = toSql(queryEmbedding);
   const effectiveCandidateLimit = Math.max(candidateLimit ?? limit, limit);
+  const knnPreselectEnabled = isEnvTrue(process.env.PERAZZI_ENABLE_VECTOR_KNN_PRESELECT);
+  const knnOverfetchMultiplierRaw = Number(process.env.PERAZZI_VECTOR_KNN_OVERFETCH_MULTIPLIER);
+  const knnOverfetchMultiplier = Number.isFinite(knnOverfetchMultiplierRaw) && knnOverfetchMultiplierRaw > 0
+    ? Math.max(1, Math.min(Math.floor(knnOverfetchMultiplierRaw), 10))
+    : 3;
+  const knnLimit = effectiveCandidateLimit * knnOverfetchMultiplier;
 
-  const { rows } = await client.query(
-    `
-      with ranked as (
+  const sql = knnPreselectEnabled
+    ? `
+        with knn as materialized (
+          select
+            e.chunk_id,
+            (e.embedding::halfvec(3072) <=> $1::halfvec(3072)) as distance
+          from public.embeddings e
+          order by (e.embedding::halfvec(3072) <=> $1::halfvec(3072)) asc
+          limit $2
+        ),
+        ranked as (
+          select
+            cd.chunk_id,
+            cd.content,
+            cd.heading_path,
+
+            cd.document_path,
+            cd.document_title,
+            cd.category,
+            cd.doc_type,
+
+            cd.chunk_primary_modes,
+            cd.chunk_archetype_bias,
+            cd.chunk_section_labels,
+            cd.chunk_disciplines,
+            cd.chunk_platforms,
+            cd.chunk_audiences,
+            cd.chunk_context_tags,
+            cd.chunk_related_entities,
+            cd.chunk_guardrail_flags,
+            cd.chunk_visibility,
+            cd.chunk_confidentiality,
+            cd.chunk_language,
+
+            cd.doc_disciplines,
+            cd.doc_platforms,
+            cd.doc_audiences,
+            cd.doc_tags,
+            cd.doc_pricing_sensitive,
+            cd.doc_visibility,
+            cd.doc_confidentiality,
+            cd.doc_guardrail_flags,
+            cd.doc_language,
+            cd.doc_summary,
+
+            knn.distance
+          from knn
+          join lateral (
+            select
+              c.id as chunk_id,
+              c.text as content,
+              c.heading_path,
+
+              d.path as document_path,
+              d.title as document_title,
+              d.category,
+              d.doc_type,
+
+              c.primary_modes as chunk_primary_modes,
+              c.archetype_bias as chunk_archetype_bias,
+              c.section_labels as chunk_section_labels,
+              c.disciplines as chunk_disciplines,
+              c.platforms as chunk_platforms,
+              c.audiences as chunk_audiences,
+              c.context_tags as chunk_context_tags,
+              c.related_entities as chunk_related_entities,
+              c.guardrail_flags as chunk_guardrail_flags,
+              c.visibility as chunk_visibility,
+              c.confidentiality as chunk_confidentiality,
+              c.language as chunk_language,
+
+              d.disciplines as doc_disciplines,
+              d.platforms as doc_platforms,
+              d.audiences as doc_audiences,
+              d.tags as doc_tags,
+              d.pricing_sensitive as doc_pricing_sensitive,
+              d.visibility as doc_visibility,
+              d.confidentiality as doc_confidentiality,
+              d.guardrail_flags as doc_guardrail_flags,
+              d.language as doc_language,
+              d.summary as doc_summary
+            from public.chunks c
+            join public.documents d on d.id = c.document_id
+            where
+              c.id = knn.chunk_id
+              and d.status = 'active'
+              and coalesce(c.visibility, 'public') = 'public'
+              and coalesce(d.visibility, 'public') = 'public'
+              and coalesce(d.confidentiality, 'normal') = 'normal'
+              and coalesce(c.confidentiality, 'normal') = 'normal'
+          ) cd on true
+          order by knn.distance asc
+          limit $3
+        )
         select
-          c.id as chunk_id,
-          c.text as content,
-          c.heading_path,
+          ranked.*,
+          (1.0 - ranked.distance) as score
+        from ranked
+      `
+    : `
+        with ranked as (
+          select
+            c.id as chunk_id,
+            c.text as content,
+            c.heading_path,
 
-          d.path as document_path,
-          d.title as document_title,
-          d.category,
-          d.doc_type,
+            d.path as document_path,
+            d.title as document_title,
+            d.category,
+            d.doc_type,
 
-          c.primary_modes as chunk_primary_modes,
-          c.archetype_bias as chunk_archetype_bias,
-          c.section_labels as chunk_section_labels,
-          c.disciplines as chunk_disciplines,
-          c.platforms as chunk_platforms,
-          c.audiences as chunk_audiences,
-          c.context_tags as chunk_context_tags,
-          c.related_entities as chunk_related_entities,
-          c.guardrail_flags as chunk_guardrail_flags,
-          c.visibility as chunk_visibility,
-          c.confidentiality as chunk_confidentiality,
-          c.language as chunk_language,
+            c.primary_modes as chunk_primary_modes,
+            c.archetype_bias as chunk_archetype_bias,
+            c.section_labels as chunk_section_labels,
+            c.disciplines as chunk_disciplines,
+            c.platforms as chunk_platforms,
+            c.audiences as chunk_audiences,
+            c.context_tags as chunk_context_tags,
+            c.related_entities as chunk_related_entities,
+            c.guardrail_flags as chunk_guardrail_flags,
+            c.visibility as chunk_visibility,
+            c.confidentiality as chunk_confidentiality,
+            c.language as chunk_language,
 
-          d.disciplines as doc_disciplines,
-          d.platforms as doc_platforms,
-          d.audiences as doc_audiences,
-          d.tags as doc_tags,
-          d.pricing_sensitive as doc_pricing_sensitive,
-          d.visibility as doc_visibility,
-          d.confidentiality as doc_confidentiality,
-          d.guardrail_flags as doc_guardrail_flags,
-          d.language as doc_language,
-          d.summary as doc_summary,
+            d.disciplines as doc_disciplines,
+            d.platforms as doc_platforms,
+            d.audiences as doc_audiences,
+            d.tags as doc_tags,
+            d.pricing_sensitive as doc_pricing_sensitive,
+            d.visibility as doc_visibility,
+            d.confidentiality as doc_confidentiality,
+            d.guardrail_flags as doc_guardrail_flags,
+            d.language as doc_language,
+            d.summary as doc_summary,
 
-          (e.embedding::halfvec(3072) <=> $1::halfvec(3072)) as distance
-        from public.embeddings e
-        join public.chunks c on c.id = e.chunk_id
-        join public.documents d on d.id = c.document_id
-        where
-          d.status = 'active'
-          and coalesce(c.visibility, 'public') = 'public'
-          and coalesce(d.visibility, 'public') = 'public'
-          and coalesce(d.confidentiality, 'normal') = 'normal'
-          and coalesce(c.confidentiality, 'normal') = 'normal'
-        order by distance asc
-        limit $2
-      )
-      select
-        ranked.*,
-        (1.0 - ranked.distance) as score
-      from ranked
-    `,
-    [embeddingParam, effectiveCandidateLimit],
-  );
+            (e.embedding::halfvec(3072) <=> $1::halfvec(3072)) as distance
+          from public.embeddings e
+          join public.chunks c on c.id = e.chunk_id
+          join public.documents d on d.id = c.document_id
+          where
+            d.status = 'active'
+            and coalesce(c.visibility, 'public') = 'public'
+            and coalesce(d.visibility, 'public') = 'public'
+            and coalesce(d.confidentiality, 'normal') = 'normal'
+            and coalesce(c.confidentiality, 'normal') = 'normal'
+          order by (e.embedding::halfvec(3072) <=> $1::halfvec(3072)) asc
+          limit $2
+        )
+        select
+          ranked.*,
+          (1.0 - ranked.distance) as score
+        from ranked
+      `;
+
+  const params = knnPreselectEnabled
+    ? [embeddingParam, knnLimit, effectiveCandidateLimit]
+    : [embeddingParam, effectiveCandidateLimit];
+
+  const { rows } = await client.query(sql, params);
 
   const typedRows = rows as RetrievedRow[];
   const logRetrievalDebug = (payload: Record<string, unknown>) => {
@@ -777,6 +1122,7 @@ async function fetchV2Chunks(opts: {
     const s = Number(row.score ?? 0);
     return s > max ? s : max;
   }, 0);
+  const candidateBaseScoreStats = summarizeScoresForDebug(typedRows.map((r) => r.score));
 
   if (!rerankEnabled) {
     const results = typedRows.map((row) => {
@@ -805,6 +1151,12 @@ async function fetchV2Chunks(opts: {
 
     logRetrievalDebug({
       rerankEnabled: false,
+      rerankTuningV2Enabled,
+      rerankTuningV2Config,
+      candidateBaseScoreStats,
+      knnPreselectEnabled,
+      knnOverfetchMultiplier: knnPreselectEnabled ? knnOverfetchMultiplier : null,
+      knnLimit: knnPreselectEnabled ? knnLimit : null,
       candidateCount: typedRows.length,
       returnedCount: sliced.length,
       limit,
@@ -849,12 +1201,28 @@ async function fetchV2Chunks(opts: {
   const margin = normalized ? getArchetypeConfidenceMargin(normalized) : null;
 
   const scored = typedRows.map((row) => {
-    const baseScore = row.score ?? 0;
-    const boost = computeBoostV2(row, context, hints);
-    const archetypeBoost = computeArchetypeBoost(userVector, row.chunk_archetype_bias, margin);
+    const baseScore = Number(row.score ?? 0);
+    const boostInfo = computeBoostV2WithParts(row, context, hints, {
+      tuningV2Enabled: rerankTuningV2Enabled,
+    });
+    const rawBoost = boostInfo.boost;
+    const rawArchetypeBoost = computeArchetypeBoost(userVector, row.chunk_archetype_bias, margin);
+    const boostScale = rerankTuningV2Enabled ? getRerankTuningV2BoostScale(baseScore) : 1;
+    const boost = rawBoost * boostScale;
+    const archetypeBoost = rawArchetypeBoost * boostScale;
     const finalScore = baseScore + boost + archetypeBoost;
 
-    return { row, baseScore, boost, archetypeBoost, finalScore };
+    return {
+      row,
+      baseScore,
+      boost,
+      archetypeBoost,
+      finalScore,
+      boostScale: rerankTuningV2Enabled ? boostScale : null,
+      boostParts: rerankDebugBreakdownEnabled ? boostInfo.parts : undefined,
+      boostRaw: rerankDebugBreakdownEnabled ? rawBoost : undefined,
+      archetypeBoostRaw: rerankDebugBreakdownEnabled ? rawArchetypeBoost : undefined,
+    };
   });
 
   scored.sort((a, b) => {
@@ -871,6 +1239,12 @@ async function fetchV2Chunks(opts: {
 
   logRetrievalDebug({
     rerankEnabled: true,
+    rerankTuningV2Enabled,
+    rerankTuningV2Config,
+    candidateBaseScoreStats,
+    knnPreselectEnabled,
+    knnOverfetchMultiplier: knnPreselectEnabled ? knnOverfetchMultiplier : null,
+    knnLimit: knnPreselectEnabled ? knnLimit : null,
     candidateCount: typedRows.length,
     returnedCount: top.length,
     limit,
@@ -881,7 +1255,11 @@ async function fetchV2Chunks(opts: {
       documentPath: item.row.document_path ?? null,
       baseScore: item.baseScore,
       boost: item.boost,
+      boostScale: item.boostScale ?? undefined,
+      boostRaw: (item as { boostRaw?: number }).boostRaw,
+      boostParts: (item as { boostParts?: BoostV2Parts }).boostParts,
       archetypeBoost: item.archetypeBoost,
+      archetypeBoostRaw: (item as { archetypeBoostRaw?: number }).archetypeBoostRaw,
       finalScore: item.finalScore,
       primaryModes: parseJsonbStringArray(item.row.chunk_primary_modes),
       archetypeBias: parseJsonbStringArray(item.row.chunk_archetype_bias),

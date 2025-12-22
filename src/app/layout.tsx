@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { getLocale } from "next-intl/server";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Cedarville_Cursive, Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
@@ -16,6 +16,12 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const cedarvilleCursive = Cedarville_Cursive({
+  variable: "--font-artisan",
+  subsets: ["latin"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -38,14 +44,8 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} data-theme={initialTheme} suppressHydrationWarning>
-      <head>
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Cedarville+Cursive&display=swap"
-        />
-      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased min-h-screen bg-canvas text-ink overflow-x-hidden`}
+        className={`${geistSans.variable} ${geistMono.variable} ${cedarvilleCursive.variable} font-sans antialiased min-h-screen bg-canvas text-ink overflow-x-hidden`}
       >
         {children}
         <SpeedInsights />
