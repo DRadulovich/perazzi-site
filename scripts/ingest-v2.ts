@@ -13,7 +13,12 @@ import { chunkDocument } from "./ingest-v2/chunking/index";
 import { parseSourceCorpus, readDocumentFile } from "./ingest-v2/corpus";
 import { createPool, replaceChunksAndEmbeddings, upsertDocumentRow } from "./ingest-v2/db";
 import { parseDocumentMetadata } from "./ingest-v2/metadata";
-import type { ActiveDoc, IngestOptions, IngestStats } from "./ingest-v2/types";
+import type {
+  ActiveDoc,
+  DocumentMetadata,
+  IngestOptions,
+  IngestStats,
+} from "./ingest-v2/types";
 
 const REQUIRED_ENV = ["DATABASE_URL"] as const;
 
@@ -42,6 +47,7 @@ async function processDocumentChunks(
   doc: ActiveDoc,
   rawText: string,
   upsertResult: { documentId: string; isNew: boolean; isChanged: boolean },
+  meta: Partial<DocumentMetadata>,
   opts: IngestOptions,
 ): Promise<number> {
   if (doc.embedMode === "metadata-only") {
@@ -63,9 +69,16 @@ async function processDocumentChunks(
   }
 
   const chunkInputs = chunkDocument(doc, rawText);
-  await replaceChunksAndEmbeddings(pool, upsertResult.documentId, doc, chunkInputs, {
-    dryRun: opts.dryRun,
-  });
+  await replaceChunksAndEmbeddings(
+    pool,
+    upsertResult.documentId,
+    doc,
+    chunkInputs,
+    meta,
+    {
+      dryRun: opts.dryRun,
+    },
+  );
   console.log("[ok] Ingested chunks", {
     count: chunkInputs.length,
     path: doc.path,
@@ -109,7 +122,7 @@ async function processDocument(
     return;
   }
 
-  const meta = parseDocumentMetadata(rawText);
+  const meta = parseDocumentMetadata(rawText, doc.docType);
   const upsertResult = await upsertDocumentRow(pool, doc, checksum, meta, {
     forceUpdate: opts.full,
   });
@@ -127,6 +140,7 @@ async function processDocument(
     doc,
     rawText,
     upsertResult,
+    meta,
     opts,
   );
   stats.chunksWritten += chunksCount;
