@@ -1,14 +1,6 @@
+import { errorMessage } from "@/lib/pgpt-insights/error-utils";
+import { recordInsightsError } from "@/lib/pgpt-insights/insights-errors";
 import { SectionHeader } from "../SectionHeader";
-
-function messageFromError(error: unknown): string {
-  if (!error) return "Unknown error.";
-  if (error instanceof Error) return error.message || "Unknown error.";
-  try {
-    return JSON.stringify(error);
-  } catch {
-    return String(error);
-  }
-}
 
 export function SectionError({
   id,
@@ -19,7 +11,8 @@ export function SectionError({
   title: string;
   error: unknown;
 }) {
-  const msg = messageFromError(error);
+  const msg = errorMessage(error);
+  recordInsightsError({ sectionId: id, sectionTitle: title, error });
 
   return (
     <section

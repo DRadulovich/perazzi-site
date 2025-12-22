@@ -10,6 +10,7 @@ import {
   fetchGuardrailBlockedCountWindow,
   fetchGuardrailByArchetype,
   fetchGuardrailStats,
+  fetchDataHealth,
   fetchLowScoreLogs,
   fetchOpenQaFlagCount,
   fetchRagSummary,
@@ -97,6 +98,8 @@ export const getArchetypeSummary = cache(async (envFilter: string | undefined, d
 );
 
 export const getOpenQaFlagCount = cache(async () => fetchOpenQaFlagCount());
+
+export const getDataHealth = cache(async (envFilter: string | undefined) => fetchDataHealth(envFilter));
 
 export const getDailyTrends = cache(
   async (envFilter: string | undefined, endpointFilter: string | undefined, days: number) =>

@@ -1,3 +1,5 @@
+import { appendDaysFilter } from "./query-helpers";
+
 export type GuardrailStatusFilter = "any" | "blocked" | "not_blocked";
 export type BoolFilter = "any" | "true" | "false";
 export type ScorePreset = "any" | "lt0.25" | "lt0.5" | "0.25-0.5" | "0.5-0.75" | "gte0.75";
@@ -169,10 +171,7 @@ function buildLogsQueryPartsInternal(args: {
     values.push(filters.endpointFilter);
   }
 
-  if (filters.daysFilter) {
-    conditions.push(`l.created_at >= now() - ($${idx++} || ' days')::interval`);
-    values.push(filters.daysFilter);
-  }
+  idx = appendDaysFilter({ conditions, params: values, idx, days: filters.daysFilter, column: "l.created_at" });
 
   // Search over FULL prompt/response, but select previews
   if (filters.q && filters.q.trim().length > 0) {
