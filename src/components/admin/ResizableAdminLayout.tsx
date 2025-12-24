@@ -43,11 +43,14 @@ export function ResizableAdminLayout({ nav, children, className }: {
 
   return (
     <div
-      className={cn("hidden h-[calc(100vh-var(--admin-header-h,0px))] lg:grid", className)}
-      style={{ gridTemplateColumns: `${width}px 4px minmax(0,1fr)` }}
+      className={cn(
+        "grid h-[calc(100vh-var(--admin-header-h,0px))] [grid-template-columns:minmax(0,1fr)] lg:[grid-template-columns:var(--admin-sidebar-width)_4px_minmax(0,1fr)]",
+        className
+      )}
+      style={{ "--admin-sidebar-width": `${width}px` } as React.CSSProperties}
     >
       {/* Sidebar */}
-      <aside className="h-full overflow-y-auto border-r border-border bg-card">
+      <aside className="hidden h-full overflow-y-auto border-r border-border bg-card lg:block">
         {nav}
       </aside>
 
@@ -58,7 +61,7 @@ export function ResizableAdminLayout({ nav, children, className }: {
         tabIndex={0}
         onPointerDown={startDrag}
         onKeyDown={handleKey}
-        className="group w-1 cursor-col-resize select-none bg-transparent focus:outline-none"
+        className="group hidden w-1 cursor-col-resize select-none bg-transparent focus:outline-none lg:block"
       >
         <div className="h-full w-full bg-transparent group-hover:bg-muted/40" />
       </div>
