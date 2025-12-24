@@ -22,6 +22,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
   const sectionRef = useRef<HTMLElement | null>(null);
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const heroImageRef = useRef<HTMLImageElement | null>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
   const [mediaLoaded, setMediaLoaded] = useState(false);
   const [manifestoOpen, setManifestoOpen] = useState(false);
@@ -43,7 +44,6 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
     priority: true,
     sizes: heroSizes,
     className: "object-cover",
-    onLoad: handleMediaLoad,
   });
 
   const tabletImageProps = hero.backgroundTablet
@@ -82,6 +82,14 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
   useEffect(() => {
     setReduceMotion(Boolean(prefersReducedMotion));
   }, [prefersReducedMotion]);
+
+  useEffect(() => {
+    if (mediaLoaded) return;
+    const img = heroImageRef.current;
+    if (img?.complete && img.naturalWidth > 0) {
+      setMediaLoaded(true);
+    }
+  }, [mediaLoaded]);
 
   useMotionValueEvent(scrollYProgress, "change", () => {
     // no-op; required for Framer to track parallax
@@ -225,7 +233,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
               sizes={tabletImageProps.sizes}
             />
           ) : null}
-          <img {...desktopImageProps} />
+          <img {...desktopImageProps} ref={heroImageRef} onLoad={handleMediaLoad} />
         </picture>
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/75 to-black/0" />
       </motion.div>
