@@ -179,6 +179,12 @@ body {
   background: linear-gradient(to top, var(--scrim-soft), transparent);
 }
 
+@media (max-width: 1024px) and (orientation: portrait) {
+  .home-hero-media img {
+    object-position: right center;
+  }
+}
+
 /* CTA baseline class */
 .btn--primary {
   background: var(--color-perazzi-red);

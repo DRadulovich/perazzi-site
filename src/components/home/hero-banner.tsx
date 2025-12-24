@@ -167,7 +167,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
       aria-labelledby="home-hero-heading"
     >
       <motion.div
-        className="absolute inset-0"
+        className="absolute inset-0 home-hero-media"
         style={{
           y: reduceMotion ? "0%" : parallaxY,
         }}
