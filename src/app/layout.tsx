@@ -32,6 +32,30 @@ export const metadata: Metadata = {
   description:
     "Editorial experiences from Perazzi celebrating bespoke shotguns, heritage, and craft.",
   manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "Perazzi USA",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    apple: [
+      {
+        url: "/pwa/apple-touch-icon-180.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+      {
+        url: "/pwa/apple-touch-icon-167.png",
+        sizes: "167x167",
+        type: "image/png",
+      },
+      {
+        url: "/pwa/apple-touch-icon-152.png",
+        sizes: "152x152",
+        type: "image/png",
+      },
+    ],
+  },
 };
 
 export default async function RootLayout({

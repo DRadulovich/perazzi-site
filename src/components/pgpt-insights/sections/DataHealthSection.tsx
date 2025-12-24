@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/error-boundaries */
 import { Badge } from "../Badge";
 import { formatCompactNumber, formatDurationMs, formatTimestampShort } from "../format";
 import { TableShell } from "../table/TableShell";
