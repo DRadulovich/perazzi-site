@@ -22,9 +22,22 @@ export const homeSingleton = defineType({
       fields: [
         defineField({
           name: 'background',
-          title: 'Background Image',
+          title: 'Background Image (Desktop)',
           type: 'imageWithMeta',
+          description: 'Used on desktop and as the fallback when tablet/mobile images are not set.',
           validation: (Rule) => Rule.required(),
+        }),
+        defineField({
+          name: 'backgroundTablet',
+          title: 'Background Image (Tablet)',
+          type: 'imageWithMeta',
+          description: 'Optional. Used between 768px and 1024px wide viewports.',
+        }),
+        defineField({
+          name: 'backgroundMobile',
+          title: 'Background Image (Mobile)',
+          type: 'imageWithMeta',
+          description: 'Optional. Used below 768px wide viewports.',
         }),
         defineField({name: 'tagline', title: 'Tagline (optional)', type: 'string'}),
         defineField({name: 'subheading', title: 'Subheading (optional)', type: 'text', rows: 2}),

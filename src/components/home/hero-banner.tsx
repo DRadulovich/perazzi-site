@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { getImageProps } from "next/image";
 import Link from "next/link";
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -29,6 +29,44 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
   const prefersReducedMotion = useReducedMotion();
   const [reduceMotion, setReduceMotion] = useState(false);
   const heroHeading = hero.subheading ?? hero.tagline ?? "";
+  const heroSizes =
+    "(min-width: 1536px) 1400px, (min-width: 1280px) 1200px, (min-width: 1024px) 90vw, 100vw";
+
+  const handleMediaLoad = useCallback(() => {
+    setMediaLoaded(true);
+  }, []);
+
+  const { props: desktopImageProps } = getImageProps({
+    src: hero.background.url,
+    alt: hero.background.alt,
+    fill: true,
+    priority: true,
+    sizes: heroSizes,
+    className: "object-cover",
+    onLoad: handleMediaLoad,
+  });
+
+  const tabletImageProps = hero.backgroundTablet
+    ? getImageProps({
+        src: hero.backgroundTablet.url,
+        alt: hero.backgroundTablet.alt,
+        fill: true,
+        priority: true,
+        sizes: heroSizes,
+        className: "object-cover",
+      }).props
+    : null;
+
+  const mobileImageProps = hero.backgroundMobile
+    ? getImageProps({
+        src: hero.backgroundMobile.url,
+        alt: hero.backgroundMobile.alt,
+        fill: true,
+        priority: true,
+        sizes: heroSizes,
+        className: "object-cover",
+      }).props
+    : null;
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -172,15 +210,23 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
           y: reduceMotion ? "0%" : parallaxY,
         }}
       >
-        <Image
-          src={hero.background.url}
-          alt={hero.background.alt}
-          fill
-          priority
-          sizes="(min-width: 1536px) 1400px, (min-width: 1280px) 1200px, (min-width: 1024px) 90vw, 100vw"
-          className="object-cover"
-          onLoad={() => { setMediaLoaded(true); }}
-        />
+        <picture className="absolute inset-0">
+          {mobileImageProps ? (
+            <source
+              media="(max-width: 767px)"
+              srcSet={mobileImageProps.srcSet}
+              sizes={mobileImageProps.sizes}
+            />
+          ) : null}
+          {tabletImageProps ? (
+            <source
+              media="(min-width: 768px) and (max-width: 1024px)"
+              srcSet={tabletImageProps.srcSet}
+              sizes={tabletImageProps.sizes}
+            />
+          ) : null}
+          <img {...desktopImageProps} />
+        </picture>
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/75 to-black/0" />
       </motion.div>
 

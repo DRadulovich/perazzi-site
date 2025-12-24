@@ -95,6 +95,12 @@ const homeQuery = groq`
       subheading,
       background{
         ${imageWithMetaFields}
+      },
+      backgroundTablet{
+        ${imageWithMetaFields}
+      },
+      backgroundMobile{
+        ${imageWithMetaFields}
       }
     },
     heroCtas{
@@ -187,6 +193,8 @@ type HomeSanityResponse = {
     tagline?: string | null;
     subheading?: string | null;
     background?: SanityImageResult;
+    backgroundTablet?: SanityImageResult;
+    backgroundMobile?: SanityImageResult;
   } | null;
   heroCtas?: {
     primaryLabel?: string | null;
@@ -278,11 +286,15 @@ export async function getHome(): Promise<HomeData> {
 function mapHero(input?: HomeSanityResponse["hero"] | null): HomeData["hero"] | undefined {
   if (!input) return undefined;
   const background = mapImageResult(input.background ?? null);
+  const backgroundTablet = mapImageResult(input.backgroundTablet ?? null);
+  const backgroundMobile = mapImageResult(input.backgroundMobile ?? null);
   if (!background) return undefined;
   return {
     tagline: input.tagline ?? fallbackHero.tagline,
     subheading: input.subheading ?? undefined,
     background,
+    backgroundTablet: backgroundTablet ?? undefined,
+    backgroundMobile: backgroundMobile ?? undefined,
   };
 }
 
