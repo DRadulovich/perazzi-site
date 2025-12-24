@@ -126,7 +126,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               <SidebarDrawerHost navItems={navItems} />
 
               {/* Header */}
-              <header className="sticky top-0 z-50 hidden lg:block">
+              <header className="sticky top-0 z-50">
                 <PrimaryNav brandLabel={t("brand")} variant="transparent" />
               </header>
 
