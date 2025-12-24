@@ -31,6 +31,7 @@ export const metadata: Metadata = {
   },
   description:
     "Editorial experiences from Perazzi celebrating bespoke shotguns, heritage, and craft.",
+  manifest: "/manifest.webmanifest",
 };
 
 export default async function RootLayout({
