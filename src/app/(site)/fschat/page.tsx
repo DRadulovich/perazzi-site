@@ -9,6 +9,31 @@ type FullScreenChatPageProps = Readonly<{
 export const metadata: Metadata = {
   title: "Perazzi Concierge – Full Screen",
   description: "A focused, full-screen view of the Perazzi concierge chat experience.",
+  manifest: "/fschat/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "pgpt_debug",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    apple: [
+      {
+        url: "/pwa-admin/apple-touch-icon-180.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+      {
+        url: "/pwa-admin/apple-touch-icon-167.png",
+        sizes: "167x167",
+        type: "image/png",
+      },
+      {
+        url: "/pwa-admin/apple-touch-icon-152.png",
+        sizes: "152x152",
+        type: "image/png",
+      },
+    ],
+  },
 };
 
 export default async function FullScreenChatPage({ searchParams }: FullScreenChatPageProps) {

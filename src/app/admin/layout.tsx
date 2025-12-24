@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { headers } from "next/headers";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
@@ -13,6 +14,34 @@ import { ResizableSidebarHost } from "@/components/admin/ResizableSidebarHost";
 import { fetchOpenQaFlagCount } from "@/lib/pgpt-insights/queries";
 import { resolveInitialTheme } from "@/lib/initial-theme";
 import { Activity, AlertTriangle, BarChart2, Clock3, Flag, Grid2X2, ListChecks } from "lucide-react";
+
+export const metadata: Metadata = {
+  manifest: "/admin/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "perazzi_admin",
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    apple: [
+      {
+        url: "/pwa-admin/apple-touch-icon-180.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+      {
+        url: "/pwa-admin/apple-touch-icon-167.png",
+        sizes: "167x167",
+        type: "image/png",
+      },
+      {
+        url: "/pwa-admin/apple-touch-icon-152.png",
+        sizes: "152x152",
+        type: "image/png",
+      },
+    ],
+  },
+};
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const locale = await getLocale();
