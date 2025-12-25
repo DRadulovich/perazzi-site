@@ -30,7 +30,7 @@ export function EngHighlightsGrid({ highlights }: EngHighlightsGridProps) {
           return (
             <article
               key={highlight.title}
-              className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:p-6 sm:shadow-md"
+              className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated"
             >
               <div
                 className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"

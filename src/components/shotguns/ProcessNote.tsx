@@ -13,7 +13,7 @@ export function ProcessNote({
 }: ProcessNoteProps) {
   return (
     <section
-      className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 sm:shadow-md lg:px-10"
+      className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10"
       aria-labelledby="process-note-heading"
       data-analytics-id={dataAnalyticsId}
     >

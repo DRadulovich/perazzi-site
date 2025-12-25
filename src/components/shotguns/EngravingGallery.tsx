@@ -62,7 +62,7 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
               }}
               className="text-left"
             >
-              <figure className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:p-4 sm:shadow-md">
+              <figure className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-4 sm:shadow-elevated">
                 <div
                   className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
                   style={{ aspectRatio: ratio }}
@@ -97,13 +97,13 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
         }}
       >
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/70 data-[state=open]:animate-fade-in" />
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/55 backdrop-blur-sm data-[state=open]:animate-fade-in" />
           {currentAsset ? (
             <Dialog.Content
               aria-modal="true"
               className="fixed inset-0 z-50 flex items-center justify-center p-4 focus:outline-none"
             >
-              <div className="relative w-full max-w-4xl rounded-2xl bg-card p-4 shadow-xl focus:outline-none sm:rounded-3xl sm:p-6 sm:shadow-2xl">
+              <div className="relative w-full max-w-4xl rounded-2xl border border-border/70 bg-card/95 p-4 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl focus:outline-none sm:rounded-3xl sm:p-6">
                 <Dialog.Title className="sr-only">
                   {currentAsset.alt}
                 </Dialog.Title>
@@ -129,7 +129,7 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
                   <button
                     type="button"
                     onClick={showPrev}
-                    className="rounded-full border border-border px-4 py-2 text-[11px] sm:text-sm uppercase tracking-[0.3em] text-ink focus-ring"
+                    className="rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-sm uppercase tracking-[0.3em] text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
                   >
                     Prev
                   </button>
@@ -139,7 +139,7 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
                   <button
                     type="button"
                     onClick={showNext}
-                    className="rounded-full border border-border px-4 py-2 text-[11px] sm:text-sm uppercase tracking-[0.3em] text-ink focus-ring"
+                    className="rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-sm uppercase tracking-[0.3em] text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
                   >
                     Next
                   </button>
@@ -147,7 +147,7 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
                 <Dialog.Close
                   type="button"
                   aria-label="Close engraving"
-                  className="absolute right-4 top-4 rounded-full border border-border px-4 py-2 text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink focus-ring"
+                  className="absolute right-4 top-4 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
                 >
                   Close
                 </Dialog.Close>

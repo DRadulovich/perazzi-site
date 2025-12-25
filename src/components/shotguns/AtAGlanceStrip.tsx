@@ -7,7 +7,7 @@ type AtAGlanceStripProps = Readonly<{
 export function AtAGlanceStrip({ data }: AtAGlanceStripProps) {
   return (
     <section
-      className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 sm:shadow-md lg:px-10"
+      className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10"
       aria-labelledby="at-a-glance-heading"
     >
       <h2
@@ -48,7 +48,7 @@ export function AtAGlanceStrip({ data }: AtAGlanceStripProps) {
             <a
               key={link.href}
               href={link.href}
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-perazzi-red focus-ring"
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-perazzi-red shadow-sm backdrop-blur-sm transition hover:border-perazzi-red/30 hover:bg-card/85 focus-ring"
             >
               {link.label}
               <span aria-hidden="true">→</span>

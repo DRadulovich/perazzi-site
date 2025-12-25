@@ -148,7 +148,7 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+        <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
           <div className="space-y-3">
             <p className="text-2xl sm:text-3xl lg:text-4xl font-black italic uppercase tracking-[0.35em] text-ink">
               {heading}
@@ -172,7 +172,7 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
                   return (
                     <div
                       key={category.label}
-                      className="rounded-2xl border border-border/60 bg-card/75 sm:border-border/70"
+                      className="rounded-2xl border border-border/70 bg-card/60 backdrop-blur-sm sm:bg-card/75"
                     >
                       <button
                         type="button"
@@ -196,7 +196,7 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
                         </span>
                       </button>
                       {isOpen ? (
-                        <div className="border-t border-border/60">
+                        <div className="border-t border-border/70">
                           <ul className="space-y-1 p-3">
                             {category.grades.map((grade) => {
                               const isActive = grade.id === resolvedActiveGradeId;
@@ -254,7 +254,7 @@ function GradeCard({ grade, ctaLabel }: GradeCardProps) {
   const gradeAnchor = getGradeAnchorId(grade);
 
   return (
-    <article className="flex h-full flex-col rounded-2xl border border-border/60 bg-card/75 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:p-5 lg:p-6">
+    <article className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-5 sm:shadow-elevated lg:p-6">
       <div
         className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
         style={{ aspectRatio: ratio }}

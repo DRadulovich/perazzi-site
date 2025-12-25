@@ -22,7 +22,7 @@ export function TeaserBlock({
   return (
     <section
       data-analytics-id="ShotgunsGradesCTA"
-      className="rounded-2xl border border-border/60 bg-perazzi-black px-4 py-6 text-white shadow-sm sm:rounded-3xl sm:border-border/70 sm:px-6 sm:py-8 sm:shadow-md lg:px-10"
+      className="rounded-2xl border border-white/15 bg-[linear-gradient(135deg,#070707,#101010)]/95 px-4 py-6 text-white shadow-elevated ring-1 ring-white/10 backdrop-blur-sm sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10"
     >
       <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-center">
         <div className="space-y-2">

@@ -189,7 +189,7 @@ export function DisciplineRail({
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+        <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
           <div className="space-y-3">
             <p className="text-2xl sm:text-3xl lg:text-4xl font-black italic uppercase tracking-[0.35em] text-ink">
               {heading}
@@ -236,7 +236,7 @@ export function DisciplineRail({
                         </span>
                       </button>
                       {isOpen ? (
-                        <div className="border-t border-border/60">
+                        <div className="border-t border-border/70">
                           <ul className="space-y-1 p-3">
                             {category.disciplines.map((discipline) => {
                               const isActive = discipline.id === activeDisciplineId;
@@ -293,20 +293,20 @@ export function DisciplineRail({
 
         {modelModalOpen && selectedModel ? (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
             role="dialog"
             aria-modal="true"
           >
             <button
               type="button"
-              className="absolute inset-0 cursor-default bg-transparent border-none"
+              className="absolute inset-0 cursor-default border-0 bg-transparent"
               aria-label="Close modal"
               onClick={() => { setModelModalOpen(false); }}
             />
-            <div className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]">
+            <div className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-[32px] border border-white/12 bg-neutral-950/90 text-white shadow-[0_50px_160px_-80px_rgba(0,0,0,0.9)] ring-1 ring-white/15 backdrop-blur-xl">
               <button
                 type="button"
-                className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 py-1 text-xs uppercase tracking-widest text-black transition hover:border-black hover:bg-white sm:right-5 sm:top-5 sm:text-sm"
+                className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-[11px] uppercase tracking-[0.3em] text-white shadow-sm backdrop-blur-sm transition hover:border-white/30 hover:bg-black/55 focus-ring sm:right-5 sm:top-5 sm:text-xs"
                 onClick={() => setModelModalOpen(false)}
               >
                 Close
@@ -337,7 +337,7 @@ export function DisciplineRail({
                     </p>
                   </div>
                 </div>
-                <div className="grid gap-4 rounded-3xl border border-white/10 bg-black/40 p-4 sm:p-6 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 rounded-3xl border border-white/12 bg-black/35 p-4 shadow-sm ring-1 ring-white/10 backdrop-blur-sm sm:p-6 sm:grid-cols-2 lg:grid-cols-3">
                   <Detail label="Platform" value={selectedModel.platform} />
                   <Detail label="Gauge" value={selectedModel.gaugeNames?.join(", ")} />
                   <Detail label="Trigger Type" value={selectedModel.triggerTypes?.join(", ")} />
@@ -386,7 +386,7 @@ function DisciplineCard({
     <article
       ref={cardRef}
       data-analytics-id={`DisciplineChip:${discipline.id}`}
-      className="flex flex-col rounded-2xl border border-border/60 bg-card/75 text-left shadow-sm focus-ring sm:rounded-3xl sm:border-border/70"
+      className="flex flex-col rounded-2xl border border-border/70 bg-card/60 text-left shadow-sm backdrop-blur-sm focus-ring sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated"
       aria-label={`Slide ${index + 1} of ${total}: ${discipline.name}`}
     >
       <div className="card-media relative aspect-[30/11] w-full rounded-t-3xl bg-[color:var(--color-canvas)]">
@@ -439,7 +439,8 @@ function DisciplineCard({
                 <button
                   type="button"
                   key={model.idLegacy ?? model.id}
-                  onClick={() => { onSelectModel(model.idLegacy ?? model.id); }}                  className="group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card/75 focus:outline-none focus:ring-2 focus:ring-perazzi-red"
+                  onClick={() => { onSelectModel(model.idLegacy ?? model.id); }}
+                  className="group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card/60 shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
                 >
                   {model.hero ? (
                     <Image

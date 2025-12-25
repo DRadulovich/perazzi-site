@@ -8,7 +8,7 @@ export function GaugeCard({ gauge }: GaugeCardProps) {
   return (
     <article
       data-analytics-id={`GaugeCard:${gauge.id}`}
-      className="flex h-full flex-col rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm focus-within:ring-2 focus-within:ring-perazzi-red/60 focus-within:ring-offset-2 focus-within:ring-offset-card sm:rounded-3xl sm:border-border/70 sm:bg-card sm:p-5"
+      className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm focus-within:ring-2 focus-within:ring-perazzi-red/60 focus-within:ring-offset-2 focus-within:ring-offset-card sm:rounded-3xl sm:bg-card/80 sm:p-5"
     >
       <header className="space-y-1">
         <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">

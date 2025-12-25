@@ -48,7 +48,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
           className="object-cover"
           priority={false}
         />
-        <div className="absolute inset-0 bg-(--scrim-soft)" aria-hidden />
+        <div className="absolute inset-0 bg-[color:var(--scrim-soft)]" aria-hidden />
         <div
           className="pointer-events-none absolute inset-0"
           style={{
@@ -62,7 +62,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+        <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
           <Collapsible.Root
             open={resolvedOpen}
             onOpenChange={(next) => {
@@ -82,7 +82,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                 {subheading}
               </p>
               <Collapsible.Trigger
-                className="mt-1 inline-flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink hover:border-ink/60 focus-ring transition lg:hidden"
+                className="mt-1 inline-flex w-fit items-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring lg:hidden"
                 aria-controls="trigger-explainer-content"
                 data-analytics-id="TriggerExplainerToggle"
               >
@@ -105,7 +105,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                       key={link.href}
                       href={link.href}
                       data-analytics-id={`TriggerExplainerLink:${link.href}`}
-                      className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red hover:border-perazzi-red focus-ring transition"
+                      className="inline-flex items-center gap-2 rounded-full border border-perazzi-red/40 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red shadow-sm backdrop-blur-sm transition hover:border-perazzi-red hover:bg-card/85 focus-ring"
                       onClick={() =>
                         logAnalytics(`TriggerExplainerLink:${link.href}`)
                       }
@@ -117,9 +117,9 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                 </div>
               </div>
 
-              <figure className="rounded-2xl border border-border/60 bg-card/40 p-3 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/50">
+              <figure className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated">
                 <div
-                  className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
+                  className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
                   style={{ aspectRatio: ratio }}
                 >
                   <Image
@@ -130,7 +130,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                     className="object-contain"
                   />
                   <div
-                    className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/60 via-(--scrim-strong)/40 to-transparent"
+                    className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[color:var(--scrim-strong)]/60 via-[color:var(--scrim-strong)]/40 to-transparent"
                     aria-hidden
                   />
                 </div>

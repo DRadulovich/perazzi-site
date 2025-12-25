@@ -50,7 +50,7 @@ export function FAQList({
         {items.map((item) => (
           <div
             key={item.q}
-            className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:bg-card"
+            className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:bg-card/80"
           >
             <dt className="text-sm sm:text-base font-semibold text-ink">
               {item.q}

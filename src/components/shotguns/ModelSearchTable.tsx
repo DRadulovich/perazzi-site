@@ -48,7 +48,7 @@ const PAGE_SIZE = 9;
 const FILTER_PANEL_CLASS =
   "space-y-4 rounded-[32px] border border-white/15 bg-[linear-gradient(135deg,#070707,#101010)]/95 px-4 py-5 shadow-[0_35px_120px_rgba(0,0,0,0.45)] sm:px-6 sm:py-6";
 const CARD_SHELL_CLASS =
-  "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-neutral-950/80 text-left shadow-lg shadow-black/40 transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red sm:rounded-3xl sm:shadow-2xl";
+  "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/12 bg-neutral-950/80 text-left shadow-[0_35px_120px_rgba(0,0,0,0.55)] ring-1 ring-white/10 backdrop-blur-sm transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red sm:rounded-3xl";
 const SPEC_PANEL_CLASS =
   "grid gap-4 border-t border-white/10 bg-black/40 px-4 py-4 text-xs text-neutral-200 sm:grid-cols-2 sm:px-6 sm:py-5 sm:text-sm";
 const DETAIL_PANEL_CLASS =
@@ -494,7 +494,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
         <dialog
           ref={modalRef}
           open
-          className="fixed inset-0 z-50 flex max-h-screen w-full items-center justify-center bg-black/80 p-3 backdrop-blur sm:p-4 md:p-6"
+          className="fixed inset-0 z-50 flex max-h-screen w-full items-center justify-center bg-black/60 p-3 backdrop-blur-sm sm:p-4 md:p-6"
           aria-modal="true"
         >
           <button
@@ -504,10 +504,10 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
             className="absolute inset-0 h-full w-full bg-transparent"
             onClick={closeModal}
           />
-          <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]">
+          <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-white/12 bg-neutral-950/90 text-white shadow-[0_50px_160px_-80px_rgba(0,0,0,0.9)] ring-1 ring-white/15 backdrop-blur-xl">
             <button
               type="button"
-              className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-widest text-black transition hover:border-black hover:bg-white sm:right-5 sm:top-5"
+              className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-[0.3em] text-white shadow-sm backdrop-blur-sm transition hover:border-white/30 hover:bg-black/55 focus-ring sm:right-5 sm:top-5"
               onClick={closeModal}
             >
               Close

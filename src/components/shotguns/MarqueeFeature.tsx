@@ -26,7 +26,7 @@ export function MarqueeFeature({ champion, fallbackText }: MarqueeFeatureProps) 
       <section
         ref={analyticsRef}
         data-analytics-id="MarqueeFeatureSeen"
-        className="rounded-2xl border border-border/60 bg-card/10 p-4 text-ink shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8"
+        className="rounded-2xl border border-border/70 bg-card/40 p-4 text-ink shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/30 sm:px-6 sm:py-8 sm:shadow-elevated"
       >
         <h2 className="text-xl sm:text-2xl font-semibold">Perazzi lineage</h2>
         <p className="mt-3 text-sm sm:text-base leading-relaxed text-ink-muted">
@@ -43,10 +43,10 @@ export function MarqueeFeature({ champion, fallbackText }: MarqueeFeatureProps) 
     <section
       ref={analyticsRef}
       data-analytics-id={`ChampionStory:${champion.id}`}
-      className="grid gap-8 rounded-2xl border border-border/60 bg-card/10 px-4 py-8 text-ink shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-10 sm:shadow-md md:grid-cols-[minmax(280px,1fr)_minmax(320px,1fr)] md:items-center lg:px-10"
+      className="grid gap-8 rounded-2xl border border-border/70 bg-card/40 px-4 py-8 text-ink shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/30 sm:px-6 sm:py-10 sm:shadow-elevated md:grid-cols-[minmax(280px,1fr)_minmax(320px,1fr)] md:items-center lg:px-10"
     >
       <div
-        className="relative overflow-hidden rounded-2xl"
+        className="relative overflow-hidden rounded-2xl bg-elevated ring-1 ring-border/70"
         style={{ aspectRatio: ratio }}
       >
         <Image
