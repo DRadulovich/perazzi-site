@@ -124,7 +124,7 @@ export function BuildStepsScroller({
           loading="lazy"
         />
         <div
-          className="absolute inset-0 bg-(--scrim-soft)"
+          className="absolute inset-0 bg-[color:var(--scrim-soft)]"
           aria-hidden
         />
         <div
@@ -139,8 +139,8 @@ export function BuildStepsScroller({
         />
       </div>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-7xl px-6 lg:px-10">
-        <div className="flex w-full flex-col gap-8 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+        <div className="relative z-10 mx-auto flex w-full max-w-7xl px-6 lg:px-10">
+        <div className="flex w-full flex-col gap-8 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
           {/* Intro block */}
           <div className="max-w-3xl space-y-3 shrink-0">
             <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
@@ -180,7 +180,7 @@ export function BuildStepsScroller({
               {/* Scroll-snap cards column */}
               <div className="relative flex-1">
                 <nav className="absolute inset-x-3 top-3 z-20 hidden lg:block sm:inset-x-4 lg:inset-x-6 lg:top-4">
-                  <div className="grid grid-flow-col auto-cols-fr items-center gap-2 rounded-2xl border border-border/75 bg-card/75 px-4 py-3 text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted shadow-sm backdrop-blur-sm">
+                  <div className="grid grid-flow-col auto-cols-fr items-center gap-2 rounded-2xl border border-border/75 bg-card/75 px-4 py-3 text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted shadow-sm backdrop-blur-md">
                     {mappedSteps.map((step, index) => {
                       const isActive = step.id === activeStepId;
                       const stepNumber = index + 1;
@@ -213,7 +213,7 @@ export function BuildStepsScroller({
                 </nav>
 
                 <div
-                  className="overflow-y-auto rounded-2xl border border-border/60 bg-card/25 shadow-sm snap-y snap-mandatory lg:pt-24 sm:rounded-3xl sm:border-border/70"
+                  className="overflow-y-auto rounded-2xl border border-border/70 bg-card/30 shadow-sm backdrop-blur-sm snap-y snap-mandatory lg:pt-24 sm:rounded-3xl"
                   ref={scrollContainerRef}
                   style={{ height: "80vh" }}
                 >
@@ -271,7 +271,7 @@ export function BuildStepsScroller({
 
                           {/* Foreground content */}
                           <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-10 sm:px-8 lg:px-12 lg:py-16">
-                            <div className="mx-auto max-w-3xl rounded-2xl border border-border/75 bg-card/75 p-5 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:p-6">
+                            <div className="mx-auto max-w-3xl rounded-2xl border border-border/75 bg-card/80 p-5 shadow-elevated ring-1 ring-border/70 backdrop-blur-md sm:rounded-3xl sm:p-6">
                               <button
                                 type="button"
                                 className="flex w-full flex-col items-start gap-3 text-left"

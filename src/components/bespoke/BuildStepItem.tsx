@@ -109,7 +109,7 @@ export function BuildStepItem({
   );
 
   const caption = step.captionHtml ? (
-    <figcaption className="rounded-2xl border border-border/60 bg-card/40 p-4 text-[11px] sm:text-xs leading-relaxed text-ink-muted">
+    <figcaption className="rounded-2xl border border-border/70 bg-card/60 p-4 text-[11px] sm:text-xs leading-relaxed text-ink-muted shadow-sm backdrop-blur-sm">
       <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
         {step.captionHtml}
       </ReactMarkdown>
@@ -153,8 +153,8 @@ export function BuildStepItem({
       data-analytics-id={`BuildStepVisible:${step.id}`}
       className={
         isPinned
-          ? "grid h-full min-h-0 grid-rows-[minmax(0,1fr)_minmax(0,3fr)] gap-6 rounded-2xl bg-card/80 p-4 shadow-lg sm:rounded-3xl sm:p-6 sm:shadow-xl"
-          : "space-y-4 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:p-6"
+          ? "grid h-full min-h-0 grid-rows-[minmax(0,1fr)_minmax(0,3fr)] gap-6 rounded-2xl border border-border/70 bg-card/70 p-4 shadow-elevated ring-1 ring-border/70 backdrop-blur-sm sm:rounded-3xl sm:p-6"
+          : "space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-6"
       }
       aria-label={`Step ${index + 1}: ${step.title}`}
     >

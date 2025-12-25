@@ -19,7 +19,7 @@ export function JourneyOverview({ journey }: JourneyOverviewProps) {
     <motion.section
       ref={analyticsRef}
       data-analytics-id="JourneyOverviewSeen"
-      className="rounded-2xl border border-border/60 bg-card/10 px-4 py-6 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8"
+      className="rounded-2xl border border-border/70 bg-card/60 px-4 py-6 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:px-6 sm:py-8"
       initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
       whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.4 }}
@@ -41,7 +41,7 @@ export function JourneyOverview({ journey }: JourneyOverviewProps) {
               <li key={step.id}>
                 <a
                   href={step.href}
-                  className="group inline-flex w-full items-center justify-between rounded-2xl border border-border/60 bg-card/10 px-4 py-3 text-sm font-semibold text-ink focus-ring transition-colors hover:border-perazzi-red/60 sm:border-border/70 sm:bg-card/60"
+                  className="group inline-flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/70 px-4 py-3 text-sm font-semibold text-ink shadow-sm backdrop-blur-sm transition-colors hover:border-perazzi-red/40 hover:bg-card/85 focus-ring"
                 >
                   <span>{step.label}</span>
                   <span

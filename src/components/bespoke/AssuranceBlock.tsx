@@ -15,7 +15,7 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
 
   return (
     <section
-      className="rounded-2xl border border-border/60 bg-card/10 px-4 py-6 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] lg:gap-8"
+      className="rounded-2xl border border-border/70 bg-card/60 px-4 py-6 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:px-6 sm:py-8 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] lg:gap-8"
       aria-labelledby="assurance-heading"
     >
       <div className="space-y-6">
@@ -37,7 +37,7 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
           />
         ) : null}
         {quote ? (
-          <blockquote className="rounded-2xl border-l-4 border-perazzi-red/60 bg-card/40 px-5 py-4 text-[13px] sm:text-sm italic leading-relaxed text-ink">
+          <blockquote className="rounded-2xl border-l-4 border-perazzi-red/60 bg-card/60 px-5 py-4 text-[13px] sm:text-sm italic leading-relaxed text-ink shadow-sm backdrop-blur-sm">
             <p>“{quote.text}”</p>
             {quote.author ? (
               <cite className="mt-2 block not-italic text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink-muted">

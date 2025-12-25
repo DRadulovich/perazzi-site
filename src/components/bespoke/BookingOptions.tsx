@@ -29,7 +29,7 @@ function BookingOptionCard({ option }: BookingOptionCardProps) {
     <article
       ref={optionRef}
       data-analytics-id={`BookingOptionSeen:${option.id}`}
-      className="flex h-full flex-col rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm transition-shadow hover:shadow-md sm:rounded-3xl sm:border-border/70 sm:bg-card sm:p-6"
+      className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm transition-shadow hover:shadow-elevated sm:rounded-3xl sm:bg-card/80 sm:p-6"
     >
       <div className="space-y-2">
         <h3 className="text-base sm:text-lg font-semibold text-ink">
@@ -88,7 +88,7 @@ function WhatToExpectCollapsible({
       }}
     >
       <Collapsible.Trigger
-        className="flex w-full items-center justify-between rounded-2xl border border-border/60 bg-card/10 px-4 py-3 text-left text-sm font-semibold text-ink focus-ring md:px-6 md:py-4 md:text-base lg:px-7 lg:py-5 md:border-border/70 md:bg-card"
+        className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/70 px-4 py-3 text-left text-sm font-semibold text-ink shadow-sm backdrop-blur-sm focus-ring md:px-6 md:py-4 md:text-base lg:px-7 lg:py-5"
         aria-controls={contentId}
         aria-expanded={open}
       >
@@ -192,7 +192,7 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
       </div>
       <aside
         aria-label="What to expect during your fitting"
-        className="space-y-3 rounded-2xl border border-border/60 bg-card/40 p-4 shadow-sm md:space-y-4 md:p-8 md:rounded-3xl md:border-border/70 md:bg-card/60 lg:space-y-5 lg:p-10"
+        className="space-y-3 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm md:space-y-4 md:p-8 md:rounded-3xl md:bg-card/75 lg:space-y-5 lg:p-10"
       >
         <h3 className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
           {resolvedWhatToExpectHeading}
@@ -208,7 +208,7 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
           ))}
         </div>
       </aside>
-      <div className="space-y-3 rounded-2xl border border-border/60 bg-card/40 p-4 shadow-sm md:space-y-4 md:p-8 md:rounded-3xl md:border-border/70 md:bg-card/60 lg:space-y-5 lg:p-10">
+      <div className="space-y-3 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm md:space-y-4 md:p-8 md:rounded-3xl md:bg-card/75 lg:space-y-5 lg:p-10">
         <h3 className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
           Schedule with the concierge
         </h3>
