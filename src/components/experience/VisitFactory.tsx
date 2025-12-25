@@ -69,7 +69,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+        <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
           <div className="space-y-2">
             <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
               {heading}
@@ -88,7 +88,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
-            <article className="space-y-5 rounded-2xl border border-border/75 bg-card/75 p-5 shadow-sm sm:rounded-3xl sm:p-6 lg:p-7">
+            <article className="space-y-5 rounded-2xl border border-border/70 bg-card/60 p-5 shadow-sm backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated lg:p-7">
               <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
                 Botticino headquarters
               </p>
@@ -120,7 +120,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                 </p>
                 <div
                   id={mapPanelId}
-                  className="relative overflow-hidden rounded-2xl border border-border/60 bg-[color:var(--color-canvas)]"
+                  className="relative overflow-hidden rounded-2xl border border-border/70 bg-[color:var(--color-canvas)] shadow-sm ring-1 ring-border/70"
                   style={{ aspectRatio: visit.location.staticMap.aspectRatio ?? 3 / 2 }}
                   aria-live="polite"
                 >
@@ -162,7 +162,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
               {visit.whatToExpectHtml ? (
                 <Collapsible.Root open={expectOpen} onOpenChange={setExpectOpen}>
                   <Collapsible.Trigger
-                    className="flex w-full items-center justify-between rounded-2xl border border-border/60 bg-card/40 px-4 py-3 text-left text-sm font-semibold uppercase tracking-[0.2em] text-ink focus-ring sm:rounded-3xl sm:border-border/70 sm:bg-card/75"
+                    className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left text-sm font-semibold uppercase tracking-[0.2em] text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
                     aria-expanded={expectOpen}
                     aria-controls="visit-expect-content"
                   >
@@ -179,7 +179,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                   </Collapsible.Trigger>
                   <Collapsible.Content
                     id="visit-expect-content"
-                    className="mt-3 rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/75"
+                    className="mt-3 rounded-2xl border border-border/70 bg-card/60 p-4 text-sm leading-relaxed text-ink-muted shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80"
                   >
                     <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
                       {visit.whatToExpectHtml}

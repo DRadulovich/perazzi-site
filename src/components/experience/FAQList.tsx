@@ -55,7 +55,7 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
       <div
         ref={analyticsRef}
         data-analytics-id="ExperienceFAQSeen"
-        className="space-y-6 rounded-2xl border border-border/60 bg-card/40 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/75 sm:px-6 sm:py-8"
+        className="space-y-6 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:px-6 sm:py-8 sm:shadow-elevated"
         aria-labelledby="experience-faq-heading"
       >
         {content}
@@ -103,7 +103,7 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
         data-analytics-id="ExperienceFAQSeen"
         className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10"
       >
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+        <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
           {content}
         </div>
       </div>
@@ -127,7 +127,7 @@ function FAQItemCard({ item, index }: FAQItemCardProps) {
   return (
     <Collapsible.Root open={open} onOpenChange={setOpen}>
       <Collapsible.Trigger
-        className="flex w-full items-center justify-between rounded-2xl border border-border/60 bg-card/40 px-4 py-3 text-left text-sm font-semibold text-ink focus-ring shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/75"
+        className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left text-sm font-semibold text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
         aria-expanded={open}
       >
         {item.q}
@@ -141,7 +141,7 @@ function FAQItemCard({ item, index }: FAQItemCardProps) {
           +
         </span>
       </Collapsible.Trigger>
-      <Collapsible.Content className="mt-2 overflow-hidden rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted sm:bg-card/60">
+      <Collapsible.Content className="mt-2 overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 text-sm leading-relaxed text-ink-muted shadow-sm backdrop-blur-sm sm:bg-card/80">
         <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
           {item.aHtml}
         </ReactMarkdown>

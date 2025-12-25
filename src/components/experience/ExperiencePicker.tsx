@@ -104,7 +104,7 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+        <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
           <div className="space-y-2">
             <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
               {heading}
@@ -167,7 +167,7 @@ function ExperiencePickerCard({
     >
       <Link
         href={item.href}
-        className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border/75 bg-card/75 text-left shadow-sm focus-ring sm:rounded-3xl"
+        className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border/70 bg-card/60 text-left shadow-sm backdrop-blur-sm ring-1 ring-border/70 transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated"
         data-analytics-id={`PickerCardClick:${item.id}`}
         onClick={(event) => {
           if (onAnchorClick) {

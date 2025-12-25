@@ -63,7 +63,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+        <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
           <div className="space-y-2">
             <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
               {heading}
@@ -79,7 +79,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
             {options.map((option) => (
               <article
                 key={option.id}
-                className="flex h-full flex-col rounded-2xl border border-border/75 bg-card/75 p-5 shadow-sm sm:rounded-3xl sm:p-6 md:p-7 lg:p-8"
+                className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-5 shadow-sm backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-7 lg:p-8"
               >
                 <div className="space-y-2">
                   <h3 className="text-base sm:text-lg font-semibold text-ink">
@@ -110,7 +110,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
             ))}
           </div>
           {scheduler ? (
-            <div className="space-y-4 rounded-2xl border border-border/60 bg-card/40 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/75 sm:p-6 md:p-8 lg:p-10">
+            <div className="space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-8 lg:p-10">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="text-base sm:text-lg font-semibold text-ink">
                   {scheduler.title}
@@ -145,19 +145,19 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
               </p>
               <div
                 id={schedulerPanelId}
-                className="rounded-2xl border border-border/60 bg-card/40 p-3 md:p-4 lg:p-5 sm:border-border/70 sm:bg-card/60"
+                className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-sm backdrop-blur-sm sm:bg-card/80 md:p-4 lg:p-5"
                 aria-live="polite"
               >
                 {schedulerLoaded ? (
                   <iframe
                     src={scheduler.src}
                     title={scheduler.iframeTitle ?? `Booking — ${scheduler.title}`}
-                    className={`h-[480px] w-full rounded-2xl border border-border ${schedulerOpen ? "" : "hidden"}`}
+                    className={`h-[480px] w-full rounded-2xl border border-border/70 bg-card/0 ${schedulerOpen ? "" : "hidden"}`}
                     loading="lazy"
                     aria-hidden={!schedulerOpen}
                   />
                 ) : (
-                  <div className="flex h-[320px] w-full items-center justify-center rounded-2xl border border-dashed border-border/60 text-sm sm:text-base text-ink-muted">
+                  <div className="flex h-[320px] w-full items-center justify-center rounded-2xl border border-dashed border-border/70 text-sm sm:text-base text-ink-muted">
                     The booking form appears here once you choose Begin Your Fitting.
                   </div>
                 )}

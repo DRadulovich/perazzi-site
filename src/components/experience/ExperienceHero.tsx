@@ -82,7 +82,7 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
       <motion.section
         ref={setRefs}
         data-analytics-id="HeroSeen:experience"
-        className="relative z-10 mx-auto min-h-screen max-w-6xl overflow-hidden rounded-2xl border border-gray-700/30 bg-card/10 text-white shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/0 sm:shadow-lg"
+        className="relative z-10 mx-auto min-h-screen max-w-6xl overflow-hidden rounded-2xl border border-white/12 bg-black/40 text-white shadow-elevated ring-1 ring-white/10 backdrop-blur-xl sm:rounded-3xl"
         initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
         animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
@@ -137,7 +137,7 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
             aria-hidden="true"
           >
             <div
-              className="relative aspect-[16/9] w-full min-h-[360px] overflow-hidden rounded-2xl shadow-2xl ring-1 ring-white/10"
+              className="relative aspect-[16/9] w-full min-h-[360px] overflow-hidden rounded-2xl bg-black/30 shadow-elevated ring-1 ring-white/10"
             >
               <Image
                 src={hero.background.url}

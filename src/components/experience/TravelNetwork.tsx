@@ -92,7 +92,7 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+        <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
           <div className="space-y-3">
             <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
               {heading}
@@ -120,10 +120,10 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
                 role="tab"
                 aria-selected={activeTab === tab.key}
                 className={cn(
-                  "rounded-full border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] focus-ring transition",
+                  "rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring",
                   activeTab === tab.key
-                    ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
-                    : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
+                    ? "border-perazzi-red/60 bg-perazzi-red/10 text-perazzi-red"
+                    : "text-ink",
                 )}
                 onClick={() => { setActiveTab(tab.key); }}
               >
@@ -157,7 +157,7 @@ function ScheduleList({ events, emptyText }: ScheduleListProps) {
       {events.map((event) => (
         <article
           key={event._id}
-          className="rounded-2xl border border-border/75 bg-card/75 p-5 shadow-sm sm:rounded-3xl md:p-6 lg:p-7"
+          className="rounded-2xl border border-border/70 bg-card/60 p-5 shadow-sm backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated md:p-6 lg:p-7"
         >
           <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
             {formatDateRange(event.startDate, event.endDate)}
@@ -187,7 +187,7 @@ function DealerList({ dealers, emptyText }: DealerListProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {dealers.map((dealer) => (
-        <article key={dealer._id} className="rounded-2xl border border-border/75 bg-card/75 p-4 shadow-sm sm:rounded-3xl">
+        <article key={dealer._id} className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated">
           <h3 className="text-base font-semibold text-ink">{dealer.dealerName}</h3>
           <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
             {dealer.state}

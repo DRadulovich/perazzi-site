@@ -60,7 +60,7 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
     <section
       ref={analyticsRef}
       data-analytics-id="MosaicGallerySeen"
-      className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 sm:shadow-md lg:px-10"
+      className="space-y-6 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10"
       aria-labelledby="mosaic-gallery-heading"
     >
       <div className="space-y-2">
@@ -79,7 +79,7 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
           <li key={asset.id}>
             <button
               type="button"
-              className="group relative w-full overflow-hidden rounded-2xl border border-border/60 bg-card/10 focus-ring sm:border-border/70 sm:bg-card"
+              className="group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card/60 shadow-sm backdrop-blur-sm ring-1 ring-border/70 transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:bg-card/80"
               style={{ aspectRatio: asset.aspectRatio ?? 4 / 3 }}
               onClick={() => { openLightbox(index); }}
               aria-label={`Open photo ${index + 1}`}
@@ -104,14 +104,14 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
         }}
       >
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/80 backdrop-blur-sm" />
+          <Dialog.Overlay className="fixed inset-0 bg-black/55 backdrop-blur-sm data-[state=open]:animate-fade-in" />
           <Dialog.Content className="fixed inset-0 flex items-center justify-center p-4 focus:outline-none">
             <Dialog.Title className="sr-only">Experience mosaic photo</Dialog.Title>
             <Dialog.Description className="sr-only">
               {currentAsset?.caption ?? currentAsset?.alt ?? "Gallery image"}
             </Dialog.Description>
             {currentAsset ? (
-              <figure className="relative flex max-w-4xl flex-col gap-3 rounded-2xl bg-card p-4 shadow-xl sm:rounded-3xl sm:p-6 sm:shadow-2xl">
+              <figure className="relative flex max-w-4xl flex-col gap-3 rounded-2xl border border-border/70 bg-card/95 p-4 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl sm:rounded-3xl sm:p-6">
                 <p className="sr-only" aria-live="polite">
                   Photo {(openIndex ?? 0) + 1} of {assets.length}
                 </p>
@@ -136,7 +136,7 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
                 <div className="flex justify-between">
                   <button
                     type="button"
-                    className="focus-ring rounded-full border border-border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink"
+                    className="rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
                     onClick={() => { goTo(-1); }}
                     aria-label="Previous photo"
                   >
@@ -144,14 +144,14 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
                   </button>
                   <button
                     type="button"
-                    className="focus-ring rounded-full border border-border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink"
+                    className="rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
                     onClick={() => { goTo(1); }}
                     aria-label="Next photo"
                   >
                     Next
                   </button>
                 </div>
-                <Dialog.Close className="focus-ring absolute right-4 top-4 rounded-full border border-border bg-card px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink">
+                <Dialog.Close className="absolute right-4 top-4 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring">
                   Close
                 </Dialog.Close>
               </figure>
