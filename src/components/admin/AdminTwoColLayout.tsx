@@ -12,7 +12,7 @@ export function AdminTwoColLayout({
 }) {
   return (
     <div className={cn("flex min-h-screen", className)}>
-      <aside className="fixed inset-y-0 left-0 w-64 overflow-y-auto border-r border-border bg-card p-4 shadow-sm">
+      <aside className="fixed inset-y-0 left-0 w-64 overflow-y-auto border-r border-border bg-card/95 p-4 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl">
         {sidebar}
       </aside>
       <main className="ml-64 flex-1 overflow-y-auto p-4 lg:p-6">{children}</main>

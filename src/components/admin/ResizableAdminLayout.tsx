@@ -50,7 +50,7 @@ export function ResizableAdminLayout({ nav, children, className }: {
       style={{ "--admin-sidebar-width": `${width}px` } as React.CSSProperties}
     >
       {/* Sidebar */}
-      <aside className="hidden h-full overflow-y-auto border-r border-border bg-card lg:block">
+      <aside className="hidden h-full overflow-y-auto border-r border-border bg-card/90 shadow-sm backdrop-blur-xl lg:block">
         {nav}
       </aside>
 
@@ -61,9 +61,9 @@ export function ResizableAdminLayout({ nav, children, className }: {
         tabIndex={0}
         onPointerDown={startDrag}
         onKeyDown={handleKey}
-        className="group hidden w-1 cursor-col-resize select-none bg-transparent focus:outline-none lg:block"
+        className="group hidden w-1 cursor-col-resize select-none bg-transparent focus-ring lg:block"
       >
-        <div className="h-full w-full bg-transparent group-hover:bg-muted/40" />
+        <div className="h-full w-full bg-transparent group-hover:bg-ink/10" />
       </div>
 
       {/* Main content */}

@@ -15,7 +15,7 @@ export function AdminDrawer({ open, onClose, children }: { open: boolean; onClos
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
+          <div className="fixed inset-0 bg-black/45 backdrop-blur-sm" aria-hidden="true" />
         </Transition.Child>
 
         <div className="fixed inset-y-0 left-0 flex w-full max-w-[260px] flex-col outline-none">
@@ -28,7 +28,7 @@ export function AdminDrawer({ open, onClose, children }: { open: boolean; onClos
             leaveFrom="translate-x-0"
             leaveTo="-translate-x-full"
           >
-            <Dialog.Panel className="h-full overflow-y-auto border-r border-border bg-card p-4 shadow-xl outline-none">
+            <Dialog.Panel className="h-full overflow-y-auto border-r border-border bg-card/95 p-4 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl outline-none">
               {children}
             </Dialog.Panel>
           </Transition.Child>
