@@ -244,14 +244,17 @@ body {
   animation: accordion-up 0.25s ease-out;
 }
 
-/* Radius adjustments for sharper theme */
-.rounded-3xl { border-radius: 1rem !important; } /* previously 1.5rem */
-.rounded-2xl { border-radius: 0.75rem !important; } /* previously 1rem */
-.rounded-xl { border-radius: 0.5rem !important; } /* previously 0.75rem */
+/* Premium radius scale */
+.rounded-3xl { border-radius: 1rem !important; } /* 16px */
+.rounded-2xl { border-radius: 0.75rem !important; } /* 12px */
+.rounded-xl { border-radius: 0.5rem !important; } /* 8px */
 
 .bg-brand { background-color: var(--brand); color: var(--card); }
 .bg-brand-hover { background-color: var(--brand-hover); color: var(--card); }
 
+/* Premium shadow scale */
+.shadow-soft { box-shadow: 0 6px 18px rgba(15,15,15,0.08); }
+.shadow-medium { box-shadow: 0 12px 32px rgba(15,15,15,0.14); }
 .shadow-elevated { box-shadow: 0 20px 60px rgba(15,15,15,0.15); }
 
 .button-primary,
