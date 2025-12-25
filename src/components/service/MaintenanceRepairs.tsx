@@ -1,11 +1,11 @@
 "use client";
 
-import * as Collapsible from "@radix-ui/react-collapsible";
 import SafeHtml from "@/components/SafeHtml";
 import { useState } from "react";
 import type { GuideDownload, MaintenanceSection } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
 
 type MaintenanceRepairsProps = {
   readonly maintenanceSection: MaintenanceSection;
@@ -57,8 +57,8 @@ export function MaintenanceRepairs({ maintenanceSection, guide }: MaintenanceRep
           <span className="sr-only"> (opens in a new tab)</span>
         </a>
       ) : null}
-      <Collapsible.Root open={open} onOpenChange={setOpen}>
-        <Collapsible.Trigger
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <CollapsibleTrigger
           className="flex w-full items-center justify-between rounded-2xl border border-border/60 bg-card/10 px-4 py-3 text-left text-sm font-semibold text-ink focus-ring sm:border-border sm:bg-card/40"
           aria-expanded={open}
           aria-controls="before-send-content"
@@ -70,8 +70,8 @@ export function MaintenanceRepairs({ maintenanceSection, guide }: MaintenanceRep
           >
             +
           </span>
-        </Collapsible.Trigger>
-        <Collapsible.Content
+        </CollapsibleTrigger>
+        <CollapsibleContent
           id="before-send-content"
           className="mt-3 rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted sm:bg-card/60"
         >
@@ -81,8 +81,8 @@ export function MaintenanceRepairs({ maintenanceSection, guide }: MaintenanceRep
             <li>Use the Perazzi travel case or double-box with foam.</li>
             <li>Include a note describing issues, desired break weight, and timeline.</li>
           </ul>
-        </Collapsible.Content>
-      </Collapsible.Root>
+        </CollapsibleContent>
+      </Collapsible>
     </section>
   );
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import * as Collapsible from "@radix-ui/react-collapsible";
 import Image from "next/image";
 import SafeHtml from "@/components/SafeHtml";
 import { useState } from "react";
@@ -8,10 +7,11 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import type { ShotgunsLandingData } from "@/types/catalog";
 import { logAnalytics } from "@/lib/analytics";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
 
-type TriggerExplainerProps = {
+type TriggerExplainerProps = Readonly<{
   explainer: ShotgunsLandingData["triggerExplainer"];
-};
+}>;
 
 export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
@@ -48,7 +48,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
           className="object-cover"
           priority={false}
         />
-        <div className="absolute inset-0 bg-[color:var(--scrim-soft)]" aria-hidden />
+        <div className="absolute inset-0 bg-(--scrim-soft)" aria-hidden />
         <div
           className="pointer-events-none absolute inset-0"
           style={{
@@ -63,7 +63,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
         <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
-          <Collapsible.Root
+          <Collapsible
             open={resolvedOpen}
             onOpenChange={(next) => {
               setManualOpen(next);
@@ -81,18 +81,18 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
               <p className="text-sm sm:text-base font-light italic text-ink-muted">
                 {subheading}
               </p>
-              <Collapsible.Trigger
+              <CollapsibleTrigger
                 className="mt-1 inline-flex w-fit items-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring lg:hidden"
                 aria-controls="trigger-explainer-content"
                 data-analytics-id="TriggerExplainerToggle"
               >
                 {resolvedOpen ? "Hide details" : "Show details"}
-              </Collapsible.Trigger>
+              </CollapsibleTrigger>
             </div>
 
-            <Collapsible.Content
+            <CollapsibleContent
               id="trigger-explainer-content"
-              className="grid gap-6 overflow-hidden transition-all duration-300 data-[state=closed]:h-0 data-[state=closed]:opacity-0 data-[state=open]:h-auto data-[state=open]:opacity-100 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start"
+              className="grid gap-6 overflow-hidden transition-all duration-300 data-[state=closed]:opacity-0 data-[state=open]:opacity-100 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start"
             >
               <div className="rounded-2xl border border-border/0 bg-card/0 p-4 sm:rounded-3xl sm:p-6 lg:flex lg:h-full lg:flex-col lg:justify-start">
                 <SafeHtml
@@ -119,7 +119,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
 
               <figure className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated">
                 <div
-                  className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
+                  className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
                   style={{ aspectRatio: ratio }}
                 >
                   <Image
@@ -130,7 +130,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                     className="object-contain"
                   />
                   <div
-                    className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[color:var(--scrim-strong)]/60 via-[color:var(--scrim-strong)]/40 to-transparent"
+                    className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/60 via-(--scrim-strong)/40 to-transparent"
                     aria-hidden
                   />
                 </div>
@@ -140,8 +140,8 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                   </figcaption>
                 ) : null}
               </figure>
-            </Collapsible.Content>
-          </Collapsible.Root>
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       </div>
     </section>

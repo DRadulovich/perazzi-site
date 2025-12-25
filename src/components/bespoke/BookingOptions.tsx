@@ -1,12 +1,12 @@
 "use client";
 
-import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
@@ -78,7 +78,7 @@ function WhatToExpectCollapsible({
   const contentId = `what-to-expect-${item.id}`;
 
   return (
-    <Collapsible.Root
+    <Collapsible
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
@@ -87,7 +87,7 @@ function WhatToExpectCollapsible({
         );
       }}
     >
-      <Collapsible.Trigger
+      <CollapsibleTrigger
         className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/70 px-4 py-3 text-left text-sm font-semibold text-ink shadow-sm backdrop-blur-sm focus-ring md:px-6 md:py-4 md:text-base lg:px-7 lg:py-5"
         aria-controls={contentId}
         aria-expanded={open}
@@ -102,8 +102,8 @@ function WhatToExpectCollapsible({
         >
           +
         </span>
-      </Collapsible.Trigger>
-      <Collapsible.Content
+      </CollapsibleTrigger>
+      <CollapsibleContent
         id={contentId}
         className={cn(
           "overflow-hidden px-4 pt-3 text-sm text-ink-muted md:px-6 md:pt-4 md:text-base lg:px-7 lg:pt-5",
@@ -117,8 +117,8 @@ function WhatToExpectCollapsible({
             {item.bodyHtml}
           </ReactMarkdown>
         </div>
-      </Collapsible.Content>
-    </Collapsible.Root>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 

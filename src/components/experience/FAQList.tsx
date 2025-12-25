@@ -1,6 +1,5 @@
 "use client";
 
-import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import ReactMarkdown from "react-markdown";
@@ -11,6 +10,7 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 import { faq as faqFixture } from "@/content/experience/faq";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
 
 type FAQListProps = Readonly<{
   items: FAQItem[];
@@ -83,7 +83,7 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
           loading="lazy"
         />
         <div
-          className="absolute inset-0 bg-[color:var(--scrim-soft)]"
+          className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
         <div
@@ -125,8 +125,8 @@ function FAQItemCard({ item, index }: FAQItemCardProps) {
   }, [open, index]);
 
   return (
-    <Collapsible.Root open={open} onOpenChange={setOpen}>
-      <Collapsible.Trigger
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger
         className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left text-sm font-semibold text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
         aria-expanded={open}
       >
@@ -140,12 +140,12 @@ function FAQItemCard({ item, index }: FAQItemCardProps) {
         >
           +
         </span>
-      </Collapsible.Trigger>
-      <Collapsible.Content className="mt-2 overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 text-sm leading-relaxed text-ink-muted shadow-sm backdrop-blur-sm sm:bg-card/80">
+      </CollapsibleTrigger>
+      <CollapsibleContent className="mt-2 overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 text-sm leading-relaxed text-ink-muted shadow-sm backdrop-blur-sm sm:bg-card/80">
         <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
           {item.aHtml}
         </ReactMarkdown>
-      </Collapsible.Content>
-    </Collapsible.Root>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

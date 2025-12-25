@@ -1,6 +1,5 @@
 "use client";
 
-import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import Image from "next/image";
 import ReactMarkdown from "react-markdown";
@@ -11,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
 
 type VisitFactoryProps = {
   readonly visitFactorySection: VisitFactoryData;
@@ -53,7 +53,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
           loading="lazy"
         />
         <div
-          className="absolute inset-0 bg-[color:var(--scrim-soft)]"
+          className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
         <div
@@ -120,7 +120,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                 </p>
                 <div
                   id={mapPanelId}
-                  className="relative overflow-hidden rounded-2xl border border-border/70 bg-[color:var(--color-canvas)] shadow-sm ring-1 ring-border/70"
+                  className="relative overflow-hidden rounded-2xl border border-border/70 bg-(--color-canvas) shadow-sm ring-1 ring-border/70"
                   style={{ aspectRatio: visit.location.staticMap.aspectRatio ?? 3 / 2 }}
                   aria-live="polite"
                 >
@@ -142,7 +142,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                     />
                   )}
                   <div
-                    className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[color:var(--scrim-strong)]/70 via-[color:var(--scrim-strong)]/40 to-transparent"
+                    className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/70 via-(--scrim-strong)/40 to-transparent"
                     aria-hidden
                   />
                 </div>
@@ -160,8 +160,8 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
 
             <div className="space-y-4">
               {visit.whatToExpectHtml ? (
-                <Collapsible.Root open={expectOpen} onOpenChange={setExpectOpen}>
-                  <Collapsible.Trigger
+                <Collapsible open={expectOpen} onOpenChange={setExpectOpen}>
+                  <CollapsibleTrigger
                     className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left text-sm font-semibold uppercase tracking-[0.2em] text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
                     aria-expanded={expectOpen}
                     aria-controls="visit-expect-content"
@@ -176,16 +176,16 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                     >
                       +
                     </span>
-                  </Collapsible.Trigger>
-                  <Collapsible.Content
+                  </CollapsibleTrigger>
+                  <CollapsibleContent
                     id="visit-expect-content"
                     className="mt-3 rounded-2xl border border-border/70 bg-card/60 p-4 text-sm leading-relaxed text-ink-muted shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80"
                   >
                     <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
                       {visit.whatToExpectHtml}
                     </ReactMarkdown>
-                  </Collapsible.Content>
-                </Collapsible.Root>
+                  </CollapsibleContent>
+                </Collapsible>
               ) : null}
               <Button
                 asChild

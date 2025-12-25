@@ -235,7 +235,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
           ) : null}
           <img {...desktopImageProps} ref={heroImageRef} onLoad={handleMediaLoad} />
         </picture>
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/75 to-black/0" />
+        <div className="absolute inset-0 bg-linear-to-t from-black via-black/75 to-black/0" />
       </motion.div>
 
       <div className="relative z-10 flex flex-1">

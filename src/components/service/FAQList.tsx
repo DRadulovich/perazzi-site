@@ -6,6 +6,7 @@ import type { FAQItem } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
 
 type FAQListProps = Readonly<{
   items: readonly FAQItem[];
@@ -66,18 +67,27 @@ function FAQItemCard({
   }, [open, index]);
 
   return (
-    <details
-      open={open}
-      onToggle={(event) => { setOpen(event.currentTarget.open); }}
-      className="rounded-2xl border border-border/75 bg-card/75 p-4 shadow-sm focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-perazzi-red"
-    >
-      <summary className="cursor-pointer text-sm font-semibold text-ink">
-        {item.q}
-      </summary>
-      <SafeHtml
-        className={cn("mt-2 text-sm leading-relaxed text-ink-muted")}
-        html={item.aHtml}
-      />
-    </details>
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div className="rounded-2xl border border-border/75 bg-card/75 p-4 shadow-sm focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-perazzi-red">
+        <CollapsibleTrigger className="flex w-full items-center justify-between text-left text-sm font-semibold text-ink">
+          {item.q}
+          <span
+            aria-hidden="true"
+            className={cn(
+              "text-lg transition-transform",
+              open ? "rotate-45" : "rotate-0",
+            )}
+          >
+            +
+          </span>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SafeHtml
+            className={cn("mt-2 text-sm leading-relaxed text-ink-muted")}
+            html={item.aHtml}
+          />
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
   );
 }

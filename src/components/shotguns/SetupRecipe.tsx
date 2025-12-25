@@ -1,10 +1,10 @@
 "use client";
 
-import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import type { DisciplineSummary } from "@/types/catalog";
 import { logAnalytics } from "@/lib/analytics";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
 
 type SetupRecipeProps = DisciplineSummary["recipe"] & {
   defaultExpanded?: boolean;
@@ -25,7 +25,7 @@ export function SetupRecipe({
       className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10"
       aria-labelledby="setup-recipe-heading"
     >
-      <Collapsible.Root
+      <Collapsible
         open={resolvedOpen}
         onOpenChange={(next) => {
           setManualOpen(next);
@@ -39,17 +39,17 @@ export function SetupRecipe({
           >
             Editorial guidance
           </h2>
-          <Collapsible.Trigger
+          <CollapsibleTrigger
             className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring md:hidden"
             aria-controls="setup-recipe-content"
           >
             {resolvedOpen ? "Hide recipe" : "Show recipe"}
-          </Collapsible.Trigger>
+          </CollapsibleTrigger>
         </div>
 
-        <Collapsible.Content
+        <CollapsibleContent
           id="setup-recipe-content"
-          className="mt-4 overflow-hidden transition-all duration-300 data-[state=closed]:h-0 data-[state=closed]:opacity-0 data-[state=open]:h-auto data-[state=open]:opacity-100"
+          className="mt-4 overflow-hidden transition-all duration-300 data-[state=closed]:opacity-0 data-[state=open]:opacity-100"
         >
           <dl className="grid gap-4 md:grid-cols-3">
             <div>
@@ -77,8 +77,8 @@ export function SetupRecipe({
               </dd>
             </div>
           </dl>
-        </Collapsible.Content>
-      </Collapsible.Root>
+        </CollapsibleContent>
+      </Collapsible>
     </section>
   );
 }

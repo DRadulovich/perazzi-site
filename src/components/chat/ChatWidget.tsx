@@ -1,7 +1,7 @@
 "use client";
 
-import { Dialog, Transition } from "@headlessui/react";
-import { Fragment, useEffect, useState } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
@@ -164,51 +164,28 @@ export function ChatWidget() {
               Perazzi Guide
             </button>
           )}
-          <Transition appear show={isOpen} as={Fragment}>
-            <Dialog as="div" className="fixed inset-0 z-50" onClose={handleClose}>
-              <div
-                className="fixed inset-x-0 overscroll-none"
+          <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
+            <Dialog.Portal>
+              <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
+              <Dialog.Content className="fixed inset-x-0 z-60 overscroll-none outline-none data-[state=closed]:opacity-0 data-[state=closed]:translate-y-2 data-[state=open]:opacity-100 data-[state=open]:translate-y-0 transition duration-200"
                 style={{
                   height: "var(--chat-sheet-height, 100vh)",
                   top: "var(--chat-sheet-offset, 0px)",
                 }}
               >
-                <Transition.Child
-                  as={Fragment}
-                  enter="ease-out duration-200"
-                  enterFrom="opacity-0"
-                  enterTo="opacity-100"
-                  leave="ease-in duration-150"
-                  leaveFrom="opacity-100"
-                  leaveTo="opacity-0"
-                >
-                  <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" aria-hidden="true" />
-                </Transition.Child>
-                <Transition.Child
-                  as={Fragment}
-                  enter="ease-out duration-200"
-                  enterFrom="translate-y-2 opacity-0"
-                  enterTo="translate-y-0 opacity-100"
-                  leave="ease-in duration-150"
-                  leaveFrom="translate-y-0 opacity-100"
-                  leaveTo="translate-y-2 opacity-0"
-                >
-                  <div className="absolute inset-0 p-3 sm:p-4">
-                    <Dialog.Panel className="h-full w-full outline-none">
-                      <ChatPanel
-                        open
-                        onClose={handleClose}
-                        variant="sheet"
-                        pendingPrompt={pendingPrompt}
-                        onPromptConsumed={consumePrompt}
-                        className="h-full w-full"
-                      />
-                    </Dialog.Panel>
-                  </div>
-                </Transition.Child>
-              </div>
-            </Dialog>
-          </Transition>
+                <div className="absolute inset-0 p-3 sm:p-4">
+                  <ChatPanel
+                    open
+                    onClose={handleClose}
+                    variant="sheet"
+                    pendingPrompt={pendingPrompt}
+                    onPromptConsumed={consumePrompt}
+                    className="h-full w-full"
+                  />
+                </div>
+              </Dialog.Content>
+            </Dialog.Portal>
+          </Dialog.Root>
         </>
       ) : (
         <>

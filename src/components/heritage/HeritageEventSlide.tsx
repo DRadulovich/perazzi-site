@@ -6,7 +6,7 @@ import SafeHtml from "@/components/SafeHtml";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import type { HeritageEvent, HeritageEventLink } from "@/types/heritage";
-import { createPortal } from "react-dom";
+import * as Dialog from "@radix-ui/react-dialog";
 
 export type HeritageEventSlideProps = Readonly<{
   event: HeritageEvent;
@@ -20,11 +20,6 @@ export function HeritageEventSlide({
   const mediaUrl = event.media?.url;
   const analyticsRef = useAnalyticsObserver<HTMLElement>(`HeritageEventSeen:${event.id}`);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [isClient, setIsClient] = React.useState(false);
-
-  React.useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   return (
     <>
@@ -34,7 +29,7 @@ export function HeritageEventSlide({
         className={cn(
           "flex h-full w-full shrink-0 flex-col",
           "px-4 sm:px-6 lg:px-10",
-          "transition-colors transition-shadow duration-200 ease-out",
+          "transition-colors duration-200 ease-out",
           className,
         )}
       >
@@ -51,7 +46,7 @@ export function HeritageEventSlide({
             )}
           >
             {mediaUrl ? (
-              <div className="relative h-full w-full min-h-[240px] overflow-hidden rounded-2xl border border-white/15 bg-[color:var(--color-canvas)]">
+              <div className="relative h-full w-full min-h-60 overflow-hidden rounded-2xl border border-white/15 bg-(--color-canvas)">
                 <Image
                   src={mediaUrl}
                   alt={event.media?.alt ?? event.title}
@@ -131,59 +126,45 @@ export function HeritageEventSlide({
       </article>
 
       {/* Mobile-only text-only modal for full summary in a portal */}
-      {isClient && isModalOpen
-        ? createPortal(
-            <div className="fixed inset-0 z-50 md:hidden">
-              {/* Backdrop */}
-              <button
-                type="button"
-                tabIndex={-1}
-                className="absolute inset-0 bg-black/60"
-                aria-hidden="true"
-                onClick={() => { setIsModalOpen(false); }}
-              />
-
-              {/* Dialog */}
-              <dialog
-                open
-                aria-modal="true"
-                aria-labelledby={`heritage-event-modal-${event.id}`}
-                onCancel={() => { setIsModalOpen(false); }}
-                className="relative z-10 m-0 flex h-full w-full items-end justify-center bg-transparent p-4"
-              >
-                <div className="max-h-[80vh] w-full max-w-lg overflow-hidden rounded-2xl bg-black text-neutral-100 shadow-lg">
-                  <div className="flex items-center justify-between border-b border-white/15 px-4 py-3">
-                    <p className="text-[11px] uppercase tracking-[0.28em] text-neutral-400">
-                      {event.date}
-                    </p>
-                    <button
-                      type="button"
-                      className="inline-flex min-h-10 items-center justify-center rounded-full border border-white/30 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-neutral-100 focus-ring"
-                      onClick={() => setIsModalOpen(false)}
-                    >
-                      Close
-                    </button>
-                  </div>
-                  <div className="space-y-3 overflow-y-auto px-4 pt-3 pb-4">
-                    <h3
-                      id={`heritage-event-modal-${event.id}`}
-                      className="text-base sm:text-lg font-semibold tracking-tight text-neutral-50"
-                    >
-                      {event.title}
-                    </h3>
-                    {event.summaryHtml ? (
-                      <SafeHtml
-                        className="prose prose-invert max-w-none text-sm leading-relaxed text-neutral-200 prose-p:mb-3 prose-p:mt-0 prose-strong:text-neutral-50 prose-em:text-neutral-200"
-                        html={event.summaryHtml}
-                      />
-                    ) : null}
-                  </div>
-                </div>
-              </dialog>
-            </div>,
-            document.body,
-          )
-        : null}
+      <Dialog.Root open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100 md:hidden" />
+          <Dialog.Content
+            aria-labelledby={`heritage-event-modal-${event.id}`}
+            className="fixed inset-0 z-60 flex h-full w-full items-end justify-center bg-transparent p-4 outline-none transition duration-200 data-[state=closed]:opacity-0 data-[state=closed]:translate-y-2 data-[state=open]:opacity-100 data-[state=open]:translate-y-0 md:hidden"
+          >
+            <div className="max-h-[80vh] w-full max-w-lg overflow-hidden rounded-2xl bg-black text-neutral-100 shadow-lg">
+              <div className="flex items-center justify-between border-b border-white/15 px-4 py-3">
+                <p className="text-[11px] uppercase tracking-[0.28em] text-neutral-400">
+                  {event.date}
+                </p>
+                <Dialog.Close asChild>
+                  <button
+                    type="button"
+                    className="inline-flex min-h-10 items-center justify-center rounded-full border border-white/30 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-neutral-100 focus-ring"
+                  >
+                    Close
+                  </button>
+                </Dialog.Close>
+              </div>
+              <div className="space-y-3 overflow-y-auto px-4 pt-3 pb-4">
+                <h3
+                  id={`heritage-event-modal-${event.id}`}
+                  className="text-base sm:text-lg font-semibold tracking-tight text-neutral-50"
+                >
+                  {event.title}
+                </h3>
+                {event.summaryHtml ? (
+                  <SafeHtml
+                    className="prose prose-invert max-w-none text-sm leading-relaxed text-neutral-200 prose-p:mb-3 prose-p:mt-0 prose-strong:text-neutral-50 prose-em:text-neutral-200"
+                    html={event.summaryHtml}
+                  />
+                ) : null}
+              </div>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </>
   );
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import * as Collapsible from "@radix-ui/react-collapsible";
 import SafeHtml from "@/components/SafeHtml";
 import { useEffect, useId, useState } from "react";
 import Image from "next/image";
@@ -9,6 +8,7 @@ import type { OralHistoriesUi, OralHistory } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
 
 const FALLBACK_TRACK_SRC = `data:text/vtt;charset=utf-8,${encodeURIComponent(
   "WEBVTT\n\n00:00:00.000 --> 00:00:01.000\nCaptions not available.",
@@ -105,7 +105,7 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
     >
       {history.image ? (
         <div
-          className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
+          className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
           style={{ aspectRatio: history.image.aspectRatio ?? 1 }}
         >
           <Image
@@ -153,8 +153,8 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
         </audio>
       ) : null}
       {history.transcriptHtml ? (
-        <Collapsible.Root open={open} onOpenChange={setOpen}>
-          <Collapsible.Trigger
+        <Collapsible open={open} onOpenChange={setOpen}>
+          <CollapsibleTrigger
             className="mt-auto inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink focus-ring"
             aria-expanded={open}
             aria-controls={contentId}
@@ -170,8 +170,8 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
             >
               +
             </span>
-          </Collapsible.Trigger>
-          <Collapsible.Content
+          </CollapsibleTrigger>
+          <CollapsibleContent
             id={contentId}
             className={cn(
               "mt-4 overflow-hidden rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted sm:bg-card/70",
@@ -181,14 +181,14 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
             )}
           >
             <SafeHtml html={history.transcriptHtml} />
-          </Collapsible.Content>
+          </CollapsibleContent>
           <noscript>
             <SafeHtml
               className="mt-4 rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted sm:bg-card/70"
               html={history.transcriptHtml}
             />
           </noscript>
-        </Collapsible.Root>
+        </Collapsible>
       ) : null}
     </article>
   );

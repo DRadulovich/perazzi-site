@@ -5,6 +5,7 @@ import Image from "next/image";
 import { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
 
 import { getSanityImageUrl } from "@/lib/sanityImage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -73,7 +74,6 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const detailButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [lastFocusedId, setLastFocusedId] = useState<string | null>(null);
-  const modalRef = useRef<HTMLDialogElement | null>(null);
   const [heroLoaded, setHeroLoaded] = useState(false);
   const analyticsRef = useAnalyticsObserver<HTMLElement>("ModelSearchTableSeen");
   const resetVisibleCount = useCallback(() => { setVisibleCount(PAGE_SIZE); }, []);
@@ -81,52 +81,6 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
     setSelectedModel(null);
     setHeroLoaded(false);
   }, []);
-
-  useEffect(() => {
-    if (!selectedModel || typeof globalThis.addEventListener !== "function") return;
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeModal();
-    };
-    globalThis.addEventListener("keydown", handleKey);
-    return () => { globalThis.removeEventListener("keydown", handleKey); };
-  }, [selectedModel, closeModal]);
-
-  useEffect(() => {
-    if (!selectedModel) return;
-    const modalNode = modalRef.current;
-    if (!modalNode) return;
-    const focusableSelectors = [
-      "a[href]",
-      'button:not([disabled])',
-      'textarea:not([disabled])',
-      'input:not([disabled])',
-      'select:not([disabled])',
-      '[tabindex]:not([tabindex="-1"])',
-    ];
-    const focusables = Array.from(
-      modalNode.querySelectorAll<HTMLElement>(focusableSelectors.join(",")),
-    ).filter((node) => node.dataset.modalBackdrop === undefined);
-    focusables[0]?.focus();
-
-    const handleTrap = (event: KeyboardEvent) => {
-      if (event.key !== "Tab" || focusables.length === 0) return;
-      const first = focusables[0];
-      const last = focusables.at(-1);
-      if (!first || !last) return;
-      if (event.shiftKey) {
-        if (document.activeElement === first) {
-          event.preventDefault();
-          last.focus();
-        }
-      } else if (document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    modalNode.addEventListener("keydown", handleTrap);
-    return () => { modalNode.removeEventListener("keydown", handleTrap); };
-  }, [selectedModel]);
 
   useEffect(() => {
     if (selectedModel || !lastFocusedId) return;
@@ -407,7 +361,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
               onMouseMove={handleCardMouseMove}
               onMouseLeave={handleCardMouseLeave}
             >
-              <div className="card-media relative aspect-[16/10] w-full bg-white">
+              <div className="card-media relative aspect-16/10 w-full bg-white">
                 {cardImageUrl ? (
                   <Image
                     src={cardImageUrl}
@@ -472,7 +426,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                     setSelectedModel(model);
                     setLastFocusedId(model._id);
                   }}
-                  className="rounded-full border border-white/30 px-5 py-2 text-sm font-semibold uppercase tracking-widest text-white transition hover:border-white hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-perazzi-red"
+                  className="rounded-full border border-white/30 px-5 py-2 text-sm font-semibold uppercase tracking-widest text-white transition hover:border-white hover:text-white focus-visible:outline-2 focus-visible:outline-perazzi-red"
                 >
                   View details
                 </button>
@@ -490,94 +444,93 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
         <div ref={loadMoreRef} className="h-10 w-full" aria-hidden="true" />
       )}
 
-      {selectedModel ? (
-        <dialog
-          ref={modalRef}
-          open
-          className="fixed inset-0 z-50 flex max-h-screen w-full items-center justify-center bg-black/60 p-3 backdrop-blur-sm sm:p-4 md:p-6"
-          aria-modal="true"
-        >
-          <button
-            type="button"
-            data-modal-backdrop="true"
-            aria-label="Close dialog"
-            className="absolute inset-0 h-full w-full bg-transparent"
-            onClick={closeModal}
-          />
-          <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-white/12 bg-neutral-950/90 text-white shadow-[0_50px_160px_-80px_rgba(0,0,0,0.9)] ring-1 ring-white/15 backdrop-blur-xl">
-            <button
-              type="button"
-              className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-[0.3em] text-white shadow-sm backdrop-blur-sm transition hover:border-white/30 hover:bg-black/55 focus-ring sm:right-5 sm:top-5"
-              onClick={closeModal}
-            >
-              Close
-            </button>
+      <Dialog.Root
+        open={Boolean(selectedModel)}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) closeModal();
+        }}
+      >
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
+          <Dialog.Content className="fixed inset-0 z-60 flex max-h-screen w-full items-center justify-center p-3 outline-none sm:p-4 md:p-6 data-[state=closed]:opacity-0 data-[state=closed]:translate-y-2 data-[state=open]:opacity-100 data-[state=open]:translate-y-0 transition duration-200">
+            {selectedModel ? (
+              <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-neutral-950/90 text-white shadow-[0_50px_160px_-80px_rgba(0,0,0,0.9)] ring-1 ring-white/15 backdrop-blur-xl">
+                <Dialog.Close asChild>
+                  <button
+                    type="button"
+                    className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-[0.3em] text-white shadow-sm backdrop-blur-sm transition hover:border-white/30 hover:bg-black/55 focus-ring sm:right-5 sm:top-5"
+                  >
+                    Close
+                  </button>
+                </Dialog.Close>
 
-            <div className="grid flex-1 gap-6 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[3fr,2fr]">
-              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-3xl bg-white">
-                {modalImageUrl ? (
-                  <Image
-                    src={modalImageUrl}
-                    alt={selectedModel.imageAlt || selectedModel.name}
-                    fill
-                    sizes="(min-width: 1024px) 80vw, 100vw"
-                    className={clsx(
-                      "object-contain bg-white transition-opacity duration-700",
-                      heroLoaded ? "opacity-100" : "opacity-0",
+                <div className="grid flex-1 gap-6 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[3fr,2fr]">
+                  <div className="relative aspect-16/10 w-full overflow-hidden rounded-3xl bg-white">
+                    {modalImageUrl ? (
+                      <Image
+                        src={modalImageUrl}
+                        alt={selectedModel.imageAlt || selectedModel.name}
+                        fill
+                        sizes="(min-width: 1024px) 80vw, 100vw"
+                        className={clsx(
+                          "object-contain bg-white transition-opacity duration-700",
+                          heroLoaded ? "opacity-100" : "opacity-0",
+                        )}
+                        priority
+                        onLoadingComplete={() => { setHeroLoaded(true); }}
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-neutral-600">
+                        No Image Available
+                      </div>
                     )}
-                    priority
-                    onLoadingComplete={() => { setHeroLoaded(true); }}
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-neutral-600">
-                    No Image Available
+                    <div className="absolute bottom-6 left-6 right-6 text-black">
+                      <p className="text-xs font-semibold uppercase tracking-[0.4em] text-perazzi-red">
+                        {selectedModel.use}
+                      </p>
+                      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold leading-tight">
+                        {selectedModel.name}
+                      </h2>
+                      <p className="text-sm text-neutral-300">{selectedModel.version}</p>
+                    </div>
                   </div>
-                )}
-                <div className="absolute bottom-6 left-6 right-6 text-black">
-                  <p className="text-xs font-semibold uppercase tracking-[0.4em] text-perazzi-red">
-                    {selectedModel.use}
-                  </p>
-                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold leading-tight">
-                    {selectedModel.name}
-                  </h2>
-                  <p className="text-sm text-neutral-300">{selectedModel.version}</p>
+
+                  <div className={`${DETAIL_PANEL_CLASS} grid gap-3 sm:grid-cols-2 lg:grid-cols-3`}>
+                    {[
+                      { label: "Platform", value: selectedModel.platform },
+                      { label: "Use", value: selectedModel.use || undefined },
+                      { label: "Gauge", value: renderList(selectedModel.gaugeNames) },
+                      { label: "Trigger Type", value: renderList(selectedModel.triggerTypes) },
+                      { label: "Trigger Springs", value: renderList(selectedModel.triggerSprings) },
+                      { label: "Rib Type", value: renderList(selectedModel.ribTypes) },
+                      { label: "Rib Style", value: renderList(selectedModel.ribStyles) },
+                      {
+                        label: "Rib Notch",
+                        value:
+                          selectedModel.ribNotch !== null && selectedModel.ribNotch !== undefined
+                            ? String(selectedModel.ribNotch)
+                            : undefined,
+                      },
+                      {
+                        label: "Rib Height",
+                        value:
+                          selectedModel.ribHeight !== null && selectedModel.ribHeight !== undefined
+                            ? `${selectedModel.ribHeight} mm`
+                            : undefined,
+                      },
+                      { label: "Grade", value: selectedModel.grade || undefined },
+                    ]
+                      .filter((entry) => Boolean(entry.value))
+                      .map((entry) => (
+                        <DetailGrid key={entry.label} label={entry.label} value={entry.value} />
+                      ))}
+                  </div>
                 </div>
               </div>
-
-              <div className={`${DETAIL_PANEL_CLASS} grid gap-3 sm:grid-cols-2 lg:grid-cols-3`}>
-                {[
-                  { label: "Platform", value: selectedModel.platform },
-                  { label: "Use", value: selectedModel.use || undefined },
-                  { label: "Gauge", value: renderList(selectedModel.gaugeNames) },
-                  { label: "Trigger Type", value: renderList(selectedModel.triggerTypes) },
-                  { label: "Trigger Springs", value: renderList(selectedModel.triggerSprings) },
-                  { label: "Rib Type", value: renderList(selectedModel.ribTypes) },
-                  { label: "Rib Style", value: renderList(selectedModel.ribStyles) },
-                  {
-                    label: "Rib Notch",
-                    value:
-                      selectedModel.ribNotch !== null && selectedModel.ribNotch !== undefined
-                        ? String(selectedModel.ribNotch)
-                        : undefined,
-                  },
-                  {
-                    label: "Rib Height",
-                    value:
-                      selectedModel.ribHeight !== null && selectedModel.ribHeight !== undefined
-                        ? `${selectedModel.ribHeight} mm`
-                        : undefined,
-                  },
-                  { label: "Grade", value: selectedModel.grade || undefined },
-                ]
-                  .filter((entry) => Boolean(entry.value))
-                  .map((entry) => (
-                    <DetailGrid key={entry.label} label={entry.label} value={entry.value} />
-                  ))}
-              </div>
-            </div>
-          </div>
-        </dialog>
-      ) : null}
+            ) : null}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </section>
   );
 }
@@ -585,7 +538,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
 function CardSkeleton() {
   return (
     <div className="animate-pulse overflow-hidden rounded-2xl border border-white/5 bg-neutral-900/60 sm:rounded-3xl">
-      <div className="aspect-[16/10] w-full bg-white" />
+      <div className="aspect-16/10 w-full bg-white" />
       <div className="space-y-3 border-t border-white/5 bg-black/30 p-4 sm:p-6">
         <div className="h-4 w-1/3 rounded bg-white/10" />
         <div className="h-6 w-2/3 rounded bg-white/10" />
@@ -696,27 +649,35 @@ function renderList(list: SpecList) {
   return mapped.join(", ");
 }
 
-function escapeRegExp(value: string) {
-  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
-}
-
 function highlightText(text: string, needle: string): ReactNode {
-  if (!needle.trim()) return text;
-  const lowerNeedle = needle.toLowerCase();
-  const regex = new RegExp(`(${escapeRegExp(needle)})`, "ig");
-  const parts = text.split(regex);
-  let cursor = 0;
+  const trimmed = needle.trim();
+  if (!trimmed) return text;
+  const lowerText = text.toLowerCase();
+  const lowerNeedle = trimmed.toLowerCase();
+  const nodes: ReactNode[] = [];
+  let start = 0;
+  let matchIndex = lowerText.indexOf(lowerNeedle, start);
+  let keyIndex = 0;
 
-  return parts.map((part) => {
-    cursor += part.length + 1;
-    const key = `${part}-${cursor}`;
-    if (part.toLowerCase() === lowerNeedle) {
-      return (
-        <mark key={key} className="bg-transparent text-perazzi-red">
-          {part}
-        </mark>
-      );
+  while (matchIndex !== -1) {
+    if (matchIndex > start) {
+      nodes.push(<span key={`text-${keyIndex}`}>{text.slice(start, matchIndex)}</span>);
+      keyIndex += 1;
     }
-    return <span key={key}>{part}</span>;
-  });
+    const end = matchIndex + trimmed.length;
+    nodes.push(
+      <mark key={`mark-${keyIndex}`} className="bg-transparent text-perazzi-red">
+        {text.slice(matchIndex, end)}
+      </mark>,
+    );
+    keyIndex += 1;
+    start = end;
+    matchIndex = lowerText.indexOf(lowerNeedle, start);
+  }
+
+  if (start < text.length) {
+    nodes.push(<span key={`text-${keyIndex}`}>{text.slice(start)}</span>);
+  }
+
+  return nodes;
 }
