@@ -3,10 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Dialog, Transition } from "@headlessui/react";
+import * as Dialog from "@radix-ui/react-dialog";
+import * as Popover from "@radix-ui/react-popover";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
 import type { Dispatch, FocusEvent, ReactElement, SetStateAction } from "react";
-import { Fragment, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { ArrowRight, ChevronDown, Menu, UserRound, X } from "lucide-react";
 import useMeasure from "react-use-measure";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -124,57 +125,92 @@ const NavLink = ({ item, pathname, tone }: { item: NavItem; pathname: string; to
       }
     : {};
 
-  return (
-    <div
-      ref={triggerRef}
-      className="relative"
-      {...interactiveHandlers}
-    >
-      {/*
-        Switch link treatment so transparent variant remains legible on light admin backgrounds.
-        Tone drives text/underline colors while preserving hover + active affordances.
-      */}
-      <Link
-        href={item.href}
-        className={`relative text-sm font-semibold transition-colors ${
-          isActive
-            ? tone === "light"
-              ? "text-white"
-              : "text-ink"
-            : tone === "light"
-              ? "text-white/70 hover:text-white"
-              : "text-ink/70 hover:text-ink"
-        }`}
-        aria-haspopup={hasFlyout ? "menu" : undefined}
-        aria-expanded={hasFlyout ? showFlyout : undefined}
-      >
-        {item.text}
-        <span
-          className={`absolute -bottom-1 left-0 right-0 h-0.5 origin-left rounded-full transition-transform duration-300 ease-out ${
-            tone === "light" ? "bg-white" : "bg-ink"
+  if (!hasFlyout || !FlyoutContent) {
+    return (
+      <div ref={triggerRef} className="relative">
+        <Link
+          href={item.href}
+          className={`relative text-sm font-semibold transition-colors ${
+            isActive
+              ? tone === "light"
+                ? "text-white"
+                : "text-ink"
+              : tone === "light"
+                ? "text-white/70 hover:text-white"
+                : "text-ink/70 hover:text-ink"
           }`}
-          style={{ transform: showFlyout || isActive ? "scaleX(1)" : "scaleX(0)" }}
-        />
-      </Link>
-      <AnimatePresence>
-        {showFlyout && FlyoutContent && (
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 15 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            style={{ translateX: "-50%" }}
-            className="absolute left-1/2 top-12 z-20 text-ink"
+        >
+          {item.text}
+          <span
+            className={`absolute -bottom-1 left-0 right-0 h-0.5 origin-left rounded-full transition-transform duration-300 ease-out ${
+              tone === "light" ? "bg-white" : "bg-ink"
+            }`}
+            style={{ transform: isActive ? "scaleX(1)" : "scaleX(0)" }}
+          />
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <div
+        ref={triggerRef}
+        className="relative"
+        {...interactiveHandlers}
+      >
+        {/*
+          Switch link treatment so transparent variant remains legible on light admin backgrounds.
+          Tone drives text/underline colors while preserving hover + active affordances.
+        */}
+        <Popover.Trigger asChild>
+          <Link
+            href={item.href}
+            className={`relative text-sm font-semibold transition-colors ${
+              isActive
+                ? tone === "light"
+                  ? "text-white"
+                  : "text-ink"
+                : tone === "light"
+                  ? "text-white/70 hover:text-white"
+                  : "text-ink/70 hover:text-ink"
+            }`}
+            aria-haspopup="menu"
+            aria-expanded={showFlyout}
           >
-            <div className="absolute -top-6 left-0 right-0 h-6 bg-transparent" />
-            <div className="absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-card/95 shadow-sm ring-1 ring-border/70" />
-            <div className="relative rounded-3xl bg-card/95 text-ink shadow-elevated ring-1 ring-border/70 backdrop-blur-xl">
-              <FlyoutContent textTone="dark" />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+            {item.text}
+            <span
+              className={`absolute -bottom-1 left-0 right-0 h-0.5 origin-left rounded-full transition-transform duration-300 ease-out ${
+                tone === "light" ? "bg-white" : "bg-ink"
+              }`}
+              style={{ transform: showFlyout || isActive ? "scaleX(1)" : "scaleX(0)" }}
+            />
+          </Link>
+        </Popover.Trigger>
+        <AnimatePresence>
+          {showFlyout && (
+            <Popover.Content asChild side="bottom" align="center" sideOffset={12}>
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 12 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="z-20 text-ink"
+              >
+                <div className="absolute -top-6 left-0 right-0 h-6 bg-transparent" />
+                <div className="absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-card/95 shadow-sm ring-1 ring-border/70" />
+                <div className="relative rounded-3xl bg-card/95 text-ink shadow-elevated ring-1 ring-border/70 backdrop-blur-xl">
+                  <FlyoutContent
+                    onNavigate={() => setOpen(false)}
+                    textTone="dark"
+                  />
+                </div>
+              </motion.div>
+            </Popover.Content>
+          )}
+        </AnimatePresence>
+      </div>
+    </Popover.Root>
   );
 };
 
@@ -418,67 +454,47 @@ const MobileMenu = ({
 
   return (
     <div className="lg:hidden">
-      <button
-        onClick={() => setOpen(true)}
-        className={`inline-flex h-10 w-10 items-center justify-center rounded-full text-2xl transition-colors focus-ring ${triggerTone}`}
-        aria-label="Open navigation menu"
-      >
-        <Menu className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
-      </button>
-
-      <Transition appear show={open} as={Fragment}>
-        <Dialog as="div" className="fixed inset-0 z-[60]" onClose={() => setOpen(false)}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-200"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-150"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
+      <Dialog.Root open={open} onOpenChange={setOpen}>
+        <Dialog.Trigger asChild>
+          <button
+            className={`inline-flex h-10 w-10 items-center justify-center rounded-full text-2xl transition-colors focus-ring ${triggerTone}`}
+            aria-label="Open navigation menu"
           >
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
-          </Transition.Child>
-
-          <div className="fixed inset-y-0 right-0 flex w-full max-w-sm flex-col outline-none">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-200"
-              enterFrom="translate-x-full"
-              enterTo="translate-x-0"
-              leave="ease-in duration-150"
-              leaveFrom="translate-x-0"
-              leaveTo="translate-x-full"
-            >
-              <Dialog.Panel className="flex h-full flex-col border-l border-border bg-card/95 text-ink shadow-elevated outline-none backdrop-blur-xl">
-                <div className="flex items-center justify-between border-b border-border px-6 py-4">
-                  <Logo label={brandLabel} />
+            <Menu className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
+          </button>
+        </Dialog.Trigger>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
+          <Dialog.Content className="fixed inset-y-0 right-0 z-[70] flex w-full max-w-sm flex-col outline-none translate-x-full transition-transform duration-200 data-[state=open]:translate-x-0">
+            <div className="flex h-full flex-col border-l border-border bg-card/95 text-ink shadow-elevated outline-none backdrop-blur-xl">
+              <div className="flex items-center justify-between border-b border-border px-6 py-4">
+                <Logo label={brandLabel} />
+                <Dialog.Close asChild>
                   <button
-                    onClick={() => setOpen(false)}
                     aria-label="Close navigation menu"
                     className="inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-ink/5 focus-ring"
                   >
                     <X className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
                   </button>
-                </div>
-                <div className="flex-1 overflow-y-auto px-6 py-4">
-                  {NAV_LINKS.map((item) => (
-                    <MobileMenuLink
-                      key={item.text}
-                      item={item}
-                      currentPath={pathname}
-                      setMenuOpen={setOpen}
-                    />
-                  ))}
-                </div>
-                <div className="border-t border-border px-6 py-4">
-                  <CTAs tone="dark" />
-                </div>
-              </Dialog.Panel>
-            </Transition.Child>
-          </div>
-        </Dialog>
-      </Transition>
+                </Dialog.Close>
+              </div>
+              <div className="flex-1 overflow-y-auto px-6 py-4">
+                {NAV_LINKS.map((item) => (
+                  <MobileMenuLink
+                    key={item.text}
+                    item={item}
+                    currentPath={pathname}
+                    setMenuOpen={setOpen}
+                  />
+                ))}
+              </div>
+              <div className="border-t border-border px-6 py-4">
+                <CTAs tone="dark" />
+              </div>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   );
 };
