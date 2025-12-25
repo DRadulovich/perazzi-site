@@ -3,11 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Dialog, Transition } from "@headlessui/react";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
 import type { Dispatch, FocusEvent, ReactElement, SetStateAction } from "react";
-import { useRef, useState } from "react";
-import { FiArrowRight, FiChevronDown, FiMenu, FiX } from "react-icons/fi";
-import { FaUserCircle } from "react-icons/fa";
+import { Fragment, useRef, useState } from "react";
+import { ArrowRight, ChevronDown, Menu, UserRound, X } from "lucide-react";
 import useMeasure from "react-use-measure";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
@@ -82,9 +82,9 @@ const Logo = ({ label }: { label: string }) => (
       width={120}
       height={38}
       priority
-    className="h-10 w-auto"
-  />
-</Link>
+      className="h-10 w-auto"
+    />
+  </Link>
 );
 
 const Links = ({ pathname, tone }: { pathname: string; tone: NavTone }) => (
@@ -167,8 +167,8 @@ const NavLink = ({ item, pathname, tone }: { item: NavItem; pathname: string; to
             className="absolute left-1/2 top-12 z-20 text-ink"
           >
             <div className="absolute -top-6 left-0 right-0 h-6 bg-transparent" />
-            <div className="absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-white" />
-            <div className="relative rounded-3xl bg-white text-perazzi-black shadow-2xl ring-1 ring-black/5">
+            <div className="absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-card/95 shadow-sm ring-1 ring-border/70" />
+            <div className="relative rounded-3xl bg-card/95 text-ink shadow-elevated ring-1 ring-border/70 backdrop-blur-xl">
               <FlyoutContent textTone="dark" />
             </div>
           </motion.div>
@@ -188,7 +188,7 @@ const CTAs = ({ tone }: { tone: NavTone }) => (
           : "border border-ink/20 text-ink hover:border-ink hover:bg-ink hover:text-white"
       }`}
     >
-      <FaUserCircle />
+      <UserRound className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
       <span>Build Planner</span>
     </Link>
     <a
@@ -208,7 +208,7 @@ const CTAs = ({ tone }: { tone: NavTone }) => (
 
 const ShotgunsFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) => (
   <div
-    className={`grid w-full grid-cols-12 rounded-3xl lg:w-[650px] ${
+    className={`grid w-full grid-cols-12 overflow-hidden rounded-3xl lg:w-[650px] ${
       textTone === "dark" ? "text-perazzi-black" : "text-white"
     }`}
   >
@@ -224,19 +224,19 @@ const ShotgunsFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) => (
         className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-white/90"
         onClick={onNavigate}
       >
-        All shotguns <FiArrowRight />
+        All shotguns <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
       </Link>
     </div>
-    <div className="col-span-12 grid grid-cols-2 gap-3 bg-white p-6 text-perazzi-black lg:col-span-8">
+    <div className="col-span-12 grid grid-cols-2 gap-3 bg-card p-6 text-ink lg:col-span-8">
       {SHOTGUN_GRID.map((entry) => (
         <Link
           key={entry.title}
           href={entry.href}
-          className="rounded-2xl border border-border/70 p-4 text-left transition-colors hover:border-perazzi-black/60"
+          className="rounded-2xl border border-border/70 bg-card/40 p-4 text-left shadow-sm transition-colors hover:border-ink/30 hover:bg-card/70"
           onClick={onNavigate}
         >
           <h3 className="font-semibold text-perazzi-red">{entry.title}</h3>
-          <p className="mt-1 text-xs text-perazzi-black">{entry.description}</p>
+          <p className="mt-1 text-xs text-ink">{entry.description}</p>
         </Link>
       ))}
     </div>
@@ -246,7 +246,7 @@ const ShotgunsFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) => (
 const ExperienceFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) => (
   <div
     className={`w-full rounded-3xl p-6 shadow-none lg:w-[520px] lg:shadow-xl ${
-      textTone === "dark" ? "bg-perazzi-black text-white" : "bg-white text-perazzi-black"
+      textTone === "dark" ? "bg-perazzi-black text-white" : "bg-card text-ink"
     }`}
   >
     <div className="grid gap-6 sm:grid-cols-2">
@@ -260,14 +260,14 @@ const ExperienceFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) =>
             className="flex items-center justify-between rounded-xl border border-border/70 px-3 py-2 text-sm font-semibold hover:border-perazzi-red/60"
             onClick={onNavigate}
           >
-            Plan a visit <FiArrowRight />
+            Plan a visit <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
           </Link>
           <Link
             href="/experience#fitting"
             className="flex items-center justify-between rounded-xl border border-border/70 px-3 py-2 text-sm font-semibold hover:border-perazzi-red/60"
             onClick={onNavigate}
           >
-            Book a fitting <FiArrowRight />
+            Book a fitting <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
           </Link>
         </div>
       </div>
@@ -281,14 +281,14 @@ const ExperienceFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) =>
             className="flex items-center justify-between rounded-xl border border-border/70 px-3 py-2 text-sm font-semibold hover:border-perazzi-red/60"
             onClick={onNavigate}
           >
-            Find a dealer <FiArrowRight />
+            Find a dealer <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
           </Link>
           <Link
             href="/journal"
             className="flex items-center justify-between rounded-xl border border-border/70 px-3 py-2 text-sm font-semibold hover:border-perazzi-red/60"
             onClick={onNavigate}
           >
-            Visit the journal <FiArrowRight />
+            Visit the journal <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
           </Link>
         </div>
       </div>
@@ -305,11 +305,11 @@ const ExperienceFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) =>
 
 const HeritageFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) => (
   <div
-    className={`grid w-full grid-cols-12 rounded-3xl lg:w-[680px] ${
+    className={`grid w-full grid-cols-12 overflow-hidden rounded-3xl lg:w-[680px] ${
       textTone === "dark" ? "text-white" : "text-perazzi-black"
     }`}
   >
-    <div className="col-span-12 flex flex-col justify-between bg-card p-6 text-perazzi-black lg:col-span-4">
+    <div className="col-span-12 flex flex-col justify-between bg-card p-6 text-ink lg:col-span-4">
       <div>
         <h2 className="text-xl font-semibold text-ink">Heritage</h2>
         <p className="mt-2 text-sm text-ink-muted">
@@ -321,10 +321,10 @@ const HeritageFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) => (
         className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-perazzi-red"
         onClick={onNavigate}
       >
-        Explore heritage <FiArrowRight />
+        Explore heritage <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
       </Link>
     </div>
-    <div className="col-span-12 grid gap-3 bg-white p-6 text-perazzi-black lg:col-span-8 lg:grid-cols-3">
+    <div className="col-span-12 grid gap-3 bg-elevated p-6 text-ink lg:col-span-8 lg:grid-cols-3">
       {HERITAGE_LINKS.map((section) => (
         <div key={section.title} className="space-y-2">
           <h3 className="text-sm font-semibold uppercase tracking-[0.25em] text-perazzi-red">
@@ -334,7 +334,7 @@ const HeritageFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) => (
             <Link
               key={link.label}
               href={link.href}
-              className="block rounded-xl border border-border/60 px-3 py-2 text-sm font-medium text-perazzi-black transition-colors hover:border-perazzi-red/50"
+              className="block rounded-xl border border-border/60 bg-card/40 px-3 py-2 text-sm font-medium text-ink shadow-sm transition-colors hover:border-perazzi-red/50 hover:bg-card/70"
               onClick={onNavigate}
             >
               {link.label}
@@ -412,53 +412,73 @@ const MobileMenu = ({
   tone: NavTone;
 }) => {
   const [open, setOpen] = useState(false);
+  const triggerTone = tone === "light"
+    ? "text-white hover:bg-white/10"
+    : "text-ink hover:bg-ink/5";
 
   return (
     <div className="lg:hidden">
       <button
         onClick={() => setOpen(true)}
-        className={`inline-flex h-10 w-10 items-center justify-center rounded-full text-2xl focus-ring ${
-          tone === "light" ? "text-white" : "text-ink"
-        }`}
+        className={`inline-flex h-10 w-10 items-center justify-center rounded-full text-2xl transition-colors focus-ring ${triggerTone}`}
         aria-label="Open navigation menu"
       >
-        <FiMenu />
+        <Menu className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
       </button>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="fixed inset-y-0 right-0 z-[60] flex w-full max-w-sm flex-col bg-perazzi-black text-white shadow-2xl"
+
+      <Transition appear show={open} as={Fragment}>
+        <Dialog as="div" className="fixed inset-0 z-[60]" onClose={() => setOpen(false)}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-200"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-150"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
           >
-            <div className="flex items-center justify-between border-b border-border px-6 py-4">
-              <Logo label={brandLabel} />
-              <button
-                onClick={() => setOpen(false)}
-                aria-label="Close navigation menu"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full text-2xl text-ink focus-ring"
-              >
-                <FiX />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto px-6 py-4">
-              {NAV_LINKS.map((item) => (
-                <MobileMenuLink
-                  key={item.text}
-                  item={item}
-                  currentPath={pathname}
-                  setMenuOpen={setOpen}
-                />
-              ))}
-            </div>
-            <div className="border-t border-border px-6 py-4">
-              <CTAs tone="light" />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
+          </Transition.Child>
+
+          <div className="fixed inset-y-0 right-0 flex w-full max-w-sm flex-col outline-none">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-200"
+              enterFrom="translate-x-full"
+              enterTo="translate-x-0"
+              leave="ease-in duration-150"
+              leaveFrom="translate-x-0"
+              leaveTo="translate-x-full"
+            >
+              <Dialog.Panel className="flex h-full flex-col border-l border-border bg-card/95 text-ink shadow-elevated outline-none backdrop-blur-xl">
+                <div className="flex items-center justify-between border-b border-border px-6 py-4">
+                  <Logo label={brandLabel} />
+                  <button
+                    onClick={() => setOpen(false)}
+                    aria-label="Close navigation menu"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-ink/5 focus-ring"
+                  >
+                    <X className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
+                  </button>
+                </div>
+                <div className="flex-1 overflow-y-auto px-6 py-4">
+                  {NAV_LINKS.map((item) => (
+                    <MobileMenuLink
+                      key={item.text}
+                      item={item}
+                      currentPath={pathname}
+                      setMenuOpen={setOpen}
+                    />
+                  ))}
+                </div>
+                <div className="border-t border-border px-6 py-4">
+                  <CTAs tone="dark" />
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </Dialog>
+      </Transition>
     </div>
   );
 };
@@ -485,7 +505,9 @@ const MobileMenuLink = ({
       <div className="flex items-center justify-between">
         <Link
           href={item.href}
-          className={`text-base sm:text-lg font-semibold ${isActive ? "text-perazzi-red" : "text-white"}`}
+          className={`text-base font-semibold tracking-tight transition-colors ${
+            isActive ? "text-perazzi-red" : "text-ink hover:text-perazzi-red"
+          }`}
           onClick={() => setMenuOpen(false)}
         >
           {item.text}
@@ -494,14 +516,14 @@ const MobileMenuLink = ({
           <button
             onClick={() => setOpen((prev) => !prev)}
             aria-label={`Toggle ${item.text} links`}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-2xl text-white focus-ring"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-ink transition-colors hover:bg-ink/5 focus-ring"
           >
             <motion.div animate={{ rotate: open ? 180 : 0 }}>
-              <FiChevronDown />
+              <ChevronDown className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
             </motion.div>
           </button>
         ) : (
-          <FiArrowRight className="text-white" />
+          <ArrowRight className="h-5 w-5 text-ink" strokeWidth={2} aria-hidden="true" />
         )}
       </div>
       {hasFold && FlyoutContent && (
@@ -513,8 +535,11 @@ const MobileMenuLink = ({
           }}
           className="overflow-hidden"
         >
-          <div ref={ref} className="rounded-2xl bg-card/0 p-0 text-white shadow-none">
-            <FlyoutContent onNavigate={() => setMenuOpen(false)} textTone="dark" />
+          <div
+            ref={ref}
+            className="overflow-hidden rounded-2xl border border-border/70 bg-card/60 shadow-sm"
+          >
+            <FlyoutContent onNavigate={() => setMenuOpen(false)} textTone="light" />
           </div>
         </motion.div>
       )}
