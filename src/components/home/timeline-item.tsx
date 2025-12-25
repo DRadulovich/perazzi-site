@@ -60,7 +60,7 @@ export function TimelineItem({
     return (
       <motion.article
         key={stage.id}
-        className="absolute inset-0 rounded-3xl border border-border/70 bg-card/75 p-4 sm:p-6 shadow-sm"
+        className="absolute inset-0 rounded-3xl border border-border/70 bg-card/70 p-4 shadow-elevated ring-1 ring-border/70 backdrop-blur-sm sm:p-6"
         initial={{ opacity: 0, y: 30 }}
         animate={{
           opacity: active ? 1 : 0,
@@ -76,7 +76,7 @@ export function TimelineItem({
 
   if (isPinned) {
     return (
-      <article className="absolute inset-0 rounded-3xl border border-border/70 bg-card/75 p-4 sm:p-6 shadow-sm">
+      <article className="absolute inset-0 rounded-3xl border border-border/70 bg-card/70 p-4 shadow-elevated ring-1 ring-border/70 backdrop-blur-sm sm:p-6">
         <TimelineContent stage={stage} isPinned />
       </article>
     );

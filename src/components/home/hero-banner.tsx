@@ -279,7 +279,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
               />
               <Link
                 href={secondaryHref}
-                className="inline-flex items-center justify-center rounded-full border border-white/40 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-white/80 hover:text-white hover:border-white focus-ring"
+                className="inline-flex items-center justify-center rounded-full border border-white/30 bg-white/5 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-white/85 shadow-sm backdrop-blur-sm transition hover:border-white/50 hover:bg-white/10 hover:text-white focus-ring"
               >
                 {secondaryLabel}
               </Link>
@@ -297,7 +297,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
           initial={{ opacity: prefersReducedMotion ? 1 : 0 }}
           animate={{ opacity: 1 }}
           transition={overlayTransition}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6 text-center text-text"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 px-6 text-center text-white backdrop-blur-sm"
           aria-labelledby="manifesto-title"
           aria-modal="true"
           tabIndex={-1}
@@ -311,7 +311,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
             initial={prefersReducedMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={panelTransition}
-            className="max-w-2xl space-y-6 rounded-3xl bg-black/50 p-8 shadow-2xl ring-1 ring-white/10 backdrop-blur"
+            className="max-w-2xl space-y-6 rounded-3xl border border-white/10 bg-black/45 p-8 shadow-elevated ring-1 ring-white/10 backdrop-blur-xl"
           >
             <h2 id="manifesto-title" className="sr-only">
               Perazzi Manifesto

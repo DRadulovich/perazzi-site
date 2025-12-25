@@ -97,7 +97,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
           className="focus:outline-none focus-ring"
         >
           <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-            <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+            <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
               <div className="space-y-4 md:flex md:items-center md:justify-between md:gap-8">
                 <div className="space-y-3">
                   <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
@@ -136,7 +136,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                   </div>
 
                   <div className="space-y-5">
-                    <div className="relative min-h-[640px] overflow-hidden rounded-3xl border border-border/70 bg-card/75 shadow-sm">
+                    <div className="relative min-h-[640px] overflow-hidden rounded-3xl border border-border/70 bg-card/70 shadow-elevated ring-1 ring-border/70 backdrop-blur-sm">
                       {stages.map((stage, index) => (
                         <PinnedStagePanel
                           key={`panel-${stage.id}`}
@@ -169,7 +169,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                       return (
                         <div
                           key={`stacked-${stage.id}`}
-                          className="rounded-2xl border border-border/60 bg-card/10 p-3 sm:p-4"
+                          className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-sm backdrop-blur-sm sm:p-4"
                         >
                           <button
                             type="button"
@@ -219,9 +219,9 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
               <div className="pt-2 sm:pt-4">
                 <Button
                   asChild
-                  variant="ghost"
+                  variant="secondary"
                   size="lg"
-                  className="w-full border border-border bg-transparent text-ink hover:bg-ink/5 focus-visible:bg-ink/5"
+                  className="w-full"
                 >
                   <Link href="/the-build/why-a-perazzi-has-a-soul">
                     See the full build story
