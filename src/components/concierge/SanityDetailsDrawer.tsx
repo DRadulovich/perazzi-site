@@ -70,8 +70,10 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
             onClick={() => onSelect?.(card)}
             className={clsx(
               "w-full text-left transition",
-              selectedCard?.id === card.id ? "border-ink bg-subtle/50" : "border-subtle/60 hover:border-ink",
-              "flex flex-col rounded-2xl border bg-card p-3 text-sm sm:text-base text-ink shadow-sm focus-ring",
+              selectedCard?.id === card.id
+                ? "border-ink/40 bg-card/85"
+                : "border-border/70 bg-card/70 hover:border-ink/30 hover:bg-card/85",
+              "flex flex-col rounded-2xl border p-3 text-sm sm:text-base text-ink shadow-sm backdrop-blur-sm focus-ring",
             )}
           >
             {card.imageUrl ? (
@@ -118,7 +120,7 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
         ref={backdropRef}
         tabIndex={-1}
         className={clsx(
-          "fixed inset-0 z-30 h-full w-full bg-black/30 transition-opacity duration-300",
+          "fixed inset-0 z-30 h-full w-full bg-black/45 backdrop-blur-sm transition-opacity duration-300",
           open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         )}
         aria-hidden="true"
@@ -127,7 +129,7 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
       <div
         ref={containerRef}
         className={clsx(
-          "fixed inset-y-0 right-0 z-40 flex w-full max-w-xl flex-col border-l border-subtle bg-card shadow-2xl transition-transform duration-300",
+          "fixed inset-y-0 right-0 z-40 flex w-full max-w-xl flex-col border-l border-border bg-card/95 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl transition-transform duration-300",
           open ? "translate-x-0" : "translate-x-full",
         )}
         aria-hidden={!open}
@@ -136,7 +138,7 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
         aria-modal="true"
         role="dialog"
       >
-        <div className="flex items-center justify-between border-b border-subtle px-4 py-3 sm:px-6">
+        <div className="flex items-center justify-between border-b border-border bg-card/80 px-4 py-3 backdrop-blur-md sm:px-6">
           <div>
             <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">Sanity Data</p>
             <p className="text-sm sm:text-base text-ink">Details for the current step</p>
@@ -145,7 +147,7 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex min-h-10 items-center justify-center rounded-full border border-subtle bg-card px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink focus-ring"
+              className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
             >
               Close
             </button>

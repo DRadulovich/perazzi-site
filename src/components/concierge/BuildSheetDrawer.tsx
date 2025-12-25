@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import clsx from "clsx";
-import { FiChevronUp } from "react-icons/fi";
+import { ChevronUp } from "lucide-react";
 
 type BuildSheetEntry = { id: string; label: string; value: string };
 type BuildSheetDetails = {
@@ -108,8 +108,8 @@ function BuildSheetEntryCard({
       <button
         type="button"
         className={clsx(
-          "w-full rounded-2xl border border-subtle/60 bg-card px-3 py-2 text-left transition focus-ring",
-          editMode ? "cursor-pointer hover:border-ink hover:shadow-sm" : "",
+          "w-full rounded-2xl border border-border/70 bg-card/70 px-3 py-2 text-left shadow-sm backdrop-blur-sm transition focus-ring",
+          editMode ? "cursor-pointer hover:border-ink/30 hover:bg-card/85" : "",
         )}
         onClick={handleClick}
         aria-expanded={hasDetails ? isExpanded : undefined}
@@ -120,11 +120,12 @@ function BuildSheetEntryCard({
             <div className="flex items-center gap-2">
               <span className="text-ink-muted">{entry.value}</span>
               {hasDetails ? (
-                <FiChevronUp
+                <ChevronUp
                   className={clsx(
                     "text-perazzi-red transition-transform",
                     isExpanded ? "rotate-0" : "rotate-180",
                   )}
+                  strokeWidth={2}
                   aria-hidden="true"
                 />
               ) : null}
@@ -195,7 +196,7 @@ function BuildSheetDrawerContent({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex flex-col gap-2 border-b border-subtle px-4 py-3 sm:px-6">
+      <div className="flex flex-col gap-2 border-b border-border bg-card/80 px-4 py-3 backdrop-blur-md sm:px-6">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
@@ -208,7 +209,7 @@ function BuildSheetDrawerContent({
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex min-h-10 items-center justify-center rounded-full border border-subtle bg-card px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink focus-ring"
+                className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
               >
                 Close
               </button>
@@ -219,20 +220,20 @@ function BuildSheetDrawerContent({
                 onClick={() => {
                   setEditMode((prev) => !prev);
                 }}
-                className="inline-flex min-h-10 items-center justify-center rounded-full border border-subtle bg-card px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink focus-ring"
+                className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
               >
                 {editMode ? "Done" : "Edit"}
               </button>
             ) : null}
           </div>
         </div>
-        <div className="h-px w-full bg-subtle" />
+        <div className="h-px w-full bg-border/70" />
         <div className="flex flex-wrap items-center gap-2">
           {onSave ? (
             <button
               type="button"
               onClick={onSave}
-              className="inline-flex min-h-10 items-center justify-center rounded-full border border-subtle bg-card px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink focus-ring"
+              className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
             >
               Save build
             </button>
@@ -241,7 +242,7 @@ function BuildSheetDrawerContent({
             <button
               type="button"
               onClick={handleToggleAll}
-              className="inline-flex min-h-10 items-center justify-center rounded-full border border-subtle bg-card px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink focus-ring"
+              className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
             >
               {allCollapsed ? "Expand all" : "Collapse all"}
             </button>
@@ -249,7 +250,7 @@ function BuildSheetDrawerContent({
         </div>
       </div>
       {savedBuilds.length ? (
-        <div className="flex flex-wrap items-center gap-2 border-b border-subtle px-4 py-3 text-[11px] sm:text-xs text-ink sm:px-6">
+        <div className="flex flex-wrap items-center gap-2 border-b border-border bg-card/60 px-4 py-3 text-[11px] sm:text-xs text-ink backdrop-blur-sm sm:px-6">
           <span className="text-ink-muted uppercase tracking-[0.2em]">Saved</span>
           {savedBuilds
             .slice()
@@ -257,7 +258,7 @@ function BuildSheetDrawerContent({
             .map((build) => (
               <div
                 key={build.id}
-                className="flex items-center gap-1 rounded-full border border-subtle bg-card px-3 py-1"
+                className="flex items-center gap-1 rounded-full border border-border/70 bg-card/70 px-3 py-1 shadow-sm"
               >
                 <button
                   type="button"
@@ -340,7 +341,7 @@ export function BuildSheetDrawer({
       <button
         type="button"
         className={clsx(
-          "fixed inset-0 z-40 h-full w-full bg-black/30 transition-opacity duration-300",
+          "fixed inset-0 z-40 h-full w-full bg-black/45 backdrop-blur-sm transition-opacity duration-300",
           open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         )}
         aria-label="Close build sheet"
@@ -349,7 +350,7 @@ export function BuildSheetDrawer({
       <div
         ref={containerRef}
         className={clsx(
-          "fixed inset-y-0 left-0 z-50 flex h-full w-full max-w-xl flex-col border-r border-subtle bg-card shadow-2xl transition-transform duration-300",
+          "fixed inset-y-0 left-0 z-50 flex h-full w-full max-w-xl flex-col border-r border-border bg-card/95 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl transition-transform duration-300",
           open ? "translate-x-0" : "-translate-x-full",
         )}
         tabIndex={-1}
