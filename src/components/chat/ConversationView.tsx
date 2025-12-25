@@ -98,10 +98,10 @@ const markdownComponents = {
     <thead className="bg-subtle text-xs uppercase tracking-[0.2em] text-ink-muted" {...props} />
   ),
   th: (props: React.ThHTMLAttributes<HTMLTableCellElement>) => (
-    <th className="border border-subtle px-3 py-2 font-semibold text-ink" {...props} />
+    <th className="border border-border/70 px-3 py-2 font-semibold text-ink" {...props} />
   ),
   td: (props: React.TdHTMLAttributes<HTMLTableCellElement>) => (
-    <td className="border border-subtle px-3 py-2 text-ink" {...props} />
+    <td className="border border-border/70 px-3 py-2 text-ink" {...props} />
   ),
   tbody: (props: React.HTMLAttributes<HTMLTableSectionElement>) => (
     <tbody className="divide-y divide-subtle" {...props} />
@@ -169,7 +169,9 @@ export function ConversationView({ messages, isTyping, pending }: ConversationVi
             <div className={isAssistant ? "text-left" : "text-right"}>
               <div
                 className={`inline-block rounded-2xl px-4 py-3 ${
-                  isAssistant ? "bg-card border border-subtle text-ink" : "bg-ink text-card"
+                  isAssistant
+                    ? "bg-card/80 border border-border/70 text-ink shadow-sm backdrop-blur-sm"
+                    : "bg-ink text-card shadow-sm"
                 }`}
               >
                 {isAssistant ? (
@@ -205,7 +207,7 @@ export function ConversationView({ messages, isTyping, pending }: ConversationVi
                   <div className="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em]">
                     <button
                       type="button"
-                      className="rounded-full border border-subtle px-3 py-1 text-ink-muted transition hover:border-ink hover:text-ink"
+                      className="rounded-full border border-border/70 bg-card/60 px-3 py-1 text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
                       onClick={() => handleCopy(msg.id, msg.content)}
                     >
                       {copiedId === msg.id ? "Copied" : "Copy"}

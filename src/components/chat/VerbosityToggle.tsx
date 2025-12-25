@@ -20,7 +20,7 @@ export function VerbosityToggle({ value, onChange, disabled = false }: Verbosity
       <legend className="sr-only">Verbosity</legend>
       <span className="text-xs font-semibold text-ink-muted">Verbosity</span>
       <div
-        className="inline-flex items-center rounded-full border border-subtle bg-card p-1 shadow-sm"
+        className="inline-flex items-center rounded-full border border-border bg-card/70 p-1 shadow-sm backdrop-blur-sm"
         role="radiogroup"
         aria-label="Verbosity"
         aria-disabled={disabled}

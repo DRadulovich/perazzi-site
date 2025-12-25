@@ -22,6 +22,7 @@ import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
+import { X } from "lucide-react";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ADMIN_DEBUG_TOKEN_STORAGE_KEY } from "@/components/chat/useChatState";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
@@ -103,10 +104,10 @@ const markdownComponents = {
     <thead className="bg-subtle text-xs uppercase tracking-[0.2em] text-ink-muted" {...props} />
   ),
   th: (props: React.ThHTMLAttributes<HTMLTableCellElement>) => (
-    <th className="border border-subtle px-3 py-2 font-semibold text-ink" {...props} />
+    <th className="border border-border/70 px-3 py-2 font-semibold text-ink" {...props} />
   ),
   td: (props: React.TdHTMLAttributes<HTMLTableCellElement>) => (
-    <td className="border border-subtle px-3 py-2 text-ink" {...props} />
+    <td className="border border-border/70 px-3 py-2 text-ink" {...props} />
   ),
   tbody: (props: React.HTMLAttributes<HTMLTableSectionElement>) => (
     <tbody className="divide-y divide-subtle" {...props} />
@@ -143,14 +144,14 @@ function AdminDebugPanel(props: {
   const titles = debug?.retrieval?.top_titles ?? [];
 
   return (
-    <div className="border-b border-subtle bg-subtle/30 px-6 py-4 text-[11px] sm:text-xs text-ink">
+    <div className="border-b border-border bg-card/80 px-6 py-4 text-[11px] sm:text-xs text-ink backdrop-blur-md">
       <div className="mb-3 flex items-center justify-between gap-3">
         <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.25em] text-ink-muted">
           Admin Debug
         </p>
         <button
           type="button"
-          className="rounded-full border border-subtle px-2 py-1 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+          className="rounded-full border border-border/70 bg-card/60 px-2 py-1 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
           onClick={props.onClearToken}
         >
           Clear admin debug token
@@ -525,13 +526,13 @@ export function ChatPanel({
 
   if (!open) return null;
 
-  const rootClasses = [
-    "flex h-full w-full flex-col bg-card text-ink shadow-elevated",
-    variant === "rail" ? "border-l border-subtle" : "",
-    className ?? "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const rootClasses = cn(
+    "relative z-40 flex h-full w-full flex-col text-ink outline-none",
+    variant === "rail"
+      ? "border-l border-border bg-card/90 shadow-elevated backdrop-blur-xl"
+      : "overflow-hidden rounded-3xl border border-border bg-card/95 shadow-elevated backdrop-blur-xl",
+    className,
+  );
 
   const legacyOverlay =
     legacyMode && typeof document !== "undefined"
@@ -556,12 +557,12 @@ export function ChatPanel({
           analyticsRef.current = node;
         }}
         data-analytics-id="ChatPanelSeen"
-        className={`${rootClasses} z-40 relative`}
+        className={rootClasses}
         style={{ minWidth: variant === "rail" ? "320px" : undefined }}
       >
       {sessionPromptOpen && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-subtle bg-card p-5 shadow-elevated">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card/95 p-5 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl">
             <h3 className="text-lg font-semibold text-ink">Input New Session ID</h3>
             <p className="mt-2 text-sm text-ink-muted">
               We&apos;ll prepend this to a fresh random ID to reduce collisions (example: label_uuid).
@@ -580,14 +581,14 @@ export function ChatPanel({
                       handleSessionIdConfirm();
                     }
                   }}
-                  className="mt-2 w-full rounded-xl border border-subtle bg-card px-3 py-2 text-sm text-ink outline-none focus:border-ink focus-ring"
+                  className="mt-2 w-full rounded-xl border border-border bg-card/70 px-3 py-2 text-sm text-ink shadow-sm outline-none backdrop-blur-sm focus:border-ink/40 focus-ring"
                   placeholder="e.g., dealer-demo"
                 />
               </label>
               <div className="flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  className="rounded-full border border-subtle px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+                  className="rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
                   onClick={handleSessionPromptCancel}
                 >
                   Cancel
@@ -604,7 +605,7 @@ export function ChatPanel({
           </div>
         </div>
       )}
-      <div className="space-y-3 border-b border-subtle px-6 py-5">
+      <div className="space-y-3 border-b border-border bg-card/80 px-6 py-5 backdrop-blur-md">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
@@ -616,7 +617,7 @@ export function ChatPanel({
             {hasAdminDebugToken && (
               <button
                 type="button"
-                className="rounded-full border border-subtle px-3 py-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted transition hover:border-ink hover:text-ink"
+                className="rounded-full border border-border/70 bg-card/60 px-3 py-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
                 onClick={() => setAdminDebugOpen((prev) => !prev)}
                 aria-expanded={adminDebugOpen}
               >
@@ -626,7 +627,7 @@ export function ChatPanel({
             {showResetButton && (
               <button
                 type="button"
-                className="rounded-full border border-subtle px-3 py-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted transition hover:border-ink hover:text-ink"
+                className="rounded-full border border-border/70 bg-card/60 px-3 py-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
                 onClick={handleResetVisitor}
               >
                 Reset visitor
@@ -635,7 +636,7 @@ export function ChatPanel({
             {legacyMode && (
               <button
                 type="button"
-                className="rounded-full border border-subtle px-3 py-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted transition hover:border-ink hover:text-ink"
+                className="rounded-full border border-border/70 bg-card/60 px-3 py-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
                 onClick={exitLegacyMode}
               >
                 Exit
@@ -645,10 +646,10 @@ export function ChatPanel({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-full p-2 text-2xl leading-none text-ink-muted transition hover:bg-subtle focus-visible:ring-2 focus-visible:ring-brand"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full text-ink-muted transition hover:bg-ink/5 focus-ring"
                 aria-label="Close chat"
               >
-                ×
+                <X className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
               </button>
             )}
           </div>
@@ -671,10 +672,20 @@ export function ChatPanel({
         />
       )}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-10 text-sm text-ink">
-          <div className={cn("flex flex-col gap-6", legacyMode ? "bg-subtle/20 rounded-3xl p-4" : "")}>
+        <div
+          ref={scrollRef}
+          className="min-h-0 flex-1 overflow-y-auto bg-[color:var(--color-canvas)]/30 px-6 py-10 text-sm text-ink"
+        >
+          <div
+            className={cn(
+              "flex flex-col gap-6",
+              legacyMode
+                ? "rounded-3xl border border-border/70 bg-card/70 p-4 shadow-sm backdrop-blur-sm"
+                : "",
+            )}
+          >
             {!legacyMode && (
-              <div className="rounded-2xl border border-subtle/60 bg-subtle/40 p-4 text-sm text-ink sm:rounded-3xl sm:border-subtle sm:px-5 sm:py-4">
+              <div className="rounded-2xl border border-border/70 bg-card/60 p-4 text-sm text-ink shadow-sm backdrop-blur-sm sm:rounded-3xl sm:px-5 sm:py-4">
                 <div className="flex items-center justify-between gap-4">
                   <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">Guided Questions</p>
                   <button
@@ -691,7 +702,7 @@ export function ChatPanel({
                       <button
                         key={qs.label}
                         type="button"
-                        className="w-full rounded-2xl border border-subtle bg-card px-4 py-3 text-left font-medium text-ink transition hover:border-ink disabled:cursor-not-allowed"
+                        className="w-full rounded-2xl border border-border/70 bg-card/70 px-4 py-3 text-left font-medium text-ink shadow-sm transition hover:border-ink/30 hover:bg-card/85 disabled:cursor-not-allowed disabled:opacity-60"
                         onClick={() =>
                           sendMessage({
                             question: qs.prompt,
@@ -731,7 +742,9 @@ export function ChatPanel({
                   <div className={isAssistant ? "text-left" : "text-right"}>
                     <div
                       className={`inline-block rounded-2xl px-4 py-3 ${
-                        isAssistant ? "bg-card border border-subtle text-ink" : "bg-ink text-card"
+                        isAssistant
+                          ? "bg-card/80 border border-border/70 text-ink shadow-sm backdrop-blur-sm"
+                          : "bg-ink text-card shadow-sm"
                       }`}
                     >
                       {isAssistant ? (
@@ -788,7 +801,7 @@ export function ChatPanel({
                         <div className="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em]">
                           <button
                             type="button"
-                            className="rounded-full border border-subtle px-3 py-1 text-ink-muted transition hover:border-ink hover:text-ink"
+                            className="rounded-full border border-border/70 bg-card/60 px-3 py-1 text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
                             onClick={() => handleCopy(msg.id, msg.content)}
                           >
                             {copiedId === msg.id ? "Copied" : "Copy"}
@@ -813,7 +826,7 @@ export function ChatPanel({
         )}
       </div>
       </div>
-        <div className="border-t border-subtle px-6 py-4">
+        <div className="border-t border-border bg-card/80 px-6 py-4 backdrop-blur-md">
           {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
           <ChatInput
             pending={pending}

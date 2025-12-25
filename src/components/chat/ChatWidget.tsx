@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Dialog, Transition } from "@headlessui/react";
+import { Fragment, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
@@ -158,29 +159,56 @@ export function ChatWidget() {
               type="button"
               aria-label="Open Perazzi Concierge"
               onClick={() => { setIsOpen(true); }}
-              className="fixed bottom-5 right-5 z-40 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm sm:text-base font-semibold text-card shadow-elevated transition hover:bg-brand-hover focus-ring"
+              className="fixed bottom-5 right-5 z-40 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm sm:text-base font-semibold text-card shadow-elevated ring-1 ring-black/10 transition hover:bg-brand-hover focus-ring"
             >
               Perazzi Guide
             </button>
           )}
-          {isOpen && (
-            <div
-              className="fixed inset-0 z-50 bg-card text-ink overscroll-none"
-              style={{
-                height: "var(--chat-sheet-height, 100vh)",
-                top: "var(--chat-sheet-offset, 0px)",
-              }}
-            >
-              <ChatPanel
-                open
-                onClose={handleClose}
-                variant="sheet"
-                pendingPrompt={pendingPrompt}
-                onPromptConsumed={consumePrompt}
-                className="rounded-none shadow-none h-full"
-              />
-            </div>
-          )}
+          <Transition appear show={isOpen} as={Fragment}>
+            <Dialog as="div" className="fixed inset-0 z-50" onClose={handleClose}>
+              <div
+                className="fixed inset-x-0 overscroll-none"
+                style={{
+                  height: "var(--chat-sheet-height, 100vh)",
+                  top: "var(--chat-sheet-offset, 0px)",
+                }}
+              >
+                <Transition.Child
+                  as={Fragment}
+                  enter="ease-out duration-200"
+                  enterFrom="opacity-0"
+                  enterTo="opacity-100"
+                  leave="ease-in duration-150"
+                  leaveFrom="opacity-100"
+                  leaveTo="opacity-0"
+                >
+                  <div className="absolute inset-0 bg-black/45 backdrop-blur-sm" aria-hidden="true" />
+                </Transition.Child>
+                <Transition.Child
+                  as={Fragment}
+                  enter="ease-out duration-200"
+                  enterFrom="translate-y-2 opacity-0"
+                  enterTo="translate-y-0 opacity-100"
+                  leave="ease-in duration-150"
+                  leaveFrom="translate-y-0 opacity-100"
+                  leaveTo="translate-y-2 opacity-0"
+                >
+                  <div className="absolute inset-0 p-3 sm:p-4">
+                    <Dialog.Panel className="h-full w-full outline-none">
+                      <ChatPanel
+                        open
+                        onClose={handleClose}
+                        variant="sheet"
+                        pendingPrompt={pendingPrompt}
+                        onPromptConsumed={consumePrompt}
+                        className="h-full w-full"
+                      />
+                    </Dialog.Panel>
+                  </div>
+                </Transition.Child>
+              </div>
+            </Dialog>
+          </Transition>
         </>
       ) : (
         <>
@@ -208,7 +236,7 @@ export function ChatWidget() {
               type="button"
               aria-label="Open Perazzi Concierge"
               onClick={() => setIsOpen(true)}
-              className="fixed bottom-6 right-6 z-30 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm sm:text-base font-semibold text-card shadow-elevated transition hover:bg-brand-hover focus-ring"
+              className="fixed bottom-6 right-6 z-30 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm sm:text-base font-semibold text-card shadow-elevated ring-1 ring-black/10 transition hover:bg-brand-hover focus-ring"
             >
               Open Perazzi Guide
             </button>
