@@ -7,6 +7,7 @@ import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 
+import { Button, Input } from "@/components/ui";
 import { getSanityImageUrl } from "@/lib/sanityImage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
@@ -287,12 +288,12 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <label className="flex w-full items-center gap-3 rounded-full border border-white/20 bg-black/40 px-4 py-2 text-sm text-neutral-300 focus-within:border-white">
             <span className="text-neutral-500">Search</span>
-            <input
+            <Input
               type="search"
               placeholder="Search models, gauges, triggers..."
               value={query}
               onChange={(event) => { handleQueryChange(event.target.value); }}
-              className="w-full bg-transparent text-base text-white placeholder:text-neutral-600 focus:outline-none"
+              className="w-full border-0 bg-transparent px-0 py-0 text-base text-white placeholder:text-neutral-600 shadow-none focus:border-0"
             />
           </label>
           <p className="text-sm text-neutral-400" aria-live="polite" aria-atomic="true">
@@ -333,13 +334,15 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
             onToggle={(value) => { toggleFilter(value, setRibTypeFilters); }}
           />
           {hasActiveFilters && (
-            <button
+            <Button
               type="button"
               onClick={clearFilters}
-              className="rounded-full border border-white/30 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-widest text-white/80 transition hover:border-white hover:text-white"
+              variant="ghost"
+              size="sm"
+              className="rounded-full border border-white/30 text-white/80 hover:border-white hover:text-white hover:bg-white/5"
             >
               Reset filters
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -417,7 +420,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                 />
               </div>
               <div className="border-t border-white/5 bg-black/50 px-6 py-4 text-right">
-                <button
+                <Button
                   ref={(node) => {
                     detailButtonRefs.current[model._id] = node;
                   }}
@@ -426,10 +429,12 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                     setSelectedModel(model);
                     setLastFocusedId(model._id);
                   }}
-                  className="rounded-full border border-white/30 px-5 py-2 text-sm font-semibold uppercase tracking-widest text-white transition hover:border-white hover:text-white focus-visible:outline-2 focus-visible:outline-perazzi-red"
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full border border-white/30 px-5 text-white hover:border-white hover:text-white hover:bg-white/5"
                 >
                   View details
-                </button>
+                </Button>
               </div>
             </article>
           );
@@ -456,12 +461,14 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
             {selectedModel ? (
               <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-neutral-950/90 text-white shadow-[0_50px_160px_-80px_rgba(0,0,0,0.9)] ring-1 ring-white/15 backdrop-blur-xl">
                 <Dialog.Close asChild>
-                  <button
+                  <Button
                     type="button"
-                    className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-[0.3em] text-white shadow-sm backdrop-blur-sm transition hover:border-white/30 hover:bg-black/55 focus-ring sm:right-5 sm:top-5"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 text-white shadow-sm backdrop-blur-sm hover:border-white/30 hover:bg-black/55 sm:right-5 sm:top-5"
                   >
                     Close
-                  </button>
+                  </Button>
                 </Dialog.Close>
 
                 <div className="grid flex-1 gap-6 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[3fr,2fr]">

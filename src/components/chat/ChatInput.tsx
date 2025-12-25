@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { ArrowUp } from "lucide-react";
 import { VerbosityToggle } from "@/components/chat/VerbosityToggle";
+import { Textarea } from "@/components/ui";
 import type { TextVerbosity } from "@/types/perazzi-assistant";
 
 type ChatInputProps = Readonly<{
@@ -34,9 +35,9 @@ export function ChatInput({
         <label htmlFor="perazzi-chat-input" className="sr-only">
           Ask the Perazzi concierge
         </label>
-        <textarea
+        <Textarea
           id="perazzi-chat-input"
-          className="h-24 w-full resize-none rounded-2xl border border-border bg-card/70 px-4 py-3 pr-20 text-sm sm:text-base text-ink shadow-sm outline-none backdrop-blur-sm focus:border-ink/40 focus-ring"
+          className="h-24 px-4 py-3 pr-20 sm:text-base"
           placeholder="Ask something about Perazzi, service, or heritage..."
           value={value}
           onChange={(event) => setValue(event.target.value)}

@@ -24,6 +24,8 @@ import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import { X } from "lucide-react";
 import { ChatInput } from "@/components/chat/ChatInput";
+import { QuickStartButton } from "@/components/chat/QuickStartButton";
+import { Button, Input } from "@/components/ui";
 import { ADMIN_DEBUG_TOKEN_STORAGE_KEY } from "@/components/chat/useChatState";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
 import { cn } from "@/lib/utils";
@@ -53,14 +55,23 @@ const normalizeLabel = (value: string) =>
   value
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9-_]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replaceAll(/[^a-z0-9-_]+/g, "-")
+    .replaceAll(/(^-+|-+$)/g, "");
+
+let sessionIdCounter = 0;
 
 const createRandomId = () => {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
+  const cryptoObj = globalThis.crypto;
+  if (cryptoObj?.randomUUID) {
+    return cryptoObj.randomUUID();
   }
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  if (cryptoObj?.getRandomValues) {
+    const bytes = new Uint8Array(16);
+    cryptoObj.getRandomValues(bytes);
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  }
+  sessionIdCounter = (sessionIdCounter + 1) % Number.MAX_SAFE_INTEGER;
+  return `${Date.now().toString(36)}-${sessionIdCounter.toString(36)}`;
 };
 
 type ChatPanelProps = {
@@ -127,7 +138,7 @@ function formatDebugValue(value: unknown): string {
   }
 }
 
-function DebugRow(props: { label: string; value: unknown }) {
+function DebugRow(props: Readonly<{ label: string; value: unknown }>) {
   return (
     <div className="flex items-start justify-between gap-4">
       <dt className="text-ink-muted">{props.label}</dt>
@@ -136,10 +147,10 @@ function DebugRow(props: { label: string; value: unknown }) {
   );
 }
 
-function AdminDebugPanel(props: {
+function AdminDebugPanel(props: Readonly<{
   debug: PerazziAdminDebugPayload | null;
   onClearToken: () => void;
-}) {
+}>) {
   const debug = props.debug;
   const titles = debug?.retrieval?.top_titles ?? [];
 
@@ -149,19 +160,17 @@ function AdminDebugPanel(props: {
         <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.25em] text-ink-muted">
           Admin Debug
         </p>
-        <button
+        <Button
           type="button"
-          className="rounded-full border border-border/70 bg-card/60 px-2 py-1 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
+          variant="secondary"
+          size="sm"
+          className="rounded-full px-2 py-1 text-[10px] sm:text-[11px] text-ink-muted hover:text-ink"
           onClick={props.onClearToken}
         >
           Clear admin debug token
-        </button>
+        </Button>
       </div>
-      {!debug ? (
-        <p className="text-ink-muted">
-          No debug payload in the last response (server debug disabled or token not authorized).
-        </p>
-      ) : (
+      {debug ? (
         <div className="grid gap-4">
           <section>
             <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted">
@@ -239,7 +248,7 @@ function AdminDebugPanel(props: {
             </dl>
           </section>
 
-          {debug.triggers && (
+          {debug.triggers ? (
             <section>
               <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted">
                 Triggers
@@ -251,8 +260,12 @@ function AdminDebugPanel(props: {
                 <DebugRow label="postvalidate" value={debug.triggers.postvalidate} />
               </dl>
             </section>
-          )}
+          ) : null}
         </div>
+      ) : (
+        <p className="text-ink-muted">
+          No debug payload in the last response (server debug disabled or token not authorized).
+        </p>
       )}
     </div>
   );
@@ -294,17 +307,18 @@ export function ChatPanel({
   const [sessionLabel, setSessionLabel] = useState("");
   const sessionInputRef = useRef<HTMLInputElement | null>(null);
   const [hasAdminDebugToken, setHasAdminDebugToken] = useState(() => {
-    if (!("localStorage" in globalThis) || typeof window === "undefined") return false;
+    const browserWindow = globalThis.window;
+    if (!browserWindow || !("localStorage" in globalThis)) return false;
     try {
-      const url = new URL(window.location.href);
+      const url = new URL(browserWindow.location.href);
       const token = url.searchParams.get("adminDebugToken");
       if (token && token.trim().length > 0) {
         globalThis.localStorage.setItem(ADMIN_DEBUG_TOKEN_STORAGE_KEY, token.trim());
         url.searchParams.delete("adminDebugToken");
-        globalThis.history.replaceState({}, "", url.toString());
+        browserWindow.history.replaceState({}, "", url.toString());
       } else if (url.searchParams.has("adminDebugToken")) {
         url.searchParams.delete("adminDebugToken");
-        globalThis.history.replaceState({}, "", url.toString());
+        browserWindow.history.replaceState({}, "", url.toString());
       }
 
       return Boolean(globalThis.localStorage.getItem(ADMIN_DEBUG_TOKEN_STORAGE_KEY));
@@ -415,13 +429,14 @@ export function ChatPanel({
   };
 
   const handleSessionIdConfirm = () => {
-    if (typeof window === "undefined") return;
+    const browserWindow = globalThis.window;
+    if (!browserWindow) return;
     const normalizedLabel = normalizeLabel(sessionLabel);
     const randomId = createRandomId();
     const combined = normalizedLabel ? `${normalizedLabel}_${randomId}` : randomId;
 
     try {
-      window.localStorage.setItem(SESSION_STORAGE_KEY, combined);
+      browserWindow.localStorage.setItem(SESSION_STORAGE_KEY, combined);
     } catch {
       // ignore storage errors
     }
@@ -450,14 +465,15 @@ export function ChatPanel({
     setCopiedId(null);
 
     // Clear browser storage to simulate a new visitor.
-    if (typeof window !== "undefined") {
+    const browserWindow = globalThis.window;
+    if (browserWindow) {
       try {
-        window.localStorage.clear();
+        browserWindow.localStorage.clear();
       } catch {
         // ignore
       }
       try {
-        window.sessionStorage.clear();
+        browserWindow.sessionStorage.clear();
       } catch {
         // ignore
       }
@@ -492,7 +508,11 @@ export function ChatPanel({
       });
       return;
     }
-    const notePrompt = `Using a quiet, reverent Perazzi voice, write a beautifully composed “Legacy Note” as if it were from the perspective of the user's future self. Base it on these three answers:\\n1) ${updated[0] ?? ""}\\n2) ${updated[1] ?? ""}\\n3) ${updated[2] ?? ""}\\nMake it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lines to create some space, then add one line: "Whenever we talk about configurations or specs, we’ll keep this in mind."`;
+    const notePrompt = String.raw`Using a quiet, reverent Perazzi voice, write a beautifully composed “Legacy Note” as if it were from the perspective of the user's future self. Base it on these three answers:
+1) ${updated[0] ?? ""}
+2) ${updated[1] ?? ""}
+3) ${updated[2] ?? ""}
+Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lines to create some space, then add one line: "Whenever we talk about configurations or specs, we’ll keep this in mind."`;
     sendMessage({ question: notePrompt, context, skipEcho: true });
     exitLegacyMode();
   };
@@ -570,7 +590,7 @@ export function ChatPanel({
             <div className="mt-4 space-y-3">
               <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted">
                 Session label
-                <input
+                <Input
                   ref={sessionInputRef}
                   type="text"
                   value={sessionLabel}
@@ -581,25 +601,29 @@ export function ChatPanel({
                       handleSessionIdConfirm();
                     }
                   }}
-                  className="mt-2 w-full rounded-xl border border-border bg-card/70 px-3 py-2 text-sm text-ink shadow-sm outline-none backdrop-blur-sm focus:border-ink/40 focus-ring"
+                  className="mt-2"
                   placeholder="e.g., dealer-demo"
                 />
               </label>
               <div className="flex items-center justify-end gap-2">
-                <button
+                <Button
                   type="button"
-                  className="rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
+                  variant="secondary"
+                  size="sm"
+                  className="rounded-full px-3 text-ink-muted hover:text-ink"
                   onClick={handleSessionPromptCancel}
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="rounded-full bg-ink px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-card transition hover:bg-ink-muted disabled:cursor-not-allowed disabled:bg-subtle disabled:text-ink-muted"
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full border-transparent bg-ink px-4 text-card hover:bg-ink-muted disabled:bg-subtle disabled:text-ink-muted"
                   onClick={handleSessionIdConfirm}
                 >
                   Confirm
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -615,32 +639,38 @@ export function ChatPanel({
           </div>
           <div className="flex items-center gap-2">
             {hasAdminDebugToken && (
-              <button
+              <Button
                 type="button"
-                className="rounded-full border border-border/70 bg-card/60 px-3 py-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
+                variant="secondary"
+                size="sm"
+                className="rounded-full px-3 py-1.5 text-[11px] sm:text-xs text-ink-muted hover:text-ink"
                 onClick={() => setAdminDebugOpen((prev) => !prev)}
                 aria-expanded={adminDebugOpen}
               >
                 Admin Debug
-              </button>
+              </Button>
             )}
             {showResetButton && (
-              <button
+              <Button
                 type="button"
-                className="rounded-full border border-border/70 bg-card/60 px-3 py-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
+                variant="secondary"
+                size="sm"
+                className="rounded-full px-3 py-1.5 text-[11px] sm:text-xs text-ink-muted hover:text-ink"
                 onClick={handleResetVisitor}
               >
                 Reset visitor
-              </button>
+              </Button>
             )}
             {legacyMode && (
-              <button
+              <Button
                 type="button"
-                className="rounded-full border border-border/70 bg-card/60 px-3 py-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
+                variant="secondary"
+                size="sm"
+                className="rounded-full px-3 py-1.5 text-[11px] sm:text-xs text-ink-muted hover:text-ink"
                 onClick={exitLegacyMode}
               >
                 Exit
-              </button>
+              </Button>
             )}
             {onClose && (
               <button
@@ -674,7 +704,7 @@ export function ChatPanel({
       <div className="flex flex-1 flex-col overflow-hidden">
         <div
           ref={scrollRef}
-          className="min-h-0 flex-1 overflow-y-auto bg-[color:var(--color-canvas)]/30 px-6 py-10 text-sm text-ink"
+          className="min-h-0 flex-1 overflow-y-auto bg-canvas/30 px-6 py-10 text-sm text-ink"
         >
           <div
             className={cn(
@@ -684,35 +714,35 @@ export function ChatPanel({
                 : "",
             )}
           >
-            {!legacyMode && (
+            {legacyMode ? null : (
               <div className="rounded-2xl border border-border/70 bg-card/60 p-4 text-sm text-ink shadow-sm backdrop-blur-sm sm:rounded-3xl sm:px-5 sm:py-4">
                 <div className="flex items-center justify-between gap-4">
                   <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">Guided Questions</p>
-                  <button
+                  <Button
                     type="button"
-                    className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:text-ink"
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto px-0 py-0 text-[11px] sm:text-xs text-ink-muted hover:text-ink"
                     onClick={() => setShowQuickStarts((prev) => !prev)}
                   >
                     {showQuickStarts ? "Hide" : "Show"}
-                  </button>
+                  </Button>
                 </div>
                 {showQuickStarts && (
                   <div className="mt-4 grid gap-3">
                     {QUICK_STARTS.map((qs) => (
-                      <button
+                      <QuickStartButton
                         key={qs.label}
-                        type="button"
-                        className="w-full rounded-2xl border border-border/70 bg-card/70 px-4 py-3 text-left font-medium text-ink shadow-sm transition hover:border-ink/30 hover:bg-card/85 disabled:cursor-not-allowed disabled:opacity-60"
-                        onClick={() =>
+                        label={qs.label}
+                        prompt={qs.prompt}
+                        disabled={pending}
+                        onSelect={(prompt) =>
                           sendMessage({
-                            question: qs.prompt,
+                            question: prompt,
                             context: { pageUrl: globalThis.location.pathname, locale: navigator.language, ...context },
                           })
                         }
-                        disabled={pending}
-                      >
-                        {qs.label}
-                      </button>
+                      />
                     ))}
                   </div>
                 )}
@@ -781,31 +811,36 @@ export function ChatPanel({
                       {(() => {
                         const hasRetrievalData =
                           (Array.isArray(msg.retrievalScores) && msg.retrievalScores.length > 0) ||
-                          msg.retrievalLabel !== undefined ||
-                          msg.similarity !== undefined;
-                        if (!hasRetrievalData) return null;
-
-                        const retrievalLabel =
-                          msg.retrievalLabel ??
-                          getRetrievalLabelFromScores(
-                            msg.retrievalScores ?? (msg.similarity !== undefined ? [msg.similarity] : []),
+                          typeof msg.retrievalLabel === "string" ||
+                          typeof msg.similarity === "number";
+                        if (hasRetrievalData) {
+                          const fallbackScores =
+                            typeof msg.similarity === "number" ? [msg.similarity] : [];
+                          const retrievalLabel =
+                            msg.retrievalLabel ??
+                            getRetrievalLabelFromScores(
+                              msg.retrievalScores ?? fallbackScores,
+                            );
+                          return (
+                            <p className="mt-2 text-[11px] sm:text-xs text-ink-muted">
+                              Retrieval: {retrievalLabel}
+                            </p>
                           );
-                        return (
-                          <p className="mt-2 text-[11px] sm:text-xs text-ink-muted">
-                            Retrieval: {retrievalLabel}
-                          </p>
-                        );
+                        }
+                        return null;
                       })()}
 
                       {isAssistant && (
                         <div className="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em]">
-                          <button
+                          <Button
                             type="button"
-                            className="rounded-full border border-border/70 bg-card/60 px-3 py-1 text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
+                            variant="secondary"
+                            size="sm"
+                            className="rounded-full px-3 py-1 text-ink-muted hover:text-ink"
                             onClick={() => handleCopy(msg.id, msg.content)}
                           >
                             {copiedId === msg.id ? "Copied" : "Copy"}
-                          </button>
+                          </Button>
                         </div>
                       )}
                     </div>

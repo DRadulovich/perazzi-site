@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, Input } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 
@@ -62,11 +62,11 @@ export function ServiceRequest({
         >
           <label className="flex flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">
             <span>Contact email</span>
-            <input
+            <Input
               type="email"
               value={email}
               onChange={(event) => { setEmail(event.target.value); }}
-              className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 text-sm text-ink focus-ring"
+              className="mt-1"
               required
             />
           </label>

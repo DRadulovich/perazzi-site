@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 import { PortableBody } from "@/components/journal/PortableBody";
+import { Button, Textarea } from "@/components/ui";
 import type { PortableBlock } from "@/types/journal";
 import { getOrCreateSessionId } from "@/lib/session";
 
@@ -360,22 +361,23 @@ function JourneyChapters({
                           }
                         }}
                       >
-                        <textarea
+                        <Textarea
                           rows={3}
-                          className="w-full rounded-md border border-border bg-card/10 px-3 py-2 text-sm text-ink"
+                          className="rounded-2xl border-border/60 bg-card/10"
                           placeholder="Write your answer here..."
                           value={answer}
                           onChange={(e) =>
                             setAnswers((prev) => ({ ...prev, [stepKey]: e.target.value }))
                           }
                         />
-                        <button
+                        <Button
                           type="submit"
                           disabled={submitting || !answer.trim()}
-                          className="inline-flex items-center rounded-full border border-border/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em]"
+                          variant="secondary"
+                          size="sm"
                         >
                           {submitting ? "Saving..." : "Send to the artisan"}
-                        </button>
+                        </Button>
                       </form>
 
                       {hasResponse ? (

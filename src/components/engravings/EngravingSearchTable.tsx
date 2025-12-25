@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 
 import { getSanityImageUrl } from "@/lib/sanityImage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { Button, Input } from "@/components/ui";
 
 type EngravingRow = {
   _id: string;
@@ -37,7 +38,7 @@ const PREFERRED_GRADE_ORDER = [
 ];
 const PREFERRED_SIDE_ORDER = ["Left", "Under", "Right"];
 const FILTER_PANEL_CLASS =
-  "space-y-4 rounded-[32px] border border-white/15 bg-[linear-gradient(135deg,#070707,#101010)]/95 px-4 py-5 shadow-[0_35px_120px_rgba(0,0,0,0.45)] sm:px-6 sm:py-6";
+  "space-y-4 rounded-3xl border border-white/15 bg-[linear-gradient(135deg,#070707,#101010)]/95 px-4 py-5 shadow-[0_35px_120px_rgba(0,0,0,0.45)] sm:px-6 sm:py-6";
 const CARD_CLASS =
   "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-neutral-950/80 text-left shadow-lg shadow-black/40 transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red sm:rounded-3xl sm:shadow-2xl";
 const SPEC_PANEL_CLASS =
@@ -239,12 +240,12 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <label className="flex w-full items-center gap-3 rounded-full border border-white/20 bg-black/40 px-4 py-2 text-sm text-neutral-300 focus-within:border-white">
             <span className="text-neutral-500">Search</span>
-            <input
+            <Input
               type="search"
               placeholder="Search engraving ID or grade…"
               value={query}
               onChange={(event) => { handleQueryChange(event.target.value); }}
-              className="w-full bg-transparent text-sm sm:text-base text-white placeholder:text-neutral-600 focus:outline-none"
+              className="w-full border-0 bg-transparent px-0 py-0 text-sm sm:text-base text-white placeholder:text-neutral-600 shadow-none focus:border-0"
             />
           </label>
           <p className="text-sm text-neutral-400" aria-live="polite" aria-atomic="true">
@@ -269,13 +270,15 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
             onToggle={(value) => { toggleMultiFilter(sideFilters, setSideFilters, value); }}
           />
           {hasFilters && (
-            <button
+            <Button
               type="button"
               onClick={clearFilters}
-              className="rounded-full border border-white/30 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-widest text-white/80 transition hover:border-white hover:text-white focus-ring"
+              variant="ghost"
+              size="sm"
+              className="rounded-full border border-white/30 text-white/80 hover:border-white hover:text-white hover:bg-white/5"
             >
               Reset filters
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -392,7 +395,7 @@ function CardSkeleton() {
   const skeletonRows = ["first", "second", "third", "fourth"];
   return (
     <div className="animate-pulse overflow-hidden rounded-2xl border border-white/5 bg-neutral-900/60 sm:rounded-3xl">
-      <div className="aspect-[4/3] w-full bg-white/10" />
+      <div className="aspect-4/3 w-full bg-white/10" />
       <div className="space-y-3 border-t border-white/5 bg-black/30 p-4 sm:p-6">
         <div className="h-4 w-1/3 rounded bg-white/10" />
         <div className="h-6 w-2/3 rounded bg-white/10" />
@@ -424,30 +427,30 @@ function FavoritesPanel({
         <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400">
           Favorites ({favorites.length}/6)
         </p>
-        <button
+        <Button
           type="button"
           disabled={favorites.length < 2}
           onClick={onCompare}
+          variant="ghost"
+          size="sm"
           className={clsx(
-            "rounded-full px-4 py-2 text-[11px] sm:text-xs uppercase tracking-[0.3em] focus-ring",
-            favorites.length < 2
-              ? "border border-white/20 text-white/40"
-              : "border border-white/40 text-white hover:border-white hover:text-white",
+            "rounded-full border border-white/40 text-white hover:border-white hover:text-white hover:bg-white/5",
+            favorites.length < 2 && "border-white/20 text-white/40",
           )}
         >
           Compare
-        </button>
+        </Button>
       </div>
       <div className="mt-3 flex flex-wrap gap-4">
         {favorites.map((fav) => {
           const previewUrl = getSanityImageUrl(fav.image, { width: 200, quality: 70 });
           return (
             <div key={fav._id} className="flex flex-col items-center text-center text-white">
-              <button
-                type="button"
-                className="relative h-16 w-16 overflow-hidden rounded-full border border-white/20 bg-white"
-                onClick={() => { onSelect(fav); }}
-              >
+        <button
+          type="button"
+          className="relative h-16 w-16 overflow-hidden rounded-full border border-white/20 bg-white"
+          onClick={() => { onSelect(fav); }}
+        >
                 {previewUrl ? (
                   <Image src={previewUrl} alt={fav.imageAlt || fav.engravingId} fill className="object-cover" />
                 ) : (
@@ -455,11 +458,11 @@ function FavoritesPanel({
                 )}
               </button>
               <p className="mt-2 text-xs font-semibold">#{fav.engravingId}</p>
-              <button
-                type="button"
-                className="text-[11px] sm:text-xs uppercase tracking-[0.3em] text-white/60 hover:text-white"
-                onClick={() => { onToggle(fav); }}
-              >
+        <button
+          type="button"
+          className="text-[11px] sm:text-xs uppercase tracking-[0.3em] text-white/60 hover:text-white"
+          onClick={() => { onToggle(fav); }}
+        >
                 Remove
               </button>
             </div>
@@ -535,7 +538,7 @@ function EngravingCard({
   const cardImageUrl = getSanityImageUrl(engraving.image, { width: 2000, quality: 90 });
   return (
     <article className={CARD_CLASS}>
-      <div className="card-media relative aspect-[4/3] w-full bg-white">
+      <div className="card-media relative aspect-4/3 w-full bg-white">
         {cardImageUrl ? (
           <Image
             src={cardImageUrl}
@@ -586,27 +589,31 @@ function EngravingCard({
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-white/5 bg-black/50 px-6 py-4">
-        <button
+        <Button
           type="button"
           onClick={() => { onToggleFavorite(engraving); }}
+          variant="ghost"
+          size="sm"
           className={clsx(
-            "rounded-full border px-5 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-widest transition focus-ring",
+            "rounded-full border px-5 text-white hover:border-white hover:text-white hover:bg-white/5",
             isFavorite
-              ? "border-perazzi-red bg-perazzi-red/80 text-white"
-              : "border-white/30 text-white hover:border-white hover:text-white",
+              ? "border-perazzi-red bg-perazzi-red/80 text-white hover:bg-perazzi-red/90"
+              : "border-white/30",
           )}
         >
           {isFavorite ? "Saved" : "Save"}
-        </button>
-        <button
+        </Button>
+        <Button
           ref={(node) => {
             onRegisterDetailButton(engraving._id, node);
           }}
           onClick={() => { onSelect(engraving); }}
-          className="rounded-full border border-white/30 px-5 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-white transition hover:border-white hover:text-white focus-ring"
+          variant="ghost"
+          size="sm"
+          className="rounded-full border border-white/30 px-5 text-white hover:border-white hover:text-white hover:bg-white/5"
         >
           View details
-        </button>
+        </Button>
       </div>
     </article>
   );
@@ -632,19 +639,21 @@ function EngravingDetailDialog({
     >
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
-        <Dialog.Content className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 md:p-6 outline-none">
-          <div className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]">
+        <Dialog.Content className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 md:p-6 outline-none">
+          <div className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]">
             <Dialog.Close asChild>
-              <button
+              <Button
                 type="button"
-                className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-widest text-black transition hover:border-black hover:bg-white focus-ring sm:right-5 sm:top-5"
+                variant="secondary"
+                size="sm"
+                className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 text-black hover:border-black hover:bg-white sm:right-5 sm:top-5"
               >
                 Close
-              </button>
+              </Button>
             </Dialog.Close>
 
             <div className="grid flex-1 overflow-y-auto p-4 sm:p-6">
-              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl bg-white">
+              <div className="relative aspect-4/3 w-full overflow-hidden rounded-3xl bg-white">
                 {modalImageUrl ? (
                   <Image
                     src={modalImageUrl}
@@ -709,14 +718,16 @@ function EngravingCompareDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
         <Dialog.Content className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 outline-none">
-          <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]">
+          <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]">
             <Dialog.Close asChild>
-              <button
+              <Button
                 type="button"
-                className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-widest text-black transition hover:border-black hover:bg-white focus-ring sm:right-5 sm:top-5"
+                variant="secondary"
+                size="sm"
+                className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 text-black hover:border-black hover:bg-white sm:right-5 sm:top-5"
               >
                 Close
-              </button>
+              </Button>
             </Dialog.Close>
             <div className="space-y-4 border-b border-white/10 p-6 text-center">
               <p className="text-[11px] sm:text-xs uppercase tracking-[0.4em] text-white/70">
@@ -729,7 +740,7 @@ function EngravingCompareDialog({
                 const compareImage = getSanityImageUrl(fav.image, { width: 2400, quality: 95 });
                 return (
                   <article key={fav._id} className="rounded-3xl border border-white/10 bg-black/30 p-4">
-                    <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-white">
+                    <div className="relative aspect-4/3 w-full overflow-hidden rounded-2xl bg-white">
                       {compareImage ? (
                         <Image
                           src={compareImage}

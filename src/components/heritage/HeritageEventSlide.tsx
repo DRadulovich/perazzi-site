@@ -3,6 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import SafeHtml from "@/components/SafeHtml";
+import { Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import type { HeritageEvent, HeritageEventLink } from "@/types/heritage";
@@ -88,13 +89,15 @@ export function HeritageEventSlide({
 
               {/* Mobile-only Read More button to open full text modal */}
               {event.summaryHtml ? (
-                <button
+                <Button
                   type="button"
-                  className="mt-2 inline-flex md:hidden min-h-10 items-center justify-center rounded-full border border-white/30 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-neutral-100 focus-ring"
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2 md:hidden min-h-10 rounded-full border border-white/30 px-4 text-neutral-100 hover:border-white hover:bg-white/10"
                   onClick={() => { setIsModalOpen(true); }}
                 >
                   Read full story
-                </button>
+                </Button>
               ) : null}
 
               {Array.isArray(event.links) && event.links.length > 0 ? (
@@ -139,12 +142,14 @@ export function HeritageEventSlide({
                   {event.date}
                 </p>
                 <Dialog.Close asChild>
-                  <button
+                  <Button
                     type="button"
-                    className="inline-flex min-h-10 items-center justify-center rounded-full border border-white/30 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-neutral-100 focus-ring"
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-full border border-white/30 px-3 text-neutral-100 hover:border-white hover:bg-white/10"
                   >
                     Close
-                  </button>
+                  </Button>
                 </Dialog.Close>
               </div>
               <div className="space-y-3 overflow-y-auto px-4 pt-3 pb-4">

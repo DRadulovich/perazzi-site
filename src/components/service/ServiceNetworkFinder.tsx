@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import SafeHtml from "@/components/SafeHtml";
+import { Input } from "@/components/ui";
 
 import type { NetworkFinderUi, ServiceLocation, ServiceLocationType } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -102,9 +103,9 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
         </label>
         <label className="flex w-full flex-col text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink">
           <span>Search by State or Name</span>
-          <input
+          <Input
             type="search"
-            className="mt-1 min-h-10 rounded-2xl border border-border/60 bg-card px-3 py-2 text-sm sm:text-base text-ink focus-ring sm:border-border/70"
+            className="mt-1 min-h-10 sm:border-border/70"
             value={search}
             onChange={(event) => { setSearch(event.target.value); }}
             placeholder="e.g. FL, TX"
@@ -188,7 +189,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
         </ul>
         <div className="space-y-3">
           <div
-            className="relative overflow-hidden rounded-2xl border border-border/60 bg-[color:var(--color-canvas)]"
+            className="relative overflow-hidden rounded-2xl border border-border/60 bg-(--color-canvas)"
             style={{ aspectRatio: 3 / 2 }}
           >
             <iframe

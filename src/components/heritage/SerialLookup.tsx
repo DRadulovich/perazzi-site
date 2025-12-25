@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Image from "next/image";
 
-import { Button } from "@/components/ui/button";
+import { Button, Input } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import type { SerialLookupUi } from "@/types/heritage";
@@ -76,7 +76,7 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
           loading="lazy"
         />
         <div
-          className="absolute inset-0 bg-[color:var(--scrim-hard)]"
+          className="absolute inset-0 bg-(--scrim-hard)"
           aria-hidden
         />
         <div
@@ -111,7 +111,7 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
               <label className="flex-1 text-sm font-medium text-white" htmlFor="serial-input">
                 <span className="block">Serial Number</span>
-                <input
+                <Input
                   id="serial-input"
                   name="serial"
                   inputMode="numeric"
@@ -119,8 +119,8 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
                   value={serial}
                   onChange={(event) => { setSerial(event.target.value); }}
                   className={cn(
-                    "mt-2 w-full rounded-xl border border-perazzi-black/50 bg-white/25 px-4 py-3 text-sm sm:text-base text-white",
-                    "placeholder:text-white/70 focus:border-perazzi-red focus:outline-none focus:ring-2 focus:ring-perazzi-red/40",
+                    "mt-2 border-perazzi-black/50 bg-white/25 px-4 py-3 text-sm sm:text-base text-white",
+                    "placeholder:text-white/70 focus:border-perazzi-red",
                   )}
                   aria-describedby={errorId}
                 />

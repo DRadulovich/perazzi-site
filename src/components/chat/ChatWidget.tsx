@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ChatPanel } from "@/components/chat/ChatPanel";
+import { Button } from "@/components/ui";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
 import { CHAT_TRIGGER_EVENT } from "@/lib/chat-trigger";
 
@@ -155,14 +156,18 @@ export function ChatWidget() {
       {isMobile ? (
         <>
           {!isOpen && !hideTrigger && (
-            <button
-              type="button"
-              aria-label="Open Perazzi Concierge"
-              onClick={() => { setIsOpen(true); }}
-              className="fixed bottom-5 right-5 z-40 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm sm:text-base font-semibold text-card shadow-elevated ring-1 ring-black/10 transition hover:bg-brand-hover focus-ring"
-            >
-              Perazzi Guide
-            </button>
+            <div className="fixed bottom-5 right-5 z-40">
+              <Button
+                type="button"
+                aria-label="Open Perazzi Concierge"
+                onClick={() => { setIsOpen(true); }}
+                size="lg"
+                variant="primary"
+                className="rounded-full px-6 py-3 shadow-elevated ring-1 ring-black/10"
+              >
+                Perazzi Guide
+              </Button>
+            </div>
           )}
           <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
             <Dialog.Portal>
@@ -209,14 +214,18 @@ export function ChatWidget() {
             </aside>
           )}
           {!isOpen && !hideTrigger && (
-            <button
-              type="button"
-              aria-label="Open Perazzi Concierge"
-              onClick={() => setIsOpen(true)}
-              className="fixed bottom-6 right-6 z-30 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm sm:text-base font-semibold text-card shadow-elevated ring-1 ring-black/10 transition hover:bg-brand-hover focus-ring"
-            >
-              Open Perazzi Guide
-            </button>
+            <div className="fixed bottom-6 right-6 z-30">
+              <Button
+                type="button"
+                aria-label="Open Perazzi Concierge"
+                onClick={() => setIsOpen(true)}
+                size="lg"
+                variant="primary"
+                className="rounded-full px-6 py-3 shadow-elevated ring-1 ring-black/10"
+              >
+                Open Perazzi Guide
+              </Button>
+            </div>
           )}
         </>
       )}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { logAnalytics } from "@/lib/analytics";
+import { Button, Input } from "@/components/ui";
 
 export function NewsletterSignup() {
   const [email, setEmail] = useState("");
@@ -28,21 +29,18 @@ export function NewsletterSignup() {
         >
           <label className="flex flex-1 flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">
             <span>Email</span>
-            <input
+            <Input
               type="email"
               required
               value={email}
               onChange={(event) => { setEmail(event.target.value); }}
-              className="mt-1 w-full rounded-2xl border border-border/70 bg-card px-3 py-2 text-sm text-ink focus-ring"
+              className="mt-1"
               placeholder="you@example.com"
             />
           </label>
-          <button
-            type="submit"
-            className="rounded-2xl bg-perazzi-red px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-white focus-ring"
-          >
+          <Button type="submit" size="sm">
             Subscribe
-          </button>
+          </Button>
         </form>
       )}
     </section>

@@ -5,6 +5,7 @@ import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import type { ChatEntry } from "@/components/chat/useChatState";
 import { getRetrievalLabelFromScores } from "@/lib/retrieval-label";
+import { Button } from "@/components/ui";
 
 interface ConversationViewProps {
   readonly messages: ReadonlyArray<ChatEntry>;
@@ -78,7 +79,7 @@ const markdownComponents = {
     return (
       <div className="my-4 overflow-x-auto">
         <table className="w-full border-collapse text-left text-sm" {...props}>
-          {!hasHeader && (
+          {hasHeader ? null : (
             <thead className="sr-only">
               <tr>
                 {Array.from({ length: columnCount }, (_, index) => (
@@ -188,30 +189,35 @@ export function ConversationView({ messages, isTyping, pending }: ConversationVi
                 {(() => {
                   const hasRetrievalData =
                     (Array.isArray(msg.retrievalScores) && msg.retrievalScores.length > 0) ||
-                    msg.retrievalLabel !== undefined ||
-                    msg.similarity !== undefined;
-                  if (!hasRetrievalData) return null;
-
-                  const retrievalLabel =
-                    msg.retrievalLabel ??
-                    getRetrievalLabelFromScores(
-                      msg.retrievalScores ?? (msg.similarity !== undefined ? [msg.similarity] : []),
+                    typeof msg.retrievalLabel === "string" ||
+                    typeof msg.similarity === "number";
+                  if (hasRetrievalData) {
+                    const fallbackScores =
+                      typeof msg.similarity === "number" ? [msg.similarity] : [];
+                    const retrievalLabel =
+                      msg.retrievalLabel ??
+                      getRetrievalLabelFromScores(
+                        msg.retrievalScores ?? fallbackScores,
+                      );
+                    return (
+                      <p className="mt-2 text-[11px] sm:text-xs text-ink-muted">
+                        Retrieval: {retrievalLabel}
+                      </p>
                     );
-                  return (
-                    <p className="mt-2 text-[11px] sm:text-xs text-ink-muted">
-                      Retrieval: {retrievalLabel}
-                    </p>
-                  );
+                  }
+                  return null;
                 })()}
                 {isAssistant && (
                   <div className="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em]">
-                    <button
+                    <Button
                       type="button"
-                      className="rounded-full border border-border/70 bg-card/60 px-3 py-1 text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
+                      variant="secondary"
+                      size="sm"
+                      className="rounded-full px-3 py-1 text-ink-muted hover:text-ink"
                       onClick={() => handleCopy(msg.id, msg.content)}
                     >
                       {copiedId === msg.id ? "Copied" : "Copy"}
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
