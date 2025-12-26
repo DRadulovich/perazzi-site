@@ -6,8 +6,7 @@ import { MarqueeFeature } from "@/components/home/marquee-feature"; // Home-spec
 import { TimelineScroller } from "@/components/home/timeline-scroller";
 import { getHome } from "@/sanity/queries/home";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
-import { Heading } from "@/components/ui/heading";
-import { Text } from "@/components/ui/text";
+import { Container, Heading, Section, Text } from "@/components/ui";
 
 export default async function HomePage() {
   const homeData = await getHome();
@@ -20,15 +19,20 @@ export default async function HomePage() {
       ];
 
   return (
-    <SiteShell mainClassName="flex-1 px-4 pb-12 pt-0 sm:px-8 lg:px-12">
+    <SiteShell mainClassName="flex-1 pb-12 pt-0">
       <div className="space-y-0">
         <HeroBanner hero={homeData.hero} heroCtas={homeData.heroCtas} fullBleed />
         <TimelineScroller stages={homeData.stages} framing={homeData.timelineFraming} />
-        <section
-          className="border-t border-border bg-canvas py-10 sm:py-16"
+        <Section
+          padding="lg"
+          bordered={false}
+          className="rounded-none border-t border-border bg-canvas shadow-none"
           aria-labelledby="home-guide-heading"
         >
-          <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
+          <Container
+            size="xl"
+            className="flex flex-col gap-10 px-0 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16"
+          >
             <div className="space-y-4 text-ink">
               <Heading
                 id="home-guide-heading"
@@ -81,20 +85,20 @@ export default async function HomePage() {
                   ?? "The concierge can map your disciplines, preferences, and ambitions to a starting platform and the right next pages to visit."}
               </Text>
             </div>
-          </div>
-        </section>
+          </Container>
+        </Section>
         <MarqueeFeature champion={homeData.champion} ui={homeData.marqueeUi} />
         {homeData.finale ? (
           <CTASection finale={homeData.finale} />
         ) : (
-          <section className="rounded-2xl border border-border/60 bg-card/10 px-4 py-6 text-center text-ink shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 sm:shadow-lg">
+          <Section padding="md" className="text-center">
             <Text size="lg" className="font-semibold" leading="normal">
               Final invitation coming soon
             </Text>
             <Text size="sm" className="mt-2 text-ink-muted">
               Update the Home CTA in Sanity to surface the latest experience.
             </Text>
-          </section>
+          </Section>
         )}
       </div>
     </SiteShell>

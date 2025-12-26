@@ -6,20 +6,23 @@ import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 import type { JourneyOverviewData } from "@/types/build";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { Section } from "@/components/ui";
 
 type JourneyOverviewProps = Readonly<{
   journey: JourneyOverviewData;
 }>;
+
+const MotionSection = motion(Section);
 
 export function JourneyOverview({ journey }: JourneyOverviewProps) {
   const prefersReducedMotion = useReducedMotion();
   const analyticsRef = useAnalyticsObserver<HTMLElement>("JourneyOverviewSeen");
 
   return (
-    <motion.section
+    <MotionSection
       ref={analyticsRef}
       data-analytics-id="JourneyOverviewSeen"
-      className="rounded-2xl border border-border/70 bg-card/60 px-4 py-6 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:px-6 sm:py-8"
+      padding="md"
       initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
       whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.4 }}
@@ -61,6 +64,6 @@ export function JourneyOverview({ journey }: JourneyOverviewProps) {
           </ReactMarkdown>
         </div>
       </div>
-    </motion.section>
+    </MotionSection>
   );
 }

@@ -5,8 +5,7 @@ import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import type { Champion, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
-import { Heading } from "@/components/ui/heading";
-import { Text } from "@/components/ui/text";
+import { Container, Heading, Section, Text } from "@/components/ui";
 
 type MarqueeFeatureProps = Readonly<{
   champion: Champion;
@@ -65,8 +64,11 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="rounded-2xl border border-border/70 bg-card/40 p-4 text-ink shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/30 sm:p-6 sm:shadow-elevated lg:p-8 md:grid md:grid-cols-[minmax(260px,1fr)_minmax(0,1.4fr)] md:items-center md:gap-10">
+      <Container size="xl" className="relative z-10">
+        <Section
+          padding="md"
+          className="md:grid md:grid-cols-[minmax(260px,1fr)_minmax(0,1.4fr)] md:items-center md:gap-10"
+        >
           <motion.div
             initial={motionEnabled ? { opacity: 0, x: -30 } : false}
             whileInView={motionEnabled ? { opacity: 1, x: 0 } : undefined}
@@ -130,8 +132,8 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
               </a>
             ) : null}
           </motion.div>
-        </div>
-      </div>
+        </Section>
+      </Container>
     </section>
   );
 }

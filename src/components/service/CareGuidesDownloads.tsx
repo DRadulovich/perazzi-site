@@ -2,7 +2,7 @@
 
 import type { GuidesSection } from "@/types/service";
 import SafeHtml from "@/components/SafeHtml";
-import { Heading, Text } from "@/components/ui";
+import { Heading, Section, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 
@@ -21,10 +21,11 @@ export function CareGuidesDownloads({ guidesSection }: CareGuidesDownloadsProps)
   if (!guides.length) return null;
 
   return (
-    <section
+    <Section
       ref={analyticsRef}
       data-analytics-id="CareGuidesSeen"
-      className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 sm:shadow-md lg:px-10"
+      padding="md"
+      className="space-y-6"
       aria-labelledby="care-guides-heading"
     >
       <div className="space-y-2">
@@ -71,6 +72,6 @@ export function CareGuidesDownloads({ guidesSection }: CareGuidesDownloadsProps)
           </li>
         ))}
       </ul>
-    </section>
+    </Section>
   );
 }

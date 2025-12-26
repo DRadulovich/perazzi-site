@@ -1,7 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Heading, Text } from "@/components/ui";
+import { Button, Heading, Section, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { motion, useReducedMotion } from "framer-motion";
 import { logAnalytics } from "@/lib/analytics";
@@ -13,6 +12,8 @@ type CTASectionProps = {
   readonly dataAnalyticsId?: string;
   readonly analyticsPrefix?: string;
 };
+
+const MotionSection = motion(Section);
 
 export function CTASection({
   text,
@@ -32,10 +33,12 @@ export function CTASection({
   };
 
   return (
-    <motion.section
+    <MotionSection
       ref={analyticsRef}
       data-analytics-id={dataAnalyticsId}
-      className="rounded-2xl bg-perazzi-black px-4 py-8 text-white sm:rounded-3xl sm:px-6 sm:py-10 sm:shadow-md"
+      padding="md"
+      bordered={false}
+      className="bg-perazzi-black text-white"
       initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
       whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.5 }}
@@ -70,6 +73,6 @@ export function CTASection({
           ) : null}
         </div>
       </div>
-    </motion.section>
+    </MotionSection>
   );
 }

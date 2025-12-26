@@ -1,7 +1,7 @@
 "use client";
 
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
-import { Heading, Text } from "@/components/ui";
+import { Heading, Section, Text } from "@/components/ui";
 import type { IntegrityAdvisorySection } from "@/types/service";
 
 type IntegrityAdvisoryProps = Readonly<{
@@ -15,10 +15,11 @@ export function IntegrityAdvisory({ integrityAdvisory }: IntegrityAdvisoryProps)
     "Perazzi parts are serialised and fit by hand. Grey-market spares often compromise safety, timing, or regulation. Work only with the factory or authorised service centres; every shipment includes documentation so you can verify provenance.\n\nIf you are unsure, contact the concierge—send photos or serial numbers and we will confirm authenticity before you install any component.";
 
   return (
-    <section
+    <Section
       ref={analyticsRef}
       data-analytics-id="IntegrityAdvisorySeen"
-      className="space-y-4 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 sm:shadow-md lg:px-10"
+      padding="md"
+      className="space-y-4"
     >
       <Text size="xs" muted className="font-semibold">
         Authenticity & fitment
@@ -33,6 +34,6 @@ export function IntegrityAdvisory({ integrityAdvisory }: IntegrityAdvisoryProps)
           </Text>
         ))}
       </div>
-    </section>
+    </Section>
   );
 }

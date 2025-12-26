@@ -1,8 +1,7 @@
 import Image from "next/image";
 import SafeHtml from "@/components/SafeHtml";
 import type { AssuranceContent } from "@/types/build";
-import { Heading } from "@/components/ui/heading";
-import { Text } from "@/components/ui/text";
+import { Heading, Section, Text } from "@/components/ui";
 
 type AssuranceBlockProps = Readonly<{
   assurance: AssuranceContent;
@@ -16,8 +15,9 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
   const ratio = media?.aspectRatio ?? 3 / 2;
 
   return (
-    <section
-      className="rounded-2xl border border-border/70 bg-card/60 px-4 py-6 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:px-6 sm:py-8 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] lg:gap-8"
+    <Section
+      padding="md"
+      className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] lg:gap-8"
       aria-labelledby="assurance-heading"
     >
       <div className="space-y-6">
@@ -92,6 +92,6 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
           ) : null}
         </figure>
       ) : null}
-    </section>
+    </Section>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import SafeHtml from "@/components/SafeHtml";
-import { Heading, Input, Text } from "@/components/ui";
+import { Heading, Input, Section, Text } from "@/components/ui";
 
 import type { NetworkFinderUi, ServiceLocation, ServiceLocationType } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -63,10 +63,11 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
   const primaryLabel = ui.primaryButtonLabel ?? "Request service";
 
   return (
-    <section
+    <Section
       ref={analyticsRef}
       data-analytics-id="ServiceNetworkSeen"
-      className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 sm:shadow-md lg:px-10"
+      padding="md"
+      className="space-y-6"
       aria-labelledby="service-network-heading"
     >
       <div className="space-y-2">
@@ -221,7 +222,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
           </a>
         </div>
       </div>
-    </section>
+    </Section>
   );
 }
 

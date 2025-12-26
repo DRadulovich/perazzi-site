@@ -3,15 +3,15 @@
 import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { HomeData } from "@/types/content";
-import { Button } from "@/components/ui/button";
+import { Button, Heading, Section, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
-import { Heading } from "@/components/ui/heading";
-import { Text } from "@/components/ui/text";
 
 type CTASectionProps = {
   readonly finale: HomeData["finale"];
 };
+
+const MotionSection = motion(Section);
 
 export function CTASection({ finale }: CTASectionProps) {
   const analyticsRef = useAnalyticsObserver("FinalCTASeen");
@@ -26,10 +26,12 @@ export function CTASection({ finale }: CTASectionProps) {
   const motionEnabled = !reduceMotion;
 
   return (
-    <motion.section
+    <MotionSection
       ref={analyticsRef}
       data-analytics-id="FinalCTASeen"
-      className="rounded-2xl bg-perazzi-black px-4 py-8 text-white sm:px-8 sm:py-10"
+      padding="md"
+      bordered={false}
+      className="bg-perazzi-black text-white"
       initial={motionEnabled ? { opacity: 0, y: 30 } : false}
       whileInView={motionEnabled ? { opacity: 1, y: 0 } : undefined}
       viewport={{ once: true, amount: 0.6 }}
@@ -69,6 +71,6 @@ export function CTASection({ finale }: CTASectionProps) {
           ) : null}
         </div>
       </div>
-    </motion.section>
+    </MotionSection>
   );
 }

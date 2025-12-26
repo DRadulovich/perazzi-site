@@ -10,7 +10,7 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 import { faq as faqFixture } from "@/content/experience/faq";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger, Heading, Text } from "@/components/ui";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, Container, Heading, Section, Text } from "@/components/ui";
 
 type FAQListProps = Readonly<{
   items: FAQItem[];
@@ -20,7 +20,7 @@ type FAQListProps = Readonly<{
 }>;
 
 export function FAQList({ items, embedded = false, heading, lead }: FAQListProps) {
-  const analyticsRef = useAnalyticsObserver<HTMLDivElement>("ExperienceFAQSeen");
+  const analyticsRef = useAnalyticsObserver<HTMLElement>("ExperienceFAQSeen");
 
   const faqItems = items.length ? items : faqFixture;
 
@@ -54,19 +54,22 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
 
   if (embedded) {
     return (
-      <div
+      <Section
         ref={analyticsRef}
         data-analytics-id="ExperienceFAQSeen"
-        className="space-y-6 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:px-6 sm:py-8 sm:shadow-elevated"
+        padding="md"
+        className="space-y-6"
         aria-labelledby="experience-faq-heading"
       >
         {content}
-      </div>
+      </Section>
     );
   }
 
   return (
     <section
+      ref={analyticsRef}
+      data-analytics-id="ExperienceFAQSeen"
       className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
       style={{
         marginLeft: "calc(50% - 50vw)",
@@ -100,15 +103,11 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
         />
       </div>
 
-      <div
-        ref={analyticsRef}
-        data-analytics-id="ExperienceFAQSeen"
-        className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10"
-      >
-        <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
+      <Container size="xl" className="relative z-10">
+        <Section padding="md" className="space-y-6 bg-card/40">
           {content}
-        </div>
-      </div>
+        </Section>
+      </Container>
     </section>
   );
 }

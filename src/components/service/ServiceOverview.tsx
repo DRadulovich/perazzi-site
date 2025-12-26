@@ -3,7 +3,7 @@
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
-import { Heading, Text } from "@/components/ui";
+import { Heading, Section, Text } from "@/components/ui";
 import type { ServiceOverviewSection } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
@@ -41,10 +41,11 @@ export function ServiceOverview({ overview }: ServiceOverviewProps) {
   }
 
   return (
-    <section
+    <Section
       ref={analyticsRef}
       data-analytics-id="ServiceOverviewSeen"
-      className="grid gap-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 sm:shadow-md lg:grid-cols-[1.2fr_1fr]"
+      padding="md"
+      className="grid gap-6 lg:grid-cols-[1.2fr_1fr]"
       aria-labelledby="service-overview-heading"
     >
       <div className="space-y-4">
@@ -60,12 +61,12 @@ export function ServiceOverview({ overview }: ServiceOverviewProps) {
           </ReactMarkdown>
         </div>
       </div>
-      <div className="rounded-2xl border border-border/75 bg-card/75 p-5 shadow-sm sm:rounded-3xl md:p-6 lg:p-8">
+      <Section padding="sm" className="bg-card/75">
         <Text size="xs" muted className="font-semibold">
           {checksHeading}
         </Text>
         {checksContent}
-      </div>
-    </section>
+      </Section>
+    </Section>
   );
 }

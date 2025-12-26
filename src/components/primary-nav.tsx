@@ -11,8 +11,7 @@ import { useRef, useState } from "react";
 import { ArrowRight, ChevronDown, Menu, UserRound, X } from "lucide-react";
 import useMeasure from "react-use-measure";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
-import { Heading } from "@/components/ui/heading";
-import { Text } from "@/components/ui/text";
+import { Container, Heading, Text } from "@/components/ui";
 
 type FlyoutRenderer = (props: { onNavigate?: () => void; textTone?: "light" | "dark" }) => ReactElement;
 
@@ -60,7 +59,7 @@ export function PrimaryNav({ brandLabel, variant = "brand" }: PrimaryNavProps) {
     <nav
       className={`w-full transition-all ${navBackground} ${navShadow} ${navText}`}
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+      <Container size="xl" className="flex items-center justify-between gap-4 py-4">
         <Logo label={brandLabel} />
         <div className="hidden items-center gap-6 lg:flex">
           <Links pathname={pathname ?? "/"} tone={tone} />
@@ -71,7 +70,7 @@ export function PrimaryNav({ brandLabel, variant = "brand" }: PrimaryNavProps) {
           <MobileMenu pathname={pathname ?? "/"} brandLabel={brandLabel} tone={tone} />
           <ThemeToggle variant={tone === "light" ? "ghost" : "default"} />
         </div>
-      </div>
+      </Container>
     </nav>
   );
 }

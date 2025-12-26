@@ -5,7 +5,7 @@ import { getTranslations } from "next-intl/server";
 import { SkipToContent } from "@/components/skip-to-content";
 import { PrimaryNav } from "@/components/primary-nav";
 import { ChatWidgetClient } from "@/components/chat";
-import { Text } from "@/components/ui/text";
+import { Container, Text } from "@/components/ui";
 
 type SiteShellProps = {
   readonly children: ReactNode;
@@ -21,8 +21,8 @@ export async function SiteShell({
   contentClassName,
 }: SiteShellProps) {
   const t = await getTranslations("Header");
-  const mainClasses = mainClassName ?? "flex-1 px-4 py-10 sm:px-6 sm:py-12 lg:px-12";
-  const contentClasses = contentClassName ?? "mx-auto flex max-w-7xl flex-col gap-8 sm:gap-12";
+  const mainClasses = mainClassName ?? "flex-1 py-10 sm:py-12";
+  const contentClasses = contentClassName ?? "flex flex-col gap-8 sm:gap-12";
 
   const primaryLinks = [
     { label: "Shotguns", href: "/shotguns" },
@@ -53,10 +53,12 @@ export async function SiteShell({
         id="site-content"
         className={mainClasses}
       >
-        <div className={contentClasses}>{children}</div>
+        <Container size="xl" className={contentClasses}>
+          {children}
+        </Container>
       </main>
       <footer className="border-t border-subtle bg-card text-sm text-ink-muted">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+        <Container size="xl" className="py-8 sm:py-12">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-12 md:gap-10">
             <div className="space-y-3 md:col-span-5">
               <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
@@ -117,7 +119,7 @@ export async function SiteShell({
               ))}
             </div>
           </div>
-        </div>
+        </Container>
       </footer>
       {showChatWidget !== false && <ChatWidgetClient />}
       <Analytics />

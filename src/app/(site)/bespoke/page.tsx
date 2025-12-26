@@ -8,7 +8,7 @@ import { CTASection } from "@/components/shotguns/CTASection";
 import { CinematicImageStrip } from "@/components/shotguns/CinematicImageStrip";
 import { getBespokePageData } from "@/lib/bespoke-data";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
-import { Heading, Text } from "@/components/ui";
+import { Container, Heading, Section, Text } from "@/components/ui";
 
 export default async function BespokeBuildPage() {
   const {
@@ -26,14 +26,19 @@ export default async function BespokeBuildPage() {
   } = await getBespokePageData();
 
   return (
-    <div className="space-y-16 px-2 sm:px-4 lg:px-6" id="bespoke-top">
+    <div className="space-y-16" id="bespoke-top">
       <BuildHero hero={hero} fullBleed />
       <BuildStepsScroller steps={steps} intro={stepsIntro} skipTargetId="bespoke-experts" />
-      <section
-        className="border-t border-border bg-canvas py-10 sm:py-16"
+      <Section
+        padding="lg"
+        bordered={false}
+        className="rounded-none border-t border-border bg-canvas shadow-none"
         aria-labelledby="bespoke-guide-heading"
       >
-        <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
+        <Container
+          size="xl"
+          className="flex flex-col gap-10 px-0 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16"
+        >
           <div className="space-y-4 text-ink">
             <Heading
               id="bespoke-guide-heading"
@@ -93,8 +98,8 @@ export default async function BespokeBuildPage() {
                 The concierge aligns your disciplines, aesthetic cues, and schedule so the atelier session runs smoothly.
               </Text>
             </div>
-        </div>
-      </section>
+        </Container>
+      </Section>
       <CinematicImageStrip
         src={(cinematicStrips?.[0]?.image?.url) ?? "/cinematic_background_photos/p-web-25.jpg"}
         image={cinematicStrips?.[0]?.image}

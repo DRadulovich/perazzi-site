@@ -1,5 +1,5 @@
 import SafeHtml from "@/components/SafeHtml";
-import { Text } from "@/components/ui/text";
+import { Section, Text } from "@/components/ui";
 
 type ProcessNoteProps = {
   title: string;
@@ -13,8 +13,8 @@ export function ProcessNote({
   dataAnalyticsId = "ProcessNote",
 }: Readonly<ProcessNoteProps>) {
   return (
-    <section
-      className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10"
+    <Section
+      padding="md"
       aria-labelledby="process-note-heading"
       data-analytics-id={dataAnalyticsId}
     >
@@ -32,6 +32,6 @@ export function ProcessNote({
           html={html}
         />
       </div>
-    </section>
+    </Section>
   );
 }

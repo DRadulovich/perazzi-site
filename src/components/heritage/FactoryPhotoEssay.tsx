@@ -7,8 +7,7 @@ import Image from "next/image";
 import type { FactoryEssayItem, FactoryEssayUi } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
-import { Heading } from "@/components/ui/heading";
-import { Text } from "@/components/ui/text";
+import { Heading, Section, Text } from "@/components/ui";
 
 type FactoryPhotoEssayProps = Readonly<{
   readonly items: readonly FactoryEssayItem[];
@@ -61,10 +60,11 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
   }, [items, openIndex]);
 
   return (
-    <section
+    <Section
       ref={sectionRef}
       data-analytics-id="FactoryPhotoEssaySeen"
-      className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 sm:shadow-md lg:px-10"
+      padding="md"
+      className="space-y-6"
       aria-labelledby="factory-essay-heading"
     >
       <div className="space-y-2">
@@ -164,7 +164,7 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
           </Dialog.Portal>
         </Dialog.Root>
       ) : null}
-    </section>
+    </Section>
   );
 }
 

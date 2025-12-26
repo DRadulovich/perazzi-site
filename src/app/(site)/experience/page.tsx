@@ -10,7 +10,7 @@ import { CTASection } from "@/components/shotguns/CTASection";
 import { getExperiencePageData } from "@/lib/experience-data";
 import { getExperienceNetworkData } from "@/sanity/queries/experience";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
-import { Heading, Text } from "@/components/ui";
+import { Container, Heading, Section, Text } from "@/components/ui";
 import type { FAQItem } from "@/types/experience";
 
 export default async function ExperiencePage() {
@@ -159,16 +159,21 @@ export default async function ExperiencePage() {
         ]}
       />
       <ExperiencePicker items={pickerItems} faqSection={faqSection} pickerUi={pickerUi} />
-      <section
+      <Section
         id="experience-visit-planning"
-        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden border-t border-border bg-canvas py-10 sm:py-16"
+        padding="lg"
+        bordered={false}
+        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none border-t border-border bg-canvas shadow-none"
         style={{
           marginLeft: "calc(50% - 50vw)",
           marginRight: "calc(50% - 50vw)",
         }}
         aria-labelledby="experience-visit-planning-heading"
       >
-        <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
+        <Container
+          size="xl"
+          className="flex flex-col gap-10 px-0 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16"
+        >
           <div className="space-y-4 text-ink">
             <Heading
               id="experience-visit-planning-heading"
@@ -220,19 +225,24 @@ export default async function ExperiencePage() {
               {visitPlanningClosing}
             </Text>
           </div>
-        </div>
-      </section>
+        </Container>
+      </Section>
       <VisitFactory visitFactorySection={visitFactorySection} />
-      <section
+      <Section
         id="experience-booking-guide"
-        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden border-t border-border bg-canvas py-10 sm:py-16"
+        padding="lg"
+        bordered={false}
+        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none border-t border-border bg-canvas shadow-none"
         style={{
           marginLeft: "calc(50% - 50vw)",
           marginRight: "calc(50% - 50vw)",
         }}
         aria-labelledby="experience-booking-guide-heading"
       >
-        <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
+        <Container
+          size="xl"
+          className="flex flex-col gap-10 px-0 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16"
+        >
           <div className="space-y-4 text-ink">
             <Heading
               id="experience-booking-guide-heading"
@@ -284,19 +294,24 @@ export default async function ExperiencePage() {
               {fittingGuidanceClosing}
             </Text>
           </div>
-        </div>
-      </section>
+        </Container>
+      </Section>
       <BookingOptions bookingSection={bookingSection} />
-      <section
+      <Section
         id="experience-travel-guide"
-        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden border-t border-border bg-canvas py-10 sm:py-16"
+        padding="lg"
+        bordered={false}
+        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none border-t border-border bg-canvas shadow-none"
         style={{
           marginLeft: "calc(50% - 50vw)",
           marginRight: "calc(50% - 50vw)",
         }}
         aria-labelledby="experience-travel-guide-heading"
       >
-        <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
+        <Container
+          size="xl"
+          className="flex flex-col gap-10 px-0 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16"
+        >
           <div className="space-y-4 text-ink">
             <Heading
               id="experience-travel-guide-heading"
@@ -348,8 +363,8 @@ export default async function ExperiencePage() {
               {travelClosing}
             </Text>
           </div>
-        </div>
-      </section>
+        </Container>
+      </Section>
       <TravelNetwork data={networkData} ui={travelNetworkUi} />
       <MosaicGallery assets={mosaic} mosaicUi={mosaicUi} />
       <CTASection

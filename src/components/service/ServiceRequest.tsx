@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Heading, Input, Text } from "@/components/ui";
+import { Button, Heading, Input, Section, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 
@@ -30,10 +30,11 @@ export function ServiceRequest({
   const [error, setError] = useState("");
 
   return (
-    <section
+    <Section
       ref={analyticsRef}
       data-analytics-id={`${analyticsOpenId}Seen`}
-      className="space-y-3 rounded-3xl border border-border/70 bg-card px-6 py-8 shadow-sm sm:px-10"
+      padding="md"
+      className="space-y-3"
     >
       <div className="space-y-2">
         <Heading level={2} size="xl" className="text-ink">
@@ -94,6 +95,6 @@ export function ServiceRequest({
           <span className="sr-only"> (opens in a new tab)</span>
         </a>
       </Text>
-    </section>
+    </Section>
   );
 }

@@ -7,8 +7,7 @@ import { EngravingGradesCarousel } from "@/components/shotguns/EngravingGradesCa
 import { getShotgunsSectionData } from "@/lib/shotguns-data";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
 import Link from "next/link";
-import { Heading } from "@/components/ui/heading";
-import { Text } from "@/components/ui/text";
+import { Container, Heading, Section, Text } from "@/components/ui";
 
 export default async function ShotgunsLandingPage() {
   const { landing, grades } = await getShotgunsSectionData();
@@ -114,11 +113,16 @@ export default async function ShotgunsLandingPage() {
     <div className="space-y-5">
       <LandingHero hero={landing.hero} />
       <PlatformGrid platforms={landing.platforms} ui={landing.platformGridUi} />
-      <section
-        className="border-t border-border bg-canvas py-10 sm:py-16"
+      <Section
+        padding="lg"
+        bordered={false}
+        className="rounded-none border-t border-border bg-canvas shadow-none"
         aria-labelledby="discipline-fit-heading"
       >
-        <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
+        <Container
+          size="xl"
+          className="flex flex-col gap-10 px-0 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16"
+        >
           <div className="space-y-4 text-ink">
             <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
               {disciplineFit.eyebrow ?? "Discipline fit"}
@@ -169,8 +173,8 @@ export default async function ShotgunsLandingPage() {
               {disciplineClosing}
             </Text>
           </div>
-        </div>
-      </section>
+        </Container>
+      </Section>
       <a className="skip-link" href="#discipline-rail-heading">
         Skip to disciplines
       </a>
@@ -179,11 +183,16 @@ export default async function ShotgunsLandingPage() {
         platforms={landing.platforms}
         ui={landing.disciplineRailUi}
       />
-      <section
-        className="border-t border-border bg-canvas py-10 sm:py-16"
+      <Section
+        padding="lg"
+        bordered={false}
+        className="rounded-none border-t border-border bg-canvas shadow-none"
         aria-labelledby="gauge-primer-heading"
       >
-        <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
+        <Container
+          size="xl"
+          className="flex flex-col gap-10 px-0 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16"
+        >
           <div className="space-y-4 text-ink">
             <Heading
               id="gauge-primer-heading"
@@ -234,14 +243,19 @@ export default async function ShotgunsLandingPage() {
                 ?? "We’ll tailor gauge choice to your primary discipline, preferred swing, and how you like a gun to absorb recoil."}
             </Text>
           </div>
-        </div>
-      </section>
+        </Container>
+      </Section>
       <TriggerExplainer explainer={landing.triggerExplainer} />
-      <section
-        className="border-t border-border bg-canvas py-10 sm:py-16"
+      <Section
+        padding="lg"
+        bordered={false}
+        className="rounded-none border-t border-border bg-canvas shadow-none"
         aria-labelledby="trigger-choice-heading"
       >
-        <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
+        <Container
+          size="xl"
+          className="flex flex-col gap-10 px-0 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16"
+        >
           <div className="space-y-4 text-ink">
             <Heading
               id="trigger-choice-heading"
@@ -298,8 +312,8 @@ export default async function ShotgunsLandingPage() {
                 ?? "We’ll align trigger choice to your platform, discipline rhythm, and how you like your release to feel under pressure."}
             </Text>
           </div>
-        </div>
-      </section>
+        </Container>
+      </Section>
       <EngravingGradesCarousel grades={grades} ui={landing.engravingCarouselUi} />
       <CTASection
         text="Begin your fitting with the Botticino atelier—matching balance, trigger feel, and engraving to your rhythm."

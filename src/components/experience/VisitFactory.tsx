@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger, Heading, Text } from "@/components/ui";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, Container, Heading, Section, Text } from "@/components/ui";
 
 type VisitFactoryProps = {
   readonly visitFactorySection: VisitFactoryData;
@@ -68,8 +68,8 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
+      <Container size="xl" className="relative z-10">
+        <Section padding="md" className="space-y-6 bg-card/40">
           <div className="space-y-2">
             <Heading
               id="visit-factory-heading"
@@ -199,8 +199,8 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
               </Button>
             </div>
           </div>
-        </div>
-      </div>
+        </Section>
+      </Container>
     </section>
   );
 }

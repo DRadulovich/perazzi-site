@@ -9,8 +9,7 @@ import rehypeSanitize from "rehype-sanitize";
 import type { Platform, ShotgunsLandingData } from "@/types/catalog";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
-import { Heading } from "@/components/ui/heading";
-import { Text } from "@/components/ui/text";
+import { Container, Heading, Section, Text } from "@/components/ui";
 
 type DisciplineCard = ShotgunsLandingData["disciplines"][number];
 
@@ -190,8 +189,8 @@ export function DisciplineRail({
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
+      <Container size="xl" className="relative z-10">
+        <Section padding="md" className="space-y-6 bg-card/40">
           <div className="space-y-3">
             <Heading
               id="discipline-rail-heading"
@@ -293,7 +292,7 @@ export function DisciplineRail({
               )}
             </div>
           </div>
-        </div>
+        </Section>
 
         {modelModalOpen && selectedModel ? (
           <div
@@ -373,7 +372,7 @@ export function DisciplineRail({
             </output>
           </Text>
         ) : null}
-      </div>
+      </Container>
     </section>
   );
 }

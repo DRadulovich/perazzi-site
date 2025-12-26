@@ -51,8 +51,8 @@ export default async function FullScreenChatPage({ searchParams }: FullScreenCha
   return (
     <SiteShell
       showChatWidget={false}
-      mainClassName="flex-1 px-0 py-0 flex"
-      contentClassName="mx-auto flex w-full max-w-7xl flex-1 flex-col"
+      mainClassName="flex flex-1 py-0"
+      contentClassName="flex w-full flex-1 flex-col max-w-none px-0"
     >
       <div className="border-b border-subtle bg-card px-6 py-6 sm:px-8 sm:py-8 lg:px-12">
         <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">

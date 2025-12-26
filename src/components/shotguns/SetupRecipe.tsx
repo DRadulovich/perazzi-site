@@ -4,9 +4,7 @@ import { useState } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import type { DisciplineSummary } from "@/types/catalog";
 import { logAnalytics } from "@/lib/analytics";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
-import { Heading } from "@/components/ui/heading";
-import { Text } from "@/components/ui/text";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, Heading, Section, Text } from "@/components/ui";
 
 type SetupRecipeProps = DisciplineSummary["recipe"] & {
   defaultExpanded?: boolean;
@@ -23,10 +21,7 @@ export function SetupRecipe({
   const resolvedOpen = isDesktop ? true : manualOpen;
 
   return (
-    <section
-      className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10"
-      aria-labelledby="setup-recipe-heading"
-    >
+    <Section padding="md" aria-labelledby="setup-recipe-heading">
       <Collapsible
         open={resolvedOpen}
         onOpenChange={(next) => {
@@ -78,6 +73,6 @@ export function SetupRecipe({
           </dl>
         </CollapsibleContent>
       </Collapsible>
-    </section>
+    </Section>
   );
 }

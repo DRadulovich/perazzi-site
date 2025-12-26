@@ -8,7 +8,7 @@ import type { FAQItem, PickerItem, PickerUi } from "@/types/experience";
 import { FAQList } from "./FAQList";
 import { logAnalytics } from "@/lib/analytics";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
-import { Heading, Text } from "@/components/ui";
+import { Container, Heading, Section, Text } from "@/components/ui";
 
 type ExperiencePickerProps = {
   readonly items: PickerItem[];
@@ -104,8 +104,8 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
+      <Container size="xl" className="relative z-10">
+        <Section padding="md" className="space-y-6 bg-card/40">
           <div className="space-y-2">
             <Heading
               id="experience-picker-heading"
@@ -136,8 +136,8 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
               <FAQList items={faqItems} embedded heading={faqHeading} lead={faqLead} />
             </div>
           ) : null}
-        </div>
-      </div>
+        </Section>
+      </Container>
     </section>
   );
 }

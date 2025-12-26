@@ -1,5 +1,5 @@
 import type { ShotgunsSeriesEntry } from "@/types/catalog";
-import { Heading, Text } from "@/components/ui";
+import { Heading, Section, Text } from "@/components/ui";
 
 type AtAGlanceStripProps = Readonly<{
   data: ShotgunsSeriesEntry["atAGlance"];
@@ -7,10 +7,7 @@ type AtAGlanceStripProps = Readonly<{
 
 export function AtAGlanceStrip({ data }: AtAGlanceStripProps) {
   return (
-    <section
-      className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10"
-      aria-labelledby="at-a-glance-heading"
-    >
+    <Section padding="md" aria-labelledby="at-a-glance-heading">
       <Heading id="at-a-glance-heading" level={2} size="lg" className="text-ink">
         At a glance
       </Heading>
@@ -66,6 +63,6 @@ export function AtAGlanceStrip({ data }: AtAGlanceStripProps) {
           ))}
         </div>
       ) : null}
-    </section>
+    </Section>
   );
 }

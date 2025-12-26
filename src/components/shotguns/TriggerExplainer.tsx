@@ -7,9 +7,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import type { ShotgunsLandingData } from "@/types/catalog";
 import { logAnalytics } from "@/lib/analytics";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
-import { Heading } from "@/components/ui/heading";
-import { Text } from "@/components/ui/text";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, Container, Heading, Section, Text } from "@/components/ui";
 
 type TriggerExplainerProps = Readonly<{
   explainer: ShotgunsLandingData["triggerExplainer"];
@@ -63,8 +61,8 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
+      <Container size="xl" className="relative z-10">
+        <Section padding="md" className="space-y-6 bg-card/40">
           <Collapsible
             open={resolvedOpen}
             onOpenChange={(next) => {
@@ -151,8 +149,8 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
               </figure>
             </CollapsibleContent>
           </Collapsible>
-        </div>
-      </div>
+        </Section>
+      </Container>
     </section>
   );
 }

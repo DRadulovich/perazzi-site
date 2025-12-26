@@ -4,8 +4,8 @@ import { SiteShell } from "@/components/site-shell";
 export default function BespokeLayout({ children }: { children: ReactNode }) {
   return (
     <SiteShell
-      // Drop top padding so the full-bleed hero sits flush under the nav; keep standard lateral padding for the rest.
-      mainClassName="flex-1 px-4 pb-10 pt-0 sm:px-6 sm:pb-12 lg:px-12"
+      // Drop top padding so the full-bleed hero sits flush under the nav.
+      mainClassName="flex-1 pb-10 pt-0 sm:pb-12"
     >
       {children}
     </SiteShell>

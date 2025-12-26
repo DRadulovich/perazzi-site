@@ -6,7 +6,7 @@ import type { FAQItem } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger, Heading, Text } from "@/components/ui";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, Heading, Section, Text } from "@/components/ui";
 
 type FAQListProps = Readonly<{
   items: readonly FAQItem[];
@@ -23,10 +23,11 @@ export function FAQList({ items, heading, intro }: FAQListProps) {
   const lead = intro;
 
   return (
-    <section
+    <Section
       ref={analyticsRef}
       data-analytics-id="ServiceFAQSeen"
-      className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 sm:shadow-md lg:px-10"
+      padding="md"
+      className="space-y-6"
       aria-labelledby="service-faq-heading"
     >
       <div className="space-y-2">
@@ -47,7 +48,7 @@ export function FAQList({ items, heading, intro }: FAQListProps) {
           <FAQItemCard key={item.q} item={item} index={index} />
         ))}
       </div>
-    </section>
+    </Section>
   );
 }
 

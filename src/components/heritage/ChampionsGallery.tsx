@@ -7,8 +7,7 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
-import { Heading } from "@/components/ui/heading";
-import { Text } from "@/components/ui/text";
+import { Container, Heading, Section, Text } from "@/components/ui";
 
 type ChampionsGalleryProps = Readonly<{
   champions: ChampionEvergreen[];
@@ -50,11 +49,11 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
 
   if (!verified.length) {
     return (
-      <section className="rounded-2xl border border-border/60 bg-card/10 px-4 py-6 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8">
+      <Section padding="md">
         <blockquote className="text-base sm:text-lg italic leading-relaxed text-ink">
           “Perazzi heritage is carried by every athlete who chooses calm precision.”
         </blockquote>
-      </section>
+      </Section>
     );
   }
 
@@ -104,8 +103,8 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
       </div>
 
       {/* Foreground glass container */}
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+      <Container size="xl" className="relative z-10">
+        <Section padding="md" className="space-y-6 bg-card/10">
           <div className="space-y-2">
             <Heading
               id="heritage-champions-heading"
@@ -222,8 +221,8 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
               </AnimatePresence>
             </div>
           </div>
-        </div>
-      </div>
+        </Section>
+      </Container>
     </section>
   );
 }

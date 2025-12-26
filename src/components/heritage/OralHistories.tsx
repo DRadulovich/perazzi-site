@@ -8,9 +8,7 @@ import type { OralHistoriesUi, OralHistory } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
-import { Heading } from "@/components/ui/heading";
-import { Text } from "@/components/ui/text";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, Heading, Section, Text } from "@/components/ui";
 
 const FALLBACK_TRACK_SRC = `data:text/vtt;charset=utf-8,${encodeURIComponent(
   "WEBVTT\n\n00:00:00.000 --> 00:00:01.000\nCaptions not available.",
@@ -54,10 +52,11 @@ export function OralHistories({ histories, ui }: OralHistoriesProps) {
   const hideLabel = ui.hideLabel ?? "Hide transcript";
 
   return (
-    <section
+    <Section
       ref={sectionRef}
       data-analytics-id="OralHistoriesSeen"
-      className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8"
+      padding="md"
+      className="space-y-6"
       aria-labelledby="oral-histories-heading"
     >
       <div className="space-y-2">
@@ -78,7 +77,7 @@ export function OralHistories({ histories, ui }: OralHistoriesProps) {
           />
         ))}
       </div>
-    </section>
+    </Section>
   );
 }
 

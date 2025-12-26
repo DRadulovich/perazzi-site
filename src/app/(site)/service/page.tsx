@@ -11,7 +11,7 @@ import { FAQList } from "@/components/service/FAQList";
 import { CTASection } from "@/components/shotguns/CTASection";
 import { getServicePageData } from "@/lib/service-data";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
-import { Text } from "@/components/ui";
+import { Section, Text } from "@/components/ui";
 
 export default async function ServicePage() {
   const {
@@ -67,10 +67,7 @@ export default async function ServicePage() {
         ]}
       />
       <ServiceOverview overview={overviewSection} />
-      <section
-        className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-5"
-        aria-labelledby="service-guidance-heading"
-      >
+      <Section padding="md" aria-labelledby="service-guidance-heading">
         <Text asChild size="xs" muted className="font-semibold">
           <h2 id="service-guidance-heading">
             {serviceGuidanceBlock.eyebrow ?? "Service guidance"}
@@ -91,7 +88,7 @@ export default async function ServicePage() {
             }}
           />
         </div>
-      </section>
+      </Section>
       <ServiceNetworkFinder locations={locations} ui={networkFinderUi} />
       <MaintenanceRepairs maintenanceSection={maintenanceSection} guide={guidesSection.guides[0]} />
       <PartsEditorial partsEditorialSection={partsEditorialSection} />
@@ -104,10 +101,7 @@ export default async function ServicePage() {
         fallbackHref={serviceRequestBlock.fallbackUrl}
         analyticsOpenId="RequestServiceOpen"
       />
-      <section
-        className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-5"
-        aria-labelledby="service-shipping-heading"
-      >
+      <Section padding="md" aria-labelledby="service-shipping-heading">
         <Text asChild size="xs" muted className="font-semibold">
           <h2 id="service-shipping-heading">
             {shippingPrepBlock.eyebrow ?? "Shipping prep"}
@@ -128,7 +122,7 @@ export default async function ServicePage() {
             }}
           />
         </div>
-      </section>
+      </Section>
       <PartsRequest partsRequestBlock={partsRequestBlock} />
       <CareGuidesDownloads guidesSection={guidesSection} />
       <FAQList items={faqItems} heading={faqSection.heading} intro={faqSection.intro} />

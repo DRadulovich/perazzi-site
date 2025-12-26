@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import type { AuthorizedDealerEntry, ExperienceNetworkData, ScheduledEventEntry, TravelNetworkUi } from "@/types/experience";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
-import { Heading, Text } from "@/components/ui";
+import { Container, Heading, Section, Text } from "@/components/ui";
 import Image from "next/image";
 
 type TabKey = "schedule" | "dealers";
@@ -92,8 +92,8 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
+      <Container size="xl" className="relative z-10">
+        <Section padding="md" className="space-y-6 bg-card/40">
           <div className="space-y-3">
             <Heading
               id="travel-network-heading"
@@ -144,8 +144,8 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
               <DealerList dealers={data.dealers} emptyText={emptyDealersText} />
             )}
           </div>
-        </div>
-      </div>
+        </Section>
+      </Container>
     </section>
   );
 }

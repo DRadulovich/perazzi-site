@@ -1,5 +1,4 @@
-import { Heading } from "@/components/ui/heading";
-import { Text } from "@/components/ui/text";
+import { Heading, Section, Text } from "@/components/ui";
 
 type PrimerBlockProps = {
   readonly copy: string;
@@ -9,10 +8,7 @@ type PrimerBlockProps = {
 
 export function PrimerBlock({ copy, href, bullets }: PrimerBlockProps) {
   return (
-    <section
-      data-analytics-id="ShotgunsGaugesCTA"
-      className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10"
-    >
+    <Section data-analytics-id="ShotgunsGaugesCTA" padding="md">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-3">
           <Heading
@@ -38,6 +34,6 @@ export function PrimerBlock({ copy, href, bullets }: PrimerBlockProps) {
           <span aria-hidden="true">→</span>
         </a>
       </div>
-    </section>
+    </Section>
   );
 }
