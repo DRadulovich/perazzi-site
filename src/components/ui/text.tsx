@@ -6,11 +6,11 @@ const sizeClasses = {
   // Large body / emphasis text: slightly larger on bigger screens
   lg: "text-base sm:text-lg",
   // Default body text: mobile-first, scales up at sm+
-  md: "text-sm sm:text-base",
+  md: "text-sm sm:text-base font-light",
   // Secondary body / compact text
-  sm: "text-xs sm:text-sm",
+  sm: "text-sm sm:text-sm",
   // Microcopy: uppercase, tracked, mobile-first
-  xs: "text-[11px] sm:text-xs tracking-[0.3em] uppercase",
+  xs: "text-[12px] sm:text-sm tracking-[0.35em] uppercase",
 } as const;
 
 const leadingClasses = {
