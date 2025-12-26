@@ -5,9 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Popover from "@radix-ui/react-popover";
-import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
-import type { Dispatch, PointerEvent as ReactPointerEvent, ReactElement, SetStateAction } from "react";
-import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import type { Dispatch, ReactElement, SetStateAction } from "react";
+import { useId, useState, useSyncExternalStore } from "react";
 import { ArrowRight, ChevronDown, Menu, UserRound, X } from "lucide-react";
 import useMeasure from "react-use-measure";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -25,19 +25,43 @@ type NavTone = "light" | "dark";
 
 type PrimaryNavProps = Readonly<{
   brandLabel: string;
+  ariaLabel: string;
   variant?: "brand" | "transparent";
 }>;
 
-export function PrimaryNav({ brandLabel, variant = "brand" }: PrimaryNavProps) {
+const SCROLL_THRESHOLD = 160;
+
+const getScrollSnapshot = () => {
+  const globalWindow: Window | undefined = globalThis.window;
+  return globalWindow === undefined ? 0 : globalWindow.scrollY;
+};
+const getScrollServerSnapshot = () => 0;
+const subscribeToScroll = (callback: () => void) => {
+  const globalWindow: Window | undefined = globalThis.window;
+  if (globalWindow === undefined) return () => {};
+  const onScroll = () => callback();
+  globalWindow.addEventListener("scroll", onScroll, { passive: true });
+  globalWindow.addEventListener("resize", onScroll);
+  globalWindow.addEventListener("orientationchange", onScroll);
+  globalWindow.addEventListener("pageshow", onScroll);
+  globalWindow.addEventListener("popstate", onScroll);
+  globalWindow.addEventListener("hashchange", onScroll);
+  return () => {
+    globalWindow.removeEventListener("scroll", onScroll);
+    globalWindow.removeEventListener("resize", onScroll);
+    globalWindow.removeEventListener("orientationchange", onScroll);
+    globalWindow.removeEventListener("pageshow", onScroll);
+    globalWindow.removeEventListener("popstate", onScroll);
+    globalWindow.removeEventListener("hashchange", onScroll);
+  };
+};
+
+export function PrimaryNav({ brandLabel, ariaLabel, variant = "brand" }: PrimaryNavProps) {
   const pathname = usePathname();
-  const [scrolled, setScrolled] = useState(false);
-  const { scrollY } = useScroll();
+  const scrollY = useSyncExternalStore(subscribeToScroll, getScrollSnapshot, getScrollServerSnapshot);
+  const scrolled = scrollY > SCROLL_THRESHOLD;
   const isTransparent = variant === "transparent";
   const tone: NavTone = isTransparent ? "dark" : "light";
-
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    setScrolled(latest > 160);
-  });
 
   let navBackground = "bg-perazzi-red";
   if (isTransparent) {
@@ -55,6 +79,7 @@ export function PrimaryNav({ brandLabel, variant = "brand" }: PrimaryNavProps) {
 
   return (
     <nav
+      aria-label={ariaLabel}
       className={`w-full transition-all ${navBackground} ${navShadow} ${navText}`}
     >
       <Container size="xl" className="flex items-center justify-between gap-4 py-4">
@@ -65,7 +90,12 @@ export function PrimaryNav({ brandLabel, variant = "brand" }: PrimaryNavProps) {
           <ThemeToggle variant={tone === "light" ? "inverted" : "default"} />
         </div>
         <div className="flex items-center gap-3 lg:hidden">
-          <MobileMenu pathname={pathname ?? "/"} brandLabel={brandLabel} tone={tone} />
+          <MobileMenu
+            pathname={pathname ?? "/"}
+            brandLabel={brandLabel}
+            ariaLabel={ariaLabel}
+            tone={tone}
+          />
           <ThemeToggle variant={tone === "light" ? "ghost" : "default"} />
         </div>
       </Container>
@@ -97,9 +127,6 @@ const Links = ({ pathname, tone }: { pathname: string; tone: NavTone }) => (
 
 const NavLink = ({ item, pathname, tone }: { item: NavItem; pathname: string; tone: NavTone }) => {
   const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLDivElement>(null);
-  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const openReasonRef = useRef<"pointer" | "focus" | null>(null);
   const FlyoutContent = item.component;
   const hasFlyout = Boolean(FlyoutContent);
   const showFlyout = Boolean(FlyoutContent && open);
@@ -110,49 +137,9 @@ const NavLink = ({ item, pathname, tone }: { item: NavItem; pathname: string; to
   const inactiveTextClass = tone === "light" ? "text-white/70 hover:text-white" : "text-ink/70 hover:text-ink";
   const linkTextClass = isActive ? activeTextClass : inactiveTextClass;
 
-  const clearCloseTimeout = () => {
-    if (closeTimeoutRef.current) {
-      clearTimeout(closeTimeoutRef.current);
-      closeTimeoutRef.current = null;
-    }
-  };
-
-  const scheduleClose = () => {
-    clearCloseTimeout();
-    closeTimeoutRef.current = setTimeout(() => setOpen(false), 120);
-  };
-
-  useEffect(() => () => clearCloseTimeout(), []);
-
-  useEffect(() => {
-    if (!open) {
-      openReasonRef.current = null;
-      clearCloseTimeout();
-    }
-  }, [open]);
-
-  const handlePointerEnter = (event: ReactPointerEvent<HTMLElement>) => {
-    if (event.pointerType !== "mouse") return;
-    openReasonRef.current = "pointer";
-    clearCloseTimeout();
-    setOpen(true);
-  };
-
-  const handlePointerLeave = (event: ReactPointerEvent<HTMLElement>) => {
-    if (event.pointerType !== "mouse") return;
-    if (openReasonRef.current !== "pointer") return;
-    scheduleClose();
-  };
-
-  const handleFocusCapture = () => {
-    openReasonRef.current = "focus";
-    clearCloseTimeout();
-    setOpen(true);
-  };
-
   if (!hasFlyout || !FlyoutContent) {
     return (
-      <div ref={triggerRef} className="relative">
+      <div className="relative">
         <Link
           href={item.href}
           className={`relative text-sm font-semibold transition-colors ${linkTextClass}`}
@@ -172,11 +159,7 @@ const NavLink = ({ item, pathname, tone }: { item: NavItem; pathname: string; to
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
       <div
-        ref={triggerRef}
         className="relative flex items-center gap-1"
-        onPointerEnter={handlePointerEnter}
-        onPointerLeave={handlePointerLeave}
-        onFocusCapture={handleFocusCapture}
       >
         {/*
           Switch link treatment so transparent variant remains legible on light admin backgrounds.
@@ -218,14 +201,6 @@ const NavLink = ({ item, pathname, tone }: { item: NavItem; pathname: string; to
           align="center"
           sideOffset={12}
           className="z-20 text-ink"
-          onPointerEnter={handlePointerEnter}
-          onPointerLeave={handlePointerLeave}
-          onFocusCapture={handleFocusCapture}
-          onInteractOutside={(event) => {
-            if (triggerRef.current?.contains(event.target as Node | null)) {
-              event.preventDefault();
-            }
-          }}
         >
           <AnimatePresence>
             {showFlyout && (
@@ -487,10 +462,12 @@ const HERITAGE_LINKS = [
 const MobileMenu = ({
   pathname,
   brandLabel,
+  ariaLabel,
   tone,
 }: {
   pathname: string;
   brandLabel: string;
+  ariaLabel: string;
   tone: NavTone;
 }) => {
   const [open, setOpen] = useState(false);
@@ -512,6 +489,7 @@ const MobileMenu = ({
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-60 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
           <Dialog.Content className="fixed inset-y-0 right-0 z-70 flex w-full max-w-sm flex-col outline-none translate-x-full transition-transform duration-200 data-[state=open]:translate-x-0">
+            <Dialog.Title className="sr-only">{ariaLabel}</Dialog.Title>
             <div className="flex h-full flex-col border-l border-border bg-card/95 text-ink shadow-elevated outline-none backdrop-blur-xl">
               <div className="flex items-center justify-between border-b border-border px-6 py-4">
                 <Logo label={brandLabel} />
@@ -556,6 +534,7 @@ const MobileMenuLink = ({
 }) => {
   const hasFold = Boolean(item.component);
   const [open, setOpen] = useState(false);
+  const contentId = useId();
   const [ref, { height }] = useMeasure();
   const FlyoutContent = item.component;
   const isActive = item.href === "/"
@@ -576,8 +555,11 @@ const MobileMenuLink = ({
         </Link>
         {hasFold ? (
           <button
+            type="button"
             onClick={() => setOpen((prev) => !prev)}
             aria-label={`Toggle ${item.text} links`}
+            aria-expanded={open}
+            aria-controls={contentId}
             className="inline-flex h-9 w-9 items-center justify-center rounded-full text-ink transition-colors hover:bg-ink/5 focus-ring"
           >
             <motion.div animate={{ rotate: open ? 180 : 0 }}>
@@ -590,6 +572,7 @@ const MobileMenuLink = ({
       </div>
       {hasFold && FlyoutContent && (
         <motion.div
+          id={contentId}
           initial={false}
           animate={{
             height: open ? height : 0,

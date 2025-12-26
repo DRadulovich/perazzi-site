@@ -127,7 +127,11 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
               {/* Header */}
               <header className="sticky top-0 z-50">
-                <PrimaryNav brandLabel={t("brand")} variant="transparent" />
+                <PrimaryNav
+                  brandLabel={t("brand")}
+                  ariaLabel={t("nav.ariaLabel")}
+                  variant="transparent"
+                />
               </header>
 
               {/* Desktop resizable layout & page content */}
