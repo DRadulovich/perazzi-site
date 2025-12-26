@@ -20,7 +20,7 @@ type BuildStepsScrollerProps = Readonly<{
   initialStepId?: string;
   onStepView?: (id: string) => void;
   onStepCta?: (id: string) => void;
-  pinnedBreakpoint?: "lg" | "xl";
+  pinnedBreakpoint?: "lg" | "xl"; // reserved for future layout options
   reduceMotion?: boolean;
   skipTargetId?: string;
 }>;
@@ -31,11 +31,9 @@ export function BuildStepsScroller({
   initialStepId,
   onStepView,
   onStepCta,
-  pinnedBreakpoint: _pinnedBreakpoint = "lg",
   reduceMotion,
   skipTargetId = "build-steps-end",
 }: BuildStepsScrollerProps) {
-  void _pinnedBreakpoint; // reserved for future responsive layout options
   const trackerRef = useAnalyticsObserver("BuildStepsSeen");
   const prefersReducedMotion = useReducedMotion();
   const shouldReduceMotion = reduceMotion ?? prefersReducedMotion;
@@ -49,8 +47,6 @@ export function BuildStepsScroller({
     initialStepId ?? mappedSteps[0]?.id
   );
   const [openStepId, setOpenStepId] = useState<string | undefined>(undefined);
-
-  // pinnedBreakpoint is accepted for future layout variants but not yet used
 
   const handleStepEnter = (stepId: string) => {
     setActiveStepId((prev) => (prev === stepId ? prev : stepId));

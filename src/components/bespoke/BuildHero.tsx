@@ -54,7 +54,7 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
             className="object-cover"
           />
         <div
-          className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"
+          className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-transparent"
           aria-hidden="true"
         />
       </motion.div>

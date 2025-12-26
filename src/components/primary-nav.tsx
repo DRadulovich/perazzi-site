@@ -39,19 +39,17 @@ export function PrimaryNav({ brandLabel, variant = "brand" }: PrimaryNavProps) {
     setScrolled(latest > 160);
   });
 
-  const navBackground = isTransparent
-    ? scrolled
-      ? "bg-card/80 backdrop-blur-md"
-      : "bg-transparent"
-    : "bg-perazzi-red";
+  let navBackground = "bg-perazzi-red";
+  if (isTransparent) {
+    navBackground = scrolled ? "bg-card/80 backdrop-blur-md" : "bg-transparent";
+  }
 
-  const navShadow = isTransparent
-    ? scrolled
-      ? "shadow-soft"
-      : "shadow-none"
-    : scrolled
-      ? "shadow-elevated"
-      : "shadow-soft";
+  let navShadow = "shadow-soft";
+  if (isTransparent) {
+    navShadow = scrolled ? "shadow-soft" : "shadow-none";
+  } else if (scrolled) {
+    navShadow = "shadow-elevated";
+  }
 
   const navText = tone === "light" ? "text-white" : "text-ink";
 
@@ -108,6 +106,9 @@ const NavLink = ({ item, pathname, tone }: { item: NavItem; pathname: string; to
   const isActive = item.href === "/"
     ? pathname === "/"
     : pathname === item.href || pathname.startsWith(`${item.href}/`);
+  const activeTextClass = tone === "light" ? "text-white" : "text-ink";
+  const inactiveTextClass = tone === "light" ? "text-white/70 hover:text-white" : "text-ink/70 hover:text-ink";
+  const linkTextClass = isActive ? activeTextClass : inactiveTextClass;
 
   const clearCloseTimeout = () => {
     if (closeTimeoutRef.current) {
@@ -154,15 +155,7 @@ const NavLink = ({ item, pathname, tone }: { item: NavItem; pathname: string; to
       <div ref={triggerRef} className="relative">
         <Link
           href={item.href}
-          className={`relative text-sm font-semibold transition-colors ${
-            isActive
-              ? tone === "light"
-                ? "text-white"
-                : "text-ink"
-              : tone === "light"
-                ? "text-white/70 hover:text-white"
-                : "text-ink/70 hover:text-ink"
-          }`}
+          className={`relative text-sm font-semibold transition-colors ${linkTextClass}`}
         >
           {item.text}
           <span
@@ -191,15 +184,7 @@ const NavLink = ({ item, pathname, tone }: { item: NavItem; pathname: string; to
         */}
         <Link
           href={item.href}
-          className={`relative text-sm font-semibold transition-colors ${
-            isActive
-              ? tone === "light"
-                ? "text-white"
-                : "text-ink"
-              : tone === "light"
-                ? "text-white/70 hover:text-white"
-                : "text-ink/70 hover:text-ink"
-          }`}
+          className={`relative text-sm font-semibold transition-colors ${linkTextClass}`}
           onClick={() => setOpen(false)}
         >
           {item.text}
