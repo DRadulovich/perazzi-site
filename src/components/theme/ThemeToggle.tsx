@@ -37,10 +37,10 @@ export function ThemeToggle({ variant = "default", className = "", ...props }: T
   );
 }
 
-function DarkModeThumb({ mode }: { mode: "light" | "dark" }) {
+function DarkModeThumb({ mode }: Readonly<{ mode: "light" | "dark" }>) {
   return (
     <div
-      className={`relative flex w-[3.5rem] items-center rounded-full border border-subtle transition-colors ${
+      className={`relative flex w-14 items-center rounded-full border border-subtle transition-colors ${
         mode === "light" ? "justify-end bg-white" : "justify-start bg-perazzi-black/90"
       }`}
     >
