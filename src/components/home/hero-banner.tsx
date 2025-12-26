@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { getImageProps } from "next/image";
 import Link from "next/link";
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -22,6 +22,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
   const sectionRef = useRef<HTMLElement | null>(null);
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const heroImageRef = useRef<HTMLImageElement | null>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
   const [mediaLoaded, setMediaLoaded] = useState(false);
   const [manifestoOpen, setManifestoOpen] = useState(false);
@@ -29,6 +30,43 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
   const prefersReducedMotion = useReducedMotion();
   const [reduceMotion, setReduceMotion] = useState(false);
   const heroHeading = hero.subheading ?? hero.tagline ?? "";
+  const heroSizes =
+    "(min-width: 1536px) 1400px, (min-width: 1280px) 1200px, (min-width: 1024px) 90vw, 100vw";
+
+  const handleMediaLoad = useCallback(() => {
+    setMediaLoaded(true);
+  }, []);
+
+  const { props: desktopImageProps } = getImageProps({
+    src: hero.background.url,
+    alt: hero.background.alt,
+    fill: true,
+    priority: true,
+    sizes: heroSizes,
+    className: "object-cover",
+  });
+
+  const tabletImageProps = hero.backgroundTablet
+    ? getImageProps({
+        src: hero.backgroundTablet.url,
+        alt: hero.backgroundTablet.alt,
+        fill: true,
+        priority: true,
+        sizes: heroSizes,
+        className: "object-cover",
+      }).props
+    : null;
+
+  const mobileImageProps = hero.backgroundMobile
+    ? getImageProps({
+        src: hero.backgroundMobile.url,
+        alt: hero.backgroundMobile.alt,
+        fill: true,
+        priority: true,
+        sizes: heroSizes,
+        className: "object-cover",
+      }).props
+    : null;
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -44,6 +82,14 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
   useEffect(() => {
     setReduceMotion(Boolean(prefersReducedMotion));
   }, [prefersReducedMotion]);
+
+  useEffect(() => {
+    if (mediaLoaded) return;
+    const img = heroImageRef.current;
+    if (img?.complete && img.naturalWidth > 0) {
+      setMediaLoaded(true);
+    }
+  }, [mediaLoaded]);
 
   useMotionValueEvent(scrollYProgress, "change", () => {
     // no-op; required for Framer to track parallax
@@ -167,21 +213,34 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
       aria-labelledby="home-hero-heading"
     >
       <motion.div
-        className="absolute inset-0"
+        className="absolute inset-0 home-hero-media"
         style={{
           y: reduceMotion ? "0%" : parallaxY,
         }}
       >
-        <Image
-          src={hero.background.url}
-          alt={hero.background.alt}
-          fill
-          priority
-          sizes="(min-width: 1536px) 1400px, (min-width: 1280px) 1200px, (min-width: 1024px) 90vw, 100vw"
-          className="object-cover"
-          onLoad={() => { setMediaLoaded(true); }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/75 to-black/0" />
+        <picture className="absolute inset-0">
+          {mobileImageProps ? (
+            <source
+              media="(max-width: 767px)"
+              srcSet={mobileImageProps.srcSet}
+              sizes={mobileImageProps.sizes}
+            />
+          ) : null}
+          {tabletImageProps ? (
+            <source
+              media="(min-width: 768px) and (max-width: 1024px)"
+              srcSet={tabletImageProps.srcSet}
+              sizes={tabletImageProps.sizes}
+            />
+          ) : null}
+          <img
+            {...desktopImageProps}
+            alt={hero.background.alt ?? ""}
+            ref={heroImageRef}
+            onLoad={handleMediaLoad}
+          />
+        </picture>
+        <div className="absolute inset-0 bg-linear-to-t from-black via-black/75 to-black/0" />
       </motion.div>
 
       <div className="relative z-10 flex flex-1">
@@ -225,7 +284,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
               />
               <Link
                 href={secondaryHref}
-                className="inline-flex items-center justify-center rounded-full border border-white/40 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-white/80 hover:text-white hover:border-white focus-ring"
+                className="inline-flex items-center justify-center rounded-full border border-white/30 bg-white/5 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-white/85 shadow-soft backdrop-blur-sm transition hover:border-white/50 hover:bg-white/10 hover:text-white focus-ring"
               >
                 {secondaryLabel}
               </Link>
@@ -243,7 +302,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
           initial={{ opacity: prefersReducedMotion ? 1 : 0 }}
           animate={{ opacity: 1 }}
           transition={overlayTransition}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6 text-center text-text"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 px-6 text-center text-white backdrop-blur-sm"
           aria-labelledby="manifesto-title"
           aria-modal="true"
           tabIndex={-1}
@@ -257,7 +316,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
             initial={prefersReducedMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={panelTransition}
-            className="max-w-2xl space-y-6 rounded-3xl bg-black/50 p-8 shadow-2xl ring-1 ring-white/10 backdrop-blur"
+            className="max-w-2xl space-y-6 rounded-3xl border border-white/10 bg-black/45 p-8 shadow-elevated ring-1 ring-white/10 backdrop-blur-xl"
           >
             <h2 id="manifesto-title" className="sr-only">
               Perazzi Manifesto

@@ -6,6 +6,7 @@ import type { FAQItem } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, Heading, Section, Text } from "@/components/ui";
 
 type FAQListProps = Readonly<{
   items: readonly FAQItem[];
@@ -22,26 +23,24 @@ export function FAQList({ items, heading, intro }: FAQListProps) {
   const lead = intro;
 
   return (
-    <section
+    <Section
       ref={analyticsRef}
       data-analytics-id="ServiceFAQSeen"
-      className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 sm:shadow-md lg:px-10"
+      padding="md"
+      className="space-y-6"
       aria-labelledby="service-faq-heading"
     >
       <div className="space-y-2">
-        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+        <Text size="xs" muted className="font-semibold">
           FAQ
-        </p>
-        <h2
-          id="service-faq-heading"
-          className="text-2xl sm:text-3xl font-semibold text-ink"
-        >
+        </Text>
+        <Heading id="service-faq-heading" level={2} size="xl" className="text-ink">
           {title}
-        </h2>
+        </Heading>
         {lead ? (
-          <p className="text-sm sm:text-base leading-relaxed text-ink-muted">
+          <Text size="md" muted leading="relaxed">
             {lead}
-          </p>
+          </Text>
         ) : null}
       </div>
       <div className="space-y-4">
@@ -49,7 +48,7 @@ export function FAQList({ items, heading, intro }: FAQListProps) {
           <FAQItemCard key={item.q} item={item} index={index} />
         ))}
       </div>
-    </section>
+    </Section>
   );
 }
 
@@ -66,18 +65,27 @@ function FAQItemCard({
   }, [open, index]);
 
   return (
-    <details
-      open={open}
-      onToggle={(event) => { setOpen(event.currentTarget.open); }}
-      className="rounded-2xl border border-border/75 bg-card/75 p-4 shadow-sm focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-perazzi-red"
-    >
-      <summary className="cursor-pointer text-sm font-semibold text-ink">
-        {item.q}
-      </summary>
-      <SafeHtml
-        className={cn("mt-2 text-sm leading-relaxed text-ink-muted")}
-        html={item.aHtml}
-      />
-    </details>
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div className="rounded-2xl border border-border/75 bg-card/75 p-4 shadow-soft focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-perazzi-red">
+        <CollapsibleTrigger className="flex w-full items-center justify-between text-left text-sm font-semibold text-ink">
+          {item.q}
+          <span
+            aria-hidden="true"
+            className={cn(
+              "text-lg transition-transform",
+              open ? "rotate-45" : "rotate-0",
+            )}
+          >
+            +
+          </span>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SafeHtml
+            className={cn("mt-2 text-sm leading-relaxed text-ink-muted")}
+            html={item.aHtml}
+          />
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
   );
 }

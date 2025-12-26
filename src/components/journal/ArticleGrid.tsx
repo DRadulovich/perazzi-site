@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import type { JournalCategoryData } from "@/types/journal";
 import type { JournalFilterState } from "@/lib/journal/filters";
 import { logAnalytics } from "@/lib/analytics";
+import { Heading, Text } from "@/components/ui";
 
 type ArticleGridProps = {
   readonly items: JournalCategoryData["items"];
@@ -88,10 +89,12 @@ export function ArticleGrid({
                 />
               </div>
               <div className="space-y-2 p-5">
-                <p className="text-xs uppercase tracking-[0.3em] text-ink-muted">
+                <Text size="xs" muted className="font-semibold">
                   {item.author} · {new Date(item.dateISO).toLocaleDateString()} · {item.readingTimeMins} min
-                </p>
-                <h3 className="text-lg font-semibold text-ink">{item.title}</h3>
+                </Text>
+                <Heading level={3} size="md" className="text-ink">
+                  {item.title}
+                </Heading>
                 {item.excerptHtml ? (
                   <SafeHtml
                     className="prose prose-sm text-ink-muted"

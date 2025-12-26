@@ -7,6 +7,7 @@ import { useMemo, useRef, useState, type MouseEvent } from "react";
 import type { FittingStage } from "@/types/build";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
+import { Heading, Text } from "@/components/ui";
 
 type BuildStepsScrollerProps = Readonly<{
   steps: FittingStage[];
@@ -19,7 +20,7 @@ type BuildStepsScrollerProps = Readonly<{
   initialStepId?: string;
   onStepView?: (id: string) => void;
   onStepCta?: (id: string) => void;
-  pinnedBreakpoint?: "lg" | "xl";
+  pinnedBreakpoint?: "lg" | "xl"; // reserved for future layout options
   reduceMotion?: boolean;
   skipTargetId?: string;
 }>;
@@ -30,11 +31,9 @@ export function BuildStepsScroller({
   initialStepId,
   onStepView,
   onStepCta,
-  pinnedBreakpoint: _pinnedBreakpoint = "lg",
   reduceMotion,
   skipTargetId = "build-steps-end",
 }: BuildStepsScrollerProps) {
-  void _pinnedBreakpoint; // reserved for future responsive layout options
   const trackerRef = useAnalyticsObserver("BuildStepsSeen");
   const prefersReducedMotion = useReducedMotion();
   const shouldReduceMotion = reduceMotion ?? prefersReducedMotion;
@@ -48,8 +47,6 @@ export function BuildStepsScroller({
     initialStepId ?? mappedSteps[0]?.id
   );
   const [openStepId, setOpenStepId] = useState<string | undefined>(undefined);
-
-  // pinnedBreakpoint is accepted for future layout variants but not yet used
 
   const handleStepEnter = (stepId: string) => {
     setActiveStepId((prev) => (prev === stepId ? prev : stepId));
@@ -139,23 +136,25 @@ export function BuildStepsScroller({
         />
       </div>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-7xl px-6 lg:px-10">
-        <div className="flex w-full flex-col gap-8 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+        <div className="relative z-10 mx-auto flex w-full max-w-7xl px-6 lg:px-10">
+        <div className="flex w-full flex-col gap-8 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-soft backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
           {/* Intro block */}
           <div className="max-w-3xl space-y-3 shrink-0">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-              {heading}
-            </p>
-            <h2
+            <Heading
               id="build-steps-heading"
-              className="text-sm sm:text-base font-light italic text-ink-muted"
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-ink"
             >
+              {heading}
+            </Heading>
+            <Text size="md" muted leading="relaxed" className="font-light italic">
               {subheading}
-            </h2>
-            <p className="max-w-xl text-sm sm:text-base leading-relaxed text-ink-muted">
+            </Text>
+            <Text size="md" muted leading="relaxed" className="max-w-xl">
               Scroll to move from moment to moment. Each step is a chapter in the
               ritual of building a Perazzi to your measure.
-            </p>
+            </Text>
             <div className="flex flex-wrap items-center gap-4">
               <a
                 href="#build-steps-sequence"
@@ -180,7 +179,7 @@ export function BuildStepsScroller({
               {/* Scroll-snap cards column */}
               <div className="relative flex-1">
                 <nav className="absolute inset-x-3 top-3 z-20 hidden lg:block sm:inset-x-4 lg:inset-x-6 lg:top-4">
-                  <div className="grid grid-flow-col auto-cols-fr items-center gap-2 rounded-2xl border border-border/75 bg-card/75 px-4 py-3 text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted shadow-sm backdrop-blur-sm">
+                  <div className="grid grid-flow-col auto-cols-fr items-center gap-2 rounded-2xl border border-border/75 bg-card/75 px-4 py-3 text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted shadow-soft backdrop-blur-md">
                     {mappedSteps.map((step, index) => {
                       const isActive = step.id === activeStepId;
                       const stepNumber = index + 1;
@@ -213,7 +212,7 @@ export function BuildStepsScroller({
                 </nav>
 
                 <div
-                  className="overflow-y-auto rounded-2xl border border-border/60 bg-card/25 shadow-sm snap-y snap-mandatory lg:pt-24 sm:rounded-3xl sm:border-border/70"
+                  className="overflow-y-auto rounded-2xl border border-border/70 bg-card/30 shadow-soft backdrop-blur-sm snap-y snap-mandatory lg:pt-24 sm:rounded-3xl"
                   ref={scrollContainerRef}
                   style={{ height: "80vh" }}
                 >
@@ -271,7 +270,7 @@ export function BuildStepsScroller({
 
                           {/* Foreground content */}
                           <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-10 sm:px-8 lg:px-12 lg:py-16">
-                            <div className="mx-auto max-w-3xl rounded-2xl border border-border/75 bg-card/75 p-5 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:p-6">
+                            <div className="mx-auto max-w-3xl rounded-2xl border border-border/75 bg-card/80 p-5 shadow-elevated ring-1 ring-border/70 backdrop-blur-md sm:rounded-3xl sm:p-6">
                               <button
                                 type="button"
                                 className="flex w-full flex-col items-start gap-3 text-left"
@@ -279,15 +278,17 @@ export function BuildStepsScroller({
                                 onClick={() => { toggleStepOpen(step.id); }}
                               >
                                 <div className="w-full space-y-1">
-                                  <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+                                  <Text size="xs" muted className="font-semibold">
                                     Step {index + 1} of {totalSteps}
-                                  </p>
-                                  <h3
+                                  </Text>
+                                  <Heading
                                     id={`build-step-heading-${step.id}`}
-                                    className="text-xl sm:text-2xl font-semibold text-ink"
+                                    level={3}
+                                    size="lg"
+                                    className="text-ink"
                                   >
                                     {step.title}
-                                  </h3>
+                                  </Heading>
                                 </div>
                                 <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red/70">
                                   {openStepId === step.id ? "Collapse" : "Read More"}

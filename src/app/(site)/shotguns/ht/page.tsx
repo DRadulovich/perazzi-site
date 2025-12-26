@@ -10,6 +10,8 @@ import { getShotgunsSectionData } from "@/lib/shotguns-data";
 import { platformToSeriesEntry } from "@/lib/platform-series";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
 import { buildPlatformPrompt } from "@/lib/platform-prompts";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 export default async function HighTechSeriesPage() {
   const { series, disciplines, landing } = await getShotgunsSectionData();
@@ -20,18 +22,19 @@ export default async function HighTechSeriesPage() {
     <div className="space-y-16">
       <SeriesHero hero={htSeries.hero} analyticsId="SeriesHero:ht" />
       <section
-        className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-5"
+        className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-soft sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-5"
         aria-labelledby="ht-platform-guidance-heading"
       >
-        <h2
-          id="ht-platform-guidance-heading"
+        <Heading
+          asChild
+          size="sm"
           className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted"
         >
-          Platform guidance
-        </h2>
-        <p className="mt-1 text-sm sm:text-base leading-relaxed text-ink">
+          <h2 id="ht-platform-guidance-heading">Platform guidance</h2>
+        </Heading>
+        <Text className="mt-1 text-ink">
           Questions about the High Tech Platform? Ask Perazzi.
-        </p>
+        </Text>
         <div className="mt-4">
           <ChatTriggerButton
             label="Ask about High Tech Platform"

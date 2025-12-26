@@ -2,13 +2,12 @@
 
 import Image from "next/image";
 import { useEffect, useRef } from "react";
-import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
-import rehypeSanitize from "rehype-sanitize";
 import { Button } from "@/components/ui/button";
+import { Heading, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import type { FittingStage } from "@/types/build";
+import SafeHtml from "@/components/SafeHtml";
 
 const swallowPlayError = () => {};
 
@@ -69,7 +68,7 @@ export function BuildStepItem({
 
   const media = (
     <div
-      className={`relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)] ${
+      className={`relative overflow-hidden rounded-2xl bg-(--color-canvas) ${
         isPinned ? "flex-1 h-full min-h-0 w-full" : ""
       }`}
       style={isPinned ? undefined : { aspectRatio: ratio }}
@@ -109,28 +108,29 @@ export function BuildStepItem({
   );
 
   const caption = step.captionHtml ? (
-    <figcaption className="rounded-2xl border border-border/60 bg-card/40 p-4 text-[11px] sm:text-xs leading-relaxed text-ink-muted">
-      <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-        {step.captionHtml}
-      </ReactMarkdown>
-    </figcaption>
+    <SafeHtml
+      as="figcaption"
+      className="rounded-2xl border border-border/70 bg-card/60 p-4 text-[11px] sm:text-xs leading-relaxed text-ink-muted shadow-soft backdrop-blur-sm"
+      html={step.captionHtml}
+    />
   ) : null;
 
   const header = (
     <header className="space-y-1">
-      <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+      <Text size="xs" muted className="font-semibold">
         Step {index + 1}
-      </span>
-      <h3 className="text-base sm:text-xl font-semibold text-ink">{step.title}</h3>
+      </Text>
+      <Heading level={3} size="md" className="text-ink">
+        {step.title}
+      </Heading>
     </header>
   );
 
   const description = (
-    <div className="prose prose-sm max-w-none leading-relaxed text-ink-muted">
-      <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-        {step.bodyHtml}
-      </ReactMarkdown>
-    </div>
+    <SafeHtml
+      className="prose prose-sm max-w-none leading-relaxed text-ink-muted"
+      html={step.bodyHtml}
+    />
   );
 
   const cta =
@@ -153,8 +153,8 @@ export function BuildStepItem({
       data-analytics-id={`BuildStepVisible:${step.id}`}
       className={
         isPinned
-          ? "grid h-full min-h-0 grid-rows-[minmax(0,1fr)_minmax(0,3fr)] gap-6 rounded-2xl bg-card/80 p-4 shadow-lg sm:rounded-3xl sm:p-6 sm:shadow-xl"
-          : "space-y-4 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:p-6"
+          ? "grid h-full min-h-0 grid-rows-[minmax(0,1fr)_minmax(0,3fr)] gap-6 rounded-2xl border border-border/70 bg-card/70 p-4 shadow-elevated ring-1 ring-border/70 backdrop-blur-sm sm:rounded-3xl sm:p-6"
+          : "space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-6"
       }
       aria-label={`Step ${index + 1}: ${step.title}`}
     >

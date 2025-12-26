@@ -1,17 +1,15 @@
 "use client";
 
-import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
-import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
-import rehypeSanitize from "rehype-sanitize";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, Heading, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 import type { BuildPageData, BookingOption, WhatToExpectItem } from "@/types/build";
+import SafeHtml from "@/components/SafeHtml";
 
 type BookingOptionsProps = Readonly<{
   booking: BuildPageData["booking"];
@@ -29,20 +27,19 @@ function BookingOptionCard({ option }: BookingOptionCardProps) {
     <article
       ref={optionRef}
       data-analytics-id={`BookingOptionSeen:${option.id}`}
-      className="flex h-full flex-col rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm transition-shadow hover:shadow-md sm:rounded-3xl sm:border-border/70 sm:bg-card sm:p-6"
+      className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm transition-shadow hover:shadow-elevated sm:rounded-3xl sm:bg-card/80 sm:p-6"
     >
       <div className="space-y-2">
-        <h3 className="text-base sm:text-lg font-semibold text-ink">
+        <Heading level={3} size="sm" className="text-ink">
           {option.title}
-        </h3>
-        <p className="text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink-muted">
+        </Heading>
+        <Text size="xs" muted className="font-semibold">
           {option.durationLabel ?? (option.durationMins ? `${option.durationMins} minutes` : "")}
-        </p>
-        <div className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg">
-          <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-            {option.descriptionHtml}
-          </ReactMarkdown>
-        </div>
+        </Text>
+        <SafeHtml
+          className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg"
+          html={option.descriptionHtml}
+        />
       </div>
       <div className="mt-auto pt-6">
         <Button
@@ -78,7 +75,7 @@ function WhatToExpectCollapsible({
   const contentId = `what-to-expect-${item.id}`;
 
   return (
-    <Collapsible.Root
+    <Collapsible
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
@@ -87,8 +84,8 @@ function WhatToExpectCollapsible({
         );
       }}
     >
-      <Collapsible.Trigger
-        className="flex w-full items-center justify-between rounded-2xl border border-border/60 bg-card/10 px-4 py-3 text-left text-sm font-semibold text-ink focus-ring md:px-6 md:py-4 md:text-base lg:px-7 lg:py-5 md:border-border/70 md:bg-card"
+      <CollapsibleTrigger
+        className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/70 px-4 py-3 text-left text-sm font-semibold text-ink shadow-soft backdrop-blur-sm focus-ring md:px-6 md:py-4 md:text-base lg:px-7 lg:py-5"
         aria-controls={contentId}
         aria-expanded={open}
       >
@@ -102,8 +99,8 @@ function WhatToExpectCollapsible({
         >
           +
         </span>
-      </Collapsible.Trigger>
-      <Collapsible.Content
+      </CollapsibleTrigger>
+      <CollapsibleContent
         id={contentId}
         className={cn(
           "overflow-hidden px-4 pt-3 text-sm text-ink-muted md:px-6 md:pt-4 md:text-base lg:px-7 lg:pt-5",
@@ -112,13 +109,12 @@ function WhatToExpectCollapsible({
             : "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
         )}
       >
-        <div className="prose prose-base max-w-none pb-4 leading-relaxed text-ink-muted md:prose-lg lg:pb-5">
-          <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-            {item.bodyHtml}
-          </ReactMarkdown>
-        </div>
-      </Collapsible.Content>
-    </Collapsible.Root>
+        <SafeHtml
+          className="prose prose-base max-w-none pb-4 leading-relaxed text-ink-muted md:prose-lg lg:pb-5"
+          html={item.bodyHtml}
+        />
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -175,15 +171,12 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
       aria-labelledby="booking-options-heading"
     >
       <div className="space-y-2">
-        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+        <Text size="xs" muted className="font-semibold">
           Reserve time
-        </p>
-        <h2
-          id="booking-options-heading"
-          className="text-2xl font-semibold text-ink"
-        >
+        </Text>
+        <Heading id="booking-options-heading" level={2} size="xl" className="text-ink">
           {resolvedHeading}
-        </h2>
+        </Heading>
       </div>
       <div className="grid gap-6 md:grid-cols-3">
         {resolvedOptions.map((option) => (
@@ -192,11 +185,11 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
       </div>
       <aside
         aria-label="What to expect during your fitting"
-        className="space-y-3 rounded-2xl border border-border/60 bg-card/40 p-4 shadow-sm md:space-y-4 md:p-8 md:rounded-3xl md:border-border/70 md:bg-card/60 lg:space-y-5 lg:p-10"
+        className="space-y-3 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm md:space-y-4 md:p-8 md:rounded-3xl md:bg-card/75 lg:space-y-5 lg:p-10"
       >
-        <h3 className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+        <Text size="xs" muted className="font-semibold">
           {resolvedWhatToExpectHeading}
-        </h3>
+        </Text>
         <div className="space-y-3 md:space-y-4 lg:space-y-5">
           {resolvedWhatToExpect.map((item) => (
             <WhatToExpectCollapsible
@@ -208,10 +201,10 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
           ))}
         </div>
       </aside>
-      <div className="space-y-3 rounded-2xl border border-border/60 bg-card/40 p-4 shadow-sm md:space-y-4 md:p-8 md:rounded-3xl md:border-border/70 md:bg-card/60 lg:space-y-5 lg:p-10">
-        <h3 className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+      <div className="space-y-3 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm md:space-y-4 md:p-8 md:rounded-3xl md:bg-card/75 lg:space-y-5 lg:p-10">
+        <Text size="xs" muted className="font-semibold">
           Schedule with the concierge
-        </h3>
+        </Text>
         {showScheduler ? (
           <iframe
             src={scheduler.src}
@@ -230,20 +223,24 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
             Load scheduler
           </Button>
         )}
-        <p className="text-[11px] sm:text-xs text-ink-muted">
-          Prefer email?{" "}
-          <a
-            href={scheduler.fallback}
-            target="_blank"
-            rel="noreferrer"
-            className="font-semibold text-perazzi-red focus-ring"
-          >
-            Open the request form<span className="sr-only"> (opens in a new tab)</span>
-          </a>
-        </p>
+        <Text asChild size="xs" className="text-ink-muted" leading="normal">
+          <p>
+            Prefer email?{" "}
+            <a
+              href={scheduler.fallback}
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-perazzi-red focus-ring"
+            >
+              Open the request form<span className="sr-only"> (opens in a new tab)</span>
+            </a>
+          </p>
+        </Text>
       </div>
       {resolvedNote ? (
-        <p className="text-[11px] sm:text-xs text-ink-muted">{resolvedNote}</p>
+        <Text size="xs" className="text-ink-muted" leading="normal">
+          {resolvedNote}
+        </Text>
       ) : null}
     </section>
   );

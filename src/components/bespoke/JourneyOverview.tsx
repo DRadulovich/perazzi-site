@@ -1,25 +1,26 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
-import rehypeSanitize from "rehype-sanitize";
 import type { JourneyOverviewData } from "@/types/build";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { Section } from "@/components/ui";
+import SafeHtml from "@/components/SafeHtml";
 
 type JourneyOverviewProps = Readonly<{
   journey: JourneyOverviewData;
 }>;
+
+const MotionSection = motion(Section);
 
 export function JourneyOverview({ journey }: JourneyOverviewProps) {
   const prefersReducedMotion = useReducedMotion();
   const analyticsRef = useAnalyticsObserver<HTMLElement>("JourneyOverviewSeen");
 
   return (
-    <motion.section
+    <MotionSection
       ref={analyticsRef}
       data-analytics-id="JourneyOverviewSeen"
-      className="rounded-2xl border border-border/60 bg-card/10 px-4 py-6 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8"
+      padding="md"
       initial={prefersReducedMotion ? false : { opacity: 0, y: 16 }}
       whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.4 }}
@@ -30,18 +31,17 @@ export function JourneyOverview({ journey }: JourneyOverviewProps) {
         <h2 id="journey-overview-heading" className="sr-only">
           Journey overview
         </h2>
-        <div className="prose prose-sm max-w-none leading-relaxed text-ink">
-          <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-            {journey.introHtml}
-          </ReactMarkdown>
-        </div>
+        <SafeHtml
+          className="prose prose-sm max-w-none leading-relaxed text-ink"
+          html={journey.introHtml}
+        />
         <nav aria-label="Journey steps">
           <ol className="grid gap-2 sm:grid-cols-2">
             {journey.steps.map((step) => (
               <li key={step.id}>
                 <a
                   href={step.href}
-                  className="group inline-flex w-full items-center justify-between rounded-2xl border border-border/60 bg-card/10 px-4 py-3 text-sm font-semibold text-ink focus-ring transition-colors hover:border-perazzi-red/60 sm:border-border/70 sm:bg-card/60"
+                  className="group inline-flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/70 px-4 py-3 text-sm font-semibold text-ink shadow-soft backdrop-blur-sm transition-colors hover:border-perazzi-red/40 hover:bg-card/85 focus-ring"
                 >
                   <span>{step.label}</span>
                   <span
@@ -55,12 +55,11 @@ export function JourneyOverview({ journey }: JourneyOverviewProps) {
             ))}
           </ol>
         </nav>
-        <div className="text-[11px] sm:text-xs leading-relaxed text-ink-muted">
-          <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-            {journey.disclaimerHtml}
-          </ReactMarkdown>
-        </div>
+        <SafeHtml
+          className="text-[11px] sm:text-xs leading-relaxed text-ink-muted"
+          html={journey.disclaimerHtml}
+        />
       </div>
-    </motion.section>
+    </MotionSection>
   );
 }

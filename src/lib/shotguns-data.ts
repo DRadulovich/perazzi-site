@@ -1,7 +1,7 @@
 import { cache } from "react";
 
 import { shotgunsData } from "@/content/shotguns";
-import { portableTextToHtml } from "@/lib/portable-text";
+import { portableTextToPlainText } from "@/lib/portable-text";
 import type {
   ShotgunsSectionData,
   Platform,
@@ -33,6 +33,15 @@ const isNonEmptyString = (value?: string | null): value is string =>
 function isDefined<T>(value: T | null | undefined): value is T {
   return value != null;
 }
+
+const stripHtml = (value?: string) => (value ? value.replaceAll(/<[^>]+>/g, "") : "");
+
+const getOverviewPlainText = (discipline?: DisciplineSummary) => {
+  return (
+    portableTextToPlainText(discipline?.overviewPortableText) ??
+    stripHtml(discipline?.overviewHtml)
+  ).trim();
+};
 
 export const getShotgunsSectionData = cache(async (): Promise<ShotgunsSectionData> => {
   const cloned: ShotgunsSectionData = structuredClone(FALLBACK);
@@ -109,9 +118,9 @@ function applyTriggerExplainer(target: ShotgunsSectionData, landing: ShotgunsLan
     target.landing.triggerExplainer = {
       title: landing.triggerExplainer.title ?? target.landing.triggerExplainer.title,
       subheading: landing.triggerExplainer.subheading ?? target.landing.triggerExplainer.subheading,
-      copyHtml:
-        portableTextToHtml(landing.triggerExplainer.copyPortableText) ??
-        target.landing.triggerExplainer.copyHtml,
+      copyPortableText:
+        landing.triggerExplainer.copyPortableText ?? target.landing.triggerExplainer.copyPortableText,
+      copyHtml: target.landing.triggerExplainer.copyHtml,
       diagram: landing.triggerExplainer.diagram ?? target.landing.triggerExplainer.diagram,
       background: landing.triggerExplainer.background ?? target.landing.triggerExplainer.background,
       links:
@@ -403,12 +412,13 @@ function syncSeriesWithPlatforms(target: ShotgunsSectionData) {
         const discipline = lookupKey ? disciplineLookup.get(lookupKey) : undefined;
         const label = discipline?.name ?? ref.name ?? "Discipline";
         const disciplineId = discipline?.id ?? ref.id ?? label.toLowerCase();
+        const overviewText = getOverviewPlainText(discipline);
         return {
           disciplineId,
           label,
           href: discipline ? `/shotguns/disciplines/${discipline.id}` : "/shotguns/disciplines",
-          rationale: discipline?.overviewHtml
-            ? discipline.overviewHtml.replaceAll(/<[^>]+>/g, "").slice(0, 140).concat("…")
+          rationale: overviewText
+            ? overviewText.slice(0, 140).concat("…")
             : `Optimized for ${label}.`,
         };
       }) ?? [];
@@ -494,9 +504,8 @@ function applyDisciplines(
         };
       }
     }
-    const overviewHtml = portableTextToHtml(cms.overviewPortableText);
-    if (overviewHtml) {
-      summary.overviewHtml = overviewHtml;
+    if (cms.overviewPortableText?.length) {
+      summary.overviewPortableText = cms.overviewPortableText;
     }
     if (cms.recommendedPlatformIds?.length) {
       summary.recommendedPlatforms = cms.recommendedPlatformIds;
@@ -508,6 +517,7 @@ function applyDisciplines(
     updatedLanding.push({
       id: entry.id,
       name: cms.name ?? entry.name,
+      overviewPortableText: summary.overviewPortableText ?? entry.overviewPortableText,
       overviewHtml: summary.overviewHtml ?? entry.overviewHtml,
       recommendedPlatforms:
         summary.recommendedPlatforms?.length
@@ -524,7 +534,7 @@ function applyDisciplines(
     const summary: DisciplineSummary = {
       id: slug,
       name: cms.name ?? slug,
-      overviewHtml: portableTextToHtml(cms.overviewPortableText) ?? "",
+      overviewPortableText: cms.overviewPortableText,
       recommendedPlatforms: cms.recommendedPlatformIds ?? [],
       recipe: {
         poiRange: "",
@@ -549,6 +559,7 @@ function applyDisciplines(
     updatedLanding.push({
       id: slug,
       name: summary.name,
+      overviewPortableText: summary.overviewPortableText,
       overviewHtml: summary.overviewHtml,
       recommendedPlatforms: summary.recommendedPlatforms,
       popularModels: summary.popularModels,

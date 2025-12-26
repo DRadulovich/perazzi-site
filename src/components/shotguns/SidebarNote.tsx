@@ -1,16 +1,17 @@
+import SafeHtml from "@/components/SafeHtml";
+import { Text } from "@/components/ui/text";
+
 type SidebarNoteProps = {
   title: string;
   html: string;
 };
 
-import SafeHtml from "@/components/SafeHtml";
-
-export function SidebarNote({ title, html }: SidebarNoteProps) {
+export function SidebarNote({ title, html }: Readonly<SidebarNoteProps>) {
   return (
-    <aside className="rounded-2xl border border-border/60 bg-card/10 p-4 text-sm sm:text-base text-ink shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-6">
-      <h2 className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+    <aside className="rounded-2xl border border-border/70 bg-card/60 p-4 text-sm sm:text-base text-ink shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:px-6 sm:py-6">
+      <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
         {title}
-      </h2>
+      </Text>
       <SafeHtml
         className="prose prose-sm mt-3 max-w-none leading-relaxed text-ink md:prose-lg"
         html={html}

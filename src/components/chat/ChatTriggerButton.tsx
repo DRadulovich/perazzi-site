@@ -1,8 +1,8 @@
 "use client";
 
-import clsx from "clsx";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
 import { triggerChat } from "@/lib/chat-trigger";
+import { Button } from "@/components/ui";
 
 type ChatTriggerButtonProps = Readonly<{
   label: string;
@@ -18,18 +18,14 @@ export function ChatTriggerButton({
   className,
 }: ChatTriggerButtonProps) {
   return (
-    <button
+    <Button
       type="button"
       onClick={() => triggerChat(payload)}
-      className={clsx(
-        "inline-flex items-center justify-center rounded-full px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] transition focus-ring",
-        variant === "solid"
-          ? "bg-perazzi-red text-white hover:bg-perazzi-red/90"
-          : "border border-border text-ink hover:border-ink",
-        className,
-      )}
+      variant={variant === "solid" ? "primary" : "secondary"}
+      size="sm"
+      className={className}
     >
       {label}
-    </button>
+    </Button>
   );
 }

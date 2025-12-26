@@ -40,3 +40,25 @@ export function portableTextToHtml(blocks?: PortableTextBlock[] | null): string 
 
   return html || undefined;
 }
+
+export function portableTextToPlainText(blocks?: PortableTextBlock[] | null): string | undefined {
+  if (!blocks?.length) return undefined;
+
+  const text = blocks
+    .map((block) => {
+      if (!block || typeof block !== "object") return "";
+      const type = (block as { _type?: string })._type;
+      if (type !== "block") return "";
+      const children = Array.isArray((block as { children?: unknown[] }).children)
+        ? ((block as { children?: unknown[] }).children as Array<{ text?: string }>)
+        : [];
+      return children
+        .map((child) => (typeof child?.text === "string" ? child.text : ""))
+        .join("");
+    })
+    .filter(Boolean)
+    .join(" ");
+
+  const normalized = text.replaceAll(/\s+/g, " ").trim();
+  return normalized || undefined;
+}

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import type { Champion, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { Container, Heading, Section, Text } from "@/components/ui";
 
 type MarqueeFeatureProps = Readonly<{
   champion: Champion;
@@ -63,8 +64,11 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="rounded-2xl border border-[color:var(--border-color)] bg-[color:var(--color-canvas)]/30 p-4 text-ink shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-[color:var(--color-canvas)]/40 sm:p-6 sm:shadow-elevated lg:p-8 md:grid md:grid-cols-[minmax(260px,1fr)_minmax(0,1.4fr)] md:items-center md:gap-10">
+      <Container size="xl" className="relative z-10">
+        <Section
+          padding="md"
+          className="md:grid md:grid-cols-[minmax(260px,1fr)_minmax(0,1.4fr)] md:items-center md:gap-10"
+        >
           <motion.div
             initial={motionEnabled ? { opacity: 0, x: -30 } : false}
             whileInView={motionEnabled ? { opacity: 1, x: 0 } : undefined}
@@ -72,7 +76,7 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
             transition={{ duration: 0.6, ease: [0.33, 1, 0.68, 1] }}
           >
             <div
-              className="relative overflow-hidden rounded-2xl bg-[color:var(--surface-elevated)]"
+              className="relative overflow-hidden rounded-2xl bg-elevated ring-1 ring-border/70"
               style={{ aspectRatio: ratio }}
             >
               <Image
@@ -93,21 +97,31 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
             viewport={{ once: true, amount: 0.4 }}
             transition={{ duration: 0.6, delay: 0.1, ease: [0.33, 1, 0.68, 1] }}
           >
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+            <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
               {eyebrow}
-            </p>
-            <h2
+            </Text>
+            <Heading
               id="champion-heading"
-              className="text-2xl sm:text-3xl font-semibold text-ink"
+              level={2}
+              size="lg"
+              className="text-2xl sm:text-3xl text-ink"
             >
               {champion.name}
-            </h2>
-            <cite className="block text-sm sm:text-base font-medium text-ink-muted not-italic">
-              {champion.title}
-            </cite>
-            <blockquote className="border-l-2 border-perazzi-red/50 pl-4 text-base sm:text-lg italic leading-relaxed text-ink">
-              “{champion.quote}”
-            </blockquote>
+            </Heading>
+            <Text
+              asChild
+              size="md"
+              className="font-medium text-ink-muted not-italic"
+            >
+              <cite>{champion.title}</cite>
+            </Text>
+            <Text
+              asChild
+              size="lg"
+              className="border-l-2 border-perazzi-red/50 pl-4 text-base sm:text-lg italic text-ink"
+            >
+              <blockquote>“{champion.quote}”</blockquote>
+            </Text>
             {champion.article ? (
               <a
                 href={`/journal/${champion.article.slug}`}
@@ -118,8 +132,8 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
               </a>
             ) : null}
           </motion.div>
-        </div>
-      </div>
+        </Section>
+      </Container>
     </section>
   );
 }

@@ -1,17 +1,18 @@
 "use client";
 
-import * as Collapsible from "@radix-ui/react-collapsible";
 import Image from "next/image";
 import SafeHtml from "@/components/SafeHtml";
+import { PortableText } from "@/components/PortableText";
 import { useState } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import type { ShotgunsLandingData } from "@/types/catalog";
 import { logAnalytics } from "@/lib/analytics";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, Container, Heading, Section, Text } from "@/components/ui";
 
-type TriggerExplainerProps = {
+type TriggerExplainerProps = Readonly<{
   explainer: ShotgunsLandingData["triggerExplainer"];
-};
+}>;
 
 export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
@@ -27,6 +28,8 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
   };
 
   const analyticsRef = useAnalyticsObserver<HTMLElement>("TriggerExplainerSeen");
+  const copyClasses =
+    "prose prose-sm max-w-none text-ink prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4";
 
   return (
     <section
@@ -61,9 +64,9 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
-          <Collapsible.Root
+      <Container size="xl" className="relative z-10">
+        <Section padding="md" className="space-y-6 bg-card/40">
+          <Collapsible
             open={resolvedOpen}
             onOpenChange={(next) => {
               setManualOpen(next);
@@ -72,40 +75,43 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
             className="space-y-4"
           >
             <div className="space-y-3">
-              <h2
+              <Heading
                 id="trigger-explainer-heading"
-                className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink"
+                level={2}
+                size="xl"
+                className="font-black uppercase italic tracking-[0.35em] text-ink"
               >
                 {explainer.title}
-              </h2>
-              <p className="text-sm sm:text-base font-light italic text-ink-muted">
+              </Heading>
+              <Text className="font-light italic text-ink-muted" leading="normal">
                 {subheading}
-              </p>
-              <Collapsible.Trigger
-                className="mt-1 inline-flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink hover:border-ink/60 focus-ring transition lg:hidden"
+              </Text>
+              <CollapsibleTrigger
+                className="mt-1 inline-flex w-fit items-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring lg:hidden"
                 aria-controls="trigger-explainer-content"
                 data-analytics-id="TriggerExplainerToggle"
               >
                 {resolvedOpen ? "Hide details" : "Show details"}
-              </Collapsible.Trigger>
+              </CollapsibleTrigger>
             </div>
 
-            <Collapsible.Content
+            <CollapsibleContent
               id="trigger-explainer-content"
-              className="grid gap-6 overflow-hidden transition-all duration-300 data-[state=closed]:h-0 data-[state=closed]:opacity-0 data-[state=open]:h-auto data-[state=open]:opacity-100 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start"
+              className="grid gap-6 overflow-hidden transition-all duration-300 data-[state=closed]:opacity-0 data-[state=open]:opacity-100 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start"
             >
               <div className="rounded-2xl border border-border/0 bg-card/0 p-4 sm:rounded-3xl sm:p-6 lg:flex lg:h-full lg:flex-col lg:justify-start">
-                <SafeHtml
-                  className="prose prose-sm max-w-none text-ink prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4"
-                  html={explainer.copyHtml}
-                />
+                {explainer.copyPortableText?.length ? (
+                  <PortableText className={copyClasses} blocks={explainer.copyPortableText} />
+                ) : explainer.copyHtml ? (
+                  <SafeHtml className={copyClasses} html={explainer.copyHtml} />
+                ) : null}
                 <div className="mt-5 flex flex-wrap gap-3">
                   {explainer.links.map((link) => (
                     <a
                       key={link.href}
                       href={link.href}
                       data-analytics-id={`TriggerExplainerLink:${link.href}`}
-                      className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red hover:border-perazzi-red focus-ring transition"
+                      className="inline-flex items-center gap-2 rounded-full border border-perazzi-red/40 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red shadow-soft backdrop-blur-sm transition hover:border-perazzi-red hover:bg-card/85 focus-ring"
                       onClick={() =>
                         logAnalytics(`TriggerExplainerLink:${link.href}`)
                       }
@@ -117,7 +123,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                 </div>
               </div>
 
-              <figure className="rounded-2xl border border-border/60 bg-card/40 p-3 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/50">
+              <figure className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated">
                 <div
                   className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
                   style={{ aspectRatio: ratio }}
@@ -135,15 +141,20 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                   />
                 </div>
                 {explainer.diagram.caption ? (
-                  <figcaption className="mt-3 text-xs uppercase tracking-[0.2em] text-ink-muted">
-                    {explainer.diagram.caption}
-                  </figcaption>
+                  <Text
+                    asChild
+                    size="xs"
+                    className="mt-3 tracking-[0.2em] text-ink-muted"
+                    leading="normal"
+                  >
+                    <figcaption>{explainer.diagram.caption}</figcaption>
+                  </Text>
                 ) : null}
               </figure>
-            </Collapsible.Content>
-          </Collapsible.Root>
-        </div>
-      </div>
+            </CollapsibleContent>
+          </Collapsible>
+        </Section>
+      </Container>
     </section>
   );
 }

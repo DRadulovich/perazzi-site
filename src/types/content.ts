@@ -39,6 +39,8 @@ export interface HomeData {
     tagline: string;
     subheading?: string;
     background: FactoryAsset;
+    backgroundTablet?: FactoryAsset;
+    backgroundMobile?: FactoryAsset;
   };
   heroCtas: {
     primaryLabel: string;

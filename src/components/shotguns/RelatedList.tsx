@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { logAnalytics } from "@/lib/analytics";
+import { Heading } from "@/components/ui";
 
 type RelatedArticle = {
   id: string;
@@ -14,7 +15,7 @@ type RelatedListProps = {
   items?: RelatedArticle[];
 };
 
-export function RelatedList({ heading, items }: RelatedListProps) {
+export function RelatedList({ heading, items }: Readonly<RelatedListProps>) {
   if (!items || items.length === 0) {
     return null;
   }
@@ -26,12 +27,9 @@ export function RelatedList({ heading, items }: RelatedListProps) {
       className="space-y-3"
       aria-labelledby="related-articles-heading"
     >
-      <h2
-        id="related-articles-heading"
-        className="text-xl sm:text-2xl font-semibold text-ink"
-      >
+      <Heading id="related-articles-heading" level={2} size="lg" className="text-ink">
         {title}
-      </h2>
+      </Heading>
       <ul className="space-y-2 text-sm sm:text-base leading-relaxed text-ink">
         {items.map((item) => (
           <li key={item.id}>

@@ -1,7 +1,9 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { ArrowUp } from "lucide-react";
 import { VerbosityToggle } from "@/components/chat/VerbosityToggle";
+import { Textarea } from "@/components/ui";
 import type { TextVerbosity } from "@/types/perazzi-assistant";
 
 type ChatInputProps = Readonly<{
@@ -33,9 +35,9 @@ export function ChatInput({
         <label htmlFor="perazzi-chat-input" className="sr-only">
           Ask the Perazzi concierge
         </label>
-        <textarea
+        <Textarea
           id="perazzi-chat-input"
-          className="h-24 w-full resize-none rounded-2xl border border-subtle bg-card px-4 py-3 pr-20 text-sm sm:text-base outline-none focus:border-ink focus-ring"
+          className="h-24 px-4 py-3 pr-20 sm:text-base"
           placeholder="Ask something about Perazzi, service, or heritage..."
           value={value}
           onChange={(event) => setValue(event.target.value)}
@@ -56,10 +58,14 @@ export function ChatInput({
           <button
             type="submit"
             disabled={pending || !value.trim()}
-            className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-ink text-card shadow-sm transition hover:bg-ink-muted disabled:cursor-not-allowed disabled:bg-subtle disabled:text-ink-muted"
+            className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-ink text-card shadow-soft transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:bg-subtle disabled:text-ink-muted"
           >
             <span className="sr-only">Send</span>
-            <span className="text-base leading-none">{pending ? "…" : "↑"}</span>
+            <span className="text-base leading-none">
+              {pending
+                ? "…"
+                : <ArrowUp className="h-4 w-4" strokeWidth={2} aria-hidden="true" />}
+            </span>
           </button>
         </div>
       </div>

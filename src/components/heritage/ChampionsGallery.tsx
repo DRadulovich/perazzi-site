@@ -7,6 +7,7 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
+import { Container, Heading, Section, Text } from "@/components/ui";
 
 type ChampionsGalleryProps = Readonly<{
   champions: ChampionEvergreen[];
@@ -48,11 +49,11 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
 
   if (!verified.length) {
     return (
-      <section className="rounded-2xl border border-border/60 bg-card/10 px-4 py-6 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8">
+      <Section padding="md">
         <blockquote className="text-base sm:text-lg italic leading-relaxed text-ink">
           “Perazzi heritage is carried by every athlete who chooses calm precision.”
         </blockquote>
-      </section>
+      </Section>
     );
   }
 
@@ -86,7 +87,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
           loading="lazy"
         />
         <div
-          className="absolute inset-0 bg-[color:var(--scrim-soft)]"
+          className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
         <div
@@ -102,18 +103,20 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
       </div>
 
       {/* Foreground glass container */}
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+      <Container size="xl" className="relative z-10">
+        <Section padding="md" className="space-y-6 bg-card/10">
           <div className="space-y-2">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-              {heading}
-            </p>
-            <h2
+            <Heading
               id="heritage-champions-heading"
-              className="mb-6 text-sm sm:text-base font-light italic leading-relaxed text-ink-muted"
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-ink"
             >
+              {heading}
+            </Heading>
+            <Text className="mb-6 font-light italic text-ink-muted">
               {subheading}
-            </h2>
+            </Text>
           </div>
 
           {disciplines.length ? (
@@ -162,9 +165,13 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
           <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)] lg:items-start">
             {/* Left column – names list */}
             <div className="rounded-2xl bg-card/0 p-4 sm:rounded-3xl">
-              <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
+              <Text
+                size="xs"
+                className="mb-3 font-semibold text-ink-muted"
+                leading="normal"
+              >
                 {championsLabel}
-              </p>
+              </Text>
 
               {filteredChampions.length ? (
                 <ul className="space-y-1" aria-label="Select a champion to view their profile">
@@ -181,14 +188,14 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
                   ))}
                 </ul>
               ) : (
-                <p className="text-[11px] sm:text-xs leading-relaxed text-ink-muted">
+                <Text size="sm" className="text-ink-muted">
                   No champions in this discipline yet—select another to continue exploring the lineage.
-                </p>
+                </Text>
               )}
             </div>
 
             {/* Right column – selected champion detail */}
-            <div className="min-h-[18rem] rounded-2xl border border-border/75 bg-card/75 p-5 shadow-sm sm:rounded-3xl">
+            <div className="min-h-72 rounded-2xl border border-border/75 bg-card/75 p-5 shadow-soft sm:rounded-3xl">
               <AnimatePresence mode="wait">
                 {selectedChampion ? (
                   <motion.div
@@ -214,8 +221,8 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
               </AnimatePresence>
             </div>
           </div>
-        </div>
-      </div>
+        </Section>
+      </Container>
     </section>
   );
 }
@@ -272,7 +279,7 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
   return (
     <>
       <div
-        className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
+        className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
         style={{ aspectRatio: ratio }}
       >
         <Image
@@ -285,32 +292,36 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
         />
         <div
           className={cn(
-            "pointer-events-none absolute inset-0 bg-gradient-to-t",
-            "from-[color:var(--scrim-strong)]/80 via-[color:var(--scrim-strong)]/50 to-transparent",
+            "pointer-events-none absolute inset-0 bg-linear-to-t",
+            "from-(--scrim-strong)/80 via-(--scrim-strong)/50 to-transparent",
           )}
           aria-hidden
         />
       </div>
       <div className="space-y-4">
         <div className="space-y-1">
-          <h3 className="text-base sm:text-lg font-semibold text-ink">
+          <Heading level={3} size="sm" className="text-ink">
             {champion.name}
-          </h3>
+          </Heading>
           {champion.title ? (
-            <p className="text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink-muted">
+            <Text size="xs" className="text-ink-muted" leading="normal">
               {champion.title}
-            </p>
+            </Text>
           ) : null}
         </div>
 
         {champion.quote ? (
-          <blockquote className="border-l-2 border-perazzi-red/40 pl-3 text-[13px] sm:text-base italic leading-relaxed text-ink">
-            “{champion.quote}”
-          </blockquote>
+          <Text
+            asChild
+            size="md"
+            className="border-l-2 border-perazzi-red/40 pl-3 text-[13px] sm:text-base italic text-ink"
+          >
+            <blockquote>“{champion.quote}”</blockquote>
+          </Text>
         ) : null}
 
         {champion.bio ? (
-          <p className="text-sm leading-relaxed text-ink-muted">{champion.bio}</p>
+          <Text className="text-ink-muted">{champion.bio}</Text>
         ) : null}
 
         {champion.resume &&
@@ -318,9 +329,9 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
           champion.resume.winTwo ||
           champion.resume.winThree) ? (
           <div className="space-y-2">
-            <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+            <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
               Career Highlights
-            </p>
+            </Text>
             <ul className="space-y-1 text-sm leading-relaxed text-ink">
               {champion.resume.winOne ? <li>• {champion.resume.winOne}</li> : null}
               {champion.resume.winTwo ? <li>• {champion.resume.winTwo}</li> : null}
@@ -331,9 +342,9 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
 
         {champion.disciplines?.length ? (
           <div className="space-y-2">
-            <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+            <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
               Disciplines
-            </p>
+            </Text>
             <ul className="flex flex-wrap gap-2 text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
               {champion.disciplines.map((discipline) => (
                 <li
@@ -349,9 +360,9 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
 
         {champion.platforms?.length ? (
           <div className="space-y-2">
-            <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+            <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
               Platforms
-            </p>
+            </Text>
             <ul className="flex flex-wrap gap-2 text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
               {champion.platforms.map((platform) => (
                 <li

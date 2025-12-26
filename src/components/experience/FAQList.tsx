@@ -1,16 +1,14 @@
 "use client";
 
-import * as Collapsible from "@radix-ui/react-collapsible";
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
-import rehypeSanitize from "rehype-sanitize";
 import type { FAQItem } from "@/types/experience";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 import { faq as faqFixture } from "@/content/experience/faq";
+import SafeHtml from "@/components/SafeHtml";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, Container, Heading, Section, Text } from "@/components/ui";
 
 type FAQListProps = Readonly<{
   items: FAQItem[];
@@ -20,7 +18,7 @@ type FAQListProps = Readonly<{
 }>;
 
 export function FAQList({ items, embedded = false, heading, lead }: FAQListProps) {
-  const analyticsRef = useAnalyticsObserver<HTMLDivElement>("ExperienceFAQSeen");
+  const analyticsRef = useAnalyticsObserver<HTMLElement>("ExperienceFAQSeen");
 
   const faqItems = items.length ? items : faqFixture;
 
@@ -32,15 +30,17 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
   const content = (
     <>
       <div className="space-y-2">
-        <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-          {title}
-        </p>
-        <h2
+        <Heading
           id="experience-faq-heading"
-          className="text-sm sm:text-base font-light italic leading-relaxed text-ink-muted"
+          level={2}
+          size="xl"
+          className="font-black uppercase italic tracking-[0.35em] text-ink"
         >
+          {title}
+        </Heading>
+        <Text size="md" muted leading="relaxed" className="font-light italic">
           {subtitle}
-        </h2>
+        </Text>
       </div>
       <div className="space-y-4">
         {faqItems.map((item, index) => (
@@ -52,19 +52,22 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
 
   if (embedded) {
     return (
-      <div
+      <Section
         ref={analyticsRef}
         data-analytics-id="ExperienceFAQSeen"
-        className="space-y-6 rounded-2xl border border-border/60 bg-card/40 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/75 sm:px-6 sm:py-8"
+        padding="md"
+        className="space-y-6"
         aria-labelledby="experience-faq-heading"
       >
         {content}
-      </div>
+      </Section>
     );
   }
 
   return (
     <section
+      ref={analyticsRef}
+      data-analytics-id="ExperienceFAQSeen"
       className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
       style={{
         marginLeft: "calc(50% - 50vw)",
@@ -83,7 +86,7 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
           loading="lazy"
         />
         <div
-          className="absolute inset-0 bg-[color:var(--scrim-soft)]"
+          className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
         <div
@@ -98,15 +101,11 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
         />
       </div>
 
-      <div
-        ref={analyticsRef}
-        data-analytics-id="ExperienceFAQSeen"
-        className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10"
-      >
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+      <Container size="xl" className="relative z-10">
+        <Section padding="md" className="space-y-6 bg-card/40">
           {content}
-        </div>
-      </div>
+        </Section>
+      </Container>
     </section>
   );
 }
@@ -125,9 +124,9 @@ function FAQItemCard({ item, index }: FAQItemCardProps) {
   }, [open, index]);
 
   return (
-    <Collapsible.Root open={open} onOpenChange={setOpen}>
-      <Collapsible.Trigger
-        className="flex w-full items-center justify-between rounded-2xl border border-border/60 bg-card/40 px-4 py-3 text-left text-sm font-semibold text-ink focus-ring shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/75"
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger
+        className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left text-sm font-semibold text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
         aria-expanded={open}
       >
         {item.q}
@@ -140,12 +139,13 @@ function FAQItemCard({ item, index }: FAQItemCardProps) {
         >
           +
         </span>
-      </Collapsible.Trigger>
-      <Collapsible.Content className="mt-2 overflow-hidden rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted sm:bg-card/60">
-        <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-          {item.aHtml}
-        </ReactMarkdown>
-      </Collapsible.Content>
-    </Collapsible.Root>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="mt-2 overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 text-sm leading-relaxed text-ink-muted shadow-soft backdrop-blur-sm sm:bg-card/80">
+        <SafeHtml
+          className="prose prose-sm max-w-none text-ink-muted"
+          html={item.aHtml}
+        />
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

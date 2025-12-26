@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button, Heading, Section, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { motion, useReducedMotion } from "framer-motion";
 import { logAnalytics } from "@/lib/analytics";
@@ -12,6 +12,8 @@ type CTASectionProps = {
   readonly dataAnalyticsId?: string;
   readonly analyticsPrefix?: string;
 };
+
+const MotionSection = motion(Section);
 
 export function CTASection({
   text,
@@ -31,10 +33,12 @@ export function CTASection({
   };
 
   return (
-    <motion.section
+    <MotionSection
       ref={analyticsRef}
       data-analytics-id={dataAnalyticsId}
-      className="rounded-2xl bg-perazzi-black px-4 py-8 text-white sm:rounded-3xl sm:px-6 sm:py-10 sm:shadow-md"
+      padding="md"
+      bordered={false}
+      className="bg-perazzi-black text-white"
       initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
       whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.5 }}
@@ -42,15 +46,12 @@ export function CTASection({
       aria-labelledby="shotguns-cta-heading"
     >
       <div className="space-y-6">
-        <h2
-          id="shotguns-cta-heading"
-          className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-white"
-        >
+        <Heading id="shotguns-cta-heading" level={2} size="xl" className="text-white">
           Begin your fitting
-        </h2>
-        <p className="max-w-2xl text-sm sm:text-base md:text-lg leading-relaxed text-white/80">
+        </Heading>
+        <Text size="lg" leading="relaxed" className="max-w-2xl text-white/80">
           {text}
-        </p>
+        </Text>
         <div className="flex flex-wrap gap-4">
           <Button
             asChild
@@ -72,6 +73,6 @@ export function CTASection({
           ) : null}
         </div>
       </div>
-    </motion.section>
+    </MotionSection>
   );
 }

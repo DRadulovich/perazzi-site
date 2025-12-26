@@ -8,6 +8,7 @@ import type { GradeSeries, ShotgunsLandingData } from "@/types/catalog";
 import { getGradeAnchorId } from "@/lib/grade-anchors";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { Container, Heading, Section, Text } from "@/components/ui";
 
 type EngravingGradesCarouselProps = Readonly<{
   grades: readonly GradeSeries[];
@@ -147,32 +148,34 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+      <Container size="xl" className="relative z-10">
+        <Section padding="md" className="space-y-6 bg-card/40">
           <div className="space-y-3">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-black italic uppercase tracking-[0.35em] text-ink">
-              {heading}
-            </p>
-            <h2
+            <Heading
               id="engraving-grades-heading"
-              className="max-w-4xl text-sm sm:text-base font-light italic text-ink-muted"
+              level={2}
+              size="xl"
+              className="font-black italic uppercase tracking-[0.35em] text-ink"
             >
+              {heading}
+            </Heading>
+            <Text className="max-w-4xl font-light italic text-ink-muted" leading="normal">
               {subheading}
-            </h2>
+            </Text>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
             <div className="space-y-3 rounded-2xl bg-transparent p-4 sm:rounded-3xl sm:p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
+              <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
                 Grade categories
-              </p>
+              </Text>
               <div className="space-y-3">
                 {categories.map((category) => {
                   const isOpen = resolvedOpenCategory === category.label;
                   return (
                     <div
                       key={category.label}
-                      className="rounded-2xl border border-border/60 bg-card/75 sm:border-border/70"
+                      className="rounded-2xl border border-border/70 bg-card/60 backdrop-blur-sm sm:bg-card/75"
                     >
                       <button
                         type="button"
@@ -196,7 +199,7 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
                         </span>
                       </button>
                       {isOpen ? (
-                        <div className="border-t border-border/60">
+                        <div className="border-t border-border/70">
                           <ul className="space-y-1 p-3">
                             {category.grades.map((grade) => {
                               const isActive = grade.id === resolvedActiveGradeId;
@@ -233,12 +236,14 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
               {selectedGrade ? (
                 <GradeCard grade={selectedGrade} ctaLabel={ctaLabel} />
               ) : (
-                <p className="text-sm text-ink-muted">Select a grade to view details.</p>
+                <Text className="text-ink-muted" leading="normal">
+                  Select a grade to view details.
+                </Text>
               )}
             </div>
           </div>
-        </div>
-      </div>
+        </Section>
+      </Container>
     </section>
   );
 }
@@ -254,7 +259,7 @@ function GradeCard({ grade, ctaLabel }: GradeCardProps) {
   const gradeAnchor = getGradeAnchorId(grade);
 
   return (
-    <article className="flex h-full flex-col rounded-2xl border border-border/60 bg-card/75 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:p-5 lg:p-6">
+    <article className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-5 sm:shadow-elevated lg:p-6">
       <div
         className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
         style={{ aspectRatio: ratio }}
@@ -269,21 +274,31 @@ function GradeCard({ grade, ctaLabel }: GradeCardProps) {
             loading="lazy"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-sm text-ink-muted">
-            Imagery coming soon
-          </div>
+          <Text
+            asChild
+            className="flex h-full items-center justify-center text-ink-muted"
+            leading="normal"
+          >
+            <div>Imagery coming soon</div>
+          </Text>
         )}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-1 p-4 text-black">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+          <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
             Engraving Grade
-          </p>
-          <h3 className="text-lg sm:text-xl font-semibold uppercase tracking-[0.25em] text-black">
+          </Text>
+          <Heading
+            level={3}
+            size="md"
+            className="uppercase tracking-[0.25em] text-black"
+          >
             {grade.name}
-          </h3>
+          </Heading>
         </div>
       </div>
       <div className="mt-4 flex flex-1 flex-col gap-3">
-        <p className="text-sm text-ink-muted">{grade.description}</p>
+        <Text className="text-ink-muted" leading="normal">
+          {grade.description}
+        </Text>
         <div className="mt-auto pt-2">
           <Link
             href={`/engravings?grade=${gradeAnchor}`}

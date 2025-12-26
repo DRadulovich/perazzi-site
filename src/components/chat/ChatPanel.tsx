@@ -22,7 +22,10 @@ import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
+import { X } from "lucide-react";
 import { ChatInput } from "@/components/chat/ChatInput";
+import { QuickStartButton } from "@/components/chat/QuickStartButton";
+import { Button, Heading, Input, Text } from "@/components/ui";
 import { ADMIN_DEBUG_TOKEN_STORAGE_KEY } from "@/components/chat/useChatState";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
 import { cn } from "@/lib/utils";
@@ -52,14 +55,23 @@ const normalizeLabel = (value: string) =>
   value
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9-_]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replaceAll(/[^a-z0-9-_]+/g, "-")
+    .replaceAll(/(^-+|-+$)/g, "");
+
+let sessionIdCounter = 0;
 
 const createRandomId = () => {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
+  const cryptoObj = globalThis.crypto;
+  if (cryptoObj?.randomUUID) {
+    return cryptoObj.randomUUID();
   }
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  if (cryptoObj?.getRandomValues) {
+    const bytes = new Uint8Array(16);
+    cryptoObj.getRandomValues(bytes);
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  }
+  sessionIdCounter = (sessionIdCounter + 1) % Number.MAX_SAFE_INTEGER;
+  return `${Date.now().toString(36)}-${sessionIdCounter.toString(36)}`;
 };
 
 type ChatPanelProps = {
@@ -74,7 +86,9 @@ type ChatPanelProps = {
 
 const markdownComponents = {
   p: (props: React.HTMLAttributes<HTMLParagraphElement>) => (
-    <p className="mb-3 last:mb-0" {...props} />
+    <Text asChild className="mb-3 last:mb-0" leading="relaxed">
+      <p {...props} />
+    </Text>
   ),
   ul: (props: React.HTMLAttributes<HTMLUListElement>) => (
     <ul className="mb-3 list-disc pl-5 text-left last:mb-0" {...props} />
@@ -103,10 +117,10 @@ const markdownComponents = {
     <thead className="bg-subtle text-xs uppercase tracking-[0.2em] text-ink-muted" {...props} />
   ),
   th: (props: React.ThHTMLAttributes<HTMLTableCellElement>) => (
-    <th className="border border-subtle px-3 py-2 font-semibold text-ink" {...props} />
+    <th className="border border-border/70 px-3 py-2 font-semibold text-ink" {...props} />
   ),
   td: (props: React.TdHTMLAttributes<HTMLTableCellElement>) => (
-    <td className="border border-subtle px-3 py-2 text-ink" {...props} />
+    <td className="border border-border/70 px-3 py-2 text-ink" {...props} />
   ),
   tbody: (props: React.HTMLAttributes<HTMLTableSectionElement>) => (
     <tbody className="divide-y divide-subtle" {...props} />
@@ -126,7 +140,7 @@ function formatDebugValue(value: unknown): string {
   }
 }
 
-function DebugRow(props: { label: string; value: unknown }) {
+function DebugRow(props: Readonly<{ label: string; value: unknown }>) {
   return (
     <div className="flex items-start justify-between gap-4">
       <dt className="text-ink-muted">{props.label}</dt>
@@ -135,37 +149,43 @@ function DebugRow(props: { label: string; value: unknown }) {
   );
 }
 
-function AdminDebugPanel(props: {
+function AdminDebugPanel(props: Readonly<{
   debug: PerazziAdminDebugPayload | null;
   onClearToken: () => void;
-}) {
+}>) {
   const debug = props.debug;
   const titles = debug?.retrieval?.top_titles ?? [];
 
   return (
-    <div className="border-b border-subtle bg-subtle/30 px-6 py-4 text-[11px] sm:text-xs text-ink">
+    <div className="border-b border-border bg-card/80 px-6 py-4 text-[11px] sm:text-xs text-ink backdrop-blur-md">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.25em] text-ink-muted">
+        <Text
+          size="xs"
+          className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.25em] text-ink-muted"
+          leading="normal"
+        >
           Admin Debug
-        </p>
-        <button
+        </Text>
+        <Button
           type="button"
-          className="rounded-full border border-subtle px-2 py-1 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+          variant="secondary"
+          size="sm"
+          className="rounded-full px-2 py-1 text-[10px] sm:text-[11px] text-ink-muted hover:text-ink"
           onClick={props.onClearToken}
         >
           Clear admin debug token
-        </button>
+        </Button>
       </div>
-      {!debug ? (
-        <p className="text-ink-muted">
-          No debug payload in the last response (server debug disabled or token not authorized).
-        </p>
-      ) : (
+      {debug ? (
         <div className="grid gap-4">
           <section>
-            <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+            <Text
+              size="xs"
+              className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted"
+              leading="normal"
+            >
               Thread
-            </p>
+            </Text>
             <dl className="mt-2 grid gap-1">
               <DebugRow
                 label="previous_response_id_present"
@@ -179,9 +199,13 @@ function AdminDebugPanel(props: {
           </section>
 
           <section>
-            <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+            <Text
+              size="xs"
+              className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted"
+              leading="normal"
+            >
               Retrieval
-            </p>
+            </Text>
             <dl className="mt-2 grid gap-1">
               <DebugRow label="attempted" value={debug.retrieval.attempted} />
               <DebugRow label="skipped" value={debug.retrieval.skipped} />
@@ -193,7 +217,9 @@ function AdminDebugPanel(props: {
                 value={debug.retrieval.rerank_metrics_present}
               />
               <div className="mt-2">
-                <p className="text-ink-muted">top_titles</p>
+                <Text className="text-ink-muted" leading="normal">
+                  top_titles
+                </Text>
                 {titles.length ? (
                   <ul className="mt-1 list-disc space-y-1 pl-5 font-mono text-[11px] sm:text-xs">
                     {titles.map((title) => (
@@ -201,16 +227,26 @@ function AdminDebugPanel(props: {
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-1 font-mono text-[11px] sm:text-xs text-ink-muted">[]</p>
+                  <Text
+                    size="sm"
+                    className="mt-1 font-mono text-[11px] sm:text-xs text-ink-muted"
+                    leading="normal"
+                  >
+                    []
+                  </Text>
                 )}
               </div>
             </dl>
           </section>
 
           <section>
-            <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+            <Text
+              size="xs"
+              className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted"
+              leading="normal"
+            >
               Usage
-            </p>
+            </Text>
             <dl className="mt-2 grid gap-1">
               <DebugRow label="input_tokens" value={debug.usage?.input_tokens} />
               <DebugRow label="cached_tokens" value={debug.usage?.cached_tokens} />
@@ -220,9 +256,13 @@ function AdminDebugPanel(props: {
           </section>
 
           <section>
-            <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+            <Text
+              size="xs"
+              className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted"
+              leading="normal"
+            >
               Flags
-            </p>
+            </Text>
             <dl className="mt-2 grid gap-1">
               <DebugRow label="convo_strategy" value={debug.flags.convo_strategy} />
               <DebugRow label="retrieval_policy" value={debug.flags.retrieval_policy} />
@@ -238,11 +278,15 @@ function AdminDebugPanel(props: {
             </dl>
           </section>
 
-          {debug.triggers && (
+          {debug.triggers ? (
             <section>
-              <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+              <Text
+                size="xs"
+                className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted"
+                leading="normal"
+              >
                 Triggers
-              </p>
+              </Text>
               <dl className="mt-2 grid gap-1">
                 <DebugRow label="blocked_intent" value={debug.triggers.blocked_intent} />
                 <DebugRow label="evidenceMode" value={debug.triggers.evidenceMode} />
@@ -250,8 +294,12 @@ function AdminDebugPanel(props: {
                 <DebugRow label="postvalidate" value={debug.triggers.postvalidate} />
               </dl>
             </section>
-          )}
+          ) : null}
         </div>
+      ) : (
+        <Text className="text-ink-muted" leading="normal">
+          No debug payload in the last response (server debug disabled or token not authorized).
+        </Text>
       )}
     </div>
   );
@@ -293,17 +341,18 @@ export function ChatPanel({
   const [sessionLabel, setSessionLabel] = useState("");
   const sessionInputRef = useRef<HTMLInputElement | null>(null);
   const [hasAdminDebugToken, setHasAdminDebugToken] = useState(() => {
-    if (!("localStorage" in globalThis) || typeof window === "undefined") return false;
+    const browserWindow = globalThis.window;
+    if (!browserWindow || !("localStorage" in globalThis)) return false;
     try {
-      const url = new URL(window.location.href);
+      const url = new URL(browserWindow.location.href);
       const token = url.searchParams.get("adminDebugToken");
       if (token && token.trim().length > 0) {
         globalThis.localStorage.setItem(ADMIN_DEBUG_TOKEN_STORAGE_KEY, token.trim());
         url.searchParams.delete("adminDebugToken");
-        globalThis.history.replaceState({}, "", url.toString());
+        browserWindow.history.replaceState({}, "", url.toString());
       } else if (url.searchParams.has("adminDebugToken")) {
         url.searchParams.delete("adminDebugToken");
-        globalThis.history.replaceState({}, "", url.toString());
+        browserWindow.history.replaceState({}, "", url.toString());
       }
 
       return Boolean(globalThis.localStorage.getItem(ADMIN_DEBUG_TOKEN_STORAGE_KEY));
@@ -414,13 +463,14 @@ export function ChatPanel({
   };
 
   const handleSessionIdConfirm = () => {
-    if (typeof window === "undefined") return;
+    const browserWindow = globalThis.window;
+    if (!browserWindow) return;
     const normalizedLabel = normalizeLabel(sessionLabel);
     const randomId = createRandomId();
     const combined = normalizedLabel ? `${normalizedLabel}_${randomId}` : randomId;
 
     try {
-      window.localStorage.setItem(SESSION_STORAGE_KEY, combined);
+      browserWindow.localStorage.setItem(SESSION_STORAGE_KEY, combined);
     } catch {
       // ignore storage errors
     }
@@ -449,14 +499,15 @@ export function ChatPanel({
     setCopiedId(null);
 
     // Clear browser storage to simulate a new visitor.
-    if (typeof window !== "undefined") {
+    const browserWindow = globalThis.window;
+    if (browserWindow) {
       try {
-        window.localStorage.clear();
+        browserWindow.localStorage.clear();
       } catch {
         // ignore
       }
       try {
-        window.sessionStorage.clear();
+        browserWindow.sessionStorage.clear();
       } catch {
         // ignore
       }
@@ -491,7 +542,11 @@ export function ChatPanel({
       });
       return;
     }
-    const notePrompt = `Using a quiet, reverent Perazzi voice, write a beautifully composed “Legacy Note” as if it were from the perspective of the user's future self. Base it on these three answers:\\n1) ${updated[0] ?? ""}\\n2) ${updated[1] ?? ""}\\n3) ${updated[2] ?? ""}\\nMake it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lines to create some space, then add one line: "Whenever we talk about configurations or specs, we’ll keep this in mind."`;
+    const notePrompt = String.raw`Using a quiet, reverent Perazzi voice, write a beautifully composed “Legacy Note” as if it were from the perspective of the user's future self. Base it on these three answers:
+1) ${updated[0] ?? ""}
+2) ${updated[1] ?? ""}
+3) ${updated[2] ?? ""}
+Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lines to create some space, then add one line: "Whenever we talk about configurations or specs, we’ll keep this in mind."`;
     sendMessage({ question: notePrompt, context, skipEcho: true });
     exitLegacyMode();
   };
@@ -525,13 +580,13 @@ export function ChatPanel({
 
   if (!open) return null;
 
-  const rootClasses = [
-    "flex h-full w-full flex-col bg-card text-ink shadow-elevated",
-    variant === "rail" ? "border-l border-subtle" : "",
-    className ?? "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const rootClasses = cn(
+    "relative z-40 flex h-full w-full flex-col text-ink outline-none",
+    variant === "rail"
+      ? "border-l border-border bg-card/90 shadow-elevated backdrop-blur-xl"
+      : "overflow-hidden rounded-3xl border border-border bg-card/95 shadow-elevated backdrop-blur-xl",
+    className,
+  );
 
   const legacyOverlay =
     legacyMode && typeof document !== "undefined"
@@ -556,20 +611,22 @@ export function ChatPanel({
           analyticsRef.current = node;
         }}
         data-analytics-id="ChatPanelSeen"
-        className={`${rootClasses} z-40 relative`}
+        className={rootClasses}
         style={{ minWidth: variant === "rail" ? "320px" : undefined }}
       >
       {sessionPromptOpen && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-md rounded-2xl border border-subtle bg-card p-5 shadow-elevated">
-            <h3 className="text-lg font-semibold text-ink">Input New Session ID</h3>
-            <p className="mt-2 text-sm text-ink-muted">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-card/95 p-5 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl">
+            <Heading level={3} size="lg" className="text-ink">
+              Input New Session ID
+            </Heading>
+            <Text className="mt-2 text-ink-muted" leading="relaxed">
               We&apos;ll prepend this to a fresh random ID to reduce collisions (example: label_uuid).
-            </p>
+            </Text>
             <div className="mt-4 space-y-3">
               <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted">
                 Session label
-                <input
+                <Input
                   ref={sessionInputRef}
                   type="text"
                   value={sessionLabel}
@@ -580,75 +637,87 @@ export function ChatPanel({
                       handleSessionIdConfirm();
                     }
                   }}
-                  className="mt-2 w-full rounded-xl border border-subtle bg-card px-3 py-2 text-sm text-ink outline-none focus:border-ink focus-ring"
+                  className="mt-2"
                   placeholder="e.g., dealer-demo"
                 />
               </label>
               <div className="flex items-center justify-end gap-2">
-                <button
+                <Button
                   type="button"
-                  className="rounded-full border border-subtle px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink"
+                  variant="secondary"
+                  size="sm"
+                  className="rounded-full px-3 text-ink-muted hover:text-ink"
                   onClick={handleSessionPromptCancel}
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="rounded-full bg-ink px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-card transition hover:bg-ink-muted disabled:cursor-not-allowed disabled:bg-subtle disabled:text-ink-muted"
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full border-transparent bg-ink px-4 text-card hover:bg-ink-muted disabled:bg-subtle disabled:text-ink-muted"
                   onClick={handleSessionIdConfirm}
                 >
                   Confirm
-                </button>
+                </Button>
               </div>
             </div>
           </div>
         </div>
       )}
-      <div className="space-y-3 border-b border-subtle px-6 py-5">
+      <div className="space-y-3 border-b border-border bg-card/80 px-6 py-5 backdrop-blur-md">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+            <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
               {legacyMode ? "Legacy Conversation" : "Perazzi Concierge"}
-            </p>
-            <h2 className="text-xl font-semibold">Where shall we begin?</h2>
+            </Text>
+            <Heading level={2} size="lg" className="text-ink">
+              Where shall we begin?
+            </Heading>
           </div>
           <div className="flex items-center gap-2">
             {hasAdminDebugToken && (
-              <button
+              <Button
                 type="button"
-                className="rounded-full border border-subtle px-3 py-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted transition hover:border-ink hover:text-ink"
+                variant="secondary"
+                size="sm"
+                className="rounded-full px-3 py-1.5 text-[11px] sm:text-xs text-ink-muted hover:text-ink"
                 onClick={() => setAdminDebugOpen((prev) => !prev)}
                 aria-expanded={adminDebugOpen}
               >
                 Admin Debug
-              </button>
+              </Button>
             )}
             {showResetButton && (
-              <button
+              <Button
                 type="button"
-                className="rounded-full border border-subtle px-3 py-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted transition hover:border-ink hover:text-ink"
+                variant="secondary"
+                size="sm"
+                className="rounded-full px-3 py-1.5 text-[11px] sm:text-xs text-ink-muted hover:text-ink"
                 onClick={handleResetVisitor}
               >
                 Reset visitor
-              </button>
+              </Button>
             )}
             {legacyMode && (
-              <button
+              <Button
                 type="button"
-                className="rounded-full border border-subtle px-3 py-1.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted transition hover:border-ink hover:text-ink"
+                variant="secondary"
+                size="sm"
+                className="rounded-full px-3 py-1.5 text-[11px] sm:text-xs text-ink-muted hover:text-ink"
                 onClick={exitLegacyMode}
               >
                 Exit
-              </button>
+              </Button>
             )}
             {onClose && (
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-full p-2 text-2xl leading-none text-ink-muted transition hover:bg-subtle focus-visible:ring-2 focus-visible:ring-brand"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full text-ink-muted transition hover:bg-ink/5 focus-ring"
                 aria-label="Close chat"
               >
-                ×
+                <X className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
               </button>
             )}
           </div>
@@ -671,46 +740,58 @@ export function ChatPanel({
         />
       )}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-10 text-sm text-ink">
-          <div className={cn("flex flex-col gap-6", legacyMode ? "bg-subtle/20 rounded-3xl p-4" : "")}>
-            {!legacyMode && (
-              <div className="rounded-2xl border border-subtle/60 bg-subtle/40 p-4 text-sm text-ink sm:rounded-3xl sm:border-subtle sm:px-5 sm:py-4">
+        <div
+          ref={scrollRef}
+          className="min-h-0 flex-1 overflow-y-auto bg-canvas/30 px-6 py-10 text-sm text-ink"
+        >
+          <div
+            className={cn(
+              "flex flex-col gap-6",
+              legacyMode
+                ? "rounded-3xl border border-border/70 bg-card/70 p-4 shadow-soft backdrop-blur-sm"
+                : "",
+            )}
+          >
+            {legacyMode ? null : (
+              <div className="rounded-2xl border border-border/70 bg-card/60 p-4 text-sm text-ink shadow-soft backdrop-blur-sm sm:rounded-3xl sm:px-5 sm:py-4">
                 <div className="flex items-center justify-between gap-4">
-                  <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">Guided Questions</p>
-                  <button
+                  <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
+                    Guided Questions
+                  </Text>
+                  <Button
                     type="button"
-                    className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:text-ink"
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto px-0 py-0 text-[11px] sm:text-xs text-ink-muted hover:text-ink"
                     onClick={() => setShowQuickStarts((prev) => !prev)}
                   >
                     {showQuickStarts ? "Hide" : "Show"}
-                  </button>
+                  </Button>
                 </div>
                 {showQuickStarts && (
                   <div className="mt-4 grid gap-3">
                     {QUICK_STARTS.map((qs) => (
-                      <button
+                      <QuickStartButton
                         key={qs.label}
-                        type="button"
-                        className="w-full rounded-2xl border border-subtle bg-card px-4 py-3 text-left font-medium text-ink transition hover:border-ink disabled:cursor-not-allowed"
-                        onClick={() =>
+                        label={qs.label}
+                        prompt={qs.prompt}
+                        disabled={pending}
+                        onSelect={(prompt) =>
                           sendMessage({
-                            question: qs.prompt,
+                            question: prompt,
                             context: { pageUrl: globalThis.location.pathname, locale: navigator.language, ...context },
                           })
                         }
-                        disabled={pending}
-                      >
-                        {qs.label}
-                      </button>
+                      />
                     ))}
                   </div>
                 )}
               </div>
             )}
         {messages.length === 0 ? (
-          <p className="text-ink-muted">
+          <Text className="text-ink-muted" leading="relaxed">
             Ask about heritage, platforms, or service, and I’ll help you connect the craft to your own journey.
-          </p>
+          </Text>
         ) : (
           <ul className="flex flex-col gap-6">
             {messages.map((msg, index) => {
@@ -731,7 +812,9 @@ export function ChatPanel({
                   <div className={isAssistant ? "text-left" : "text-right"}>
                     <div
                       className={`inline-block rounded-2xl px-4 py-3 ${
-                        isAssistant ? "bg-card border border-subtle text-ink" : "bg-ink text-card"
+                        isAssistant
+                          ? "bg-card/80 border border-border/70 text-ink shadow-soft backdrop-blur-sm"
+                          : "bg-ink text-card shadow-soft"
                       }`}
                     >
                       {isAssistant ? (
@@ -749,50 +832,55 @@ export function ChatPanel({
                       {isAssistant && msg.archetypeBreakdown && (
                         <div className="mt-3 text-[11px] sm:text-xs text-ink-muted">
                           {msg.archetypeBreakdown.primary && (
-                            <p className="font-semibold">
+                            <Text className="font-semibold" leading="normal">
                               Archetype profile: {msg.archetypeBreakdown.primary.charAt(0).toUpperCase()}
                               {msg.archetypeBreakdown.primary.slice(1)}
-                            </p>
+                            </Text>
                           )}
-                          <p className="mt-1">
+                          <Text className="mt-1" leading="normal">
                             {formatArchetypePercentages(msg.archetypeBreakdown.vector).map((item, idx) => (
                               <span key={item.label}>
                                 {item.label} {item.percent}%
                                 {idx < ARCHETYPE_ORDER.length - 1 ? " • " : ""}
                               </span>
                             ))}
-                          </p>
+                          </Text>
                         </div>
                       )}
 
                       {(() => {
                         const hasRetrievalData =
                           (Array.isArray(msg.retrievalScores) && msg.retrievalScores.length > 0) ||
-                          msg.retrievalLabel !== undefined ||
-                          msg.similarity !== undefined;
-                        if (!hasRetrievalData) return null;
-
-                        const retrievalLabel =
-                          msg.retrievalLabel ??
-                          getRetrievalLabelFromScores(
-                            msg.retrievalScores ?? (msg.similarity !== undefined ? [msg.similarity] : []),
+                          typeof msg.retrievalLabel === "string" ||
+                          typeof msg.similarity === "number";
+                        if (hasRetrievalData) {
+                          const fallbackScores =
+                            typeof msg.similarity === "number" ? [msg.similarity] : [];
+                          const retrievalLabel =
+                            msg.retrievalLabel ??
+                            getRetrievalLabelFromScores(
+                              msg.retrievalScores ?? fallbackScores,
+                            );
+                          return (
+                            <Text size="sm" className="mt-2 text-ink-muted" leading="normal">
+                              Retrieval: {retrievalLabel}
+                            </Text>
                           );
-                        return (
-                          <p className="mt-2 text-[11px] sm:text-xs text-ink-muted">
-                            Retrieval: {retrievalLabel}
-                          </p>
-                        );
+                        }
+                        return null;
                       })()}
 
                       {isAssistant && (
                         <div className="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em]">
-                          <button
+                          <Button
                             type="button"
-                            className="rounded-full border border-subtle px-3 py-1 text-ink-muted transition hover:border-ink hover:text-ink"
+                            variant="secondary"
+                            size="sm"
+                            className="rounded-full px-3 py-1 text-ink-muted hover:text-ink"
                             onClick={() => handleCopy(msg.id, msg.content)}
                           >
                             {copiedId === msg.id ? "Copied" : "Copy"}
-                          </button>
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -813,8 +901,12 @@ export function ChatPanel({
         )}
       </div>
       </div>
-        <div className="border-t border-subtle px-6 py-4">
-          {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
+        <div className="border-t border-border bg-card/80 px-6 py-4 backdrop-blur-md">
+          {error && (
+            <Text className="mb-2 text-red-600" leading="normal">
+              {error}
+            </Text>
+          )}
           <ChatInput
             pending={pending}
             onSend={handleSend}

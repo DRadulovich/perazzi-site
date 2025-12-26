@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { PageHeading } from "@/components/page-heading";
+import { Text } from "@/components/ui/text";
 
 const stageCopy = {
   fitting: {
@@ -53,7 +54,9 @@ export default function BespokeBuildStagePage({
         title={copy.title}
         description={copy.description}
       />
-      <p className="max-w-3xl text-base text-ink-muted">{copy.body}</p>
+      <Text size="lg" className="max-w-3xl text-ink-muted">
+        {copy.body}
+      </Text>
     </div>
   );
 }

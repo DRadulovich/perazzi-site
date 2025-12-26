@@ -8,6 +8,7 @@ import { CTASection } from "@/components/shotguns/CTASection";
 import { CinematicImageStrip } from "@/components/shotguns/CinematicImageStrip";
 import { getBespokePageData } from "@/lib/bespoke-data";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
+import { Container, Heading, Section, Text } from "@/components/ui";
 
 export default async function BespokeBuildPage() {
   const {
@@ -25,25 +26,32 @@ export default async function BespokeBuildPage() {
   } = await getBespokePageData();
 
   return (
-    <div className="space-y-16 px-2 sm:px-4 lg:px-6" id="bespoke-top">
+    <div className="space-y-16" id="bespoke-top">
       <BuildHero hero={hero} fullBleed />
       <BuildStepsScroller steps={steps} intro={stepsIntro} skipTargetId="bespoke-experts" />
-      <section
-        className="border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-10 sm:py-16"
+      <Section
+        padding="lg"
+        bordered={false}
+        className="rounded-none border-t border-border bg-canvas shadow-none"
         aria-labelledby="bespoke-guide-heading"
       >
-        <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
+        <Container
+          size="xl"
+          className="flex flex-col gap-10 px-0 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16"
+        >
           <div className="space-y-4 text-ink">
-            <p
+            <Heading
               id="bespoke-guide-heading"
-              className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-ink"
             >
               {bespokeGuide?.heading ?? "Need a bespoke guide?"}
-            </p>
-            <p className="mb-8 text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
+            </Heading>
+            <Text className="mb-8 font-light italic text-ink-muted">
               {bespokeGuide?.body
                 ?? "Ask how fittings, platform choices, engraving, and finishing should flow for you—so your visit to the atelier is focused, confident, and personal."}
-            </p>
+            </Text>
             <div className="flex flex-wrap gap-3 justify-start">
               <ChatTriggerButton
                 label={bespokeGuide?.chatLabel ?? "Plan my bespoke visit"}
@@ -66,9 +74,9 @@ export default async function BespokeBuildPage() {
           </div>
 
           <div className="space-y-3 text-sm sm:text-base font-light italic text-ink-muted">
-              <p className="text-sm sm:text-base font-semibold not-italic text-ink">
+              <Text className="font-semibold not-italic text-ink" leading="normal">
                 Three things we’ll map together:
-              </p>
+              </Text>
               <ul className="space-y-2">
                 {(bespokeGuide?.listItems?.length
                   ? bespokeGuide.listItems
@@ -86,12 +94,12 @@ export default async function BespokeBuildPage() {
                       );
                     })}
               </ul>
-              <p className="text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
+              <Text className="font-light italic text-ink-muted">
                 The concierge aligns your disciplines, aesthetic cues, and schedule so the atelier session runs smoothly.
-              </p>
+              </Text>
             </div>
-        </div>
-      </section>
+        </Container>
+      </Section>
       <CinematicImageStrip
         src={(cinematicStrips?.[0]?.image?.url) ?? "/cinematic_background_photos/p-web-25.jpg"}
         image={cinematicStrips?.[0]?.image}
@@ -104,15 +112,12 @@ export default async function BespokeBuildPage() {
         aria-labelledby="expert-section-heading"
       >
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+          <Text size="xs" muted className="font-semibold">
             {expertsIntro?.eyebrow ?? "Atelier team"}
-          </p>
-          <h2
-            id="expert-section-heading"
-            className="text-2xl font-semibold text-ink"
-          >
+          </Text>
+          <Heading id="expert-section-heading" level={2} size="xl" className="text-ink">
             {expertsIntro?.heading ?? "Meet the craftsmen guiding your build"}
-          </h2>
+          </Heading>
         </div>
         <div className="grid gap-6 md:grid-cols-3">
           {experts.map((expert) => (

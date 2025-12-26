@@ -12,6 +12,7 @@ import {
   getJournalArticleData,
   getJournalArticleSlugs,
 } from "@/lib/journal-data";
+import { Heading, Text } from "@/components/ui";
 
 type ArticlePageProps = {
   params: { slug: string };
@@ -52,11 +53,13 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const data = await getJournalArticleData(params.slug);
   if (!data) {
     return (
-      <div className="space-y-6 rounded-3xl border border-border/70 bg-card/70 p-6 text-ink shadow-sm sm:p-8">
-        <h1 className="text-3xl font-semibold">Article coming soon</h1>
-        <p className="text-base text-ink-muted">
+      <div className="space-y-6 rounded-3xl border border-border/70 bg-card/70 p-6 text-ink shadow-soft sm:p-8">
+        <Heading level={1} size="xl">
+          Article coming soon
+        </Heading>
+        <Text size="lg" muted>
           We&apos;re shaping this story now. Check back shortly or explore other Journal features.
-        </p>
+        </Text>
         <Link href="/journal" className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring">
           Return to Journal{" "}
           <span aria-hidden="true">→</span>

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import SafeHtml from "@/components/SafeHtml";
 import type { AssuranceContent } from "@/types/build";
+import { Heading, Section, Text } from "@/components/ui";
 
 type AssuranceBlockProps = Readonly<{
   assurance: AssuranceContent;
@@ -14,21 +15,26 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
   const ratio = media?.aspectRatio ?? 3 / 2;
 
   return (
-    <section
-      className="rounded-2xl border border-border/60 bg-card/10 px-4 py-6 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] lg:gap-8"
+    <Section
+      padding="md"
+      className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] lg:gap-8"
       aria-labelledby="assurance-heading"
     >
       <div className="space-y-6">
         {heading ? (
-          <p
+          <Text
             id="assurance-heading"
-            className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted"
+            size="xs"
+            className="font-semibold tracking-[0.35em] text-ink-muted"
+            leading="normal"
           >
             {heading}
-          </p>
+          </Text>
         ) : null}
         {label ? (
-          <p className="text-lg font-semibold text-ink">{label}</p>
+          <Heading level={2} size="lg" className="text-ink">
+            {label}
+          </Heading>
         ) : null}
         {body ? (
           <SafeHtml
@@ -37,12 +43,19 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
           />
         ) : null}
         {quote ? (
-          <blockquote className="rounded-2xl border-l-4 border-perazzi-red/60 bg-card/40 px-5 py-4 text-[13px] sm:text-sm italic leading-relaxed text-ink">
-            <p>“{quote.text}”</p>
+          <blockquote className="rounded-2xl border-l-4 border-perazzi-red/60 bg-card/60 px-5 py-4 text-[13px] sm:text-sm italic leading-relaxed text-ink shadow-soft backdrop-blur-sm">
+            <Text asChild size="md" className="italic text-ink" leading="relaxed">
+              <p>“{quote.text}”</p>
+            </Text>
             {quote.author ? (
-              <cite className="mt-2 block not-italic text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink-muted">
-                {quote.author}
-              </cite>
+              <Text
+                asChild
+                size="xs"
+                className="mt-2 block not-italic tracking-[0.3em] text-ink-muted"
+                leading="normal"
+              >
+                <cite>{quote.author}</cite>
+              </Text>
             ) : null}
           </blockquote>
         ) : null}
@@ -50,7 +63,7 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
       {media ? (
         <figure className="mt-6 space-y-3 lg:mt-0">
           <div
-            className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
+            className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
             style={{ aspectRatio: ratio }}
           >
             {media.kind === "image" ? (
@@ -73,12 +86,12 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
             )}
           </div>
           {media.caption ? (
-            <figcaption className="text-[11px] sm:text-xs leading-relaxed text-ink-muted">
-              {media.caption}
-            </figcaption>
+            <Text asChild size="sm" className="text-ink-muted" leading="relaxed">
+              <figcaption>{media.caption}</figcaption>
+            </Text>
           ) : null}
         </figure>
       ) : null}
-    </section>
+    </Section>
   );
 }

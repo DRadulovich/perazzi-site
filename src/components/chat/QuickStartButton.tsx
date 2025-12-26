@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui";
+
 type QuickStartButtonProps = Readonly<{
   label: string;
   prompt: string;
@@ -7,13 +9,15 @@ type QuickStartButtonProps = Readonly<{
 
 export function QuickStartButton({ label, prompt, disabled, onSelect }: QuickStartButtonProps) {
   return (
-    <button
+    <Button
       type="button"
-      className="w-full rounded-2xl border border-subtle/60 bg-card px-4 py-3 text-left text-sm sm:text-base font-medium text-ink transition hover:border-ink focus-ring disabled:cursor-not-allowed disabled:opacity-60"
+      variant="secondary"
+      size="md"
+      className="w-full justify-start rounded-2xl px-4 py-3 text-left text-sm sm:text-base normal-case tracking-normal"
       onClick={() => onSelect(prompt)}
       disabled={disabled}
     >
       {label}
-    </button>
+    </Button>
   );
 }

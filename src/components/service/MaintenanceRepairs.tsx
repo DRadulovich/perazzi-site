@@ -1,11 +1,11 @@
 "use client";
 
-import * as Collapsible from "@radix-ui/react-collapsible";
 import SafeHtml from "@/components/SafeHtml";
 import { useState } from "react";
 import type { GuideDownload, MaintenanceSection } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, Heading, Section, Text } from "@/components/ui";
 
 type MaintenanceRepairsProps = {
   readonly maintenanceSection: MaintenanceSection;
@@ -21,22 +21,20 @@ export function MaintenanceRepairs({ maintenanceSection, guide }: MaintenanceRep
   const beforeSendLabel = maintenanceSection.columnLabels?.[0] ?? "Before you send your gun";
 
   return (
-    <section
+    <Section
       ref={analyticsRef}
       data-analytics-id="MaintenanceRepairsSeen"
-      className="space-y-4 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 sm:shadow-md lg:px-10"
+      padding="md"
+      className="space-y-4"
       aria-labelledby="maintenance-heading"
     >
       <div className="space-y-2">
-        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+        <Text size="xs" muted className="font-semibold">
           {heading}
-        </p>
-        <h2
-          id="maintenance-heading"
-          className="text-2xl sm:text-3xl font-semibold text-ink"
-        >
+        </Text>
+        <Heading id="maintenance-heading" level={2} size="xl" className="text-ink">
           {subheading}
-        </h2>
+        </Heading>
       </div>
       <SafeHtml
         className="prose prose-sm max-w-none leading-relaxed text-ink-muted md:prose-lg"
@@ -57,8 +55,8 @@ export function MaintenanceRepairs({ maintenanceSection, guide }: MaintenanceRep
           <span className="sr-only"> (opens in a new tab)</span>
         </a>
       ) : null}
-      <Collapsible.Root open={open} onOpenChange={setOpen}>
-        <Collapsible.Trigger
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <CollapsibleTrigger
           className="flex w-full items-center justify-between rounded-2xl border border-border/60 bg-card/10 px-4 py-3 text-left text-sm font-semibold text-ink focus-ring sm:border-border sm:bg-card/40"
           aria-expanded={open}
           aria-controls="before-send-content"
@@ -70,8 +68,8 @@ export function MaintenanceRepairs({ maintenanceSection, guide }: MaintenanceRep
           >
             +
           </span>
-        </Collapsible.Trigger>
-        <Collapsible.Content
+        </CollapsibleTrigger>
+        <CollapsibleContent
           id="before-send-content"
           className="mt-3 rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted sm:bg-card/60"
         >
@@ -81,8 +79,8 @@ export function MaintenanceRepairs({ maintenanceSection, guide }: MaintenanceRep
             <li>Use the Perazzi travel case or double-box with foam.</li>
             <li>Include a note describing issues, desired break weight, and timeline.</li>
           </ul>
-        </Collapsible.Content>
-      </Collapsible.Root>
-    </section>
+        </CollapsibleContent>
+      </Collapsible>
+    </Section>
   );
 }

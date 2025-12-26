@@ -1,6 +1,5 @@
 "use client";
 
-import * as Collapsible from "@radix-ui/react-collapsible";
 import SafeHtml from "@/components/SafeHtml";
 import { useEffect, useId, useState } from "react";
 import Image from "next/image";
@@ -9,6 +8,7 @@ import type { OralHistoriesUi, OralHistory } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, Heading, Section, Text } from "@/components/ui";
 
 const FALLBACK_TRACK_SRC = `data:text/vtt;charset=utf-8,${encodeURIComponent(
   "WEBVTT\n\n00:00:00.000 --> 00:00:01.000\nCaptions not available.",
@@ -52,22 +52,20 @@ export function OralHistories({ histories, ui }: OralHistoriesProps) {
   const hideLabel = ui.hideLabel ?? "Hide transcript";
 
   return (
-    <section
+    <Section
       ref={sectionRef}
       data-analytics-id="OralHistoriesSeen"
-      className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8"
+      padding="md"
+      className="space-y-6"
       aria-labelledby="oral-histories-heading"
     >
       <div className="space-y-2">
-        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+        <Text size="xs" className="font-semibold tracking-[0.35em] text-ink-muted" leading="normal">
           {eyebrow}
-        </p>
-        <h2
-          id="oral-histories-heading"
-          className="text-2xl sm:text-3xl font-semibold text-ink"
-        >
+        </Text>
+        <Heading id="oral-histories-heading" level={2} size="xl" className="text-ink">
           {heading}
-        </h2>
+        </Heading>
       </div>
       <div className="grid gap-6 md:grid-cols-2">
         {histories.map((history) => (
@@ -79,7 +77,7 @@ export function OralHistories({ histories, ui }: OralHistoriesProps) {
           />
         ))}
       </div>
-    </section>
+    </Section>
   );
 }
 
@@ -101,11 +99,11 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
     <article
       ref={analyticsRef}
       data-analytics-id={`OralHistorySeen:${history.id}`}
-      className="flex h-full flex-col gap-4 rounded-2xl border border-border/75 bg-card/80 p-5 shadow-sm sm:rounded-3xl sm:p-6"
+      className="flex h-full flex-col gap-4 rounded-2xl border border-border/75 bg-card/80 p-5 shadow-soft sm:rounded-3xl sm:p-6"
     >
       {history.image ? (
         <div
-          className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
+          className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
           style={{ aspectRatio: history.image.aspectRatio ?? 1 }}
         >
           <Image
@@ -118,15 +116,19 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
         </div>
       ) : null}
       <div className="space-y-2">
-        <h3 className="text-base sm:text-lg font-semibold text-ink">
+        <Heading level={3} size="sm" className="text-ink">
           {history.title}
-        </h3>
-        <blockquote className="border-l-2 border-perazzi-red/50 pl-3 text-sm italic leading-relaxed text-ink-muted">
-          “{history.quote}”
-        </blockquote>
-        <p className="text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink-muted">
+        </Heading>
+        <Text
+          asChild
+          size="md"
+          className="border-l-2 border-perazzi-red/50 pl-3 italic text-ink-muted"
+        >
+          <blockquote>“{history.quote}”</blockquote>
+        </Text>
+        <Text size="xs" className="text-ink-muted" leading="normal">
           {history.attribution}
-        </p>
+        </Text>
       </div>
       {history.audioSrc ? (
         <audio
@@ -153,8 +155,8 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
         </audio>
       ) : null}
       {history.transcriptHtml ? (
-        <Collapsible.Root open={open} onOpenChange={setOpen}>
-          <Collapsible.Trigger
+        <Collapsible open={open} onOpenChange={setOpen}>
+          <CollapsibleTrigger
             className="mt-auto inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink focus-ring"
             aria-expanded={open}
             aria-controls={contentId}
@@ -170,8 +172,8 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
             >
               +
             </span>
-          </Collapsible.Trigger>
-          <Collapsible.Content
+          </CollapsibleTrigger>
+          <CollapsibleContent
             id={contentId}
             className={cn(
               "mt-4 overflow-hidden rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted sm:bg-card/70",
@@ -181,14 +183,14 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
             )}
           >
             <SafeHtml html={history.transcriptHtml} />
-          </Collapsible.Content>
+          </CollapsibleContent>
           <noscript>
             <SafeHtml
               className="mt-4 rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted sm:bg-card/70"
               html={history.transcriptHtml}
             />
           </noscript>
-        </Collapsible.Root>
+        </Collapsible>
       ) : null}
     </article>
   );

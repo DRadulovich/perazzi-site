@@ -54,7 +54,7 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
             className="object-cover"
           />
         <div
-          className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"
+          className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-transparent"
           aria-hidden="true"
         />
       </motion.div>
@@ -79,7 +79,7 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
         className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center"
         aria-hidden="true"
       >
-        <span className="inline-flex items-center gap-2 rounded-full border border-white/40 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-white/80">
+        <span className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/5 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-white/85 shadow-soft backdrop-blur-sm">
           <span>Scroll</span>
           <span className="text-lg leading-none">↓</span>
         </span>

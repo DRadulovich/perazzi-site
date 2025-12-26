@@ -1,4 +1,5 @@
 import type { DisciplineSummary, Platform, ShotgunsSeriesEntry } from "@/types/catalog";
+import { portableTextToPlainText } from "@/lib/portable-text";
 
 const asHtml = (content?: string, fallback?: string) => {
   if (!content) return fallback ?? "";
@@ -27,12 +28,16 @@ const buildDisciplineMap = (
       if (!discipline && !ref.id && !ref.name) return null;
       const label = discipline?.name ?? ref.name ?? "Discipline";
       const id = discipline?.id ?? ref.id ?? label.toLowerCase();
+      const overviewText =
+        portableTextToPlainText(discipline?.overviewPortableText) ??
+        (discipline?.overviewHtml ? discipline.overviewHtml.replaceAll(/<[^>]+>/g, "") : "");
+      const trimmed = overviewText.trim();
       return {
         disciplineId: id,
         label,
         href: discipline ? `/shotguns/disciplines/${discipline.id}` : `/shotguns/disciplines`,
-        rationale: discipline?.overviewHtml
-          ? discipline.overviewHtml.replaceAll(/<[^>]+>/g, "").slice(0, 160).concat("…")
+        rationale: trimmed
+          ? trimmed.slice(0, 160).concat("…")
           : `Optimized for ${label}.`,
       };
     })

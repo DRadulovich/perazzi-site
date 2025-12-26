@@ -1,6 +1,7 @@
 'use client';
 
 import clsx from "clsx";
+import * as Dialog from "@radix-ui/react-dialog";
 import Image from "next/image";
 import { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import type { ReactNode } from "react";
@@ -8,6 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 
 import { getSanityImageUrl } from "@/lib/sanityImage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { Button, Heading, Input, Text } from "@/components/ui";
 
 type EngravingRow = {
   _id: string;
@@ -36,44 +38,11 @@ const PREFERRED_GRADE_ORDER = [
 ];
 const PREFERRED_SIDE_ORDER = ["Left", "Under", "Right"];
 const FILTER_PANEL_CLASS =
-  "space-y-4 rounded-[32px] border border-white/15 bg-[linear-gradient(135deg,#070707,#101010)]/95 px-4 py-5 shadow-[0_35px_120px_rgba(0,0,0,0.45)] sm:px-6 sm:py-6";
+  "space-y-4 rounded-3xl border border-white/15 bg-[linear-gradient(135deg,var(--perazzi-black),color-mix(in srgb,var(--perazzi-black) 85%, black))]/95 px-4 py-5 shadow-elevated sm:px-6 sm:py-6";
 const CARD_CLASS =
-  "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-neutral-950/80 text-left shadow-lg shadow-black/40 transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red sm:rounded-3xl sm:shadow-2xl";
+  "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-perazzi-black/80 text-left shadow-medium transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red sm:rounded-3xl sm:shadow-elevated";
 const SPEC_PANEL_CLASS =
   "grid gap-4 border-t border-white/10 bg-black/40 px-4 py-4 text-[11px] sm:text-sm text-neutral-200 sm:grid-cols-2 sm:px-6 sm:py-5";
-const FOCUSABLE_SELECTORS = [
-  "a[href]",
-  'button:not([disabled])',
-  'textarea:not([disabled])',
-  'input:not([disabled])',
-  'select:not([disabled])',
-  '[tabindex]:not([tabindex="-1"])',
-] as const;
-
-function trapFocus(container: HTMLElement | null) {
-  if (!container) return undefined;
-  const focusables = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS.join(",")));
-  focusables.at(0)?.focus();
-
-  const handleTrap = (event: KeyboardEvent) => {
-    if (event.key !== "Tab" || focusables.length === 0) return;
-    const first = focusables.at(0);
-    const last = focusables.at(-1);
-    if (!first || !last) return;
-    if (event.shiftKey) {
-      if (document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      }
-    } else if (document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  };
-
-  container.addEventListener("keydown", handleTrap);
-  return () => { container.removeEventListener("keydown", handleTrap); };
-}
 
 function filterByQuery(engravings: EngravingRow[], query: string) {
   const needle = query.trim().toLowerCase();
@@ -271,18 +240,20 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <label className="flex w-full items-center gap-3 rounded-full border border-white/20 bg-black/40 px-4 py-2 text-sm text-neutral-300 focus-within:border-white">
             <span className="text-neutral-500">Search</span>
-            <input
+            <Input
               type="search"
               placeholder="Search engraving ID or grade…"
               value={query}
               onChange={(event) => { handleQueryChange(event.target.value); }}
-              className="w-full bg-transparent text-sm sm:text-base text-white placeholder:text-neutral-600 focus:outline-none"
+              className="w-full border-0 bg-transparent px-0 py-0 text-sm sm:text-base text-white placeholder:text-neutral-600 shadow-none focus:border-0"
             />
           </label>
-          <p className="text-sm text-neutral-400" aria-live="polite" aria-atomic="true">
-            Showing <span className="font-semibold text-white">{filteredEngravings.length}</span>{" "}
-            of <span className="font-semibold text-white">{engravings.length}</span>
-          </p>
+          <Text asChild className="text-neutral-400" leading="normal">
+            <p aria-live="polite" aria-atomic="true">
+              Showing <span className="font-semibold text-white">{filteredEngravings.length}</span>{" "}
+              of <span className="font-semibold text-white">{engravings.length}</span>
+            </p>
+          </Text>
         </div>
 
         <FavoritesPanel favorites={favorites} onCompare={() => { setCompareOpen(true); }} onToggle={toggleFavorite} onSelect={openDetails} />
@@ -301,13 +272,15 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
             onToggle={(value) => { toggleMultiFilter(sideFilters, setSideFilters, value); }}
           />
           {hasFilters && (
-            <button
+            <Button
               type="button"
               onClick={clearFilters}
-              className="rounded-full border border-white/30 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-widest text-white/80 transition hover:border-white hover:text-white focus-ring"
+              variant="ghost"
+              size="sm"
+              className="rounded-full border border-white/30 text-white/80 hover:border-white hover:text-white hover:bg-white/5"
             >
               Reset filters
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -338,10 +311,12 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
 function Spec({ label, value }: Readonly<{ label: string; value?: string }>) {
   return (
     <div>
-      <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+      <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
         {label}
-      </p>
-      <p className="text-sm text-white">{value || "—"}</p>
+      </Text>
+      <Text className="text-white" leading="normal">
+        {value || "—"}
+      </Text>
     </div>
   );
 }
@@ -363,14 +338,17 @@ function FilterGroup({
   const total = options.reduce((sum, option) => sum + option.count, 0);
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <span
+      <Text
+        asChild
+        size="xs"
         className={clsx(
-          "text-[11px] sm:text-xs uppercase tracking-[0.3em]",
+          "tracking-[0.3em]",
           tone === "dark" ? "text-neutral-500" : "text-ink-muted",
         )}
+        leading="normal"
       >
-        {label}
-      </span>
+        <span>{label}</span>
+      </Text>
       <div className="flex flex-wrap gap-2">
         <FilterChip active={!values.length} label={`All (${total})`} onClick={() => { onToggle("__reset__"); }} />
         {options.map((option) => (
@@ -423,8 +401,8 @@ function FilterChip({
 function CardSkeleton() {
   const skeletonRows = ["first", "second", "third", "fourth"];
   return (
-    <div className="animate-pulse overflow-hidden rounded-2xl border border-white/5 bg-neutral-900/60 sm:rounded-3xl">
-      <div className="aspect-[4/3] w-full bg-white/10" />
+    <div className="animate-pulse overflow-hidden rounded-2xl border border-white/5 bg-perazzi-black/60 sm:rounded-3xl">
+      <div className="aspect-4/3 w-full bg-white/10" />
       <div className="space-y-3 border-t border-white/5 bg-black/30 p-4 sm:p-6">
         <div className="h-4 w-1/3 rounded bg-white/10" />
         <div className="h-6 w-2/3 rounded bg-white/10" />
@@ -453,22 +431,22 @@ function FavoritesPanel({
   return (
     <div className="rounded-3xl border border-white/10 bg-black/30 p-4 text-white">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400">
+        <Text size="xs" className="font-semibold text-neutral-400" leading="normal">
           Favorites ({favorites.length}/6)
-        </p>
-        <button
+        </Text>
+        <Button
           type="button"
           disabled={favorites.length < 2}
           onClick={onCompare}
+          variant="ghost"
+          size="sm"
           className={clsx(
-            "rounded-full px-4 py-2 text-[11px] sm:text-xs uppercase tracking-[0.3em] focus-ring",
-            favorites.length < 2
-              ? "border border-white/20 text-white/40"
-              : "border border-white/40 text-white hover:border-white hover:text-white",
+            "rounded-full border border-white/40 text-white hover:border-white hover:text-white hover:bg-white/5",
+            favorites.length < 2 && "border-white/20 text-white/40",
           )}
         >
           Compare
-        </button>
+        </Button>
       </div>
       <div className="mt-3 flex flex-wrap gap-4">
         {favorites.map((fav) => {
@@ -486,7 +464,9 @@ function FavoritesPanel({
                   <span className="text-xs text-black">No Image</span>
                 )}
               </button>
-              <p className="mt-2 text-xs font-semibold">#{fav.engravingId}</p>
+              <Text size="sm" className="mt-2 font-semibold" leading="normal">
+                #{fav.engravingId}
+              </Text>
               <button
                 type="button"
                 className="text-[11px] sm:text-xs uppercase tracking-[0.3em] text-white/60 hover:text-white"
@@ -541,9 +521,13 @@ function EngravingCardsGrid({
         ),
       )}
       {!showSkeletons && filteredLength === 0 && (
-        <p className="col-span-full rounded-2xl border border-dashed border-white/20 py-16 text-center text-neutral-500 sm:rounded-3xl">
-          No engravings match your current filters.
-        </p>
+        <Text
+          asChild
+          className="col-span-full rounded-2xl border border-dashed border-white/20 py-16 text-center text-neutral-500 sm:rounded-3xl"
+          leading="normal"
+        >
+          <p>No engravings match your current filters.</p>
+        </Text>
       )}
     </div>
   );
@@ -567,7 +551,7 @@ function EngravingCard({
   const cardImageUrl = getSanityImageUrl(engraving.image, { width: 2000, quality: 90 });
   return (
     <article className={CARD_CLASS}>
-      <div className="card-media relative aspect-[4/3] w-full bg-white">
+      <div className="card-media relative aspect-4/3 w-full bg-white">
         {cardImageUrl ? (
           <Image
             src={cardImageUrl}
@@ -599,15 +583,15 @@ function EngravingCard({
             engraving.engravingSide === "Right" ? "items-end text-right" : "items-start text-left",
           )}
         >
-          <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+          <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
             {engraving.gradeName}
-          </p>
-          <h3 className="text-xl sm:text-2xl font-semibold leading-tight">
+          </Text>
+          <Heading level={3} size="lg" className="leading-tight text-black">
             {highlightText(`Engraving ${engraving.engravingId}`, query)}
-          </h3>
-          <p className="text-sm text-black/70">
+          </Heading>
+          <Text className="text-black/70" leading="normal">
             {highlightText(engraving.engravingSide, query)}
-          </p>
+          </Text>
         </div>
       </div>
 
@@ -618,27 +602,31 @@ function EngravingCard({
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-white/5 bg-black/50 px-6 py-4">
-        <button
+        <Button
           type="button"
           onClick={() => { onToggleFavorite(engraving); }}
+          variant="ghost"
+          size="sm"
           className={clsx(
-            "rounded-full border px-5 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-widest transition focus-ring",
+            "rounded-full border px-5 text-white hover:border-white hover:text-white hover:bg-white/5",
             isFavorite
-              ? "border-perazzi-red bg-perazzi-red/80 text-white"
-              : "border-white/30 text-white hover:border-white hover:text-white",
+              ? "border-perazzi-red bg-perazzi-red/80 text-white hover:bg-perazzi-red/90"
+              : "border-white/30",
           )}
         >
           {isFavorite ? "Saved" : "Save"}
-        </button>
-        <button
+        </Button>
+        <Button
           ref={(node) => {
             onRegisterDetailButton(engraving._id, node);
           }}
           onClick={() => { onSelect(engraving); }}
-          className="rounded-full border border-white/30 px-5 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-widest text-white transition hover:border-white hover:text-white focus-ring"
+          variant="ghost"
+          size="sm"
+          className="rounded-full border border-white/30 px-5 text-white hover:border-white hover:text-white hover:bg-white/5"
         >
           View details
-        </button>
+        </Button>
       </div>
     </article>
   );
@@ -651,78 +639,75 @@ function EngravingDetailDialog({
   selected: EngravingRow | null;
   onClose: () => void;
 }>) {
-  const modalRef = useRef<HTMLDivElement | null>(null);
   const [heroLoaded, setHeroLoaded] = useState(false);
-  useEffect(() => trapFocus(modalRef.current), []);
 
   if (!selected) return null;
   const modalImageUrl = getSanityImageUrl(selected.image, { width: 3000, quality: 95 });
   return (
-    <dialog
-      open
-      className="fixed inset-0 z-50 m-0 flex items-center justify-center bg-black/80 p-3 sm:p-4 md:p-6 backdrop-blur relative"
-      aria-modal="true"
-      onCancel={onClose}
+    <Dialog.Root
+      open={Boolean(selected)}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
+      }}
     >
-      <button
-        type="button"
-        className="absolute inset-0 h-full w-full cursor-default border-0 bg-transparent p-0"
-        aria-label="Close engraving details dialog"
-        onClick={onClose}
-      />
-      <div
-        ref={modalRef}
-        className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]"
-      >
-        <button
-          type="button"
-          className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-widest text-black transition hover:border-black hover:bg-white focus-ring sm:right-5 sm:top-5"
-          onClick={onClose}
-        >
-          Close
-        </button>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
+        <Dialog.Content className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 md:p-6 outline-none">
+          <div className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-perazzi-black/95 text-white shadow-elevated">
+            <Dialog.Close asChild>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 text-black hover:border-black hover:bg-white sm:right-5 sm:top-5"
+              >
+                Close
+              </Button>
+            </Dialog.Close>
 
-        <div className="grid flex-1 overflow-y-auto p-4 sm:p-6">
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl bg-white">
-            {modalImageUrl ? (
-              <Image
-                src={modalImageUrl}
-                alt={selected.imageAlt || `Engraving ${selected.engravingId}`}
-                fill
-                sizes="(min-width: 1024px) 70vw, 100vw"
-                className={clsx(
-                  "object-contain bg-white transition-opacity duration-700",
-                  heroLoaded ? "opacity-100" : "opacity-0",
+            <div className="grid flex-1 overflow-y-auto p-4 sm:p-6">
+              <div className="relative aspect-4/3 w-full overflow-hidden rounded-3xl bg-white">
+                {modalImageUrl ? (
+                  <Image
+                    src={modalImageUrl}
+                    alt={selected.imageAlt || `Engraving ${selected.engravingId}`}
+                    fill
+                    sizes="(min-width: 1024px) 70vw, 100vw"
+                    className={clsx(
+                      "object-contain bg-white transition-opacity duration-700",
+                      heroLoaded ? "opacity-100" : "opacity-0",
+                    )}
+                    style={{
+                      objectPosition: selected.engravingSide === "Under" ? "right center" : "center",
+                    }}
+                    priority
+                    onLoadingComplete={() => { setHeroLoaded(true); }}
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-neutral-600">No Image Available</div>
                 )}
-                style={{
-                  objectPosition: selected.engravingSide === "Under" ? "right center" : "center",
-                }}
-                priority
-                onLoadingComplete={() => { setHeroLoaded(true); }}
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center text-neutral-600">No Image Available</div>
-            )}
-            <div
-              className={clsx(
-                "absolute inset-x-0 bottom-0 flex flex-col p-8 text-black",
-                selected.engravingSide === "Right" ? "items-end text-right" : "items-start text-left",
-              )}
-            >
-              <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
-                {selected.gradeName}
-              </p>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold leading-tight">
-                Engraving {selected.engravingId}
-              </h2>
-              <p className="text-sm sm:text-base text-black/70">
-                {selected.engravingSide}
-              </p>
+                <div
+                  className={clsx(
+                    "absolute inset-x-0 bottom-0 flex flex-col p-8 text-black",
+                    selected.engravingSide === "Right" ? "items-end text-right" : "items-start text-left",
+                  )}
+                >
+                  <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
+                    {selected.gradeName}
+                  </Text>
+                  <Heading level={2} size="xl" className="leading-tight text-black">
+                    Engraving {selected.engravingId}
+                  </Heading>
+                  <Text className="text-black/70" leading="normal">
+                    {selected.engravingSide}
+                  </Text>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-    </dialog>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 
@@ -735,80 +720,81 @@ function EngravingCompareDialog({
   favorites: EngravingRow[];
   onClose: () => void;
 }>) {
-  const compareModalRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => trapFocus(compareModalRef.current), []);
   if (!open) return null;
   return (
-    <dialog
-      open
-      className="fixed inset-0 z-40 m-0 flex items-center justify-center bg-black/80 p-3 sm:p-4 md:p-6 backdrop-blur relative"
-      aria-modal="true"
-      onCancel={onClose}
+    <Dialog.Root
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
+      }}
     >
-      <button
-        type="button"
-        className="absolute inset-0 h-full w-full cursor-default border-0 bg-transparent p-0"
-        aria-label="Close engraving comparison dialog"
-        onClick={onClose}
-      />
-      <div
-        ref={compareModalRef}
-        className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]"
-      >
-        <button
-          type="button"
-          className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-widest text-black transition hover:border-black hover:bg-white focus-ring sm:right-5 sm:top-5"
-          onClick={onClose}
-        >
-          Close
-        </button>
-        <div className="space-y-4 border-b border-white/10 p-6 text-center">
-          <p className="text-[11px] sm:text-xs uppercase tracking-[0.4em] text-white/70">
-            Compare Engravings
-          </p>
-          <h2 className="text-3xl font-semibold">Side-by-side favorites</h2>
-        </div>
-        <div className="grid gap-6 overflow-y-auto p-6 sm:grid-cols-2 lg:grid-cols-3">
-          {favorites.map((fav) => {
-            const compareImage = getSanityImageUrl(fav.image, { width: 2400, quality: 95 });
-            return (
-              <article key={fav._id} className="rounded-3xl border border-white/10 bg-black/30 p-4">
-                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-white">
-                  {compareImage ? (
-                    <Image
-                      src={compareImage}
-                      alt={fav.imageAlt || `Engraving ${fav.engravingId}`}
-                      fill
-                      className="object-contain bg-white"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-neutral-600">No Image</div>
-                  )}
-                  {compareImage ? (
-                    <div
-                      className="pointer-events-none absolute inset-0"
-                      style={{
-                        background:
-                          "radial-gradient(circle at center, transparent 45%, rgba(0,0,0,0.4) 85%)",
-                      }}
-                    />
-                  ) : null}
-                </div>
-                <div className="mt-4 space-y-1 text-white">
-                  <p className="text-[11px] sm:text-xs uppercase tracking-[0.35em] text-perazzi-red">
-                    {fav.gradeName}
-                  </p>
-                  <p className="text-lg sm:text-xl font-semibold text-white">
-                    Engraving {fav.engravingId}
-                  </p>
-                  <p className="text-sm text-white/80">{fav.engravingSide}</p>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </div>
-    </dialog>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
+        <Dialog.Content className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 outline-none">
+          <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-perazzi-black/95 text-white shadow-elevated">
+            <Dialog.Close asChild>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 text-black hover:border-black hover:bg-white sm:right-5 sm:top-5"
+              >
+                Close
+              </Button>
+            </Dialog.Close>
+            <div className="space-y-4 border-b border-white/10 p-6 text-center">
+              <Text size="xs" className="tracking-[0.4em] text-white/70" leading="normal">
+                Compare Engravings
+              </Text>
+              <Heading level={2} size="xl" className="text-white">
+                Side-by-side favorites
+              </Heading>
+            </div>
+            <div className="grid gap-6 overflow-y-auto p-6 sm:grid-cols-2 lg:grid-cols-3">
+              {favorites.map((fav) => {
+                const compareImage = getSanityImageUrl(fav.image, { width: 2400, quality: 95 });
+                return (
+                  <article key={fav._id} className="rounded-3xl border border-white/10 bg-black/30 p-4">
+                    <div className="relative aspect-4/3 w-full overflow-hidden rounded-2xl bg-white">
+                      {compareImage ? (
+                        <Image
+                          src={compareImage}
+                          alt={fav.imageAlt || `Engraving ${fav.engravingId}`}
+                          fill
+                          className="object-contain bg-white"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-neutral-600">No Image</div>
+                      )}
+                      {compareImage ? (
+                        <div
+                          className="pointer-events-none absolute inset-0"
+                          style={{
+                            background:
+                              "radial-gradient(circle at center, transparent 45%, rgba(0,0,0,0.4) 85%)",
+                          }}
+                        />
+                      ) : null}
+                    </div>
+                    <div className="mt-4 space-y-1 text-white">
+                      <Text size="xs" className="tracking-[0.35em] text-perazzi-red" leading="normal">
+                        {fav.gradeName}
+                      </Text>
+                      <Heading level={3} size="lg" className="text-white">
+                        Engraving {fav.engravingId}
+                      </Heading>
+                      <Text className="text-white/80" leading="normal">
+                        {fav.engravingSide}
+                      </Text>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import type { Article } from "@/types/journal";
 import { logAnalytics } from "@/lib/analytics";
+import { Text } from "@/components/ui/text";
 
 type MetaBarProps = {
   readonly article: Article;
@@ -54,7 +55,9 @@ export function MetaBar({ article }: MetaBarProps) {
     >
       {reduceMotion ? null : (
         <div>
-          <p className="text-xs uppercase tracking-[0.3em] text-ink-muted">Progress</p>
+          <Text size="xs" className="tracking-[0.3em] text-ink-muted" leading="normal">
+            Progress
+          </Text>
           <div className="mt-2 h-2 w-full rounded-full bg-border">
             <div
               className="h-full rounded-full bg-perazzi-red transition-all"
@@ -63,7 +66,9 @@ export function MetaBar({ article }: MetaBarProps) {
           </div>
         </div>
       )}
-      <p className="font-semibold">Share</p>
+      <Text className="font-semibold" leading="normal">
+        Share
+      </Text>
       <button
         type="button"
         className="text-perazzi-red focus-ring"

@@ -1,16 +1,14 @@
 "use client";
 
-import * as Collapsible from "@radix-ui/react-collapsible";
 import { useState } from "react";
 import Image from "next/image";
-import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
-import rehypeSanitize from "rehype-sanitize";
 import type { VisitFactoryData } from "@/types/experience";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
+import SafeHtml from "@/components/SafeHtml";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, Container, Heading, Section, Text } from "@/components/ui";
 
 type VisitFactoryProps = {
   readonly visitFactorySection: VisitFactoryData;
@@ -53,7 +51,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
           loading="lazy"
         />
         <div
-          className="absolute inset-0 bg-[color:var(--scrim-soft)]"
+          className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
         <div
@@ -68,51 +66,49 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+      <Container size="xl" className="relative z-10">
+        <Section padding="md" className="space-y-6 bg-card/40">
           <div className="space-y-2">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-              {heading}
-            </p>
-            <h2
+            <Heading
               id="visit-factory-heading"
-              className="mb-4 text-sm sm:text-base font-light italic leading-relaxed text-ink-muted"
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-ink"
             >
+              {heading}
+            </Heading>
+            <Text size="md" muted leading="relaxed" className="mb-4 font-light italic">
               {subheading}
-            </h2>
-            <div className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg md:max-w-4xl lg:max-w-4xl prose-headings:text-ink prose-strong:text-ink">
-              <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-                {visit.introHtml}
-              </ReactMarkdown>
-            </div>
+            </Text>
+            <SafeHtml
+              className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg md:max-w-4xl lg:max-w-4xl prose-headings:text-ink prose-strong:text-ink"
+              html={visit.introHtml}
+            />
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
-            <article className="space-y-5 rounded-2xl border border-border/75 bg-card/75 p-5 shadow-sm sm:rounded-3xl sm:p-6 lg:p-7">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
+            <article className="space-y-5 rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated lg:p-7">
+              <Text size="xs" muted className="font-semibold">
                 Botticino headquarters
-              </p>
-              <h3 className="text-base sm:text-lg font-semibold text-ink">
+              </Text>
+              <Heading level={3} size="sm" className="text-ink">
                 {visit.location.name}
-              </h3>
-              <div className="text-sm leading-relaxed text-ink-muted">
-                <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-                  {visit.location.addressHtml}
-                </ReactMarkdown>
-              </div>
+              </Heading>
+              <SafeHtml
+                className="text-sm leading-relaxed text-ink-muted"
+                html={visit.location.addressHtml}
+              />
               {visit.location.hoursHtml ? (
-                <div className="text-[11px] sm:text-xs uppercase tracking-[0.25em] text-ink-muted">
-                  <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-                    {visit.location.hoursHtml}
-                  </ReactMarkdown>
-                </div>
+                <SafeHtml
+                  className="text-[11px] sm:text-xs uppercase tracking-[0.25em] text-ink-muted"
+                  html={visit.location.hoursHtml}
+                />
               ) : null}
               {visit.location.notesHtml ? (
-                <div className="text-sm leading-relaxed text-ink-muted">
-                  <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-                    {visit.location.notesHtml}
-                  </ReactMarkdown>
-                </div>
+                <SafeHtml
+                  className="text-sm leading-relaxed text-ink-muted"
+                  html={visit.location.notesHtml}
+                />
               ) : null}
               <div className="space-y-3 pt-2">
                 <p id={mapNoteId} className="sr-only">
@@ -120,7 +116,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                 </p>
                 <div
                   id={mapPanelId}
-                  className="relative overflow-hidden rounded-2xl border border-border/60 bg-[color:var(--color-canvas)]"
+                  className="relative overflow-hidden rounded-2xl border border-border/70 bg-(--color-canvas) shadow-soft ring-1 ring-border/70"
                   style={{ aspectRatio: visit.location.staticMap.aspectRatio ?? 3 / 2 }}
                   aria-live="polite"
                 >
@@ -142,7 +138,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                     />
                   )}
                   <div
-                    className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[color:var(--scrim-strong)]/70 via-[color:var(--scrim-strong)]/40 to-transparent"
+                    className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/70 via-(--scrim-strong)/40 to-transparent"
                     aria-hidden
                   />
                 </div>
@@ -160,9 +156,9 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
 
             <div className="space-y-4">
               {visit.whatToExpectHtml ? (
-                <Collapsible.Root open={expectOpen} onOpenChange={setExpectOpen}>
-                  <Collapsible.Trigger
-                    className="flex w-full items-center justify-between rounded-2xl border border-border/60 bg-card/40 px-4 py-3 text-left text-sm font-semibold uppercase tracking-[0.2em] text-ink focus-ring sm:rounded-3xl sm:border-border/70 sm:bg-card/75"
+                <Collapsible open={expectOpen} onOpenChange={setExpectOpen}>
+                  <CollapsibleTrigger
+                    className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left text-sm font-semibold uppercase tracking-[0.2em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
                     aria-expanded={expectOpen}
                     aria-controls="visit-expect-content"
                   >
@@ -176,16 +172,17 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                     >
                       +
                     </span>
-                  </Collapsible.Trigger>
-                  <Collapsible.Content
+                  </CollapsibleTrigger>
+                  <CollapsibleContent
                     id="visit-expect-content"
-                    className="mt-3 rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/75"
+                    className="mt-3 rounded-2xl border border-border/70 bg-card/60 p-4 text-sm leading-relaxed text-ink-muted shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80"
                   >
-                    <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-                      {visit.whatToExpectHtml}
-                    </ReactMarkdown>
-                  </Collapsible.Content>
-                </Collapsible.Root>
+                    <SafeHtml
+                      className="prose prose-sm max-w-none text-ink-muted"
+                      html={visit.whatToExpectHtml}
+                    />
+                  </CollapsibleContent>
+                </Collapsible>
               ) : null}
               <Button
                 asChild
@@ -197,8 +194,8 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
               </Button>
             </div>
           </div>
-        </div>
-      </div>
+        </Section>
+      </Container>
     </section>
   );
 }

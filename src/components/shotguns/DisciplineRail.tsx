@@ -2,13 +2,13 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
-import rehypeSanitize from "rehype-sanitize";
 
 import type { Platform, ShotgunsLandingData } from "@/types/catalog";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
+import SafeHtml from "@/components/SafeHtml";
+import { PortableText } from "@/components/PortableText";
+import { Container, Heading, Section, Text } from "@/components/ui";
 
 type DisciplineCard = ShotgunsLandingData["disciplines"][number];
 
@@ -175,7 +175,7 @@ export function DisciplineRail({
           className="object-cover"
           priority={false}
         />
-        <div className="absolute inset-0 bg-[color:var(--scrim-soft)]" aria-hidden />
+        <div className="absolute inset-0 bg-(--scrim-soft)" aria-hidden />
         <div
           className="absolute inset-0"
           style={{
@@ -188,24 +188,26 @@ export function DisciplineRail({
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+      <Container size="xl" className="relative z-10">
+        <Section padding="md" className="space-y-6 bg-card/40">
           <div className="space-y-3">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-black italic uppercase tracking-[0.35em] text-ink">
-              {heading}
-            </p>
-            <h2
+            <Heading
               id="discipline-rail-heading"
-              className="text-sm sm:text-base font-light italic text-ink-muted"
+              level={2}
+              size="xl"
+              className="font-black italic uppercase tracking-[0.35em] text-ink"
             >
+              {heading}
+            </Heading>
+            <Text className="italic font-light text-ink-muted" leading="normal">
               {subheading}
-            </h2>
+            </Text>
           </div>
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
             <div className="space-y-3 rounded-2xl bg-card/0 p-4 sm:rounded-3xl sm:p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
+              <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
                 Discipline categories
-              </p>
+              </Text>
               <div className="space-y-3">
                 {categories.map((category) => {
                   const isOpen = openCategory === category.label;
@@ -236,7 +238,7 @@ export function DisciplineRail({
                         </span>
                       </button>
                       {isOpen ? (
-                        <div className="border-t border-border/60">
+                        <div className="border-t border-border/70">
                           <ul className="space-y-1 p-3">
                             {category.disciplines.map((discipline) => {
                               const isActive = discipline.id === activeDisciplineId;
@@ -257,7 +259,7 @@ export function DisciplineRail({
                                       {discipline.name}
                                     </span>
                                     <span className="mt-0.5 block text-[11px] uppercase tracking-[0.25em] text-ink-muted group-hover:text-ink-muted/90">
-                                      {discipline.id.replace(/-/g, " ")}
+                                      {discipline.id.replaceAll('-', " ")}
                                     </span>
                                   </button>
                                 </li>
@@ -272,7 +274,7 @@ export function DisciplineRail({
               </div>
             </div>
 
-            <div className="min-h-[26rem]">
+            <div className="min-h-104">
               {selectedDiscipline ? (
                 <DisciplineCard
                   discipline={selectedDiscipline}
@@ -283,37 +285,37 @@ export function DisciplineRail({
                   loadingModelId={modelLoadingId}
                 />
               ) : (
-                <p className="text-sm text-ink-muted">
+                <Text className="text-ink-muted" leading="normal">
                   Select a discipline to view its details.
-                </p>
+                </Text>
               )}
             </div>
           </div>
-        </div>
+        </Section>
 
         {modelModalOpen && selectedModel ? (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
             role="dialog"
             aria-modal="true"
           >
             <button
               type="button"
-              className="absolute inset-0 cursor-default bg-transparent border-none"
+              className="absolute inset-0 cursor-default border-0 bg-transparent"
               aria-label="Close modal"
               onClick={() => { setModelModalOpen(false); }}
             />
-            <div className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]">
+            <div className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-perazzi-black/90 text-white shadow-elevated ring-1 ring-white/15 backdrop-blur-xl">
               <button
                 type="button"
-                className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 py-1 text-xs uppercase tracking-widest text-black transition hover:border-black hover:bg-white sm:right-5 sm:top-5 sm:text-sm"
+                className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-[11px] uppercase tracking-[0.3em] text-white shadow-soft backdrop-blur-sm transition hover:border-white/30 hover:bg-black/55 focus-ring sm:right-5 sm:top-5 sm:text-xs"
                 onClick={() => setModelModalOpen(false)}
               >
                 Close
               </button>
 
               <div className="grid flex-1 gap-6 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[3fr,1.6fr]">
-                <div className="card-media relative aspect-[16/10] w-full overflow-hidden rounded-3xl bg-white">
+                <div className="card-media relative aspect-16/10 w-full overflow-hidden rounded-3xl bg-white">
                   {selectedModel.imageUrl ? (
                     <Image
                       src={selectedModel.imageUrl}
@@ -326,18 +328,26 @@ export function DisciplineRail({
                     <div className="flex h-full items-center justify-center text-neutral-600">No Image Available</div>
                   )}
                   <div className="absolute inset-x-0 bottom-6 flex flex-col gap-2 px-6 text-black">
-                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+                    <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
                       {selectedModel.grade}
-                    </p>
-                    <h2 className="text-4xl font-semibold uppercase leading-tight tracking-[0.2em]">
+                    </Text>
+                    <Heading
+                      level={2}
+                      size="xl"
+                      className="uppercase tracking-[0.2em] text-black"
+                    >
                       {selectedModel.name}
-                    </h2>
-                    <p className="text-base uppercase tracking-[0.2em] text-black/70">
+                    </Heading>
+                    <Text
+                      size="lg"
+                      className="uppercase tracking-[0.2em] text-black/70"
+                      leading="normal"
+                    >
                       {selectedModel.use}
-                    </p>
+                    </Text>
                   </div>
                 </div>
-                <div className="grid gap-4 rounded-3xl border border-white/10 bg-black/40 p-4 sm:p-6 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 rounded-3xl border border-white/12 bg-black/35 p-4 shadow-soft ring-1 ring-white/10 backdrop-blur-sm sm:p-6 sm:grid-cols-2 lg:grid-cols-3">
                   <Detail label="Platform" value={selectedModel.platform} />
                   <Detail label="Gauge" value={selectedModel.gaugeNames?.join(", ")} />
                   <Detail label="Trigger Type" value={selectedModel.triggerTypes?.join(", ")} />
@@ -351,11 +361,17 @@ export function DisciplineRail({
         ) : null}
 
         {modelError ? (
-          <output className="block text-center text-sm text-red-500" aria-live="polite">
+          <Text
+            asChild
+            className="block text-center text-red-500"
+            leading="normal"
+          >
+            <output aria-live="polite">
             {modelError}
-          </output>
+            </output>
+          </Text>
         ) : null}
-      </div>
+      </Container>
     </section>
   );
 }
@@ -386,10 +402,10 @@ function DisciplineCard({
     <article
       ref={cardRef}
       data-analytics-id={`DisciplineChip:${discipline.id}`}
-      className="flex flex-col rounded-2xl border border-border/60 bg-card/75 text-left shadow-sm focus-ring sm:rounded-3xl sm:border-border/70"
+      className="flex flex-col rounded-2xl border border-border/70 bg-card/60 text-left shadow-soft backdrop-blur-sm focus-ring sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated"
       aria-label={`Slide ${index + 1} of ${total}: ${discipline.name}`}
     >
-      <div className="card-media relative aspect-[30/11] w-full rounded-t-3xl bg-[color:var(--color-canvas)]">
+      <div className="card-media relative aspect-30/11 w-full rounded-t-3xl bg-(--color-canvas)">
         {discipline.hero ? (
           <Image
             src={discipline.hero.url}
@@ -401,22 +417,28 @@ function DisciplineCard({
         ) : null}
         <div className="pointer-events-none absolute inset-0 bg-black/50" />
         <div className="absolute inset-x-0 bottom-0 flex flex-col items-center justify-end p-6 text-white">
-          <p className="text-sm sm:text-base font-semibold uppercase tracking-[0.35em] text-white">
+          <Text size="xs" className="font-semibold tracking-[0.35em] text-white" leading="normal">
             {discipline.name}
-          </p>
+          </Text>
         </div>
       </div>
       <div className="flex flex-1 flex-col gap-6 p-6">
-        <div className="prose prose-sm italic max-w-none text-ink-muted">
-          <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-            {discipline.overviewHtml}
-          </ReactMarkdown>
-        </div>
+        {discipline.overviewPortableText?.length ? (
+          <PortableText
+            className="prose prose-sm italic max-w-none text-ink-muted"
+            blocks={discipline.overviewPortableText}
+          />
+        ) : discipline.overviewHtml ? (
+          <SafeHtml
+            className="prose prose-sm italic max-w-none text-ink-muted"
+            html={discipline.overviewHtml}
+          />
+        ) : null}
         {discipline.recommendedPlatforms?.length ? (
           <div className="space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+            <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
               Recommended platforms
-            </h3>
+            </Text>
             <ul className="flex flex-wrap gap-2">
               {discipline.recommendedPlatforms.map((platformId) => (
                 <li
@@ -431,15 +453,16 @@ function DisciplineCard({
         ) : null}
         {discipline.popularModels?.length ? (
           <div className="mt-auto flex flex-col gap-3">
-            <h3 className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+            <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
               Most Popular Models
-            </h3>
+            </Text>
             <div className="flex flex-col gap-3">
               {discipline.popularModels.map((model) => (
                 <button
                   type="button"
                   key={model.idLegacy ?? model.id}
-                  onClick={() => { onSelectModel(model.idLegacy ?? model.id); }}                  className="group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card/75 focus:outline-none focus:ring-2 focus:ring-perazzi-red"
+                  onClick={() => { onSelectModel(model.idLegacy ?? model.id); }}
+                  className="group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card/60 shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
                 >
                   {model.hero ? (
                     <Image
@@ -472,10 +495,12 @@ function DisciplineCard({
 function Detail({ label, value }: Readonly<{ label: string; value?: string }>) {
   return (
     <div>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-perazzi-red">{label}</p>
-      <p className="text-sm sm:text-base uppercase tracking-[0.2em] text-white">
+      <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
+        {label}
+      </Text>
+      <Text size="md" className="uppercase tracking-[0.2em] text-white" leading="normal">
         {value || "—"}
-      </p>
+      </Text>
     </div>
   );
 }

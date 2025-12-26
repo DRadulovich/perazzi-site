@@ -34,7 +34,7 @@ export default async function DisciplinePage({ params }: DisciplinePageProps) {
         hero={discipline.hero}
         name={discipline.name}
       />
-      <OverviewBlock html={discipline.overviewHtml} />
+      <OverviewBlock blocks={discipline.overviewPortableText} html={discipline.overviewHtml} />
       <PlatformGrid platforms={platforms} />
       <SetupRecipe
         poiRange={discipline.recipe.poiRange}

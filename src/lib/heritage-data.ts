@@ -4,7 +4,6 @@ import { heritageData } from "@/content/heritage";
 import { factoryIntroHtml as factoryIntroFixture } from "@/content/heritage/factoryIntro";
 import { related as relatedFixture } from "@/content/heritage/related";
 import { HERITAGE_ERAS } from "@/config/heritage-eras";
-import { portableTextToHtml } from "@/lib/portable-text";
 import type {
   HeritageEra,
   HeritageEvent,
@@ -81,7 +80,7 @@ function mapEvents(events: Awaited<ReturnType<typeof getHeritageEvents>>): Herit
         id: event.id,
         date: event.date ?? "",
         title: event.title ?? "",
-        summaryHtml: portableTextToHtml(event.bodyPortableText) ?? "",
+        summaryPortableText: event.bodyPortableText ?? undefined,
         media: event.media ?? undefined,
         referenceLinks,
       };

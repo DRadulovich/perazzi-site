@@ -192,11 +192,17 @@ export function useChatState(
       storedContext,
     );
 
-    return {
-      ...(options.initialContext ?? {}),
-      ...(storedContext ?? {}),
-      ...(persistedPreviousResponseId ? { previousResponseId: persistedPreviousResponseId } : {}),
-    };
+    const baseContext: ChatContextShape = {};
+    if (options.initialContext) {
+      Object.assign(baseContext, options.initialContext);
+    }
+    if (storedContext) {
+      Object.assign(baseContext, storedContext);
+    }
+    if (persistedPreviousResponseId) {
+      baseContext.previousResponseId = persistedPreviousResponseId;
+    }
+    return baseContext;
   });
 
   const addMessage = useCallback((entry: ChatEntry) => {
@@ -308,7 +314,7 @@ export function useChatState(
       setLastAdminDebug(data.debug ?? null);
       const retrievalScores = Array.isArray(data.retrievalScores) ? data.retrievalScores : undefined;
       const retrievalLabel = getRetrievalLabelFromScores(
-        retrievalScores ?? (data.similarity !== undefined ? [data.similarity] : []),
+        retrievalScores ?? (data.similarity === undefined ? [] : [data.similarity]),
       );
       const assistantEntry: ChatEntry = {
         id: crypto.randomUUID(),
@@ -349,12 +355,10 @@ export function useChatState(
 
         // Only fall back when the server omitted the field (undefined).
         const nextArchetype =
-          data.archetype !== undefined ? data.archetype : prev.archetype ?? null;
+          data.archetype === undefined ? (prev.archetype ?? null) : data.archetype;
 
         const nextArchetypeVector =
-          data.archetypeBreakdown?.vector !== undefined
-            ? data.archetypeBreakdown.vector
-            : prev.archetypeVector ?? null;
+          data.archetypeBreakdown?.vector ?? prev.archetypeVector ?? null;
 
         return {
           ...prev,

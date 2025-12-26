@@ -99,7 +99,7 @@ function resolveSafePath(basePath: string, ...segments: string[]): string {
 
 function readFileWithinBase(basePath: string, targetPath: string): string {
   const safePath = ensurePathWithinBase(basePath, targetPath);
-  // nosemgrep: javascript_pathtraversal_rule-non-literal-fs-filename -- path is constructed from fixed segments and validated to stay under the allowed base.
+  // nosemgrep: codacy.tools-configs.javascript_pathtraversal_rule-non-literal-fs-filename -- path is constructed from fixed segments and validated to stay under the allowed base.
   return fs.readFileSync(safePath, "utf8");
 }
 
@@ -275,7 +275,7 @@ function extractAdminDebugUsage(
 
   const cachedTokensRaw =
     typeof asRecord.cached_tokens === "number"
-      ? (asRecord.cached_tokens as number)
+      ? asRecord.cached_tokens
       : ((asRecord.input_tokens_details as { cached_tokens?: unknown } | undefined)?.cached_tokens ??
           undefined);
 
@@ -305,7 +305,7 @@ function buildDebugPayload(params: {
 
   return {
     thread: params.thread,
-    ...(typeof params.openai === "undefined" ? {} : { openai: params.openai }),
+    ...(params.openai === undefined ? {} : { openai: params.openai }),
     retrieval: {
       ...params.retrieval,
       models_registry_sot_enabled:
@@ -321,10 +321,10 @@ function buildDebugPayload(params: {
     },
     usage: extractAdminDebugUsage(params.usage),
     flags: params.flags,
-    ...(typeof params.archetypeAnalytics === "undefined"
+    ...(params.archetypeAnalytics === undefined
       ? {}
       : { archetypeAnalytics: params.archetypeAnalytics }),
-    ...(typeof params.output === "undefined" ? {} : { output: params.output }),
+    ...(params.output === undefined ? {} : { output: params.output }),
     ...(params.triggers ? { triggers: params.triggers } : {}),
   };
 }
@@ -393,7 +393,7 @@ const PROMPT_CACHE_RETENTION = parsePromptCacheRetention(process.env.PERAZZI_PRO
 const PROMPT_CACHE_KEY = parsePromptCacheKey(process.env.PERAZZI_PROMPT_CACHE_KEY);
 const ASSISTANT_TEMPERATURE = parseTemperature(
   process.env.PERAZZI_ASSISTANT_TEMPERATURE,
-  1.0,
+  1,
 );
 
 function isOriginAllowed(req: Request): { ok: boolean; originHost?: string } {
@@ -578,7 +578,7 @@ function computeArchetypeConfidenceMetrics(vector: Record<string, unknown> | nul
   const threshold = getArchetypeConfidenceMin();
 
   const scored = ALLOWED_ARCHETYPES.map((a) => {
-    const v = Number((vector as Record<string, unknown> | null | undefined)?.[a] ?? 0);
+    const v = Number(vector?.[a] ?? 0);
     return { a, v: Number.isFinite(v) ? v : 0 };
   });
 
@@ -1747,19 +1747,19 @@ function isInvalidPreviousResponseIdError(error: unknown): boolean {
 
   const codeCandidate =
     err.code ??
-    (typeof nestedBody?.code === "string" ? (nestedBody.code as string) : null) ??
-    (typeof nestedError?.code === "string" ? (nestedError.code as string) : null);
+    (typeof nestedBody?.code === "string" ? nestedBody.code : null) ??
+    (typeof nestedError?.code === "string" ? nestedError.code : null);
   const paramCandidate =
     err.param ??
-    (typeof nestedBody?.param === "string" ? (nestedBody.param as string) : null) ??
-    (typeof nestedError?.param === "string" ? (nestedError.param as string) : null);
+    (typeof nestedBody?.param === "string" ? nestedBody.param : null) ??
+    (typeof nestedError?.param === "string" ? nestedError.param : null);
   const messageCandidate =
     typeof err.message === "string"
       ? err.message
       : typeof nestedBody?.message === "string"
-        ? (nestedBody.message as string)
+        ? nestedBody.message
         : typeof nestedError?.message === "string"
-          ? (nestedError.message as string)
+          ? nestedError.message
           : "";
 
   const code = typeof codeCandidate === "string" ? codeCandidate.toLowerCase() : "";
@@ -1878,7 +1878,7 @@ async function generateAssistantAnswer(
       effectiveArchetype,
     );
     const archetypeGuidanceBlock = buildArchetypeGuidanceBlock(effectiveArchetype);
-    const extra = (extraMetadata ?? {}) as Record<string, unknown>;
+    const extra: Record<string, unknown> = extraMetadata ?? {};
     const rerankEnabled =
       typeof extra.rerankEnabled === "boolean" ? extra.rerankEnabled : undefined;
     const candidateLimit =
@@ -2175,8 +2175,8 @@ function normalizeSnippetText(input: string): string {
 
 function sanitizeExcerptContent(raw: string | null | undefined): string {
   if (!raw) return "";
-  const withoutSourceLines = raw.replace(/^\s*source:\s*[^\n\r]+/gim, "");
-  const withoutChunkIds = withoutSourceLines.replace(/chunk-[a-z0-9_-]{3,}/gi, "");
+  const withoutSourceLines = raw.replaceAll(/^\s*source:\s*[^\n\r]+/gim, "");
+  const withoutChunkIds = withoutSourceLines.replaceAll(/chunk-[a-z0-9_-]{3,}/gi, "");
   return normalizeSnippetText(withoutChunkIds);
 }
 
@@ -2220,15 +2220,14 @@ function extractModelMetadata(content: string | null | undefined): ModelMetadata
   };
 
   const modelMatch =
-    content?.match(/model\s+name:\s*([^\n\r]+)/i) ??
-    content?.match(/model:\s*([^\n\r]+)/i);
-  const platformMatch = content?.match(/platform:\s*([^\n\r]+)/i);
+    (content ? /model\s+name:\s*([^\n\r]+)/i.exec(content) : null) ??
+    (content ? /model:\s*([^\n\r]+)/i.exec(content) : null);
+  const platformMatch = content ? /platform:\s*([^\n\r]+)/i.exec(content) : null;
 
   const safeContent = sanitizeExcerptContent(content);
   const inlineModelMatch =
-    safeContent.match(/\bmodel\s+name:\s*([^.;]+)/i) ??
-    safeContent.match(/\bmodel:\s*([^.;]+)/i);
-  const inlinePlatformMatch = safeContent.match(/\bplatform:\s*([^.;]+)/i);
+    /\bmodel\s+name:\s*([^.;]+)/i.exec(safeContent) ?? /\bmodel:\s*([^.;]+)/i.exec(safeContent);
+  const inlinePlatformMatch = /\bplatform:\s*([^.;]+)/i.exec(safeContent);
 
   return {
     modelName: cleanLabeledValue(modelMatch?.[1] ?? inlineModelMatch?.[1], {
@@ -2239,7 +2238,7 @@ function extractModelMetadata(content: string | null | undefined): ModelMetadata
 }
 
 function findModelMarkerIndex(content: string): number | null {
-  const match = content.match(/\b(model\s+name|platform):/i);
+  const match = /\b(model\s+name|platform):/i.exec(content);
   return typeof match?.index === "number" ? match.index : null;
 }
 
@@ -2330,9 +2329,9 @@ export function buildRetrievedReferencesForPrompt(chunks: RetrievedChunk[]): {
   let exceededTotalCap = false;
 
   for (let i = 0; i < chunks.length; i += 1) {
-    const chunk = chunks[i]!;
+    const chunk = chunks[i];
     const rank = i + 1;
-    const meta = metadata[i]!;
+    const meta = metadata[i];
     const displayTitle = meta.displayTitle;
 
     const perChunk = buildExcerptForPrompt(chunk.content, RETRIEVAL_EXCERPT_CHAR_LIMIT);
@@ -2477,22 +2476,22 @@ function logInteraction(
 ) {
   const retrievalPrompt = buildRetrievedReferencesForPrompt(chunks);
   const evidenceMode =
-    typeof extraMetadata?.evidenceMode === "string" ? (extraMetadata.evidenceMode as string) : null;
+    typeof extraMetadata?.evidenceMode === "string" ? extraMetadata.evidenceMode : null;
   const evidenceReason =
     typeof extraMetadata?.evidenceReason === "string"
-      ? (extraMetadata.evidenceReason as string)
+      ? extraMetadata.evidenceReason
       : null;
   const retrievalSkipped =
     typeof extraMetadata?.retrievalSkipped === "boolean"
-      ? (extraMetadata.retrievalSkipped as boolean)
+      ? extraMetadata.retrievalSkipped
       : null;
   const retrievalSkipReason =
     typeof extraMetadata?.retrievalSkipReason === "string"
-      ? (extraMetadata.retrievalSkipReason as string)
+      ? extraMetadata.retrievalSkipReason
       : null;
   const retrievalChunkCount =
     typeof extraMetadata?.retrievalChunkCount === "number"
-      ? (extraMetadata.retrievalChunkCount as number)
+      ? extraMetadata.retrievalChunkCount
       : null;
   const data = {
     type: "perazzi-assistant-log",
@@ -2599,7 +2598,9 @@ function logPostValidate(params: {
 function appendEvalLog(entry: Record<string, unknown>) {
   try {
     const safeLogPath = ensurePathWithinBase(LOG_DIR, CONVERSATION_LOG_PATH);
+    // nosemgrep: codacy.tools-configs.javascript_pathtraversal_rule-non-literal-fs-filename -- LOG_DIR is resolved from fixed segments under PROJECT_ROOT.
     fs.mkdirSync(LOG_DIR, { recursive: true });
+    // nosemgrep: codacy.tools-configs.javascript_pathtraversal_rule-non-literal-fs-filename -- safeLogPath is validated to remain within LOG_DIR.
     fs.appendFileSync(safeLogPath, `${JSON.stringify(entry)}\n`, "utf8");
   } catch {
     // Ignore logging failures to avoid impacting response flow

@@ -1,4 +1,5 @@
 import type { ShotgunsSeriesEntry } from "@/types/catalog";
+import { Heading, Section, Text } from "@/components/ui";
 
 type AtAGlanceStripProps = Readonly<{
   data: ShotgunsSeriesEntry["atAGlance"];
@@ -6,39 +7,45 @@ type AtAGlanceStripProps = Readonly<{
 
 export function AtAGlanceStrip({ data }: AtAGlanceStripProps) {
   return (
-    <section
-      className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 sm:shadow-md lg:px-10"
-      aria-labelledby="at-a-glance-heading"
-    >
-      <h2
-        id="at-a-glance-heading"
-        className="text-xl sm:text-2xl font-semibold text-ink"
-      >
+    <Section padding="md" aria-labelledby="at-a-glance-heading">
+      <Heading id="at-a-glance-heading" level={2} size="lg" className="text-ink">
         At a glance
-      </h2>
+      </Heading>
       <dl className="mt-6 grid gap-6 md:grid-cols-3">
         <div>
-          <dt className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
-            Trigger type
+          <dt>
+            <Text size="xs" muted className="font-semibold">
+              Trigger type
+            </Text>
           </dt>
-          <dd className="mt-2 text-sm sm:text-base text-ink">
-            {data.triggerType}
+          <dd className="mt-2">
+            <Text size="md" className="text-ink">
+              {data.triggerType}
+            </Text>
           </dd>
         </div>
         <div>
-          <dt className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
-            Weight distribution
+          <dt>
+            <Text size="xs" muted className="font-semibold">
+              Weight distribution
+            </Text>
           </dt>
-          <dd className="mt-2 text-sm sm:text-base text-ink">
-            {data.weightDistribution}
+          <dd className="mt-2">
+            <Text size="md" className="text-ink">
+              {data.weightDistribution}
+            </Text>
           </dd>
         </div>
         <div>
-          <dt className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
-            Typical disciplines
+          <dt>
+            <Text size="xs" muted className="font-semibold">
+              Typical disciplines
+            </Text>
           </dt>
-          <dd className="mt-2 text-sm sm:text-base text-ink">
-            {data.typicalDisciplines.join(" · ")}
+          <dd className="mt-2">
+            <Text size="md" className="text-ink">
+              {data.typicalDisciplines.join(" · ")}
+            </Text>
           </dd>
         </div>
       </dl>
@@ -48,7 +55,7 @@ export function AtAGlanceStrip({ data }: AtAGlanceStripProps) {
             <a
               key={link.href}
               href={link.href}
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-perazzi-red focus-ring"
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-perazzi-red shadow-soft backdrop-blur-sm transition hover:border-perazzi-red/30 hover:bg-card/85 focus-ring"
             >
               {link.label}
               <span aria-hidden="true">→</span>
@@ -56,6 +63,6 @@ export function AtAGlanceStrip({ data }: AtAGlanceStripProps) {
           ))}
         </div>
       ) : null}
-    </section>
+    </Section>
   );
 }

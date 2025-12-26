@@ -7,6 +7,7 @@ import { EngravingGradesCarousel } from "@/components/shotguns/EngravingGradesCa
 import { getShotgunsSectionData } from "@/lib/shotguns-data";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
 import Link from "next/link";
+import { Container, Heading, Section, Text } from "@/components/ui";
 
 export default async function ShotgunsLandingPage() {
   const { landing, grades } = await getShotgunsSectionData();
@@ -112,24 +113,33 @@ export default async function ShotgunsLandingPage() {
     <div className="space-y-5">
       <LandingHero hero={landing.hero} />
       <PlatformGrid platforms={landing.platforms} ui={landing.platformGridUi} />
-      <section
-        className="border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-10 sm:py-16"
+      <Section
+        padding="lg"
+        bordered={false}
+        className="rounded-none border-t border-border bg-canvas shadow-none"
         aria-labelledby="discipline-fit-heading"
       >
-        <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
+        <Container
+          size="xl"
+          className="flex flex-col gap-10 px-0 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16"
+        >
           <div className="space-y-4 text-ink">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+            <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
               {disciplineFit.eyebrow ?? "Discipline fit"}
-            </p>
-            <p
+            </Text>
+            <Heading
               id="discipline-fit-heading"
-              className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-ink"
             >
               {disciplineFit.heading ?? "The geometry of rhythm"}
-            </p>
-            <div className="mb-6 space-y-4 text-sm sm:text-base font-light italic text-ink-muted leading-relaxed lg:mb-10">
+            </Heading>
+            <div className="mb-6 space-y-4 lg:mb-10">
               {disciplineParagraphs.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
+                <Text key={paragraph} className="font-light italic text-ink-muted">
+                  {paragraph}
+                </Text>
               ))}
             </div>
             <div className="flex flex-wrap gap-3 justify-start">
@@ -147,9 +157,9 @@ export default async function ShotgunsLandingPage() {
           </div>
 
           <div className="space-y-3 text-sm sm:text-base font-light italic text-ink-muted">
-            <p className="text-sm sm:text-base font-semibold not-italic text-ink">
+            <Text className="font-semibold not-italic text-ink" leading="normal">
               Three rhythms most clay shooters learn:
-            </p>
+            </Text>
             <ul className="space-y-2">
               {disciplineBullets.map((item) => (
                 <li key={item.code ?? item.label}>
@@ -159,12 +169,12 @@ export default async function ShotgunsLandingPage() {
                 </li>
               ))}
             </ul>
-            <p className="text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
+            <Text className="font-light italic text-ink-muted">
               {disciplineClosing}
-            </p>
+            </Text>
           </div>
-        </div>
-      </section>
+        </Container>
+      </Section>
       <a className="skip-link" href="#discipline-rail-heading">
         Skip to disciplines
       </a>
@@ -173,22 +183,29 @@ export default async function ShotgunsLandingPage() {
         platforms={landing.platforms}
         ui={landing.disciplineRailUi}
       />
-      <section
-        className="border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-10 sm:py-16"
+      <Section
+        padding="lg"
+        bordered={false}
+        className="rounded-none border-t border-border bg-canvas shadow-none"
         aria-labelledby="gauge-primer-heading"
       >
-        <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
+        <Container
+          size="xl"
+          className="flex flex-col gap-10 px-0 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16"
+        >
           <div className="space-y-4 text-ink">
-            <p
+            <Heading
               id="gauge-primer-heading"
-              className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-ink"
             >
               {gaugeAdvisory.heading ?? "Gauge selection"}
-            </p>
-            <p className="mb-8 text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
+            </Heading>
+            <Text className="mb-8 font-light italic text-ink-muted">
               {gaugeAdvisory.intro
                 ?? "Decode how 12, 20, and 28 gauge choices shape recoil feel, swing speed, and payload — and how to pair them with your platform and disciplines."}
-            </p>
+            </Text>
             <div className="flex flex-wrap gap-3 justify-start">
               <ChatTriggerButton
                 label={gaugeAdvisory.chatLabel ?? "Ask about gauges"}
@@ -211,9 +228,9 @@ export default async function ShotgunsLandingPage() {
           </div>
 
           <div className="space-y-3 text-sm sm:text-base font-light italic text-ink-muted">
-            <p className="text-sm sm:text-base font-semibold not-italic text-ink">
+            <Text className="font-semibold not-italic text-ink" leading="normal">
               What to compare:
-            </p>
+            </Text>
             <ul className="space-y-2">
               {(gaugeAdvisory.bullets?.length ? gaugeAdvisory.bullets : landing.gaugesTeaser.bullets).map((item) => (
                 <li key={item} className="text-sm sm:text-base">
@@ -221,30 +238,37 @@ export default async function ShotgunsLandingPage() {
                 </li>
               ))}
             </ul>
-            <p className="text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
+            <Text className="font-light italic text-ink-muted">
               {gaugeAdvisory.closing
                 ?? "We’ll tailor gauge choice to your primary discipline, preferred swing, and how you like a gun to absorb recoil."}
-            </p>
+            </Text>
           </div>
-        </div>
-      </section>
+        </Container>
+      </Section>
       <TriggerExplainer explainer={landing.triggerExplainer} />
-      <section
-        className="border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-10 sm:py-16"
+      <Section
+        padding="lg"
+        bordered={false}
+        className="rounded-none border-t border-border bg-canvas shadow-none"
         aria-labelledby="trigger-choice-heading"
       >
-        <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
+        <Container
+          size="xl"
+          className="flex flex-col gap-10 px-0 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16"
+        >
           <div className="space-y-4 text-ink">
-            <p
+            <Heading
               id="trigger-choice-heading"
-              className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-ink"
             >
               {triggerChoice.heading ?? "Trigger choice"}
-            </p>
-            <p className="mb-8 text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
+            </Heading>
+            <Text className="mb-8 font-light italic text-ink-muted">
               {triggerChoice.intro
                 ?? "Decide when to choose a fixed trigger group for simplicity, or a detachable set for quick swaps, varied pull weights, and service resilience."}
-            </p>
+            </Text>
             <div className="flex flex-wrap gap-3 justify-start">
               <ChatTriggerButton
                 label={triggerChoice.chatLabel ?? "Choose my trigger"}
@@ -267,9 +291,9 @@ export default async function ShotgunsLandingPage() {
           </div>
 
           <div className="space-y-3 text-sm sm:text-base font-light italic text-ink-muted">
-            <p className="text-sm sm:text-base font-semibold not-italic text-ink">
+            <Text className="font-semibold not-italic text-ink" leading="normal">
               What to weigh:
-            </p>
+            </Text>
             <ul className="space-y-2">
               {(triggerChoice.bullets?.length
                 ? triggerChoice.bullets
@@ -283,13 +307,13 @@ export default async function ShotgunsLandingPage() {
                     </li>
                   ))}
             </ul>
-            <p className="text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
+            <Text className="font-light italic text-ink-muted">
               {triggerChoice.closing
                 ?? "We’ll align trigger choice to your platform, discipline rhythm, and how you like your release to feel under pressure."}
-            </p>
+            </Text>
           </div>
-        </div>
-      </section>
+        </Container>
+      </Section>
       <EngravingGradesCarousel grades={grades} ui={landing.engravingCarouselUi} />
       <CTASection
         text="Begin your fitting with the Botticino atelier—matching balance, trigger feel, and engraving to your rhythm."

@@ -12,6 +12,8 @@ import { ProcessNote } from "@/components/shotguns/ProcessNote";
 import { CTASection } from "@/components/shotguns/CTASection";
 import { getGradeAnchorId } from "@/lib/grade-anchors";
 import { getShotgunsSectionData } from "@/lib/shotguns-data";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 export default async function GradesPage() {
   const { grades } = await getShotgunsSectionData();
@@ -31,10 +33,12 @@ export default async function GradesPage() {
           className="space-y-10 scroll-mt-24"
         >
           <header className="space-y-2">
-            <h2 className="text-2xl font-semibold text-ink">{grade.name}</h2>
-            <p className="max-w-3xl text-sm text-ink-muted">
+            <Heading level={2} size="lg" className="text-ink">
+              {grade.name}
+            </Heading>
+            <Text className="max-w-3xl text-ink-muted" leading="normal">
               {grade.description}
-            </p>
+            </Text>
           </header>
           <EngravingGallery gallery={grade.gallery} title={`${grade.name} gallery`} />
           <ProvenanceNote html={grade.provenanceHtml} />

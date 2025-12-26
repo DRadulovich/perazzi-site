@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { PageHeading } from "@/components/page-heading";
+import { Text } from "@/components/ui/text";
 
 const heritageSections = {
   timeline: {
@@ -43,9 +44,9 @@ export default function HeritageSectionPage({
         title={copy.title}
         description={copy.description}
       />
-      <p className="max-w-3xl text-sm sm:text-base leading-relaxed text-ink-muted">
+      <Text className="max-w-3xl text-ink-muted">
         {copy.body}
-      </p>
+      </Text>
     </div>
   );
 }

@@ -36,15 +36,15 @@ function normalizeDescriptor(value: string): string {
   return stripPrefix(value)
     .toLowerCase()
     .trim()
-    .replace(/[_-]+/g, " ")
-    .replace(/\s+/g, " ");
+    .replaceAll(/[_-]+/g, " ")
+    .replaceAll(/\s+/g, " ");
 }
 
 function normalizeTagToken(value: string): string | null {
   const normalized = stripPrefix(value)
     .toLowerCase()
     .trim()
-    .replace(/[\s-]+/g, "_");
+    .replaceAll(/[\s-]+/g, "_");
   return normalized || null;
 }
 
@@ -68,25 +68,27 @@ export function normalizeLanguage(value: string | null | undefined): string {
 export function mapPlatformToken(value: string): Platform | null {
   const normalized = normalizeDescriptor(value);
   if (!normalized) return null;
-  const compact = normalized.replace(/\s+/g, "");
+  const compact = normalized.replaceAll(/\s+/g, "");
 
-  if (normalized === "mx" || normalized === "mx platform" || normalized === "mx series") {
+  if (PLATFORM_CANONICAL.includes(normalized as Platform)) {
+    return normalized as Platform;
+  }
+  if (normalized === "mx platform" || normalized === "mx series") {
     return "mx";
   }
-  if (normalized === "high tech" || normalized === "ht" || normalized === "hts") {
+  if (normalized === "high tech" || normalized === "hts") {
     return "ht";
   }
   if (
-    normalized === "tm" ||
     normalized === "tm series" ||
     /^tm\d+x?$/.test(compact)
   ) {
     return "tm";
   }
-  if (normalized === "dc" || normalized === "dc series") {
+  if (normalized === "dc series") {
     return "dc";
   }
-  if (normalized === "sho" || normalized === "sho series" || normalized === "sidelock") {
+  if (normalized === "sho series" || normalized === "sidelock") {
     return "sho";
   }
 
@@ -143,7 +145,7 @@ export function normalizeDisciplines(
 export function normalizeAudiences(values: string[] | null | undefined): string[] {
   const mapped: string[] = [];
   for (const value of values ?? []) {
-    const normalized = normalizeDescriptor(value).replace(/\s+/g, "");
+    const normalized = normalizeDescriptor(value).replaceAll(/\s+/g, "");
     if (AUDIENCE_CANONICAL.includes(normalized as (typeof AUDIENCE_CANONICAL)[number])) {
       mapped.push(normalized);
     }

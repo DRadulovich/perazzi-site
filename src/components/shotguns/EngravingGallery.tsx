@@ -6,6 +6,8 @@ import { useState } from "react";
 import type { GradeSeries } from "@/types/catalog";
 import { logAnalytics } from "@/lib/analytics";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 type EngravingGalleryProps = Readonly<{
   gallery: GradeSeries["gallery"];
@@ -43,12 +45,14 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
       className="space-y-4"
       aria-labelledby="engraving-gallery-heading"
     >
-      <h2
+      <Heading
         id="engraving-gallery-heading"
-        className="text-lg sm:text-xl font-semibold text-ink"
+        level={2}
+        size="md"
+        className="text-ink"
       >
         {title ?? "Engraving gallery"}
-      </h2>
+      </Heading>
       <div className="grid gap-4 md:grid-cols-2">
         {gallery.map((asset, index) => {
           const ratio = asset.aspectRatio ?? 3 / 2;
@@ -62,7 +66,7 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
               }}
               className="text-left"
             >
-              <figure className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:p-4 sm:shadow-md">
+              <figure className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-4 sm:shadow-elevated">
                 <div
                   className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
                   style={{ aspectRatio: ratio }}
@@ -77,9 +81,9 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
                   />
                 </div>
                 {asset.caption ? (
-                  <figcaption className="mt-3 text-xs sm:text-sm leading-relaxed text-ink-muted">
-                    {asset.caption}
-                  </figcaption>
+                  <Text asChild size="sm" className="mt-3 text-ink-muted">
+                    <figcaption>{asset.caption}</figcaption>
+                  </Text>
                 ) : null}
               </figure>
             </button>
@@ -97,13 +101,13 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
         }}
       >
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/70 data-[state=open]:animate-fade-in" />
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/55 backdrop-blur-sm data-[state=open]:animate-fade-in" />
           {currentAsset ? (
             <Dialog.Content
               aria-modal="true"
               className="fixed inset-0 z-50 flex items-center justify-center p-4 focus:outline-none"
             >
-              <div className="relative w-full max-w-4xl rounded-2xl bg-card p-4 shadow-xl focus:outline-none sm:rounded-3xl sm:p-6 sm:shadow-2xl">
+              <div className="relative w-full max-w-4xl rounded-2xl border border-border/70 bg-card/95 p-4 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl focus:outline-none sm:rounded-3xl sm:p-6">
                 <Dialog.Title className="sr-only">
                   {currentAsset.alt}
                 </Dialog.Title>
@@ -121,25 +125,32 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
                   />
                 </div>
                 {currentAsset.caption ? (
-                  <p className="mt-4 text-sm text-ink-muted">
+                  <Text className="mt-4 text-ink-muted" leading="normal">
                     {currentAsset.caption}
-                  </p>
+                  </Text>
                 ) : null}
                 <div className="mt-4 flex items-center justify-between text-sm">
                   <button
                     type="button"
                     onClick={showPrev}
-                    className="rounded-full border border-border px-4 py-2 text-[11px] sm:text-sm uppercase tracking-[0.3em] text-ink focus-ring"
+                    className="rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-sm uppercase tracking-[0.3em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
                   >
                     Prev
                   </button>
-                  <span className="text-xs uppercase tracking-[0.3em] text-ink-muted">
-                    {openIndex! + 1} / {gallery.length}
-                  </span>
+                  <Text
+                    asChild
+                    size="xs"
+                    className="text-ink-muted"
+                    leading="normal"
+                  >
+                    <span>
+                      {openIndex! + 1} / {gallery.length}
+                    </span>
+                  </Text>
                   <button
                     type="button"
                     onClick={showNext}
-                    className="rounded-full border border-border px-4 py-2 text-[11px] sm:text-sm uppercase tracking-[0.3em] text-ink focus-ring"
+                    className="rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-sm uppercase tracking-[0.3em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
                   >
                     Next
                   </button>
@@ -147,7 +158,7 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
                 <Dialog.Close
                   type="button"
                   aria-label="Close engraving"
-                  className="absolute right-4 top-4 rounded-full border border-border px-4 py-2 text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink focus-ring"
+                  className="absolute right-4 top-4 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
                 >
                   Close
                 </Dialog.Close>

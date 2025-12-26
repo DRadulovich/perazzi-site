@@ -4,7 +4,7 @@ import { useAdminDrawer } from "@/components/admin/AdminDrawerContext";
 import { useSidebarContent } from "@/components/admin/AdminSidebarContext";
 import { AdminSidebarNav, type AdminSidebarNavItem } from "@/components/pgpt-insights/nav/AdminSidebarNav";
 
-export function SidebarDrawerHost({ navItems }: { navItems: AdminSidebarNavItem[] }) {
+export function SidebarDrawerHost({ navItems }: Readonly<{ navItems: AdminSidebarNavItem[] }>) {
   const { open, close } = useAdminDrawer();
   const sidebarContent = useSidebarContent();
 

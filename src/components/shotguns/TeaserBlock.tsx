@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { FactoryAsset } from "@/types/content";
+import { Heading, Text } from "@/components/ui";
 
 type TeaserBlockProps = Readonly<{
   copy: string;
@@ -22,20 +23,20 @@ export function TeaserBlock({
   return (
     <section
       data-analytics-id="ShotgunsGradesCTA"
-      className="rounded-2xl border border-border/60 bg-perazzi-black px-4 py-6 text-white shadow-sm sm:rounded-3xl sm:border-border/70 sm:px-6 sm:py-8 sm:shadow-md lg:px-10"
+      className="rounded-2xl border border-white/15 bg-[linear-gradient(135deg,var(--perazzi-black),color-mix(in srgb,var(--perazzi-black) 85%, black))]/95 px-4 py-6 text-white shadow-elevated ring-1 ring-white/10 backdrop-blur-sm sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10"
     >
       <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-center">
         <div className="space-y-2">
-          <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
+          <Heading level={2} size="lg" className="text-white">
             {title}
-          </h2>
-          <p className="max-w-3xl text-sm sm:text-base leading-relaxed text-white/80">
+          </Heading>
+          <Text size="md" leading="relaxed" className="max-w-3xl text-white/80">
             {copy}
-          </p>
+          </Text>
           <div className="flex flex-wrap gap-4">
             <figure className="w-40 rounded-2xl border border-white/30 bg-white/5 p-3">
               <div
-                className="relative overflow-hidden rounded-lg"
+                className="relative overflow-hidden rounded-xl"
                 style={{ aspectRatio: engravingRatio }}
               >
                 <Image
@@ -53,7 +54,7 @@ export function TeaserBlock({
             </figure>
             <figure className="w-40 rounded-2xl border border-white/30 bg-white/5 p-3">
               <div
-                className="relative overflow-hidden rounded-lg"
+                className="relative overflow-hidden rounded-xl"
                 style={{ aspectRatio: woodRatio }}
               >
                 <Image

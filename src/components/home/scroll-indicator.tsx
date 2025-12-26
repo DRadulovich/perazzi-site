@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import { ChevronDown } from "lucide-react";
 
 type ScrollIndicatorProps = Readonly<{
   className?: string;
@@ -33,21 +34,7 @@ export function ScrollIndicator({ className }: ScrollIndicatorProps) {
         }}
       >
         Scroll
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 16 16"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M4 6l4 4 4-4"
-            stroke="currentColor"
-            strokeWidth={1.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <ChevronDown className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
       </motion.span>
     </motion.div>
   );

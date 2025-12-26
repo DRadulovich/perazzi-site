@@ -17,11 +17,11 @@ type ButtonProps = {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-perazzi-red text-white shadow-[0_10px_30px_rgba(156,31,43,0.35)] hover:bg-perazzi-red/90 focus-visible:bg-perazzi-red/90",
+    "bg-perazzi-red text-white shadow-medium ring-1 ring-black/10 hover:bg-perazzi-red/90 active:bg-perazzi-red/95",
   secondary:
-    "bg-card text-ink border border-border hover:border-ink/40 focus-visible:border-ink",
+    "border border-border/70 bg-card/70 text-ink shadow-soft backdrop-blur-sm hover:border-ink/20 hover:bg-card/85 active:bg-card",
   ghost:
-    "bg-transparent text-current hover:bg-white/20 focus-visible:bg-white/30 border border-transparent",
+    "border border-transparent bg-transparent text-current hover:bg-ink/5 active:bg-ink/10",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -51,7 +51,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         type={type as ComponentPropsWithoutRef<"button">["type"]}
         className={cn(
-          "focus-ring relative inline-flex min-h-10 items-center justify-center gap-xs font-medium uppercase tracking-[0.2em] transition-colors duration-150",
+          "focus-ring relative inline-flex min-h-10 items-center justify-center gap-xs font-medium uppercase tracking-[0.2em] transition-colors duration-150 disabled:pointer-events-none disabled:opacity-60",
           variantClasses[variant],
           sizeClasses[size],
           className,

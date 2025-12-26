@@ -10,6 +10,8 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 import { TimelineItem } from "./timeline-item";
 
 type TimelineScrollerProps = {
@@ -97,30 +99,32 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
           className="focus:outline-none focus-ring"
         >
           <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-            <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+            <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-soft backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
               <div className="space-y-4 md:flex md:items-center md:justify-between md:gap-8">
                 <div className="space-y-3">
-                  <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-                    {headingTitle}
-                  </p>
-                  <h2
+                  <Heading
                     id="craft-timeline-heading"
-                    className="text-base sm:text-lg lg:text-xl font-light italic text-ink-muted"
+                    level={2}
+                    size="xl"
+                    className="font-black uppercase italic tracking-[0.35em] text-ink"
                   >
+                    {headingTitle}
+                  </Heading>
+                  <Text className="text-base sm:text-lg lg:text-xl font-light italic text-ink-muted" leading="normal">
                     {headingEyebrow}
-                  </h2>
-                  <p className="max-w-3xl text-xs sm:text-sm leading-relaxed text-ink-muted lg:max-w-4xl">
+                  </Text>
+                  <Text className="max-w-3xl text-ink-muted lg:max-w-4xl">
                     {headingInstructions}
-                  </p>
+                  </Text>
                 </div>
               </div>
 
               {enablePinned ? (
                 <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
                   <div className="space-y-4 border-none bg-card/0 p-4 shadow-none sm:border-none sm:bg-card/0 sm:p-4 sm:shadow-none">
-                    <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.3em] text-ink">
+                    <Text size="xs" className="mb-3 font-semibold text-ink" leading="normal">
                       {alternateTitle}
-                    </p>
+                    </Text>
                     <div className="space-y-1">
                       {stages.map((stage, index) => (
                         <TimelineControlButton
@@ -136,7 +140,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                   </div>
 
                   <div className="space-y-5">
-                    <div className="relative min-h-[640px] overflow-hidden rounded-3xl border border-border/70 bg-card/75 shadow-sm">
+                    <div className="relative min-h-[640px] overflow-hidden rounded-3xl border border-border/70 bg-card/70 shadow-elevated ring-1 ring-border/70 backdrop-blur-sm">
                       {stages.map((stage, index) => (
                         <PinnedStagePanel
                           key={`panel-${stage.id}`}
@@ -151,13 +155,13 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
               ) : (
                 <div className="space-y-8">
                   <div className="space-y-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
+                    <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
                       {alternateTitle}
-                    </p>
-                    <p className="text-xs sm:text-sm leading-relaxed text-ink-muted">
+                    </Text>
+                    <Text size="sm" className="text-ink-muted">
                       Scroll through each stage to follow the bespoke process
                       from first measurements to the final finish. Tap a stage to see more.
-                    </p>
+                    </Text>
                   </div>
 
                   <div className="space-y-3">
@@ -169,7 +173,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                       return (
                         <div
                           key={`stacked-${stage.id}`}
-                          className="rounded-2xl border border-border/60 bg-card/10 p-3 sm:p-4"
+                          className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:p-4"
                         >
                           <button
                             type="button"
@@ -182,12 +186,12 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                             className="flex w-full items-center justify-between gap-3 text-left focus-ring"
                           >
                             <div>
-                              <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+                              <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
                                 Stage {stage.order}
-                              </p>
-                              <p className="text-sm sm:text-base font-semibold text-ink">
+                              </Text>
+                              <Text className="font-semibold text-ink" leading="normal">
                                 {stage.title}
-                              </p>
+                              </Text>
                             </div>
                             <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red/70">
                               {expanded ? "Collapse" : "Show more"}
@@ -219,9 +223,9 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
               <div className="pt-2 sm:pt-4">
                 <Button
                   asChild
-                  variant="ghost"
+                  variant="secondary"
                   size="lg"
-                  className="w-full border border-border bg-transparent text-ink hover:bg-ink/5 focus-visible:bg-ink/5"
+                  className="w-full"
                 >
                   <Link href="/the-build/why-a-perazzi-has-a-soul">
                     See the full build story
@@ -317,15 +321,19 @@ function PinnedStagePanel({
         />
       </div>
       <div className="space-y-3">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
+        <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
           Stage {stage.order}
-        </p>
-        <h3 className="text-2xl font-semibold text-ink">{stage.title}</h3>
-        <p className="text-sm leading-relaxed text-ink-muted">
+        </Text>
+        <Heading level={3} size="lg" className="text-ink">
+          {stage.title}
+        </Heading>
+        <Text className="text-ink-muted">
           {stage.body}
-        </p>
+        </Text>
         {stage.media.caption ? (
-          <p className="text-xs text-ink-muted">{stage.media.caption}</p>
+          <Text size="sm" className="text-ink-muted" leading="normal">
+            {stage.media.caption}
+          </Text>
         ) : null}
       </div>
     </div>

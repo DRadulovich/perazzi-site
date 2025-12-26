@@ -1,8 +1,10 @@
 "use client";
 
+import * as Dialog from "@radix-ui/react-dialog";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ChatPanel } from "@/components/chat/ChatPanel";
+import { Button } from "@/components/ui";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
 import { CHAT_TRIGGER_EVENT } from "@/lib/chat-trigger";
 
@@ -154,33 +156,41 @@ export function ChatWidget() {
       {isMobile ? (
         <>
           {!isOpen && !hideTrigger && (
-            <button
-              type="button"
-              aria-label="Open Perazzi Concierge"
-              onClick={() => { setIsOpen(true); }}
-              className="fixed bottom-5 right-5 z-40 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm sm:text-base font-semibold text-card shadow-elevated transition hover:bg-brand-hover focus-ring"
-            >
-              Perazzi Guide
-            </button>
-          )}
-          {isOpen && (
-            <div
-              className="fixed inset-0 z-50 bg-card text-ink overscroll-none"
-              style={{
-                height: "var(--chat-sheet-height, 100vh)",
-                top: "var(--chat-sheet-offset, 0px)",
-              }}
-            >
-              <ChatPanel
-                open
-                onClose={handleClose}
-                variant="sheet"
-                pendingPrompt={pendingPrompt}
-                onPromptConsumed={consumePrompt}
-                className="rounded-none shadow-none h-full"
-              />
+            <div className="fixed bottom-5 right-5 z-40">
+              <Button
+                type="button"
+                aria-label="Open Perazzi Concierge"
+                onClick={() => { setIsOpen(true); }}
+                size="lg"
+                variant="primary"
+                className="rounded-full px-6 py-3 shadow-elevated ring-1 ring-black/10"
+              >
+                Perazzi Guide
+              </Button>
             </div>
           )}
+          <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
+            <Dialog.Portal>
+              <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
+              <Dialog.Content className="fixed inset-x-0 z-60 overscroll-none outline-none data-[state=closed]:opacity-0 data-[state=closed]:translate-y-2 data-[state=open]:opacity-100 data-[state=open]:translate-y-0 transition duration-200"
+                style={{
+                  height: "var(--chat-sheet-height, 100vh)",
+                  top: "var(--chat-sheet-offset, 0px)",
+                }}
+              >
+                <div className="absolute inset-0 p-3 sm:p-4">
+                  <ChatPanel
+                    open
+                    onClose={handleClose}
+                    variant="sheet"
+                    pendingPrompt={pendingPrompt}
+                    onPromptConsumed={consumePrompt}
+                    className="h-full w-full"
+                  />
+                </div>
+              </Dialog.Content>
+            </Dialog.Portal>
+          </Dialog.Root>
         </>
       ) : (
         <>
@@ -204,14 +214,18 @@ export function ChatWidget() {
             </aside>
           )}
           {!isOpen && !hideTrigger && (
-            <button
-              type="button"
-              aria-label="Open Perazzi Concierge"
-              onClick={() => setIsOpen(true)}
-              className="fixed bottom-6 right-6 z-30 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm sm:text-base font-semibold text-card shadow-elevated transition hover:bg-brand-hover focus-ring"
-            >
-              Open Perazzi Guide
-            </button>
+            <div className="fixed bottom-6 right-6 z-30">
+              <Button
+                type="button"
+                aria-label="Open Perazzi Concierge"
+                onClick={() => setIsOpen(true)}
+                size="lg"
+                variant="primary"
+                className="rounded-full px-6 py-3 shadow-elevated ring-1 ring-black/10"
+              >
+                Open Perazzi Guide
+              </Button>
+            </div>
           )}
         </>
       )}

@@ -1,3 +1,6 @@
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
+
 type FAQItem = Readonly<{
   q: string;
   a: string;
@@ -40,24 +43,21 @@ export function FAQList({
       className="space-y-4"
       aria-labelledby="faq-heading"
     >
-      <h2
-        id="faq-heading"
-        className="text-xl sm:text-2xl font-semibold text-ink"
-      >
+      <Heading id="faq-heading" level={2} size="lg" className="text-ink">
         {schemaName}
-      </h2>
+      </Heading>
       <dl className="space-y-4">
         {items.map((item) => (
           <div
             key={item.q}
-            className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:bg-card"
+            className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:bg-card/80"
           >
-            <dt className="text-sm sm:text-base font-semibold text-ink">
-              {item.q}
-            </dt>
-            <dd className="mt-2 text-sm sm:text-base leading-relaxed text-ink-muted">
-              {item.a}
-            </dd>
+            <Text asChild className="font-semibold text-ink" leading="normal">
+              <dt>{item.q}</dt>
+            </Text>
+            <Text asChild className="mt-2 text-ink-muted" leading="relaxed">
+              <dd>{item.a}</dd>
+            </Text>
           </div>
         ))}
       </dl>

@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { HomeData } from "@/types/content";
-import { Button } from "@/components/ui/button";
+import { Button, Heading, Section, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 
 type CTASectionProps = {
   readonly finale: HomeData["finale"];
 };
+
+const MotionSection = motion(Section);
 
 export function CTASection({ finale }: CTASectionProps) {
   const analyticsRef = useAnalyticsObserver("FinalCTASeen");
@@ -24,10 +26,12 @@ export function CTASection({ finale }: CTASectionProps) {
   const motionEnabled = !reduceMotion;
 
   return (
-    <motion.section
+    <MotionSection
       ref={analyticsRef}
       data-analytics-id="FinalCTASeen"
-      className="rounded-2xl bg-perazzi-black px-4 py-8 text-white sm:px-8 sm:py-10"
+      padding="md"
+      bordered={false}
+      className="bg-perazzi-black text-white"
       initial={motionEnabled ? { opacity: 0, y: 30 } : false}
       whileInView={motionEnabled ? { opacity: 1, y: 0 } : undefined}
       viewport={{ once: true, amount: 0.6 }}
@@ -35,15 +39,17 @@ export function CTASection({ finale }: CTASectionProps) {
       aria-labelledby="final-cta-heading"
     >
       <div className="space-y-6">
-        <h2
+        <Heading
           id="final-cta-heading"
-          className="text-2xl sm:text-3xl font-semibold tracking-tight text-white"
+          level={2}
+          size="lg"
+          className="text-2xl sm:text-3xl tracking-tight text-white"
         >
           Join the legacy
-        </h2>
-        <p className="max-w-none text-sm sm:text-base leading-relaxed text-white/80 md:max-w-4xl lg:max-w-4xl">
+        </Heading>
+        <Text className="max-w-none text-white/80 md:max-w-4xl lg:max-w-4xl">
           {finale.text}
-        </p>
+        </Text>
         <div className="flex flex-wrap gap-4">
           <Button
             asChild
@@ -65,6 +71,6 @@ export function CTASection({ finale }: CTASectionProps) {
           ) : null}
         </div>
       </div>
-    </motion.section>
+    </MotionSection>
   );
 }

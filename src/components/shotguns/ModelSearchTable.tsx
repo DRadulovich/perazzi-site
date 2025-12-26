@@ -5,7 +5,9 @@ import Image from "next/image";
 import { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
 
+import { Button, Heading, Input, Text } from "@/components/ui";
 import { getSanityImageUrl } from "@/lib/sanityImage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
@@ -46,9 +48,9 @@ type SpecProps = Readonly<{ label: string; value?: string }>;
 
 const PAGE_SIZE = 9;
 const FILTER_PANEL_CLASS =
-  "space-y-4 rounded-[32px] border border-white/15 bg-[linear-gradient(135deg,#070707,#101010)]/95 px-4 py-5 shadow-[0_35px_120px_rgba(0,0,0,0.45)] sm:px-6 sm:py-6";
+  "space-y-4 rounded-3xl border border-white/15 bg-[linear-gradient(135deg,var(--perazzi-black),color-mix(in srgb,var(--perazzi-black) 85%, black))]/95 px-4 py-5 shadow-elevated sm:px-6 sm:py-6";
 const CARD_SHELL_CLASS =
-  "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-neutral-950/80 text-left shadow-lg shadow-black/40 transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red sm:rounded-3xl sm:shadow-2xl";
+  "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/12 bg-perazzi-black/80 text-left shadow-medium ring-1 ring-white/10 backdrop-blur-sm transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red sm:rounded-3xl";
 const SPEC_PANEL_CLASS =
   "grid gap-4 border-t border-white/10 bg-black/40 px-4 py-4 text-xs text-neutral-200 sm:grid-cols-2 sm:px-6 sm:py-5 sm:text-sm";
 const DETAIL_PANEL_CLASS =
@@ -73,7 +75,6 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const detailButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [lastFocusedId, setLastFocusedId] = useState<string | null>(null);
-  const modalRef = useRef<HTMLDialogElement | null>(null);
   const [heroLoaded, setHeroLoaded] = useState(false);
   const analyticsRef = useAnalyticsObserver<HTMLElement>("ModelSearchTableSeen");
   const resetVisibleCount = useCallback(() => { setVisibleCount(PAGE_SIZE); }, []);
@@ -81,52 +82,6 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
     setSelectedModel(null);
     setHeroLoaded(false);
   }, []);
-
-  useEffect(() => {
-    if (!selectedModel || typeof globalThis.addEventListener !== "function") return;
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeModal();
-    };
-    globalThis.addEventListener("keydown", handleKey);
-    return () => { globalThis.removeEventListener("keydown", handleKey); };
-  }, [selectedModel, closeModal]);
-
-  useEffect(() => {
-    if (!selectedModel) return;
-    const modalNode = modalRef.current;
-    if (!modalNode) return;
-    const focusableSelectors = [
-      "a[href]",
-      'button:not([disabled])',
-      'textarea:not([disabled])',
-      'input:not([disabled])',
-      'select:not([disabled])',
-      '[tabindex]:not([tabindex="-1"])',
-    ];
-    const focusables = Array.from(
-      modalNode.querySelectorAll<HTMLElement>(focusableSelectors.join(",")),
-    ).filter((node) => node.dataset.modalBackdrop === undefined);
-    focusables[0]?.focus();
-
-    const handleTrap = (event: KeyboardEvent) => {
-      if (event.key !== "Tab" || focusables.length === 0) return;
-      const first = focusables[0];
-      const last = focusables.at(-1);
-      if (!first || !last) return;
-      if (event.shiftKey) {
-        if (document.activeElement === first) {
-          event.preventDefault();
-          last.focus();
-        }
-      } else if (document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    modalNode.addEventListener("keydown", handleTrap);
-    return () => { modalNode.removeEventListener("keydown", handleTrap); };
-  }, [selectedModel]);
 
   useEffect(() => {
     if (selectedModel || !lastFocusedId) return;
@@ -333,18 +288,24 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <label className="flex w-full items-center gap-3 rounded-full border border-white/20 bg-black/40 px-4 py-2 text-sm text-neutral-300 focus-within:border-white">
             <span className="text-neutral-500">Search</span>
-            <input
+            <Input
               type="search"
               placeholder="Search models, gauges, triggers..."
               value={query}
               onChange={(event) => { handleQueryChange(event.target.value); }}
-              className="w-full bg-transparent text-base text-white placeholder:text-neutral-600 focus:outline-none"
+              className="w-full border-0 bg-transparent px-0 py-0 text-base text-white placeholder:text-neutral-600 shadow-none focus:border-0"
             />
           </label>
-          <p className="text-sm text-neutral-400" aria-live="polite" aria-atomic="true">
-            Showing <span className="font-semibold text-white">{filteredModels.length}</span>{" "}
-            of <span className="font-semibold text-white">{models.length}</span>
-          </p>
+          <Text
+            asChild
+            className="text-neutral-400"
+            leading="normal"
+          >
+            <p aria-live="polite" aria-atomic="true">
+              Showing <span className="font-semibold text-white">{filteredModels.length}</span>{" "}
+              of <span className="font-semibold text-white">{models.length}</span>
+            </p>
+          </Text>
         </div>
 
         <div className="flex flex-wrap gap-4">
@@ -379,13 +340,15 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
             onToggle={(value) => { toggleFilter(value, setRibTypeFilters); }}
           />
           {hasActiveFilters && (
-            <button
+            <Button
               type="button"
               onClick={clearFilters}
-              className="rounded-full border border-white/30 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-widest text-white/80 transition hover:border-white hover:text-white"
+              variant="ghost"
+              size="sm"
+              className="rounded-full border border-white/30 text-white/80 hover:border-white hover:text-white hover:bg-white/5"
             >
               Reset filters
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -407,36 +370,36 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
               onMouseMove={handleCardMouseMove}
               onMouseLeave={handleCardMouseLeave}
             >
-              <div className="card-media relative aspect-[16/10] w-full bg-white">
+              <div className="card-media relative aspect-16/10 w-full bg-perazzi-white">
                 {cardImageUrl ? (
                   <Image
                     src={cardImageUrl}
                     alt={model.imageAlt || model.name}
                     fill
                     sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
-                    className="object-contain bg-white transition-transform duration-500"
+                    className="object-contain bg-perazzi-white transition-transform duration-500"
                     style={{
                       transform: "translate3d(var(--parallax-x,0px), var(--parallax-y,0px), 0)",
                     }}
                   />
                 ) : (
-                  <div className="flex h-full items-center justify-center bg-neutral-900 text-neutral-600">
+                  <div className="flex h-full items-center justify-center bg-card text-ink-muted">
                     No Image Available
                   </div>
                 )}
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-black">
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+                <div className="absolute bottom-0 left-0 right-0 p-6 text-ink">
+                  <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
                     {model.use}
-                  </p>
+                  </Text>
                  {/*
                     Keep highlight behavior consistent while showing only the model name on the card.
                   */}
-                  <h3 className="text-xl sm:text-2xl font-semibold leading-tight">
+                  <Heading level={3} size="lg" className="leading-tight text-ink">
                     {highlightText(model.name, query)}
-                  </h3>
-                  <p className="text-sm text-neutral-600">
+                  </Heading>
+                  <Text className="text-ink-muted" leading="normal">
                     {highlightText((model.gaugeNames || []).join(", ") || "", query)}
-                  </p>
+                  </Text>
                 </div>
               </div>
 
@@ -463,7 +426,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                 />
               </div>
               <div className="border-t border-white/5 bg-black/50 px-6 py-4 text-right">
-                <button
+                <Button
                   ref={(node) => {
                     detailButtonRefs.current[model._id] = node;
                   }}
@@ -472,120 +435,129 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                     setSelectedModel(model);
                     setLastFocusedId(model._id);
                   }}
-                  className="rounded-full border border-white/30 px-5 py-2 text-sm font-semibold uppercase tracking-widest text-white transition hover:border-white hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-perazzi-red"
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full border border-white/30 px-5 text-white hover:border-white hover:text-white hover:bg-white/5"
                 >
                   View details
-                </button>
+                </Button>
               </div>
             </article>
           );
         })}
         {!showSkeletons && filteredModels.length === 0 && (
-          <p className="col-span-full rounded-3xl border border-dashed border-white/20 py-16 text-center text-neutral-500">
-            No models match your current filters.
-          </p>
+          <Text
+            asChild
+            className="col-span-full rounded-3xl border border-dashed border-white/20 py-16 text-center text-neutral-500"
+            leading="normal"
+          >
+            <p>No models match your current filters.</p>
+          </Text>
         )}
       </div>
       {hasMore && !showSkeletons && (
         <div ref={loadMoreRef} className="h-10 w-full" aria-hidden="true" />
       )}
 
-      {selectedModel ? (
-        <dialog
-          ref={modalRef}
-          open
-          className="fixed inset-0 z-50 flex max-h-screen w-full items-center justify-center bg-black/80 p-3 backdrop-blur sm:p-4 md:p-6"
-          aria-modal="true"
-        >
-          <button
-            type="button"
-            data-modal-backdrop="true"
-            aria-label="Close dialog"
-            className="absolute inset-0 h-full w-full bg-transparent"
-            onClick={closeModal}
-          />
-          <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]">
-            <button
-              type="button"
-              className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-widest text-black transition hover:border-black hover:bg-white sm:right-5 sm:top-5"
-              onClick={closeModal}
-            >
-              Close
-            </button>
+      <Dialog.Root
+        open={Boolean(selectedModel)}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) closeModal();
+        }}
+      >
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
+          <Dialog.Content className="fixed inset-0 z-60 flex max-h-screen w-full items-center justify-center p-3 outline-none sm:p-4 md:p-6 data-[state=closed]:opacity-0 data-[state=closed]:translate-y-2 data-[state=open]:opacity-100 data-[state=open]:translate-y-0 transition duration-200">
+            {selectedModel ? (
+              <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-perazzi-black/90 text-white shadow-elevated ring-1 ring-white/15 backdrop-blur-xl">
+                <Dialog.Close asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 text-white shadow-soft backdrop-blur-sm hover:border-white/30 hover:bg-black/55 sm:right-5 sm:top-5"
+                  >
+                    Close
+                  </Button>
+                </Dialog.Close>
 
-            <div className="grid flex-1 gap-6 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[3fr,2fr]">
-              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-3xl bg-white">
-                {modalImageUrl ? (
-                  <Image
-                    src={modalImageUrl}
-                    alt={selectedModel.imageAlt || selectedModel.name}
-                    fill
-                    sizes="(min-width: 1024px) 80vw, 100vw"
-                    className={clsx(
-                      "object-contain bg-white transition-opacity duration-700",
-                      heroLoaded ? "opacity-100" : "opacity-0",
+                <div className="grid flex-1 gap-6 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[3fr,2fr]">
+                  <div className="relative aspect-16/10 w-full overflow-hidden rounded-3xl bg-white">
+                    {modalImageUrl ? (
+                      <Image
+                        src={modalImageUrl}
+                        alt={selectedModel.imageAlt || selectedModel.name}
+                        fill
+                        sizes="(min-width: 1024px) 80vw, 100vw"
+                        className={clsx(
+                          "object-contain bg-white transition-opacity duration-700",
+                          heroLoaded ? "opacity-100" : "opacity-0",
+                        )}
+                        priority
+                        onLoadingComplete={() => { setHeroLoaded(true); }}
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-neutral-600">
+                        No Image Available
+                      </div>
                     )}
-                    priority
-                    onLoadingComplete={() => { setHeroLoaded(true); }}
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-neutral-600">
-                    No Image Available
+                    <div className="absolute bottom-6 left-6 right-6 text-black">
+                      <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
+                        {selectedModel.use}
+                      </Text>
+                      <Heading level={2} size="xl" className="leading-tight text-black">
+                        {selectedModel.name}
+                      </Heading>
+                      <Text className="text-neutral-300" leading="normal">
+                        {selectedModel.version}
+                      </Text>
+                    </div>
                   </div>
-                )}
-                <div className="absolute bottom-6 left-6 right-6 text-black">
-                  <p className="text-xs font-semibold uppercase tracking-[0.4em] text-perazzi-red">
-                    {selectedModel.use}
-                  </p>
-                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold leading-tight">
-                    {selectedModel.name}
-                  </h2>
-                  <p className="text-sm text-neutral-300">{selectedModel.version}</p>
+
+                  <div className={`${DETAIL_PANEL_CLASS} grid gap-3 sm:grid-cols-2 lg:grid-cols-3`}>
+                    {[
+                      { label: "Platform", value: selectedModel.platform },
+                      { label: "Use", value: selectedModel.use || undefined },
+                      { label: "Gauge", value: renderList(selectedModel.gaugeNames) },
+                      { label: "Trigger Type", value: renderList(selectedModel.triggerTypes) },
+                      { label: "Trigger Springs", value: renderList(selectedModel.triggerSprings) },
+                      { label: "Rib Type", value: renderList(selectedModel.ribTypes) },
+                      { label: "Rib Style", value: renderList(selectedModel.ribStyles) },
+                      {
+                        label: "Rib Notch",
+                        value:
+                          selectedModel.ribNotch !== null && selectedModel.ribNotch !== undefined
+                            ? String(selectedModel.ribNotch)
+                            : undefined,
+                      },
+                      {
+                        label: "Rib Height",
+                        value:
+                          selectedModel.ribHeight !== null && selectedModel.ribHeight !== undefined
+                            ? `${selectedModel.ribHeight} mm`
+                            : undefined,
+                      },
+                      { label: "Grade", value: selectedModel.grade || undefined },
+                    ]
+                      .filter((entry) => Boolean(entry.value))
+                      .map((entry) => (
+                        <DetailGrid key={entry.label} label={entry.label} value={entry.value} />
+                      ))}
+                  </div>
                 </div>
               </div>
-
-              <div className={`${DETAIL_PANEL_CLASS} grid gap-3 sm:grid-cols-2 lg:grid-cols-3`}>
-                {[
-                  { label: "Platform", value: selectedModel.platform },
-                  { label: "Use", value: selectedModel.use || undefined },
-                  { label: "Gauge", value: renderList(selectedModel.gaugeNames) },
-                  { label: "Trigger Type", value: renderList(selectedModel.triggerTypes) },
-                  { label: "Trigger Springs", value: renderList(selectedModel.triggerSprings) },
-                  { label: "Rib Type", value: renderList(selectedModel.ribTypes) },
-                  { label: "Rib Style", value: renderList(selectedModel.ribStyles) },
-                  {
-                    label: "Rib Notch",
-                    value:
-                      selectedModel.ribNotch !== null && selectedModel.ribNotch !== undefined
-                        ? String(selectedModel.ribNotch)
-                        : undefined,
-                  },
-                  {
-                    label: "Rib Height",
-                    value:
-                      selectedModel.ribHeight !== null && selectedModel.ribHeight !== undefined
-                        ? `${selectedModel.ribHeight} mm`
-                        : undefined,
-                  },
-                  { label: "Grade", value: selectedModel.grade || undefined },
-                ]
-                  .filter((entry) => Boolean(entry.value))
-                  .map((entry) => (
-                    <DetailGrid key={entry.label} label={entry.label} value={entry.value} />
-                  ))}
-              </div>
-            </div>
-          </div>
-        </dialog>
-      ) : null}
+            ) : null}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </section>
   );
 }
 
 function CardSkeleton() {
   return (
-    <div className="animate-pulse overflow-hidden rounded-2xl border border-white/5 bg-neutral-900/60 sm:rounded-3xl">
-      <div className="aspect-[16/10] w-full bg-white" />
+    <div className="animate-pulse overflow-hidden rounded-2xl border border-white/5 bg-perazzi-black/60 sm:rounded-3xl">
+      <div className="aspect-16/10 w-full bg-white" />
       <div className="space-y-3 border-t border-white/5 bg-black/30 p-4 sm:p-6">
         <div className="h-4 w-1/3 rounded bg-white/10" />
         <div className="h-6 w-2/3 rounded bg-white/10" />
@@ -611,7 +583,9 @@ function FilterGroup({
   };
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <span className="text-sm uppercase tracking-[0.3em] text-neutral-500">{label}</span>
+      <Text asChild size="sm" className="uppercase tracking-[0.3em] text-neutral-500" leading="normal">
+        <span>{label}</span>
+      </Text>
       <div className="flex flex-wrap gap-2">
         <FilterChip active={!values.length} label="All" onClick={handleAll} />
         {options.map((option) => (
@@ -666,10 +640,12 @@ function Spec({ label, value }: SpecProps) {
   const display = humanizeValue(value) ?? value;
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+      <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
         {label}
-      </p>
-      <p className="text-sm text-white">{display || "—"}</p>
+      </Text>
+      <Text className="text-white" leading="normal">
+        {display || "—"}
+      </Text>
     </div>
   );
 }
@@ -678,10 +654,12 @@ function DetailGrid({ label, value }: SpecProps) {
   const display = humanizeValue(value) ?? value;
   return (
     <div>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-perazzi-red">
+      <Text size="xs" className="font-semibold tracking-[0.4em] text-perazzi-red" leading="normal">
         {label}
-      </p>
-      <p className="text-lg text-white">{display || "—"}</p>
+      </Text>
+      <Text size="lg" className="text-lg text-white" leading="normal">
+        {display || "—"}
+      </Text>
     </div>
   );
 }
@@ -696,27 +674,35 @@ function renderList(list: SpecList) {
   return mapped.join(", ");
 }
 
-function escapeRegExp(value: string) {
-  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
-}
-
 function highlightText(text: string, needle: string): ReactNode {
-  if (!needle.trim()) return text;
-  const lowerNeedle = needle.toLowerCase();
-  const regex = new RegExp(`(${escapeRegExp(needle)})`, "ig");
-  const parts = text.split(regex);
-  let cursor = 0;
+  const trimmed = needle.trim();
+  if (!trimmed) return text;
+  const lowerText = text.toLowerCase();
+  const lowerNeedle = trimmed.toLowerCase();
+  const nodes: ReactNode[] = [];
+  let start = 0;
+  let matchIndex = lowerText.indexOf(lowerNeedle, start);
+  let keyIndex = 0;
 
-  return parts.map((part) => {
-    cursor += part.length + 1;
-    const key = `${part}-${cursor}`;
-    if (part.toLowerCase() === lowerNeedle) {
-      return (
-        <mark key={key} className="bg-transparent text-perazzi-red">
-          {part}
-        </mark>
-      );
+  while (matchIndex !== -1) {
+    if (matchIndex > start) {
+      nodes.push(<span key={`text-${keyIndex}`}>{text.slice(start, matchIndex)}</span>);
+      keyIndex += 1;
     }
-    return <span key={key}>{part}</span>;
-  });
+    const end = matchIndex + trimmed.length;
+    nodes.push(
+      <mark key={`mark-${keyIndex}`} className="bg-transparent text-perazzi-red">
+        {text.slice(matchIndex, end)}
+      </mark>,
+    );
+    keyIndex += 1;
+    start = end;
+    matchIndex = lowerText.indexOf(lowerNeedle, start);
+  }
+
+  if (start < text.length) {
+    nodes.push(<span key={`text-${keyIndex}`}>{text.slice(start)}</span>);
+  }
+
+  return nodes;
 }

@@ -5,6 +5,7 @@ import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import type { ChatEntry } from "@/components/chat/useChatState";
 import { getRetrievalLabelFromScores } from "@/lib/retrieval-label";
+import { Button, Text } from "@/components/ui";
 
 interface ConversationViewProps {
   readonly messages: ReadonlyArray<ChatEntry>;
@@ -21,7 +22,9 @@ const childrenToArray = (node?: ReactNode) => Children.toArray(node);
 
 const markdownComponents = {
   p: (props: React.HTMLAttributes<HTMLParagraphElement>) => (
-    <p className="mb-3 last:mb-0" {...props} />
+    <Text asChild className="mb-3 last:mb-0" leading="relaxed">
+      <p {...props} />
+    </Text>
   ),
   ul: (props: React.HTMLAttributes<HTMLUListElement>) => (
     <ul className="mb-3 list-disc pl-5 text-left last:mb-0" {...props} />
@@ -78,7 +81,7 @@ const markdownComponents = {
     return (
       <div className="my-4 overflow-x-auto">
         <table className="w-full border-collapse text-left text-sm" {...props}>
-          {!hasHeader && (
+          {hasHeader ? null : (
             <thead className="sr-only">
               <tr>
                 {Array.from({ length: columnCount }, (_, index) => (
@@ -98,10 +101,10 @@ const markdownComponents = {
     <thead className="bg-subtle text-xs uppercase tracking-[0.2em] text-ink-muted" {...props} />
   ),
   th: (props: React.ThHTMLAttributes<HTMLTableCellElement>) => (
-    <th className="border border-subtle px-3 py-2 font-semibold text-ink" {...props} />
+    <th className="border border-border/70 px-3 py-2 font-semibold text-ink" {...props} />
   ),
   td: (props: React.TdHTMLAttributes<HTMLTableCellElement>) => (
-    <td className="border border-subtle px-3 py-2 text-ink" {...props} />
+    <td className="border border-border/70 px-3 py-2 text-ink" {...props} />
   ),
   tbody: (props: React.HTMLAttributes<HTMLTableSectionElement>) => (
     <tbody className="divide-y divide-subtle" {...props} />
@@ -123,9 +126,13 @@ export function ConversationView({ messages, isTyping, pending }: ConversationVi
 
   if (messages.length === 0) {
     return (
-      <p className="rounded-2xl bg-subtle px-4 py-3 text-sm text-ink-muted">
-        Ask about platforms, service, or heritage. I’ll respond in the Perazzi workshop tone.
-      </p>
+      <Text
+        asChild
+        className="rounded-2xl bg-subtle px-4 py-3 text-ink-muted"
+        leading="relaxed"
+      >
+        <p>Ask about platforms, service, or heritage. I’ll respond in the Perazzi workshop tone.</p>
+      </Text>
     );
   }
 
@@ -169,7 +176,9 @@ export function ConversationView({ messages, isTyping, pending }: ConversationVi
             <div className={isAssistant ? "text-left" : "text-right"}>
               <div
                 className={`inline-block rounded-2xl px-4 py-3 ${
-                  isAssistant ? "bg-card border border-subtle text-ink" : "bg-ink text-card"
+                  isAssistant
+                    ? "bg-card/80 border border-border/70 text-ink shadow-soft backdrop-blur-sm"
+                    : "bg-ink text-card shadow-soft"
                 }`}
               >
                 {isAssistant ? (
@@ -186,30 +195,35 @@ export function ConversationView({ messages, isTyping, pending }: ConversationVi
                 {(() => {
                   const hasRetrievalData =
                     (Array.isArray(msg.retrievalScores) && msg.retrievalScores.length > 0) ||
-                    msg.retrievalLabel !== undefined ||
-                    msg.similarity !== undefined;
-                  if (!hasRetrievalData) return null;
-
-                  const retrievalLabel =
-                    msg.retrievalLabel ??
-                    getRetrievalLabelFromScores(
-                      msg.retrievalScores ?? (msg.similarity !== undefined ? [msg.similarity] : []),
+                    typeof msg.retrievalLabel === "string" ||
+                    typeof msg.similarity === "number";
+                  if (hasRetrievalData) {
+                    const fallbackScores =
+                      typeof msg.similarity === "number" ? [msg.similarity] : [];
+                    const retrievalLabel =
+                      msg.retrievalLabel ??
+                      getRetrievalLabelFromScores(
+                        msg.retrievalScores ?? fallbackScores,
+                      );
+                    return (
+                      <Text size="sm" className="mt-2 text-ink-muted" leading="normal">
+                        Retrieval: {retrievalLabel}
+                      </Text>
                     );
-                  return (
-                    <p className="mt-2 text-[11px] sm:text-xs text-ink-muted">
-                      Retrieval: {retrievalLabel}
-                    </p>
-                  );
+                  }
+                  return null;
                 })()}
                 {isAssistant && (
                   <div className="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em]">
-                    <button
+                    <Button
                       type="button"
-                      className="rounded-full border border-subtle px-3 py-1 text-ink-muted transition hover:border-ink hover:text-ink"
+                      variant="secondary"
+                      size="sm"
+                      className="rounded-full px-3 py-1 text-ink-muted hover:text-ink"
                       onClick={() => handleCopy(msg.id, msg.content)}
                     >
                       {copiedId === msg.id ? "Copied" : "Copy"}
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
@@ -227,7 +241,9 @@ export function ConversationView({ messages, isTyping, pending }: ConversationVi
         );
       })}
       {normalizedTyping && messages.length === 0 ? (
-        <li className="text-sm text-ink-muted">Collecting references…</li>
+        <Text asChild className="text-ink-muted" leading="normal">
+          <li>Collecting references…</li>
+        </Text>
       ) : null}
     </ul>
   );

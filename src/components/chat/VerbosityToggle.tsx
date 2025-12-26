@@ -20,7 +20,7 @@ export function VerbosityToggle({ value, onChange, disabled = false }: Verbosity
       <legend className="sr-only">Verbosity</legend>
       <span className="text-xs font-semibold text-ink-muted">Verbosity</span>
       <div
-        className="inline-flex items-center rounded-full border border-subtle bg-card p-1 shadow-sm"
+        className="inline-flex items-center rounded-full border border-border bg-card/70 p-1 shadow-soft backdrop-blur-sm"
         role="radiogroup"
         aria-label="Verbosity"
         aria-disabled={disabled}
@@ -40,7 +40,7 @@ export function VerbosityToggle({ value, onChange, disabled = false }: Verbosity
               className={[
                 "block rounded-full px-3 py-1 text-xs font-semibold transition",
                 "text-ink-muted hover:bg-subtle",
-                "peer-checked:bg-ink peer-checked:text-card peer-checked:shadow-sm",
+                "peer-checked:bg-ink peer-checked:text-card peer-checked:shadow-soft",
                 "peer-focus-visible:outline peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink",
                 "peer-disabled:cursor-not-allowed peer-disabled:opacity-60",
               ].join(" ")}

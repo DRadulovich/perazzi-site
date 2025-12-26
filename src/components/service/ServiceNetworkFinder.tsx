@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import SafeHtml from "@/components/SafeHtml";
+import { Heading, Input, Section, Text } from "@/components/ui";
 
 import type { NetworkFinderUi, ServiceLocation, ServiceLocationType } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -62,24 +63,24 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
   const primaryLabel = ui.primaryButtonLabel ?? "Request service";
 
   return (
-    <section
+    <Section
       ref={analyticsRef}
       data-analytics-id="ServiceNetworkSeen"
-      className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8 sm:shadow-md lg:px-10"
+      padding="md"
+      className="space-y-6"
       aria-labelledby="service-network-heading"
     >
       <div className="space-y-2">
-        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+        <Text size="xs" muted className="font-semibold">
           Service network
-        </p>
-        <h2
-          id="service-network-heading"
-          className="text-2xl sm:text-3xl font-semibold text-ink"
-        >
+        </Text>
+        <Heading id="service-network-heading" level={2} size="xl" className="text-ink">
           {heading}
-        </h2>
+        </Heading>
         {subheading ? (
-          <p className="text-sm sm:text-base leading-relaxed text-ink-muted">{subheading}</p>
+          <Text size="md" muted leading="relaxed">
+            {subheading}
+          </Text>
         ) : null}
       </div>
       <form role="search" className="flex flex-col gap-3 md:flex-row md:items-end">
@@ -102,9 +103,9 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
         </label>
         <label className="flex w-full flex-col text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink">
           <span>Search by State or Name</span>
-          <input
+          <Input
             type="search"
-            className="mt-1 min-h-10 rounded-2xl border border-border/60 bg-card px-3 py-2 text-sm sm:text-base text-ink focus-ring sm:border-border/70"
+            className="mt-1 min-h-10 sm:border-border/70"
             value={search}
             onChange={(event) => { setSearch(event.target.value); }}
             placeholder="e.g. FL, TX"
@@ -139,10 +140,12 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
                       logAnalytics(`FinderResultClick:${location.id}`);
                     }}
                   >
-                    <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+                    <Text size="xs" muted className="font-semibold">
                       {location.type}
-                    </p>
-                    <h3 className="text-lg font-semibold text-ink">{location.name}</h3>
+                    </Text>
+                    <Heading level={3} size="md" className="text-ink">
+                      {location.name}
+                    </Heading>
                     <SafeHtml
                       className="text-sm leading-relaxed text-ink-muted"
                       html={location.addressHtml}
@@ -188,7 +191,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
         </ul>
         <div className="space-y-3">
           <div
-            className="relative overflow-hidden rounded-2xl border border-border/60 bg-[color:var(--color-canvas)]"
+            className="relative overflow-hidden rounded-2xl border border-border/60 bg-(--color-canvas)"
             style={{ aspectRatio: 3 / 2 }}
           >
             <iframe
@@ -219,7 +222,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
           </a>
         </div>
       </div>
-    </section>
+    </Section>
   );
 }
 

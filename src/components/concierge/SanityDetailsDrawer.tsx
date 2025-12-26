@@ -3,6 +3,7 @@
 import Image from "next/image";
 import clsx from "clsx";
 import { type ReactNode, useEffect, useRef } from "react";
+import { Heading, Text } from "@/components/ui";
 
 type InfoCard = {
   id: string;
@@ -55,11 +56,23 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
 
   let content: ReactNode;
   if (error) {
-    content = <p className="text-sm sm:text-base leading-relaxed text-red-600">{error}</p>;
+    content = (
+      <Text className="text-red-600" leading="relaxed">
+        {error}
+      </Text>
+    );
   } else if (loading) {
-    content = <p className="text-sm sm:text-base leading-relaxed text-ink-muted">Loading details…</p>;
+    content = (
+      <Text className="text-ink-muted" leading="relaxed">
+        Loading details…
+      </Text>
+    );
   } else if (cards.length === 0) {
-    content = <p className="text-sm sm:text-base leading-relaxed text-ink-muted">No details available.</p>;
+    content = (
+      <Text className="text-ink-muted" leading="relaxed">
+        No details available.
+      </Text>
+    );
   } else {
     content = (
       <div className="space-y-3">
@@ -70,8 +83,10 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
             onClick={() => onSelect?.(card)}
             className={clsx(
               "w-full text-left transition",
-              selectedCard?.id === card.id ? "border-ink bg-subtle/50" : "border-subtle/60 hover:border-ink",
-              "flex flex-col rounded-2xl border bg-card p-3 text-sm sm:text-base text-ink shadow-sm focus-ring",
+              selectedCard?.id === card.id
+                ? "border-ink/40 bg-card/85"
+                : "border-border/70 bg-card/70 hover:border-ink/30 hover:bg-card/85",
+              "flex flex-col rounded-2xl border p-3 text-sm sm:text-base text-ink shadow-soft backdrop-blur-sm focus-ring",
             )}
           >
             {card.imageUrl ? (
@@ -85,24 +100,32 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
             ) : null}
             <div className="mt-2 space-y-1">
               <div className="flex items-center justify-between">
-                <p className="text-base font-semibold">{card.title}</p>
+                <Heading level={3} size="sm">
+                  {card.title}
+                </Heading>
                 <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-perazzi-red">
                   View more
                 </span>
               </div>
               {card.description ? (
-                <p className="text-sm sm:text-base leading-relaxed text-ink-muted line-clamp-3">{card.description}</p>
+                <Text className="text-ink-muted line-clamp-3" leading="relaxed">
+                  {card.description}
+                </Text>
               ) : null}
               {card.platform ? (
-                <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">Platform: {card.platform}</p>
+                <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
+                  Platform: {card.platform}
+                </Text>
               ) : null}
               {card.grade ? (
-                <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">Grade: {card.grade}</p>
+                <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
+                  Grade: {card.grade}
+                </Text>
               ) : null}
               {card.gauges?.length ? (
-                <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+                <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
                   Gauges: {card.gauges.join(", ")}
-                </p>
+                </Text>
               ) : null}
             </div>
           </button>
@@ -118,7 +141,7 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
         ref={backdropRef}
         tabIndex={-1}
         className={clsx(
-          "fixed inset-0 z-30 h-full w-full bg-black/30 transition-opacity duration-300",
+          "fixed inset-0 z-30 h-full w-full bg-black/45 backdrop-blur-sm transition-opacity duration-300",
           open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
         )}
         aria-hidden="true"
@@ -127,7 +150,7 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
       <div
         ref={containerRef}
         className={clsx(
-          "fixed inset-y-0 right-0 z-40 flex w-full max-w-xl flex-col border-l border-subtle bg-card shadow-2xl transition-transform duration-300",
+          "fixed inset-y-0 right-0 z-40 flex w-full max-w-xl flex-col border-l border-border bg-card/95 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl transition-transform duration-300",
           open ? "translate-x-0" : "translate-x-full",
         )}
         aria-hidden={!open}
@@ -136,16 +159,20 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
         aria-modal="true"
         role="dialog"
       >
-        <div className="flex items-center justify-between border-b border-subtle px-4 py-3 sm:px-6">
+        <div className="flex items-center justify-between border-b border-border bg-card/80 px-4 py-3 backdrop-blur-md sm:px-6">
           <div>
-            <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">Sanity Data</p>
-            <p className="text-sm sm:text-base text-ink">Details for the current step</p>
+            <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
+              Sanity Data
+            </Text>
+            <Text className="text-ink" leading="normal">
+              Details for the current step
+            </Text>
           </div>
           {onClose ? (
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex min-h-10 items-center justify-center rounded-full border border-subtle bg-card px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:border-ink hover:text-ink focus-ring"
+              className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
             >
               Close
             </button>

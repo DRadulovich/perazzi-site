@@ -1,4 +1,6 @@
 import type { GaugeInfo } from "@/types/catalog";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 type GaugeCardProps = {
   readonly gauge: GaugeInfo;
@@ -8,41 +10,53 @@ export function GaugeCard({ gauge }: GaugeCardProps) {
   return (
     <article
       data-analytics-id={`GaugeCard:${gauge.id}`}
-      className="flex h-full flex-col rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm focus-within:ring-2 focus-within:ring-perazzi-red/60 focus-within:ring-offset-2 focus-within:ring-offset-card sm:rounded-3xl sm:border-border/70 sm:bg-card sm:p-5"
+      className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm focus-within:ring-2 focus-within:ring-perazzi-red/60 focus-within:ring-offset-2 focus-within:ring-offset-card sm:rounded-3xl sm:bg-card/80 sm:p-5"
     >
       <header className="space-y-1">
-        <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
-          {gauge.label}
-        </span>
-        <h2 className="text-base sm:text-lg font-semibold text-ink">
+        <Text asChild size="xs" className="font-semibold text-ink-muted" leading="normal">
+          <span>{gauge.label}</span>
+        </Text>
+        <Heading level={3} size="sm" className="text-ink">
           {gauge.description}
-        </h2>
+        </Heading>
       </header>
-      <p className="mt-3 text-sm sm:text-base leading-relaxed text-ink-muted">
-        {gauge.handlingNotes}
-      </p>
+      <Text className="mt-3 text-ink-muted">{gauge.handlingNotes}</Text>
       <div className="mt-4 space-y-2">
-        <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
-          Typical disciplines
-        </span>
-        <p className="text-sm sm:text-base leading-relaxed normal-case tracking-normal text-ink">
+        <Text asChild size="xs" className="font-semibold text-ink-muted" leading="normal">
+          <span>Typical disciplines</span>
+        </Text>
+        <Text className="normal-case tracking-normal text-ink">
           {gauge.typicalDisciplines.join(" • ")}
-        </p>
+        </Text>
       </div>
       <div className="mt-4 space-y-2 text-sm sm:text-base leading-relaxed text-ink-muted">
-        <strong className="block text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink-muted">
-          Common barrels
-        </strong>
-        <p>{gauge.commonBarrels.join(" · ")}</p>
+        <Text
+          asChild
+          size="xs"
+          className="block font-semibold text-ink-muted"
+          leading="normal"
+        >
+          <strong>Common barrels</strong>
+        </Text>
+        <Text asChild className="text-ink-muted">
+          <p>{gauge.commonBarrels.join(" · ")}</p>
+        </Text>
       </div>
       {gauge.faq && gauge.faq.length > 0 ? (
         <ul className="mt-4 space-y-2 text-sm sm:text-base leading-relaxed text-ink-muted">
           {gauge.faq.slice(0, 2).map((item) => (
             <li key={item.q}>
-              <strong className="block text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink-muted">
-                {item.q}
-              </strong>
-              <p className="mt-1">{item.a}</p>
+              <Text
+                asChild
+                size="xs"
+                className="block font-semibold text-ink-muted"
+                leading="normal"
+              >
+                <strong>{item.q}</strong>
+              </Text>
+              <Text asChild className="mt-1 text-ink-muted">
+                <p>{item.a}</p>
+              </Text>
             </li>
           ))}
         </ul>

@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useRef } from "react";
 import { logAnalytics } from "@/lib/analytics";
 import type { GradeSeries } from "@/types/catalog";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 type WoodCarouselProps = {
   readonly grades: readonly GradeSeries[];
@@ -26,9 +28,9 @@ export function WoodCarousel({ grades }: WoodCarouselProps) {
       aria-labelledby="wood-carousel-heading"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="wood-carousel-heading" className="text-xl font-semibold text-ink">
+        <Heading id="wood-carousel-heading" level={2} size="lg" className="text-ink">
           Wood sets &amp; embellishments
-        </h2>
+        </Heading>
         <div className="flex gap-2">
           <button
             type="button"
@@ -62,10 +64,10 @@ export function WoodCarousel({ grades }: WoodCarouselProps) {
             <div
               key={grade.id}
               data-analytics-id={`WoodCarousel:${grade.id}`}
-              className="flex min-w-[260px] flex-col rounded-3xl border border-border/70 bg-card p-4 shadow-sm md:min-w-[320px] md:p-6 lg:min-w-0 lg:p-8"
+              className="flex min-w-[260px] flex-col rounded-3xl border border-border/70 bg-card p-4 shadow-soft md:min-w-80 md:p-6 lg:min-w-0 lg:p-8"
             >
               <div
-                className="relative overflow-hidden rounded-xl bg-neutral-200"
+                className="relative overflow-hidden rounded-xl bg-border"
                 style={{ aspectRatio: ratio }}
               >
                 <Image
@@ -77,10 +79,12 @@ export function WoodCarousel({ grades }: WoodCarouselProps) {
                   loading="lazy"
                 />
               </div>
-              <h3 className="mt-3 text-base font-semibold text-ink">
+              <Heading level={3} size="sm" className="mt-3 text-ink">
                 {grade.name}
-              </h3>
-              <p className="mt-2 text-sm text-ink-muted">{grade.description}</p>
+              </Heading>
+              <Text className="mt-2 text-ink-muted" leading="normal">
+                {grade.description}
+              </Text>
             </div>
           );
         })}

@@ -8,6 +8,7 @@ import type { FAQItem, PickerItem, PickerUi } from "@/types/experience";
 import { FAQList } from "./FAQList";
 import { logAnalytics } from "@/lib/analytics";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { Container, Heading, Section, Text } from "@/components/ui";
 
 type ExperiencePickerProps = {
   readonly items: PickerItem[];
@@ -103,18 +104,20 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+      <Container size="xl" className="relative z-10">
+        <Section padding="md" className="space-y-6 bg-card/40">
           <div className="space-y-2">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-              {heading}
-            </p>
-            <h2
+            <Heading
               id="experience-picker-heading"
-              className="mb-4 text-sm sm:text-base font-light italic leading-relaxed text-ink-muted"
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-ink"
             >
+              {heading}
+            </Heading>
+            <Text size="md" muted leading="relaxed" className="mb-4 font-light italic">
               {subheading}
-            </h2>
+            </Text>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:items-start">
@@ -133,8 +136,8 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
               <FAQList items={faqItems} embedded heading={faqHeading} lead={faqLead} />
             </div>
           ) : null}
-        </div>
-      </div>
+        </Section>
+      </Container>
     </section>
   );
 }
@@ -167,7 +170,7 @@ function ExperiencePickerCard({
     >
       <Link
         href={item.href}
-        className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border/75 bg-card/75 text-left shadow-sm focus-ring sm:rounded-3xl"
+        className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border/70 bg-card/60 text-left shadow-soft backdrop-blur-sm ring-1 ring-border/70 transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated"
         data-analytics-id={`PickerCardClick:${item.id}`}
         onClick={(event) => {
           if (onAnchorClick) {
@@ -195,13 +198,15 @@ function ExperiencePickerCard({
           />
         </div>
         <div className="flex flex-1 flex-col gap-3 px-6 py-5">
-          <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+          <Text size="xs" muted className="font-semibold">
             {microLabel}
-          </p>
-          <h3 className="text-base sm:text-lg font-semibold text-ink">
+          </Text>
+          <Heading level={3} size="sm" className="text-ink">
             {item.title}
-          </h3>
-          <p className="text-sm leading-relaxed text-ink-muted">{item.summary}</p>
+          </Heading>
+          <Text size="md" muted leading="relaxed">
+            {item.summary}
+          </Text>
           <span className="mt-auto inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
             {item.ctaLabel}
             <span aria-hidden="true">→</span>

@@ -3,6 +3,7 @@ import { groq } from "next-sanity";
 
 import { BuildJourneyClient, type BuildJourneyArticle } from "./BuildJourneyClient";
 import { client } from "@/sanity/lib/client";
+import { Text } from "@/components/ui/text";
 
 const BUILD_JOURNEY_QUERY = groq`
   *[_type == "article" && isBuildJourneyStep == true] | order(buildStepOrder asc, title asc) {
@@ -31,7 +32,7 @@ export default async function BuildJourneyPage() {
       <main className="bg-canvas text-ink">
         <HeroSection />
         <section className="px-4 py-16 sm:px-6">
-          <p>No build-journey steps are configured yet in Sanity.</p>
+          <Text>No build-journey steps are configured yet in Sanity.</Text>
         </section>
       </main>
     );
@@ -57,7 +58,7 @@ function HeroSection() {
           sizes="100vw"
           className="object-cover opacity-100"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[color:var(--color-black)]/100 via-[color:var(--color-black)]/50 to-[color:var(--color-black)]/100" />
+        <div className="absolute inset-0 bg-linear-to-b from-black via-black/50 to-black" />
       </div>
       <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16 lg:py-24">
         <header className="max-w-2l space-y-4">

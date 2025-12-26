@@ -3,6 +3,7 @@
 import Image from "next/image";
 import type { FactoryAsset } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { Heading, Section, Text } from "@/components/ui";
 
 type ChampionData = Readonly<{
   id: string;
@@ -23,30 +24,33 @@ export function MarqueeFeature({ champion, fallbackText }: MarqueeFeatureProps) 
 
   if (!champion) {
     return (
-      <section
+      <Section
         ref={analyticsRef}
         data-analytics-id="MarqueeFeatureSeen"
-        className="rounded-2xl border border-border/60 bg-card/10 p-4 text-ink shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-8"
+        padding="md"
       >
-        <h2 className="text-xl sm:text-2xl font-semibold">Perazzi lineage</h2>
-        <p className="mt-3 text-sm sm:text-base leading-relaxed text-ink-muted">
+        <Heading level={2} size="lg">
+          Perazzi lineage
+        </Heading>
+        <Text className="mt-3 text-ink-muted">
           {fallbackText ??
             "Every Perazzi platform is validated by generations of champions. Visit the heritage timeline to explore their stories."}
-        </p>
-      </section>
+        </Text>
+      </Section>
     );
   }
 
   const ratio = champion.image.aspectRatio ?? 3 / 4;
 
   return (
-    <section
+    <Section
       ref={analyticsRef}
       data-analytics-id={`ChampionStory:${champion.id}`}
-      className="grid gap-8 rounded-2xl border border-border/60 bg-card/10 px-4 py-8 text-ink shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-10 sm:shadow-md md:grid-cols-[minmax(280px,1fr)_minmax(320px,1fr)] md:items-center lg:px-10"
+      padding="md"
+      className="grid gap-8 md:grid-cols-[minmax(280px,1fr)_minmax(320px,1fr)] md:items-center"
     >
       <div
-        className="relative overflow-hidden rounded-2xl"
+        className="relative overflow-hidden rounded-2xl bg-elevated ring-1 ring-border/70"
         style={{ aspectRatio: ratio }}
       >
         <Image
@@ -59,22 +63,30 @@ export function MarqueeFeature({ champion, fallbackText }: MarqueeFeatureProps) 
         />
       </div>
       <div className="space-y-4">
-        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+        <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
           Champion spotlight
-        </p>
+        </Text>
         {champion.name ? (
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-ink">
+          <Heading level={2} size="xl" className="text-ink">
             {champion.name}
-          </h2>
+          </Heading>
         ) : null}
         {champion.title ? (
-          <cite className="block text-sm sm:text-base leading-relaxed font-medium text-ink-muted not-italic">
-            {champion.title}
-          </cite>
+          <Text
+            asChild
+            size="md"
+            className="font-medium text-ink-muted not-italic"
+          >
+            <cite>{champion.title}</cite>
+          </Text>
         ) : null}
-        <blockquote className="border-l-2 border-perazzi-red/50 pl-4 text-lg sm:text-xl italic leading-relaxed text-ink">
-          “{champion.quote}”
-        </blockquote>
+        <Text
+          asChild
+          size="lg"
+          className="border-l-2 border-perazzi-red/50 pl-4 text-lg sm:text-xl italic text-ink"
+        >
+          <blockquote>“{champion.quote}”</blockquote>
+        </Text>
         {champion.href ? (
           <a
             href={champion.href}
@@ -85,6 +97,6 @@ export function MarqueeFeature({ champion, fallbackText }: MarqueeFeatureProps) 
           </a>
         ) : null}
       </div>
-    </section>
+    </Section>
   );
 }

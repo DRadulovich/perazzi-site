@@ -7,6 +7,8 @@ import type { HeritageEraWithEvents } from "@/types/heritage";
 import { EraBackgroundLayer } from "./EraBackgroundLayer";
 import { HeritageEventSlide } from "./HeritageEventSlide";
 import { HeritageEventRail } from "./HeritageEventRail";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 export type HeritageEraSectionProps = Readonly<{
   era: HeritageEraWithEvents;
@@ -141,17 +143,23 @@ export function HeritageEraSection({
         </a>
 
         <div className="relative z-10 px-4 py-16">
-          <div className="mx-auto max-w-6xl rounded-2xl border border-white/15 bg-black/60 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:px-6 sm:py-8 sm:shadow-md md:px-10 md:py-10">
+          <div className="mx-auto max-w-6xl rounded-2xl border border-white/15 bg-black/60 p-4 shadow-soft backdrop-blur-md sm:rounded-3xl sm:px-6 sm:py-8 sm:shadow-medium md:px-10 md:py-10">
             <header className="max-w-4xl">
-              <h2
-                id={`heritage-era-${index}`}
+              <Heading
+                asChild
+                size="sm"
                 className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-neutral-300"
               >
-                {era.label}
-              </h2>
-            <p className="mt-2 text-[11px] sm:text-[0.7rem] uppercase tracking-[0.25em] text-neutral-500">
-                {yearRangeLabel}
-            </p>
+                <h2 id={`heritage-era-${index}`}>{era.label}</h2>
+              </Heading>
+              <Text
+                asChild
+                size="xs"
+                className="mt-2 tracking-[0.25em] text-neutral-500"
+                leading="normal"
+              >
+                <p>{yearRangeLabel}</p>
+              </Text>
             </header>
 
             <div className="mt-8 space-y-6">
@@ -214,15 +222,21 @@ export function HeritageEraSection({
 
         <div className="relative z-10 w-full px-4 py-10 md:px-8 md:py-16">
           <header className="mx-auto max-w-6xl pb-6">
-            <h2
-              id={`heritage-era-${index}`}
+            <Heading
+              asChild
+              size="sm"
               className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-neutral-300"
             >
-              {era.label}
-            </h2>
-            <p className="mt-2 text-[11px] sm:text-[0.7rem] uppercase tracking-[0.25em] text-neutral-500">
-              {yearRangeLabel}
-            </p>
+              <h2 id={`heritage-era-${index}`}>{era.label}</h2>
+            </Heading>
+            <Text
+              asChild
+              size="xs"
+              className="mt-2 tracking-[0.25em] text-neutral-500"
+              leading="normal"
+            >
+              <p>{yearRangeLabel}</p>
+            </Text>
           </header>
 
           <HeritageEventRail

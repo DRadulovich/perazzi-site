@@ -9,6 +9,8 @@ import { PlatformCard } from "./PlatformCard";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
 import { buildPlatformPrompt } from "@/lib/platform-prompts";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 type PlatformGridProps = {
   readonly platforms: Platform[];
@@ -116,12 +118,17 @@ const createPayloadBuilder =
 
 const PlatformHeader = ({ heading, subheading }: { heading: string; subheading: string }) => (
   <div className="space-y-2">
-    <p className="text-2xl sm:text-3xl lg:text-4xl font-black italic uppercase tracking-[0.35em] text-ink">
+    <Heading
+      id="platforms-heading"
+      level={2}
+      size="xl"
+      className="font-black italic uppercase tracking-[0.35em] text-ink"
+    >
       {heading}
-    </p>
-    <h2 id="platforms-heading" className="mb-6 max-w-4xl text-sm sm:text-base font-light italic text-ink-muted">
+    </Heading>
+    <Text className="mb-6 max-w-4xl font-light italic text-ink-muted" leading="normal">
       {subheading}
-    </h2>
+    </Text>
   </div>
 );
 
@@ -242,7 +249,11 @@ const ChampionHighlight = ({
         prefersReducedMotion ? undefined : { duration: 1.5, delay: 0.3, ease: [0.33, 1, 0.68, 1] }
       }
     >
-      {hallmark ? <p className="text-xl italic text-ink">{hallmark}</p> : null}
+      {hallmark ? (
+        <Text className="text-xl italic text-ink" leading="normal">
+          {hallmark}
+        </Text>
+      ) : null}
       {champion ? (
         <div className="flex items-center justify-center gap-5">
           {champion.image ? (
@@ -257,12 +268,20 @@ const ChampionHighlight = ({
             </div>
           ) : null}
           <div className="space-y-2">
-            {champion.name ? <p className="text-xl font-semibold text-ink">{champion.name}</p> : null}
-            {champion.title ? <p className="text-base text-ink-muted">{champion.title}</p> : null}
+            {champion.name ? (
+              <Heading level={3} size="lg" className="text-ink">
+                {champion.name}
+              </Heading>
+            ) : null}
+            {champion.title ? (
+              <Text size="md" className="text-ink-muted" leading="normal">
+                {champion.title}
+              </Text>
+            ) : null}
             {champion.resume?.winOne ? (
-              <p className="text-base text-ink-muted">
+              <Text size="md" className="text-ink-muted" leading="normal">
                 Win highlight: <span className="font-medium">{champion.resume.winOne}</span>
-              </p>
+              </Text>
             ) : null}
           </div>
         </div>

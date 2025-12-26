@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { JournalLandingData } from "@/types/journal";
 import { stripHtml } from "@/utils/text";
 import { logAnalytics } from "@/lib/analytics";
+import { Heading, Text } from "@/components/ui";
 
 type HubProps = {
   readonly category: keyof JournalLandingData["hubs"];
@@ -22,14 +23,16 @@ export function CategoryHub({ category, data }: HubProps) {
     <section className="space-y-4" aria-labelledby={`category-${category}`}>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+          <Text size="xs" muted className="font-semibold">
             {category.replace(/^[a-z]/, (c) => c.toUpperCase())}
-          </p>
-          <h2 id={`category-${category}`} className="text-2xl font-semibold text-ink">
+          </Text>
+          <Heading id={`category-${category}`} level={2} size="xl" className="text-ink">
             {heading}
-          </h2>
+          </Heading>
           {headerText ? (
-            <p className="prose prose-sm max-w-2xl text-ink-muted">{headerText}</p>
+            <Text size="md" muted className="max-w-2xl">
+              {headerText}
+            </Text>
           ) : null}
         </div>
         <Link
@@ -62,12 +65,16 @@ export function CategoryHub({ category, data }: HubProps) {
                 />
               </div>
               <div className="space-y-2 p-5">
-                <p className="text-xs uppercase tracking-[0.3em] text-ink-muted">
+                <Text size="xs" muted className="font-semibold">
                   {item.author}
-                </p>
-                <h3 className="text-lg font-semibold text-ink">{item.title}</h3>
+                </Text>
+                <Heading level={3} size="md" className="text-ink">
+                  {item.title}
+                </Heading>
                 {item.excerptHtml ? (
-                  <p className="text-sm text-ink-muted">{stripHtml(item.excerptHtml)}</p>
+                  <Text size="md" muted>
+                    {stripHtml(item.excerptHtml)}
+                  </Text>
                 ) : null}
               </div>
             </Link>

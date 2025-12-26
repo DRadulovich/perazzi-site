@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import SafeHtml from "@/components/SafeHtml";
-import { Button } from "@/components/ui/button";
+import { Button, Container, Heading, Section, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import type { BookingSection } from "@/types/experience";
@@ -47,7 +47,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
           priority={false}
         />
         <div
-          className="absolute inset-0 bg-[color:var(--scrim-soft)]"
+          className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
         <div
@@ -62,32 +62,34 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+      <Container size="xl" className="relative z-10">
+        <Section padding="md" className="space-y-6 bg-card/40">
           <div className="space-y-2">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-              {heading}
-            </p>
-            <h2
+            <Heading
               id="experience-booking-heading"
-              className="mb-4 text-sm sm:text-base font-light italic leading-relaxed text-ink-muted"
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-ink"
             >
+              {heading}
+            </Heading>
+            <Text size="md" muted leading="relaxed" className="mb-4 font-light italic">
               {subheading}
-            </h2>
+            </Text>
           </div>
           <div className="grid gap-6 md:gap-8 lg:gap-10 md:grid-cols-2 xl:grid-cols-3">
             {options.map((option) => (
               <article
                 key={option.id}
-                className="flex h-full flex-col rounded-2xl border border-border/75 bg-card/75 p-5 shadow-sm sm:rounded-3xl sm:p-6 md:p-7 lg:p-8"
+                className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-7 lg:p-8"
               >
                 <div className="space-y-2">
-                  <h3 className="text-base sm:text-lg font-semibold text-ink">
+                  <Heading level={3} size="sm" className="text-ink">
                     {option.title}
-                  </h3>
-                  <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+                  </Heading>
+                  <Text size="xs" muted className="font-semibold">
                     {option.durationLabel ?? (option.durationMins ? `${option.durationMins} minutes` : "")}
-                  </p>
+                  </Text>
                   <SafeHtml
                     className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg prose-headings:text-ink prose-strong:text-ink"
                     html={option.descriptionHtml}
@@ -110,11 +112,11 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
             ))}
           </div>
           {scheduler ? (
-            <div className="space-y-4 rounded-2xl border border-border/60 bg-card/40 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/75 sm:p-6 md:p-8 lg:p-10">
+            <div className="space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-8 lg:p-10">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-base sm:text-lg font-semibold text-ink">
+                <Heading level={3} size="sm" className="text-ink">
                   {scheduler.title}
-                </h3>
+                </Heading>
                 <Button
                   variant="primary"
                   size="sm"
@@ -145,19 +147,19 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
               </p>
               <div
                 id={schedulerPanelId}
-                className="rounded-2xl border border-border/60 bg-card/40 p-3 md:p-4 lg:p-5 sm:border-border/70 sm:bg-card/60"
+                className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:bg-card/80 md:p-4 lg:p-5"
                 aria-live="polite"
               >
                 {schedulerLoaded ? (
                   <iframe
                     src={scheduler.src}
                     title={scheduler.iframeTitle ?? `Booking — ${scheduler.title}`}
-                    className={`h-[480px] w-full rounded-2xl border border-border ${schedulerOpen ? "" : "hidden"}`}
+                    className={`h-[480px] w-full rounded-2xl border border-border/70 bg-card/0 ${schedulerOpen ? "" : "hidden"}`}
                     loading="lazy"
                     aria-hidden={!schedulerOpen}
                   />
                 ) : (
-                  <div className="flex h-[320px] w-full items-center justify-center rounded-2xl border border-dashed border-border/60 text-sm sm:text-base text-ink-muted">
+                  <div className="flex h-80 w-full items-center justify-center rounded-2xl border border-dashed border-border/70 text-sm sm:text-base text-ink-muted">
                     The booking form appears here once you choose Begin Your Fitting.
                   </div>
                 )}
@@ -176,8 +178,8 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
               </p>
             </div>
           ) : null}
-        </div>
-      </div>
+        </Section>
+      </Container>
     </section>
   );
 }

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import type { AuthorizedDealerEntry, ExperienceNetworkData, ScheduledEventEntry, TravelNetworkUi } from "@/types/experience";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { Container, Heading, Section, Text } from "@/components/ui";
 import Image from "next/image";
 
 type TabKey = "schedule" | "dealers";
@@ -76,7 +77,7 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
           loading="lazy"
         />
         <div
-          className="absolute inset-0 bg-[color:var(--scrim-soft)]"
+          className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
         <div
@@ -91,21 +92,23 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+      <Container size="xl" className="relative z-10">
+        <Section padding="md" className="space-y-6 bg-card/40">
           <div className="space-y-3">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-              {heading}
-            </p>
-            <h2
+            <Heading
               id="travel-network-heading"
-              className="text-sm sm:text-base font-light italic leading-relaxed text-ink-muted"
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-ink"
             >
+              {heading}
+            </Heading>
+            <Text size="md" muted leading="relaxed" className="font-light italic">
               {lead}
-            </h2>
-            <p className="text-sm sm:text-base leading-relaxed text-ink-muted">
+            </Text>
+            <Text size="md" muted leading="relaxed">
               {supporting}
-            </p>
+            </Text>
           </div>
 
           <div
@@ -120,10 +123,10 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
                 role="tab"
                 aria-selected={activeTab === tab.key}
                 className={cn(
-                  "rounded-full border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] focus-ring transition",
+                  "rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring",
                   activeTab === tab.key
-                    ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
-                    : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
+                    ? "border-perazzi-red/60 bg-perazzi-red/10 text-perazzi-red"
+                    : "text-ink",
                 )}
                 onClick={() => { setActiveTab(tab.key); }}
               >
@@ -141,15 +144,19 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
               <DealerList dealers={data.dealers} emptyText={emptyDealersText} />
             )}
           </div>
-        </div>
-      </div>
+        </Section>
+      </Container>
     </section>
   );
 }
 
 function ScheduleList({ events, emptyText }: ScheduleListProps) {
   if (!events.length) {
-    return <p className="text-sm leading-relaxed text-ink-muted">{emptyText}</p>;
+    return (
+      <Text size="md" muted leading="relaxed">
+        {emptyText}
+      </Text>
+    );
   }
 
   return (
@@ -157,21 +164,21 @@ function ScheduleList({ events, emptyText }: ScheduleListProps) {
       {events.map((event) => (
         <article
           key={event._id}
-          className="rounded-2xl border border-border/75 bg-card/75 p-5 shadow-sm sm:rounded-3xl md:p-6 lg:p-7"
+          className="rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated md:p-6 lg:p-7"
         >
-          <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+          <Text size="xs" muted className="font-semibold">
             {formatDateRange(event.startDate, event.endDate)}
-          </p>
-          <h3 className="mt-2 text-base sm:text-lg font-semibold text-ink">
+          </Text>
+          <Heading level={3} size="sm" className="mt-2 text-ink">
             {event.eventName}
-          </h3>
-          <p className="text-sm leading-relaxed text-ink-muted">
+          </Heading>
+          <Text size="md" muted leading="relaxed">
             {event.eventLocation}
-          </p>
+          </Text>
           {event.location ? (
-            <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+            <Text size="md" muted leading="relaxed" className="mt-2">
               {event.location}
-            </p>
+            </Text>
           ) : null}
         </article>
       ))}
@@ -181,22 +188,30 @@ function ScheduleList({ events, emptyText }: ScheduleListProps) {
 
 function DealerList({ dealers, emptyText }: DealerListProps) {
   if (!dealers.length) {
-    return <p className="text-sm leading-relaxed text-ink-muted">{emptyText}</p>;
+    return (
+      <Text size="md" muted leading="relaxed">
+        {emptyText}
+      </Text>
+    );
   }
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {dealers.map((dealer) => (
-        <article key={dealer._id} className="rounded-2xl border border-border/75 bg-card/75 p-4 shadow-sm sm:rounded-3xl">
-          <h3 className="text-base font-semibold text-ink">{dealer.dealerName}</h3>
-          <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+        <article key={dealer._id} className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated">
+          <Heading level={3} size="sm" className="text-ink">
+            {dealer.dealerName}
+          </Heading>
+          <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
             {dealer.state}
-          </p>
-          <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-            {dealer.address}
-            <br />
-            {dealer.city}
-          </p>
+          </Text>
+          <Text asChild size="md" className="mt-2 text-ink-muted" leading="relaxed">
+            <p>
+              {dealer.address}
+              <br />
+              {dealer.city}
+            </p>
+          </Text>
         </article>
       ))}
     </div>
