@@ -14,7 +14,7 @@
   ```
   M	.env.example
   M	PerazziGPT/Phase_3_Documents/API_Contract.md
-  M	V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-3/V2_REDO_api-contract.md
+  M	PGPT/V2/AI-Docs/P3/API-Contract.md
   M	docs/audits/dealer-authority-audit.md
   M	src/app/(site)/fschat/page.tsx
   M	src/app/api/perazzi-assistant/route.ts
@@ -36,7 +36,7 @@
   ```
    .env.example                                       |  22 +++-
    PerazziGPT/Phase_3_Documents/API_Contract.md       |   9 +-
-   V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-3/V2_REDO_api-contract.md |  18 ++-
+   PGPT/V2/AI-Docs/P3/API-Contract.md |  18 ++-
    docs/audits/dealer-authority-audit.md              |   8 +-
    src/app/(site)/fschat/page.tsx                     |  11 +-
    src/app/api/perazzi-assistant/route.ts             | 143 ++++++++++++++++++---

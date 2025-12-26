@@ -4,15 +4,15 @@ This document is the developer-facing overview for the PerazziGPT system. For a 
 
 ## System boundaries and source of truth
 - The PerazziGPT v2 corpus is defined only by the manifest:
-  `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-2/V2_REDO_source-corpus.md`
+  `PGPT/V2/AI-Docs/P2/Source-Corpus.md`
 - Documents not listed as `Status: active` must not be embedded.
-- PerazziGPT v2 content lives under `V2-PGPT/` and excludes legacy v1 materials.
+- PerazziGPT v2 content lives under `PGPT/` and excludes legacy v1 materials.
 
 ## Repository map (PerazziGPT-specific)
-- Corpus manifest: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-2/V2_REDO_source-corpus.md`
-- Core corpus files: `V2-PGPT/V2_PreBuild-Docs/**`
-- Chunking guidance: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-2/V2_REDO_chunking-guidelines.md`
-- Behavior + guardrails: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-1/`
+- Corpus manifest: `PGPT/V2/AI-Docs/P2/Source-Corpus.md`
+- Core corpus files: `PGPT/V2/**`
+- Chunking guidance: `PGPT/V2/AI-Docs/P2/Chunking-Guidelines.md`
+- Behavior + guardrails: `PGPT/V2/AI-Docs/P1/`
 - Ingestion script: `scripts/ingest-v2.ts`
 - Retrieval + scoring: `src/lib/perazzi-retrieval.ts`
 - Assistant API route: `src/app/api/perazzi-assistant/route.ts`
@@ -79,11 +79,11 @@ pnpm perazzi:eval:retrieval --k 12 --rerank on --candidate-limit 60 --json tmp/r
 ```
 
 Canonical test cases live in:
-`V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-2/V2_REDO_validation.md`
+`PGPT/V2/AI-Docs/P2/Validation.md`
 
 ## Updating the corpus (developer workflow)
-1) Edit or add source docs under `V2-PGPT/V2_PreBuild-Docs/`.
-2) Update the manifest row in `V2_REDO_source-corpus.md`.
+1) Edit or add source docs under `PGPT/V2/`.
+2) Update the manifest row in `Source-Corpus.md`.
 3) Run `pnpm ingest:v2 -- --audit`, then `pnpm ingest:v2:dry-run`.
 4) Run `pnpm ingest:v2:full` to apply changes.
 5) Optionally run the retrieval harness to validate.

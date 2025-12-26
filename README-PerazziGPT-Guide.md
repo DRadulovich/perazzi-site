@@ -6,14 +6,14 @@ This guide explains, in plain language, how to update the PerazziGPT knowledge b
 PerazziGPT is the on-site assistant that answers questions using the official Perazzi documents. It reads a defined list of approved source files and builds an internal knowledge base from them.
 
 ## What you are allowed to change
-- The source documents under `V2-PGPT/V2_PreBuild-Docs/`.
+- The source documents under `PGPT/V2/`.
 - The official corpus list (the manifest) that says which files are active.
 
 Do not edit scripts or database code unless you are told to.
 
 ## Where the official document list lives
 The source list is here:
-`V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-2/V2_REDO_source-corpus.md`
+`PGPT/V2/AI-Docs/P2/Source-Corpus.md`
 
 Only documents listed there as `Status: active` will be used.
 
@@ -38,8 +38,8 @@ Run these in order:
 If the full run fails, just run it again. It is designed to recover safely.
 
 ## How to add a new document
-1) Place the new file under `V2-PGPT/V2_PreBuild-Docs/`.
-2) Add a row for the file in `V2_REDO_source-corpus.md`.
+1) Place the new file under `PGPT/V2/`.
+2) Add a row for the file in `Source-Corpus.md`.
    - Set `Status` to `active`.
    - Set `Embed_Mode` to `full` unless told otherwise.
 3) Run the standard workflow above.
@@ -58,5 +58,5 @@ If the full run fails, just run it again. It is designed to recover safely.
 ## When to ask for help
 - You see repeated failures after two re-runs.
 - You are unsure how to classify a document in the manifest.
-- You need to change anything outside `V2-PGPT/V2_PreBuild-Docs/`.
+- You need to change anything outside `PGPT/V2/`.
 

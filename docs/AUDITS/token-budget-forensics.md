@@ -12,7 +12,7 @@ Audit date: 2025-12-16 (based on `tmp/logs/perazzi-prompt-debug.ndjson` with `pr
 ## Prompt assembly map (no behavioral changes made)
 - API: `POST /api/perazzi-assistant` -> `validateRequest` -> `sanitizeMessages` (keeps user+assistant only) -> `detectBlockedIntent` guardrails -> `retrievePerazziContext` -> `generateAssistantAnswer`.
 - System instructions: `generateAssistantAnswer` builds `instructions = buildSystemPrompt(...) + toneNudge`, then calls `createResponseText`.
-- `buildSystemPrompt` injects, in order: `V2_REDO_assistant-spec.md` (PHASE_ONE_SPEC) -> inline STYLE_EXEMPLARS -> Context line (mode/pageUrl/model) -> docSnippets (retrieved chunks formatted as `[chunkId] {content}\nSource: {title} ({sourcePath})`) -> optional response templates -> archetype guidance + bridge guidance -> relatability block -> final Markdown/writing rules.
+- `buildSystemPrompt` injects, in order: `Assistant-Spec.md` (PHASE_ONE_SPEC) -> inline STYLE_EXEMPLARS -> Context line (mode/pageUrl/model) -> docSnippets (retrieved chunks formatted as `[chunkId] {content}\nSource: {title} ({sourcePath})`) -> optional response templates -> archetype guidance + bridge guidance -> relatability block -> final Markdown/writing rules.
 - Model call: `createResponseText` forwards `prompt_cache_retention`, `prompt_cache_key`, `previous_response_id`, `reasoning`, `text.verbosity`, and `input` = full sanitized chat history.
 - Chat history packing: `useChatState` sends the entire transcript (user and assistant messages, capped at 40) every turn; `previousResponseId` is also sent but history is not trimmed.
 - Logging: `logAiInteraction` persists usage + metadata (prompt/response text omitted or truncated by env), `logInteraction` emits console/file NDJSON (retrieved chunk IDs + scores, guardrail status).
@@ -22,7 +22,7 @@ Approx tokens use the observed ratio (0.395 tokens per character; 1 token ~ 2.53
 
 | Component | Chars | Approx tokens | Notes |
 | --- | ---: | ---: | --- |
-| PHASE_ONE_SPEC (`V2_REDO_assistant-spec.md`) | 26,258 | ~10,373 | Full assistant spec with guardrails and policy text injected every call. |
+| PHASE_ONE_SPEC (`Assistant-Spec.md`) | 26,258 | ~10,373 | Full assistant spec with guardrails and policy text injected every call. |
 | STYLE_EXEMPLARS (inline) | 5,653 | ~2,233 | Voice/tone exemplars appended after the spec each call. |
 | Context line | 45 | ~18 | e.g., `Context: Mode: navigation | Page URL: /fschat`. |
 | Tone nudge (`Stay in the Perazzi concierge voice...`) | 187 | ~74 | Added separately to instructions. |

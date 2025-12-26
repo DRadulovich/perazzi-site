@@ -423,12 +423,12 @@ function getRetrievalPolicy(): RetrievalPolicy {
 
 const PHASE_ONE_SPEC_BASE = resolveSafePath(
   PROJECT_ROOT,
-  "V2-PGPT",
-  "V2_PreBuild-Docs",
-  "V2_REDO_Docs",
-  "V2_REDO_Phase-1",
+  "PGPT",
+  "V2",
+  "AI-Docs",
+  "P1",
 );
-const PHASE_ONE_SPEC_PATH = resolveSafePath(PHASE_ONE_SPEC_BASE, "V2_REDO_assistant-spec.md");
+const PHASE_ONE_SPEC_PATH = resolveSafePath(PHASE_ONE_SPEC_BASE, "Assistant-Spec.md");
 const PHASE_ONE_SPEC = readFileWithinBase(PHASE_ONE_SPEC_BASE, PHASE_ONE_SPEC_PATH);
 
 const STYLE_EXEMPLARS = `

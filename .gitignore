@@ -48,12 +48,9 @@ tmp/logs/
 next-env.d.ts
 
 # internal (not for git)
-docs/META-PROMPTS/
-docs/GUIDES/
 docs/SanityMigration/
 docs/SECURITY/
 docs/ARCHETYPE-ANALYSIS/GIT-IGNORE
-docs/SANITY-MIGRATION
 Page_Spec_Layouts
 Perazzi_Model_Information
 SITE_DOCUMENTS/PRICE_LISTS

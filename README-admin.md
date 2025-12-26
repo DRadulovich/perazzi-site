@@ -33,7 +33,7 @@ These flags help tune retrieval reranking/scoring. They only affect ordering (no
 
 ## Retrieval Evaluation Harness (Regression)
 
-Use this retrieval-only harness to confirm canonical queries still hit the expected doc families and catch regressions after chunking/metadata changes. The canonical test cases live in `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-2/V2_REDO_validation.md`.
+Use this retrieval-only harness to confirm canonical queries still hit the expected doc families and catch regressions after chunking/metadata changes. The canonical test cases live in `PGPT/V2/AI-Docs/P2/Validation.md`.
 
 ### Run
 
