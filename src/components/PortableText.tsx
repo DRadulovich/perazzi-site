@@ -20,8 +20,10 @@ type PortableTextBlockShape = {
 
 const hashString = (value: string) => {
   let hash = 5381;
-  for (let i = 0; i < value.length; i += 1) {
-    hash = (hash * 33) ^ value.charCodeAt(i);
+  for (const char of value) {
+    const codePoint = char.codePointAt(0);
+    if (codePoint === undefined) continue;
+    hash = (hash * 33) ^ codePoint;
   }
   return (hash >>> 0).toString(36);
 };
@@ -61,7 +63,7 @@ const renderBlocks = (blocks: PortableTextBlock[]) => {
     listItems = [];
   };
 
-  blocks.forEach((block, index) => {
+  blocks.forEach((block) => {
     if (!block || typeof block !== "object") return;
     const { _type, style, listItem, children } = block as PortableTextBlockShape;
     if (_type !== "block") return;
