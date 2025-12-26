@@ -233,7 +233,12 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
               sizes={tabletImageProps.sizes}
             />
           ) : null}
-          <img {...desktopImageProps} ref={heroImageRef} onLoad={handleMediaLoad} />
+          <img
+            {...desktopImageProps}
+            alt={hero.background.alt ?? ""}
+            ref={heroImageRef}
+            onLoad={handleMediaLoad}
+          />
         </picture>
         <div className="absolute inset-0 bg-linear-to-t from-black via-black/75 to-black/0" />
       </motion.div>
