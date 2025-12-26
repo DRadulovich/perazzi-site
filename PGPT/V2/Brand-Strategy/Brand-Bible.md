@@ -1,16 +1,19 @@
 # Perazzi Brand Bible – AI Reference
 
 ## 0. Metadata
-- Source: Internal Perazzi USA Document
-- Version: v2.0 (AI-refactored)
-- Last transformed by AI: 2025-12-01
-- Intended use: AI knowledge base / RAG for PerazziGPT and related assistants.
+- Title: Perazzi Brand Bible
+- Summary: Canonical brand strategy reference covering Perazzi history, platform families (MX/HT/TM/DC/SHO), technical design, customization and fitting, service and warranty, pricing approach, and authenticity guidance.
+- Audiences: prospect, owner, navigation
+- Tags: heritage, history, models, platforms, bespoke, service, care, olympic, athletes, events, pricing_policies
+- Language: en
 
 ---
 
 ## 1. High-Level Overview
 
-This document is an AI-optimized reference on **Perazzi (Armi Perazzi S.p.A.)** – its history, product architecture, technical design, brand philosophy, customization process, pricing, community presence, and policies on parts and authenticity.
+This document is an AI-optimized reference on **Perazzi (Armi Perazzi S.p.A.)** – its history, product architecture, technical design, brand philosophy, customization process, pricing approach, community presence, and policies on parts and authenticity.
+
+Note: This corpus intentionally omits numeric pricing. For current pricing or quotes, consult an authorized Perazzi dealer.
 
 It is designed for retrieval-augmented generation (RAG) systems and internal assistants (e.g. PerazziGPT), with the goal that an AI can:
 
@@ -20,7 +23,7 @@ It is designed for retrieval-augmented generation (RAG) systems and internal ass
 - Summarize the achievements of key athletes associated with Perazzi.
 - Convey the brand philosophy, ethos, and narrative strategy (including The Champions Network / TCN).
 - Explain customization and ordering options, including fitting at the factory.
-- Provide information about parts, service, warranty, pricing structure, and value.
+- Provide information about parts, service, warranty, and pricing structure and value (non-numeric).
 - Warn about grey-market, counterfeit parts, and unsafe component mixing.
 
 The document prioritizes **factual completeness, structural clarity, and canonical terminology** over marketing prose.
@@ -53,7 +56,7 @@ The document prioritizes **factual completeness, structural clarity, and canonic
 
 - **MX Platform**  
   - Canonical term: **MX platform**.  
-  - Description: Core low-profile over/under (O/U) receiver design with a Boss-type locking system and monobloc barrels. Includes removable-trigger models (e.g. MX8) and fixed-trigger derivatives (e.g. MX12). Underpins most Perazzi competition guns.[16]
+  - Description: Core low-profile over/under (O/U, over-under) receiver design with a Boss-type locking system and monobloc barrels. Includes removable-trigger models (e.g. MX8) and fixed-trigger derivatives (e.g. MX12). Underpins most Perazzi competition guns.[16]
 
 - **High Tech Platform**  
   - Canonical terms: **High Tech**, **HT**.  
@@ -65,11 +68,11 @@ The document prioritizes **factual completeness, structural clarity, and canonic
 
 - **DC Platform**  
   - Canonical term: **DC series**.  
-  - Description: Side by side (SxS) with “Detachable coil” builds where the removable trigger group uses coil mainsprings; emphasizes rugged use and serviceability.
+  - Description: Side-by-side (SxS, double gun) with “Detachable coil” builds where the removable trigger group uses coil mainsprings; emphasizes rugged use and serviceability.
 
 - **SHO Platform**  
   - Canonical term: **SHO series**.  
-  - Description: Hand-built sidelock guns with distinct sidelock metalwork; still use a removable trigger group.
+  - Description: Hand-built sidelock (side-lock) guns with distinct sidelock metalwork; still use a removable trigger group.
 
 - **Model Name Prefixes / Suffixes**  
   - **MX**: Core O/U family (e.g. MX1–MX14, MX8, MX12, MX20, MX28, MX410, MX2000).[16]  
@@ -88,6 +91,7 @@ The document prioritizes **factual completeness, structural clarity, and canonic
 
 - **Olympic Trap / Bunker Trap**  
   - Governing body: ISSF.  
+  - Also referred to as bunker trap (Olympic trap) depending on region.  
   - Perazzi association: Major platform for Olympic success since 1964.
 
 - **Skeet**  
@@ -105,13 +109,13 @@ The document prioritizes **factual completeness, structural clarity, and canonic
 
 - **Monobloc**: Solid breech block into which barrel tubes are fitted and soldered; contains locking bites and lugs. Key to Perazzi’s Boss-style low-profile action.[21]
 
-- **Drop-out (detachable) trigger group**: Self-contained trigger-plate unit removable from the bottom of the receiver for fast service or replacement (MX8-style action).[32]
+- **Drop-out (detachable/removable trigger group)**: Self-contained trigger-plate unit removable from the bottom of the receiver for fast service or replacement (MX8-style action).[32]
 
 - **Leaf springs vs. coil springs**: Alternative mainspring types driving the hammers. Leaf springs provide very fast lock times; coil springs emphasize durability and easier replacement.[33][36]
 
 - **Point of impact (POI)**: Vertical distribution of pattern relative to point of aim (e.g. 50/50, 70/30, 80/20), tunable via rib height and stock geometry.
 
-- **Try-gun**: Adjustable “fitting” gun used to measure and confirm ideal stock dimensions before building the customer’s final stock.[75]
+- **Try-gun (fitting gun)**: Adjustable “fitting” gun used to measure and confirm ideal stock dimensions before building the customer’s final stock.[75]
 
 ---
 
@@ -166,11 +170,15 @@ The document prioritizes **factual completeness, structural clarity, and canonic
 - **2012** – Daniele Perazzi passes away; Perazzi guns dominate London Olympics.[3][15]
 - **2023** – CSG majority acquisition with family retaining control.[12][13]
 
+See also: `PGPT/V2/Brand-Strategy/Brand-Ethos.md`.
+
 ---
 
 ### 3.2 Product Platform Architecture
 
 #### 3.2.1 Platform Overview
+
+If you are comparing MX vs High Tech vs TM vs DC vs SHO, start here for the platform-level mechanical and handling differences.
 
 All Perazzi shotguns derive from the **MX-style low-profile O/U action**, extended into several families:[16][18]
 
@@ -246,6 +254,14 @@ Naming patterns are not strictly sequential. Some numbers (e.g. MX14, MX16) corr
   - Wider receivers (High Tech) for balance and recoil control.  
   - Cosmetic and ergonomic customization rather than wholesale mechanical redesign.
 - Cross-compatibility: Many parts (e.g. triggers, barrels) are compatible across generations, though proper fitting is critical for safety.
+
+#### 3.2.7 Platform Comparison Quick Answers
+
+- Difference between **MX8** and **MX12**: MX8 uses a removable (drop-out) trigger group with leaf or coil spring options; MX12 is a fixed-trigger derivative that favors simplicity, durability, and a more traditional trigger feel.  
+- Difference between **High Tech** and **MX8**: High Tech adds a wider, heavier receiver to shift balance between the hands and reduce muzzle flip; MX8 keeps the classic low-profile feel and lighter receiver mass.  
+- Difference between **TM** and **MX O/U**: TM is a single-barrel trap platform optimized for singles/handicap; MX is an over/under platform that supports doubles and broader discipline coverage.  
+- Difference between **DC** and **SHO**: DC is a side-by-side with coil mainsprings aimed at rugged serviceability; SHO is a sidelock platform built around traditional artistry and bespoke presentation.  
+- Difference between **removable** and **fixed trigger**: Removable triggers prioritize fast service and swap capability; fixed triggers prioritize simplicity and continuity of fit while retaining the same core action geometry.  
 
 ---
 
@@ -395,6 +411,8 @@ Perazzi has an unmatched record in Olympic and world-level shotgun sports.
 
 The competitive record supports the brand narrative that Perazzi is “the gun of champions,” and underpins much of the company’s prestige.
 
+See also: `PGPT/V2/Company-Info/Athletes.md`.
+
 ---
 
 ### 3.5 Brand Philosophy and Ethos
@@ -450,6 +468,8 @@ Perazzi’s brand identity extends beyond engineering into legacy, exclusivity, 
 - Lead times typically about **6 months** (longer for complex engraving or multiple barrel sets).[40][68][69]
 
 #### 3.6.2 Configuration Steps (High-Level)
+
+If you are asking how to order a bespoke Perazzi or how to choose options, this is the typical configuration flow used by dealers and the factory.
 
 1. **Choose platform and discipline**
    - Decide between MX, HT, TM, DC, or SHO.  
@@ -509,7 +529,7 @@ Perazzi’s brand identity extends beyond engineering into legacy, exclusivity, 
 
 ---
 
-### 3.7 Parts, Accessories, and Service
+### 3.7 Parts, Accessories, and Service (maintenance, warranty)
 
 #### 3.7.1 Parts Catalog and Modularity
 
@@ -521,27 +541,23 @@ Perazzi’s brand identity extends beyond engineering into legacy, exclusivity, 
   - Ejector springs and small coil springs for controls.  
   - Top lever springs and locking bolts.
 
-- Representative prices (approximate, from 2025 retail lists):[101][102][103][104]  
-  - Firing pin (top or bottom): ~US$77.  
-  - Main leaf spring: ~US$62.  
-  - Small springs: ~US$8–15.  
-  - Ejectors: ~US$247 each.  
-  - Trigger blades: ~US$192–384 depending on model.  
-
 - Parts kits (e.g. with firing pins, springs, tools) are popular among high-volume trap shooters.[105]
+- Parts pricing varies by component and market; current pricing is handled outside this corpus.
 
 #### 3.7.2 Accessories
 
 - Functional accessories:  
   - Comb hardware kits for adjustable comb retrofits.  
-  - Choke-wrench tools (~US$53).[107]  
-  - Factory recoil pads (~US$53).[108]  
+  - Choke-wrench tools.[107]  
+  - Factory recoil pads.[108]  
   - Trigger tools and stock-bolt wrenches.  
 - Branded accessories:  
   - Hard cases, leather cases, soft covers.  
   - Shooting vests, jackets, and merchandise.[146][147]
 
 #### 3.7.3 Service and Maintenance Practices
+
+If your top lever is nearing center, you need maintenance intervals, or you are unsure about routine care, start with the guidance below.
 
 - Basic guidance:[35][110]  
   - Keep action surfaces clean and lightly lubricated (oil on pivots, grease on locking surfaces).  
@@ -564,6 +580,8 @@ Perazzi’s brand identity extends beyond engineering into legacy, exclusivity, 
 - Scope: manufacturing defects in materials or workmanship.  
 - Exclusions: normal wear parts (springs, firing pins) and issues arising from third-party modifications.
 
+See also: `PGPT/V2/Company-Info/Recommended-Service-Centers.md`.
+
 ---
 
 ### 3.8 Pricing Structure and Value
@@ -573,60 +591,37 @@ Perazzi’s brand identity extends beyond engineering into legacy, exclusivity, 
 - Perazzi occupies the **upper tier** of the shotgun market.  
 - Pricing reflects craftsmanship, customization, and competition pedigree, but is generally below ultra-boutique makers (e.g. Fabbri, high-end British “best guns”).[138]
 
-#### 3.8.2 Representative Base Prices (Approximate, 2025 Retail)[115][116][119][121][123][125][128][129][130]
+#### 3.8.2 Pricing Structure (Non-Numeric Overview)
 
-- **MX8 O/U**  
-  - Basic 12-ga single (trap configuration): ~US$13,800.  
-  - Standard 12-ga O/U: ~US$20,700.  
+If you are asking about Perazzi price ranges, note that numeric pricing is intentionally omitted here; this section focuses on the non-numeric structure and cost drivers.
 
-- **MX12 O/U (fixed trigger)**  
-  - Base 12-ga sporting: ~US$22,420.  
+- Base pricing is driven primarily by platform, grade, and configuration complexity.  
+- Core competition platforms (MX and High Tech) sit in the premium tier; sidelock and high-grade engraving move builds into the highest tiers.  
+- Single-barrel trap guns (TM) vary by rib and configuration; combo sets add substantial cost due to extra barrels and fitting.  
+- Special editions and bespoke options can move a build into higher tiers based on wood, engraving, and finish choices.
 
-- **MX2000 Series**  
-  - MX2000/8 base: ~US$16,640.  
-  - MX2000S (fixed trigger): ~US$23,000.
-
-- **High Tech (HT)**  
-  - Base 12-ga: ~US$15,750.  
-  - HT SC3: ~US$26,700.  
-  - HT SCO Gold: up to ~US$49,260.
-
-- **High Tech S (HTS)**  
-  - Base 12-ga: ~US$16,080.  
-  - HTS SCO Gold: up to ~US$49,260.[126][127]
-
-- **TM Series**  
-  - TM9 base: ~US$12,600.  
-  - TM9X (higher rib): ~US$14,680.
-
-- **Trap Combos**  
-  - High Tech trap combo (unsingle + O/U): up to ~US$27,000 or more depending on grade.[130][136][137]
-
-Prices above are **ex-factory suggested retail**; local dealer pricing and taxes may vary.[139]
+For current pricing or quotes, work through an authorized Perazzi dealer.
 
 #### 3.8.3 Upgrades and Cost Drivers
 
 - **Wood grade**:[81]
-  - Standard Grade 1: included.  
-  - SC2: ~US$1,000–1,500 upgrade.  
-  - SC3: ~US$2,000–3,000 upgrade.  
-  - SCO: ~US$5,000+ upgrade, depending on blank quality.  
+  - Higher figure and rarer blanks increase cost.  
+  - SC2, SC3, and SCO represent progressively higher grades.  
 
 - **Engraving**:[117][118][131][134][135]
-  - SC3 scroll: ~US$8,000–12,000 over base.  
-  - SCO full-coverage: ~US$20,000+ over base.  
-  - SCO Gold and sideplate designs can raise total gun prices into the **US$70k–80k** range.  
+  - Engraving complexity and hours are among the largest cost drivers.  
+  - Full-coverage and gold-inlay work place builds at the top tier.  
 
 - **Barrels & sub-gauges**:[31]  
-  - Extra small-gauge barrel set: ~US$1,680 (on 12-ga frame).  
-  - Scaled-frame 28/.410 action: ~US$4,380 premium.  
+  - Extra barrel sets and sub-gauge configurations increase cost.  
+  - Scaled-frame small gauges carry a premium due to dedicated actions.  
 
 - **Other options**:[132][133]  
   - Multi-choke systems, special ribs, glove grips, adjustable buttplates, and barrel porting may add additional cost.
 
 #### 3.8.4 Value and Resale
 
-- A basic competition-grade Perazzi (~US$12k–20k) performs identically, in functional terms, to a heavily engraved US$70k+ Perazzi; upgrades primarily affect aesthetics and personal expression.[138]
+- A base competition-grade Perazzi performs identically, in functional terms, to a heavily engraved high-grade Perazzi; upgrades primarily affect aesthetics and personal expression.[138]
 - Used Perazzis retain strong **resale value**, especially popular configurations and small-gauge models.  
 - Limited editions and high-grade engraving can appreciate, but most buyers view Perazzi primarily as a **long-term use tool** that can be rebuilt indefinitely.
 
@@ -668,14 +663,18 @@ Prices above are **ex-factory suggested retail**; local dealer pricing and taxes
 - Perazzi supports top athletes primarily via guns, custom configurations, and priority service rather than large cash stipends.  
 - Sponsored shooters across trap, skeet, sporting, and live-pigeon disciplines serve as **brand ambassadors**, bridging elite performance and aspirant shooters.
 
+See also: `PGPT/V2/Company-Info/Event-Schedule.md`.
+
 ---
 
-### 3.10 Counterfeits, Grey Market, and Service Integrity
+### 3.10 Counterfeits, Grey Market, and Service Integrity (authenticity, safety)
 
 #### 3.10.1 Authentic Parts and Aftermarket Risk
 
-- Perazzi warns against **counterfeit or non-genuine parts**, especially springs and firing pins.[148]  
-- Third-party parts may be cheaper but can cause:  
+If you are worried about counterfeit (fake) parts or non-factory replacements, this section summarizes the official guidance.
+
+- Perazzi warns against **counterfeit or non-genuine (aftermarket) parts**, especially springs and firing pins.[148]  
+- Third-party (aftermarket) parts may be cheaper but can cause:  
   - Inconsistent trigger feel.  
   - Premature breakage.  
   - Safety issues.  
@@ -684,6 +683,7 @@ Prices above are **ex-factory suggested retail**; local dealer pricing and taxes
 #### 3.10.2 Grey-Market Guns and Import Channels
 
 - **Perazzi USA** is the sole official importer for the U.S.; other countries have analogous official agents.[149]
+- Grey-market (gray-market, parallel import) guns are those moved outside official channels.
 - Guns imported or assembled outside official channels may:  
   - Lack warranty and factory support.  
   - Have unknown histories or questionable parts.  
@@ -751,88 +751,6 @@ Prices above are **ex-factory suggested retail**; local dealer pricing and taxes
 
 ---
 
-## 5. References & Cross-Links
+## 5. Sources Summary
 
-### 5.1 Internal Cross-Links
-
-- **History & Ownership** – see §3.1.  
-- **Platform architecture & model differences** – see §3.2.  
-- **Technical design (action, barrels, triggers)** – see §3.3.  
-- **Athletes and medals** – see §3.4.  
-- **Brand philosophy & TCN** – see §3.5 and §3.9.1.  
-- **Customization & ordering** – see §3.6.  
-- **Parts & service** – see §3.7 and §3.10.  
-- **Pricing & value** – see §3.8.  
-- **Events & community** – see §3.9.
-
-### 5.2 External References (Numbered Sources)
-
-[1] [9] [10] [12] [13] [14] [15] [40] [41] [42] [49] [50] [149] perazzi & csg announcement.pdf  
-https://www.dropbox.com/preview/perazzi/blank%20forms%20%26%20price%20lists/perazzi%20%26%20csg%20announcement.pdf
-
-[2] [3] [4] [5] [6] [7] [8] [11] [17] [43] [44] [142] [144] Inductees  
-https://traphof.org/inductees/details/1/184-perazzi-daniele
-
-[16] [27] [28] [30] [37] [38] [51] [52] [67] [68] [69] [70] [71] [72] [73] [74] [75] [76] [77] [81] [82] [83] [84] [85] [86] [87] [89] [91] [92] [93] [94] [95] [96] [97] [114] [132] [133] [145] [146] [147]  What To Consider When Buying a Perazzi | By Driven Sporting  
-https://www.drivensporting.co.uk/blogs/news/buying-a-perazzi
-
-[18] Perazzi High Tech S Game 12-bore - Shooting UK  
-https://www.shootinguk.co.uk/news/perazzi-high-tech-s-game-12-bore/
-
-[19] My Perazzi High Tech - DRadulovich  
-https://www.dradulovich.com/perazzi-high-tech/
-
-[20] Ithaca Perazzis | Shotgun Report(R)  
-https://shotgunreport.com/2012/02/20/ithaca-perazzis/
-
-[21] [22] [23] [24] [25] [26] [29] [32] [33] [35] [36] [78] [79] [80] [110] Website Timeline.docx  
-file://file-VjbDjKfKKcVW5Sq4EN61RL
-
-[31] [88] [115] [116] [117] [118] [119] [120] [121] [122] [123] [124] [125] [126] [127] [128] [129] [130] [131] [134] [135] [136] [137] [139] 2025 perazzi retail price list.pdf  
-https://www.dropbox.com/preview/perazzi/2025%20perazzi%20documents/2025%20perazzi%20retail%20price%20list.pdf
-
-[34] Don Rackley's Gun Parts - Online Store  
-https://donrackleygunparts.com/
-
-[39] HIGH TECH 10 TRAP COMBO - AVAILABLE FOR CUSTOM ORDER  
-https://giacomosportingusa.com/products/high-tech-10-trap-combo-available-for-custom-order?srsltid=AfmBOooN5GOYxa2Fuis5zBKFclroCg4dHQ9dDsrP3-I_nLqt3kZOqFiD
-
-[45] The gun I always wish I had - the Perazzi MX12 Pro Sport  
-https://www.shootinguk.co.uk/gear/perazzi-mx12-pro-sport/
-
-[46] Perazzi semantics question MX8/MX12/MX2000S  
-https://www.doublegunshop.com/forums/ubbthreads.php?ubb=showflat&Number=575171
-
-[47] Olympian Kim Rhode Recovers Medal-Winning Perazzi  
-https://bulletin.accurateshooter.com/2009/01/olympian-kim-rhode-recovers-shotgu/
-
-[48] Kim Rhode's a sure shot--and she benefits from a long shot  
-https://www.latimes.com/archives/blogs/sports-now/story/2009-01-28/kim-rhodes-a-sure-shot-and-she-benefits-from-a-long-shot
-
-[53] [54] [55] [56] [57] [58] [59] [60] [61] [62] [63] [64] [65] [66] [140] [141] perazzi long form proposal.pdf  
-https://www.dropbox.com/preview/marketing%20materials/perazzi/perazzi%20long%20form%2
-
-[98] [99] [100] [101] [102] [103] [104] [105] [107] [108] [109] [111] [112] [113] [148] Website Timeline.docx (and related Perazzi USA parts documentation)
-
-[138] [139] Blue Book of Gun Values and Perazzi price list references (summary-level, not full text).
-
-[143] [145] Grand American and ATA program references; Perazzi USA communications.
-
----
-
-## Appendix A. Section Index
-
-- **1. High-Level Overview** – Purpose of this document and its scope.  
-- **2. Key Concepts & Glossary** – Canonical terms, platforms, and technical vocabulary.  
-- **3.1 Company History and Ownership Timeline** – Founding, Olympic breakthrough, U.S. expansion, CSG acquisition.  
-- **3.2 Product Platform Architecture** – MX, High Tech, TM, DC, SHO, model naming, and evolution.  
-- **3.3 Technical Design and Manufacturing** – Action, barrels, triggers, springs, balance, and production methods.  
-- **3.4 Athletes and Competitive Record** – Key champions and medal statistics.  
-- **3.5 Brand Philosophy and Ethos** – Core values, tone, TCN storytelling framework.  
-- **3.6 Customization and Ordering Process** – Configuration options, factory fitting, and lifecycle.  
-- **3.7 Parts, Accessories, and Service** – Parts catalog, accessories, maintenance practices, and warranty.  
-- **3.8 Pricing Structure and Value** – Model pricing, upgrade costs, and resale value.  
-- **3.9 Events, Community, and Legacy** – Perazzi Invitational concept, major events, factory visits, and owner community.  
-- **3.10 Counterfeits, Grey Market, and Service Integrity** – Warnings, policies, and best practices around authenticity and safety.  
-- **4. Edge Cases, Exceptions, and Caveats** – Non-standard scenarios, modifications, and naming ambiguities.  
-- **5. References & Cross-Links** – Internal navigation and external source references.
+Sources, cross-links, and the section index are maintained in `PGPT/V2/AI-Docs/P2/Sources-Summary.md`.

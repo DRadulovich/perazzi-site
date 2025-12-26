@@ -2,6 +2,11 @@
 
 ## 0. Metadata
 
+- Title: Perazzi x TCN Marketing Plan
+- Summary: Narrative marketing strategy by TCN for Perazzi describing the year-long Perazzi Narrative, the Perazzi Invitational, the Winner's Bespoke Build, and the Aspirant Series demo gun program that moves shooters from aspiration to ownership and legacy.
+- Language: en
+- Audiences: prospect, owner, navigation
+- Tags: events, bespoke, heritage
 - Source: Internal Perazzi USA Document
 - Original format: Narrative marketing proposal letter from David Radulovich to CSG / Perazzi
 - Version: v1.0 (AI-refactored)
@@ -12,7 +17,7 @@
 
 ## 1. High-Level Overview
 
-This document defines a comprehensive **marketing and brand experience strategy** for Perazzi, developed by David Radulovich and The Champions Network (TCN). It is not a conventional media plan; it is a **narrative-driven, multi-phase, multi-channel experience** designed to:
+This document defines a comprehensive **marketing and brand experience strategy** for Perazzi, developed by David Radulovich and The Champions Network (TCN). It functions as a **narrative marketing strategy** and **brand experience plan** rooted in **experiential marketing**, not a traditional media buy. It is not a conventional media plan; it is a **narrative-driven, multi-phase, multi-channel experience** designed to:
 
 - Deepen emotional connection to Perazzi as a **symbol of identity, mastery, and legacy**.
 - Differentiate Perazzi from competitors by avoiding traditional “noise-based” advertising and sponsorship clutter.
@@ -34,9 +39,9 @@ The document is organized as follows:
   - 3.1 Brand & Author Context  
   - 3.2 Campaign Vision (“A Perazzi Experience”)  
   - 3.3 The Perazzi Narrative (TCN Content Strategy)  
-  - 3.4 The Perazzi Invitational  
-  - 3.5 Winner’s Bespoke Build  
-  - 3.6 “Aspirant Series” Demo Gun  
+  - 3.4 The Perazzi Invitational (invite-only tournament)  
+  - 3.5 Winner’s Bespoke Build (bespoke build experience)  
+  - 3.6 “Aspirant Series” Demo Gun Program (dealer demo guns)  
   - 3.7 Evidence & Strategic Rationale  
   - 3.8 Conclusion  
 - **Section 4** – Edge Cases, Exceptions, and Caveats  
@@ -49,80 +54,94 @@ The document is organized as follows:
 
 ### 2.1 Core Entities
 
-- **Perazzi**  
-  - Italian shotgun maker positioned as the **embodiment of mastery, heritage, and bespoke craftsmanship**.  
-  - In this plan, Perazzi is treated not as a “product brand” but as a **symbol of identity, transformation, and legacy**.
+#### Perazzi
 
-- **The Champions Network (TCN)**  
-  - **Canonical name:** TCN  
-  - **Also referred to as:** The Champions Network, niche marketing agency.  
-  - **Definition:** A media and marketing platform created by David Radulovich, focused on the clay target shooting industry.  
-  - Capabilities:
-    - Live tournament broadcasts.
-    - Long-form narrative content and storytelling.
-    - Integrated marketing campaigns built around athletes, events, and brands.
+- Italian shotgun maker positioned as the **embodiment of mastery, heritage, and bespoke craftsmanship**.  
+- In this plan, Perazzi is treated not as a “product brand” but as a **symbol of identity, transformation, and legacy**.
 
-- **Perazzi x TCN Campaign (canonical)**  
-  - **Also referred to as:** “this strategy,” “this proposal,” “four-phase plan.”  
-  - **Definition:** The full, multi-phase marketing and brand-experience program described in this document, built around narrative, Invitational, bespoke build, and demo guns.
+#### The Champions Network (TCN)
+
+- **Canonical name:** TCN  
+- **Also referred to as:** The Champions Network, niche marketing agency.  
+- **Definition:** A media and marketing platform created by David Radulovich, focused on the clay target shooting industry.  
+- Capabilities:
+  - Live tournament broadcasts.
+  - Long-form narrative content and storytelling.
+  - Integrated marketing campaigns built around athletes, events, and brands.
+
+#### Perazzi x TCN Campaign (canonical)
+
+- **Also referred to as:** “this strategy,” “this proposal,” “four-phase plan.”  
+- **Definition:** The full, multi-phase marketing and brand-experience program described in this document, built around narrative, Invitational, bespoke build, and demo guns.
 
 ### 2.2 Narrative & Experience Concepts
 
-- **Perazzi Narrative**  
-  - The overarching **storytelling arc** delivered through TCN, focused on:  
-    - The emotional bond between champions and their Perazzis.  
-    - The journey from aspirant to master.  
-    - The soul of craftsmanship and bespoke creation.  
-  - Unfolds across **four phases** (see 3.3.2).
+#### Perazzi Narrative
 
-- **Perazzi Ethos**  
-  - The emotional and philosophical core of the brand: **excellence, artistry, legacy, transformation, aspiration, and identity**.  
-  - The proposal aims to make this ethos **felt**, not just described.
+- The overarching **storytelling arc** delivered through TCN, focused on:  
+  - The emotional bond between champions and their Perazzis.  
+  - The journey from aspirant to master.  
+  - The soul of craftsmanship and bespoke creation.  
+- Unfolds across **four phases** (see 3.3.2).
 
-- **“Mastery as Identity”**  
-  - Central psychological frame: owning and using a Perazzi is presented not as acquiring a tool but as **becoming part of a lineage** and affirming a deeply-held identity.
+#### Perazzi Ethos
+
+- The emotional and philosophical core of the brand: **excellence, artistry, legacy, transformation, aspiration, and identity**.  
+- The proposal aims to make this ethos **felt**, not just described.
+
+#### "Mastery as Identity"
+
+- Central psychological frame: owning and using a Perazzi is presented not as acquiring a tool but as **becoming part of a lineage** and affirming a deeply-held identity.
 
 ### 2.3 Program Components
 
-- **The Perazzi Invitational (canonical)**  
-  - **Also referred to as:** Invitational, Perazzi Invitational event.  
-  - **Definition:** A highly curated, exclusive tournament (50–75 shooters) designed as the **emotional apex** of the year-long narrative.  
-  - Focus: transformation, belonging, and embodiment of the Perazzi ethos.
+#### The Perazzi Invitational (canonical)
 
-- **Winner’s Bespoke Build (canonical)**  
-  - **Also referred to as:** Bespoke build, winner’s build experience.  
-  - **Definition:** A deeply personal, filmed, and narrated journey in which the Invitational winner receives a bespoke Perazzi built under the guidance of Wendell Cherry and David Radulovich, with involvement from Perazzi artisans.  
-  - Treated as the **emotional and narrative peak** of the campaign.
+- **Also referred to as:** Invitational, Perazzi Invitational event.  
+- **Definition:** A highly curated, exclusive tournament (50–75 shooters) designed as the **emotional apex** of the year-long narrative.  
+- Focus: transformation, belonging, and embodiment of the Perazzi ethos.
 
-- **“Aspirant Series” Demo Gun (canonical)**  
-  - **Also referred to as:** Aspirant Series, demo gun program.  
-  - **Definition:** A limited collection of Perazzi demonstration guns placed at dealers.  
-  - Built to embody key learnings and insights from Wendell, David, and Al Kondak’s journeys, allowing shooters to **physically experience** the qualities featured in the narrative.  
-  - Goal: bridge emotional storytelling with **tactile, accessible product experience**.
+#### Winner’s Bespoke Build (canonical)
+
+- **Also referred to as:** Bespoke build, winner’s build experience.  
+- **Definition:** A deeply personal, filmed, and narrated journey in which the Invitational winner receives a bespoke Perazzi built under the guidance of Wendell Cherry and David Radulovich, with involvement from Perazzi artisans.  
+- Treated as the **emotional and narrative peak** of the campaign.
+
+#### “Aspirant Series” Demo Gun (canonical)
+
+- **Also referred to as:** Aspirant Series, demo gun program.  
+- **Definition:** A limited collection of Perazzi demonstration guns placed at dealers.  
+- Built to embody key learnings and insights from Wendell, David, and Al Kondak’s journeys, allowing shooters to **physically experience** the qualities featured in the narrative.  
+- Goal: bridge emotional storytelling with **tactile, accessible product experience**.
 
 ### 2.4 Audience Segments
 
 The proposal defines five **canonical customer segments**:
 
-1. **Loyalists**  
-   - Deeply connected to Perazzi’s heritage.  
-   - Need **emotional validation**, not heavy persuasion.
+#### Loyalists
 
-2. **Prestige Buyers**  
-   - Seek **distinction and exclusivity**.  
-   - View Perazzi as the ultimate status symbol and signal of aspiration.
+- Deeply connected to Perazzi’s heritage.  
+- Need **emotional validation**, not heavy persuasion.
 
-3. **Analysts**  
-   - Require **tangible evidence** of superiority (craftsmanship, performance, proof).  
-   - Skeptical of purely emotional messaging.
+#### Prestige Buyers
 
-4. **Achievers**  
-   - See ownership as a **milestone of success** and self-recognition.  
-   - Motivated by symbols of accomplishment.
+- Seek **distinction and exclusivity**.  
+- View Perazzi as the ultimate status symbol and signal of aspiration.
 
-5. **Legacy Builders**  
-   - View Perazzi as **intergenerational**: a legacy to pass down.  
-   - Motivated by long-term significance and memory.
+#### Analysts
+
+- Require **tangible evidence** of superiority (craftsmanship, performance, proof).  
+- Skeptical of purely emotional messaging.
+
+#### Achievers
+
+- See ownership as a **milestone of success** and self-recognition.  
+- Motivated by symbols of accomplishment.
+
+#### Legacy Builders
+
+- View Perazzi as **intergenerational**: a legacy to pass down.  
+- Motivated by long-term significance and memory.
 
 Each phase of the plan is mapped intentionally to these segments (see 3.7.2).
 
@@ -142,6 +161,17 @@ Each phase of the plan is mapped intentionally to these segments (see 3.7.2).
 - **Identity vs Transaction**  
   - Competitors focus on short-term sales metrics.  
   - Perazzi focuses on **identity formation** and lifetime emotional commitment.
+
+### 2.6 Common Queries
+
+- What is the Perazzi Invitational?
+- What is the Winner's Bespoke Build?
+- What is the Aspirant Series demo gun program?
+- Who is The Champions Network (TCN)?
+- Why are Perazzi lead times framed as a strength?
+- How does this plan address high price or cost concerns?
+- Why does Perazzi avoid traditional advertising?
+- How do the audience segments map to the campaign phases?
 
 ---
 
@@ -277,6 +307,15 @@ Effect:
 Core psychological function:  
 - Validate that mastery and Perazzi ownership are not only attainable, but a **necessary evolution** of the viewer’s identity.
 
+**Phase summary (compact):**
+
+| Phase | Timing | Primary Goal |
+| --- | --- | --- |
+| Initiation | Q2 2025 | Identity formation and personal beginnings |
+| Immersion | Q3–Q4 2025 | Deep emotional engagement and participation |
+| Revelation | Q1–Q2 2026 | Craftsmanship reverence and behind-the-scenes insight |
+| Culmination (Invitational) | Q2 2026 | Emotional apex, belonging, and transformation |
+
 #### 3.3.3 Core Messages of the Narrative
 
 - **Exclusivity** – Perazzi’s exclusivity is expressed through carefully curated experiences, not volume marketing.  
@@ -289,7 +328,7 @@ Shooters do not simply choose Perazzi; they come to feel that **their identity d
 
 ---
 
-### 3.4 The Perazzi Invitational – The Stage for Prestige
+### 3.4 The Perazzi Invitational (invite-only tournament) – The Stage for Prestige
 
 #### 3.4.1 Purpose & Positioning
 
@@ -351,7 +390,7 @@ The Invitational is framed as:
 
 ---
 
-### 3.5 Winner’s Bespoke Build – The Emotional Apex
+### 3.5 Winner’s Bespoke Build (bespoke build experience) – The Emotional Apex
 
 #### 3.5.1 Concept
 
@@ -403,7 +442,7 @@ Key narrative function:
 
 ---
 
-### 3.6 “Aspirant Series” Demo Gun – Connecting Viewers to the Brand
+### 3.6 “Aspirant Series” Demo Gun Program (dealer demo guns) – Connecting Viewers to the Brand
 
 #### 3.6.1 Concept Definition
 
@@ -466,17 +505,20 @@ Summary contrast:
 
 The proposal reframes three perceived challenges as advantages:
 
-1. **High Price → Symbol of Elite Status**  
-   - Price is positioned not as cost, but as **affirmation of exclusivity, aspiration, and craftsmanship**.  
-   - Functions as proof of identity, ambition, and belonging.
+##### High Price (pricing policy / cost)
 
-2. **Lengthy Lead Times → Proof of Artistry**  
-   - A nine-month lead time signals **meticulous care and personal craftsmanship**, not inefficiency.  
-   - Waiting becomes **anticipation**, aligned with the value of what is delivered.
+- Framed as a **symbol of elite status**, exclusivity, aspiration, and craftsmanship.  
+- Functions as proof of identity, ambition, and belonging.
 
-3. **Limited Traditional Advertising → Unmatched Authenticity**  
-   - Sparse marketing is a sign of **confidence and exclusivity**.  
-   - Each interaction is designed to be meaningful, not one of many impressions.
+##### Lengthy Lead Times (wait time)
+
+- A nine-month lead time signals **meticulous care and personal craftsmanship**, not inefficiency.  
+- Waiting becomes **anticipation**, aligned with the value of what is delivered.
+
+##### Limited Traditional Advertising (low-visibility marketing)
+
+- Sparse marketing is a sign of **confidence and exclusivity**.  
+- Each interaction is designed to be meaningful, not one of many impressions.
 
 #### 3.7.2 Customer Segments & Phase Alignment
 
@@ -589,10 +631,12 @@ Final framing:
 
 ## 5. References & Cross-Links
 
-- **Related internal documents (by function, not file name):**
-  - Perazzi writing style & tone guide (for aligning narrative copy with brand voice).  
-  - Perazzi athlete bios / team shooters reference (for using Wendell, David, and others consistently in content).  
-  - Perazzi site overview / digital platform architecture (for technical integration with TCN, web, and digital experiences).  
+- **Related internal documents (by function, with file paths):**
+  - Perazzi brand pillars and positioning: `PGPT/V2/Brand-Strategy/Brand-Bible.md`  
+  - Perazzi writing style & tone guide: `PGPT/V2/Brand-Strategy/Writing-Tone.md`  
+  - Audience archetypes and psychology: `PGPT/V2/Brand-Strategy/Audience-Psych-Archetypes.md`  
+  - Perazzi athlete bios / team shooters reference: `PGPT/V2/Company-Info/Athletes.md`  
+  - Perazzi site overview / digital platform architecture: `PGPT/V2/Operational/Site-Overview.md`  
 
 - **Conceptual cross-links:**
   - This plan can be connected to:
@@ -612,9 +656,9 @@ Final framing:
 - **3.1 Brand & Author Context** – David Radulovich’s relationship to Perazzi, role of Al Kondak.  
 - **3.2 Campaign Vision – “A Perazzi Experience”** – Vision statement and key storytelling motifs.  
 - **3.3 The Perazzi Narrative (TCN Content Strategy)** – Purpose, four-phase narrative arc, and core messages.  
-- **3.4 The Perazzi Invitational – The Stage for Prestige** – Purpose, structure, integration with TCN, and psychological outcomes.  
-- **3.5 Winner’s Bespoke Build – The Emotional Apex** – Concept, strategic importance, and storytelling integration.  
-- **3.6 “Aspirant Series” Demo Gun – Connecting Viewers to the Brand** – Concept, dealer value, and retention mechanics.  
+- **3.4 The Perazzi Invitational (invite-only tournament) – The Stage for Prestige** – Purpose, structure, integration with TCN, and psychological outcomes.  
+- **3.5 Winner’s Bespoke Build (bespoke build experience) – The Emotional Apex** – Concept, strategic importance, and storytelling integration.  
+- **3.6 “Aspirant Series” Demo Gun Program (dealer demo guns) – Connecting Viewers to the Brand** – Concept, dealer value, and retention mechanics.  
 - **3.7 Evidence & Strategic Rationale (“The Evidence”)** – Challenges reframed, segment-phase mapping, and why the approach succeeds.  
 - **3.8 Conclusion – A Legacy Waiting to Be Lived** – Summary of strategic necessity and alignment with Perazzi’s ethos.  
 - **4. Edge Cases, Exceptions, and Caveats** – Scope limitations and explicit non-coverage.  

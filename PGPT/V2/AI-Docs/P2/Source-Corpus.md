@@ -101,6 +101,7 @@ These documents define Perazzi’s identity, tone, positioning, and key marketin
 | PGPT/V2/Brand-Strategy/Brand-Ethos.md        | core-brand-and-strategy  | brand-ethos         | active   | false             | full        | High-level ethos, spirit of the brand. |
 | PGPT/V2/Brand-Strategy/Audience-Psych-Archetypes.md | core-brand-and-strategy  | audience-psychology | active   | false             | full        | Motivational archetypes and how they relate to Perazzi. |
 | PGPT/V2/Brand-Strategy/Marketing-Plan.md     | core-brand-and-strategy  | audience-definition | active   | false             | ignore        | Includes audience segments (Loyalist, Prestige, etc.). |
+| PGPT/V2/Brand-Strategy/Perazzi-Price-LeadTimes-Advertising-Reframe.md | core-brand-and-strategy  | brand-strategy      | active   | false             | full        | Public-facing reframing of price, lead times, and limited advertising. |
 | PGPT/V2/Brand-Strategy/Writing-Tone.md       | core-brand-and-strategy  | tone-guidance       | active   | false             | full        | Detailed writing style guidance; complements voice calibration doc. |
 | PGPT/V2/Brand-Strategy/README.md (if present)   | core-brand-and-strategy  | reference           | planned  | false             | full/ignore | Optional; clarify status if used. |
 

@@ -1,6 +1,13 @@
 # Perazzi Brand Ethos & Personality – AI Reference
 
 ## 0. Metadata
+- title: Perazzi Brand Ethos and Personality
+- summary: Defines Perazzi brand ethos, tone of voice, audience motivations, and positioning (identity, legacy, craftsmanship, exclusivity) plus guardrails for price, lead time, availability, and sponsorship framing.
+- audiences: prospect, owner, navigation
+- tags: heritage, history, pricing_policies, bespoke
+- language: en
+
+## 0.5 Provenance
 - Source: Internal Perazzi USA Document
 - Version: v1.0 (AI-refactored)
 - Last transformed by AI: 2025-12-01
@@ -8,7 +15,7 @@
 
 ---
 
-## 1. High-Level Overview
+## 1. High-Level Overview (brand ethos, identity, positioning)
 
 This document defines the **Perazzi brand ethos and personality** so that AI systems can:
 
@@ -26,6 +33,20 @@ It covers:
 - Strategic brand themes (exclusivity, narrative, and experience).
 - The Perazzi brand experience and key storytelling vehicles.
 - Signature language patterns and a canonical summary definition.
+
+### 1.1 Common Queries / Use Cases
+
+- What is the Perazzi brand ethos in one paragraph?
+- How should we describe Perazzi in marketing copy or product narratives?
+- What is Perazzi's positioning versus competitors (identity, legacy, craftsmanship, exclusivity)?
+- How should Perazzi answer price or "how much" questions without discount framing?
+- How should we frame lead times or limited availability?
+- What tone of voice should Perazzi use (quiet confidence, reverent, emotional)?
+- How should we compare Perazzi platforms (MX, High Tech, TM, DC, SHO) without price-first language?
+- How should we describe Perazzi's approach to sponsorship versus experience?
+- What words or framing should we avoid when describing Perazzi?
+- How should we describe the bespoke build journey and why it matters?
+- Which audience segments does the brand speak to, and how should the message shift?
 
 ---
 
@@ -53,7 +74,7 @@ It covers:
 - **Legacy and Belonging**  
   Perazzi ownership signals membership in an elite lineage. The shotgun is a bridge across generations, from Olympic champions to aspiring amateurs. Ownership equals belonging to an unbroken chain of excellence.
 
-### 2.3 Brand Tone & Personality
+### 2.3 Brand Tone & Personality (tone of voice)
 
 - **Quiet Confidence**  
   Perazzi avoids loud, flashy messaging. It communicates through elegance, calm authority, and earned prestige. The brand does not try to win attention by shouting.
@@ -75,7 +96,7 @@ It covers:
 - **Achievers & Legacy Builders**  
   Individuals who see a Perazzi as a mark of having "arrived" and as a generational artifact meant to be passed down.
 
-### 2.5 Strategic Brand Themes
+### 2.5 Strategic Brand Themes (positioning: exclusivity, narrative, experience)
 
 - **Exclusivity Over Accessibility**  
   Perazzi does **not** compete on price, volume, or advertising saturation. It emphasizes rarity, elite access, and personalized experiences (e.g., Bespoke Build, Perazzi Invitational).
@@ -120,6 +141,8 @@ Perazzi is positioned as **more than a product manufacturer**:
 - A Perazzi is characterized as something you **earn, embody, and become**, aligning the gun with the shooter’s identity and life story.
 - The brand targets individuals who demand **meaning, depth, and performance** from the objects they choose.
 
+**Application in model/platform comparisons:** When comparing platforms (MX, High Tech, TM, DC, SHO) or models, frame differences through identity, legacy, craftsmanship, and fit for discipline; avoid price-first language.
+
 ### 3.2 Emotional & Philosophical Brand Pillars
 
 #### 3.2.1 Transformation Over Transaction
@@ -127,12 +150,14 @@ Perazzi is positioned as **more than a product manufacturer**:
 - Acquiring a Perazzi is positioned as a **rite of passage**.  
 - The emphasis is on **who the owner is** and who they are becoming, not on the commercial act of buying.  
 - The customization and build journey is framed as a **personal evolution**, strengthening the connection between shooter and shotgun.
+- Alternate phrasing: rite-of-passage purchase, earned ownership, identity milestone.
 
 #### 3.2.2 Craftsmanship as Sacred Art
 
 - Craftsmanship is treated as **sacred** rather than merely technical.  
 - Every curve, balance point, and engraving is described as a reflection of the **artisan’s soul**.  
 - Mechanical performance is transformed into an emotional narrative: wood and metal are framed as **"quiet monuments to greatness."**
+- Alternate phrasing: sacred craft, artisan soul, poetic performance.
 
 #### 3.2.3 Legacy and Belonging
 
@@ -141,25 +166,28 @@ Perazzi is positioned as **more than a product manufacturer**:
 - Wear marks and scratches are not flaws; they are treated as **evidence of a story unfolding** — history in the making.  
 - To own a Perazzi is to join an **unbroken chain of excellence**.
 
-### 3.3 Brand Tone & Personality
+### 3.3 Brand Tone & Personality (tone of voice)
 
 #### 3.3.1 Quiet Confidence
 
 - Perazzi **does not shout** to compete.  
 - The brand relies on **quiet confidence**, understated visual style, and calm authority.  
 - Flashiness is avoided in favor of **elegance and earned prestige**.
+- Alternate phrasing: quiet luxury, understated prestige, restrained authority.
 
 #### 3.3.2 Deeply Emotional & Personal
 
 - Messaging is **reflective and intimate**, addressing the shooter’s inner life and aspirations.  
 - The brand sees itself as **inviting people into a journey**, not pushing a product.  
 - Copy makes heavy use of **metaphor, introspection, and sensory storytelling** to create an aspirational emotional experience.
+- Alternate phrasing: intimate and reflective voice, inward journey, personal narrative.
 
 #### 3.3.3 Philosophical & Reverent
 
 - Communications regularly reference **identity, legacy, and soul**.  
 - The language has a **thoughtful slowness**, evoking contemplation rather than urgency.  
 - The gun is spoken of with reverence (e.g., "crafted patiently, waiting for the right hands to awaken it").
+- Alternate phrasing: contemplative, reverent, almost sacred.
 
 ### 3.4 Audience Connection
 
@@ -182,19 +210,21 @@ Perazzi’s ethos is designed to resonate with specific audience archetypes:
 - Intend to treat the gun as a **generational artifact** — something to be passed down.  
 - Respond strongly to narratives about legacy, inheritance, and long-term significance.
 
-### 3.5 Strategic Brand Themes
+### 3.5 Strategic Brand Themes (positioning: exclusivity, narrative, experience)
 
 #### 3.5.1 Exclusivity Over Accessibility
 
 - Perazzi avoids competing on **price, volume, or advertising saturation**.  
 - It emphasizes **rarity, elite access, and personalized experiences** (e.g., bespoke builds, invite-only events like the Perazzi Invitational).  
 - The brand’s power comes from **selectivity**, not ubiquity.
+- Alternate phrasing: selective access, invitation-only, rarefied ownership.
 
 #### 3.5.2 Narrative Over Visibility
 
 - Rather than straightforward advertisements, Perazzi builds **immersive storytelling arcs**.  
 - The aim is for the audience to **feel, internalize, and live** the Perazzi experience.  
 - Campaigns are designed as **emotional universes** the customer steps into, rather than one-off impressions.
+- Alternate phrasing: storytelling over advertising, narrative immersion, lived experience.
 
 
 #### 3.5.3 Experience Over Sponsorship
@@ -230,12 +260,14 @@ The Perazzi brand experience is defined by several recurring elements:
 - The journey of building a custom Perazzi is **spiritual, personal, and precise**.  
 - Each decision in the build reflects the owner’s **values, aspirations, and physical connection** to the tool.  
 - The process itself is an affirmation of identity, not just a spec selection.
+- Alternate phrasing: custom build, made-to-order, atelier, fitting journey.
 
 #### 3.6.2 Storytelling Immersion
 
 - Platforms like **The Champions Network** create a world where shooters can **live through the stories of others**.  
 - Examples include following figures like **Wendell Cherry** and **David Radulovich** as they evolve alongside their guns.  
 - The gun becomes a **central character** in these stories, embodying growth and transformation.
+- Alternate phrasing: narrative worldbuilding, cinematic storytelling, story-first brand experience.
 
 #### 3.6.3 Tactile Legacy
 
@@ -272,9 +304,9 @@ Key characteristics of the brand definition:
 
 ---
 
-## 4. Edge Cases, Exceptions, and Caveats
+## 4. Guardrails & Objections (price, lead time, availability, sponsorship)
 
-The original text does not explicitly list edge cases, but it implies important constraints on how the brand should **not** be represented. For AI usage, treat the following as guardrails derived from the ethos:
+The original text does not explicitly list guardrails or objections, but it implies important constraints on how the brand should **not** be represented. For AI usage, treat the following as guardrails derived from the ethos:
 
 - **No Price-Based Positioning**  
   Do not frame Perazzi as a discount, entry-level, or price-driven brand. Its ethos is anchored in **exclusivity, craftsmanship, and legacy**, not affordability or deals.
@@ -302,12 +334,16 @@ The original text does not explicitly list edge cases, but it implies important 
 
 - **Core Brand Identity** – see §3.1.  
 - **Emotional & Philosophical Pillars** – see §3.2.  
-- **Brand Tone & Personality** – see §3.3.  
+- **Brand Tone & Personality (tone of voice)** – see §3.3.  
 - **Audience Segments** – see §3.4.  
 - **Strategic Themes (Exclusivity, Narrative, Experience)** – see §3.5.  
 - **Perazzi Experience Components** – see §3.6.  
 - **Signature Language Patterns** – see §3.7.  
 - **Canonical Definition** – see §3.8.
+- **Guardrails & Objections** – see §4.
+- **Brand Bible** – `PGPT/V2/Brand-Strategy/Brand-Bible.md`.  
+- **Writing Tone** – `PGPT/V2/Brand-Strategy/Writing-Tone.md`.  
+- **Audience Psychology Archetypes** – `PGPT/V2/Brand-Strategy/Audience-Psych-Archetypes.md`.  
 
 ### 5.2 External References
 
@@ -315,17 +351,6 @@ The original text does not explicitly list edge cases, but it implies important 
 
 ---
 
-## Appendix A. Section Index
+## Appendix A. Section Index (navigation-only)
 
-- **1. High-Level Overview** – Purpose of this document and what it covers.  
-- **2. Key Concepts & Glossary** – Canonical concepts: identity, legacy, transformation, tone, audience segments, strategic themes.  
-- **3.1 Core Brand Identity** – Perazzi as identity, legacy, and life-defining companion.  
-- **3.2 Emotional & Philosophical Brand Pillars** – Transformation over transaction, sacred craftsmanship, legacy and belonging.  
-- **3.3 Brand Tone & Personality** – Quiet confidence, emotional intimacy, philosophical and reverent voice.  
-- **3.4 Audience Connection** – Loyalists, prestige buyers, and achievers/legacy builders.  
-- **3.5 Strategic Brand Themes** – Exclusivity over accessibility, narrative over visibility, experience over sponsorship.  
-- **3.6 The Perazzi Experience** – Bespoke craftsmanship, storytelling immersion, tactile legacy.  
-- **3.7 Signature Language Patterns** – Canonical phrases and guidance on their usage.  
-- **3.8 Canonical Summary Definition** – Concise definition of Perazzi’s brand essence.  
-- **4. Edge Cases, Exceptions, and Caveats** – Guardrails for avoiding misalignment with the ethos.  
-- **5. References & Cross-Links** – Internal navigation and note on external references.
+Navigation-only index intentionally omitted to reduce retrieval noise. Use the headings above for navigation.
