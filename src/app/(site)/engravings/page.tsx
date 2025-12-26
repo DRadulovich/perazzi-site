@@ -46,7 +46,7 @@ export default async function EngravingsPage() {
   return (
     <div className="space-y-12">
       <section className="relative mb-12 overflow-hidden rounded-3xl border border-white/10 bg-black/60">
-        <div className="relative h-72 w-full sm:h-96 lg:h-[28rem]">
+        <div className="relative h-72 w-full sm:h-96 lg:h-112">
           <Image
             src={engravingHero}
             alt="Perazzi engraving illustration"
@@ -55,7 +55,7 @@ export default async function EngravingsPage() {
             className="object-cover object-center"
             sizes="(min-width: 1024px) 1200px, 100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-r from-black/80 via-black/40 to-transparent" />
           <div className="absolute inset-0 flex flex-col justify-center gap-4 px-8 py-10 text-white sm:px-12 lg:px-16">
             <p className="text-[11px] sm:text-xs uppercase tracking-[0.4em] text-white/70">
               Engraving Search
