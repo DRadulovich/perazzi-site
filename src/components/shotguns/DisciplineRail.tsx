@@ -305,10 +305,10 @@ export function DisciplineRail({
               aria-label="Close modal"
               onClick={() => { setModelModalOpen(false); }}
             />
-            <div className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-neutral-950/90 text-white shadow-elevated ring-1 ring-white/15 backdrop-blur-xl">
+            <div className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-perazzi-black/90 text-white shadow-elevated ring-1 ring-white/15 backdrop-blur-xl">
               <button
                 type="button"
-                className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-[11px] uppercase tracking-[0.3em] text-white shadow-sm backdrop-blur-sm transition hover:border-white/30 hover:bg-black/55 focus-ring sm:right-5 sm:top-5 sm:text-xs"
+                className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-[11px] uppercase tracking-[0.3em] text-white shadow-soft backdrop-blur-sm transition hover:border-white/30 hover:bg-black/55 focus-ring sm:right-5 sm:top-5 sm:text-xs"
                 onClick={() => setModelModalOpen(false)}
               >
                 Close
@@ -347,7 +347,7 @@ export function DisciplineRail({
                     </Text>
                   </div>
                 </div>
-                <div className="grid gap-4 rounded-3xl border border-white/12 bg-black/35 p-4 shadow-sm ring-1 ring-white/10 backdrop-blur-sm sm:p-6 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 rounded-3xl border border-white/12 bg-black/35 p-4 shadow-soft ring-1 ring-white/10 backdrop-blur-sm sm:p-6 sm:grid-cols-2 lg:grid-cols-3">
                   <Detail label="Platform" value={selectedModel.platform} />
                   <Detail label="Gauge" value={selectedModel.gaugeNames?.join(", ")} />
                   <Detail label="Trigger Type" value={selectedModel.triggerTypes?.join(", ")} />
@@ -402,7 +402,7 @@ function DisciplineCard({
     <article
       ref={cardRef}
       data-analytics-id={`DisciplineChip:${discipline.id}`}
-      className="flex flex-col rounded-2xl border border-border/70 bg-card/60 text-left shadow-sm backdrop-blur-sm focus-ring sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated"
+      className="flex flex-col rounded-2xl border border-border/70 bg-card/60 text-left shadow-soft backdrop-blur-sm focus-ring sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated"
       aria-label={`Slide ${index + 1} of ${total}: ${discipline.name}`}
     >
       <div className="card-media relative aspect-30/11 w-full rounded-t-3xl bg-(--color-canvas)">
@@ -462,7 +462,7 @@ function DisciplineCard({
                   type="button"
                   key={model.idLegacy ?? model.id}
                   onClick={() => { onSelectModel(model.idLegacy ?? model.id); }}
-                  className="group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card/60 shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
+                  className="group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card/60 shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
                 >
                   {model.hero ? (
                     <Image

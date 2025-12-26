@@ -748,12 +748,12 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
             className={cn(
               "flex flex-col gap-6",
               legacyMode
-                ? "rounded-3xl border border-border/70 bg-card/70 p-4 shadow-sm backdrop-blur-sm"
+                ? "rounded-3xl border border-border/70 bg-card/70 p-4 shadow-soft backdrop-blur-sm"
                 : "",
             )}
           >
             {legacyMode ? null : (
-              <div className="rounded-2xl border border-border/70 bg-card/60 p-4 text-sm text-ink shadow-sm backdrop-blur-sm sm:rounded-3xl sm:px-5 sm:py-4">
+              <div className="rounded-2xl border border-border/70 bg-card/60 p-4 text-sm text-ink shadow-soft backdrop-blur-sm sm:rounded-3xl sm:px-5 sm:py-4">
                 <div className="flex items-center justify-between gap-4">
                   <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
                     Guided Questions
@@ -813,8 +813,8 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
                     <div
                       className={`inline-block rounded-2xl px-4 py-3 ${
                         isAssistant
-                          ? "bg-card/80 border border-border/70 text-ink shadow-sm backdrop-blur-sm"
-                          : "bg-ink text-card shadow-sm"
+                          ? "bg-card/80 border border-border/70 text-ink shadow-soft backdrop-blur-sm"
+                          : "bg-ink text-card shadow-soft"
                       }`}
                     >
                       {isAssistant ? (

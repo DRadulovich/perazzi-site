@@ -109,7 +109,7 @@ function BuildSheetEntryCard({
       <button
         type="button"
         className={clsx(
-          "w-full rounded-2xl border border-border/70 bg-card/70 px-3 py-2 text-left shadow-sm backdrop-blur-sm transition focus-ring",
+          "w-full rounded-2xl border border-border/70 bg-card/70 px-3 py-2 text-left shadow-soft backdrop-blur-sm transition focus-ring",
           editMode ? "cursor-pointer hover:border-ink/30 hover:bg-card/85" : "",
         )}
         onClick={handleClick}
@@ -123,7 +123,7 @@ function BuildSheetEntryCard({
               {hasDetails ? (
                 <ChevronUp
                   className={clsx(
-                    "text-perazzi-red transition-transform",
+                    "h-4 w-4 text-perazzi-red transition-transform",
                     isExpanded ? "rotate-0" : "rotate-180",
                   )}
                   strokeWidth={2}
@@ -140,7 +140,7 @@ function BuildSheetEntryCard({
                   alt={entry.label}
                   width={1600}
                   height={1000}
-                  className="w-full max-h-48 rounded-lg object-cover"
+                  className="w-full max-h-48 rounded-xl object-cover"
                   sizes="(max-width: 768px) 100vw, 768px"
                 />
               ) : null}
@@ -212,7 +212,7 @@ function BuildSheetDrawerContent({
               <button
                 type="button"
                 onClick={onClose}
-                className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
+                className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
               >
                 Close
               </button>
@@ -223,7 +223,7 @@ function BuildSheetDrawerContent({
                 onClick={() => {
                   setEditMode((prev) => !prev);
                 }}
-                className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
+                className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
               >
                 {editMode ? "Done" : "Edit"}
               </button>
@@ -236,7 +236,7 @@ function BuildSheetDrawerContent({
             <button
               type="button"
               onClick={onSave}
-              className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
+              className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
             >
               Save build
             </button>
@@ -245,7 +245,7 @@ function BuildSheetDrawerContent({
             <button
               type="button"
               onClick={handleToggleAll}
-              className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
+              className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
             >
               {allCollapsed ? "Expand all" : "Collapse all"}
             </button>
@@ -261,7 +261,7 @@ function BuildSheetDrawerContent({
             .map((build) => (
               <div
                 key={build.id}
-                className="flex items-center gap-1 rounded-full border border-border/70 bg-card/70 px-3 py-1 shadow-sm"
+                className="flex items-center gap-1 rounded-full border border-border/70 bg-card/70 px-3 py-1 shadow-soft"
               >
                 <button
                   type="button"

@@ -123,7 +123,7 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
                 role="tab"
                 aria-selected={activeTab === tab.key}
                 className={cn(
-                  "rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring",
+                  "rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring",
                   activeTab === tab.key
                     ? "border-perazzi-red/60 bg-perazzi-red/10 text-perazzi-red"
                     : "text-ink",
@@ -164,7 +164,7 @@ function ScheduleList({ events, emptyText }: ScheduleListProps) {
       {events.map((event) => (
         <article
           key={event._id}
-          className="rounded-2xl border border-border/70 bg-card/60 p-5 shadow-sm backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated md:p-6 lg:p-7"
+          className="rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated md:p-6 lg:p-7"
         >
           <Text size="xs" muted className="font-semibold">
             {formatDateRange(event.startDate, event.endDate)}
@@ -198,7 +198,7 @@ function DealerList({ dealers, emptyText }: DealerListProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {dealers.map((dealer) => (
-        <article key={dealer._id} className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated">
+        <article key={dealer._id} className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated">
           <Heading level={3} size="sm" className="text-ink">
             {dealer.dealerName}
           </Heading>

@@ -78,7 +78,7 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
           <li key={asset.id}>
             <button
               type="button"
-              className="group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card/60 shadow-sm backdrop-blur-sm ring-1 ring-border/70 transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:bg-card/80"
+              className="group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card/60 shadow-soft backdrop-blur-sm ring-1 ring-border/70 transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:bg-card/80"
               style={{ aspectRatio: asset.aspectRatio ?? 4 / 3 }}
               onClick={() => { openLightbox(index); }}
               aria-label={`Open photo ${index + 1}`}
@@ -135,7 +135,7 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
                 <div className="flex justify-between">
                   <button
                     type="button"
-                    className="rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
+                    className="rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
                     onClick={() => { goTo(-1); }}
                     aria-label="Previous photo"
                   >
@@ -143,14 +143,14 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
                   </button>
                   <button
                     type="button"
-                    className="rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
+                    className="rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
                     onClick={() => { goTo(1); }}
                     aria-label="Next photo"
                   >
                     Next
                   </button>
                 </div>
-                <Dialog.Close className="absolute right-4 top-4 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring">
+                <Dialog.Close className="absolute right-4 top-4 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring">
                   Close
                 </Dialog.Close>
               </figure>

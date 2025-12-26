@@ -53,7 +53,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const data = await getJournalArticleData(params.slug);
   if (!data) {
     return (
-      <div className="space-y-6 rounded-3xl border border-border/70 bg-card/70 p-6 text-ink shadow-sm sm:p-8">
+      <div className="space-y-6 rounded-3xl border border-border/70 bg-card/70 p-6 text-ink shadow-soft sm:p-8">
         <Heading level={1} size="xl">
           Article coming soon
         </Heading>

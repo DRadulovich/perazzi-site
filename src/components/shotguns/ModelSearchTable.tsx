@@ -50,7 +50,7 @@ const PAGE_SIZE = 9;
 const FILTER_PANEL_CLASS =
   "space-y-4 rounded-3xl border border-white/15 bg-[linear-gradient(135deg,var(--perazzi-black),color-mix(in srgb,var(--perazzi-black) 85%, black))]/95 px-4 py-5 shadow-elevated sm:px-6 sm:py-6";
 const CARD_SHELL_CLASS =
-  "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/12 bg-neutral-950/80 text-left shadow-medium ring-1 ring-white/10 backdrop-blur-sm transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red sm:rounded-3xl";
+  "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/12 bg-perazzi-black/80 text-left shadow-medium ring-1 ring-white/10 backdrop-blur-sm transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red sm:rounded-3xl";
 const SPEC_PANEL_CLASS =
   "grid gap-4 border-t border-white/10 bg-black/40 px-4 py-4 text-xs text-neutral-200 sm:grid-cols-2 sm:px-6 sm:py-5 sm:text-sm";
 const DETAIL_PANEL_CLASS =
@@ -370,34 +370,34 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
               onMouseMove={handleCardMouseMove}
               onMouseLeave={handleCardMouseLeave}
             >
-              <div className="card-media relative aspect-16/10 w-full bg-white">
+              <div className="card-media relative aspect-16/10 w-full bg-perazzi-white">
                 {cardImageUrl ? (
                   <Image
                     src={cardImageUrl}
                     alt={model.imageAlt || model.name}
                     fill
                     sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
-                    className="object-contain bg-white transition-transform duration-500"
+                    className="object-contain bg-perazzi-white transition-transform duration-500"
                     style={{
                       transform: "translate3d(var(--parallax-x,0px), var(--parallax-y,0px), 0)",
                     }}
                   />
                 ) : (
-                  <div className="flex h-full items-center justify-center bg-neutral-900 text-neutral-600">
+                  <div className="flex h-full items-center justify-center bg-card text-ink-muted">
                     No Image Available
                   </div>
                 )}
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-black">
+                <div className="absolute bottom-0 left-0 right-0 p-6 text-ink">
                   <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
                     {model.use}
                   </Text>
                  {/*
                     Keep highlight behavior consistent while showing only the model name on the card.
                   */}
-                  <Heading level={3} size="lg" className="leading-tight text-black">
+                  <Heading level={3} size="lg" className="leading-tight text-ink">
                     {highlightText(model.name, query)}
                   </Heading>
-                  <Text className="text-neutral-600" leading="normal">
+                  <Text className="text-ink-muted" leading="normal">
                     {highlightText((model.gaugeNames || []).join(", ") || "", query)}
                   </Text>
                 </div>
@@ -469,13 +469,13 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
           <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
           <Dialog.Content className="fixed inset-0 z-60 flex max-h-screen w-full items-center justify-center p-3 outline-none sm:p-4 md:p-6 data-[state=closed]:opacity-0 data-[state=closed]:translate-y-2 data-[state=open]:opacity-100 data-[state=open]:translate-y-0 transition duration-200">
             {selectedModel ? (
-              <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-neutral-950/90 text-white shadow-elevated ring-1 ring-white/15 backdrop-blur-xl">
+              <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-perazzi-black/90 text-white shadow-elevated ring-1 ring-white/15 backdrop-blur-xl">
                 <Dialog.Close asChild>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 text-white shadow-sm backdrop-blur-sm hover:border-white/30 hover:bg-black/55 sm:right-5 sm:top-5"
+                    className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 text-white shadow-soft backdrop-blur-sm hover:border-white/30 hover:bg-black/55 sm:right-5 sm:top-5"
                   >
                     Close
                   </Button>
@@ -556,7 +556,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
 
 function CardSkeleton() {
   return (
-    <div className="animate-pulse overflow-hidden rounded-2xl border border-white/5 bg-neutral-900/60 sm:rounded-3xl">
+    <div className="animate-pulse overflow-hidden rounded-2xl border border-white/5 bg-perazzi-black/60 sm:rounded-3xl">
       <div className="aspect-16/10 w-full bg-white" />
       <div className="space-y-3 border-t border-white/5 bg-black/30 p-4 sm:p-6">
         <div className="h-4 w-1/3 rounded bg-white/10" />

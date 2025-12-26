@@ -9,7 +9,7 @@ export function NewsletterSignup() {
   const [submitted, setSubmitted] = useState(false);
 
   return (
-    <section className="space-y-3 rounded-3xl border border-border/70 bg-card px-6 py-8 shadow-sm sm:px-10">
+    <section className="space-y-3 rounded-3xl border border-border/70 bg-card px-6 py-8 shadow-soft sm:px-10">
       <Heading level={2} size="xl" className="text-ink">
         Stay in the loop
       </Heading>

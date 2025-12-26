@@ -55,7 +55,7 @@ export function AtAGlanceStrip({ data }: AtAGlanceStripProps) {
             <a
               key={link.href}
               href={link.href}
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-perazzi-red shadow-sm backdrop-blur-sm transition hover:border-perazzi-red/30 hover:bg-card/85 focus-ring"
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-perazzi-red shadow-soft backdrop-blur-sm transition hover:border-perazzi-red/30 hover:bg-card/85 focus-ring"
             >
               {link.label}
               <span aria-hidden="true">→</span>

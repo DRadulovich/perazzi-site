@@ -15,7 +15,7 @@ export function GuardrailNotice({ status }: GuardrailNoticeProps) {
     return (
       <output
         aria-live="polite"
-        className="block rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-sm sm:text-base leading-relaxed text-ink shadow-sm backdrop-blur-sm"
+        className="block rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-sm sm:text-base leading-relaxed text-ink shadow-soft backdrop-blur-sm"
       >
         This answer is based on limited information and may be incomplete.
       </output>
@@ -26,7 +26,7 @@ export function GuardrailNotice({ status }: GuardrailNoticeProps) {
     return (
       <output
         aria-live="polite"
-        className="block rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-sm sm:text-base leading-relaxed text-ink shadow-sm backdrop-blur-sm"
+        className="block rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-sm sm:text-base leading-relaxed text-ink shadow-soft backdrop-blur-sm"
       >
         Policy-limited answer.
       </output>

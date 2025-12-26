@@ -41,7 +41,7 @@ export function JourneyOverview({ journey }: JourneyOverviewProps) {
               <li key={step.id}>
                 <a
                   href={step.href}
-                  className="group inline-flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/70 px-4 py-3 text-sm font-semibold text-ink shadow-sm backdrop-blur-sm transition-colors hover:border-perazzi-red/40 hover:bg-card/85 focus-ring"
+                  className="group inline-flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/70 px-4 py-3 text-sm font-semibold text-ink shadow-soft backdrop-blur-sm transition-colors hover:border-perazzi-red/40 hover:bg-card/85 focus-ring"
                 >
                   <span>{step.label}</span>
                   <span

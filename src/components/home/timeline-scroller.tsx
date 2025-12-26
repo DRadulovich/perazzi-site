@@ -99,7 +99,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
           className="focus:outline-none focus-ring"
         >
           <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-            <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
+            <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-soft backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
               <div className="space-y-4 md:flex md:items-center md:justify-between md:gap-8">
                 <div className="space-y-3">
                   <Heading
@@ -173,7 +173,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                       return (
                         <div
                           key={`stacked-${stage.id}`}
-                          className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-sm backdrop-blur-sm sm:p-4"
+                          className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:p-4"
                         >
                           <button
                             type="button"

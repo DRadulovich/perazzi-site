@@ -278,8 +278,8 @@ function JourneyChapters({
 
               <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-10 sm:px-6 sm:py-16 lg:px-6 lg:py-20">
                 <div
-                  className="space-y-6 rounded-2xl border border-border bg-card p-4 shadow-sm
-                             sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg"
+                  className="space-y-6 rounded-2xl border border-border bg-card p-4 shadow-soft
+                             sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-elevated"
                 >
                   <header className="space-y-3">
                     <p className="text-xs font-semibold uppercase tracking-[0.22em] text-ink-muted">
@@ -493,7 +493,7 @@ function JourneyChapters({
                     </p>
 
                     {userAnswer ? (
-                      <div className="space-y-1 rounded-md px-3 py-2">
+                      <div className="space-y-1 rounded-xl px-3 py-2">
                         <p className="text-md font-semibold uppercase tracking-[0.22em] text-ink-muted/80">
                           Your reflection
                         </p>
@@ -543,7 +543,7 @@ function JourneyChapterBar({ stations, activeStepIndex, isNavVisible }: JourneyC
 
   return (
     <div
-      className={`fixed inset-x-0 bottom-0 z-30 border-t border-perazzi-black/50 bg-perazzi-black/85 text-xs text-white shadow-sm backdrop-blur-none sm:backdrop-blur-lg sm:text-sm transition-transform duration-300 ${
+      className={`fixed inset-x-0 bottom-0 z-30 border-t border-perazzi-black/50 bg-perazzi-black/85 text-xs text-white shadow-soft backdrop-blur-none sm:backdrop-blur-lg sm:text-sm transition-transform duration-300 ${
         isNavVisible ? "translate-y-0" : "translate-y-full sm:translate-y-0"
       }`}
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}

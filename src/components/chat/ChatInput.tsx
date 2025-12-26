@@ -58,7 +58,7 @@ export function ChatInput({
           <button
             type="submit"
             disabled={pending || !value.trim()}
-            className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-ink text-card shadow-sm transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:bg-subtle disabled:text-ink-muted"
+            className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-ink text-card shadow-soft transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:bg-subtle disabled:text-ink-muted"
           >
             <span className="sr-only">Send</span>
             <span className="text-base leading-none">

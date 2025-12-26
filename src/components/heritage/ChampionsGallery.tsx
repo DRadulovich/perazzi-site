@@ -195,7 +195,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
             </div>
 
             {/* Right column – selected champion detail */}
-            <div className="min-h-[18rem] rounded-2xl border border-border/75 bg-card/75 p-5 shadow-sm sm:rounded-3xl">
+            <div className="min-h-[18rem] rounded-2xl border border-border/75 bg-card/75 p-5 shadow-soft sm:rounded-3xl">
               <AnimatePresence mode="wait">
                 {selectedChampion ? (
                   <motion.div

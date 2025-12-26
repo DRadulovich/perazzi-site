@@ -22,7 +22,7 @@ export function OptionsGrid({ options }: Readonly<OptionsGridProps>) {
         {options.map((option) => (
           <article
             key={option.id}
-            className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80"
+            className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80"
           >
             <Heading level={3} size="sm" className="text-ink">
               {option.title}

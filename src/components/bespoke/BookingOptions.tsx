@@ -27,7 +27,7 @@ function BookingOptionCard({ option }: BookingOptionCardProps) {
     <article
       ref={optionRef}
       data-analytics-id={`BookingOptionSeen:${option.id}`}
-      className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm transition-shadow hover:shadow-elevated sm:rounded-3xl sm:bg-card/80 sm:p-6"
+      className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm transition-shadow hover:shadow-elevated sm:rounded-3xl sm:bg-card/80 sm:p-6"
     >
       <div className="space-y-2">
         <Heading level={3} size="sm" className="text-ink">
@@ -85,7 +85,7 @@ function WhatToExpectCollapsible({
       }}
     >
       <CollapsibleTrigger
-        className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/70 px-4 py-3 text-left text-sm font-semibold text-ink shadow-sm backdrop-blur-sm focus-ring md:px-6 md:py-4 md:text-base lg:px-7 lg:py-5"
+        className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/70 px-4 py-3 text-left text-sm font-semibold text-ink shadow-soft backdrop-blur-sm focus-ring md:px-6 md:py-4 md:text-base lg:px-7 lg:py-5"
         aria-controls={contentId}
         aria-expanded={open}
       >
@@ -185,7 +185,7 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
       </div>
       <aside
         aria-label="What to expect during your fitting"
-        className="space-y-3 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm md:space-y-4 md:p-8 md:rounded-3xl md:bg-card/75 lg:space-y-5 lg:p-10"
+        className="space-y-3 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm md:space-y-4 md:p-8 md:rounded-3xl md:bg-card/75 lg:space-y-5 lg:p-10"
       >
         <Text size="xs" muted className="font-semibold">
           {resolvedWhatToExpectHeading}
@@ -201,7 +201,7 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
           ))}
         </div>
       </aside>
-      <div className="space-y-3 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm md:space-y-4 md:p-8 md:rounded-3xl md:bg-card/75 lg:space-y-5 lg:p-10">
+      <div className="space-y-3 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm md:space-y-4 md:p-8 md:rounded-3xl md:bg-card/75 lg:space-y-5 lg:p-10">
         <Text size="xs" muted className="font-semibold">
           Schedule with the concierge
         </Text>

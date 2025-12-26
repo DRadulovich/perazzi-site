@@ -99,7 +99,7 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
     <article
       ref={analyticsRef}
       data-analytics-id={`OralHistorySeen:${history.id}`}
-      className="flex h-full flex-col gap-4 rounded-2xl border border-border/75 bg-card/80 p-5 shadow-sm sm:rounded-3xl sm:p-6"
+      className="flex h-full flex-col gap-4 rounded-2xl border border-border/75 bg-card/80 p-5 shadow-soft sm:rounded-3xl sm:p-6"
     >
       {history.image ? (
         <div

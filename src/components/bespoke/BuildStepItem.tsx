@@ -110,7 +110,7 @@ export function BuildStepItem({
   const caption = step.captionHtml ? (
     <SafeHtml
       as="figcaption"
-      className="rounded-2xl border border-border/70 bg-card/60 p-4 text-[11px] sm:text-xs leading-relaxed text-ink-muted shadow-sm backdrop-blur-sm"
+      className="rounded-2xl border border-border/70 bg-card/60 p-4 text-[11px] sm:text-xs leading-relaxed text-ink-muted shadow-soft backdrop-blur-sm"
       html={step.captionHtml}
     />
   ) : null;
@@ -154,7 +154,7 @@ export function BuildStepItem({
       className={
         isPinned
           ? "grid h-full min-h-0 grid-rows-[minmax(0,1fr)_minmax(0,3fr)] gap-6 rounded-2xl border border-border/70 bg-card/70 p-4 shadow-elevated ring-1 ring-border/70 backdrop-blur-sm sm:rounded-3xl sm:p-6"
-          : "space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-6"
+          : "space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-6"
       }
       aria-label={`Step ${index + 1}: ${step.title}`}
     >

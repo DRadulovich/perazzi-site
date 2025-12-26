@@ -49,7 +49,7 @@ export function HeritageEventSlide({
         <div
           className={cn(
             "flex h-full w-full flex-col md:flex-row",
-            "mx-auto max-w-6xl rounded-2xl border border-white/10 bg-black/60 shadow-sm backdrop-blur-sm",
+            "mx-auto max-w-6xl rounded-2xl border border-white/10 bg-black/60 shadow-soft backdrop-blur-sm",
           )}
         >
           <div
@@ -152,7 +152,7 @@ export function HeritageEventSlide({
             aria-labelledby={`heritage-event-modal-${event.id}`}
             className="fixed inset-0 z-60 flex h-full w-full items-end justify-center bg-transparent p-4 outline-none transition duration-200 data-[state=closed]:opacity-0 data-[state=closed]:translate-y-2 data-[state=open]:opacity-100 data-[state=open]:translate-y-0 md:hidden"
           >
-            <div className="max-h-[80vh] w-full max-w-lg overflow-hidden rounded-2xl bg-black text-neutral-100 shadow-lg">
+            <div className="max-h-[80vh] w-full max-w-lg overflow-hidden rounded-2xl bg-black text-neutral-100 shadow-elevated">
               <div className="flex items-center justify-between border-b border-white/15 px-4 py-3">
                 <Text size="xs" className="tracking-[0.28em] text-neutral-400" leading="normal">
                   {event.date}

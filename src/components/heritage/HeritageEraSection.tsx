@@ -143,7 +143,7 @@ export function HeritageEraSection({
         </a>
 
         <div className="relative z-10 px-4 py-16">
-          <div className="mx-auto max-w-6xl rounded-2xl border border-white/15 bg-black/60 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:px-6 sm:py-8 sm:shadow-md md:px-10 md:py-10">
+          <div className="mx-auto max-w-6xl rounded-2xl border border-white/15 bg-black/60 p-4 shadow-soft backdrop-blur-md sm:rounded-3xl sm:px-6 sm:py-8 sm:shadow-medium md:px-10 md:py-10">
             <header className="max-w-4xl">
               <Heading
                 asChild

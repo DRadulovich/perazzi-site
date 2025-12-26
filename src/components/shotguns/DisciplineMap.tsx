@@ -25,7 +25,7 @@ export function DisciplineMap({ items, disciplines }: DisciplineMapProps) {
             <a
               key={entry.disciplineId}
               href={href}
-              className="flex max-w-sm flex-col rounded-2xl border border-border/70 bg-card/60 p-4 text-left shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
+              className="flex max-w-sm flex-col rounded-2xl border border-border/70 bg-card/60 p-4 text-left shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
               data-analytics-id={`SeriesDisciplineChip:${entry.disciplineId}`}
             >
               <Text

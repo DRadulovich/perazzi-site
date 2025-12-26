@@ -54,9 +54,9 @@ export function PortableGallery({ items }: PortableGalleryProps) {
             className="text-left"
             onClick={() => { handleOpen(index); }}
           >
-            <figure className="rounded-2xl border border-border/60 bg-card/70 p-3 shadow-sm">
+            <figure className="rounded-2xl border border-border/60 bg-card/70 p-3 shadow-soft">
               <div
-                className="relative overflow-hidden rounded-xl bg-neutral-200"
+                className="relative overflow-hidden rounded-xl bg-border"
                 style={{ aspectRatio: asset.aspectRatio ?? 4 / 3 }}
               >
                 <Image
@@ -90,12 +90,12 @@ export function PortableGallery({ items }: PortableGalleryProps) {
               className="fixed inset-0 flex items-center justify-center p-4 focus:outline-none"
               aria-label="Gallery lightbox"
             >
-              <figure className="relative flex w-full max-w-4xl flex-col gap-3 rounded-3xl bg-card p-6 shadow-2xl focus:outline-none">
+              <figure className="relative flex w-full max-w-4xl flex-col gap-3 rounded-3xl bg-card p-6 shadow-elevated focus:outline-none">
                 <p className="sr-only" aria-live="polite">
                   Photo {(openIndex ?? 0) + 1} of {length}
                 </p>
                 <div
-                  className="relative overflow-hidden rounded-2xl bg-neutral-200"
+                  className="relative overflow-hidden rounded-2xl bg-border"
                   style={{ aspectRatio: currentAsset.aspectRatio ?? 4 / 3 }}
                 >
                   <Image

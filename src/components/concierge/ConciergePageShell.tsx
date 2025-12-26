@@ -781,7 +781,7 @@ export function ConciergePageShell() {
         {/* Conversation */}
         <section
           id="concierge-conversation"
-          className="flex min-h-[70vh] max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-6 lg:order-2"
+          className="flex min-h-[70vh] max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-6 lg:order-2"
           tabIndex={-1}
         >
           <div className="flex items-center justify-between gap-3 border-b border-border/70 pb-3">
@@ -804,7 +804,7 @@ export function ConciergePageShell() {
               <button
                 type="button"
                 onClick={handleClearChat}
-                className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
+                className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
               >
                 Clear chat
               </button>
@@ -837,13 +837,13 @@ export function ConciergePageShell() {
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask about platforms, fitting, service, or heritage…"
-                className="min-h-[96px] flex-1 rounded-2xl border border-border bg-card/70 px-3 py-2 text-sm sm:text-base text-ink shadow-sm backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                className="min-h-[96px] flex-1 rounded-2xl border border-border bg-card/70 px-3 py-2 text-sm sm:text-base text-ink shadow-soft backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 disabled={pending}
               />
               <button
                 type="button"
                 onClick={handleSend}
-                className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-2xl bg-brand px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-card shadow-sm ring-1 ring-black/10 transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-2xl bg-brand px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-card shadow-soft ring-1 ring-black/10 transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-70"
                 disabled={pending || !draft.trim()}
               >
                 Send
@@ -855,7 +855,7 @@ export function ConciergePageShell() {
         {/* Build Navigator */}
         <aside
           id="concierge-navigator"
-          className="space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-6 lg:order-1"
+          className="space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-6 lg:order-1"
           tabIndex={-1}
         >
           <div className="space-y-3">
@@ -877,7 +877,7 @@ export function ConciergePageShell() {
               </Text>
             ) : null}
 
-            <div className="space-y-2 rounded-2xl border border-border/70 bg-card/60 px-3 py-3 shadow-sm backdrop-blur-sm">
+            <div className="space-y-2 rounded-2xl border border-border/70 bg-card/60 px-3 py-3 shadow-soft backdrop-blur-sm">
               <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
                 Current Build Category
               </Text>
@@ -886,7 +886,7 @@ export function ConciergePageShell() {
               </Text>
             </div>
 
-            <div className="space-y-2 rounded-2xl border border-border/70 bg-card/60 px-3 py-3 shadow-sm backdrop-blur-sm">
+            <div className="space-y-2 rounded-2xl border border-border/70 bg-card/60 px-3 py-3 shadow-soft backdrop-blur-sm">
               <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
                 Current step
               </Text>
@@ -912,7 +912,7 @@ export function ConciergePageShell() {
                                 setHighlightedOption({ fieldId: nextField.id, value: opt.value });
                               }}
                               className={clsx(
-                                "w-full rounded-xl border bg-card/60 px-3 py-2 text-left text-sm font-semibold shadow-sm transition",
+                                "w-full rounded-xl border bg-card/60 px-3 py-2 text-left text-sm font-semibold shadow-soft transition",
                                 isHighlighted
                                   ? "border-ink/40 bg-card/85 text-ink"
                                   : "border-border/70 text-ink-muted hover:border-ink/30 hover:bg-card/80 hover:text-ink",
@@ -936,14 +936,14 @@ export function ConciergePageShell() {
                         onClick={() => {
                           setDetailsDrawerOpen(true);
                         }}
-                        className="mt-2 inline-flex w-full min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-center text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
+                        className="mt-2 inline-flex w-full min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-center text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
                       >
                         {infoLoading ? "Loading details…" : "View More Details"}
                       </button>
                       <button
                         type="button"
                         onClick={handleExplainCurrent}
-                        className="mt-2 inline-flex w-full min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-center text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
+                        className="mt-2 inline-flex w-full min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-center text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
                       >
                         Explain these options
                       </button>
@@ -963,7 +963,7 @@ export function ConciergePageShell() {
               )}
             </div>
 
-            <div className="space-y-3 rounded-2xl border border-border/70 bg-card/60 px-3 py-3 shadow-sm backdrop-blur-sm">
+            <div className="space-y-3 rounded-2xl border border-border/70 bg-card/60 px-3 py-3 shadow-soft backdrop-blur-sm">
               <button
                 type="button"
                 onClick={() => {
@@ -973,7 +973,7 @@ export function ConciergePageShell() {
               >
                 View Build Sheet
               </button>
-              <div className="space-y-2 rounded-2xl border border-border/70 bg-card/70 px-3 py-3 shadow-sm backdrop-blur-sm">
+              <div className="space-y-2 rounded-2xl border border-border/70 bg-card/70 px-3 py-3 shadow-soft backdrop-blur-sm">
                 <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
                   Next step
                 </Text>
@@ -993,7 +993,7 @@ export function ConciergePageShell() {
               onClick={() => {
                 setSelectedInfoCard(null);
               }}
-              className="absolute right-4 top-4 rounded-full border border-border/70 bg-card/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/85 hover:text-ink"
+              className="absolute right-4 top-4 rounded-full border border-border/70 bg-card/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/85 hover:text-ink"
             >
               Close
             </button>

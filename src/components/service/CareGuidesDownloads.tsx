@@ -45,7 +45,7 @@ export function CareGuidesDownloads({ guidesSection }: CareGuidesDownloadsProps)
         {guides.map((guide) => (
           <li
             key={guide.id}
-            className="rounded-2xl border border-border/75 bg-card/75 p-4 shadow-sm"
+            className="rounded-2xl border border-border/75 bg-card/75 p-4 shadow-soft"
           >
             <Heading level={3} size="md" className="text-ink">
               {guide.title}

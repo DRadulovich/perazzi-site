@@ -72,7 +72,7 @@ export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {
       <motion.section
         ref={setRefs}
         data-analytics-id="HeroSeen:service"
-        className="relative z-10 mx-auto min-h-screen max-w-6xl overflow-hidden rounded-2xl border border-gray-700/30 bg-card/10 text-white shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/0 sm:shadow-lg"
+        className="relative z-10 mx-auto min-h-screen max-w-6xl overflow-hidden rounded-2xl border border-gray-700/30 bg-card/10 text-white shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/0 sm:shadow-elevated"
         initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
         animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
@@ -120,7 +120,7 @@ export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {
             style={prefersReducedMotion ? undefined : { y: parallax }}
             aria-hidden="true"
           >
-            <div className="relative aspect-[16/9] w-full min-h-[360px] overflow-hidden rounded-2xl shadow-2xl ring-1 ring-white/10">
+            <div className="relative aspect-[16/9] w-full min-h-[360px] overflow-hidden rounded-2xl shadow-elevated ring-1 ring-white/10">
               <Image
                 src={hero.background.url}
                 alt={hero.background.alt ?? hero.title}

@@ -33,7 +33,7 @@ export const Section = forwardRef<HTMLElement, SectionProps>(
         ref={ref}
         data-theme={theme === "default" ? undefined : theme}
         className={cn(
-          "relative rounded-2xl bg-card/60 text-ink shadow-sm backdrop-blur-sm transition-colors sm:rounded-3xl sm:bg-card/80 data-[theme=dark]:bg-perazzi-black/90 data-[theme=dark]:text-perazzi-white data-[theme=dark]:backdrop-blur-xl data-[theme=light]:bg-perazzi-white data-[theme=light]:text-perazzi-black",
+          "relative rounded-2xl bg-card/60 text-ink shadow-soft backdrop-blur-sm transition-colors sm:rounded-3xl sm:bg-card/80 data-[theme=dark]:bg-perazzi-black/90 data-[theme=dark]:text-perazzi-white data-[theme=dark]:backdrop-blur-xl data-[theme=light]:bg-perazzi-white data-[theme=light]:text-perazzi-black",
           bordered &&
             "border border-border/70 data-[theme=dark]:border-white/10 data-[theme=light]:border-black/5",
           paddingClasses[padding],

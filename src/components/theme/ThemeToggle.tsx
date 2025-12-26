@@ -47,7 +47,7 @@ function DarkModeThumb({ mode }: { mode: "light" | "dark" }) {
       <motion.div
         layout
         transition={{ duration: 0.6, type: "spring" }}
-        className={`relative m-1 flex h-5 w-5 items-center justify-center rounded-full shadow-lg ${
+        className={`relative m-1 flex h-5 w-5 items-center justify-center rounded-full shadow-elevated ${
           mode === "light" ? "bg-perazzi-black" : "bg-white"
         }`}
       >

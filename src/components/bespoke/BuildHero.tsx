@@ -79,7 +79,7 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
         className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center"
         aria-hidden="true"
       >
-        <span className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/5 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-white/85 shadow-sm backdrop-blur-sm">
+        <span className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/5 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-white/85 shadow-soft backdrop-blur-sm">
           <span>Scroll</span>
           <span className="text-lg leading-none">↓</span>
         </span>

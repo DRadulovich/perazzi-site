@@ -111,7 +111,7 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
                 {currentItem?.image.caption ?? currentItem?.image.alt}
               </Dialog.Description>
               {currentItem ? (
-                <figure className="relative flex w-full max-w-5xl flex-col gap-3 rounded-2xl bg-card p-4 shadow-xl max-h-[70vh] sm:rounded-3xl sm:p-6 sm:shadow-2xl">
+                <figure className="relative flex w-full max-w-5xl flex-col gap-3 rounded-2xl bg-card p-4 shadow-elevated max-h-[70vh] sm:rounded-3xl sm:p-6 sm:shadow-elevated">
                   <Text asChild className="sr-only" leading="normal">
                     <p aria-live="polite">
                       Photo {(openIndex ?? 0) + 1} of {items.length}

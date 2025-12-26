@@ -21,7 +21,7 @@ export function FeaturedStoryCard({ article, hero, summary }: FeaturedStoryCardP
   return (
     <article
       ref={analyticsRef}
-      className="overflow-hidden rounded-3xl border border-border/70 bg-card shadow-sm"
+      className="overflow-hidden rounded-3xl border border-border/70 bg-card shadow-soft"
     >
       <Link
         href={`/journal/${article.slug}`}

@@ -92,7 +92,7 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
       </div>
 
       <div className="relative z-10 mx-auto flex min-h-[75vh] max-w-7xl items-center px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-perazzi-black/50 bg-card/0 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-perazzi-black/50 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
+        <div className="space-y-6 rounded-2xl border border-perazzi-black/50 bg-card/0 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:border-perazzi-black/50 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
           <div className="space-y-2">
             <Heading
               id="serial-lookup-heading"
@@ -180,7 +180,7 @@ function LookupResult({ state, emptyStateText }: Readonly<{ state: SerialLookupF
 
   const { data } = state;
   return (
-    <div className="rounded-2xl border border-perazzi-black/50 bg-perazzi-black/40 p-4 shadow-sm sm:bg-perazzi-black/70 md:p-6" aria-live="polite">
+    <div className="rounded-2xl border border-perazzi-black/50 bg-perazzi-black/40 p-4 shadow-soft sm:bg-perazzi-black/70 md:p-6" aria-live="polite">
       <Text size="xs" className="font-semibold tracking-[0.35em] text-white/70" leading="normal">
         Record Found
       </Text>

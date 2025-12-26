@@ -87,7 +87,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
-            <article className="space-y-5 rounded-2xl border border-border/70 bg-card/60 p-5 shadow-sm backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated lg:p-7">
+            <article className="space-y-5 rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated lg:p-7">
               <Text size="xs" muted className="font-semibold">
                 Botticino headquarters
               </Text>
@@ -116,7 +116,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                 </p>
                 <div
                   id={mapPanelId}
-                  className="relative overflow-hidden rounded-2xl border border-border/70 bg-(--color-canvas) shadow-sm ring-1 ring-border/70"
+                  className="relative overflow-hidden rounded-2xl border border-border/70 bg-(--color-canvas) shadow-soft ring-1 ring-border/70"
                   style={{ aspectRatio: visit.location.staticMap.aspectRatio ?? 3 / 2 }}
                   aria-live="polite"
                 >
@@ -158,7 +158,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
               {visit.whatToExpectHtml ? (
                 <Collapsible open={expectOpen} onOpenChange={setExpectOpen}>
                   <CollapsibleTrigger
-                    className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left text-sm font-semibold uppercase tracking-[0.2em] text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
+                    className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left text-sm font-semibold uppercase tracking-[0.2em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
                     aria-expanded={expectOpen}
                     aria-controls="visit-expect-content"
                   >
@@ -175,7 +175,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                   </CollapsibleTrigger>
                   <CollapsibleContent
                     id="visit-expect-content"
-                    className="mt-3 rounded-2xl border border-border/70 bg-card/60 p-4 text-sm leading-relaxed text-ink-muted shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80"
+                    className="mt-3 rounded-2xl border border-border/70 bg-card/60 p-4 text-sm leading-relaxed text-ink-muted shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80"
                   >
                     <SafeHtml
                       className="prose prose-sm max-w-none text-ink-muted"

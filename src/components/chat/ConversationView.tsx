@@ -177,8 +177,8 @@ export function ConversationView({ messages, isTyping, pending }: ConversationVi
               <div
                 className={`inline-block rounded-2xl px-4 py-3 ${
                   isAssistant
-                    ? "bg-card/80 border border-border/70 text-ink shadow-sm backdrop-blur-sm"
-                    : "bg-ink text-card shadow-sm"
+                    ? "bg-card/80 border border-border/70 text-ink shadow-soft backdrop-blur-sm"
+                    : "bg-ink text-card shadow-soft"
                 }`}
               >
                 {isAssistant ? (

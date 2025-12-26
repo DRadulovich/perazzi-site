@@ -86,7 +86,7 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
               selectedCard?.id === card.id
                 ? "border-ink/40 bg-card/85"
                 : "border-border/70 bg-card/70 hover:border-ink/30 hover:bg-card/85",
-              "flex flex-col rounded-2xl border p-3 text-sm sm:text-base text-ink shadow-sm backdrop-blur-sm focus-ring",
+              "flex flex-col rounded-2xl border p-3 text-sm sm:text-base text-ink shadow-soft backdrop-blur-sm focus-ring",
             )}
           >
             {card.imageUrl ? (
@@ -172,7 +172,7 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-sm transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
+              className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
             >
               Close
             </button>

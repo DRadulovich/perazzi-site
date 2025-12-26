@@ -37,7 +37,7 @@ export function PartsEditorial({ partsEditorialSection }: PartsEditorialProps) {
         {parts.map((part) => (
           <li
             key={part.name}
-            className="rounded-2xl border border-border/75 bg-card/75 p-4 shadow-sm"
+            className="rounded-2xl border border-border/75 bg-card/75 p-4 shadow-soft"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <Heading level={3} size="md" className="text-ink">

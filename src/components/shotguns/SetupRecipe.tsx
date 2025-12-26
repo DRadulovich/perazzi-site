@@ -34,7 +34,7 @@ export function SetupRecipe({
             Editorial guidance
           </Heading>
           <CollapsibleTrigger
-            className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring md:hidden"
+            className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring md:hidden"
             aria-controls="setup-recipe-content"
           >
             {resolvedOpen ? "Hide recipe" : "Show recipe"}

@@ -87,7 +87,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                 {subheading}
               </Text>
               <CollapsibleTrigger
-                className="mt-1 inline-flex w-fit items-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring lg:hidden"
+                className="mt-1 inline-flex w-fit items-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring lg:hidden"
                 aria-controls="trigger-explainer-content"
                 data-analytics-id="TriggerExplainerToggle"
               >
@@ -111,7 +111,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                       key={link.href}
                       href={link.href}
                       data-analytics-id={`TriggerExplainerLink:${link.href}`}
-                      className="inline-flex items-center gap-2 rounded-full border border-perazzi-red/40 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red shadow-sm backdrop-blur-sm transition hover:border-perazzi-red hover:bg-card/85 focus-ring"
+                      className="inline-flex items-center gap-2 rounded-full border border-perazzi-red/40 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red shadow-soft backdrop-blur-sm transition hover:border-perazzi-red hover:bg-card/85 focus-ring"
                       onClick={() =>
                         logAnalytics(`TriggerExplainerLink:${link.href}`)
                       }
@@ -123,7 +123,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                 </div>
               </div>
 
-              <figure className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated">
+              <figure className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated">
                 <div
                   className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
                   style={{ aspectRatio: ratio }}

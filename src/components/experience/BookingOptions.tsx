@@ -81,7 +81,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
             {options.map((option) => (
               <article
                 key={option.id}
-                className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-5 shadow-sm backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-7 lg:p-8"
+                className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-7 lg:p-8"
               >
                 <div className="space-y-2">
                   <Heading level={3} size="sm" className="text-ink">
@@ -112,7 +112,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
             ))}
           </div>
           {scheduler ? (
-            <div className="space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-8 lg:p-10">
+            <div className="space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-8 lg:p-10">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <Heading level={3} size="sm" className="text-ink">
                   {scheduler.title}
@@ -147,7 +147,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
               </p>
               <div
                 id={schedulerPanelId}
-                className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-sm backdrop-blur-sm sm:bg-card/80 md:p-4 lg:p-5"
+                className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:bg-card/80 md:p-4 lg:p-5"
                 aria-live="polite"
               >
                 {schedulerLoaded ? (

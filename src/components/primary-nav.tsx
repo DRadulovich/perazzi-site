@@ -47,11 +47,11 @@ export function PrimaryNav({ brandLabel, variant = "brand" }: PrimaryNavProps) {
 
   const navShadow = isTransparent
     ? scrolled
-      ? "shadow-sm"
+      ? "shadow-soft"
       : "shadow-none"
     : scrolled
-      ? "shadow-2xl"
-      : "shadow-sm";
+      ? "shadow-elevated"
+      : "shadow-soft";
 
   const navText = tone === "light" ? "text-white" : "text-ink";
 
@@ -199,7 +199,7 @@ const NavLink = ({ item, pathname, tone }: { item: NavItem; pathname: string; to
                 className="z-20 text-ink"
               >
                 <div className="absolute -top-6 left-0 right-0 h-6 bg-transparent" />
-                <div className="absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-card/95 shadow-sm ring-1 ring-border/70" />
+                <div className="absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-card/95 shadow-soft ring-1 ring-border/70" />
                 <div className="relative rounded-3xl bg-card/95 text-ink shadow-elevated ring-1 ring-border/70 backdrop-blur-xl">
                   <FlyoutContent
                     onNavigate={() => setOpen(false)}
@@ -271,7 +271,7 @@ const ShotgunsFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) => (
         <Link
           key={entry.title}
           href={entry.href}
-          className="rounded-2xl border border-border/70 bg-card/40 p-4 text-left shadow-sm transition-colors hover:border-ink/30 hover:bg-card/70"
+          className="rounded-2xl border border-border/70 bg-card/40 p-4 text-left shadow-soft transition-colors hover:border-ink/30 hover:bg-card/70"
           onClick={onNavigate}
         >
           <Heading level={3} size="sm" className="text-perazzi-red">
@@ -288,7 +288,7 @@ const ShotgunsFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) => (
 
 const ExperienceFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) => (
   <div
-    className={`w-full rounded-3xl p-6 shadow-none lg:w-[520px] lg:shadow-xl ${
+    className={`w-full rounded-3xl p-6 shadow-none lg:w-[520px] lg:shadow-elevated ${
       textTone === "dark" ? "bg-perazzi-black text-white" : "bg-card text-ink"
     }`}
   >
@@ -379,7 +379,7 @@ const HeritageFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) => (
             <Link
               key={link.label}
               href={link.href}
-              className="block rounded-xl border border-border/60 bg-card/40 px-3 py-2 text-sm font-medium text-ink shadow-sm transition-colors hover:border-perazzi-red/50 hover:bg-card/70"
+              className="block rounded-xl border border-border/60 bg-card/40 px-3 py-2 text-sm font-medium text-ink shadow-soft transition-colors hover:border-perazzi-red/50 hover:bg-card/70"
               onClick={onNavigate}
             >
               {link.label}
@@ -562,7 +562,7 @@ const MobileMenuLink = ({
         >
           <div
             ref={ref}
-            className="overflow-hidden rounded-2xl border border-border/70 bg-card/60 shadow-sm"
+            className="overflow-hidden rounded-2xl border border-border/70 bg-card/60 shadow-soft"
           >
             <FlyoutContent onNavigate={() => setMenuOpen(false)} textTone="light" />
           </div>

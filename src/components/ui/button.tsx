@@ -19,7 +19,7 @@ const variantClasses: Record<ButtonVariant, string> = {
   primary:
     "bg-perazzi-red text-white shadow-medium ring-1 ring-black/10 hover:bg-perazzi-red/90 active:bg-perazzi-red/95",
   secondary:
-    "border border-border/70 bg-card/70 text-ink shadow-sm backdrop-blur-sm hover:border-ink/20 hover:bg-card/85 active:bg-card",
+    "border border-border/70 bg-card/70 text-ink shadow-soft backdrop-blur-sm hover:border-ink/20 hover:bg-card/85 active:bg-card",
   ghost:
     "border border-transparent bg-transparent text-current hover:bg-ink/5 active:bg-ink/10",
 };

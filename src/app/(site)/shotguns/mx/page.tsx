@@ -22,7 +22,7 @@ export default async function MXSeriesPage() {
     <div className="space-y-16">
       <SeriesHero hero={mxSeries.hero} analyticsId="SeriesHero:mx" />
       <section
-        className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-5"
+        className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-soft sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-5"
         aria-labelledby="mx-platform-guidance-heading"
       >
         <Heading

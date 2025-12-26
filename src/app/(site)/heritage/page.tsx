@@ -206,7 +206,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
             </div>
           </div>
           <div className="flex-1">
-            <div className="relative w-full overflow-hidden rounded-2xl border border-white/20 shadow-lg">
+            <div className="relative w-full overflow-hidden rounded-2xl border border-white/20 shadow-elevated">
               <Image
                 src={heritageIntroBackgroundSrc}
                 alt={heritageIntroBackgroundAlt}

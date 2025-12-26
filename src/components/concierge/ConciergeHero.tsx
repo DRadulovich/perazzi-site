@@ -82,7 +82,7 @@ export function ConciergeHero({ hero }: ConciergeHeroProps) {
             {hero.bullets.map((bullet) => (
               <div
                 key={bullet.title}
-                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-sm backdrop-blur-md"
+                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-soft backdrop-blur-md"
               >
                 <p className="text-sm font-semibold text-white">{bullet.title}</p>
                 <p className="mt-1 text-sm text-white/75">{bullet.body}</p>
@@ -91,7 +91,7 @@ export function ConciergeHero({ hero }: ConciergeHeroProps) {
           </div>
         </div>
 
-        <div className="space-y-4 rounded-2xl border border-white/20 bg-white/5 p-4 shadow-sm backdrop-blur-md md:col-span-6 lg:col-span-5 sm:rounded-3xl sm:p-5">
+        <div className="space-y-4 rounded-2xl border border-white/20 bg-white/5 p-4 shadow-soft backdrop-blur-md md:col-span-6 lg:col-span-5 sm:rounded-3xl sm:p-5">
           <div className="flex items-center justify-between gap-3">
             <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-white/70">
               Workshop snapshot
