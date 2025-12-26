@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Image from "next/image";
 
-import { Button, Input } from "@/components/ui";
+import { Button, Heading, Input, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import type { SerialLookupUi } from "@/types/heritage";
@@ -94,18 +94,20 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
       <div className="relative z-10 mx-auto flex min-h-[75vh] max-w-7xl items-center px-6 lg:px-10">
         <div className="space-y-6 rounded-2xl border border-perazzi-black/50 bg-card/0 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:border-perazzi-black/50 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-lg lg:px-10">
           <div className="space-y-2">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-white">
-              {heading}
-            </p>
-            <h2
+            <Heading
               id="serial-lookup-heading"
-              className="text-sm sm:text-base font-light italic leading-relaxed text-white/70"
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-white"
             >
+              {heading}
+            </Heading>
+            <Text className="font-light italic text-white/70" leading="relaxed">
               {subheading}
-            </h2>
-            <p className="text-sm sm:text-base md:text-lg leading-relaxed text-white/70">
+            </Text>
+            <Text className="text-white/70 md:text-lg">
               {instructions}
-            </p>
+            </Text>
           </div>
           <form action={formAction} className="space-y-4" noValidate>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -128,9 +130,13 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
               <LookupSubmitButton label={primaryButtonLabel} />
             </div>
             {state.status === "error" ? (
-              <p id="serial-lookup-error" className="text-sm text-perazzi-red">
-                {state.message}
-              </p>
+              <Text
+                asChild
+                className="text-perazzi-red"
+                leading="normal"
+              >
+                <p id="serial-lookup-error">{state.message}</p>
+              </Text>
             ) : null}
             <LookupResult state={state} emptyStateText={emptyStateText} />
           </form>
@@ -154,17 +160,17 @@ function LookupResult({ state, emptyStateText }: Readonly<{ state: SerialLookupF
 
   if (pending) {
     return (
-      <p className="text-sm text-white/70" aria-live="polite">
-        Consulting the archives...
-      </p>
+      <Text asChild className="text-white/70" leading="normal">
+        <p aria-live="polite">Consulting the archives...</p>
+      </Text>
     );
   }
 
   if (state.status === "idle") {
     return (
-      <p className="text-sm text-white/70" aria-live="polite">
-        {emptyStateText}
-      </p>
+      <Text asChild className="text-white/70" leading="normal">
+        <p aria-live="polite">{emptyStateText}</p>
+      </Text>
     );
   }
 
@@ -175,29 +181,43 @@ function LookupResult({ state, emptyStateText }: Readonly<{ state: SerialLookupF
   const { data } = state;
   return (
     <div className="rounded-2xl border border-perazzi-black/50 bg-perazzi-black/40 p-4 shadow-sm sm:bg-perazzi-black/70 md:p-6" aria-live="polite">
-      <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
+      <Text size="xs" className="font-semibold tracking-[0.35em] text-white/70" leading="normal">
         Record Found
-      </p>
-      <h3 className="mt-2 text-2xl sm:text-3xl font-semibold text-white">
+      </Text>
+      <Heading level={3} size="xl" className="mt-2 text-white">
         {data.year}
-      </h3>
-      <p className="text-sm text-white/70">Proof Code: {data.proofCode}</p>
+      </Heading>
+      <Text className="text-white/70" leading="normal">
+        Proof Code: {data.proofCode}
+      </Text>
       <dl className="mt-4 space-y-1 text-sm text-white/70">
         <div className="flex items-center justify-between">
-          <dt className="font-semibold text-white">Serial</dt>
-          <dd>{data.serial.toLocaleString()}</dd>
+          <Text asChild className="font-semibold text-white" leading="normal">
+            <dt>Serial</dt>
+          </Text>
+          <Text asChild className="text-white/70" leading="normal">
+            <dd>{data.serial.toLocaleString()}</dd>
+          </Text>
         </div>
         <div className="flex items-center justify-between">
-          <dt className="font-semibold text-white">Production Range:</dt>
-          <dd>
-            {data.range.start.toLocaleString()}-
-            {data.range.end ? data.range.end.toLocaleString() : "present"}
-          </dd>
+          <Text asChild className="font-semibold text-white" leading="normal">
+            <dt>Production Range:</dt>
+          </Text>
+          <Text asChild className="text-white/70" leading="normal">
+            <dd>
+              {data.range.start.toLocaleString()}-
+              {data.range.end ? data.range.end.toLocaleString() : "present"}
+            </dd>
+          </Text>
         </div>
         {data.model ? (
           <div className="flex items-center justify-between">
-            <dt className="font-semibold text-white">Model Lineage:</dt>
-            <dd>{data.model}</dd>
+            <Text asChild className="font-semibold text-white" leading="normal">
+              <dt>Model Lineage:</dt>
+            </Text>
+            <Text asChild className="text-white/70" leading="normal">
+              <dd>{data.model}</dd>
+            </Text>
           </div>
         ) : null}
       </dl>

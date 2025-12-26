@@ -1,4 +1,5 @@
 import type { ShotgunsSeriesEntry } from "@/types/catalog";
+import { Heading, Text } from "@/components/ui";
 
 type AtAGlanceStripProps = Readonly<{
   data: ShotgunsSeriesEntry["atAGlance"];
@@ -10,35 +11,44 @@ export function AtAGlanceStrip({ data }: AtAGlanceStripProps) {
       className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10"
       aria-labelledby="at-a-glance-heading"
     >
-      <h2
-        id="at-a-glance-heading"
-        className="text-xl sm:text-2xl font-semibold text-ink"
-      >
+      <Heading id="at-a-glance-heading" level={2} size="lg" className="text-ink">
         At a glance
-      </h2>
+      </Heading>
       <dl className="mt-6 grid gap-6 md:grid-cols-3">
         <div>
-          <dt className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
-            Trigger type
+          <dt>
+            <Text size="xs" muted className="font-semibold">
+              Trigger type
+            </Text>
           </dt>
-          <dd className="mt-2 text-sm sm:text-base text-ink">
-            {data.triggerType}
+          <dd className="mt-2">
+            <Text size="md" className="text-ink">
+              {data.triggerType}
+            </Text>
           </dd>
         </div>
         <div>
-          <dt className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
-            Weight distribution
+          <dt>
+            <Text size="xs" muted className="font-semibold">
+              Weight distribution
+            </Text>
           </dt>
-          <dd className="mt-2 text-sm sm:text-base text-ink">
-            {data.weightDistribution}
+          <dd className="mt-2">
+            <Text size="md" className="text-ink">
+              {data.weightDistribution}
+            </Text>
           </dd>
         </div>
         <div>
-          <dt className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
-            Typical disciplines
+          <dt>
+            <Text size="xs" muted className="font-semibold">
+              Typical disciplines
+            </Text>
           </dt>
-          <dd className="mt-2 text-sm sm:text-base text-ink">
-            {data.typicalDisciplines.join(" · ")}
+          <dd className="mt-2">
+            <Text size="md" className="text-ink">
+              {data.typicalDisciplines.join(" · ")}
+            </Text>
           </dd>
         </div>
       </dl>

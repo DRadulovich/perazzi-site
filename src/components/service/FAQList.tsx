@@ -6,7 +6,7 @@ import type { FAQItem } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, Heading, Text } from "@/components/ui";
 
 type FAQListProps = Readonly<{
   items: readonly FAQItem[];
@@ -30,19 +30,16 @@ export function FAQList({ items, heading, intro }: FAQListProps) {
       aria-labelledby="service-faq-heading"
     >
       <div className="space-y-2">
-        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+        <Text size="xs" muted className="font-semibold">
           FAQ
-        </p>
-        <h2
-          id="service-faq-heading"
-          className="text-2xl sm:text-3xl font-semibold text-ink"
-        >
+        </Text>
+        <Heading id="service-faq-heading" level={2} size="xl" className="text-ink">
           {title}
-        </h2>
+        </Heading>
         {lead ? (
-          <p className="text-sm sm:text-base leading-relaxed text-ink-muted">
+          <Text size="md" muted leading="relaxed">
             {lead}
-          </p>
+          </Text>
         ) : null}
       </div>
       <div className="space-y-4">

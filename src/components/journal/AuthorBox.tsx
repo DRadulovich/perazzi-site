@@ -1,5 +1,6 @@
 import Image from "next/image";
 import SafeHtml from "@/components/SafeHtml";
+import { Heading, Text } from "@/components/ui";
 import type { Author } from "@/types/journal";
 
 type AuthorBoxProps = Readonly<{
@@ -23,8 +24,12 @@ export function AuthorBox({ author }: AuthorBoxProps) {
         </div>
       ) : null}
       <div className="space-y-2">
-        <p className="text-sm uppercase tracking-[0.3em] text-ink-muted">About the author</p>
-        <h3 className="text-lg font-semibold text-ink">{author.name}</h3>
+        <Text size="xs" muted className="font-semibold">
+          About the author
+        </Text>
+        <Heading level={3} size="md" className="text-ink">
+          {author.name}
+        </Heading>
         {author.bioHtml ? (
           <SafeHtml
             className="prose prose-sm text-ink-muted"

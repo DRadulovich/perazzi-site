@@ -1,6 +1,8 @@
 import Image from "next/image";
 import SafeHtml from "@/components/SafeHtml";
 import type { AssuranceContent } from "@/types/build";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 type AssuranceBlockProps = Readonly<{
   assurance: AssuranceContent;
@@ -20,15 +22,19 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
     >
       <div className="space-y-6">
         {heading ? (
-          <p
+          <Text
             id="assurance-heading"
-            className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted"
+            size="xs"
+            className="font-semibold tracking-[0.35em] text-ink-muted"
+            leading="normal"
           >
             {heading}
-          </p>
+          </Text>
         ) : null}
         {label ? (
-          <p className="text-lg font-semibold text-ink">{label}</p>
+          <Heading level={2} size="lg" className="text-ink">
+            {label}
+          </Heading>
         ) : null}
         {body ? (
           <SafeHtml
@@ -38,11 +44,18 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
         ) : null}
         {quote ? (
           <blockquote className="rounded-2xl border-l-4 border-perazzi-red/60 bg-card/60 px-5 py-4 text-[13px] sm:text-sm italic leading-relaxed text-ink shadow-sm backdrop-blur-sm">
-            <p>“{quote.text}”</p>
+            <Text asChild size="md" className="italic text-ink" leading="relaxed">
+              <p>“{quote.text}”</p>
+            </Text>
             {quote.author ? (
-              <cite className="mt-2 block not-italic text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink-muted">
-                {quote.author}
-              </cite>
+              <Text
+                asChild
+                size="xs"
+                className="mt-2 block not-italic tracking-[0.3em] text-ink-muted"
+                leading="normal"
+              >
+                <cite>{quote.author}</cite>
+              </Text>
             ) : null}
           </blockquote>
         ) : null}
@@ -73,9 +86,9 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
             )}
           </div>
           {media.caption ? (
-            <figcaption className="text-[11px] sm:text-xs leading-relaxed text-ink-muted">
-              {media.caption}
-            </figcaption>
+            <Text asChild size="sm" className="text-ink-muted" leading="relaxed">
+              <figcaption>{media.caption}</figcaption>
+            </Text>
           ) : null}
         </figure>
       ) : null}

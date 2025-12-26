@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import SafeHtml from "@/components/SafeHtml";
-import { Input } from "@/components/ui";
+import { Heading, Input, Text } from "@/components/ui";
 
 import type { NetworkFinderUi, ServiceLocation, ServiceLocationType } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -70,17 +70,16 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
       aria-labelledby="service-network-heading"
     >
       <div className="space-y-2">
-        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+        <Text size="xs" muted className="font-semibold">
           Service network
-        </p>
-        <h2
-          id="service-network-heading"
-          className="text-2xl sm:text-3xl font-semibold text-ink"
-        >
+        </Text>
+        <Heading id="service-network-heading" level={2} size="xl" className="text-ink">
           {heading}
-        </h2>
+        </Heading>
         {subheading ? (
-          <p className="text-sm sm:text-base leading-relaxed text-ink-muted">{subheading}</p>
+          <Text size="md" muted leading="relaxed">
+            {subheading}
+          </Text>
         ) : null}
       </div>
       <form role="search" className="flex flex-col gap-3 md:flex-row md:items-end">
@@ -140,10 +139,12 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
                       logAnalytics(`FinderResultClick:${location.id}`);
                     }}
                   >
-                    <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+                    <Text size="xs" muted className="font-semibold">
                       {location.type}
-                    </p>
-                    <h3 className="text-lg font-semibold text-ink">{location.name}</h3>
+                    </Text>
+                    <Heading level={3} size="md" className="text-ink">
+                      {location.name}
+                    </Heading>
                     <SafeHtml
                       className="text-sm leading-relaxed text-ink-muted"
                       html={location.addressHtml}

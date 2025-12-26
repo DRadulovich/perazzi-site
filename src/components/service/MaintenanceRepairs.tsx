@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { GuideDownload, MaintenanceSection } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, Heading, Text } from "@/components/ui";
 
 type MaintenanceRepairsProps = {
   readonly maintenanceSection: MaintenanceSection;
@@ -28,15 +28,12 @@ export function MaintenanceRepairs({ maintenanceSection, guide }: MaintenanceRep
       aria-labelledby="maintenance-heading"
     >
       <div className="space-y-2">
-        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+        <Text size="xs" muted className="font-semibold">
           {heading}
-        </p>
-        <h2
-          id="maintenance-heading"
-          className="text-2xl sm:text-3xl font-semibold text-ink"
-        >
+        </Text>
+        <Heading id="maintenance-heading" level={2} size="xl" className="text-ink">
           {subheading}
-        </h2>
+        </Heading>
       </div>
       <SafeHtml
         className="prose prose-sm max-w-none leading-relaxed text-ink-muted md:prose-lg"

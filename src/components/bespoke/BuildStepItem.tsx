@@ -6,6 +6,7 @@ import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 import { Button } from "@/components/ui/button";
+import { Heading, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import type { FittingStage } from "@/types/build";
@@ -118,10 +119,12 @@ export function BuildStepItem({
 
   const header = (
     <header className="space-y-1">
-      <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+      <Text size="xs" muted className="font-semibold">
         Step {index + 1}
-      </span>
-      <h3 className="text-base sm:text-xl font-semibold text-ink">{step.title}</h3>
+      </Text>
+      <Heading level={3} size="md" className="text-ink">
+        {step.title}
+      </Heading>
     </header>
   );
 

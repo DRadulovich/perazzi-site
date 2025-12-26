@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import type { FittingStage } from "@/types/content";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 type TimelineItemProps = {
   readonly stage: FittingStage;
@@ -34,15 +36,17 @@ function TimelineContent({ stage, isPinned }: TimelineContentProps) {
           loading={isPinned && stage.order === 1 ? "eager" : "lazy"}
         />
       </div>
-      <p className="mt-4 text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+      <Text size="xs" className="mt-4 font-semibold text-ink-muted" leading="normal">
         Stage {stage.order}
-      </p>
-      <h3 className="mt-2 text-base sm:text-lg font-semibold text-ink">
+      </Text>
+      <Heading level={3} size="sm" className="mt-2 text-ink">
         {stage.title}
-      </h3>
-      <p className="mt-2 text-sm leading-relaxed text-ink-muted">{stage.body}</p>
+      </Heading>
+      <Text className="mt-2 text-ink-muted">{stage.body}</Text>
       {stage.media.caption ? (
-        <p className="mt-3 text-xs text-ink-muted">{stage.media.caption}</p>
+        <Text size="sm" className="mt-3 text-ink-muted" leading="normal">
+          {stage.media.caption}
+        </Text>
       ) : null}
     </>
   );

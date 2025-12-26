@@ -7,6 +7,8 @@ import Image from "next/image";
 import type { FactoryEssayItem, FactoryEssayUi } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 type FactoryPhotoEssayProps = Readonly<{
   readonly items: readonly FactoryEssayItem[];
@@ -66,15 +68,12 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
       aria-labelledby="factory-essay-heading"
     >
       <div className="space-y-2">
-        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+        <Text size="xs" className="font-semibold tracking-[0.35em] text-ink-muted" leading="normal">
           {eyebrow}
-        </p>
-        <h2
-          id="factory-essay-heading"
-          className="text-2xl sm:text-3xl font-semibold text-ink"
-        >
+        </Text>
+        <Heading id="factory-essay-heading" level={2} size="xl" className="text-ink">
           {heading}
-        </h2>
+        </Heading>
         {introHtml ? (
           <SafeHtml
             className="prose prose-sm max-w-3xl leading-relaxed text-ink-muted md:prose-lg"
@@ -113,12 +112,11 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
               </Dialog.Description>
               {currentItem ? (
                 <figure className="relative flex w-full max-w-5xl flex-col gap-3 rounded-2xl bg-card p-4 shadow-xl max-h-[70vh] sm:rounded-3xl sm:p-6 sm:shadow-2xl">
-                  <p
-                    className="sr-only"
-                    aria-live="polite"
-                  >
-                    Photo {(openIndex ?? 0) + 1} of {items.length}
-                  </p>
+                  <Text asChild className="sr-only" leading="normal">
+                    <p aria-live="polite">
+                      Photo {(openIndex ?? 0) + 1} of {items.length}
+                    </p>
+                  </Text>
                   <div
                     className="relative w-full flex-1 min-h-0 overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
                     style={{
@@ -135,9 +133,9 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
                     />
                   </div>
                   {currentItem.image.caption ? (
-                    <figcaption className="text-sm leading-relaxed text-ink-muted">
-                      {currentItem.image.caption}
-                    </figcaption>
+                    <Text asChild className="text-ink-muted" leading="relaxed">
+                      <figcaption>{currentItem.image.caption}</figcaption>
+                    </Text>
                   ) : null}
                   <div className="flex justify-between">
                     <button

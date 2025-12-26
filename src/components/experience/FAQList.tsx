@@ -10,7 +10,7 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 import { faq as faqFixture } from "@/content/experience/faq";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, Heading, Text } from "@/components/ui";
 
 type FAQListProps = Readonly<{
   items: FAQItem[];
@@ -32,15 +32,17 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
   const content = (
     <>
       <div className="space-y-2">
-        <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-          {title}
-        </p>
-        <h2
+        <Heading
           id="experience-faq-heading"
-          className="text-sm sm:text-base font-light italic leading-relaxed text-ink-muted"
+          level={2}
+          size="xl"
+          className="font-black uppercase italic tracking-[0.35em] text-ink"
         >
+          {title}
+        </Heading>
+        <Text size="md" muted leading="relaxed" className="font-light italic">
           {subtitle}
-        </h2>
+        </Text>
       </div>
       <div className="space-y-4">
         {faqItems.map((item, index) => (

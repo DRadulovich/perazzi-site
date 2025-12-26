@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import SafeHtml from "@/components/SafeHtml";
 import { Button } from "@/components/ui/button";
+import { Heading, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import type { BookingSection } from "@/types/experience";
@@ -65,15 +66,17 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
         <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
           <div className="space-y-2">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-              {heading}
-            </p>
-            <h2
+            <Heading
               id="experience-booking-heading"
-              className="mb-4 text-sm sm:text-base font-light italic leading-relaxed text-ink-muted"
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-ink"
             >
+              {heading}
+            </Heading>
+            <Text size="md" muted leading="relaxed" className="mb-4 font-light italic">
               {subheading}
-            </h2>
+            </Text>
           </div>
           <div className="grid gap-6 md:gap-8 lg:gap-10 md:grid-cols-2 xl:grid-cols-3">
             {options.map((option) => (
@@ -82,12 +85,12 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
                 className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-5 shadow-sm backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-7 lg:p-8"
               >
                 <div className="space-y-2">
-                  <h3 className="text-base sm:text-lg font-semibold text-ink">
+                  <Heading level={3} size="sm" className="text-ink">
                     {option.title}
-                  </h3>
-                  <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+                  </Heading>
+                  <Text size="xs" muted className="font-semibold">
                     {option.durationLabel ?? (option.durationMins ? `${option.durationMins} minutes` : "")}
-                  </p>
+                  </Text>
                   <SafeHtml
                     className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg prose-headings:text-ink prose-strong:text-ink"
                     html={option.descriptionHtml}
@@ -112,9 +115,9 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
           {scheduler ? (
             <div className="space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-8 lg:p-10">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-base sm:text-lg font-semibold text-ink">
+                <Heading level={3} size="sm" className="text-ink">
                   {scheduler.title}
-                </h3>
+                </Heading>
                 <Button
                   variant="primary"
                   size="sm"

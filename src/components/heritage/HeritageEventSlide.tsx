@@ -3,7 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import SafeHtml from "@/components/SafeHtml";
-import { Button } from "@/components/ui";
+import { Button, Heading, Text } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import type { HeritageEvent, HeritageEventLink } from "@/types/heritage";
@@ -58,9 +58,14 @@ export function HeritageEventSlide({
                 />
               </div>
             ) : (
-              <div className="flex w-full max-w-xl items-center justify-center rounded-2xl border border-dashed border-white/20 bg-black/20 text-[11px] sm:text-xs uppercase tracking-[0.25em] text-neutral-500">
-                Perazzi archive
-              </div>
+              <Text
+                asChild
+                size="xs"
+                className="flex w-full max-w-xl items-center justify-center rounded-2xl border border-dashed border-white/20 bg-black/20 tracking-[0.25em] text-neutral-500"
+                leading="normal"
+              >
+                <div>Perazzi archive</div>
+              </Text>
             )}
           </div>
 
@@ -72,12 +77,12 @@ export function HeritageEventSlide({
           >
             <div className="w-full space-y-5">
               <header className="space-y-1">
-                <p className="text-[11px] sm:text-xs uppercase tracking-[0.28em] text-neutral-400">
+                <Text size="xs" className="tracking-[0.28em] text-neutral-400" leading="normal">
                   {event.date}
-                </p>
-                <h3 className="text-base sm:text-xl font-semibold tracking-tight text-neutral-50">
+                </Text>
+                <Heading level={3} size="sm" className="tracking-tight text-neutral-50">
                   {event.title}
-                </h3>
+                </Heading>
               </header>
 
               {event.summaryHtml ? (
@@ -138,9 +143,9 @@ export function HeritageEventSlide({
           >
             <div className="max-h-[80vh] w-full max-w-lg overflow-hidden rounded-2xl bg-black text-neutral-100 shadow-lg">
               <div className="flex items-center justify-between border-b border-white/15 px-4 py-3">
-                <p className="text-[11px] uppercase tracking-[0.28em] text-neutral-400">
+                <Text size="xs" className="tracking-[0.28em] text-neutral-400" leading="normal">
                   {event.date}
-                </p>
+                </Text>
                 <Dialog.Close asChild>
                   <Button
                     type="button"
@@ -153,12 +158,14 @@ export function HeritageEventSlide({
                 </Dialog.Close>
               </div>
               <div className="space-y-3 overflow-y-auto px-4 pt-3 pb-4">
-                <h3
+                <Heading
                   id={`heritage-event-modal-${event.id}`}
-                  className="text-base sm:text-lg font-semibold tracking-tight text-neutral-50"
+                  level={3}
+                  size="sm"
+                  className="tracking-tight text-neutral-50"
                 >
                   {event.title}
-                </h3>
+                </Heading>
                 {event.summaryHtml ? (
                   <SafeHtml
                     className="prose prose-invert max-w-none text-sm leading-relaxed text-neutral-200 prose-p:mb-3 prose-p:mt-0 prose-strong:text-neutral-50 prose-em:text-neutral-200"

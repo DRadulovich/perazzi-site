@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import clsx from "clsx";
 import { ChevronUp } from "lucide-react";
+import { Text } from "@/components/ui/text";
 
 type BuildSheetEntry = { id: string; label: string; value: string };
 type BuildSheetDetails = {
@@ -146,13 +147,13 @@ function BuildSheetEntryCard({
               <div className="space-y-1 text-[11px] sm:text-xs leading-relaxed text-ink">
                 {detailLines.map((detail) =>
                   detail.isDescription ? (
-                    <p key={detail.id} className="text-ink">
-                      {detail.text}
-                    </p>
+                    <Text asChild key={detail.id} className="text-ink" leading="relaxed">
+                      <p>{detail.text}</p>
+                    </Text>
                   ) : (
-                    <p key={detail.id} className="text-ink-muted">
-                      {detail.label ? `${detail.label}: ${detail.text}` : detail.text}
-                    </p>
+                    <Text asChild key={detail.id} className="text-ink-muted" leading="relaxed">
+                      <p>{detail.label ? `${detail.label}: ${detail.text}` : detail.text}</p>
+                    </Text>
                   ),
                 )}
               </div>
@@ -199,10 +200,12 @@ function BuildSheetDrawerContent({
       <div className="flex flex-col gap-2 border-b border-border bg-card/80 px-4 py-3 backdrop-blur-md sm:px-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+            <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
               Build sheet
-            </p>
-            <p className="text-sm sm:text-base text-ink">Selections so far</p>
+            </Text>
+            <Text className="text-ink" leading="normal">
+              Selections so far
+            </Text>
           </div>
           <div className="flex items-center gap-2">
             {onClose ? (
@@ -283,9 +286,9 @@ function BuildSheetDrawerContent({
       ) : null}
       <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
         {entries.length === 0 ? (
-          <p className="text-sm sm:text-base leading-relaxed text-ink-muted">
+          <Text className="text-ink-muted" leading="relaxed">
             Selections will appear here as you choose them.
-          </p>
+          </Text>
         ) : (
           <ul className="space-y-2 text-sm sm:text-base text-ink">
             {entries.map((entry) => (

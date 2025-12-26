@@ -2,6 +2,7 @@
 
 import type { GuidesSection } from "@/types/service";
 import SafeHtml from "@/components/SafeHtml";
+import { Heading, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 
@@ -27,19 +28,16 @@ export function CareGuidesDownloads({ guidesSection }: CareGuidesDownloadsProps)
       aria-labelledby="care-guides-heading"
     >
       <div className="space-y-2">
-        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+        <Text size="xs" muted className="font-semibold">
           {careGuidesLabel}
-        </p>
-        <h2
-          id="care-guides-heading"
-          className="text-2xl sm:text-3xl font-semibold text-ink"
-        >
+        </Text>
+        <Heading id="care-guides-heading" level={2} size="xl" className="text-ink">
           {heading}
-        </h2>
+        </Heading>
         {downloadsLabel ? (
-          <p className="text-sm sm:text-base leading-relaxed text-ink-muted">
+          <Text size="md" muted leading="relaxed">
             {downloadsLabel}
-          </p>
+          </Text>
         ) : null}
       </div>
       <ul className="space-y-4">
@@ -48,7 +46,9 @@ export function CareGuidesDownloads({ guidesSection }: CareGuidesDownloadsProps)
             key={guide.id}
             className="rounded-2xl border border-border/75 bg-card/75 p-4 shadow-sm"
           >
-            <h3 className="text-lg font-semibold text-ink">{guide.title}</h3>
+            <Heading level={3} size="md" className="text-ink">
+              {guide.title}
+            </Heading>
             <SafeHtml
               className="text-sm leading-relaxed text-ink-muted"
               html={guide.summaryHtml}

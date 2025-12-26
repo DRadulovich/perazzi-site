@@ -9,6 +9,7 @@ import { GuardrailNotice } from "@/components/concierge/GuardrailNotice";
 import type { GuardrailStatus } from "@/components/concierge/GuardrailNotice";
 import { SanityDetailsDrawer } from "@/components/concierge/SanityDetailsDrawer";
 import { BuildSheetDrawer } from "@/components/concierge/BuildSheetDrawer";
+import { Heading, Text } from "@/components/ui";
 import {
   getFieldOrder,
   getNextField,
@@ -683,19 +684,23 @@ export function ConciergePageShell() {
   if (nextField?.id === "ENGRAVING" && !displayOptions.length) {
     if (!buildState.GRADE) {
       engravingStatusMessage = (
-        <p className="text-sm text-ink-muted">
+        <Text muted>
           Choose a grade first and we’ll load engravings for that grade here.
-        </p>
+        </Text>
       );
     } else if (engravingLoading) {
-      engravingStatusMessage = <p className="text-sm text-ink-muted">Loading engravings…</p>;
+      engravingStatusMessage = <Text muted>Loading engravings…</Text>;
     } else if (engravingError) {
-      engravingStatusMessage = <p className="text-xs text-red-600">{engravingError}</p>;
+      engravingStatusMessage = (
+        <Text size="sm" className="text-red-600" leading="normal">
+          {engravingError}
+        </Text>
+      );
     } else {
       engravingStatusMessage = (
-        <p className="text-sm text-ink-muted">
+        <Text muted>
           No engravings found for grade {buildState.GRADE}.
-        </p>
+        </Text>
       );
     }
   }
@@ -704,20 +709,20 @@ export function ConciergePageShell() {
   if (nextFieldAfterCurrent) {
     nextStepContent = (
       <>
-        <p className="text-sm font-semibold text-ink">{getFieldLabel(nextFieldAfterCurrent.id)}</p>
+        <Text className="font-semibold text-ink" leading="normal">
+          {getFieldLabel(nextFieldAfterCurrent.id)}
+        </Text>
         {FIELD_DESCRIPTIONS[nextFieldAfterCurrent.id] ? (
-          <p className="text-sm text-ink-muted">
-            {FIELD_DESCRIPTIONS[nextFieldAfterCurrent.id]}
-          </p>
+          <Text muted>{FIELD_DESCRIPTIONS[nextFieldAfterCurrent.id]}</Text>
         ) : null}
       </>
     );
   } else if (nextField) {
-    nextStepContent = <p className="text-sm text-ink-muted">Depends on your current selection.</p>;
+    nextStepContent = <Text muted>Depends on your current selection.</Text>;
   } else {
     nextStepContent = (
       <div className="space-y-2">
-        <p className="text-sm text-ink-muted">All steps satisfied.</p>
+        <Text muted>All steps satisfied.</Text>
         <button
           type="button"
           onClick={handleBuildReview}
@@ -733,37 +738,41 @@ export function ConciergePageShell() {
   return (
     <div className="space-y-8" id="concierge-workshop" tabIndex={-1}>
       <header className="space-y-3">
-        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted">
+        <Text
+          size="xs"
+          className="font-semibold tracking-[0.25em] text-ink-muted"
+          leading="normal"
+        >
           Perazzi Build Planner
-        </p>
+        </Text>
         <div className="space-y-3">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-ink">
+          <Heading level={2} size="xl" className="text-ink">
             Designing a Perazzi, Together
-          </h2>
-          <div className="space-y-3 text-sm sm:text-base leading-relaxed text-ink-muted">
-            <p>
+          </Heading>
+          <div className="space-y-3">
+            <Text muted>
               This space is the closest you can come to sitting across from a Perazzi master, without leaving home. The Build Navigator
               walks you step by step through every element of a bespoke shotgun—platform, fit, balance, aesthetics—while the Perazzi
               Concierge listens, answers, and explains as if you were in the atelier itself.
-            </p>
-            <p>
+            </Text>
+            <Text muted>
               A Perazzi is not a catalogue choice; it is a composition. There are more possibilities here than most guns will ever offer,
               and that is the point. You are not expected to finish in a few minutes. You are invited to move slowly—explore each stage,
               open the cards, press “explain these options,” ask questions, change your mind, return tomorrow and see it with fresh eyes.
-            </p>
-            <p>
+            </Text>
+            <Text muted>
               As you progress, the system remembers where you are and responds to what you say, helping you translate your history, style,
               and ambitions into real decisions. By the time you reach the end, you won’t just have selected options from a list—you’ll
               have shaped an instrument with a clear purpose and a familiar soul: a Perazzi that already feels like it belongs to you.
-            </p>
-            <p>
+            </Text>
+            <Text muted>
               If you feel unsure where to begin, that’s exactly the right place to start. Ask a simple question, open a single stage, or
               let the Navigator suggest the next step—there is no “wrong” way to move through this process. You can speak to the assistant
               as you would to a trusted fitter: share your habits, doubts, even the way you hope the gun will make you feel on the stand.
               Take a few minutes or a few evenings; step away and return when you’re ready. When you’re curious, begin—and let the
               conversation slowly reveal the Perazzi that feels like it was waiting for you.
-            </p>
-            <p>(NOTE: This immersive experience is best done on a computer, and not a mobile device.)</p>
+            </Text>
+            <Text muted>(NOTE: This immersive experience is best done on a computer, and not a mobile device.)</Text>
           </div>
         </div>
       </header>
@@ -777,12 +786,10 @@ export function ConciergePageShell() {
         >
           <div className="flex items-center justify-between gap-3 border-b border-border/70 pb-3">
             <div>
-              <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+              <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
                 Conversation
-              </p>
-              <p className="text-sm sm:text-base text-ink-muted">
-                Context carries across each message.
-              </p>
+              </Text>
+              <Text muted>Context carries across each message.</Text>
             </div>
             <div className="flex items-center gap-3">
               {pending || isTyping ? (
@@ -813,9 +820,9 @@ export function ConciergePageShell() {
           </div>
           <div className="mt-4 space-y-2 border-t border-border/70 pt-4">
             {error ? (
-              <p className="text-sm sm:text-base leading-relaxed text-red-600">
+              <Text className="text-red-600">
                 Something went wrong reaching the concierge. Please try again.
-              </p>
+              </Text>
             ) : null}
             <label
               htmlFor="concierge-question"
@@ -853,9 +860,9 @@ export function ConciergePageShell() {
         >
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+              <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
                 Build navigator
-              </p>
+              </Text>
               <button
                 type="button"
                 className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:text-ink focus-ring"
@@ -864,28 +871,32 @@ export function ConciergePageShell() {
                 Reset
               </button>
             </div>
-            {buildError ? <p className="text-xs text-red-600">{buildError}</p> : null}
+            {buildError ? (
+              <Text size="sm" className="text-red-600" leading="normal">
+                {buildError}
+              </Text>
+            ) : null}
 
             <div className="space-y-2 rounded-2xl border border-border/70 bg-card/60 px-3 py-3 shadow-sm backdrop-blur-sm">
-              <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+              <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
                 Current Build Category
-              </p>
-              <p className="text-sm sm:text-base text-ink">
+              </Text>
+              <Text className="text-ink" leading="normal">
                 {nextField ? nextField.section || "Unknown" : "Complete"}
-              </p>
+              </Text>
             </div>
 
             <div className="space-y-2 rounded-2xl border border-border/70 bg-card/60 px-3 py-3 shadow-sm backdrop-blur-sm">
-              <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+              <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
                 Current step
-              </p>
+              </Text>
               {nextField ? (
                 <>
-                  <p className="text-sm sm:text-base font-semibold text-ink">{getFieldLabel(nextField.id)}</p>
+                  <Text className="font-semibold text-ink" leading="normal">
+                    {getFieldLabel(nextField.id)}
+                  </Text>
                   {FIELD_DESCRIPTIONS[nextField.id] ? (
-                    <p className="text-sm sm:text-base leading-relaxed text-ink-muted">
-                      {FIELD_DESCRIPTIONS[nextField.id]}
-                    </p>
+                    <Text muted>{FIELD_DESCRIPTIONS[nextField.id]}</Text>
                   ) : null}
                   {displayOptions.length ? (
                     <>
@@ -940,33 +951,35 @@ export function ConciergePageShell() {
                   ) : (
                     <div className="space-y-2">
                       {engravingStatusMessage ?? (
-                        <p className="text-sm text-ink-muted">
+                        <Text muted>
                           No valid options available based on current selections.
-                        </p>
+                        </Text>
                       )}
                     </div>
                   )}
                 </>
               ) : (
-                <p className="text-sm text-ink-muted">All steps completed.</p>
+                <Text muted>All steps completed.</Text>
               )}
             </div>
 
-              <div className="space-y-3 rounded-2xl border border-border/70 bg-card/60 px-3 py-3 shadow-sm backdrop-blur-sm">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setBuildSheetDrawerOpen(true);
-                  }}
-                  className="w-full rounded-full border border-perazzi-red bg-perazzi-red px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:border-ink hover:text-card"
-                >
-                  View Build Sheet
-                </button>
-                <div className="space-y-2 rounded-2xl border border-border/70 bg-card/70 px-3 py-3 shadow-sm backdrop-blur-sm">
-                  <p className="text-xs uppercase tracking-[0.2em] text-ink-muted">Next step</p>
-                  {nextStepContent}
-                </div>
+            <div className="space-y-3 rounded-2xl border border-border/70 bg-card/60 px-3 py-3 shadow-sm backdrop-blur-sm">
+              <button
+                type="button"
+                onClick={() => {
+                  setBuildSheetDrawerOpen(true);
+                }}
+                className="w-full rounded-full border border-perazzi-red bg-perazzi-red px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:border-ink hover:text-card"
+              >
+                View Build Sheet
+              </button>
+              <div className="space-y-2 rounded-2xl border border-border/70 bg-card/70 px-3 py-3 shadow-sm backdrop-blur-sm">
+                <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
+                  Next step
+                </Text>
+                {nextStepContent}
               </div>
+            </div>
           </div>
         </aside>
 
@@ -984,39 +997,68 @@ export function ConciergePageShell() {
             >
               Close
             </button>
-              <div className="flex-1 space-y-4 overflow-y-auto p-6 pr-5">
-                {selectedInfoCard.imageUrl ? (
-                  <Image
-                    src={selectedInfoCard.fullImageUrl ?? selectedInfoCard.imageUrl}
-                    alt={selectedInfoCard.title}
-                    width={1600}
-                    height={1000}
-                    className="w-full rounded-2xl object-cover"
-                  />
-                ) : null}
-                <div className="space-y-2">
-                  <h3 className="text-xl font-semibold text-ink">{selectedInfoCard.title}</h3>
+            <div className="flex-1 space-y-4 overflow-y-auto p-6 pr-5">
+              {selectedInfoCard.imageUrl ? (
+                <Image
+                  src={selectedInfoCard.fullImageUrl ?? selectedInfoCard.imageUrl}
+                  alt={selectedInfoCard.title}
+                  width={1600}
+                  height={1000}
+                  className="w-full rounded-2xl object-cover"
+                />
+              ) : null}
+              <div className="space-y-2">
+                <Heading level={3} size="lg" className="text-ink">
+                  {selectedInfoCard.title}
+                </Heading>
                 {selectedInfoCard.description ? (
-                  <p className="text-sm text-ink-muted whitespace-pre-line">{selectedInfoCard.description}</p>
+                  <Text muted className="whitespace-pre-line">
+                    {selectedInfoCard.description}
+                  </Text>
                 ) : null}
-                <div className="grid gap-2 text-sm text-ink">
+                <div className="grid gap-2">
                   {selectedInfoCard.platform ? (
-                    <p><span className="font-semibold">Platform:</span> {selectedInfoCard.platform}</p>
+                    <Text asChild className="text-ink" leading="normal">
+                      <p>
+                        <span className="font-semibold">Platform:</span> {selectedInfoCard.platform}
+                      </p>
+                    </Text>
                   ) : null}
                   {selectedInfoCard.grade ? (
-                    <p><span className="font-semibold">Grade:</span> {selectedInfoCard.grade}</p>
+                    <Text asChild className="text-ink" leading="normal">
+                      <p>
+                        <span className="font-semibold">Grade:</span> {selectedInfoCard.grade}
+                      </p>
+                    </Text>
                   ) : null}
                   {selectedInfoCard.gauges?.length ? (
-                    <p><span className="font-semibold">Gauges:</span> {selectedInfoCard.gauges.join(", ")}</p>
+                    <Text asChild className="text-ink" leading="normal">
+                      <p>
+                        <span className="font-semibold">Gauges:</span> {selectedInfoCard.gauges.join(", ")}
+                      </p>
+                    </Text>
                   ) : null}
                   {selectedInfoCard.triggerTypes?.length ? (
-                    <p><span className="font-semibold">Trigger types:</span> {selectedInfoCard.triggerTypes.join(", ")}</p>
+                    <Text asChild className="text-ink" leading="normal">
+                      <p>
+                        <span className="font-semibold">Trigger types:</span> {selectedInfoCard.triggerTypes.join(", ")}
+                      </p>
+                    </Text>
                   ) : null}
                   {selectedInfoCard.recommendedPlatforms?.length ? (
-                    <p><span className="font-semibold">Recommended platforms:</span> {selectedInfoCard.recommendedPlatforms.join(", ")}</p>
+                    <Text asChild className="text-ink" leading="normal">
+                      <p>
+                        <span className="font-semibold">Recommended platforms:</span>{" "}
+                        {selectedInfoCard.recommendedPlatforms.join(", ")}
+                      </p>
+                    </Text>
                   ) : null}
                   {selectedInfoCard.popularModels?.length ? (
-                    <p><span className="font-semibold">Popular models:</span> {selectedInfoCard.popularModels.join(", ")}</p>
+                    <Text asChild className="text-ink" leading="normal">
+                      <p>
+                        <span className="font-semibold">Popular models:</span> {selectedInfoCard.popularModels.join(", ")}
+                      </p>
+                    </Text>
                   ) : null}
                 </div>
               </div>

@@ -8,6 +8,8 @@ import type { ShotgunsLandingData } from "@/types/catalog";
 import { logAnalytics } from "@/lib/analytics";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 type TriggerExplainerProps = Readonly<{
   explainer: ShotgunsLandingData["triggerExplainer"];
@@ -72,15 +74,17 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
             className="space-y-4"
           >
             <div className="space-y-3">
-              <h2
+              <Heading
                 id="trigger-explainer-heading"
-                className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink"
+                level={2}
+                size="xl"
+                className="font-black uppercase italic tracking-[0.35em] text-ink"
               >
                 {explainer.title}
-              </h2>
-              <p className="text-sm sm:text-base font-light italic text-ink-muted">
+              </Heading>
+              <Text className="font-light italic text-ink-muted" leading="normal">
                 {subheading}
-              </p>
+              </Text>
               <CollapsibleTrigger
                 className="mt-1 inline-flex w-fit items-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring lg:hidden"
                 aria-controls="trigger-explainer-content"
@@ -135,9 +139,14 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                   />
                 </div>
                 {explainer.diagram.caption ? (
-                  <figcaption className="mt-3 text-xs uppercase tracking-[0.2em] text-ink-muted">
-                    {explainer.diagram.caption}
-                  </figcaption>
+                  <Text
+                    asChild
+                    size="xs"
+                    className="mt-3 tracking-[0.2em] text-ink-muted"
+                    leading="normal"
+                  >
+                    <figcaption>{explainer.diagram.caption}</figcaption>
+                  </Text>
                 ) : null}
               </figure>
             </CollapsibleContent>

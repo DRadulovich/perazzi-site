@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, Heading, Text } from "@/components/ui";
 
 type VisitFactoryProps = {
   readonly visitFactorySection: VisitFactoryData;
@@ -71,15 +71,17 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
         <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
           <div className="space-y-2">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-              {heading}
-            </p>
-            <h2
+            <Heading
               id="visit-factory-heading"
-              className="mb-4 text-sm sm:text-base font-light italic leading-relaxed text-ink-muted"
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-ink"
             >
+              {heading}
+            </Heading>
+            <Text size="md" muted leading="relaxed" className="mb-4 font-light italic">
               {subheading}
-            </h2>
+            </Text>
             <div className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg md:max-w-4xl lg:max-w-4xl prose-headings:text-ink prose-strong:text-ink">
               <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
                 {visit.introHtml}
@@ -89,12 +91,12 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
             <article className="space-y-5 rounded-2xl border border-border/70 bg-card/60 p-5 shadow-sm backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated lg:p-7">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
+              <Text size="xs" muted className="font-semibold">
                 Botticino headquarters
-              </p>
-              <h3 className="text-base sm:text-lg font-semibold text-ink">
+              </Text>
+              <Heading level={3} size="sm" className="text-ink">
                 {visit.location.name}
-              </h3>
+              </Heading>
               <div className="text-sm leading-relaxed text-ink-muted">
                 <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
                   {visit.location.addressHtml}

@@ -14,6 +14,8 @@ import { getManufactureYearBySerial } from "@/sanity/queries/manufactureYear";
 import { PerazziHeritageEras } from "@/components/heritage/PerazziHeritageEras";
 import { groupEventsByEra } from "@/utils/heritage/groupEventsByEra";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 async function serialLookupAction(
   _: SerialLookupFormState,
@@ -179,16 +181,20 @@ export default async function HeritagePage(): Promise<ReactElement> {
         />
         <div className="relative mx-auto flex max-w-6xl flex-col gap-8 px-6 text-white lg:flex-row lg:items-center lg:gap-12">
           <div className="flex-1 space-y-4">
-            <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
+            <Text size="xs" className="font-semibold tracking-[0.35em] text-white/70" leading="normal">
               {heritageIntroEyebrow}
-            </p>
-            <h2 className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em]">
+            </Text>
+            <Heading
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-white"
+            >
               {heritageIntroHeading}
-            </h2>
+            </Heading>
             {heritageIntroParagraphs.map((paragraph) => (
-              <p key={paragraph} className="text-sm sm:text-base leading-relaxed text-white/80">
+              <Text key={paragraph} className="text-white/80">
                 {paragraph}
-              </p>
+              </Text>
             ))}
             <div className="hidden lg:flex lg:pt-2">
               <Link
@@ -234,15 +240,17 @@ export default async function HeritagePage(): Promise<ReactElement> {
       >
         <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 text-white lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
           <div className="space-y-4">
-            <p
+            <Heading
               id="heritage-workshop-heading"
-              className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em]"
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-white"
             >
               {workshopHeading}
-            </p>
-            <p className="mb-8 text-sm sm:text-base font-light italic text-gray-300 leading-relaxed">
+            </Heading>
+            <Text className="mb-8 font-light italic text-gray-300">
               {workshopIntro}
-            </p>
+            </Text>
             <div className="flex flex-wrap justify-start gap-3">
               <Link
                 href={workshopPrimaryHref}
@@ -262,9 +270,9 @@ export default async function HeritagePage(): Promise<ReactElement> {
           </div>
 
           <div className="space-y-3 text-sm sm:text-base font-light italic text-gray-300">
-            <p className="text-sm sm:text-base font-semibold not-italic text-white">
+            <Text className="font-semibold not-italic text-white" leading="normal">
               What the atelier can surface:
-            </p>
+            </Text>
             <ul className="space-y-2">
               {workshopBullets.map((bullet) => {
                 const [label, ...rest] = bullet.split(" - ");
@@ -277,9 +285,9 @@ export default async function HeritagePage(): Promise<ReactElement> {
                 );
               })}
             </ul>
-            <p className="text-sm sm:text-base font-light italic text-gray-300 leading-relaxed">
+            <Text className="font-light italic text-gray-300">
               {workshopClosing}
-            </p>
+            </Text>
           </div>
         </div>
       </section>
@@ -303,15 +311,17 @@ export default async function HeritagePage(): Promise<ReactElement> {
         >
           <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 text-white lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10 min-h-[50vh]">
             <div className="space-y-4">
-              <p
+              <Heading
                 id="heritage-champions-intro-heading"
-                className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em]"
+                level={2}
+                size="xl"
+                className="font-black uppercase italic tracking-[0.35em] text-white"
               >
                 {championsIntroHeading}
-              </p>
-              <p className="mb-8 text-sm sm:text-base font-light italic text-gray-300 leading-relaxed">
+              </Heading>
+              <Text className="mb-8 font-light italic text-gray-300">
                 {championsIntroText}
-              </p>
+              </Text>
               <ChatTriggerButton
                 label={championsChatLabel}
                 payload={{
@@ -324,9 +334,9 @@ export default async function HeritagePage(): Promise<ReactElement> {
             </div>
 
             <div className="space-y-3 text-sm sm:text-base font-light italic text-gray-300">
-            <p className="text-sm sm:text-base font-semibold not-italic text-white">
+            <Text className="font-semibold not-italic text-white" leading="normal">
               What you&apos;ll see below:
-            </p>
+            </Text>
             <ul className="space-y-2">
               {championsIntroBullets.map((bullet) => {
                 const [label, ...rest] = bullet.split(" - ");
@@ -339,9 +349,9 @@ export default async function HeritagePage(): Promise<ReactElement> {
                 );
               })}
             </ul>
-            <p className="text-sm sm:text-base font-light italic text-gray-300 leading-relaxed">
+            <Text className="font-light italic text-gray-300">
               {championsIntroClosing}
-            </p>
+            </Text>
           </div>
         </div>
       </section>
@@ -363,15 +373,17 @@ export default async function HeritagePage(): Promise<ReactElement> {
           />
           <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 text-white lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10 min-h-[50vh]">
             <div className="space-y-4">
-              <p
+              <Heading
                 id="heritage-factory-intro-heading"
-                className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em]"
+                level={2}
+                size="xl"
+                className="font-black uppercase italic tracking-[0.35em] text-white"
               >
                 {factoryHeading}
-              </p>
-              <p className="mb-8 text-sm sm:text-base font-light italic text-gray-300 leading-relaxed">
+              </Heading>
+              <Text className="mb-8 font-light italic text-gray-300">
                 {factoryIntro}
-              </p>
+              </Text>
               <ChatTriggerButton
                 label={factoryChatLabel}
                 payload={{
@@ -384,9 +396,9 @@ export default async function HeritagePage(): Promise<ReactElement> {
             </div>
 
             <div className="space-y-3 text-sm sm:text-base font-light italic text-gray-300">
-            <p className="text-sm sm:text-base font-semibold not-italic text-white">
+            <Text className="font-semibold not-italic text-white" leading="normal">
               What you&apos;ll see below:
-            </p>
+            </Text>
             <ul className="space-y-2">
               {factoryBullets.map((bullet) => {
                 const [label, ...rest] = bullet.split(" - ");
@@ -399,9 +411,9 @@ export default async function HeritagePage(): Promise<ReactElement> {
                 );
               })}
             </ul>
-            <p className="text-sm sm:text-base font-light italic text-gray-300 leading-relaxed">
+            <Text className="font-light italic text-gray-300">
               {factoryClosing}
-            </p>
+            </Text>
           </div>
         </div>
       </section>

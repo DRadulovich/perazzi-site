@@ -5,12 +5,13 @@ import { getTranslations } from "next-intl/server";
 import { SkipToContent } from "@/components/skip-to-content";
 import { PrimaryNav } from "@/components/primary-nav";
 import { ChatWidgetClient } from "@/components/chat";
+import { Text } from "@/components/ui/text";
 
 type SiteShellProps = {
-  children: ReactNode;
-  showChatWidget?: boolean;
-  mainClassName?: string;
-  contentClassName?: string;
+  readonly children: ReactNode;
+  readonly showChatWidget?: boolean;
+  readonly mainClassName?: string;
+  readonly contentClassName?: string;
 };
 
 export async function SiteShell({
@@ -58,13 +59,17 @@ export async function SiteShell({
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-12 md:gap-10">
             <div className="space-y-3 md:col-span-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">Perazzi</p>
-              <p className="text-sm sm:text-base text-ink leading-relaxed">
+              <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+                Perazzi
+              </Text>
+              <Text className="text-ink">
                 Purpose-built competition shotguns, crafted in Botticino to grow with the marksmen who refuse to be ordinary.
-              </p>
+              </Text>
             </div>
             <div className="space-y-3 md:col-span-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">Explore</p>
+              <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+                Explore
+              </Text>
               <ul className="grid grid-cols-2 gap-3 text-ink sm:grid-cols-3 md:grid-cols-2">
                 {primaryLinks.map((link) => (
                   <li key={link.label}>
@@ -79,7 +84,9 @@ export async function SiteShell({
               </ul>
             </div>
             <div className="space-y-3 md:col-span-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">Support</p>
+              <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+                Support
+              </Text>
               <ul className="space-y-2 text-ink">
                 {secondaryLinks.map((link) => (
                   <li key={link.label}>
@@ -95,7 +102,9 @@ export async function SiteShell({
             </div>
           </div>
           <div className="mt-10 flex flex-col gap-3 border-t border-subtle pt-6 text-xs text-ink-muted sm:flex-row sm:items-center sm:justify-between">
-            <span className="text-ink">Perazzi S.p.A · Botticino, Italy</span>
+            <Text asChild size="sm" className="text-ink" leading="normal">
+              <span>Perazzi S.p.A · Botticino, Italy</span>
+            </Text>
             <div className="flex flex-wrap gap-4">
               {legalLinks.map((link) => (
                 <Link

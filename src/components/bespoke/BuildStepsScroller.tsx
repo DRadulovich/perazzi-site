@@ -7,6 +7,7 @@ import { useMemo, useRef, useState, type MouseEvent } from "react";
 import type { FittingStage } from "@/types/build";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
+import { Heading, Text } from "@/components/ui";
 
 type BuildStepsScrollerProps = Readonly<{
   steps: FittingStage[];
@@ -124,7 +125,7 @@ export function BuildStepsScroller({
           loading="lazy"
         />
         <div
-          className="absolute inset-0 bg-[color:var(--scrim-soft)]"
+          className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
         <div
@@ -143,19 +144,21 @@ export function BuildStepsScroller({
         <div className="flex w-full flex-col gap-8 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
           {/* Intro block */}
           <div className="max-w-3xl space-y-3 shrink-0">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-              {heading}
-            </p>
-            <h2
+            <Heading
               id="build-steps-heading"
-              className="text-sm sm:text-base font-light italic text-ink-muted"
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-ink"
             >
+              {heading}
+            </Heading>
+            <Text size="md" muted leading="relaxed" className="font-light italic">
               {subheading}
-            </h2>
-            <p className="max-w-xl text-sm sm:text-base leading-relaxed text-ink-muted">
+            </Text>
+            <Text size="md" muted leading="relaxed" className="max-w-xl">
               Scroll to move from moment to moment. Each step is a chapter in the
               ritual of building a Perazzi to your measure.
-            </p>
+            </Text>
             <div className="flex flex-wrap items-center gap-4">
               <a
                 href="#build-steps-sequence"
@@ -279,15 +282,17 @@ export function BuildStepsScroller({
                                 onClick={() => { toggleStepOpen(step.id); }}
                               >
                                 <div className="w-full space-y-1">
-                                  <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+                                  <Text size="xs" muted className="font-semibold">
                                     Step {index + 1} of {totalSteps}
-                                  </p>
-                                  <h3
+                                  </Text>
+                                  <Heading
                                     id={`build-step-heading-${step.id}`}
-                                    className="text-xl sm:text-2xl font-semibold text-ink"
+                                    level={3}
+                                    size="lg"
+                                    className="text-ink"
                                   >
                                     {step.title}
-                                  </h3>
+                                  </Heading>
                                 </div>
                                 <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red/70">
                                   {openStepId === step.id ? "Collapse" : "Read More"}

@@ -11,6 +11,7 @@ import { FAQList } from "@/components/service/FAQList";
 import { CTASection } from "@/components/shotguns/CTASection";
 import { getServicePageData } from "@/lib/service-data";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
+import { Text } from "@/components/ui";
 
 export default async function ServicePage() {
   const {
@@ -70,16 +71,15 @@ export default async function ServicePage() {
         className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-5"
         aria-labelledby="service-guidance-heading"
       >
-        <h2
-          id="service-guidance-heading"
-          className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted"
-        >
-          {serviceGuidanceBlock.eyebrow ?? "Service guidance"}
-        </h2>
-        <p className="mt-2 text-sm sm:text-base leading-relaxed text-ink">
+        <Text asChild size="xs" muted className="font-semibold">
+          <h2 id="service-guidance-heading">
+            {serviceGuidanceBlock.eyebrow ?? "Service guidance"}
+          </h2>
+        </Text>
+        <Text className="mt-2" size="md" leading="relaxed">
           {serviceGuidanceBlock.body ??
             "Need help mapping out service and care cadence? Ask Perazzi for the recommended intervals and how to coordinate with the atelier."}
-        </p>
+        </Text>
         <div className="mt-4">
           <ChatTriggerButton
             label={serviceGuidanceBlock.chatLabel ?? "Ask about service & care"}
@@ -108,16 +108,15 @@ export default async function ServicePage() {
         className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-sm sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-5"
         aria-labelledby="service-shipping-heading"
       >
-        <h2
-          id="service-shipping-heading"
-          className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted"
-        >
-          {shippingPrepBlock.eyebrow ?? "Shipping prep"}
-        </h2>
-        <p className="mt-2 text-sm sm:text-base leading-relaxed text-ink">
+        <Text asChild size="xs" muted className="font-semibold">
+          <h2 id="service-shipping-heading">
+            {shippingPrepBlock.eyebrow ?? "Shipping prep"}
+          </h2>
+        </Text>
+        <Text className="mt-2" size="md" leading="relaxed">
           {shippingPrepBlock.body ??
             "Wondering what to include when shipping your gun or scheduling an inspection? Ask before you book."}
-        </p>
+        </Text>
         <div className="mt-4">
           <ChatTriggerButton
             label={shippingPrepBlock.chatLabel ?? "Ask before I ship"}

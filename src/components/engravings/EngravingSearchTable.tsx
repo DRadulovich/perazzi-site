@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from
 
 import { getSanityImageUrl } from "@/lib/sanityImage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
-import { Button, Input } from "@/components/ui";
+import { Button, Heading, Input, Text } from "@/components/ui";
 
 type EngravingRow = {
   _id: string;
@@ -248,10 +248,12 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
               className="w-full border-0 bg-transparent px-0 py-0 text-sm sm:text-base text-white placeholder:text-neutral-600 shadow-none focus:border-0"
             />
           </label>
-          <p className="text-sm text-neutral-400" aria-live="polite" aria-atomic="true">
-            Showing <span className="font-semibold text-white">{filteredEngravings.length}</span>{" "}
-            of <span className="font-semibold text-white">{engravings.length}</span>
-          </p>
+          <Text asChild className="text-neutral-400" leading="normal">
+            <p aria-live="polite" aria-atomic="true">
+              Showing <span className="font-semibold text-white">{filteredEngravings.length}</span>{" "}
+              of <span className="font-semibold text-white">{engravings.length}</span>
+            </p>
+          </Text>
         </div>
 
         <FavoritesPanel favorites={favorites} onCompare={() => { setCompareOpen(true); }} onToggle={toggleFavorite} onSelect={openDetails} />
@@ -309,10 +311,12 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
 function Spec({ label, value }: Readonly<{ label: string; value?: string }>) {
   return (
     <div>
-      <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+      <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
         {label}
-      </p>
-      <p className="text-sm text-white">{value || "—"}</p>
+      </Text>
+      <Text className="text-white" leading="normal">
+        {value || "—"}
+      </Text>
     </div>
   );
 }
@@ -334,14 +338,17 @@ function FilterGroup({
   const total = options.reduce((sum, option) => sum + option.count, 0);
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <span
+      <Text
+        asChild
+        size="xs"
         className={clsx(
-          "text-[11px] sm:text-xs uppercase tracking-[0.3em]",
+          "tracking-[0.3em]",
           tone === "dark" ? "text-neutral-500" : "text-ink-muted",
         )}
+        leading="normal"
       >
-        {label}
-      </span>
+        <span>{label}</span>
+      </Text>
       <div className="flex flex-wrap gap-2">
         <FilterChip active={!values.length} label={`All (${total})`} onClick={() => { onToggle("__reset__"); }} />
         {options.map((option) => (
@@ -424,9 +431,9 @@ function FavoritesPanel({
   return (
     <div className="rounded-3xl border border-white/10 bg-black/30 p-4 text-white">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400">
+        <Text size="xs" className="font-semibold text-neutral-400" leading="normal">
           Favorites ({favorites.length}/6)
-        </p>
+        </Text>
         <Button
           type="button"
           disabled={favorites.length < 2}
@@ -446,23 +453,25 @@ function FavoritesPanel({
           const previewUrl = getSanityImageUrl(fav.image, { width: 200, quality: 70 });
           return (
             <div key={fav._id} className="flex flex-col items-center text-center text-white">
-        <button
-          type="button"
-          className="relative h-16 w-16 overflow-hidden rounded-full border border-white/20 bg-white"
-          onClick={() => { onSelect(fav); }}
-        >
+              <button
+                type="button"
+                className="relative h-16 w-16 overflow-hidden rounded-full border border-white/20 bg-white"
+                onClick={() => { onSelect(fav); }}
+              >
                 {previewUrl ? (
                   <Image src={previewUrl} alt={fav.imageAlt || fav.engravingId} fill className="object-cover" />
                 ) : (
                   <span className="text-xs text-black">No Image</span>
                 )}
               </button>
-              <p className="mt-2 text-xs font-semibold">#{fav.engravingId}</p>
-        <button
-          type="button"
-          className="text-[11px] sm:text-xs uppercase tracking-[0.3em] text-white/60 hover:text-white"
-          onClick={() => { onToggle(fav); }}
-        >
+              <Text size="sm" className="mt-2 font-semibold" leading="normal">
+                #{fav.engravingId}
+              </Text>
+              <button
+                type="button"
+                className="text-[11px] sm:text-xs uppercase tracking-[0.3em] text-white/60 hover:text-white"
+                onClick={() => { onToggle(fav); }}
+              >
                 Remove
               </button>
             </div>
@@ -512,9 +521,13 @@ function EngravingCardsGrid({
         ),
       )}
       {!showSkeletons && filteredLength === 0 && (
-        <p className="col-span-full rounded-2xl border border-dashed border-white/20 py-16 text-center text-neutral-500 sm:rounded-3xl">
-          No engravings match your current filters.
-        </p>
+        <Text
+          asChild
+          className="col-span-full rounded-2xl border border-dashed border-white/20 py-16 text-center text-neutral-500 sm:rounded-3xl"
+          leading="normal"
+        >
+          <p>No engravings match your current filters.</p>
+        </Text>
       )}
     </div>
   );
@@ -570,15 +583,15 @@ function EngravingCard({
             engraving.engravingSide === "Right" ? "items-end text-right" : "items-start text-left",
           )}
         >
-          <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+          <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
             {engraving.gradeName}
-          </p>
-          <h3 className="text-xl sm:text-2xl font-semibold leading-tight">
+          </Text>
+          <Heading level={3} size="lg" className="leading-tight text-black">
             {highlightText(`Engraving ${engraving.engravingId}`, query)}
-          </h3>
-          <p className="text-sm text-black/70">
+          </Heading>
+          <Text className="text-black/70" leading="normal">
             {highlightText(engraving.engravingSide, query)}
-          </p>
+          </Text>
         </div>
       </div>
 
@@ -679,15 +692,15 @@ function EngravingDetailDialog({
                     selected.engravingSide === "Right" ? "items-end text-right" : "items-start text-left",
                   )}
                 >
-                  <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+                  <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
                     {selected.gradeName}
-                  </p>
-                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold leading-tight">
+                  </Text>
+                  <Heading level={2} size="xl" className="leading-tight text-black">
                     Engraving {selected.engravingId}
-                  </h2>
-                  <p className="text-sm sm:text-base text-black/70">
+                  </Heading>
+                  <Text className="text-black/70" leading="normal">
                     {selected.engravingSide}
-                  </p>
+                  </Text>
                 </div>
               </div>
             </div>
@@ -730,10 +743,12 @@ function EngravingCompareDialog({
               </Button>
             </Dialog.Close>
             <div className="space-y-4 border-b border-white/10 p-6 text-center">
-              <p className="text-[11px] sm:text-xs uppercase tracking-[0.4em] text-white/70">
+              <Text size="xs" className="tracking-[0.4em] text-white/70" leading="normal">
                 Compare Engravings
-              </p>
-              <h2 className="text-3xl font-semibold">Side-by-side favorites</h2>
+              </Text>
+              <Heading level={2} size="xl" className="text-white">
+                Side-by-side favorites
+              </Heading>
             </div>
             <div className="grid gap-6 overflow-y-auto p-6 sm:grid-cols-2 lg:grid-cols-3">
               {favorites.map((fav) => {
@@ -762,13 +777,15 @@ function EngravingCompareDialog({
                       ) : null}
                     </div>
                     <div className="mt-4 space-y-1 text-white">
-                      <p className="text-[11px] sm:text-xs uppercase tracking-[0.35em] text-perazzi-red">
+                      <Text size="xs" className="tracking-[0.35em] text-perazzi-red" leading="normal">
                         {fav.gradeName}
-                      </p>
-                      <p className="text-lg sm:text-xl font-semibold text-white">
+                      </Text>
+                      <Heading level={3} size="lg" className="text-white">
                         Engraving {fav.engravingId}
-                      </p>
-                      <p className="text-sm text-white/80">{fav.engravingSide}</p>
+                      </Heading>
+                      <Text className="text-white/80" leading="normal">
+                        {fav.engravingSide}
+                      </Text>
                     </div>
                   </article>
                 );

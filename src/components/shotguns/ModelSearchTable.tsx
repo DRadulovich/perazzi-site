@@ -7,7 +7,7 @@ import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 
-import { Button, Input } from "@/components/ui";
+import { Button, Heading, Input, Text } from "@/components/ui";
 import { getSanityImageUrl } from "@/lib/sanityImage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
@@ -296,10 +296,16 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
               className="w-full border-0 bg-transparent px-0 py-0 text-base text-white placeholder:text-neutral-600 shadow-none focus:border-0"
             />
           </label>
-          <p className="text-sm text-neutral-400" aria-live="polite" aria-atomic="true">
-            Showing <span className="font-semibold text-white">{filteredModels.length}</span>{" "}
-            of <span className="font-semibold text-white">{models.length}</span>
-          </p>
+          <Text
+            asChild
+            className="text-neutral-400"
+            leading="normal"
+          >
+            <p aria-live="polite" aria-atomic="true">
+              Showing <span className="font-semibold text-white">{filteredModels.length}</span>{" "}
+              of <span className="font-semibold text-white">{models.length}</span>
+            </p>
+          </Text>
         </div>
 
         <div className="flex flex-wrap gap-4">
@@ -382,18 +388,18 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                   </div>
                 )}
                 <div className="absolute bottom-0 left-0 right-0 p-6 text-black">
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+                  <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
                     {model.use}
-                  </p>
+                  </Text>
                  {/*
                     Keep highlight behavior consistent while showing only the model name on the card.
                   */}
-                  <h3 className="text-xl sm:text-2xl font-semibold leading-tight">
+                  <Heading level={3} size="lg" className="leading-tight text-black">
                     {highlightText(model.name, query)}
-                  </h3>
-                  <p className="text-sm text-neutral-600">
+                  </Heading>
+                  <Text className="text-neutral-600" leading="normal">
                     {highlightText((model.gaugeNames || []).join(", ") || "", query)}
-                  </p>
+                  </Text>
                 </div>
               </div>
 
@@ -440,9 +446,13 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
           );
         })}
         {!showSkeletons && filteredModels.length === 0 && (
-          <p className="col-span-full rounded-3xl border border-dashed border-white/20 py-16 text-center text-neutral-500">
-            No models match your current filters.
-          </p>
+          <Text
+            asChild
+            className="col-span-full rounded-3xl border border-dashed border-white/20 py-16 text-center text-neutral-500"
+            leading="normal"
+          >
+            <p>No models match your current filters.</p>
+          </Text>
         )}
       </div>
       {hasMore && !showSkeletons && (
@@ -492,13 +502,15 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                       </div>
                     )}
                     <div className="absolute bottom-6 left-6 right-6 text-black">
-                      <p className="text-xs font-semibold uppercase tracking-[0.4em] text-perazzi-red">
+                      <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
                         {selectedModel.use}
-                      </p>
-                      <h2 className="text-2xl sm:text-3xl lg:text-4xl font-semibold leading-tight">
+                      </Text>
+                      <Heading level={2} size="xl" className="leading-tight text-black">
                         {selectedModel.name}
-                      </h2>
-                      <p className="text-sm text-neutral-300">{selectedModel.version}</p>
+                      </Heading>
+                      <Text className="text-neutral-300" leading="normal">
+                        {selectedModel.version}
+                      </Text>
                     </div>
                   </div>
 
@@ -571,7 +583,9 @@ function FilterGroup({
   };
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <span className="text-sm uppercase tracking-[0.3em] text-neutral-500">{label}</span>
+      <Text asChild size="sm" className="uppercase tracking-[0.3em] text-neutral-500" leading="normal">
+        <span>{label}</span>
+      </Text>
       <div className="flex flex-wrap gap-2">
         <FilterChip active={!values.length} label="All" onClick={handleAll} />
         {options.map((option) => (
@@ -626,10 +640,12 @@ function Spec({ label, value }: SpecProps) {
   const display = humanizeValue(value) ?? value;
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+      <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
         {label}
-      </p>
-      <p className="text-sm text-white">{display || "—"}</p>
+      </Text>
+      <Text className="text-white" leading="normal">
+        {display || "—"}
+      </Text>
     </div>
   );
 }
@@ -638,10 +654,12 @@ function DetailGrid({ label, value }: SpecProps) {
   const display = humanizeValue(value) ?? value;
   return (
     <div>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.4em] text-perazzi-red">
+      <Text size="xs" className="font-semibold tracking-[0.4em] text-perazzi-red" leading="normal">
         {label}
-      </p>
-      <p className="text-lg text-white">{display || "—"}</p>
+      </Text>
+      <Text size="lg" className="text-lg text-white" leading="normal">
+        {display || "—"}
+      </Text>
     </div>
   );
 }

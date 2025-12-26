@@ -6,6 +6,8 @@ import { useState } from "react";
 import type { GradeSeries } from "@/types/catalog";
 import { logAnalytics } from "@/lib/analytics";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 type EngravingGalleryProps = Readonly<{
   gallery: GradeSeries["gallery"];
@@ -43,12 +45,14 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
       className="space-y-4"
       aria-labelledby="engraving-gallery-heading"
     >
-      <h2
+      <Heading
         id="engraving-gallery-heading"
-        className="text-lg sm:text-xl font-semibold text-ink"
+        level={2}
+        size="md"
+        className="text-ink"
       >
         {title ?? "Engraving gallery"}
-      </h2>
+      </Heading>
       <div className="grid gap-4 md:grid-cols-2">
         {gallery.map((asset, index) => {
           const ratio = asset.aspectRatio ?? 3 / 2;
@@ -77,9 +81,9 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
                   />
                 </div>
                 {asset.caption ? (
-                  <figcaption className="mt-3 text-xs sm:text-sm leading-relaxed text-ink-muted">
-                    {asset.caption}
-                  </figcaption>
+                  <Text asChild size="sm" className="mt-3 text-ink-muted">
+                    <figcaption>{asset.caption}</figcaption>
+                  </Text>
                 ) : null}
               </figure>
             </button>
@@ -121,9 +125,9 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
                   />
                 </div>
                 {currentAsset.caption ? (
-                  <p className="mt-4 text-sm text-ink-muted">
+                  <Text className="mt-4 text-ink-muted" leading="normal">
                     {currentAsset.caption}
-                  </p>
+                  </Text>
                 ) : null}
                 <div className="mt-4 flex items-center justify-between text-sm">
                   <button
@@ -133,9 +137,16 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
                   >
                     Prev
                   </button>
-                  <span className="text-xs uppercase tracking-[0.3em] text-ink-muted">
-                    {openIndex! + 1} / {gallery.length}
-                  </span>
+                  <Text
+                    asChild
+                    size="xs"
+                    className="text-ink-muted"
+                    leading="normal"
+                  >
+                    <span>
+                      {openIndex! + 1} / {gallery.length}
+                    </span>
+                  </Text>
                   <button
                     type="button"
                     onClick={showNext}

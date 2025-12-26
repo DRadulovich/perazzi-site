@@ -6,7 +6,7 @@ import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger, Heading, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
@@ -32,12 +32,12 @@ function BookingOptionCard({ option }: BookingOptionCardProps) {
       className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm transition-shadow hover:shadow-elevated sm:rounded-3xl sm:bg-card/80 sm:p-6"
     >
       <div className="space-y-2">
-        <h3 className="text-base sm:text-lg font-semibold text-ink">
+        <Heading level={3} size="sm" className="text-ink">
           {option.title}
-        </h3>
-        <p className="text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink-muted">
+        </Heading>
+        <Text size="xs" muted className="font-semibold">
           {option.durationLabel ?? (option.durationMins ? `${option.durationMins} minutes` : "")}
-        </p>
+        </Text>
         <div className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg">
           <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
             {option.descriptionHtml}
@@ -175,15 +175,12 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
       aria-labelledby="booking-options-heading"
     >
       <div className="space-y-2">
-        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+        <Text size="xs" muted className="font-semibold">
           Reserve time
-        </p>
-        <h2
-          id="booking-options-heading"
-          className="text-2xl font-semibold text-ink"
-        >
+        </Text>
+        <Heading id="booking-options-heading" level={2} size="xl" className="text-ink">
           {resolvedHeading}
-        </h2>
+        </Heading>
       </div>
       <div className="grid gap-6 md:grid-cols-3">
         {resolvedOptions.map((option) => (
@@ -194,9 +191,9 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
         aria-label="What to expect during your fitting"
         className="space-y-3 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm md:space-y-4 md:p-8 md:rounded-3xl md:bg-card/75 lg:space-y-5 lg:p-10"
       >
-        <h3 className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+        <Text size="xs" muted className="font-semibold">
           {resolvedWhatToExpectHeading}
-        </h3>
+        </Text>
         <div className="space-y-3 md:space-y-4 lg:space-y-5">
           {resolvedWhatToExpect.map((item) => (
             <WhatToExpectCollapsible
@@ -209,9 +206,9 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
         </div>
       </aside>
       <div className="space-y-3 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm md:space-y-4 md:p-8 md:rounded-3xl md:bg-card/75 lg:space-y-5 lg:p-10">
-        <h3 className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+        <Text size="xs" muted className="font-semibold">
           Schedule with the concierge
-        </h3>
+        </Text>
         {showScheduler ? (
           <iframe
             src={scheduler.src}
@@ -230,20 +227,24 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
             Load scheduler
           </Button>
         )}
-        <p className="text-[11px] sm:text-xs text-ink-muted">
-          Prefer email?{" "}
-          <a
-            href={scheduler.fallback}
-            target="_blank"
-            rel="noreferrer"
-            className="font-semibold text-perazzi-red focus-ring"
-          >
-            Open the request form<span className="sr-only"> (opens in a new tab)</span>
-          </a>
-        </p>
+        <Text asChild size="xs" className="text-ink-muted" leading="normal">
+          <p>
+            Prefer email?{" "}
+            <a
+              href={scheduler.fallback}
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-perazzi-red focus-ring"
+            >
+              Open the request form<span className="sr-only"> (opens in a new tab)</span>
+            </a>
+          </p>
+        </Text>
       </div>
       {resolvedNote ? (
-        <p className="text-[11px] sm:text-xs text-ink-muted">{resolvedNote}</p>
+        <Text size="xs" className="text-ink-muted" leading="normal">
+          {resolvedNote}
+        </Text>
       ) : null}
     </section>
   );

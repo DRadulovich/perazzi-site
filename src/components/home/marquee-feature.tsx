@@ -5,6 +5,8 @@ import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import type { Champion, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 type MarqueeFeatureProps = Readonly<{
   champion: Champion;
@@ -93,21 +95,31 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
             viewport={{ once: true, amount: 0.4 }}
             transition={{ duration: 0.6, delay: 0.1, ease: [0.33, 1, 0.68, 1] }}
           >
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+            <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
               {eyebrow}
-            </p>
-            <h2
+            </Text>
+            <Heading
               id="champion-heading"
-              className="text-2xl sm:text-3xl font-semibold text-ink"
+              level={2}
+              size="lg"
+              className="text-2xl sm:text-3xl text-ink"
             >
               {champion.name}
-            </h2>
-            <cite className="block text-sm sm:text-base font-medium text-ink-muted not-italic">
-              {champion.title}
-            </cite>
-            <blockquote className="border-l-2 border-perazzi-red/50 pl-4 text-base sm:text-lg italic leading-relaxed text-ink">
-              “{champion.quote}”
-            </blockquote>
+            </Heading>
+            <Text
+              asChild
+              size="md"
+              className="font-medium text-ink-muted not-italic"
+            >
+              <cite>{champion.title}</cite>
+            </Text>
+            <Text
+              asChild
+              size="lg"
+              className="border-l-2 border-perazzi-red/50 pl-4 text-base sm:text-lg italic text-ink"
+            >
+              <blockquote>“{champion.quote}”</blockquote>
+            </Text>
             {champion.article ? (
               <a
                 href={`/journal/${champion.article.slug}`}

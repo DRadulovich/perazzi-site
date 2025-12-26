@@ -5,6 +5,8 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import type { DisciplineSummary } from "@/types/catalog";
 import { logAnalytics } from "@/lib/analytics";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 type SetupRecipeProps = DisciplineSummary["recipe"] & {
   defaultExpanded?: boolean;
@@ -33,12 +35,9 @@ export function SetupRecipe({
         }}
       >
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h2
-            id="setup-recipe-heading"
-            className="text-xl sm:text-2xl font-semibold text-ink"
-          >
+          <Heading id="setup-recipe-heading" level={2} size="lg" className="text-ink">
             Editorial guidance
-          </h2>
+          </Heading>
           <CollapsibleTrigger
             className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring md:hidden"
             aria-controls="setup-recipe-content"
@@ -53,28 +52,28 @@ export function SetupRecipe({
         >
           <dl className="grid gap-4 md:grid-cols-3">
             <div>
-              <dt className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
-                POI range
-              </dt>
-              <dd className="mt-2 text-sm sm:text-base leading-relaxed text-ink">
-                {poiRange}
-              </dd>
+              <Text asChild size="xs" className="font-semibold text-ink-muted" leading="normal">
+                <dt>POI range</dt>
+              </Text>
+              <Text asChild size="md" className="mt-2 text-ink" leading="relaxed">
+                <dd>{poiRange}</dd>
+              </Text>
             </div>
             <div>
-              <dt className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
-                Barrel lengths
-              </dt>
-              <dd className="mt-2 text-sm sm:text-base leading-relaxed text-ink">
-                {barrelLengths}
-              </dd>
+              <Text asChild size="xs" className="font-semibold text-ink-muted" leading="normal">
+                <dt>Barrel lengths</dt>
+              </Text>
+              <Text asChild size="md" className="mt-2 text-ink" leading="relaxed">
+                <dd>{barrelLengths}</dd>
+              </Text>
             </div>
             <div>
-              <dt className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
-                Rib notes
-              </dt>
-              <dd className="mt-2 text-sm sm:text-base leading-relaxed text-ink">
-                {ribNotes}
-              </dd>
+              <Text asChild size="xs" className="font-semibold text-ink-muted" leading="normal">
+                <dt>Rib notes</dt>
+              </Text>
+              <Text asChild size="md" className="mt-2 text-ink" leading="relaxed">
+                <dd>{ribNotes}</dd>
+              </Text>
             </div>
           </dl>
         </CollapsibleContent>

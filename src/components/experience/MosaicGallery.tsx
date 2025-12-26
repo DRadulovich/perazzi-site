@@ -7,6 +7,7 @@ import type { FactoryAsset } from "@/types/content";
 import type { MosaicUi } from "@/types/experience";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
+import { Heading, Text } from "@/components/ui";
 
 type MosaicGalleryProps = {
   readonly assets: readonly FactoryAsset[];
@@ -64,15 +65,12 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
       aria-labelledby="mosaic-gallery-heading"
     >
       <div className="space-y-2">
-        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+        <Text size="xs" muted className="font-semibold">
           {eyebrow}
-        </p>
-        <h2
-          id="mosaic-gallery-heading"
-          className="text-2xl sm:text-3xl font-semibold text-ink"
-        >
+        </Text>
+        <Heading id="mosaic-gallery-heading" level={2} size="xl" className="text-ink">
           {heading}
-        </h2>
+        </Heading>
       </div>
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {assets.map((asset, index) => (
@@ -116,7 +114,7 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
                   Photo {(openIndex ?? 0) + 1} of {assets.length}
                 </p>
                 <div
-                  className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
+                  className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
                   style={{ aspectRatio: currentAsset.aspectRatio ?? 3 / 2 }}
                 >
                   <Image

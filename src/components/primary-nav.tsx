@@ -11,6 +11,8 @@ import { useRef, useState } from "react";
 import { ArrowRight, ChevronDown, Menu, UserRound, X } from "lucide-react";
 import useMeasure from "react-use-measure";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 type FlyoutRenderer = (props: { onNavigate?: () => void; textTone?: "light" | "dark" }) => ReactElement;
 
@@ -250,10 +252,12 @@ const ShotgunsFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) => (
   >
     <div className="col-span-12 flex flex-col justify-between bg-perazzi-black p-6 text-white lg:col-span-4">
       <div>
-        <h2 className="mb-2 text-xl font-semibold">Shotguns</h2>
-        <p className="text-sm text-white">
+        <Heading level={2} size="lg" className="mb-2 text-white">
+          Shotguns
+        </Heading>
+        <Text className="text-white" leading="normal">
           Explore dedicated Perazzi platforms—from high-trap geometry to MX race-ready builds.
-        </p>
+        </Text>
       </div>
       <Link
         href="/shotguns"
@@ -271,8 +275,12 @@ const ShotgunsFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) => (
           className="rounded-2xl border border-border/70 bg-card/40 p-4 text-left shadow-sm transition-colors hover:border-ink/30 hover:bg-card/70"
           onClick={onNavigate}
         >
-          <h3 className="font-semibold text-perazzi-red">{entry.title}</h3>
-          <p className="mt-1 text-xs text-ink">{entry.description}</p>
+          <Heading level={3} size="sm" className="text-perazzi-red">
+            {entry.title}
+          </Heading>
+          <Text size="sm" className="mt-1 text-ink" leading="normal">
+            {entry.description}
+          </Text>
         </Link>
       ))}
     </div>
@@ -287,9 +295,9 @@ const ExperienceFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) =>
   >
     <div className="grid gap-6 sm:grid-cols-2">
       <div>
-        <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-ink-muted">
+        <Text size="sm" className="font-semibold uppercase tracking-[0.3em] text-ink-muted" leading="normal">
           TRAVEL
-        </h3>
+        </Text>
         <div className="mt-3 space-y-2">
           <Link
             href="/experience#visit"
@@ -308,9 +316,9 @@ const ExperienceFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) =>
         </div>
       </div>
       <div>
-        <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-ink-muted">
+        <Text size="sm" className="font-semibold uppercase tracking-[0.3em] text-ink-muted" leading="normal">
           INQUIRE
-        </h3>
+        </Text>
         <div className="mt-3 space-y-2">
           <Link
             href="/experience#dealers"
@@ -347,10 +355,12 @@ const HeritageFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) => (
   >
     <div className="col-span-12 flex flex-col justify-between bg-card p-6 text-ink lg:col-span-4">
       <div>
-        <h2 className="text-xl font-semibold text-ink">Heritage</h2>
-        <p className="mt-2 text-sm text-ink-muted">
+        <Heading level={2} size="lg" className="text-ink">
+          Heritage
+        </Heading>
+        <Text className="mt-2 text-ink-muted" leading="normal">
           Trace Perazzi craft across eras—factory milestones, champions, and oral histories.
-        </p>
+        </Text>
       </div>
       <Link
         href="/heritage"
@@ -363,9 +373,9 @@ const HeritageFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) => (
     <div className="col-span-12 grid gap-3 bg-elevated p-6 text-ink lg:col-span-8 lg:grid-cols-3">
       {HERITAGE_LINKS.map((section) => (
         <div key={section.title} className="space-y-2">
-          <h3 className="text-sm font-semibold uppercase tracking-[0.25em] text-perazzi-red">
+          <Text size="sm" className="font-semibold uppercase tracking-[0.25em] text-perazzi-red" leading="normal">
             {section.title}
-          </h3>
+          </Text>
           {section.links.map((link) => (
             <Link
               key={link.label}
@@ -464,8 +474,8 @@ const MobileMenu = ({
           </button>
         </Dialog.Trigger>
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
-          <Dialog.Content className="fixed inset-y-0 right-0 z-[70] flex w-full max-w-sm flex-col outline-none translate-x-full transition-transform duration-200 data-[state=open]:translate-x-0">
+          <Dialog.Overlay className="fixed inset-0 z-60 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
+          <Dialog.Content className="fixed inset-y-0 right-0 z-70 flex w-full max-w-sm flex-col outline-none translate-x-full transition-transform duration-200 data-[state=open]:translate-x-0">
             <div className="flex h-full flex-col border-l border-border bg-card/95 text-ink shadow-elevated outline-none backdrop-blur-xl">
               <div className="flex items-center justify-between border-b border-border px-6 py-4">
                 <Logo label={brandLabel} />

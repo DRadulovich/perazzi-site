@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/site-shell";
 import { FullScreenChat } from "@/components/chat/FullScreenChat";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 type FullScreenChatPageProps = Readonly<{
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -53,14 +55,16 @@ export default async function FullScreenChatPage({ searchParams }: FullScreenCha
       contentClassName="mx-auto flex w-full max-w-7xl flex-1 flex-col"
     >
       <div className="border-b border-subtle bg-card px-6 py-6 sm:px-8 sm:py-8 lg:px-12">
-        <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+        <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
           Perazzi Concierge
-        </p>
-        <h1 className="text-2xl sm:text-3xl font-semibold text-ink">Full-screen conversation</h1>
-        <p className="mt-2 max-w-3xl text-sm sm:text-base text-ink-muted">
+        </Text>
+        <Heading level={1} size="xl" className="text-2xl sm:text-3xl text-ink">
+          Full-screen conversation
+        </Heading>
+        <Text className="mt-2 max-w-3xl text-ink-muted">
           A focused view of the concierge without the floating drawer. Use it to test the experience or
           share a direct link with a prefilled question.
-        </p>
+        </Text>
       </div>
       <div className="flex flex-1 px-0 py-6 sm:px-6 lg:px-12">
         <FullScreenChat initialPrompt={initialPrompt} />

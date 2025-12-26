@@ -8,6 +8,8 @@ import type { GradeSeries, ShotgunsLandingData } from "@/types/catalog";
 import { getGradeAnchorId } from "@/lib/grade-anchors";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 type EngravingGradesCarouselProps = Readonly<{
   grades: readonly GradeSeries[];
@@ -150,22 +152,24 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
         <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
           <div className="space-y-3">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-black italic uppercase tracking-[0.35em] text-ink">
-              {heading}
-            </p>
-            <h2
+            <Heading
               id="engraving-grades-heading"
-              className="max-w-4xl text-sm sm:text-base font-light italic text-ink-muted"
+              level={2}
+              size="xl"
+              className="font-black italic uppercase tracking-[0.35em] text-ink"
             >
+              {heading}
+            </Heading>
+            <Text className="max-w-4xl font-light italic text-ink-muted" leading="normal">
               {subheading}
-            </h2>
+            </Text>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
             <div className="space-y-3 rounded-2xl bg-transparent p-4 sm:rounded-3xl sm:p-5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-ink-muted">
+              <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
                 Grade categories
-              </p>
+              </Text>
               <div className="space-y-3">
                 {categories.map((category) => {
                   const isOpen = resolvedOpenCategory === category.label;
@@ -233,7 +237,9 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
               {selectedGrade ? (
                 <GradeCard grade={selectedGrade} ctaLabel={ctaLabel} />
               ) : (
-                <p className="text-sm text-ink-muted">Select a grade to view details.</p>
+                <Text className="text-ink-muted" leading="normal">
+                  Select a grade to view details.
+                </Text>
               )}
             </div>
           </div>
@@ -269,21 +275,31 @@ function GradeCard({ grade, ctaLabel }: GradeCardProps) {
             loading="lazy"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-sm text-ink-muted">
-            Imagery coming soon
-          </div>
+          <Text
+            asChild
+            className="flex h-full items-center justify-center text-ink-muted"
+            leading="normal"
+          >
+            <div>Imagery coming soon</div>
+          </Text>
         )}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-1 p-4 text-black">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+          <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
             Engraving Grade
-          </p>
-          <h3 className="text-lg sm:text-xl font-semibold uppercase tracking-[0.25em] text-black">
+          </Text>
+          <Heading
+            level={3}
+            size="md"
+            className="uppercase tracking-[0.25em] text-black"
+          >
             {grade.name}
-          </h3>
+          </Heading>
         </div>
       </div>
       <div className="mt-4 flex flex-1 flex-col gap-3">
-        <p className="text-sm text-ink-muted">{grade.description}</p>
+        <Text className="text-ink-muted" leading="normal">
+          {grade.description}
+        </Text>
         <div className="mt-auto pt-2">
           <Link
             href={`/engravings?grade=${gradeAnchor}`}

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import type { AuthorizedDealerEntry, ExperienceNetworkData, ScheduledEventEntry, TravelNetworkUi } from "@/types/experience";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { Heading, Text } from "@/components/ui";
 import Image from "next/image";
 
 type TabKey = "schedule" | "dealers";
@@ -76,7 +77,7 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
           loading="lazy"
         />
         <div
-          className="absolute inset-0 bg-[color:var(--scrim-soft)]"
+          className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
         <div
@@ -94,18 +95,20 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
         <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
           <div className="space-y-3">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-              {heading}
-            </p>
-            <h2
+            <Heading
               id="travel-network-heading"
-              className="text-sm sm:text-base font-light italic leading-relaxed text-ink-muted"
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-ink"
             >
+              {heading}
+            </Heading>
+            <Text size="md" muted leading="relaxed" className="font-light italic">
               {lead}
-            </h2>
-            <p className="text-sm sm:text-base leading-relaxed text-ink-muted">
+            </Text>
+            <Text size="md" muted leading="relaxed">
               {supporting}
-            </p>
+            </Text>
           </div>
 
           <div
@@ -149,7 +152,11 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
 
 function ScheduleList({ events, emptyText }: ScheduleListProps) {
   if (!events.length) {
-    return <p className="text-sm leading-relaxed text-ink-muted">{emptyText}</p>;
+    return (
+      <Text size="md" muted leading="relaxed">
+        {emptyText}
+      </Text>
+    );
   }
 
   return (
@@ -159,19 +166,19 @@ function ScheduleList({ events, emptyText }: ScheduleListProps) {
           key={event._id}
           className="rounded-2xl border border-border/70 bg-card/60 p-5 shadow-sm backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated md:p-6 lg:p-7"
         >
-          <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+          <Text size="xs" muted className="font-semibold">
             {formatDateRange(event.startDate, event.endDate)}
-          </p>
-          <h3 className="mt-2 text-base sm:text-lg font-semibold text-ink">
+          </Text>
+          <Heading level={3} size="sm" className="mt-2 text-ink">
             {event.eventName}
-          </h3>
-          <p className="text-sm leading-relaxed text-ink-muted">
+          </Heading>
+          <Text size="md" muted leading="relaxed">
             {event.eventLocation}
-          </p>
+          </Text>
           {event.location ? (
-            <p className="mt-2 text-sm leading-relaxed text-ink-muted">
+            <Text size="md" muted leading="relaxed" className="mt-2">
               {event.location}
-            </p>
+            </Text>
           ) : null}
         </article>
       ))}
@@ -181,22 +188,30 @@ function ScheduleList({ events, emptyText }: ScheduleListProps) {
 
 function DealerList({ dealers, emptyText }: DealerListProps) {
   if (!dealers.length) {
-    return <p className="text-sm leading-relaxed text-ink-muted">{emptyText}</p>;
+    return (
+      <Text size="md" muted leading="relaxed">
+        {emptyText}
+      </Text>
+    );
   }
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {dealers.map((dealer) => (
         <article key={dealer._id} className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-sm backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated">
-          <h3 className="text-base font-semibold text-ink">{dealer.dealerName}</h3>
-          <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+          <Heading level={3} size="sm" className="text-ink">
+            {dealer.dealerName}
+          </Heading>
+          <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
             {dealer.state}
-          </p>
-          <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-            {dealer.address}
-            <br />
-            {dealer.city}
-          </p>
+          </Text>
+          <Text asChild size="md" className="mt-2 text-ink-muted" leading="relaxed">
+            <p>
+              {dealer.address}
+              <br />
+              {dealer.city}
+            </p>
+          </Text>
         </article>
       ))}
     </div>

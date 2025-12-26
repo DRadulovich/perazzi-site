@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { FactoryAsset } from "@/types/content";
+import { Heading, Text } from "@/components/ui";
 
 type TeaserBlockProps = Readonly<{
   copy: string;
@@ -26,12 +27,12 @@ export function TeaserBlock({
     >
       <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-center">
         <div className="space-y-2">
-          <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
+          <Heading level={2} size="lg" className="text-white">
             {title}
-          </h2>
-          <p className="max-w-3xl text-sm sm:text-base leading-relaxed text-white/80">
+          </Heading>
+          <Text size="md" leading="relaxed" className="max-w-3xl text-white/80">
             {copy}
-          </p>
+          </Text>
           <div className="flex flex-wrap gap-4">
             <figure className="w-40 rounded-2xl border border-white/30 bg-white/5 p-3">
               <div

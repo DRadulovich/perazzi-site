@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Input } from "@/components/ui";
+import { Button, Heading, Input, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 
@@ -36,8 +36,12 @@ export function ServiceRequest({
       className="space-y-3 rounded-3xl border border-border/70 bg-card px-6 py-8 shadow-sm sm:px-10"
     >
       <div className="space-y-2">
-        <h2 className="text-2xl font-semibold text-ink">{title}</h2>
-        <p className="text-sm text-ink-muted">{description}</p>
+        <Heading level={2} size="xl" className="text-ink">
+          {title}
+        </Heading>
+        <Text size="md" muted>
+          {description}
+        </Text>
       </div>
       {open ? (
         <iframe
@@ -73,12 +77,12 @@ export function ServiceRequest({
           <Button type="submit" variant="primary">
             {buttonLabel}
           </Button>
-          <output className="text-xs text-perazzi-red" aria-live="polite">
-            {error}
-          </output>
+          <Text asChild size="sm" className="text-perazzi-red">
+            <output aria-live="polite">{error}</output>
+          </Text>
         </form>
       )}
-      <p className="text-xs text-ink-muted">
+      <Text size="sm" muted>
         Prefer email?{" "}
         <a
           href={fallbackHref}
@@ -89,7 +93,7 @@ export function ServiceRequest({
           {fallbackLinkLabel ?? "Open the request form"}
           <span className="sr-only"> (opens in a new tab)</span>
         </a>
-      </p>
+      </Text>
     </section>
   );
 }

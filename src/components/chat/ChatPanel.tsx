@@ -25,7 +25,7 @@ import remarkGfm from "remark-gfm";
 import { X } from "lucide-react";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { QuickStartButton } from "@/components/chat/QuickStartButton";
-import { Button, Input } from "@/components/ui";
+import { Button, Heading, Input, Text } from "@/components/ui";
 import { ADMIN_DEBUG_TOKEN_STORAGE_KEY } from "@/components/chat/useChatState";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
 import { cn } from "@/lib/utils";
@@ -86,7 +86,9 @@ type ChatPanelProps = {
 
 const markdownComponents = {
   p: (props: React.HTMLAttributes<HTMLParagraphElement>) => (
-    <p className="mb-3 last:mb-0" {...props} />
+    <Text asChild className="mb-3 last:mb-0" leading="relaxed">
+      <p {...props} />
+    </Text>
   ),
   ul: (props: React.HTMLAttributes<HTMLUListElement>) => (
     <ul className="mb-3 list-disc pl-5 text-left last:mb-0" {...props} />
@@ -157,9 +159,13 @@ function AdminDebugPanel(props: Readonly<{
   return (
     <div className="border-b border-border bg-card/80 px-6 py-4 text-[11px] sm:text-xs text-ink backdrop-blur-md">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.25em] text-ink-muted">
+        <Text
+          size="xs"
+          className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.25em] text-ink-muted"
+          leading="normal"
+        >
           Admin Debug
-        </p>
+        </Text>
         <Button
           type="button"
           variant="secondary"
@@ -173,9 +179,13 @@ function AdminDebugPanel(props: Readonly<{
       {debug ? (
         <div className="grid gap-4">
           <section>
-            <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+            <Text
+              size="xs"
+              className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted"
+              leading="normal"
+            >
               Thread
-            </p>
+            </Text>
             <dl className="mt-2 grid gap-1">
               <DebugRow
                 label="previous_response_id_present"
@@ -189,9 +199,13 @@ function AdminDebugPanel(props: Readonly<{
           </section>
 
           <section>
-            <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+            <Text
+              size="xs"
+              className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted"
+              leading="normal"
+            >
               Retrieval
-            </p>
+            </Text>
             <dl className="mt-2 grid gap-1">
               <DebugRow label="attempted" value={debug.retrieval.attempted} />
               <DebugRow label="skipped" value={debug.retrieval.skipped} />
@@ -203,7 +217,9 @@ function AdminDebugPanel(props: Readonly<{
                 value={debug.retrieval.rerank_metrics_present}
               />
               <div className="mt-2">
-                <p className="text-ink-muted">top_titles</p>
+                <Text className="text-ink-muted" leading="normal">
+                  top_titles
+                </Text>
                 {titles.length ? (
                   <ul className="mt-1 list-disc space-y-1 pl-5 font-mono text-[11px] sm:text-xs">
                     {titles.map((title) => (
@@ -211,16 +227,26 @@ function AdminDebugPanel(props: Readonly<{
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-1 font-mono text-[11px] sm:text-xs text-ink-muted">[]</p>
+                  <Text
+                    size="sm"
+                    className="mt-1 font-mono text-[11px] sm:text-xs text-ink-muted"
+                    leading="normal"
+                  >
+                    []
+                  </Text>
                 )}
               </div>
             </dl>
           </section>
 
           <section>
-            <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+            <Text
+              size="xs"
+              className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted"
+              leading="normal"
+            >
               Usage
-            </p>
+            </Text>
             <dl className="mt-2 grid gap-1">
               <DebugRow label="input_tokens" value={debug.usage?.input_tokens} />
               <DebugRow label="cached_tokens" value={debug.usage?.cached_tokens} />
@@ -230,9 +256,13 @@ function AdminDebugPanel(props: Readonly<{
           </section>
 
           <section>
-            <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+            <Text
+              size="xs"
+              className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted"
+              leading="normal"
+            >
               Flags
-            </p>
+            </Text>
             <dl className="mt-2 grid gap-1">
               <DebugRow label="convo_strategy" value={debug.flags.convo_strategy} />
               <DebugRow label="retrieval_policy" value={debug.flags.retrieval_policy} />
@@ -250,9 +280,13 @@ function AdminDebugPanel(props: Readonly<{
 
           {debug.triggers ? (
             <section>
-              <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+              <Text
+                size="xs"
+                className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted"
+                leading="normal"
+              >
                 Triggers
-              </p>
+              </Text>
               <dl className="mt-2 grid gap-1">
                 <DebugRow label="blocked_intent" value={debug.triggers.blocked_intent} />
                 <DebugRow label="evidenceMode" value={debug.triggers.evidenceMode} />
@@ -263,9 +297,9 @@ function AdminDebugPanel(props: Readonly<{
           ) : null}
         </div>
       ) : (
-        <p className="text-ink-muted">
+        <Text className="text-ink-muted" leading="normal">
           No debug payload in the last response (server debug disabled or token not authorized).
-        </p>
+        </Text>
       )}
     </div>
   );
@@ -583,10 +617,12 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
       {sessionPromptOpen && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
           <div className="w-full max-w-md rounded-2xl border border-border bg-card/95 p-5 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl">
-            <h3 className="text-lg font-semibold text-ink">Input New Session ID</h3>
-            <p className="mt-2 text-sm text-ink-muted">
+            <Heading level={3} size="lg" className="text-ink">
+              Input New Session ID
+            </Heading>
+            <Text className="mt-2 text-ink-muted" leading="relaxed">
               We&apos;ll prepend this to a fresh random ID to reduce collisions (example: label_uuid).
-            </p>
+            </Text>
             <div className="mt-4 space-y-3">
               <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted">
                 Session label
@@ -632,10 +668,12 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
       <div className="space-y-3 border-b border-border bg-card/80 px-6 py-5 backdrop-blur-md">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+            <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
               {legacyMode ? "Legacy Conversation" : "Perazzi Concierge"}
-            </p>
-            <h2 className="text-xl font-semibold">Where shall we begin?</h2>
+            </Text>
+            <Heading level={2} size="lg" className="text-ink">
+              Where shall we begin?
+            </Heading>
           </div>
           <div className="flex items-center gap-2">
             {hasAdminDebugToken && (
@@ -717,7 +755,9 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
             {legacyMode ? null : (
               <div className="rounded-2xl border border-border/70 bg-card/60 p-4 text-sm text-ink shadow-sm backdrop-blur-sm sm:rounded-3xl sm:px-5 sm:py-4">
                 <div className="flex items-center justify-between gap-4">
-                  <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">Guided Questions</p>
+                  <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
+                    Guided Questions
+                  </Text>
                   <Button
                     type="button"
                     variant="ghost"
@@ -749,9 +789,9 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
               </div>
             )}
         {messages.length === 0 ? (
-          <p className="text-ink-muted">
+          <Text className="text-ink-muted" leading="relaxed">
             Ask about heritage, platforms, or service, and I’ll help you connect the craft to your own journey.
-          </p>
+          </Text>
         ) : (
           <ul className="flex flex-col gap-6">
             {messages.map((msg, index) => {
@@ -792,19 +832,19 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
                       {isAssistant && msg.archetypeBreakdown && (
                         <div className="mt-3 text-[11px] sm:text-xs text-ink-muted">
                           {msg.archetypeBreakdown.primary && (
-                            <p className="font-semibold">
+                            <Text className="font-semibold" leading="normal">
                               Archetype profile: {msg.archetypeBreakdown.primary.charAt(0).toUpperCase()}
                               {msg.archetypeBreakdown.primary.slice(1)}
-                            </p>
+                            </Text>
                           )}
-                          <p className="mt-1">
+                          <Text className="mt-1" leading="normal">
                             {formatArchetypePercentages(msg.archetypeBreakdown.vector).map((item, idx) => (
                               <span key={item.label}>
                                 {item.label} {item.percent}%
                                 {idx < ARCHETYPE_ORDER.length - 1 ? " • " : ""}
                               </span>
                             ))}
-                          </p>
+                          </Text>
                         </div>
                       )}
 
@@ -822,9 +862,9 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
                               msg.retrievalScores ?? fallbackScores,
                             );
                           return (
-                            <p className="mt-2 text-[11px] sm:text-xs text-ink-muted">
+                            <Text size="sm" className="mt-2 text-ink-muted" leading="normal">
                               Retrieval: {retrievalLabel}
-                            </p>
+                            </Text>
                           );
                         }
                         return null;
@@ -862,7 +902,11 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
       </div>
       </div>
         <div className="border-t border-border bg-card/80 px-6 py-4 backdrop-blur-md">
-          {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
+          {error && (
+            <Text className="mb-2 text-red-600" leading="normal">
+              {error}
+            </Text>
+          )}
           <ChatInput
             pending={pending}
             onSend={handleSend}

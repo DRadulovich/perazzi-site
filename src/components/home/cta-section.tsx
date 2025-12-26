@@ -6,6 +6,8 @@ import type { HomeData } from "@/types/content";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 type CTASectionProps = {
   readonly finale: HomeData["finale"];
@@ -35,15 +37,17 @@ export function CTASection({ finale }: CTASectionProps) {
       aria-labelledby="final-cta-heading"
     >
       <div className="space-y-6">
-        <h2
+        <Heading
           id="final-cta-heading"
-          className="text-2xl sm:text-3xl font-semibold tracking-tight text-white"
+          level={2}
+          size="lg"
+          className="text-2xl sm:text-3xl tracking-tight text-white"
         >
           Join the legacy
-        </h2>
-        <p className="max-w-none text-sm sm:text-base leading-relaxed text-white/80 md:max-w-4xl lg:max-w-4xl">
+        </Heading>
+        <Text className="max-w-none text-white/80 md:max-w-4xl lg:max-w-4xl">
           {finale.text}
-        </p>
+        </Text>
         <div className="flex flex-wrap gap-4">
           <Button
             asChild

@@ -8,6 +8,7 @@ import type { FAQItem, PickerItem, PickerUi } from "@/types/experience";
 import { FAQList } from "./FAQList";
 import { logAnalytics } from "@/lib/analytics";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { Heading, Text } from "@/components/ui";
 
 type ExperiencePickerProps = {
   readonly items: PickerItem[];
@@ -106,15 +107,17 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
         <div className="space-y-6 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-sm backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
           <div className="space-y-2">
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase italic tracking-[0.35em] text-ink">
-              {heading}
-            </p>
-            <h2
+            <Heading
               id="experience-picker-heading"
-              className="mb-4 text-sm sm:text-base font-light italic leading-relaxed text-ink-muted"
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-ink"
             >
+              {heading}
+            </Heading>
+            <Text size="md" muted leading="relaxed" className="mb-4 font-light italic">
               {subheading}
-            </h2>
+            </Text>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:items-start">
@@ -195,13 +198,15 @@ function ExperiencePickerCard({
           />
         </div>
         <div className="flex flex-1 flex-col gap-3 px-6 py-5">
-          <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink-muted">
+          <Text size="xs" muted className="font-semibold">
             {microLabel}
-          </p>
-          <h3 className="text-base sm:text-lg font-semibold text-ink">
+          </Text>
+          <Heading level={3} size="sm" className="text-ink">
             {item.title}
-          </h3>
-          <p className="text-sm leading-relaxed text-ink-muted">{item.summary}</p>
+          </Heading>
+          <Text size="md" muted leading="relaxed">
+            {item.summary}
+          </Text>
           <span className="mt-auto inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
             {item.ctaLabel}
             <span aria-hidden="true">→</span>

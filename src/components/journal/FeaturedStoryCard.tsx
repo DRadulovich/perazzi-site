@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { ArticleRef } from "@/types/journal";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
+import { Heading } from "@/components/ui";
 
 type FeaturedStoryCardProps = Readonly<{
   article: ArticleRef;
@@ -51,7 +52,9 @@ export function FeaturedStoryCard({ article, hero, summary }: FeaturedStoryCardP
           ) : null}
         </figure>
         <div className="px-6 py-5">
-          <h3 className="text-xl font-semibold text-ink">{article.title}</h3>
+          <Heading level={3} size="lg" className="text-ink">
+            {article.title}
+          </Heading>
         </div>
       </Link>
     </article>

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import clsx from "clsx";
 import { type ReactNode, useEffect, useRef } from "react";
+import { Heading, Text } from "@/components/ui";
 
 type InfoCard = {
   id: string;
@@ -55,11 +56,23 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
 
   let content: ReactNode;
   if (error) {
-    content = <p className="text-sm sm:text-base leading-relaxed text-red-600">{error}</p>;
+    content = (
+      <Text className="text-red-600" leading="relaxed">
+        {error}
+      </Text>
+    );
   } else if (loading) {
-    content = <p className="text-sm sm:text-base leading-relaxed text-ink-muted">Loading details…</p>;
+    content = (
+      <Text className="text-ink-muted" leading="relaxed">
+        Loading details…
+      </Text>
+    );
   } else if (cards.length === 0) {
-    content = <p className="text-sm sm:text-base leading-relaxed text-ink-muted">No details available.</p>;
+    content = (
+      <Text className="text-ink-muted" leading="relaxed">
+        No details available.
+      </Text>
+    );
   } else {
     content = (
       <div className="space-y-3">
@@ -87,24 +100,32 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
             ) : null}
             <div className="mt-2 space-y-1">
               <div className="flex items-center justify-between">
-                <p className="text-base font-semibold">{card.title}</p>
+                <Heading level={3} size="sm">
+                  {card.title}
+                </Heading>
                 <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-perazzi-red">
                   View more
                 </span>
               </div>
               {card.description ? (
-                <p className="text-sm sm:text-base leading-relaxed text-ink-muted line-clamp-3">{card.description}</p>
+                <Text className="text-ink-muted line-clamp-3" leading="relaxed">
+                  {card.description}
+                </Text>
               ) : null}
               {card.platform ? (
-                <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">Platform: {card.platform}</p>
+                <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
+                  Platform: {card.platform}
+                </Text>
               ) : null}
               {card.grade ? (
-                <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">Grade: {card.grade}</p>
+                <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
+                  Grade: {card.grade}
+                </Text>
               ) : null}
               {card.gauges?.length ? (
-                <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+                <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
                   Gauges: {card.gauges.join(", ")}
-                </p>
+                </Text>
               ) : null}
             </div>
           </button>
@@ -140,8 +161,12 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
       >
         <div className="flex items-center justify-between border-b border-border bg-card/80 px-4 py-3 backdrop-blur-md sm:px-6">
           <div>
-            <p className="text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">Sanity Data</p>
-            <p className="text-sm sm:text-base text-ink">Details for the current step</p>
+            <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
+              Sanity Data
+            </Text>
+            <Text className="text-ink" leading="normal">
+              Details for the current step
+            </Text>
           </div>
           {onClose ? (
             <button

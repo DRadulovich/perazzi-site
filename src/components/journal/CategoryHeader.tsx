@@ -1,5 +1,6 @@
 import Link from "next/link";
 import SafeHtml from "@/components/SafeHtml";
+import { Heading, Text } from "@/components/ui";
 import type { JournalCategoryData } from "@/types/journal";
 
 type CategoryHeaderProps = Readonly<{
@@ -9,10 +10,12 @@ type CategoryHeaderProps = Readonly<{
 export function CategoryHeader({ header }: CategoryHeaderProps) {
   return (
     <header className="space-y-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+      <Text size="xs" muted className="font-semibold">
         Journal
-      </p>
-      <h1 className="text-3xl font-semibold text-ink">{header.title}</h1>
+      </Text>
+      <Heading level={1} size="xl" className="text-ink">
+        {header.title}
+      </Heading>
       {header.subtitleHtml ? (
         <SafeHtml
           className="prose prose-sm text-ink-muted"
@@ -20,7 +23,7 @@ export function CategoryHeader({ header }: CategoryHeaderProps) {
         />
       ) : null}
       {header.featured ? (
-        <p className="text-sm text-ink">
+        <Text size="md" className="text-ink">
           Featured: {" "}
           <Link
             href={`/journal/${header.featured.slug}`}
@@ -28,7 +31,7 @@ export function CategoryHeader({ header }: CategoryHeaderProps) {
           >
             {header.featured.title}
           </Link>
-        </p>
+        </Text>
       ) : null}
     </header>
   );

@@ -9,6 +9,8 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 const FALLBACK_TRACK_SRC = `data:text/vtt;charset=utf-8,${encodeURIComponent(
   "WEBVTT\n\n00:00:00.000 --> 00:00:01.000\nCaptions not available.",
@@ -59,15 +61,12 @@ export function OralHistories({ histories, ui }: OralHistoriesProps) {
       aria-labelledby="oral-histories-heading"
     >
       <div className="space-y-2">
-        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+        <Text size="xs" className="font-semibold tracking-[0.35em] text-ink-muted" leading="normal">
           {eyebrow}
-        </p>
-        <h2
-          id="oral-histories-heading"
-          className="text-2xl sm:text-3xl font-semibold text-ink"
-        >
+        </Text>
+        <Heading id="oral-histories-heading" level={2} size="xl" className="text-ink">
           {heading}
-        </h2>
+        </Heading>
       </div>
       <div className="grid gap-6 md:grid-cols-2">
         {histories.map((history) => (
@@ -118,15 +117,19 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
         </div>
       ) : null}
       <div className="space-y-2">
-        <h3 className="text-base sm:text-lg font-semibold text-ink">
+        <Heading level={3} size="sm" className="text-ink">
           {history.title}
-        </h3>
-        <blockquote className="border-l-2 border-perazzi-red/50 pl-3 text-sm italic leading-relaxed text-ink-muted">
-          “{history.quote}”
-        </blockquote>
-        <p className="text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink-muted">
+        </Heading>
+        <Text
+          asChild
+          size="md"
+          className="border-l-2 border-perazzi-red/50 pl-3 italic text-ink-muted"
+        >
+          <blockquote>“{history.quote}”</blockquote>
+        </Text>
+        <Text size="xs" className="text-ink-muted" leading="normal">
           {history.attribution}
-        </p>
+        </Text>
       </div>
       {history.audioSrc ? (
         <audio

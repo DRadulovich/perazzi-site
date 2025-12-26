@@ -5,6 +5,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { useState } from "react";
 import type { Expert } from "@/types/build";
 import { logAnalytics } from "@/lib/analytics";
+import { Heading, Text } from "@/components/ui";
 
 type ExpertCardProps = Readonly<{
   expert: Expert;
@@ -33,15 +34,15 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         />
       </div>
       <div className="mt-4 space-y-1">
-        <h3 className="text-base sm:text-lg font-semibold text-ink">
+        <Heading level={3} size="sm" className="text-ink">
           {expert.name}
-        </h3>
-        <p className="text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink-muted">
+        </Heading>
+        <Text size="xs" muted className="font-semibold">
           {expert.role}
-        </p>
-        <p className="text-sm leading-relaxed text-ink-muted">
+        </Text>
+        <Text size="md" muted leading="relaxed">
           {expert.bioShort}
-        </p>
+        </Text>
         {expert.quote ? (
           <blockquote className="border-l-2 border-perazzi-red/40 pl-3 text-[13px] sm:text-sm italic leading-relaxed text-ink">
             “{expert.quote}”
@@ -68,17 +69,17 @@ export function ExpertCard({ expert }: ExpertCardProps) {
           </Dialog.Trigger>
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 bg-black/55 backdrop-blur-sm" />
-            <Dialog.Content className="fixed inset-0 flex items-center justify-center p-4">
-              <div className="max-w-lg rounded-2xl border border-border bg-card/95 p-4 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl focus:outline-none sm:rounded-3xl sm:p-6">
-                <Dialog.Title className="text-base sm:text-lg font-semibold text-ink">
-                  {expert.name}
-                </Dialog.Title>
-                <Dialog.Description className="mt-1 text-[13px] sm:text-sm text-ink-muted">
-                  {expert.role}
-                </Dialog.Description>
-                <p className="mt-4 text-sm leading-relaxed text-ink-muted">
+          <Dialog.Content className="fixed inset-0 flex items-center justify-center p-4">
+            <div className="max-w-lg rounded-2xl border border-border bg-card/95 p-4 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl focus:outline-none sm:rounded-3xl sm:p-6">
+                <Heading asChild level={3} size="sm" className="text-ink">
+                  <Dialog.Title>{expert.name}</Dialog.Title>
+                </Heading>
+                <Text asChild size="sm" muted className="mt-1">
+                  <Dialog.Description>{expert.role}</Dialog.Description>
+                </Text>
+                <Text size="md" muted leading="relaxed" className="mt-4">
                   {expert.bioShort}
-                </p>
+                </Text>
                 <Dialog.Close className="mt-6 inline-flex items-center justify-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring">
                   Close
                 </Dialog.Close>

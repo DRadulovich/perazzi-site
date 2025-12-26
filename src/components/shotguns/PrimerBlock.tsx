@@ -1,3 +1,6 @@
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
+
 type PrimerBlockProps = {
   readonly copy: string;
   readonly href: string;
@@ -12,8 +15,14 @@ export function PrimerBlock({ copy, href, bullets }: PrimerBlockProps) {
     >
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-3">
-          <h2 className="text-2xl sm:text-3xl font-bold italic uppercase tracking-[0.35em] text-ink">Gauge primer</h2>
-          <p className="max-w-3xl text-sm sm:text-base leading-relaxed text-ink-muted">{copy}</p>
+          <Heading
+            level={2}
+            size="xl"
+            className="font-bold italic uppercase tracking-[0.35em] text-ink"
+          >
+            Gauge primer
+          </Heading>
+          <Text className="max-w-3xl text-ink-muted">{copy}</Text>
           <ul className="list-disc space-y-1 pl-5 text-sm sm:text-base leading-relaxed text-ink-muted">
             {bullets.map((item) => (
               <li key={item}>{item}</li>

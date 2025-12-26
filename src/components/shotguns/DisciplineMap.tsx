@@ -1,4 +1,6 @@
 import type { ShotgunsSeriesEntry, DisciplineSummary } from "@/types/catalog";
+import { Heading } from "@/components/ui/heading";
+import { Text } from "@/components/ui/text";
 
 type DisciplineMapProps = Readonly<{
   items: ShotgunsSeriesEntry["disciplineMap"];
@@ -11,12 +13,9 @@ export function DisciplineMap({ items, disciplines }: DisciplineMapProps) {
       className="space-y-4"
       aria-labelledby="discipline-map-heading"
     >
-      <h2
-        id="discipline-map-heading"
-        className="text-xl sm:text-2xl font-semibold text-ink"
-      >
+      <Heading id="discipline-map-heading" level={2} size="lg" className="text-ink">
         Discipline pairing
-      </h2>
+      </Heading>
       <div className="flex flex-wrap gap-4">
         {items.map((entry) => {
           const discipline = disciplines[entry.disciplineId];
@@ -29,12 +28,15 @@ export function DisciplineMap({ items, disciplines }: DisciplineMapProps) {
               className="flex max-w-sm flex-col rounded-2xl border border-border/70 bg-card/60 p-4 text-left shadow-sm backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
               data-analytics-id={`SeriesDisciplineChip:${entry.disciplineId}`}
             >
-              <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
-                {label}
-              </span>
-              <p className="mt-2 text-sm sm:text-base leading-relaxed text-ink-muted">
-                {entry.rationale}
-              </p>
+              <Text
+                asChild
+                size="xs"
+                className="font-semibold tracking-[0.35em] text-ink-muted"
+                leading="normal"
+              >
+                <span>{label}</span>
+              </Text>
+              <Text className="mt-2 text-ink-muted">{entry.rationale}</Text>
             </a>
           );
         })}

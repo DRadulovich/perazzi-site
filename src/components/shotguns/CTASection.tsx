@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Heading, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { motion, useReducedMotion } from "framer-motion";
 import { logAnalytics } from "@/lib/analytics";
@@ -42,15 +43,12 @@ export function CTASection({
       aria-labelledby="shotguns-cta-heading"
     >
       <div className="space-y-6">
-        <h2
-          id="shotguns-cta-heading"
-          className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-white"
-        >
+        <Heading id="shotguns-cta-heading" level={2} size="xl" className="text-white">
           Begin your fitting
-        </h2>
-        <p className="max-w-2xl text-sm sm:text-base md:text-lg leading-relaxed text-white/80">
+        </Heading>
+        <Text size="lg" leading="relaxed" className="max-w-2xl text-white/80">
           {text}
-        </p>
+        </Text>
         <div className="flex flex-wrap gap-4">
           <Button
             asChild

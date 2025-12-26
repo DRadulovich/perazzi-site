@@ -5,7 +5,7 @@ import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import type { ChatEntry } from "@/components/chat/useChatState";
 import { getRetrievalLabelFromScores } from "@/lib/retrieval-label";
-import { Button } from "@/components/ui";
+import { Button, Text } from "@/components/ui";
 
 interface ConversationViewProps {
   readonly messages: ReadonlyArray<ChatEntry>;
@@ -22,7 +22,9 @@ const childrenToArray = (node?: ReactNode) => Children.toArray(node);
 
 const markdownComponents = {
   p: (props: React.HTMLAttributes<HTMLParagraphElement>) => (
-    <p className="mb-3 last:mb-0" {...props} />
+    <Text asChild className="mb-3 last:mb-0" leading="relaxed">
+      <p {...props} />
+    </Text>
   ),
   ul: (props: React.HTMLAttributes<HTMLUListElement>) => (
     <ul className="mb-3 list-disc pl-5 text-left last:mb-0" {...props} />
@@ -124,9 +126,13 @@ export function ConversationView({ messages, isTyping, pending }: ConversationVi
 
   if (messages.length === 0) {
     return (
-      <p className="rounded-2xl bg-subtle px-4 py-3 text-sm text-ink-muted">
-        Ask about platforms, service, or heritage. I’ll respond in the Perazzi workshop tone.
-      </p>
+      <Text
+        asChild
+        className="rounded-2xl bg-subtle px-4 py-3 text-ink-muted"
+        leading="relaxed"
+      >
+        <p>Ask about platforms, service, or heritage. I’ll respond in the Perazzi workshop tone.</p>
+      </Text>
     );
   }
 
@@ -200,9 +206,9 @@ export function ConversationView({ messages, isTyping, pending }: ConversationVi
                         msg.retrievalScores ?? fallbackScores,
                       );
                     return (
-                      <p className="mt-2 text-[11px] sm:text-xs text-ink-muted">
+                      <Text size="sm" className="mt-2 text-ink-muted" leading="normal">
                         Retrieval: {retrievalLabel}
-                      </p>
+                      </Text>
                     );
                   }
                   return null;
@@ -235,7 +241,9 @@ export function ConversationView({ messages, isTyping, pending }: ConversationVi
         );
       })}
       {normalizedTyping && messages.length === 0 ? (
-        <li className="text-sm text-ink-muted">Collecting references…</li>
+        <Text asChild className="text-ink-muted" leading="normal">
+          <li>Collecting references…</li>
+        </Text>
       ) : null}
     </ul>
   );

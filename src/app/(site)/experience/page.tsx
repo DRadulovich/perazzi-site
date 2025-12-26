@@ -10,6 +10,7 @@ import { CTASection } from "@/components/shotguns/CTASection";
 import { getExperiencePageData } from "@/lib/experience-data";
 import { getExperienceNetworkData } from "@/sanity/queries/experience";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
+import { Heading, Text } from "@/components/ui";
 import type { FAQItem } from "@/types/experience";
 
 export default async function ExperiencePage() {
@@ -160,7 +161,7 @@ export default async function ExperiencePage() {
       <ExperiencePicker items={pickerItems} faqSection={faqSection} pickerUi={pickerUi} />
       <section
         id="experience-visit-planning"
-        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-10 sm:py-16"
+        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden border-t border-border bg-canvas py-10 sm:py-16"
         style={{
           marginLeft: "calc(50% - 50vw)",
           marginRight: "calc(50% - 50vw)",
@@ -169,15 +170,17 @@ export default async function ExperiencePage() {
       >
         <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
           <div className="space-y-4 text-ink">
-            <h2
+            <Heading
               id="experience-visit-planning-heading"
-              className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-ink"
             >
               {visitPlanningHeading}
-            </h2>
-            <p className="mb-8 text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
+            </Heading>
+            <Text size="md" muted leading="relaxed" className="mb-8 font-light italic">
               {visitPlanningIntro}
-            </p>
+            </Text>
             <div className="flex flex-wrap justify-start gap-3">
               <ChatTriggerButton
                 label={visitPlanningChatLabel}
@@ -198,9 +201,9 @@ export default async function ExperiencePage() {
           </div>
 
           <div className="space-y-3 text-sm sm:text-base font-light italic text-ink-muted">
-            <p className="text-sm sm:text-base font-semibold not-italic text-ink">
+            <Text size="md" className="font-semibold not-italic text-ink">
               What the concierge can line up:
-            </p>
+            </Text>
             <ul className="space-y-2">
               {visitPlanningBullets.map((bullet) => {
                 const [label, ...rest] = bullet.split(" - ");
@@ -213,16 +216,16 @@ export default async function ExperiencePage() {
                 );
               })}
             </ul>
-            <p className="text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
+            <Text size="md" muted leading="relaxed" className="font-light italic">
               {visitPlanningClosing}
-            </p>
+            </Text>
           </div>
         </div>
       </section>
       <VisitFactory visitFactorySection={visitFactorySection} />
       <section
         id="experience-booking-guide"
-        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-10 sm:py-16"
+        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden border-t border-border bg-canvas py-10 sm:py-16"
         style={{
           marginLeft: "calc(50% - 50vw)",
           marginRight: "calc(50% - 50vw)",
@@ -231,15 +234,17 @@ export default async function ExperiencePage() {
       >
         <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
           <div className="space-y-4 text-ink">
-            <h2
+            <Heading
               id="experience-booking-guide-heading"
-              className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-ink"
             >
               {fittingGuidanceHeading}
-            </h2>
-            <p className="mb-8 text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
+            </Heading>
+            <Text size="md" muted leading="relaxed" className="mb-8 font-light italic">
               {fittingGuidanceIntro}
-            </p>
+            </Text>
             <div className="flex flex-wrap justify-start gap-3">
               <ChatTriggerButton
                 label={fittingGuidanceChatLabel}
@@ -260,9 +265,9 @@ export default async function ExperiencePage() {
           </div>
 
           <div className="space-y-3 text-sm sm:text-base font-light italic text-ink-muted">
-            <p className="text-sm sm:text-base font-semibold not-italic text-ink">
+            <Text size="md" className="font-semibold not-italic text-ink">
               What the concierge can clarify:
-            </p>
+            </Text>
             <ul className="space-y-2">
               {fittingGuidanceBullets.map((bullet) => {
                 const [label, ...rest] = bullet.split(" - ");
@@ -275,16 +280,16 @@ export default async function ExperiencePage() {
                 );
               })}
             </ul>
-            <p className="text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
+            <Text size="md" muted leading="relaxed" className="font-light italic">
               {fittingGuidanceClosing}
-            </p>
+            </Text>
           </div>
         </div>
       </section>
       <BookingOptions bookingSection={bookingSection} />
       <section
         id="experience-travel-guide"
-        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden border-t border-[color:var(--border-color)] bg-[color:var(--surface-canvas)] py-10 sm:py-16"
+        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden border-t border-border bg-canvas py-10 sm:py-16"
         style={{
           marginLeft: "calc(50% - 50vw)",
           marginRight: "calc(50% - 50vw)",
@@ -293,15 +298,17 @@ export default async function ExperiencePage() {
       >
         <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
           <div className="space-y-4 text-ink">
-            <h2
+            <Heading
               id="experience-travel-guide-heading"
-              className="text-2xl sm:text-3xl font-black uppercase italic tracking-[0.35em] text-ink"
+              level={2}
+              size="xl"
+              className="font-black uppercase italic tracking-[0.35em] text-ink"
             >
               {travelHeading}
-            </h2>
-            <p className="mb-8 text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
+            </Heading>
+            <Text size="md" muted leading="relaxed" className="mb-8 font-light italic">
               {travelIntro}
-            </p>
+            </Text>
             <div className="flex flex-wrap justify-start gap-3">
               <ChatTriggerButton
                 label={travelChatLabel}
@@ -322,9 +329,9 @@ export default async function ExperiencePage() {
           </div>
 
           <div className="space-y-3 text-sm sm:text-base font-light italic text-ink-muted">
-            <p className="text-sm sm:text-base font-semibold not-italic text-ink">
+            <Text size="md" className="font-semibold not-italic text-ink">
               What the concierge can organize:
-            </p>
+            </Text>
             <ul className="space-y-2">
               {travelBullets.map((bullet) => {
                 const [label, ...rest] = bullet.split(" - ");
@@ -337,9 +344,9 @@ export default async function ExperiencePage() {
                 );
               })}
             </ul>
-            <p className="text-sm sm:text-base font-light italic text-ink-muted leading-relaxed">
+            <Text size="md" muted leading="relaxed" className="font-light italic">
               {travelClosing}
-            </p>
+            </Text>
           </div>
         </div>
       </section>
