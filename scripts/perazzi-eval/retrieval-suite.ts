@@ -32,7 +32,7 @@ const RETRIEVAL_CASES: RetrievalCase[] = [
     name: "Prospect - Platform differentiation",
     query: "What's the difference between the MX and the HT platforms?",
     expectedFamilies: [
-      "Gun-Info/All-Models-Corpus.json",
+      "Gun-Info/Models-SpecText-Corpus.md",
       "PGPT/V2/Gun-Info/Base-Models-Corpus.md",
       "Gun-Info/Platforms-Corpus.md",
       "Making-A-Perazzi/1_Product-and-System-Overview.md",
@@ -86,7 +86,7 @@ const RETRIEVAL_CASES: RetrievalCase[] = [
     name: "Rerank - Platform comparison (MX8 vs High Tech)",
     query: "What's the difference between the MX8 and the High Tech?",
     expectedFamilies: [
-      "Gun-Info/All-Models-Corpus.json",
+      "Gun-Info/Models-SpecText-Corpus.md",
       "PGPT/V2/Gun-Info/Base-Models-Corpus.md",
       "Gun-Info/Platforms-Corpus.md",
       "Making-A-Perazzi/1_Product-and-System-Overview.md",
@@ -208,7 +208,8 @@ function resolveEmbeddingFromCache(cache: EmbeddingCache, testCase: RetrievalCas
     const match = cache.find(
       (entry) => entry && typeof entry === "object" && (entry.id === testCase.id || entry.query === testCase.query),
     );
-    return Array.isArray(match?.embedding) ? match!.embedding : null;
+    const embedding = match?.embedding;
+    return Array.isArray(embedding) ? embedding : null;
   }
 
   if (cache && typeof cache === "object") {
@@ -404,7 +405,7 @@ async function main() {
     embeddingsById = new Map(
       RETRIEVAL_CASES.map((testCase) => [
         testCase.id,
-        ensureEmbeddingVector(resolveEmbeddingFromCache(embeddingCache!, testCase), testCase.id),
+        ensureEmbeddingVector(resolveEmbeddingFromCache(embeddingCache, testCase), testCase.id),
       ]),
     );
   } else {
