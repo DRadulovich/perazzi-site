@@ -26,7 +26,7 @@ Archetype must never:
 - Change pricing policy (pricing remains guarded/blocked at the route level).
 - Be asserted back to the user as an identity (“You are a Loyalist”, etc.).
 
-Runtime enforcement is expressed both in brand docs (e.g. `V2-PGPT/V2_PreBuild-Docs/V2_Core-Brand-and-Strategy-Docs/V2_audience-psychology-and-archetypes.md`) and in prompt guidance blocks inside the assistant route (`src/app/api/perazzi-assistant/route.ts`).
+Runtime enforcement is expressed both in brand docs (e.g. `PGPT/V2/Brand-Strategy/Audience-Psych-Archetypes.md`) and in prompt guidance blocks inside the assistant route (`src/app/api/perazzi-assistant/route.ts`).
 
 ---
 
@@ -121,7 +121,7 @@ Primary orchestration is in `src/app/api/perazzi-assistant/route.ts`:
 ### Internal evaluation docs (human grading)
 - Rubric: `docs/ARCHETYPE-ANALYSIS/GRADING-RUBRIC/ARCHETYPE-ANALYSIS-GRADE-RUBRIC.md`
 - Example output packs: `docs/ARCHETYPE-ANALYSIS/GRADING-RUBRIC/OUTPUT-TESTS/`
-- Implementation notes (bridge doc): `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-1/V2_REDO_archetype-implementation-notes.md`
+- Implementation notes (bridge doc): `PGPT/V2/AI-Docs/P1/Archetype-Implementation-Notes.md`
 
 ---
 

@@ -4,7 +4,7 @@
 
 > Version: 0.2 (Draft)  
 > Owner: David Radulovich  
-> File: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-2/V2_REDO_chunking-guidelines.md`  
+> File: `PGPT/V2/AI-Docs/P2/Chunking-Guidelines.md`  
 > Purpose: Define **how** V2 corpus documents are split into chunks for embeddings, and how chunk-level metadata (heading paths, labels, mode/archetype hints, guardrails) should be derived.
 
 ---
@@ -19,9 +19,9 @@ The chunking pipeline should:
    - **Traceable** back to specific sections and headings.
 
 2. Respect:
-   - The **V2 Source Corpus Manifest** (`V2_REDO_source-corpus.md`).
-   - The **Metadata Schema** (`V2_REDO_metadata-schema.md`).
-   - The **Assistant Spec** (`V2_REDO_assistant-spec.md`), especially Modes & Archetypes.
+   - The **V2 Source Corpus Manifest** (`Source-Corpus.md`).
+   - The **Metadata Schema** (`Metadata-Schema.md`).
+   - The **Assistant Spec** (`Assistant-Spec.md`), especially Modes & Archetypes.
 
 3. Provide:
    - `heading_path` and `section_labels` for better reasoning.
@@ -61,11 +61,11 @@ Unless overridden by a category-specific rule:
 
 ## 3. Category-Specific Strategies
 
-The `Category` and `Doc_Type` fields from `V2_REDO_source-corpus.md` should drive category-specific behavior.
+The `Category` and `Doc_Type` fields from `Source-Corpus.md` should drive category-specific behavior.
 
 ### 3.1 Core Brand & Strategy Docs
 
-**Folder:** `V2_Core-Brand-and-Strategy-Docs/`  
+**Folder:** `Brand-Strategy/`  
 **Doc_Types:** `brand-strategy`, `brand-ethos`, `audience-definition`, `tone-guidance`
 
 **Objectives:**
@@ -92,10 +92,10 @@ The `Category` and `Doc_Type` fields from `V2_REDO_source-corpus.md` should driv
 
 ### 3.2 Company Info Docs
 
-**Folder:** `V2_Company-Info-Docs/`  
+**Folder:** `Company-Info/`  
 **Doc_Types:** `athletes`, `dealer-directory`, `safety-notice`, `achievement-record`, `service-centers`, `events`
 
-#### 3.2.1 Athletes (`V2_athletes.md`)
+#### 3.2.1 Athletes (`Athletes.md`)
 
 - Split by **athlete profile**:
   - Each athlete becomes one or more chunks, depending on length.
@@ -123,7 +123,7 @@ The `Category` and `Doc_Type` fields from `V2_REDO_source-corpus.md` should driv
 - `archetype_bias`: neutral (`[]`) unless you want to bias toward `["Analyst","Legacy"]` for service docs.
 - `section_labels`: `"dealer-directory"`, `"service-centers"`, plus region names.
 
-#### 3.2.3 Safety Notice (`V2_consumer-warning-notice.md`)
+#### 3.2.3 Safety Notice (`Consumer-Warning.md`)
 
 - Chunk by logical sections (warnings, disclaimers, etc.).
 - Keep any **critical safety paragraphs intact**; do not split mid-warning.
@@ -137,7 +137,7 @@ The `Category` and `Doc_Type` fields from `V2_REDO_source-corpus.md` should driv
 
 #### 3.2.4 Olympic Medals & Events
 
-- For structured JSON (`V2_olympic-medals.json`), convert into:
+- For structured JSON (`Olympic-Medals.json`), convert into:
   - Per-competition or per-era text blocks.
 - Aim for chunks like:
   - “All Olympic medals by decade”
@@ -153,10 +153,10 @@ The `Category` and `Doc_Type` fields from `V2_REDO_source-corpus.md` should driv
 
 ### 3.3 Gun Info Docs
 
-**Folder:** `V2_Gun-Info-Docs/`  
+**Folder:** `Gun-Info/`  
 **Doc_Types:** `serial-year-mapping`, `model-details`, `configuration-guide`, `front-end-config (ignore)`
 
-#### 3.3.1 Manufacture Year (`V2_manufacture-year.md`)
+#### 3.3.1 Manufacture Year (`Manufacture-Year.md`)
 
 - If tabular, group serial ranges into **logical blocks** (e.g., per decade or per platform).
 - Each chunk should let the assistant answer:
@@ -168,7 +168,7 @@ The `Category` and `Doc_Type` fields from `V2_REDO_source-corpus.md` should driv
 - `primary_modes`: `["Owner","Prospect"]`
 - `archetype_bias`: `["Analyst","Legacy"]`
 
-#### 3.3.2 Model Details (`V2_RAG_corpus-models-details.json`)
+#### 3.3.2 Model Details (`All-Models-Corpus.json`)
 
 - Treat each **model or platform** as a core unit.
 - For each model:
@@ -188,10 +188,10 @@ The `Category` and `Doc_Type` fields from `V2_REDO_source-corpus.md` should driv
 #### 3.3.3 SpecText & Index Markdown Helpers
 
 - Files:  
-  - `V2_RAG_corpus-models-specText.md`  
-  - `V2_RAG_corpus-base-models.md`  
-  - `V2_RAG_corpus-disciplines.md`  
-  - `V2_RAG_corpus-platforms.md`
+  - `Models-SpecText-Corpus.md`  
+  - `Base-Models-Corpus.md`  
+  - `Disciplines-Corpus.md`  
+  - `Platforms-Corpus.md`
 - Chunking:
   - Split on Markdown headings; aim for **one heading block per chunk**.
   - Keep bullets under a heading in the same chunk (no mid-heading splits).
@@ -202,7 +202,7 @@ The `Category` and `Doc_Type` fields from `V2_REDO_source-corpus.md` should driv
   - `primary_modes`: `["Prospect","Owner"]`
   - `archetype_bias`: neutral (`[]`) unless a section is clearly performance-heavy (then include `["Analyst","Achiever"]`).
 
-#### 3.3.4 Rib Information (`V2_rib-information.md`)
+#### 3.3.4 Rib Information (`Rib-Info.md`)
 
 - Chunk by rib family/type and discipline:
   - One chunk per rib type if it fits (e.g., “High rib for bunker trap”, “Flat rib for sporting”).
@@ -220,14 +220,14 @@ The `Category` and `Doc_Type` fields from `V2_REDO_source-corpus.md` should driv
 
 #### 3.3.5 Front-End Config JSON
 
-- `V2_FRONT-END_corpus-models-sanity.json` is `Embed_Mode: ignore` by default.
+- `SanityData-Models-List.json` is `Embed_Mode: ignore` by default.
 - Do **not** chunk or embed unless you decide to repurpose it for RAG later.
 
 ---
 
 ### 3.4 Making-a-Perazzi Docs (Craftsmanship Handbook)
 
-**Folder:** `V2_Making-a-Perazzi-Docs/`  
+**Folder:** `Making-A-Perazzi/`  
 **Doc_Type:** `craftsmanship-handbook`, `learning-map`
 
 These documents are **central** to the assistant’s explanation of Perazzi craft.
@@ -268,10 +268,10 @@ These documents are **central** to the assistant’s explanation of Perazzi craf
 
 ### 3.5 Operational Docs
 
-**Folder:** `V2_Operational-Docs/`  
+**Folder:** `Operational/`  
 **Doc_Types:** `flow-definition`, `site-map`
 
-#### 3.5.1 Build Configurator Flow (`V2_build-configurator-flow.json`)
+#### 3.5.1 Build Configurator Flow (`Build-Configurator-Flow.json`)
 
 - Convert into descriptive chunks:
   - One chunk per major phase of the configurator (e.g., “platform selection”, “barrels & ribs”, “stock & fit”).
@@ -285,7 +285,7 @@ These documents are **central** to the assistant’s explanation of Perazzi craf
 - `archetype_bias`: `["Analyst","Achiever"]`
 - `section_labels`: `"configurator-flow"`, plus phase names.
 
-#### 3.5.2 Site Overview (`V2_site-overview.md`)
+#### 3.5.2 Site Overview (`Site-Overview.md`)
 
 - Chunk by **site region** (e.g., “Shotguns”, “Bespoke Journey”, “Heritage”, “Service & Support”).
 - Each chunk describes:
@@ -302,7 +302,7 @@ These documents are **central** to the assistant’s explanation of Perazzi craf
 
 ### 3.6 Pricing List Docs (Metadata Only)
 
-**Folder:** `V2_Pricing-List-Docs/`  
+**Folder:** `Pricing-Lists/`  
 **Doc_Types:** `retail-pricing`, `parts-pricing`, `service-pricing`  
 **Embed_Mode:** `metadata-only`  
 **Pricing_Sensitive:** `true`
@@ -404,7 +404,7 @@ High-level algorithm the ingestion script could follow:
 ## 6. Future Refinements
 
 - Add per-document **chunking overrides** (e.g., max/min chunk size, special split markers).
-- Allow `V2_REDO_chunking.config.json` to specify:
+- Allow `chunking.config.json` to specify:
   - Per-path chunk sizes.
   - Stopwords/headings where splitting is preferred.
 - Add support for:

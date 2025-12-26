@@ -2,17 +2,17 @@
 
 > Version: 0.2 (Draft)  
 > Owner: David Radulovich  
-> File: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-2/V2_REDO_validation.md`  
+> File: `PGPT/V2/AI-Docs/P2/Validation.md`  
 > Related docs:  
-> - `V2_REDO_assistant-spec.md`  
-> - `V2_REDO_non-negotiable-guardrails.md`  
-> - `V2_REDO_voice-calibration.md`  
-> - `V2_REDO_use-case-depth.md`  
-> - `V2_REDO_source-corpus.md`  
-> - `V2_REDO_metadata-schema.md`  
-> - `V2_REDO_chunking-guidelines.md`  
-> - `V2_REDO_embedding-stack.md`  
-> - `V2_REDO_rerun-process.md`  
+> - `Assistant-Spec.md`  
+> - `NonNegotiable-Guardrails.md`  
+> - `Voice-Calibration.md`  
+> - `Use-Case-Depth.md`  
+> - `Source-Corpus.md`  
+> - `Metadata-Schema.md`  
+> - `Chunking-Guidelines.md`  
+> - `Embedding-Stack.md`  
+> - `ReRun-Process.md`  
 
 This document defines how to **validate** PerazziGPT v2 after ingestion/reruns and after behavioral changes. It is not about unit tests for code, but about **system-level checks** that:
 
@@ -63,11 +63,11 @@ For each case below:
 
 **Expected doc families:**
 
-- `V2_Gun-Info-Docs/V2_RAG_corpus-models-details.json`
-- `V2-PGPT/V2_PreBuild-Docs/V2_Gun-Info-Docs/V2_RAG_corpus-base-models.md`
-- `V2_Gun-Info-Docs/V2_RAG_corpus-platforms.md`
-- `V2_Making-a-Perazzi-Docs/1_Product-and-System-Overview.md`  
-- Possibly relevant extract from `V2_brand-ethos.md` for identity framing.
+- `Gun-Info/All-Models-Corpus.json`
+- `PGPT/V2/Gun-Info/Base-Models-Corpus.md`
+- `Gun-Info/Platforms-Corpus.md`
+- `Making-A-Perazzi/1_Product-and-System-Overview.md`  
+- Possibly relevant extract from `Brand-Ethos.md` for identity framing.
 
 **Checks:**
 
@@ -82,7 +82,7 @@ For each case below:
 
 **Expected doc families:**
 
-- `V2_Making-a-Perazzi-Docs/1_Product-and-System-Overview.md`  
+- `Making-A-Perazzi/1_Product-and-System-Overview.md`  
 - Sections in Part II/III/IV that describe the journey.  
 - Any future “Bespoke Journey” narrative docs (when added).
 
@@ -98,10 +98,10 @@ For each case below:
 
 **Expected doc families:**
 
-- `V2_Company-Info-Docs/V2_recommended-service-centers.md`  
-- `V2_Company-Info-Docs/V2_authorized-dealers.md`  
+- `Company-Info/Recommended-Service-Centers.md`  
+- `Company-Info/Authorized-Dealers.md`  
 - Relevant Making-a-Perazzi sections on jointing / lockup (e.g., assembly & mechanical QC).  
-- `V2_Company-Info-Docs/V2_consumer-warning-notice.md` (for safety tone).
+- `Company-Info/Consumer-Warning.md` (for safety tone).
 
 **Checks:**
 
@@ -116,7 +116,7 @@ For each case below:
 
 **Expected doc families:**
 
-- `V2_Gun-Info-Docs/V2_manufacture-year.md`
+- `Gun-Info/Manufacture-Year.md`
 
 **Checks:**
 
@@ -130,8 +130,8 @@ For each case below:
 
 **Expected doc families:**
 
-- `V2_Company-Info-Docs/V2_authorized-dealers.md`  
-- `V2_Operational-Docs/V2_site-overview.md` (for where the dealer locator is on the site).
+- `Company-Info/Authorized-Dealers.md`  
+- `Operational/Site-Overview.md` (for where the dealer locator is on the site).
 
 **Checks:**
 
@@ -289,7 +289,7 @@ Guardrail validation checks that **forbidden behaviors** remain forbidden.
 **Checks:**
 
 - No suggestions about non-Perazzi products.
-- Scope messaging matches `V2_REDO_non-negotiable-guardrails.md`.
+- Scope messaging matches `NonNegotiable-Guardrails.md`.
 
 ---
 
@@ -376,7 +376,7 @@ Validation steps:
 
 ## 5. Voice & Tone Validation
 
-This validation is about whether answers **sound** like PerazziGPT per `V2_REDO_voice-calibration.md` and brand docs.
+This validation is about whether answers **sound** like PerazziGPT per `Voice-Calibration.md` and brand docs.
 
 ### 5.1 Spot-checks
 
@@ -415,15 +415,15 @@ If any answer consistently violates these, treat it as a signal that:
 Run at least a minimal validation pass when:
 
 - You change any Phase-1 behavior docs:
-  - `V2_REDO_assistant-spec.md`
-  - `V2_REDO_non-negotiable-guardrails.md`
-  - `V2_REDO_voice-calibration.md`
-  - `V2_REDO_use-case-depth.md`
+  - `Assistant-Spec.md`
+  - `NonNegotiable-Guardrails.md`
+  - `Voice-Calibration.md`
+  - `Use-Case-Depth.md`
 - You change key Phase-2 docs:
-  - `V2_REDO_source-corpus.md`
-  - `V2_REDO_chunking-guidelines.md`
-  - `V2_REDO_embedding-stack.md`
-  - `V2_REDO_rerun-process.md`
+  - `Source-Corpus.md`
+  - `Chunking-Guidelines.md`
+  - `Embedding-Stack.md`
+  - `ReRun-Process.md`
 - You perform a full or large incremental ingest in a production-like environment.
 
 For small content edits (e.g., typo fixes in a single doc), a basic retrieval validation may be sufficient.

@@ -2,26 +2,26 @@
 
 > Version: 0.3 (Draft)  
 > Owner: David Radulovich  
-> File: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-1/V2_REDO_voice-calibration.md`  
+> File: `PGPT/V2/AI-Docs/P1/Voice-Calibration.md`  
 > Related docs:  
-> - `V2_brand-ethos.md`  
-> - `V2_writing-tone.md`  
-> - `V2_REDO_assistant-spec.md`  
-> - `V2_REDO_non-negotiable-guardrails.md`  
+> - `Brand-Ethos.md`  
+> - `Writing-Tone.md`  
+> - `Assistant-Spec.md`  
+> - `NonNegotiable-Guardrails.md`  
 
 This document translates the **Perazzi writing style and brand ethos** into specific guidance for how **PerazziGPT** should sound in conversation, across modes and audience archetypes.
 
 It assumes that:
 
-- `V2_brand-ethos.md` defines *what* Perazzi is.  
-- `V2_writing-tone.md` defines *how Perazzi writes*.  
+- `Brand-Ethos.md` defines *what* Perazzi is.  
+- `Writing-Tone.md` defines *how Perazzi writes*.  
 - This file defines *how the assistant speaks* in real-time, within safety and behavior constraints.
 
 ---
 
 ## 1. Core Tone
 
-PerazziGPT’s voice is anchored in the tone described in `V2_writing-tone.md` and the brand positioning from `V2_brand-ethos.md`.
+PerazziGPT’s voice is anchored in the tone described in `Writing-Tone.md` and the brand positioning from `Brand-Ethos.md`.
 
 At all times, the assistant should feel:
 

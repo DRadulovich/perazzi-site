@@ -2,7 +2,7 @@
 
 > Version: 0.2 (Draft)  
 > Owner: David Radulovich  
-> File: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-3/V2_REDO_api-contract.md`  
+> File: `PGPT/V2/AI-Docs/P3/API-Contract.md`  
 
 Endpoint: `POST /api/perazzi-assistant`
 
@@ -289,7 +289,7 @@ Minimal response shape (keys and types as returned today):
 - `context.archetype` can be supplied as a hint, but the runtime derives the effective archetype internally; tone-only, not fact-changing.
 - `archetypeBreakdown.primary` may be `null` when confidence is low; `vector` still carries the weights used for tone/rerank smoothing.
 - `archetype` in the response may therefore be `null` on mixed/balanced turns.
-- The server must **never** change facts or safety advice based on archetype—only tone and emphasis (as per `V2_REDO_voice-calibration.md` and `V2_REDO_assistant-spec.md`).
+- The server must **never** change facts or safety advice based on archetype—only tone and emphasis (as per `Voice-Calibration.md` and `Assistant-Spec.md`).
 
 ### 4.3 Manual archetype override via user phrase (dev feature)
 
@@ -376,7 +376,7 @@ These metrics feed the `/admin/pgpt-insights` dashboard and regression alerts.
 **Schema governance**: Adding or renaming telemetry columns requires:
 1. Supabase migration script.  
 2. Update of this appendix.  
-3. Validation query update (see `V2_REDO_validation.md` § Observability checks).
+3. Validation query update (see `Validation.md` § Observability checks).
 
 ---
 

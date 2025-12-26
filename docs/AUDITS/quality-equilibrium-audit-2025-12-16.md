@@ -15,7 +15,7 @@ Repository-grounded audit of how prompt structure, retrieval, history, caching, 
 
 ## Prompt Block Inventory & Injection Order (verified)
 Order inside `buildSystemPrompt` (`src/app/api/perazzi-assistant/route.ts:924-1025`):
-1. `PHASE_ONE_SPEC` loaded from `V2_REDO_assistant-spec.md` (`:146-155`).
+1. `PHASE_ONE_SPEC` loaded from `Assistant-Spec.md` (`:146-155`).
 2. `STYLE_EXEMPLARS` block (`:158-196`).
 3. Context summary line (mode/model/page) (`:937-950`).
 4. Retrieved `docSnippets` per chunk: ``[chunkId] content\nSource: title (sourcePath)`` (`:931-936`, `:1012-1014`).
@@ -29,7 +29,7 @@ Order inside `buildSystemPrompt` (`src/app/api/perazzi-assistant/route.ts:924-10
 Templates come from `buildResponseTemplates` (`src/lib/perazzi-intents.ts:314-327`), driven by detected intents/archetype variants.
 
 ## Quality-Risk Map (helpfulness, rule reliability, hallucination)
-- **Guardrail dilution / conflicts:** Pricing, gunsmithing, legal refusals appear in both `BLOCKED_RESPONSES` (`src/app/api/perazzi-assistant/route.ts:43-52`) and style exemplar refusals (`:185-196`), plus spec guardrails (`V2_REDO_assistant-spec.md:312-331,322-325`). Mixed severity and placement risk inconsistent refusals. Low-confidence threshold defaults to 0 (`getLowConfidenceThreshold`, `:206-209`), effectively disabling the fallback message even when retrieval is irrelevant.
+- **Guardrail dilution / conflicts:** Pricing, gunsmithing, legal refusals appear in both `BLOCKED_RESPONSES` (`src/app/api/perazzi-assistant/route.ts:43-52`) and style exemplar refusals (`:185-196`), plus spec guardrails (`Assistant-Spec.md:312-331,322-325`). Mixed severity and placement risk inconsistent refusals. Low-confidence threshold defaults to 0 (`getLowConfidenceThreshold`, `:206-209`), effectively disabling the fallback message even when retrieval is irrelevant.
 - **Instruction overload:** System prompt begins with a 12k+ token spec + long style exemplars, followed by contextual scaffolding and templates; final Markdown/tone nudges arrive late. Critical grounding/guardrails compete with narrative tone blocks and archetype/relatability guidance (`:971-1025`).
 - **Retrieval contamination:** `docSnippets` include full chunk text and repeated `Source: {title} ({sourcePath})` per chunk (`:931-936`), encouraging model fixation on chunk headers. Titles default to document_path when missing (`src/lib/perazzi-retrieval.ts:884-892`), so repeated paths amplify noise.
 - **History inertia:** All assistant + user turns (capped at 40) are resent every call (`src/components/chat/useChatState.ts:99-106,191-203`), while `previousResponseId` is also supplied (`:185-201`). Long assistant replies dominate context; no summarization or pruning beyond count cap (no truncation logic found via `rg` search).
@@ -64,7 +64,7 @@ Templates come from `buildResponseTemplates` (`src/lib/perazzi-intents.ts:314-32
 ## Guardrail Enforcement & Logging Map
 - **Pre-model:** `detectBlockedIntent` keyword checks for system meta/pricing/gunsmithing/legal (`src/app/api/perazzi-assistant/route.ts:773-803`). No moderation/PII filter or model-side safety call.
 - **Low confidence:** returns canned message only if `maxScore` below env threshold (defaults to 0) (`:673-697`), so effectively never triggers unless env set.
-- **In-prompt:** Spec + style refusal patterns and safety rules (`V2_REDO_assistant-spec.md:312-338,322-325`) embedded each turn; `toneNudge` reiterates “avoid pricing or legal guidance” (`src/app/api/perazzi-assistant/route.ts:832-834`).
+- **In-prompt:** Spec + style refusal patterns and safety rules (`Assistant-Spec.md:312-338,322-325`) embedded each turn; `toneNudge` reiterates “avoid pricing or legal guidance” (`src/app/api/perazzi-assistant/route.ts:832-834`).
 - **Post-model:** None; no validation of output, citations, or refusal correctness.
 - **Logging:** `logInteraction` prints JSON and optional NDJSON file (`:1049-1073`), including guardrail status, intents/topics, templates, retrieval scores. `logAiInteraction` writes to DB when `PERAZZI_AI_LOGGING_ENABLED` is true, with prompt/response text gated by `PERAZZI_LOG_TEXT_MODE` (`src/lib/aiLogging.ts:9-26,159-281`). Guardrail blocks also logged (`src/app/api/perazzi-assistant/route.ts:594-642`).
 
@@ -74,10 +74,10 @@ Templates come from `buildResponseTemplates` (`src/lib/perazzi-intents.ts:314-32
 - No fixtures/golden outputs for guardrails, hallucination checks, or citation correctness; no scoring harness beyond maxScore analytics (`src/components/pgpt-insights/...`).
 
 ## Duplications & Conflicts (spec/style/templates/rules/guardrails)
-- Pricing/gunsmithing/competitor refusals duplicated across spec (`V2_REDO_assistant-spec.md:310-331,322-325`), style exemplars (`src/app/api/perazzi-assistant/route.ts:185-196`), and BLOCKED_RESPONSES (`:43-52`); wording varies (policy vs tone).
+- Pricing/gunsmithing/competitor refusals duplicated across spec (`Assistant-Spec.md:310-331,322-325`), style exemplars (`src/app/api/perazzi-assistant/route.ts:185-196`), and BLOCKED_RESPONSES (`:43-52`); wording varies (policy vs tone).
 - Tone/length conflict: poetic, multi-paragraph exemplars (`:158-196`) vs final rule “short paragraphs…avoid filler” (`:1021-1025`) and `toneNudge` “concise” (`:832-834`).
-- Archetype influence: spec says archetype guides tone but never facts (`V2_REDO_assistant-spec.md:226-233`), yet archetype block in prompt emphasizes tone guidance (`src/app/api/perazzi-assistant/route.ts:971-987`) while templates may include archetype-specific structures (`src/lib/perazzi-intents.ts:144-178`), increasing overlap.
-- Retrieval instruction duplication: spec requires grounding and citations (`V2_REDO_assistant-spec.md:437-444`), while closing rules also ask for Markdown/bullets (`src/app/api/perazzi-assistant/route.ts:1021-1025`); no single concise guardrail block near the end.
+- Archetype influence: spec says archetype guides tone but never facts (`Assistant-Spec.md:226-233`), yet archetype block in prompt emphasizes tone guidance (`src/app/api/perazzi-assistant/route.ts:971-987`) while templates may include archetype-specific structures (`src/lib/perazzi-intents.ts:144-178`), increasing overlap.
+- Retrieval instruction duplication: spec requires grounding and citations (`Assistant-Spec.md:437-444`), while closing rules also ask for Markdown/bullets (`src/app/api/perazzi-assistant/route.ts:1021-1025`); no single concise guardrail block near the end.
 - Late overrides: `toneNudge` appended last can supersede earlier tone/formatting; no late restatement of safety/grounding after templates/archetype/relatability blocks.
 
 ## Salience/History Dominance Risks

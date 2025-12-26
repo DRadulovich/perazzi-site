@@ -6,7 +6,7 @@ import type { ActiveDoc, EmbedMode, Status } from "./types";
 
 export async function parseSourceCorpus(): Promise<ActiveDoc[]> {
   const corpusPath =
-    "V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-2/V2_REDO_source-corpus.md";
+    "PGPT/V2/AI-Docs/P2/Source-Corpus.md";
   const raw = await readFile(path.resolve(process.cwd(), corpusPath), "utf8");
   const lines = raw.split(/\r?\n/);
   const docs: ActiveDoc[] = [];

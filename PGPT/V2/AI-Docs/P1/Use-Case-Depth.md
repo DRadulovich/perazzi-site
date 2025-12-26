@@ -243,16 +243,16 @@ These are **internal** calibrations. They refine how the assistant speaks, not w
 
 Prospect responses should draw primarily from:
 
-- `V2_Core-Brand-and-Strategy-Docs/`
-  - `V2_brand-bible.md`
-  - `V2_brand-ethos.md`
-  - `V2_marketing-plan.md` (especially audience segments)
-  - `V2_writing-tone.md`
-- `V2_Gun-Info-Docs/`
-  - `V2_RAG_corpus-models-details.json`
-  - `V2_rib-information.md`
-  - `V2_manufacture-year.md` (for era/heritage context when relevant)
-- `V2_Making-a-Perazzi-Docs/`
+- `Brand-Strategy/`
+  - `Brand-Bible.md`
+  - `Brand-Ethos.md`
+  - `Marketing-Plan.md` (especially audience segments)
+  - `Writing-Tone.md`
+- `Gun-Info/`
+  - `All-Models-Corpus.json`
+  - `Rib-Info.md`
+  - `Manufacture-Year.md` (for era/heritage context when relevant)
+- `Making-A-Perazzi/`
   - `1_Product-and-System-Overview.md`
   - Relevant Part II station chapters when explaining craft and process.
   - `4_Perazzi-vs-General-Gunmaking.md` for differentiating Perazzi practices.
@@ -260,7 +260,7 @@ Prospect responses should draw primarily from:
 
 Navigation elements (links to live site pages) come from:
 
-- `V2_Operational-Docs/V2_site-overview.md`  
+- `Operational/Site-Overview.md`  
 - Any future live-site narrative docs you add to the corpus.
 
 ### 1.5 Success criteria & failure modes (Prospect)
@@ -355,22 +355,22 @@ Support existing owners in understanding their shotgun, care philosophy, and off
 
 Owner responses should draw primarily from:
 
-- `V2_Company-Info-Docs/`
-  - `V2_recommended-service-centers.md`
-  - `V2_authorized-dealers.md`
-  - `V2_consumer-warning-notice.md` (safety boundaries)
-- `V2_Gun-Info-Docs/`
-  - `V2_manufacture-year.md` (for age/era context)
-  - `V2_rib-information.md` (for configuration implications)
-  - `V2_RAG_corpus-models-details.json` (for platform-specific considerations)
-- `V2_Making-a-Perazzi-Docs/`
+- `Company-Info/`
+  - `Recommended-Service-Centers.md`
+  - `Authorized-Dealers.md`
+  - `Consumer-Warning.md` (safety boundaries)
+- `Gun-Info/`
+  - `Manufacture-Year.md` (for age/era context)
+  - `Rib-Info.md` (for configuration implications)
+  - `All-Models-Corpus.json` (for platform-specific considerations)
+- `Making-A-Perazzi/`
   - Station chapters related to assembly, mechanical QC, patterning, and fitting
   - `3_CrossCutting-Systems.md` (quality control, tolerances, fit, performance)
   - `4_Perazzi-vs-General-Gunmaking.md` (Perazzi-specific care practices)
 
 Navigation elements from:
 
-- `V2_Operational-Docs/V2_site-overview.md`
+- `Operational/Site-Overview.md`
 
 ### 2.5 Success criteria & failure modes (Owner)
 
@@ -458,11 +458,11 @@ Navigation answers depend heavily on the live site structure and any editorial c
 
 Primary sources:
 
-- `V2_Operational-Docs/`
-  - `V2_site-overview.md` – map from user intent → site region.  
-  - `V2_build-configurator-flow.json` – helps explain where to start the configurator process.
+- `Operational/`
+  - `Site-Overview.md` – map from user intent → site region.  
+  - `Build-Configurator-Flow.json` – helps explain where to start the configurator process.
 
-- `V2_Core-Brand-and-Strategy-Docs/` and `V2_Making-a-Perazzi-Docs/` may be used to:
+- `Brand-Strategy/` and `Making-A-Perazzi/` may be used to:
   - Inform brief explanations before routing the user.
   - Suggest which content will be most rewarding for different archetypes.
 
@@ -525,9 +525,9 @@ This document is where **abstract behavior** from the assistant spec becomes **c
 
 As you add new documents, flows, or site sections, update this file alongside:
 
-- `V2_REDO_assistant-spec.md`  
-- `V2_REDO_source-corpus.md`  
-- `V2_REDO_metadata-schema.md`  
+- `Assistant-Spec.md`  
+- `Source-Corpus.md`  
+- `Metadata-Schema.md`  
 
 to keep the whole system coherent and easy to evolve.
 

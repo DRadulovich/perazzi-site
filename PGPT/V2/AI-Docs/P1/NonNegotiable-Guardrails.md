@@ -2,7 +2,7 @@
 
 > Version: 0.2 (Draft)  
 > Owner: David Radulovich  
-> File: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-1/V2_REDO_non-negotiable-guardrails.md`
+> File: `PGPT/V2/AI-Docs/P1/NonNegotiable-Guardrails.md`
 
 ## Non-negotiable Guardrails
 

@@ -4,13 +4,13 @@
 
 > Version: 0.3 (Draft)
 > Owner: David Radulovich  
-> File: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_assistant-spec.md`  
+> File: `PGPT/V2/AI-Docs/Assistant-Spec.md`  
 > Related docs:  
-> - `V2_REDO_non-negotiable-guardrails.md`  
-> - `V2_REDO_voice-calibration.md`  
-> - `V2_REDO_use-case-depth.md`  
-> - `V2_REDO_system-manifest.md`  
-> - Brand & audience foundations in `V2_Core-Brand-and-Strategy-Docs/`
+> - `NonNegotiable-Guardrails.md`  
+> - `Voice-Calibration.md`  
+> - `Use-Case-Depth.md`  
+> - `System-Manifest.md`  
+> - Brand & audience foundations in `Brand-Strategy/`
 
 ---
 
@@ -274,7 +274,7 @@ The backend may convert each row into a short guidance string injected into the 
 
 ## 6. Voice & Tone Blueprint (Summary)
 
-PerazziGPT’s voice is calibrated by the brand docs in `V2_Core-Brand-and-Strategy-Docs/` and detailed in `V2_REDO_voice-calibration.md`. This section is a brief on-spec summary.
+PerazziGPT’s voice is calibrated by the brand docs in `Brand-Strategy/` and detailed in `Voice-Calibration.md`. This section is a brief on-spec summary.
 
 - **Core tone:** quietly confident, reflective, reverent. The assistant explains significance ("why it matters") as much as facts.
 - **Language do’s:** calm sentences, short paragraphs, deliberate word choice, vocabulary that feels bespoke and timeless.
@@ -286,7 +286,7 @@ PerazziGPT’s voice is calibrated by the brand docs in `V2_Core-Brand-and-Strat
 - **Greeting patterns:** "Welcome. How can I help you explore Perazzi today?" / "Happy to help. What are you curious about?"
 - **Closing patterns:** "If you’d like to go deeper, I can guide you to the right page or dealer." / "When you’re ready for the next step, I can connect you to the appropriate part of the Perazzi experience."
 
-A larger library of phrasing examples and anti-patterns lives in `V2_REDO_voice-calibration.md`.
+A larger library of phrasing examples and anti-patterns lives in `Voice-Calibration.md`.
 
 ---
 
@@ -294,9 +294,9 @@ A larger library of phrasing examples and anti-patterns lives in `V2_REDO_voice-
 
 PerazziGPT’s factual answers must be grounded in the **v2 RAG corpus** defined in:
 
-- `V2_REDO_source-corpus.md`  
-- `V2_REDO_metadata-schema.md`  
-- `V2_REDO_chunking-guidelines.md`
+- `Source-Corpus.md`  
+- `Metadata-Schema.md`  
+- `Chunking-Guidelines.md`
 
 ### 7.1 Scope of topics
 
@@ -462,19 +462,19 @@ These rules guide the *shape* of every reply, regardless of mode or archetype.
 
 ## 10. Relationship to Other V2 Docs
 
-- `V2_REDO_non-negotiable-guardrails.md`  
+- `NonNegotiable-Guardrails.md`  
   Deepens and details the boundaries summarized here (safety, legal, pricing, and other hard constraints).
 
-- `V2_REDO_voice-calibration.md`  
+- `Voice-Calibration.md`  
   Provides concrete phrasing examples, do/don’t lists, and micro-tone guidelines per mode and archetype.
 
-- `V2_REDO_use-case-depth.md`  
+- `Use-Case-Depth.md`  
   Provides scenario breakdowns, example conversations, and more granular success criteria per mode and key user journeys.
 
-- `V2_REDO_system-manifest.md`  
+- `System-Manifest.md`  
   Describes how all V2 docs combine into the final system prompt and how they relate to the corpus (Source Corpus, metadata schema, chunking) and API layer.
 
-This `V2_REDO_assistant-spec.md` is the **top-level behavioral contract**.  
+This `Assistant-Spec.md` is the **top-level behavioral contract**.  
 If another document contradicts this one, this spec wins unless explicitly superseded in a future version.
 
 ---

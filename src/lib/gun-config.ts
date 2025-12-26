@@ -1,4 +1,4 @@
-import rawConfig from "../../V2-PGPT/V2_PreBuild-Docs/V2_Gun-Info-Docs/gun_order_flow.json";
+import rawConfig from "../../PGPT/V2/Gun-Info/GunOrder-FlowChart.json";
 
 export type FieldOption = {
   value: string;

@@ -10,7 +10,7 @@
 
 Use this document for direct lookup questions like "What variants exist for base model `mx8`?" or "Show me the variants under `high-tech-s`."
 
-For detailed per-model configuration/spec text, use `V2-PGPT/V2_PreBuild-Docs/V2_Gun-Info-Docs/V2_RAG_corpus-models-specText.md`.
+For detailed per-model configuration/spec text, use `PGPT/V2/Gun-Info/Models-SpecText-Corpus.md`.
 
 ## dc
 

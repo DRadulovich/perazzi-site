@@ -4,7 +4,7 @@
 
 > Version: 0.2 (Draft)  
 > Owner: David Radulovich  
-> File: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-2/V2_REDO_metadata-schema.md`  
+> File: `PGPT/V2/AI-Docs/P2/Metadata-Schema.md`  
 > Purpose: Define the canonical metadata schema for PerazziGPT v2 documents, chunks, and embeddings so that Supabase, the ingestion pipeline, and the runtime all agree on how knowledge is stored and retrieved.
 
 ---
@@ -13,7 +13,7 @@
 
 This schema is the **contract** between:
 
-- The **source corpus** (`V2_REDO_source-corpus.md`),
+- The **source corpus** (`Source-Corpus.md`),
 - The **ingestion pipeline** (which reads the corpus and writes to Supabase),
 - The **runtime** (which performs RAG and builds prompts),
 - And future tools (Codex scripts, audits, etc.).
@@ -25,7 +25,7 @@ Key principles:
    - **Chunk-level** metadata describes individual text chunks used for embeddings and retrieval.
 
 2. **Alignment with Source Corpus**
-   - Fields in `V2_REDO_source-corpus.md` like `Category`, `Doc_Type`, `Status`, `Embed_Mode`, and `Pricing_Sensitive` must appear in this schema and be faithfully preserved.
+   - Fields in `Source-Corpus.md` like `Category`, `Doc_Type`, `Status`, `Embed_Mode`, and `Pricing_Sensitive` must appear in this schema and be faithfully preserved.
 
 3. **Support Modes & Archetypes**
    - Chunk metadata should support light biasing for:
@@ -66,7 +66,7 @@ Recommended columns:
 ```sql
 documents (
   id                  uuid primary key,
-  path                text not null,    -- matches Path from V2_REDO_source-corpus.md
+  path                text not null,    -- matches Path from Source-Corpus.md
   title               text,             -- human-readable title (from doc metadata or derived)
   summary             text,             -- brief 1–3 sentence summary (optional)
 
@@ -119,7 +119,7 @@ documents (
 
 - For non-Making-a-Perazzi docs, `series_*` fields can be `NULL`.
 - For pricing docs, `pricing_sensitive = true` and `guardrail_flags` should include something like `"pricing_sensitive_source"` at **document-level** as well as chunk-level.
-- `path` must match the `Path` specified in `V2_REDO_source-corpus.md`.
+- `path` must match the `Path` specified in `Source-Corpus.md`.
 
 ---
 
@@ -188,7 +188,7 @@ chunks (
 
 - `primary_modes` and `archetype_bias` are hints. They don’t set runtime `mode` or `archetype` but can be used to:
   - bias retrieval when we **know** the user is in Owner + Analyst, etc.
-- `heading_path` and `section_labels` are especially important in `V2_Making-a-Perazzi-Docs`, so the assistant can reconstruct context like:
+- `heading_path` and `section_labels` are especially important in `Making-A-Perazzi`, so the assistant can reconstruct context like:
   - “This chunk is from Part II, station 2-G, sub-section 3.4.”
 - `guardrail_flags` should include pricing-related flags for chunks derived from `metadata-only` CSVs, even though the numeric values are stripped.
 
@@ -217,7 +217,7 @@ embeddings (
 
 ## 6. Relationship to Source Corpus Manifest
 
-`V2_REDO_source-corpus.md` defines **which files** are ingested and how. This schema defines **how** they land in Supabase.
+`Source-Corpus.md` defines **which files** are ingested and how. This schema defines **how** they land in Supabase.
 
 For each `active` entry in the source corpus:
 
@@ -249,7 +249,7 @@ For each `active` entry in the source corpus:
 ```yaml
 # documents row (conceptual)
 id: "5f9c2cbd-2c1e-4fb3-9e02-6d2bfa29abcd"
-path: "V2-PGPT/V2_PreBuild-Docs/V2_Making-a-Perazzi-Docs/2-G_Roles-and-Stations_Checkering.md"
+path: "PGPT/V2/Making-A-Perazzi/2-G_Roles-and-Stations_Checkering.md"
 title: "2-G – Checkering"
 summary: >
   Handbook chapter describing the checkering station at Perazzi, including
@@ -377,7 +377,7 @@ created_at: "2025-03-01T12:35:01Z"
     - `embeddings.embedding` (via pgvector index)
 
 - The ingestion pipeline should be responsible for:
-  - Mapping each source file’s `## 0. Metadata` and `V2_REDO_source-corpus.md` entry into a `documents` row.
+  - Mapping each source file’s `## 0. Metadata` and `Source-Corpus.md` entry into a `documents` row.
   - Creating `chunks` with appropriate `heading_path`, `section_labels`, and hints (`primary_modes`, `archetype_bias`).
   - Populating `guardrail_flags` for pricing-sensitive and safety-critical content.
 

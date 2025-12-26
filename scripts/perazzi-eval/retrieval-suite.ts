@@ -12,7 +12,7 @@ import { getRerankCandidateLimit, retrievePerazziContextWithEmbedding } from "@/
 import type { PerazziAssistantRequest, PerazziMode } from "@/types/perazzi-assistant";
 
 const VALIDATION_SOURCE =
-  "V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-2/V2_REDO_validation.md";
+  "PGPT/V2/AI-Docs/P2/Validation.md";
 
 type RetrievalCase = {
   id: string;
@@ -32,13 +32,13 @@ const RETRIEVAL_CASES: RetrievalCase[] = [
     name: "Prospect - Platform differentiation",
     query: "What's the difference between the MX and the HT platforms?",
     expectedFamilies: [
-      "V2_Gun-Info-Docs/V2_RAG_corpus-models-details.json",
-      "V2-PGPT/V2_PreBuild-Docs/V2_Gun-Info-Docs/V2_RAG_corpus-base-models.md",
-      "V2_Gun-Info-Docs/V2_RAG_corpus-platforms.md",
-      "V2_Making-a-Perazzi-Docs/1_Product-and-System-Overview.md",
-      "V2_brand-ethos.md",
+      "Gun-Info/All-Models-Corpus.json",
+      "PGPT/V2/Gun-Info/Base-Models-Corpus.md",
+      "Gun-Info/Platforms-Corpus.md",
+      "Making-A-Perazzi/1_Product-and-System-Overview.md",
+      "Brand-Ethos.md",
     ],
-    forbiddenPathPrefixes: ["V2_Pricing-List-Docs/"],
+    forbiddenPathPrefixes: ["Pricing-Lists/"],
     sourceSection: "2.2.1",
   },
   {
@@ -46,10 +46,10 @@ const RETRIEVAL_CASES: RetrievalCase[] = [
     name: "Prospect - Bespoke journey",
     query: "How does the bespoke build process work at Perazzi?",
     expectedFamilies: [
-      "V2_Making-a-Perazzi-Docs/1_Product-and-System-Overview.md",
-      "V2_Making-a-Perazzi-Docs/",
+      "Making-A-Perazzi/1_Product-and-System-Overview.md",
+      "Making-A-Perazzi/",
     ],
-    forbiddenPathPrefixes: ["V2_Pricing-List-Docs/"],
+    forbiddenPathPrefixes: ["Pricing-Lists/"],
     sourceSection: "2.2.2",
   },
   {
@@ -57,10 +57,10 @@ const RETRIEVAL_CASES: RetrievalCase[] = [
     name: "Owner - Service & timing",
     query: "My top lever is nearing center. What should I do?",
     expectedFamilies: [
-      "V2_Company-Info-Docs/V2_recommended-service-centers.md",
-      "V2_Company-Info-Docs/V2_authorized-dealers.md",
-      "V2_Making-a-Perazzi-Docs/",
-      "V2_Company-Info-Docs/V2_consumer-warning-notice.md",
+      "Company-Info/Recommended-Service-Centers.md",
+      "Company-Info/Authorized-Dealers.md",
+      "Making-A-Perazzi/",
+      "Company-Info/Consumer-Warning.md",
     ],
     sourceSection: "2.2.3",
   },
@@ -68,7 +68,7 @@ const RETRIEVAL_CASES: RetrievalCase[] = [
     id: "owner-year-of-manufacture",
     name: "Owner - Year of manufacture",
     query: "What year was my Perazzi made if my serial is XXXXX?",
-    expectedFamilies: ["V2_Gun-Info-Docs/V2_manufacture-year.md"],
+    expectedFamilies: ["Gun-Info/Manufacture-Year.md"],
     sourceSection: "2.2.4",
   },
   {
@@ -76,8 +76,8 @@ const RETRIEVAL_CASES: RetrievalCase[] = [
     name: "Navigation - Dealer locator",
     query: "Where can I find a Perazzi dealer near me?",
     expectedFamilies: [
-      "V2_Company-Info-Docs/V2_authorized-dealers.md",
-      "V2_Operational-Docs/V2_site-overview.md",
+      "Company-Info/Authorized-Dealers.md",
+      "Operational/Site-Overview.md",
     ],
     sourceSection: "2.2.5",
   },
@@ -86,13 +86,13 @@ const RETRIEVAL_CASES: RetrievalCase[] = [
     name: "Rerank - Platform comparison (MX8 vs High Tech)",
     query: "What's the difference between the MX8 and the High Tech?",
     expectedFamilies: [
-      "V2_Gun-Info-Docs/V2_RAG_corpus-models-details.json",
-      "V2-PGPT/V2_PreBuild-Docs/V2_Gun-Info-Docs/V2_RAG_corpus-base-models.md",
-      "V2_Gun-Info-Docs/V2_RAG_corpus-platforms.md",
-      "V2_Making-a-Perazzi-Docs/1_Product-and-System-Overview.md",
-      "V2_brand-ethos.md",
+      "Gun-Info/All-Models-Corpus.json",
+      "PGPT/V2/Gun-Info/Base-Models-Corpus.md",
+      "Gun-Info/Platforms-Corpus.md",
+      "Making-A-Perazzi/1_Product-and-System-Overview.md",
+      "Brand-Ethos.md",
     ],
-    forbiddenPathPrefixes: ["V2_Pricing-List-Docs/"],
+    forbiddenPathPrefixes: ["Pricing-Lists/"],
     sourceSection: "2.4",
   },
 ];

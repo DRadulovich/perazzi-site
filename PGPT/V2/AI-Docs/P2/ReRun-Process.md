@@ -2,14 +2,14 @@
 
 > Version: 0.1 (Draft)  
 > Owner: David Radulovich  
-> File: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-2/V2_REDO_rerun-process.md`  
+> File: `PGPT/V2/AI-Docs/P2/ReRun-Process.md`  
 > Related docs:  
-> - `V2_REDO_source-corpus.md`  
-> - `V2_REDO_metadata-schema.md`  
-> - `V2_REDO_chunking-guidelines.md`  
-> - `V2_REDO_embedding-stack.md`  
-> - `V2_REDO_infrastructure.md`  
-> - `V2_REDO_validation.md` (placeholder)  
+> - `Source-Corpus.md`  
+> - `Metadata-Schema.md`  
+> - `Chunking-Guidelines.md`  
+> - `Embedding-Stack.md`  
+> - `Infrastructure.md`  
+> - `Validation.md` (placeholder)  
 
 This document describes **how** PerazziGPT v2’s corpus is ingested into Supabase and **how reruns are handled safely** when documents change.
 
@@ -24,7 +24,7 @@ The goals are:
 
 ## 1. Terminology
 
-- **Source corpus** – The set of files under `V2-PGPT/V2_PreBuild-Docs` that are eligible for ingestion, as defined by `V2_REDO_source-corpus.md`.
+- **Source corpus** – The set of files under `PGPT/V2` that are eligible for ingestion, as defined by `Source-Corpus.md`.
 - **Document** – A logical source file (e.g., a single `.md` or `.json`), represented by one row in the `documents` table.
 - **Chunk** – A semantically coherent slice of a document, represented by one row in the `chunks` table.
 - **Embedding** – A vector representation of a chunk, stored in the `embeddings` table.
@@ -47,16 +47,16 @@ Run a **full ingest** when:
 
 Run an **incremental rerun** (targeted re-ingest) when:
 
-- A source document in `V2_PreBuild-Docs` changes:
+- A source document in `V2` changes:
   - Content edited,
   - Renamed (path change),
   - Added/removed entirely.
-- `V2_REDO_source-corpus.md` changes:
+- `Source-Corpus.md` changes:
   - Docs switched between `Status: active` / `planned` / `deprecated`,
   - Categories or Doc_Types updated.
-- `V2_REDO_chunking-guidelines.md` or `V2_REDO_chunking.config.json` changes:
+- `Chunking-Guidelines.md` or `chunking.config.json` changes:
   - Chunking behavior differs enough to change chunk boundaries.
-- `V2_REDO_embedding-stack.md` changes embedding behavior materially:
+- `Embedding-Stack.md` changes embedding behavior materially:
   - Embedding model change (e.g., new model).
   - Significant preprocessing changes.
 
@@ -70,16 +70,16 @@ The ingestion pipeline (e.g., a Node/TS script or CLI command like `pnpm ingest:
 
 1. **Load configuration**
    - Read:
-     - `V2_REDO_source-corpus.md`
-     - `V2_REDO_metadata-schema.md`
-     - `V2_REDO_chunking-guidelines.md`
-     - `V2_REDO_embedding-stack.md`
+     - `Source-Corpus.md`
+     - `Metadata-Schema.md`
+     - `Chunking-Guidelines.md`
+     - `Embedding-Stack.md`
    - Validate that required fields and tables exist (at least `documents`, `chunks`, `embeddings`).
 
 2. **Scan source corpus**
-   - Build a list of documents with `Status: active` from `V2_REDO_source-corpus.md`.
+   - Build a list of documents with `Status: active` from `Source-Corpus.md`.
    - For each active doc:
-     - Resolve its `Path` to an actual file under `V2_PreBuild-Docs`.
+     - Resolve its `Path` to an actual file under `V2`.
 
 3. **Per-document processing**
    - For each active document:
@@ -95,7 +95,7 @@ The ingestion pipeline (e.g., a Node/TS script or CLI command like `pnpm ingest:
 
 4. **Chunking**
    - For each new/modified document:
-     - Apply the chunking rules from `V2_REDO_chunking-guidelines.md` (and `V2_REDO_chunking.config.json` if used).
+     - Apply the chunking rules from `Chunking-Guidelines.md` (and `chunking.config.json` if used).
      - Produce an ordered list of chunks with:
        - `text`
        - `chunk_index`
@@ -114,7 +114,7 @@ The ingestion pipeline (e.g., a Node/TS script or CLI command like `pnpm ingest:
 
 6. **Embeddings**
    - For each new chunk:
-     - Preprocess text per `V2_REDO_embedding-stack.md`.
+     - Preprocess text per `Embedding-Stack.md`.
      - Batch chunks (e.g., 64 per call).
      - Call OpenAI’s `text-embedding-3-large`.
      - Insert into `embeddings` with:
@@ -130,7 +130,7 @@ The ingestion pipeline (e.g., a Node/TS script or CLI command like `pnpm ingest:
      - Chunks created.
      - Tokens embedded.
      - Any errors or warnings.
-   - Optionally run a small validation suite (see `V2_REDO_validation.md` once defined).
+   - Optionally run a small validation suite (see `Validation.md` once defined).
 
 ---
 
@@ -170,9 +170,9 @@ For v2, this is **not required**. The spec here should be seen as a possible fut
 
 The rerun process must respect all guardrails defined in:
 
-- `V2_REDO_non-negotiable-guardrails.md`
-- `V2_REDO_source-corpus.md`
-- `V2_REDO_embedding-stack.md`
+- `NonNegotiable-Guardrails.md`
+- `Source-Corpus.md`
+- `Embedding-Stack.md`
 
 ### 5.1 Source Corpus Status & Modes
 
@@ -198,7 +198,7 @@ The rerun process must respect all guardrails defined in:
 
 - When ingesting docs that contain safety or service information:
   - Ensure that the content is coming from **approved** Perazzi docs (e.g., consumer warning, service center guidance).
-  - If a doc is deprecated or replaced, deactivating it in `V2_REDO_source-corpus.md` should remove it from future retrieval:
+  - If a doc is deprecated or replaced, deactivating it in `Source-Corpus.md` should remove it from future retrieval:
     - By setting `Status: deprecated`.
     - Optionally by deleting associated `chunks` and `embeddings`.
 
@@ -309,17 +309,17 @@ After a major ingest or rerun, it’s good practice to run a **validation suite*
   - Pricing guardrails intact (no numeric price leakage).
   - Safety content coming from the correct docs.
 
-`V2_REDO_validation.md` will define these tests in more detail; this document only specifies that a rerun **should** be followed by validation for non-trivial changes.
+`Validation.md` will define these tests in more detail; this document only specifies that a rerun **should** be followed by validation for non-trivial changes.
 
 ---
 
 ## 9. Summary
 
 - Ingestion is controlled by:
-  - `V2_REDO_source-corpus.md` (which docs),
-  - `V2_REDO_metadata-schema.md` (how docs are stored),
-  - `V2_REDO_chunking-guidelines.md` (how docs are split),
-  - `V2_REDO_embedding-stack.md` (how chunks are embedded).
+  - `Source-Corpus.md` (which docs),
+  - `Metadata-Schema.md` (how docs are stored),
+  - `Chunking-Guidelines.md` (how docs are split),
+  - `Embedding-Stack.md` (how chunks are embedded).
 - Reruns:
   - Use document-level checksums to minimize unnecessary work.
   - Overwrite embeddings for changed chunks, one active embedding per chunk.

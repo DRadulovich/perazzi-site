@@ -28,12 +28,12 @@ export function chunkDocument(
   } else if (lowerPath.endsWith(".json")) {
     if (
       doc.path.includes(
-        "/V2_Gun-Info-Docs/V2_RAG_corpus-models-details.json",
+        "/Gun-Info/All-Models-Corpus.json",
       )
     ) {
       baseChunks = chunkModelDetailsV2(rawText);
     } else if (
-      doc.path.includes("/V2_Company-Info-Docs/V2_olympic-medals.json")
+      doc.path.includes("/Company-Info/Olympic-Medals.json")
     ) {
       baseChunks = chunkOlympicMedalsV2(rawText);
     } else {

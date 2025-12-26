@@ -1192,7 +1192,7 @@ async function fetchV2Chunks(opts: {
       return {
         chunkId: row.chunk_id,
         title,
-        sourcePath: row.document_path ?? "V2-PGPT/unknown",
+        sourcePath: row.document_path ?? "PGPT/unknown",
         content: row.content ?? "",
         baseScore,
         score: baseScore,
@@ -1330,7 +1330,7 @@ async function fetchV2Chunks(opts: {
     return {
       chunkId: row.chunk_id,
       title,
-      sourcePath: row.document_path ?? "V2-PGPT/unknown",
+      sourcePath: row.document_path ?? "PGPT/unknown",
       content: row.content ?? "",
       baseScore,
       score: finalScore,

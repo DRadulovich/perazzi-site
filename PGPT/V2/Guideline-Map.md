@@ -11,10 +11,10 @@
   - [X] One canonical source corpus manifest.
   - [X] One canonical metadata schema.
 - **Separation of concerns**
-  - *Behavior* (how the assistant acts) lives in `V2_REDO_Phase-1`.
-  - *Knowledge* (what it knows) lives in `V2_PreBuild-Docs` + `V2_REDO_source-corpus.md`.
-  - *Infrastructure & RAG* live in `V2_REDO_Phase-2`.
-  - *API / app wiring* lives in `V2_REDO_Phase-3`.
+  - *Behavior* (how the assistant acts) lives in `P1`.
+  - *Knowledge* (what it knows) lives in `V2` + `Source-Corpus.md`.
+  - *Infrastructure & RAG* live in `P2`.
+  - *API / app wiring* lives in `P3`.
 - **Mode + Archetype**
   - Every response is shaped by:
     - `mode ∈ {Prospect, Owner, Navigation}`
@@ -24,32 +24,32 @@
 
 ## Phase 1 – Establish V2 Project Skeleton (you’ve mostly done this)
 
-**Folder:** `V2-PGPT/`
+**Folder:** `PGPT/`
 
 **Objective:** Lock in the v2 layout so no v1 artifacts bleed in.
 
 **You already have:**
 
-- `V2_PreBuild-Docs/` – domain knowledge only.
-- `V2_REDO_Docs/`
-  - `V2_REDO_Phase-1/` – assistant behavior & system manifest.
-  - `V2_REDO_Phase-2/` – RAG, chunking, metadata, infra.
-  - `V2_REDO_Phase-3/` – API contract.
+- `V2/` – domain knowledge only.
+- `AI-Docs/`
+  - `P1/` – assistant behavior & system manifest.
+  - `P2/` – RAG, chunking, metadata, infra.
+  - `P3/` – API contract.
 
 **Success criteria:**
 
 - No legacy `INTERNAL-PERAZZIGPT` folders left.
-- All future PerazziGPT work happens in `V2-PGPT`.
+- All future PerazziGPT work happens in `PGPT`.
 
 ---
 
 ## Phase 2 – Assistant “Brain” Spec (Behavior Layer)
 
-**Folder:** `V2_REDO_Phase-1/`
+**Folder:** `P1/`
 
 **Objective:** Define exactly what PerazziGPT is, how it behaves, and how Modes + Archetypes work.
 
-### 2.1 Rewrite `V2_REDO_assistant-spec.md`
+### 2.1 Rewrite `Assistant-Spec.md`
 
 - Replace its contents with the v2 spec that defines:
   - Mission & scope.
@@ -70,7 +70,7 @@
   - High-level RAG behavior (uses Source Corpus v2 as only factual base).
   - Guardrail summary (no pricing, safety boundaries, etc).
 
-### 2.2 Tighten `V2_REDO_non-negotiable-guardrails.md`
+### 2.2 Tighten `NonNegotiable-Guardrails.md`
 
 - Make it the canonical “thou shalt not” doc:
   - Safety & legal constraints.
@@ -78,21 +78,21 @@
   - Don’t-speculate rules.
 - Cross-link it from the assistant spec (but keep it standalone).
 
-### 2.3 Update `V2_REDO_voice-calibration.md`
+### 2.3 Update `Voice-Calibration.md`
 
 - Lock in brand voice and style:
   - Perazzi tone (luxury, craft, quiet confidence).
   - Assistant tone variants per mode (Prospect vs Owner vs Nav).
   - How to *subtly* adjust tone per archetype without naming the archetype.
 
-### 2.4 Refine `V2_REDO_use-case-depth.md`
+### 2.4 Refine `Use-Case-Depth.md`
 
 - Explicitly define:
   - Core use cases for each mode.
   - Example conversations.
   - Failure modes to avoid (e.g., overselling, giving gunsmithing instructions).
 
-### 2.5 Refresh `V2_REDO_system-manifest.md`
+### 2.5 Refresh `System-Manifest.md`
 
 - Make this the **map** of the behavior layer:
   - Lists all Phase-1 docs and their roles.
@@ -112,43 +112,43 @@
 
 ## Phase 3 – Corpus & Metadata Design (Knowledge Layer)
 
-**Folder:** `V2_PreBuild-Docs/` + `V2_REDO_Phase-2/`
+**Folder:** `V2/` + `P2/`
 
 **Objective:** Decide **exactly** what the assistant is allowed to know and how we label it.
 
-### 3.1 Build `V2_REDO_source-corpus.md`
+### 3.1 Build `Source-Corpus.md`
 
 - Treat this as **the ingestion contract**.
-- For each category under `V2_PreBuild-Docs/`:
+- For each category under `V2/`:
 
-  1. **V2_Core-Brand-and-Strategy-Docs/**
-     - `V2_brand-bible.md`
-     - `V2_brand-ethos.md`
-     - `V2_marketing-plan.md`
-     - `V2_writing-tone.md`
+  1. **Brand-Strategy/**
+     - `Brand-Bible.md`
+     - `Brand-Ethos.md`
+     - `Marketing-Plan.md`
+     - `Writing-Tone.md`
 
-  2. **V2_Company-Info-Docs/**
-     - `V2_athletes.md`
-     - `V2_authorized-dealers.md`
-     - `V2_consumer-warning-notice.md`
-     - `V2_olympic-medals.json`
-     - `V2_recommended-service-centers.md`
-     - `V2_scheduled-events.md`
+  2. **Company-Info/**
+     - `Athletes.md`
+     - `Authorized-Dealers.md`
+     - `Consumer-Warning.md`
+     - `Olympic-Medals.json`
+     - `Recommended-Service-Centers.md`
+     - `Event-Schedule.md`
 
-  3. **V2_Gun-Info-Docs/**
-     - `V2_manufacture-year.md`
-     - `V2_RAG_corpus-models-details.json`
-     - `V2_rib-information.md`
-     - any FRONT-END-only JSON marked as **not** for RAG (e.g. `V2_FRONT-END_corpus-models-sanity.json`).
+  3. **Gun-Info/**
+     - `Manufacture-Year.md`
+     - `All-Models-Corpus.json`
+     - `Rib-Info.md`
+     - any FRONT-END-only JSON marked as **not** for RAG (e.g. `SanityData-Models-List.json`).
 
-  4. **V2_Making-a-Perazzi-Docs/**
+  4. **Making-A-Perazzi/**
      - All 1_ / 2-A_ … 5_ docs.
 
-  5. **V2_Operational-Docs/**
-     - `V2_build-configurator-flow.json`
-     - `V2_site-overview.md`
+  5. **Operational/**
+     - `Build-Configurator-Flow.json`
+     - `Site-Overview.md`
 
-  6. **V2_Pricing-List-Docs/**
+  6. **Pricing-Lists/**
      - All `V2_*retail-price.csv`.
 
 - For each file, include:
@@ -163,7 +163,7 @@
   - Mark pricing CSVs as **pricing-sensitive**, embed **metadata only**, not numeric price fields.
   - Mark any FRONT-END-only JSON as non-RAG.
 
-### 3.2 Define `V2_REDO_metadata-schema.md`
+### 3.2 Define `Metadata-Schema.md`
 
 - Specify Postgres / Supabase-level schemas for:
 
@@ -204,13 +204,13 @@
   **`conversations` / `messages` tables** (optional but nice):
   - Standard chat history structure.
 
-### 3.3 Define `V2_REDO_chunking-guidelines.md` + `V2_REDO_chunking.config.json`
+### 3.3 Define `Chunking-Guidelines.md` + `chunking.config.json`
 
 - Document chunking strategy:
 
   - Default chunk size (e.g., 800–1200 tokens) with ~10–15% overlap.
   - Split on Markdown headings (`#`, `##`, `###`) before raw token windows.
-  - For `V2_Making-a-Perazzi-Docs`, keep each conceptual block (e.g. “3.4 Tradeoffs”) intact where possible.
+  - For `Making-A-Perazzi`, keep each conceptual block (e.g. “3.4 Tradeoffs”) intact where possible.
   - For CSV/JSON, explain how to turn rows/entries into text chunks (e.g., one item per chunk or grouped by category).
 
 - `chunking.config.json` holds machine-friendly rules:
@@ -219,18 +219,18 @@
 
 **Success criteria:**
 
-- A script could ingest **only** from `V2_REDO_source-corpus.md` and know exactly what to do per file.
+- A script could ingest **only** from `Source-Corpus.md` and know exactly what to do per file.
 - Metadata schema is clear enough to implement without guessing.
 
 ---
 
 ## Phase 4 – Supabase & Embedding Stack (Infrastructure Layer)
 
-**Folder:** `V2_REDO_Phase-2/`
+**Folder:** `P2/`
 
 **Objective:** Decide how Supabase stores everything and how embeddings are created.
 
-### 4.1 Finalize `V2_REDO_infrastructure.md`
+### 4.1 Finalize `Infrastructure.md`
 
 - Describe:
   - Supabase project roles relevant to PerazziGPT.
@@ -238,7 +238,7 @@
   - Tables from `metadata-schema.md`.
   - Index strategies (e.g., vector index on `embeddings.embedding`).
 
-### 4.2 Configure `V2_REDO_embedding-stack.md`
+### 4.2 Configure `Embedding-Stack.md`
 
 - Pick embedding model (e.g., `text-embedding-3-large`).
 - Define:
@@ -246,7 +246,7 @@
   - Embedding dimension and distance metric.
   - How to handle updates (re-embed on doc change).
 
-### 4.3 Define `V2_REDO_rerun-process.md`
+### 4.3 Define `ReRun-Process.md`
 
 - Step-by-step process for:
   - When a doc changes → how to detect, re-chunk, re-embed, and update Supabase.
@@ -255,7 +255,7 @@
   - Never ingest pricing values.
   - Log ingestion runs with timestamps and doc versions.
 
-### 4.4 Define `V2_REDO_validation.md`
+### 4.4 Define `Validation.md`
 
 - Outline validation strategy:
   - Sample questions + expected doc origins.
@@ -275,17 +275,17 @@
 
 **Code location:** your Next.js / scripts folder (outside this guideline, but driven by the v2 docs).
 
-**Objective:** Turn V2_PreBuild-Docs into Supabase rows.
+**Objective:** Turn V2 into Supabase rows.
 
 **Process:**
 
-1. Read `V2_REDO_source-corpus.md` to get active docs.
+1. Read `Source-Corpus.md` to get active docs.
 2. For each doc:
    - Parse and normalize text.
-   - Chunk according to `V2_REDO_chunking-guidelines.md` + JSON config.
+   - Chunk according to `Chunking-Guidelines.md` + JSON config.
    - Generate embeddings via the configured model and existing `.env.local` keys.
    - Upsert into Supabase tables using the metadata schema.
-3. Run basic validation as per `V2_REDO_validation.md`.
+3. Run basic validation as per `Validation.md`.
 
 **Success criteria:**
 
@@ -296,11 +296,11 @@
 
 ## Phase 6 – Runtime Logic: Modes, Archetypes, and RAG
 
-**Folder:** `V2_REDO_Phase-3/` (`V2_REDO_api-contract.md`) + code.
+**Folder:** `P3/` (`API-Contract.md`) + code.
 
 **Objective:** Define how the app talks to PerazziGPT and how mode/archetype drive behavior.
 
-### 6.1 Flesh out `V2_REDO_api-contract.md`
+### 6.1 Flesh out `API-Contract.md`
 
 - Request shape:
   - `user_id`
@@ -333,7 +333,7 @@
 ### 6.4 Prompt Construction
 
 - System prompt built from:
-  - `V2_REDO_assistant-spec.md`
+  - `Assistant-Spec.md`
   - Guardrails summary
   - Voice calibration
 - Inject runtime variables:
@@ -413,9 +413,9 @@
 
 When all phases are complete:
 
-- `V2_REDO_Phase-1` fully defines **what** PerazziGPT is and how it behaves.
-- `V2_REDO_Phase-2` fully defines **what it knows** and how RAG is implemented on Supabase.
-- `V2_REDO_Phase-3` fully defines **how the app talks to it**.
-- `V2_PreBuild-Docs` contains only the curated, versioned content you want in v2.
+- `P1` fully defines **what** PerazziGPT is and how it behaves.
+- `P2` fully defines **what it knows** and how RAG is implemented on Supabase.
+- `P3` fully defines **how the app talks to it**.
+- `V2` contains only the curated, versioned content you want in v2.
 - Supabase holds a clean corpus aligned with the guideline docs.
 - The live Perazzi site runs on this v2 stack, with Modes + Audience Segments quietly shaping every reply.

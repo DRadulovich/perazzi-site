@@ -2,13 +2,13 @@
 
 > Version: 0.1 (Draft)
 > Owner: David Radulovich  
-> File: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-3/V2_REDO_rerank-algorithm.md`  
+> File: `PGPT/V2/AI-Docs/P3/ReRank-Algorithm.md`  
 > Related docs:  
-> • `V2_REDO_api-contract.md`  
-> • `V2_REDO_metadata-schema.md`  
-> • `V2_REDO_chunking-guidelines.md`  
-> • `V2_REDO_infrastructure.md` (env-var reference table)  
-> • `V2_REDO_validation.md` (§ Rerank tests)
+> • `API-Contract.md`  
+> • `Metadata-Schema.md`  
+> • `Chunking-Guidelines.md`  
+> • `Infrastructure.md` (env-var reference table)  
+> • `Validation.md` (§ Rerank tests)
 
 This file explains **how v2 turns raw pgvector similarity results into the final chunk list** that feeds each model call.  
 It is strictly an implementation reference (Phase-3) and *not* included in user-facing prompts.
@@ -93,7 +93,7 @@ Effect: a chunk explicitly tagged **Analyst** moves up only if the user vector i
 | `PERAZZI_ARCHETYPE_BOOST_K` | `0.08` | Global coefficient for archetypeBoost. |
 | `PERAZZI_ARCHETYPE_CONFIDENCE_MIN` | `0.08` | Margin below which confidenceFactor is clamped to 0. |
 
-These keys must be documented as well in `V2_REDO_infrastructure.md` & `.env.example`.
+These keys must be documented as well in `Infrastructure.md` & `.env.example`.
 
 ---
 
@@ -109,8 +109,8 @@ These keys must be documented as well in `V2_REDO_infrastructure.md` & `.env.exa
 ## 6  Change-management rules
 
 1. Any edit to this doc or the boost math **bumps version** (0.1 → 0.x) and is listed in system-manifest changelog.
-2. Update env-var table in `V2_REDO_infrastructure.md` if new toggles are added.
-3. Add / modify validation tests (`V2_REDO_validation.md` § Rerank tests).  Pull-request cannot merge without green validation in CI.
+2. Update env-var table in `Infrastructure.md` if new toggles are added.
+3. Add / modify validation tests (`Validation.md` § Rerank tests).  Pull-request cannot merge without green validation in CI.
 
 ---
 

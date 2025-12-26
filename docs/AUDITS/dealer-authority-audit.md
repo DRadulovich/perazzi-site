@@ -1,7 +1,7 @@
 # Dealer Authority Audit (Authorized Dealer Leakage)
 
 -## LLM entrypoints & sampling
-- `src/app/api/perazzi-assistant/route.ts:124-136,845-852` — Main chat endpoint uses Responses (`model=gpt-5.2` default via env), `temperature:1.0` (env `PERAZZI_ASSISTANT_TEMPERATURE`; only applied when `reasoning.effort="none"`), `max_output_tokens:3000`; system prompt (`instructions`) prepends `V2_REDO_assistant-spec.md` + style exemplars on every call. System/dev instructions: **closed-world intent** (grounded in V2 corpus) but no hard refusal when context is empty. Reasoning/verbosity/prompt-cache knobs are env-driven (`PERAZZI_REASONING_EFFORT`, `PERAZZI_TEXT_VERBOSITY`, `PERAZZI_PROMPT_CACHE_RETENTION`).
+- `src/app/api/perazzi-assistant/route.ts:124-136,845-852` — Main chat endpoint uses Responses (`model=gpt-5.2` default via env), `temperature:1.0` (env `PERAZZI_ASSISTANT_TEMPERATURE`; only applied when `reasoning.effort="none"`), `max_output_tokens:3000`; system prompt (`instructions`) prepends `Assistant-Spec.md` + style exemplars on every call. System/dev instructions: **closed-world intent** (grounded in V2 corpus) but no hard refusal when context is empty. Reasoning/verbosity/prompt-cache knobs are env-driven (`PERAZZI_REASONING_EFFORT`, `PERAZZI_TEXT_VERBOSITY`, `PERAZZI_PROMPT_CACHE_RETENTION`).
 - `src/app/api/perazzi-assistant/route.ts:945-964` — System prompt injects retrieved chunks then says “Use the following retrieved references when relevant … If you are not certain, clearly state the limitation,” but still runs even when `docSnippets` is empty. Classification: **open-world fallback** (invites best-effort answer without context).
 - `src/lib/perazzi-intents.ts:52-55,128-133` — Dealer intent detection routes dealer-like phrases to Navigation mode and injects template: “List up to three recommended dealers with Name — City/State …” Classification: **open-world nudge** (encourages listing dealers without requiring corpus support or “authorized” wording).
 - `src/app/api/perazzi-assistant/route.ts:186-189,650-666` — Low-confidence gate defaults to `PERAZZI_LOW_CONF_THRESHOLD ?? 0`, so threshold is 0 unless overridden; low-conf message exists but is effectively disabled. Classification: **open-world** (allows answering on zero/weak retrieval).
@@ -11,9 +11,9 @@
 
 ## Instruction inventory (dealer relevance)
 - **Closed-world / corpus-only instructions**
-  - `V2_REDO_assistant-spec.md:83-87` — “Factual claims … must be grounded in the V2 RAG corpus. If the corpus is silent or ambiguous, acknowledge that and suggest a next step.”
-  - `V2_REDO_assistant-spec.md:321-326` — “If the RAG corpus is silent … say so plainly … Avoid speculation … Suggest concrete next steps (authorized dealer/service center).”
-  - `V2_REDO_non-negotiable-guardrails.md:56-62` — “Be explicit when the corpus does not contain enough verified information … prefer ‘I don’t have enough reliable detail’ … suggest authorized dealer/service center instead of speculation.”
+  - `Assistant-Spec.md:83-87` — “Factual claims … must be grounded in the V2 RAG corpus. If the corpus is silent or ambiguous, acknowledge that and suggest a next step.”
+  - `Assistant-Spec.md:321-326` — “If the RAG corpus is silent … say so plainly … Avoid speculation … Suggest concrete next steps (authorized dealer/service center).”
+  - `NonNegotiable-Guardrails.md:56-62` — “Be explicit when the corpus does not contain enough verified information … prefer ‘I don’t have enough reliable detail’ … suggest authorized dealer/service center instead of speculation.”
   - `src/app/api/perazzi-assistant/route.ts:945-964` — Prompt footer: “If you are not certain, clearly state the limitation and offer to connect the user with Perazzi staff.”
   - `src/app/api/perazzi-assistant/route.ts:266-315` — Knowledge-source handler answers “I don’t search the open internet… built on curated Perazzi-specific information.” (closed-world stance).
 - **Open-world / helpful best-effort instructions**
@@ -40,7 +40,7 @@
 - Rerank: disabled by default unless `PERAZZI_ENABLE_RERANK=true`; candidateLimit 60 when on, otherwise limit 12.
 
 ## Dealer data provenance & chunking risks
-- Source doc: `V2-PGPT/V2_PreBuild-Docs/V2_Company-Info-Docs/V2_authorized-dealers.md` (dealer names + addresses; no explicit “authorized” repeated per entry).
+- Source doc: `PGPT/V2/Company-Info/Authorized-Dealers.md` (dealer names + addresses; no explicit “authorized” repeated per entry).
 - Chunking guidance: `PerazziGPT/Phase_2_Documents/Chunking_Guidelines.md:24-27` says 3–5 dealers per chunk and include the header “Perazzi USA Authorized Dealers” in each chunk.
 - Actual chunk example (Supabase dump `docs/ARCHETYPE-ANALYSIS/SUPABASE/SQL-DUMPS/chunks_rows.sql:5280-5309`) shows a dealer block without the “Authorized” header in-text; only names/addresses remain. Signal of authorization may rely on metadata/title, making recall weaker for “authorized dealer” phrasing.
 - No link from runtime to Sanity dealer table; authorized list is purely in the V2 corpus markdown + Supabase embeddings.

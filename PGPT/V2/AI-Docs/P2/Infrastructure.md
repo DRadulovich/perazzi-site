@@ -2,14 +2,14 @@
 
 > Version: 0.1 (Draft)  
 > Owner: David Radulovich  
-> File: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-2/V2_REDO_infrastructure.md`  
+> File: `PGPT/V2/AI-Docs/P2/Infrastructure.md`  
 > Related docs:  
-> - `V2_REDO_source-corpus.md`  
-> - `V2_REDO_metadata-schema.md`  
-> - `V2_REDO_chunking-guidelines.md`  
-> - `V2_REDO_embedding-stack.md` (placeholder)  
-> - `V2_REDO_rerun-process.md` (placeholder)  
-> - `V2_REDO_validation.md` (placeholder)  
+> - `Source-Corpus.md`  
+> - `Metadata-Schema.md`  
+> - `Chunking-Guidelines.md`  
+> - `Embedding-Stack.md` (placeholder)  
+> - `ReRun-Process.md` (placeholder)  
+> - `Validation.md` (placeholder)  
 
 This document defines how PerazziGPT v2 uses **Supabase** + **pgvector** to store and query the knowledge base, and how the Next.js app and ingestion pipeline should connect across environments.
 
@@ -29,7 +29,7 @@ PerazziGPT v2 assumes three logical environments:
 
 **Key points:**
 
-- All environments share the same **logical schema**: `documents`, `chunks`, `embeddings` as defined in `V2_REDO_metadata-schema.md`.
+- All environments share the same **logical schema**: `documents`, `chunks`, `embeddings` as defined in `Metadata-Schema.md`.
 - Local dev can either:
   - Use the *dev* Supabase project directly (with a separate schema or database), or
   - Use Supabase’s local dev tools, if you prefer.
@@ -67,7 +67,7 @@ For each Supabase project:
     create extension if not exists vector;
     ```
 
-- The `embeddings` table (or `chunks.embedding` if you choose that route) must use the `vector` type as specified in `V2_REDO_metadata-schema.md`.
+- The `embeddings` table (or `chunks.embedding` if you choose that route) must use the `vector` type as specified in `Metadata-Schema.md`.
 
 ### 2.3 Tables & Schema Alignment
 
@@ -77,13 +77,13 @@ The tables must match the conceptual schema:
 - `chunks`
 - `embeddings` (optional separate table; embeddings could also live on `chunks`)
 
-As defined in `V2_REDO_metadata-schema.md`:
+As defined in `Metadata-Schema.md`:
 
 - `documents` tracks logical docs (path, category, doc_type, status, embed_mode, pricing_sensitive, series_* fields, etc.).
 - `chunks` tracks text chunks linked to documents (heading_path, section_labels, primary_modes, archetype_bias, guardrail_flags, etc.).
 - `embeddings` stores vector embeddings, keyed by `chunk_id` and `embedding_model`.
 
-The exact DDL (CREATE TABLE statements) should be derived from the metadata schema doc. Any changes to `V2_REDO_metadata-schema.md` must be reflected as migrations in Supabase.
+The exact DDL (CREATE TABLE statements) should be derived from the metadata schema doc. Any changes to `Metadata-Schema.md` must be reflected as migrations in Supabase.
 
 ---
 
@@ -139,8 +139,8 @@ All new vars must be added to `.env.example` and described here when introduced.
 The ingestion script (Phase 5) will:
 
 - Use Node/TypeScript to:
-  - Read `V2_REDO_source-corpus.md` to determine which docs to ingest.
-  - Read and chunk each doc per `V2_REDO_chunking-guidelines.md`.
+  - Read `Source-Corpus.md` to determine which docs to ingest.
+  - Read and chunk each doc per `Chunking-Guidelines.md`.
   - Write `documents` and `chunks` rows to Supabase.
   - Generate embeddings via `OPENAI_API_KEY` and write them to `embeddings`.
 
@@ -227,7 +227,7 @@ These indexes make it easy to:
 
 **Guardrails & data sensitivity:**
 
-- Pricing-sensitive chunks (as defined by `V2_REDO_source-corpus.md` and `guardrail_flags`) exist in the DB but:
+- Pricing-sensitive chunks (as defined by `Source-Corpus.md` and `guardrail_flags`) exist in the DB but:
   - Must **not** leak numeric values to the model input.
   - Are still part of database backups; rely on Supabase’s built-in encrypted storage.
 - Do not log entire chunks or embeddings in application logs; log IDs and metadata instead.
@@ -255,7 +255,7 @@ For v2 local dev, the canonical flow is:
    - API routes will connect to the same Supabase dev DB via `DATABASE_URL`.
 
 4. **Reset or re-ingest as needed**
-   - Use `V2_REDO_rerun-process.md` (once written) to handle updates.
+   - Use `ReRun-Process.md` (once written) to handle updates.
 
 Local Docker Postgres from v1 remains an optional fallback but is not the default v2 path.
 

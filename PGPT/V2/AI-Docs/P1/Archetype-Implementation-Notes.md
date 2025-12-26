@@ -2,11 +2,11 @@
 
 > Version: 0.1 (Draft)  
 > Owner: David Radulovich  
-> File: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-1/V2_REDO_archetype-implementation-notes.md`  
+> File: `PGPT/V2/AI-Docs/P1/Archetype-Implementation-Notes.md`  
 > Related docs:  
-> • `V2_REDO_assistant-spec.md` (canonical definitions)  
-> • `V2_REDO_voice-calibration.md` (tone guidance)  
-> • `V2_REDO_rerank-algorithm.md` (runtime boost logic)  
+> • `Assistant-Spec.md` (canonical definitions)  
+> • `Voice-Calibration.md` (tone guidance)  
+> • `ReRank-Algorithm.md` (runtime boost logic)  
 > • Code: `src/config/*archetype*` & `src/lib/perazzi-archetypes.*`
 
 This file bridges **brand-level archetype theory** (Assistant-spec §4) and the **code artefacts** that operationalise it.
@@ -18,8 +18,8 @@ It is *internal documentation*—not surfaced to users nor injected into prompts
 
 | Layer | Purpose | Authoritative Location |
 |-------|---------|------------------------|
-| Marketing definition | Names, motivations, do/don’t | `V2_REDO_assistant-spec.md` §4 |
-| Tone & phrasing nuance | Voice tweaks per archetype | `V2_REDO_voice-calibration.md` §5 |
+| Marketing definition | Names, motivations, do/don’t | `Assistant-Spec.md` §4 |
+| Tone & phrasing nuance | Voice tweaks per archetype | `Voice-Calibration.md` §5 |
 | Runtime weight vector | Numerical guess 0–1 per archetype | `src/lib/perazzi-archetypes.classification.ts` |
 | Retrieval bias | Small score boost for chunks labelled with matching biases | `src/lib/perazzi-retrieval.ts` (`computeArchetypeBoost`) |
 | Telemetry | Winner, vector, margin stored in logs | `perazzi_conversation_logs` (Phase-3 observability) |
@@ -66,7 +66,7 @@ export const LEXICON: Record<Archetype, string[]> = {
 | `src/config/archetype-weights.ts` | Default neutral vector | • Must sum to 1  
 • Usually 0.20 each unless research suggests skew  |
 | `src/lib/perazzi-archetypes.classification.ts` | Runtime classifier | • Algorithm tweaks require validation (accuracy vs false-positive)  
-• Update `V2_REDO_validation.md` archetype tests |
+• Update `Validation.md` archetype tests |
 | `src/lib/perazzi-retrieval.ts` (`computeArchetypeBoost`) | Retrieval nudge | • Keep `K` small (see rerank doc)  
 • Any new bias fields in chunks need matching logic here |
 
@@ -84,7 +84,7 @@ If code changes risk violating these rules the PR must tag both *Brand* and *Saf
 
 ## 5  Validation hooks
 
-`V2_REDO_validation.md` now includes:
+`Validation.md` now includes:
 1. Natural-signal prompts that should pick a *snapped* archetype.  
 2. Mixed/balanced prompt ensuring neutral template.  
 3. Retrieval ordering test showing archetype bias does **not** surface wrong categories.
@@ -98,7 +98,7 @@ Running `pnpm test:validation` locally or in CI must pass before merging archety
 1. Update lexicon → bump this doc to next 0.x and note in system-manifest changelog.  
 2. Run validation suite (archetype & voice segments).  
 3. If classification thresholds (`ARCHETYPE_CONF_MIN`) change, also update:  
-   • `V2_REDO_rerank-algorithm.md`  
+   • `ReRank-Algorithm.md`  
    • `.env.example`  
 4. Add new chunk bias tags only via **source-corpus** + **chunking-guidelines** PR, then re-ingest.
 

@@ -2,14 +2,14 @@
 
 > Version: 0.1 (Draft)  
 > Owner: David Radulovich  
-> File: `V2-PGPT/V2_PreBuild-Docs/V2_REDO_Docs/V2_REDO_Phase-2/V2_REDO_embedding-stack.md`  
+> File: `PGPT/V2/AI-Docs/P2/Embedding-Stack.md`  
 > Related docs:  
-> - `V2_REDO_metadata-schema.md`  
-> - `V2_REDO_source-corpus.md`  
-> - `V2_REDO_chunking-guidelines.md`  
-> - `V2_REDO_infrastructure.md`  
-> - `V2_REDO_rerun-process.md` (placeholder)  
-> - `V2_REDO_validation.md` (placeholder)  
+> - `Metadata-Schema.md`  
+> - `Source-Corpus.md`  
+> - `Chunking-Guidelines.md`  
+> - `Infrastructure.md`  
+> - `ReRun-Process.md` (placeholder)  
+> - `Validation.md` (placeholder)  
 
 This document defines the **embedding layer** for PerazziGPT v2:
 
@@ -71,7 +71,7 @@ For each chunk:
 
 5. **Length check**
    - Chunking guidelines are designed to keep chunks within the model’s token limit.  
-   - If a chunk somehow exceeds the safe limit for `text-embedding-3-large`, truncate conservatively at a sentence boundary and log a warning (see `V2_REDO_rerun-process.md` once defined).
+   - If a chunk somehow exceeds the safe limit for `text-embedding-3-large`, truncate conservatively at a sentence boundary and log a warning (see `ReRun-Process.md` once defined).
 
 ### 2.2 Special cases
 
@@ -91,7 +91,7 @@ For each chunk:
 
 ## 3. Storage & Schema Alignment
 
-The embedding stack respects the schema defined in `V2_REDO_metadata-schema.md`.
+The embedding stack respects the schema defined in `Metadata-Schema.md`.
 
 ### 3.1 Where embeddings live
 
@@ -124,7 +124,7 @@ The embedding stack assumes a **vector + metadata filter** retrieval pattern.
 
 - **Metric:** cosine similarity
 - **pgvector operator:** `vector_cosine_ops`
-- **Index:** as described in `V2_REDO_infrastructure.md` (We use an HNSW index on a half-precision view of the embedding).
+- **Index:** as described in `Infrastructure.md` (We use an HNSW index on a half-precision view of the embedding).
 
 ### 4.2 Top-k and filters
 
@@ -182,7 +182,7 @@ Embeddings must be recomputed when **any of the following** occur:
    - This may change chunk boundaries or text.
 
 2. **Chunking rules change**
-   - `V2_REDO_chunking-guidelines.md` or `V2_REDO_chunking.config.json` is updated in a way that alters how docs are split.
+   - `Chunking-Guidelines.md` or `chunking.config.json` is updated in a way that alters how docs are split.
 
 3. **Embedding model changes**
    - If v2 ever upgrades to a different embedding model, all embeddings must be recomputed.
@@ -229,19 +229,19 @@ Even though cost is not a primary concern, v2 should behave politely and predict
   - Start/end timestamps.
   - Any errors or skipped chunks.
 
-`V2_REDO_rerun-process.md` (once written) will describe the full rerun flow and how to track ingestion runs persistently.
+`ReRun-Process.md` (once written) will describe the full rerun flow and how to track ingestion runs persistently.
 
 ---
 
 ## 7. Relationship to Validation & Rerun Docs
 
-- `V2_REDO_embedding-stack.md` defines **how** embeddings are generated and used.
-- `V2_REDO_rerun-process.md` will define **when** and **in what sequence** to:
+- `Embedding-Stack.md` defines **how** embeddings are generated and used.
+- `ReRun-Process.md` will define **when** and **in what sequence** to:
   - Detect changes,
   - Re-chunk,
   - Re-embed,
   - Clean up stale rows.
-- `V2_REDO_validation.md` will define how to:
+- `Validation.md` will define how to:
   - Confirm that retrieval behavior (top-k, filters, etc.) matches expectations.
   - Ensure that pricing and safety guardrails are being respected when embeddings are used in responses.
 

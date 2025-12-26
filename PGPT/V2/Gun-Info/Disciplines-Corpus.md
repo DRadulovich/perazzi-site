@@ -10,7 +10,7 @@
 
 Use this document for direct lookup questions like "Which models are listed under trap?" or "List the models under game, sporting."
 
-For detailed per-model configuration/spec text, use `V2-PGPT/V2_PreBuild-Docs/V2_Gun-Info-Docs/V2_RAG_corpus-models-specText.md`.
+For detailed per-model configuration/spec text, use `PGPT/V2/Gun-Info/Models-SpecText-Corpus.md`.
 
 ## all-disciplines
 
