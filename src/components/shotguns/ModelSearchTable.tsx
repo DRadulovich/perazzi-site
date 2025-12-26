@@ -48,9 +48,9 @@ type SpecProps = Readonly<{ label: string; value?: string }>;
 
 const PAGE_SIZE = 9;
 const FILTER_PANEL_CLASS =
-  "space-y-4 rounded-[32px] border border-white/15 bg-[linear-gradient(135deg,#070707,#101010)]/95 px-4 py-5 shadow-[0_35px_120px_rgba(0,0,0,0.45)] sm:px-6 sm:py-6";
+  "space-y-4 rounded-3xl border border-white/15 bg-[linear-gradient(135deg,var(--perazzi-black),color-mix(in srgb,var(--perazzi-black) 85%, black))]/95 px-4 py-5 shadow-elevated sm:px-6 sm:py-6";
 const CARD_SHELL_CLASS =
-  "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/12 bg-neutral-950/80 text-left shadow-[0_35px_120px_rgba(0,0,0,0.55)] ring-1 ring-white/10 backdrop-blur-sm transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red sm:rounded-3xl";
+  "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/12 bg-neutral-950/80 text-left shadow-medium ring-1 ring-white/10 backdrop-blur-sm transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red sm:rounded-3xl";
 const SPEC_PANEL_CLASS =
   "grid gap-4 border-t border-white/10 bg-black/40 px-4 py-4 text-xs text-neutral-200 sm:grid-cols-2 sm:px-6 sm:py-5 sm:text-sm";
 const DETAIL_PANEL_CLASS =
@@ -469,7 +469,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
           <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
           <Dialog.Content className="fixed inset-0 z-60 flex max-h-screen w-full items-center justify-center p-3 outline-none sm:p-4 md:p-6 data-[state=closed]:opacity-0 data-[state=closed]:translate-y-2 data-[state=open]:opacity-100 data-[state=open]:translate-y-0 transition duration-200">
             {selectedModel ? (
-              <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-neutral-950/90 text-white shadow-[0_50px_160px_-80px_rgba(0,0,0,0.9)] ring-1 ring-white/15 backdrop-blur-xl">
+              <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-neutral-950/90 text-white shadow-elevated ring-1 ring-white/15 backdrop-blur-xl">
                 <Dialog.Close asChild>
                   <Button
                     type="button"

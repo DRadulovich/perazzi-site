@@ -74,7 +74,7 @@ export default async function ModelSearchPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
-      <section className="relative mb-12 overflow-hidden rounded-[40px] border border-white/10 bg-black/60">
+      <section className="relative mb-12 overflow-hidden rounded-3xl border border-white/10 bg-black/60">
         <div className="relative h-72 w-full sm:h-96 lg:h-[28rem]">
           <Image
             src={medalsHero}

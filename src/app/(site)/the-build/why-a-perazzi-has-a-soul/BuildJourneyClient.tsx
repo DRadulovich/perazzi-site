@@ -314,7 +314,7 @@ function JourneyChapters({
 
                   {station.soulQuestion ? (
                     <div className="mt-4 space-y-3 rounded-xl bg-card/5 p-4 sm:p-5">
-                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#E30613]">
+                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-perazzi-red">
                         Reflection
                       </p>
                       <p className="text-sm leading-relaxed text-ink">

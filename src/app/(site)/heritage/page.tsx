@@ -367,7 +367,8 @@ export default async function HeritagePage(): Promise<ReactElement> {
           <div
             className="absolute inset-0 -z-10"
             style={{
-              backgroundImage: "linear-gradient(to bottom, #000000 0%, var(--color-canvas) 100%)",
+              backgroundImage:
+                "linear-gradient(to bottom, var(--perazzi-black) 0%, var(--color-canvas) 100%)",
             }}
             aria-hidden="true"
           />

@@ -1,11 +1,11 @@
 export const colors = {
-  perazziRed: "#9c1f2b",
-  perazziWhite: "#fffdfa",
-  perazziBlack: "#120d0a",
-  ink: "#1b120b",
-  inkMuted: "#645247",
-  border: "#e2d7ce",
-  focus: "#0d62ff",
+  perazziRed: "var(--perazzi-red)",
+  perazziWhite: "var(--perazzi-white)",
+  perazziBlack: "var(--perazzi-black)",
+  ink: "var(--ink-primary)",
+  inkMuted: "var(--ink-muted)",
+  border: "var(--border-color)",
+  focus: "var(--focus-ring)",
 } as const;
 
 export const spacing = {

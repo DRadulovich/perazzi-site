@@ -305,7 +305,7 @@ export function DisciplineRail({
               aria-label="Close modal"
               onClick={() => { setModelModalOpen(false); }}
             />
-            <div className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-4xl border border-white/12 bg-neutral-950/90 text-white shadow-[0_50px_160px_-80px_rgba(0,0,0,0.9)] ring-1 ring-white/15 backdrop-blur-xl">
+            <div className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-neutral-950/90 text-white shadow-elevated ring-1 ring-white/15 backdrop-blur-xl">
               <button
                 type="button"
                 className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-[11px] uppercase tracking-[0.3em] text-white shadow-sm backdrop-blur-sm transition hover:border-white/30 hover:bg-black/55 focus-ring sm:right-5 sm:top-5 sm:text-xs"

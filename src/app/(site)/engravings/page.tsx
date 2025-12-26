@@ -45,7 +45,7 @@ export default async function EngravingsPage() {
 
   return (
     <div className="space-y-12">
-      <section className="relative mb-12 overflow-hidden rounded-[40px] border border-white/10 bg-black/60">
+      <section className="relative mb-12 overflow-hidden rounded-3xl border border-white/10 bg-black/60">
         <div className="relative h-72 w-full sm:h-96 lg:h-[28rem]">
           <Image
             src={engravingHero}

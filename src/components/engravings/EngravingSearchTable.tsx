@@ -38,9 +38,9 @@ const PREFERRED_GRADE_ORDER = [
 ];
 const PREFERRED_SIDE_ORDER = ["Left", "Under", "Right"];
 const FILTER_PANEL_CLASS =
-  "space-y-4 rounded-3xl border border-white/15 bg-[linear-gradient(135deg,#070707,#101010)]/95 px-4 py-5 shadow-[0_35px_120px_rgba(0,0,0,0.45)] sm:px-6 sm:py-6";
+  "space-y-4 rounded-3xl border border-white/15 bg-[linear-gradient(135deg,var(--perazzi-black),color-mix(in srgb,var(--perazzi-black) 85%, black))]/95 px-4 py-5 shadow-elevated sm:px-6 sm:py-6";
 const CARD_CLASS =
-  "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-neutral-950/80 text-left shadow-lg shadow-black/40 transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red sm:rounded-3xl sm:shadow-2xl";
+  "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-neutral-950/80 text-left shadow-medium transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red sm:rounded-3xl sm:shadow-elevated";
 const SPEC_PANEL_CLASS =
   "grid gap-4 border-t border-white/10 bg-black/40 px-4 py-4 text-[11px] sm:text-sm text-neutral-200 sm:grid-cols-2 sm:px-6 sm:py-5";
 
@@ -653,7 +653,7 @@ function EngravingDetailDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
         <Dialog.Content className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 md:p-6 outline-none">
-          <div className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]">
+          <div className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-neutral-950/95 text-white shadow-elevated">
             <Dialog.Close asChild>
               <Button
                 type="button"
@@ -731,7 +731,7 @@ function EngravingCompareDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
         <Dialog.Content className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 outline-none">
-          <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-neutral-950/95 text-white shadow-[0_40px_120px_-40px_rgba(0,0,0,0.9)]">
+          <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-neutral-950/95 text-white shadow-elevated">
             <Dialog.Close asChild>
               <Button
                 type="button"
