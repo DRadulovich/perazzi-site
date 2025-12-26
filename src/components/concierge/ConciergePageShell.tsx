@@ -837,7 +837,7 @@ export function ConciergePageShell() {
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask about platforms, fitting, service, or heritage…"
-                className="min-h-[96px] flex-1 rounded-2xl border border-border bg-card/70 px-3 py-2 text-sm sm:text-base text-ink shadow-soft backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                className="min-h-24 flex-1 rounded-2xl border border-border bg-card/70 px-3 py-2 text-sm sm:text-base text-ink shadow-soft backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 disabled={pending}
               />
               <button
