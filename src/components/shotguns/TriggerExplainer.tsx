@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import SafeHtml from "@/components/SafeHtml";
+import { PortableText } from "@/components/PortableText";
 import { useState } from "react";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import type { ShotgunsLandingData } from "@/types/catalog";
@@ -27,6 +28,8 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
   };
 
   const analyticsRef = useAnalyticsObserver<HTMLElement>("TriggerExplainerSeen");
+  const copyClasses =
+    "prose prose-sm max-w-none text-ink prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4";
 
   return (
     <section
@@ -97,10 +100,11 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
               className="grid gap-6 overflow-hidden transition-all duration-300 data-[state=closed]:opacity-0 data-[state=open]:opacity-100 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start"
             >
               <div className="rounded-2xl border border-border/0 bg-card/0 p-4 sm:rounded-3xl sm:p-6 lg:flex lg:h-full lg:flex-col lg:justify-start">
-                <SafeHtml
-                  className="prose prose-sm max-w-none text-ink prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4"
-                  html={explainer.copyHtml}
-                />
+                {explainer.copyPortableText?.length ? (
+                  <PortableText className={copyClasses} blocks={explainer.copyPortableText} />
+                ) : explainer.copyHtml ? (
+                  <SafeHtml className={copyClasses} html={explainer.copyHtml} />
+                ) : null}
                 <div className="mt-5 flex flex-wrap gap-3">
                   {explainer.links.map((link) => (
                     <a

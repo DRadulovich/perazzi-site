@@ -3,6 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import SafeHtml from "@/components/SafeHtml";
+import { PortableText } from "@/components/PortableText";
 import { Button, Heading, Text } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -21,6 +22,17 @@ export function HeritageEventSlide({
   const mediaUrl = event.media?.url;
   const analyticsRef = useAnalyticsObserver<HTMLElement>(`HeritageEventSeen:${event.id}`);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const hasSummary = Boolean(event.summaryPortableText?.length || event.summaryHtml);
+
+  const renderSummary = (className: string) => {
+    if (event.summaryPortableText?.length) {
+      return <PortableText className={className} blocks={event.summaryPortableText} />;
+    }
+    if (event.summaryHtml) {
+      return <SafeHtml className={className} html={event.summaryHtml} />;
+    }
+    return null;
+  };
 
   return (
     <>
@@ -85,15 +97,14 @@ export function HeritageEventSlide({
                 </Heading>
               </header>
 
-              {event.summaryHtml ? (
-                <SafeHtml
-                  className="hidden md:block prose prose-invert max-w-none text-sm leading-relaxed text-neutral-200 prose-p:mb-3 prose-p:mt-0 prose-strong:text-neutral-50 prose-em:text-neutral-200"
-                  html={event.summaryHtml}
-                />
-              ) : null}
+              {hasSummary
+                ? renderSummary(
+                  "hidden md:block prose prose-invert max-w-none text-sm leading-relaxed text-neutral-200 prose-p:mb-3 prose-p:mt-0 prose-strong:text-neutral-50 prose-em:text-neutral-200",
+                )
+                : null}
 
               {/* Mobile-only Read More button to open full text modal */}
-              {event.summaryHtml ? (
+              {hasSummary ? (
                 <Button
                   type="button"
                   variant="ghost"
@@ -166,12 +177,11 @@ export function HeritageEventSlide({
                 >
                   {event.title}
                 </Heading>
-                {event.summaryHtml ? (
-                  <SafeHtml
-                    className="prose prose-invert max-w-none text-sm leading-relaxed text-neutral-200 prose-p:mb-3 prose-p:mt-0 prose-strong:text-neutral-50 prose-em:text-neutral-200"
-                    html={event.summaryHtml}
-                  />
-                ) : null}
+                {hasSummary
+                  ? renderSummary(
+                    "prose prose-invert max-w-none text-sm leading-relaxed text-neutral-200 prose-p:mb-3 prose-p:mt-0 prose-strong:text-neutral-50 prose-em:text-neutral-200",
+                  )
+                  : null}
               </div>
             </div>
           </Dialog.Content>

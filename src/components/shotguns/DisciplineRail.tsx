@@ -2,13 +2,12 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
-import rehypeSanitize from "rehype-sanitize";
 
 import type { Platform, ShotgunsLandingData } from "@/types/catalog";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
+import SafeHtml from "@/components/SafeHtml";
+import { PortableText } from "@/components/PortableText";
 import { Container, Heading, Section, Text } from "@/components/ui";
 
 type DisciplineCard = ShotgunsLandingData["disciplines"][number];
@@ -424,11 +423,17 @@ function DisciplineCard({
         </div>
       </div>
       <div className="flex flex-1 flex-col gap-6 p-6">
-        <div className="prose prose-sm italic max-w-none text-ink-muted">
-          <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-            {discipline.overviewHtml}
-          </ReactMarkdown>
-        </div>
+        {discipline.overviewPortableText?.length ? (
+          <PortableText
+            className="prose prose-sm italic max-w-none text-ink-muted"
+            blocks={discipline.overviewPortableText}
+          />
+        ) : discipline.overviewHtml ? (
+          <SafeHtml
+            className="prose prose-sm italic max-w-none text-ink-muted"
+            html={discipline.overviewHtml}
+          />
+        ) : null}
         {discipline.recommendedPlatforms?.length ? (
           <div className="space-y-2">
             <Text size="xs" className="font-semibold text-ink-muted" leading="normal">

@@ -2,14 +2,12 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
-import rehypeSanitize from "rehype-sanitize";
 import type { VisitFactoryData } from "@/types/experience";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
+import SafeHtml from "@/components/SafeHtml";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, Container, Heading, Section, Text } from "@/components/ui";
 
 type VisitFactoryProps = {
@@ -82,11 +80,10 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
             <Text size="md" muted leading="relaxed" className="mb-4 font-light italic">
               {subheading}
             </Text>
-            <div className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg md:max-w-4xl lg:max-w-4xl prose-headings:text-ink prose-strong:text-ink">
-              <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-                {visit.introHtml}
-              </ReactMarkdown>
-            </div>
+            <SafeHtml
+              className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg md:max-w-4xl lg:max-w-4xl prose-headings:text-ink prose-strong:text-ink"
+              html={visit.introHtml}
+            />
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
@@ -97,24 +94,21 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
               <Heading level={3} size="sm" className="text-ink">
                 {visit.location.name}
               </Heading>
-              <div className="text-sm leading-relaxed text-ink-muted">
-                <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-                  {visit.location.addressHtml}
-                </ReactMarkdown>
-              </div>
+              <SafeHtml
+                className="text-sm leading-relaxed text-ink-muted"
+                html={visit.location.addressHtml}
+              />
               {visit.location.hoursHtml ? (
-                <div className="text-[11px] sm:text-xs uppercase tracking-[0.25em] text-ink-muted">
-                  <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-                    {visit.location.hoursHtml}
-                  </ReactMarkdown>
-                </div>
+                <SafeHtml
+                  className="text-[11px] sm:text-xs uppercase tracking-[0.25em] text-ink-muted"
+                  html={visit.location.hoursHtml}
+                />
               ) : null}
               {visit.location.notesHtml ? (
-                <div className="text-sm leading-relaxed text-ink-muted">
-                  <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-                    {visit.location.notesHtml}
-                  </ReactMarkdown>
-                </div>
+                <SafeHtml
+                  className="text-sm leading-relaxed text-ink-muted"
+                  html={visit.location.notesHtml}
+                />
               ) : null}
               <div className="space-y-3 pt-2">
                 <p id={mapNoteId} className="sr-only">
@@ -183,9 +177,10 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                     id="visit-expect-content"
                     className="mt-3 rounded-2xl border border-border/70 bg-card/60 p-4 text-sm leading-relaxed text-ink-muted shadow-sm backdrop-blur-sm sm:rounded-3xl sm:bg-card/80"
                   >
-                    <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-                      {visit.whatToExpectHtml}
-                    </ReactMarkdown>
+                    <SafeHtml
+                      className="prose prose-sm max-w-none text-ink-muted"
+                      html={visit.whatToExpectHtml}
+                    />
                   </CollapsibleContent>
                 </Collapsible>
               ) : null}

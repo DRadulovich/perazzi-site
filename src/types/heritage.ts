@@ -1,3 +1,4 @@
+import type { PortableTextBlock } from "@/sanity/queries/utils";
 import type { FactoryAsset } from "./content";
 
 export interface ArticleRef {
@@ -49,7 +50,8 @@ export type HeritageEvent = {
   id: string;
   date: string;
   title: string;
-  summaryHtml: string;
+  summaryPortableText?: PortableTextBlock[];
+  summaryHtml?: string;
   media?: HeritageEventMedia;
   links?: HeritageEventLink[];
   referenceLinks?: HeritageEventReferenceLinks;

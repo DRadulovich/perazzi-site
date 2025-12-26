@@ -2,14 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
-import rehypeSanitize from "rehype-sanitize";
 import type { FAQItem } from "@/types/experience";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 import { faq as faqFixture } from "@/content/experience/faq";
+import SafeHtml from "@/components/SafeHtml";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, Container, Heading, Section, Text } from "@/components/ui";
 
 type FAQListProps = Readonly<{
@@ -143,9 +141,10 @@ function FAQItemCard({ item, index }: FAQItemCardProps) {
         </span>
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-2 overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 text-sm leading-relaxed text-ink-muted shadow-sm backdrop-blur-sm sm:bg-card/80">
-        <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-          {item.aHtml}
-        </ReactMarkdown>
+        <SafeHtml
+          className="prose prose-sm max-w-none text-ink-muted"
+          html={item.aHtml}
+        />
       </CollapsibleContent>
     </Collapsible>
   );

@@ -1,12 +1,10 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
-import rehypeSanitize from "rehype-sanitize";
 import type { JourneyOverviewData } from "@/types/build";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { Section } from "@/components/ui";
+import SafeHtml from "@/components/SafeHtml";
 
 type JourneyOverviewProps = Readonly<{
   journey: JourneyOverviewData;
@@ -33,11 +31,10 @@ export function JourneyOverview({ journey }: JourneyOverviewProps) {
         <h2 id="journey-overview-heading" className="sr-only">
           Journey overview
         </h2>
-        <div className="prose prose-sm max-w-none leading-relaxed text-ink">
-          <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-            {journey.introHtml}
-          </ReactMarkdown>
-        </div>
+        <SafeHtml
+          className="prose prose-sm max-w-none leading-relaxed text-ink"
+          html={journey.introHtml}
+        />
         <nav aria-label="Journey steps">
           <ol className="grid gap-2 sm:grid-cols-2">
             {journey.steps.map((step) => (
@@ -58,11 +55,10 @@ export function JourneyOverview({ journey }: JourneyOverviewProps) {
             ))}
           </ol>
         </nav>
-        <div className="text-[11px] sm:text-xs leading-relaxed text-ink-muted">
-          <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-            {journey.disclaimerHtml}
-          </ReactMarkdown>
-        </div>
+        <SafeHtml
+          className="text-[11px] sm:text-xs leading-relaxed text-ink-muted"
+          html={journey.disclaimerHtml}
+        />
       </div>
     </MotionSection>
   );

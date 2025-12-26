@@ -2,14 +2,12 @@
 
 import Image from "next/image";
 import { useEffect, useRef } from "react";
-import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
-import rehypeSanitize from "rehype-sanitize";
 import { Button } from "@/components/ui/button";
 import { Heading, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import type { FittingStage } from "@/types/build";
+import SafeHtml from "@/components/SafeHtml";
 
 const swallowPlayError = () => {};
 
@@ -110,11 +108,11 @@ export function BuildStepItem({
   );
 
   const caption = step.captionHtml ? (
-    <figcaption className="rounded-2xl border border-border/70 bg-card/60 p-4 text-[11px] sm:text-xs leading-relaxed text-ink-muted shadow-sm backdrop-blur-sm">
-      <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-        {step.captionHtml}
-      </ReactMarkdown>
-    </figcaption>
+    <SafeHtml
+      as="figcaption"
+      className="rounded-2xl border border-border/70 bg-card/60 p-4 text-[11px] sm:text-xs leading-relaxed text-ink-muted shadow-sm backdrop-blur-sm"
+      html={step.captionHtml}
+    />
   ) : null;
 
   const header = (
@@ -129,11 +127,10 @@ export function BuildStepItem({
   );
 
   const description = (
-    <div className="prose prose-sm max-w-none leading-relaxed text-ink-muted">
-      <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-        {step.bodyHtml}
-      </ReactMarkdown>
-    </div>
+    <SafeHtml
+      className="prose prose-sm max-w-none leading-relaxed text-ink-muted"
+      html={step.bodyHtml}
+    />
   );
 
   const cta =

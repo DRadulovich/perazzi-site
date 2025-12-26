@@ -1,3 +1,4 @@
+import type { PortableTextBlock } from "@/sanity/queries/utils";
 import type { FactoryAsset } from "./content";
 
 export type PlatformKind = "MX" | "MX12" | "HT" | "HTS" | "TM";
@@ -47,7 +48,8 @@ export interface Platform {
 export interface DisciplineSummary {
   id: string;
   name: string;
-  overviewHtml: string;
+  overviewHtml?: string;
+  overviewPortableText?: PortableTextBlock[];
   recommendedPlatforms: string[];
   popularModels?: Array<{ id: string; idLegacy?: string; name?: string; hero?: FactoryAsset }>;
   recipe: {
@@ -114,7 +116,8 @@ export interface ShotgunsLandingData {
   triggerExplainer: {
     title: string;
     subheading?: string;
-    copyHtml: string;
+    copyPortableText?: PortableTextBlock[];
+    copyHtml?: string;
     diagram: FactoryAsset;
     background?: FactoryAsset;
     links: Array<{ label: string; href: string }>;
@@ -129,7 +132,14 @@ export interface ShotgunsLandingData {
   disciplines: Array<
     Pick<
       DisciplineSummary,
-      "id" | "name" | "overviewHtml" | "recommendedPlatforms" | "popularModels" | "champion" | "hero"
+      "id"
+      | "name"
+      | "overviewHtml"
+      | "overviewPortableText"
+      | "recommendedPlatforms"
+      | "popularModels"
+      | "champion"
+      | "hero"
     >
   >;
   disciplineRailUi?: {

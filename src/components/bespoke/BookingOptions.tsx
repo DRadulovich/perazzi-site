@@ -2,9 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
-import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
-import rehypeSanitize from "rehype-sanitize";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, Heading, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -12,6 +9,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 import type { BuildPageData, BookingOption, WhatToExpectItem } from "@/types/build";
+import SafeHtml from "@/components/SafeHtml";
 
 type BookingOptionsProps = Readonly<{
   booking: BuildPageData["booking"];
@@ -38,11 +36,10 @@ function BookingOptionCard({ option }: BookingOptionCardProps) {
         <Text size="xs" muted className="font-semibold">
           {option.durationLabel ?? (option.durationMins ? `${option.durationMins} minutes` : "")}
         </Text>
-        <div className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg">
-          <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-            {option.descriptionHtml}
-          </ReactMarkdown>
-        </div>
+        <SafeHtml
+          className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg"
+          html={option.descriptionHtml}
+        />
       </div>
       <div className="mt-auto pt-6">
         <Button
@@ -112,11 +109,10 @@ function WhatToExpectCollapsible({
             : "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
         )}
       >
-        <div className="prose prose-base max-w-none pb-4 leading-relaxed text-ink-muted md:prose-lg lg:pb-5">
-          <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-            {item.bodyHtml}
-          </ReactMarkdown>
-        </div>
+        <SafeHtml
+          className="prose prose-base max-w-none pb-4 leading-relaxed text-ink-muted md:prose-lg lg:pb-5"
+          html={item.bodyHtml}
+        />
       </CollapsibleContent>
     </Collapsible>
   );

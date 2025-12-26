@@ -1,11 +1,9 @@
 "use client";
 
-import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
-import rehypeSanitize from "rehype-sanitize";
 import { Heading, Section, Text } from "@/components/ui";
 import type { ServiceOverviewSection } from "@/types/service";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import SafeHtml from "@/components/SafeHtml";
 
 type ServiceOverviewProps = {
   readonly overview: ServiceOverviewSection;
@@ -22,11 +20,10 @@ export function ServiceOverview({ overview }: ServiceOverviewProps) {
   let checksContent: React.ReactNode = null;
   if (hasCustomChecksHtml) {
     checksContent = (
-      <div className="prose prose-base max-w-none leading-relaxed text-ink md:prose-lg">
-        <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-          {overview.checksHtml ?? ""}
-        </ReactMarkdown>
-      </div>
+      <SafeHtml
+        className="prose prose-base max-w-none leading-relaxed text-ink md:prose-lg"
+        html={overview.checksHtml ?? ""}
+      />
     );
   } else if (checksList.length) {
     checksContent = (
@@ -55,11 +52,10 @@ export function ServiceOverview({ overview }: ServiceOverviewProps) {
         <Heading id="service-overview-heading" level={2} size="xl" className="text-ink">
           {subheading}
         </Heading>
-        <div className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg">
-          <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeSanitize]}>
-            {overview.introHtml}
-          </ReactMarkdown>
-        </div>
+        <SafeHtml
+          className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg"
+          html={overview.introHtml}
+        />
       </div>
       <Section padding="sm" className="bg-card/75">
         <Text size="xs" muted className="font-semibold">
