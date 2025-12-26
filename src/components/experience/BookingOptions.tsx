@@ -47,7 +47,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
           priority={false}
         />
         <div
-          className="absolute inset-0 bg-[color:var(--scrim-soft)]"
+          className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
         <div
@@ -159,7 +159,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
                     aria-hidden={!schedulerOpen}
                   />
                 ) : (
-                  <div className="flex h-[320px] w-full items-center justify-center rounded-2xl border border-dashed border-border/70 text-sm sm:text-base text-ink-muted">
+                  <div className="flex h-80 w-full items-center justify-center rounded-2xl border border-dashed border-border/70 text-sm sm:text-base text-ink-muted">
                     The booking form appears here once you choose Begin Your Fitting.
                   </div>
                 )}

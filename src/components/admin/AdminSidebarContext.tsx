@@ -12,7 +12,7 @@ const SidebarContentContext = createContext<SidebarContentCtx | null>(null);
  * Provider that stores arbitrary React nodes to be rendered inside the admin sidebar
  * (e.g. Filters panel, on‐this‐page rail). Pages can push content via <AdminSidebarPortal>.
  */
-export function SidebarContentProvider({ children }: { children: ReactNode }) {
+export function SidebarContentProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [sidebarContent, setSidebarContent] = useState<ReactNode | null>(null);
   const value = useMemo(() => ({ sidebarContent, setSidebarContent }), [sidebarContent]);
   return <SidebarContentContext.Provider value={value}>{children}</SidebarContentContext.Provider>;

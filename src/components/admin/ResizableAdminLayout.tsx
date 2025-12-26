@@ -7,14 +7,14 @@ import { cn } from "@/lib/utils";
  * Grid wrapper for admin pages on desktop (lg breakpoint and up).
  * Sidebar width is driven by a CSS variable and can be resized via a drag handle.
  */
-export function ResizableAdminLayout({ nav, children, className }: {
+export function ResizableAdminLayout({ nav, children, className }: Readonly<{
   nav: ReactNode;
   children: ReactNode;
   className?: string;
-}) {
+}>) {
   const { width, setWidth } = useResizableSidebar();
 
-  const startDrag = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+  const startDrag = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
     const startX = e.clientX;
     const startW = width;
 
@@ -23,15 +23,15 @@ export function ResizableAdminLayout({ nav, children, className }: {
       setWidth(startW + delta);
     };
     const onUp = () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
+      globalThis.removeEventListener("pointermove", onMove);
+      globalThis.removeEventListener("pointerup", onUp);
     };
 
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
+    globalThis.addEventListener("pointermove", onMove);
+    globalThis.addEventListener("pointerup", onUp);
   }, [width, setWidth]);
 
-  const handleKey = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+  const handleKey = useCallback((e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === "ArrowLeft") {
       e.preventDefault();
       setWidth(width - 16);
@@ -44,27 +44,27 @@ export function ResizableAdminLayout({ nav, children, className }: {
   return (
     <div
       className={cn(
-        "grid h-[calc(100vh-var(--admin-header-h,0px))] [grid-template-columns:minmax(0,1fr)] lg:[grid-template-columns:var(--admin-sidebar-width)_4px_minmax(0,1fr)]",
+        "grid h-[calc(100vh-var(--admin-header-h,0px))] grid-cols-[minmax(0,1fr)] lg:grid-cols-[var(--admin-sidebar-width)_4px_minmax(0,1fr)]",
         className
       )}
       style={{ "--admin-sidebar-width": `${width}px` } as React.CSSProperties}
     >
       {/* Sidebar */}
-      <aside className="hidden h-full overflow-y-auto border-r border-border bg-card/90 shadow-sm backdrop-blur-xl lg:block">
+      <aside id="admin-sidebar" className="hidden h-full overflow-y-auto border-r border-border bg-card/90 shadow-sm backdrop-blur-xl lg:block">
         {nav}
       </aside>
 
       {/* Drag handle */}
-      <div
-        role="separator"
-        aria-orientation="vertical"
-        tabIndex={0}
+      <button
+        type="button"
+        aria-label="Resize sidebar"
+        aria-controls="admin-sidebar"
         onPointerDown={startDrag}
         onKeyDown={handleKey}
         className="group hidden w-1 cursor-col-resize select-none bg-transparent focus-ring lg:block"
       >
-        <div className="h-full w-full bg-transparent group-hover:bg-ink/10" />
-      </div>
+        <div className="h-full w-full bg-transparent group-hover:bg-ink/10" aria-hidden="true" />
+      </button>
 
       {/* Main content */}
       <main className="min-w-0 overflow-y-auto px-4 pb-12 pt-6 sm:px-6 lg:px-8">

@@ -5,11 +5,11 @@ export function AdminTwoColLayout({
   sidebar,
   children,
   className,
-}: {
+}: Readonly<{
   sidebar: ReactNode;
   children: ReactNode;
   className?: string;
-}) {
+}>) {
   return (
     <div className={cn("flex min-h-screen", className)}>
       <aside className="fixed inset-y-0 left-0 w-64 overflow-y-auto border-r border-border bg-card/95 p-4 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl">

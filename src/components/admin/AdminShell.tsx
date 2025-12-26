@@ -9,7 +9,7 @@ type AdminShellProps = {
   children: ReactNode;
 };
 
-export function AdminShell({ children }: AdminShellProps) {
+export function AdminShell({ children }: Readonly<AdminShellProps>) {
   const { toggle, open } = useAdminDrawer();
 
   return (

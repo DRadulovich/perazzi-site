@@ -87,7 +87,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
           loading="lazy"
         />
         <div
-          className="absolute inset-0 bg-[color:var(--scrim-soft)]"
+          className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
         <div
@@ -195,7 +195,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
             </div>
 
             {/* Right column – selected champion detail */}
-            <div className="min-h-[18rem] rounded-2xl border border-border/75 bg-card/75 p-5 shadow-soft sm:rounded-3xl">
+            <div className="min-h-72 rounded-2xl border border-border/75 bg-card/75 p-5 shadow-soft sm:rounded-3xl">
               <AnimatePresence mode="wait">
                 {selectedChampion ? (
                   <motion.div
@@ -279,7 +279,7 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
   return (
     <>
       <div
-        className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
+        className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
         style={{ aspectRatio: ratio }}
       >
         <Image
@@ -292,8 +292,8 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
         />
         <div
           className={cn(
-            "pointer-events-none absolute inset-0 bg-gradient-to-t",
-            "from-[color:var(--scrim-strong)]/80 via-[color:var(--scrim-strong)]/50 to-transparent",
+            "pointer-events-none absolute inset-0 bg-linear-to-t",
+            "from-(--scrim-strong)/80 via-(--scrim-strong)/50 to-transparent",
           )}
           aria-hidden
         />

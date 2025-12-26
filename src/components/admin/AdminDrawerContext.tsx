@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useState, ReactNode, useCallback } from "react";
+import { createContext, useContext, useState, ReactNode, useCallback, useMemo } from "react";
 
 interface DrawerCtx {
   open: boolean;
@@ -9,11 +9,12 @@ interface DrawerCtx {
 
 const Ctx = createContext<DrawerCtx | null>(null);
 
-export function AdminDrawerProvider({ children }: { children: ReactNode }) {
+export function AdminDrawerProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [open, setOpen] = useState(false);
   const toggle = useCallback(() => setOpen((v) => !v), []);
   const close = useCallback(() => setOpen(false), []);
-  return <Ctx.Provider value={{ open, toggle, close }}>{children}</Ctx.Provider>;
+  const value = useMemo(() => ({ open, toggle, close }), [open, toggle, close]);
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
 export function useAdminDrawer() {

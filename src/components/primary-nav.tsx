@@ -6,8 +6,8 @@ import { usePathname } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Popover from "@radix-ui/react-popover";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
-import type { Dispatch, FocusEvent, ReactElement, SetStateAction } from "react";
-import { useRef, useState } from "react";
+import type { Dispatch, PointerEvent as ReactPointerEvent, ReactElement, SetStateAction } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, ChevronDown, Menu, UserRound, X } from "lucide-react";
 import useMeasure from "react-use-measure";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -100,31 +100,54 @@ const Links = ({ pathname, tone }: { pathname: string; tone: NavTone }) => (
 const NavLink = ({ item, pathname, tone }: { item: NavItem; pathname: string; tone: NavTone }) => {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openReasonRef = useRef<"pointer" | "focus" | null>(null);
   const FlyoutContent = item.component;
   const hasFlyout = Boolean(FlyoutContent);
   const showFlyout = Boolean(FlyoutContent && open);
   const isActive = item.href === "/"
     ? pathname === "/"
     : pathname === item.href || pathname.startsWith(`${item.href}/`);
-  const handleOpen = () => {
-    if (hasFlyout) {
-      setOpen(true);
+
+  const clearCloseTimeout = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
     }
   };
-  const handleClose = () => setOpen(false);
-  const handleBlur = (event: FocusEvent<HTMLDivElement>) => {
-    if (!triggerRef.current?.contains(event.relatedTarget as Node | null)) {
-      handleClose();
-    }
+
+  const scheduleClose = () => {
+    clearCloseTimeout();
+    closeTimeoutRef.current = setTimeout(() => setOpen(false), 120);
   };
-  const interactiveHandlers = hasFlyout
-    ? {
-        onMouseEnter: handleOpen,
-        onMouseLeave: handleClose,
-        onFocus: handleOpen,
-        onBlur: handleBlur,
-      }
-    : {};
+
+  useEffect(() => () => clearCloseTimeout(), []);
+
+  useEffect(() => {
+    if (!open) {
+      openReasonRef.current = null;
+      clearCloseTimeout();
+    }
+  }, [open]);
+
+  const handlePointerEnter = (event: ReactPointerEvent<HTMLElement>) => {
+    if (event.pointerType !== "mouse") return;
+    openReasonRef.current = "pointer";
+    clearCloseTimeout();
+    setOpen(true);
+  };
+
+  const handlePointerLeave = (event: ReactPointerEvent<HTMLElement>) => {
+    if (event.pointerType !== "mouse") return;
+    if (openReasonRef.current !== "pointer") return;
+    scheduleClose();
+  };
+
+  const handleFocusCapture = () => {
+    openReasonRef.current = "focus";
+    clearCloseTimeout();
+    setOpen(true);
+  };
 
   if (!hasFlyout || !FlyoutContent) {
     return (
@@ -157,48 +180,77 @@ const NavLink = ({ item, pathname, tone }: { item: NavItem; pathname: string; to
     <Popover.Root open={open} onOpenChange={setOpen}>
       <div
         ref={triggerRef}
-        className="relative"
-        {...interactiveHandlers}
+        className="relative flex items-center gap-1"
+        onPointerEnter={handlePointerEnter}
+        onPointerLeave={handlePointerLeave}
+        onFocusCapture={handleFocusCapture}
       >
         {/*
           Switch link treatment so transparent variant remains legible on light admin backgrounds.
           Tone drives text/underline colors while preserving hover + active affordances.
         */}
-        <Popover.Trigger asChild>
-          <Link
-            href={item.href}
-            className={`relative text-sm font-semibold transition-colors ${
-              isActive
-                ? tone === "light"
-                  ? "text-white"
-                  : "text-ink"
-                : tone === "light"
-                  ? "text-white/70 hover:text-white"
-                  : "text-ink/70 hover:text-ink"
+        <Link
+          href={item.href}
+          className={`relative text-sm font-semibold transition-colors ${
+            isActive
+              ? tone === "light"
+                ? "text-white"
+                : "text-ink"
+              : tone === "light"
+                ? "text-white/70 hover:text-white"
+                : "text-ink/70 hover:text-ink"
+          }`}
+          onClick={() => setOpen(false)}
+        >
+          {item.text}
+          <span
+            className={`absolute -bottom-1 left-0 right-0 h-0.5 origin-left rounded-full transition-transform duration-300 ease-out ${
+              tone === "light" ? "bg-white" : "bg-ink"
             }`}
-            aria-haspopup="menu"
-            aria-expanded={showFlyout}
+            style={{ transform: showFlyout || isActive ? "scaleX(1)" : "scaleX(0)" }}
+          />
+        </Link>
+        <Popover.Trigger asChild>
+          <button
+            type="button"
+            aria-label={`Open ${item.text} menu`}
+            className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors focus-ring ${
+              tone === "light"
+                ? "text-white/80 hover:bg-white/10 hover:text-white"
+                : "text-ink/70 hover:bg-ink/5 hover:text-ink"
+            }`}
           >
-            {item.text}
-            <span
-              className={`absolute -bottom-1 left-0 right-0 h-0.5 origin-left rounded-full transition-transform duration-300 ease-out ${
-                tone === "light" ? "bg-white" : "bg-ink"
-              }`}
-              style={{ transform: showFlyout || isActive ? "scaleX(1)" : "scaleX(0)" }}
+            <ChevronDown
+              className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`}
+              strokeWidth={2}
+              aria-hidden="true"
             />
-          </Link>
+          </button>
         </Popover.Trigger>
-        <AnimatePresence>
-          {showFlyout && (
-            <Popover.Content asChild side="bottom" align="center" sideOffset={12}>
+        <Popover.Content
+          forceMount
+          side="bottom"
+          align="center"
+          sideOffset={12}
+          className="z-20 text-ink"
+          onPointerEnter={handlePointerEnter}
+          onPointerLeave={handlePointerLeave}
+          onFocusCapture={handleFocusCapture}
+          onInteractOutside={(event) => {
+            if (triggerRef.current?.contains(event.target as Node | null)) {
+              event.preventDefault();
+            }
+          }}
+        >
+          <AnimatePresence>
+            {showFlyout && (
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 12 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                className="z-20 text-ink"
+                className="text-ink"
               >
-                <div className="absolute -top-6 left-0 right-0 h-6 bg-transparent" />
                 <div className="absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-card/95 shadow-soft ring-1 ring-border/70" />
                 <div className="relative rounded-3xl bg-card/95 text-ink shadow-elevated ring-1 ring-border/70 backdrop-blur-xl">
                   <FlyoutContent
@@ -207,9 +259,9 @@ const NavLink = ({ item, pathname, tone }: { item: NavItem; pathname: string; to
                   />
                 </div>
               </motion.div>
-            </Popover.Content>
-          )}
-        </AnimatePresence>
+            )}
+          </AnimatePresence>
+        </Popover.Content>
       </div>
     </Popover.Root>
   );
