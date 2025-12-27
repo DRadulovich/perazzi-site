@@ -38,7 +38,7 @@ export function CTASection({
       data-analytics-id={dataAnalyticsId}
       padding="md"
       bordered={false}
-      className="bg-perazzi-black text-white"
+      className="bg-perazzi-black text-ink"
       initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
       whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.5 }}
@@ -46,10 +46,10 @@ export function CTASection({
       aria-labelledby="shotguns-cta-heading"
     >
       <div className="space-y-6">
-        <Heading id="shotguns-cta-heading" level={2} size="xl" className="text-white">
+        <Heading id="shotguns-cta-heading" level={2} size="xl" className="text-ink">
           Begin your fitting
         </Heading>
-        <Text size="lg" leading="relaxed" className="max-w-2xl text-white/80">
+        <Text size="lg" leading="relaxed" className="max-w-2xl text-ink/80">
           {text}
         </Text>
         <div className="flex flex-wrap gap-4">

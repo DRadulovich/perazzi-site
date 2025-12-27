@@ -150,7 +150,7 @@ const PlatformTabs = ({ platforms, activeIndex, onSelect }: PlatformTabsProps) =
           aria-selected={isActive}
           className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] focus-ring transition ${
             isActive
-              ? "border-perazzi-red bg-[color:var(--color-canvas)]/40 text-perazzi-red backdrop-blur-sm shadow-elevated"
+              ? "border-perazzi-red bg-canvas/40 text-perazzi-red backdrop-blur-sm shadow-elevated"
               : "border-border/70 bg-transparent text-ink-muted hover:border-ink/60"
           }`}
           onClick={() => { onSelect(index); }}
@@ -257,7 +257,7 @@ const ChampionHighlight = ({
       {champion ? (
         <div className="flex items-center justify-center gap-5">
           {champion.image ? (
-            <div className="relative h-16 w-16 overflow-hidden rounded-full bg-[color:var(--surface-elevated)]">
+            <div className="relative h-16 w-16 overflow-hidden rounded-full bg-(--surface-elevated)">
               <Image
                 src={champion.image.url}
                 alt={champion.image.alt ?? `${champion.name ?? "Perazzi champion"}`}
@@ -338,7 +338,7 @@ const PlatformBackground = ({ background }: { background: PlatformBackground }) 
       className="object-cover"
       priority={false}
     />
-    <div className="absolute inset-0 bg-[color:var(--scrim-soft)]" aria-hidden />
+    <div className="absolute inset-0 bg-(--scrim-soft)" aria-hidden />
     <div
       className="pointer-events-none absolute inset-0"
       style={{

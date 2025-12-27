@@ -42,9 +42,9 @@ Notes:
 - Avoid `rounded-sm/md/lg` for site UI (use the premium scale; `rounded-full` is OK for pills).
 
 ## Shadow scale (premium)
-- `shadow-soft`: 0 6px 18px rgba(15,15,15,0.08)
-- `shadow-medium`: 0 12px 32px rgba(15,15,15,0.14)
-- `shadow-elevated`: 0 20px 60px rgba(15,15,15,0.15)
+- `shadow-soft`: 0 6px 18px rgba(0,0,0,0.08)
+- `shadow-medium`: 0 12px 32px rgba(0,0,0,0.14)
+- `shadow-elevated`: 0 20px 60px rgba(0,0,0,0.15)
 - Use the premium shadow scale (avoid `shadow-sm/md/lg/xl/2xl`).
 - No ad-hoc `shadow-[...]` in site UI.
 

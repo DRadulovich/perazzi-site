@@ -39,6 +39,7 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
       style={{
         marginLeft: "calc(50% - 50vw)",
         marginRight: "calc(50% - 50vw)",
+        marginTop: "15px",
       }}
       aria-labelledby="champion-heading"
     >
@@ -51,7 +52,7 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
           className="object-cover"
           priority={false}
         />
-        <div className="absolute inset-0 bg-[color:var(--scrim-soft)]" aria-hidden />
+        <div className="absolute inset-0 bg-(--scrim-soft)" aria-hidden />
         <div
           className="pointer-events-none absolute inset-0"
           style={{

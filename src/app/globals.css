@@ -253,9 +253,27 @@ body {
 .bg-brand-hover { background-color: var(--brand-hover); color: var(--card); }
 
 /* Premium shadow scale */
-.shadow-soft { box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
-.shadow-medium { box-shadow: 0 12px 32px rgba(0,0,0,0.14); }
-.shadow-elevated { box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+.shadow-soft {
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.04),
+    0 0 6px rgba(0, 0, 0, 0.16),
+    0 0 18px rgba(0, 0, 0, 0.14);
+}
+
+.shadow-medium {
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.05),
+    0 0 12px rgba(0, 0, 0, 0.20),
+    0 0 32px rgba(0, 0, 0, 0.16);
+}
+
+.shadow-elevated {
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 0 20px rgba(0, 0, 0, 0.22),
+    0 0 60px rgba(0, 0, 0, 0.18);
+}
+
 
 .button-primary,
 .button-secondary {

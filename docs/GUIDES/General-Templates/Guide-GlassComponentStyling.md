@@ -76,7 +76,7 @@ The background is a **3-layer stack**:
     className="object-cover"
   />
   <div
-    className="absolute inset-0 bg-[color:var(--scrim-soft)]"
+    className="absolute inset-0 bg-(--scrim-soft)"
     aria-hidden
   />
   <div
@@ -283,7 +283,7 @@ Use this pill design for any filter/segmented control that should visually match
 ### 7.3 “Card in Card” – Detail Card
 
 ```tsx
-<div className="min-h-[18rem] rounded-3xl border border-border/70 bg-card/75 p-5 shadow-sm">
+<div className="min-h-72 rounded-3xl border border-border/70 bg-card/75 p-5 shadow-sm">
   {/* animated content */}
 </div>
 ```
@@ -351,7 +351,7 @@ Used for champion portraits; can be reused for other “hero portrait” styles.
 
 ```tsx
 <div
-  className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
+  className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
   style={{ aspectRatio: 3 / 2 }}
 >
   <Image
@@ -363,8 +363,8 @@ Used for champion portraits; can be reused for other “hero portrait” styles.
   />
   <div
     className={cn(
-      "pointer-events-none absolute inset-0 bg-gradient-to-t",
-      "from-[color:var(--scrim-strong)]/80 via-[color:var(--scrim-strong)]/50 to-transparent",
+      "pointer-events-none absolute inset-0 bg-linear-to-t",
+      "from-(--scrim-strong)/80 via-(--scrim-strong)/50 to-transparent",
     )}
     aria-hidden
   />

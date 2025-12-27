@@ -225,14 +225,14 @@ For any fixed or sticky elements at top or bottom, add safe-area padding:
 
 ```tsx
 <header
-  className="fixed inset-x-0 top-0 z-50 bg-[color:var(--color-canvas)]/90 backdrop-blur-sm"
+  className="fixed inset-x-0 top-0 z-50 bg-canvas/90 backdrop-blur-sm"
   style={{ paddingTop: "env(safe-area-inset-top)" }}
 >
   ...
 </header>
 
 <footer
-  className="fixed inset-x-0 bottom-0 bg-[color:var(--color-canvas)]/90"
+  className="fixed inset-x-0 bottom-0 bg-canvas/90"
   style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
 >
   ...
@@ -252,7 +252,7 @@ For any fixed or sticky elements at top or bottom, add safe-area padding:
 **Out-of-spec pattern:**
 
 ```tsx
-<div className="relative aspect-[4/3] w-full ...">
+<div className="relative aspect-4/3 w-full ...">
   ...
 </div>
 ```
@@ -262,7 +262,7 @@ Used identically on all breakpoints.
 **In-spec transformation:**
 
 ```tsx
-<div className="relative aspect-[3/2] sm:aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]">
+<div className="relative aspect-3/2 sm:aspect-4/3 w-full overflow-hidden rounded-2xl bg-(--color-canvas)">
   <Image
     src={stage.media.url}
     alt={stage.media.alt}
