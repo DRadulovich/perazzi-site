@@ -30,6 +30,13 @@ type PrimaryNavProps = Readonly<{
 }>;
 
 const SCROLL_THRESHOLD = 160;
+const FLYOUT_GLASS_WRAPPER =
+  "overflow-hidden rounded-2xl border border-canvas/10 bg-canvas/50 text-white shadow-medium ring-1 ring-white/10 backdrop-blur-sm sm:rounded-3xl";
+const FLYOUT_GLASS_ARROW = "bg-black/50 shadow-medium ring-1 ring-white/10";
+const FLYOUT_GLASS_PANEL = "bg-black/50";
+const FLYOUT_GLASS_PANEL_ALT = "bg-black/50";
+const FLYOUT_GLASS_ITEM =
+  "rounded-2xl border border-ink/10 bg-canvas/5 shadow-soft transition-colors hover:border-ink/25 hover:bg-canvas/70";
 
 const getScrollSnapshot = () => {
   const globalWindow: Window | undefined = globalThis.window;
@@ -112,7 +119,7 @@ const Logo = ({ label }: { label: string }) => (
       width={120}
       height={38}
       priority
-      className="h-10 w-auto"
+      className="h-auto w-22"
     />
   </Link>
 );
@@ -200,7 +207,7 @@ const NavLink = ({ item, pathname, tone }: { item: NavItem; pathname: string; to
           side="bottom"
           align="center"
           sideOffset={12}
-          className="z-20 text-ink"
+          className="z-20 text-white"
         >
           <AnimatePresence>
             {showFlyout && (
@@ -209,13 +216,15 @@ const NavLink = ({ item, pathname, tone }: { item: NavItem; pathname: string; to
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 12 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                className="text-ink"
+                className="text-white"
               >
-                <div className="absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rotate-45 bg-card/95 shadow-soft ring-1 ring-border/70" />
-                <div className="relative rounded-3xl bg-card/95 text-ink shadow-elevated ring-1 ring-border/70 backdrop-blur-xl">
+                <div
+                  className={`absolute left-1/2 top-0 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rotate-45 ${FLYOUT_GLASS_ARROW}`}
+                />
+                <div className={`relative ${FLYOUT_GLASS_WRAPPER}`}>
                   <FlyoutContent
                     onNavigate={() => setOpen(false)}
-                    textTone="dark"
+                    textTone="light"
                   />
                 </div>
               </motion.div>
@@ -233,8 +242,8 @@ const CTAs = ({ tone }: { tone: NavTone }) => (
       href="/concierge"
       className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
         tone === "light"
-          ? "border border-white/50 text-white hover:bg-white hover:text-perazzi-black"
-          : "border border-ink/20 text-ink hover:border-ink hover:bg-ink hover:text-white"
+          ? "border border-white/50 text-white/70 hover:bg-white/10 hover:text-white"
+          : "border border-white/50 text-white/70 hover:border-white hover:bg-white/10 hover:text-white"
       }`}
     >
       <UserRound className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
@@ -255,41 +264,43 @@ const CTAs = ({ tone }: { tone: NavTone }) => (
   </div>
 );
 
-const ShotgunsFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) => (
+const ShotgunsFlyout: FlyoutRenderer = ({ onNavigate }) => (
   <div
-    className={`grid w-full grid-cols-12 overflow-hidden rounded-3xl lg:w-[650px] ${
-      textTone === "dark" ? "text-perazzi-black" : "text-white"
-    }`}
+    className="grid w-full grid-cols-12 lg:w-[650px]"
   >
-    <div className="col-span-12 flex flex-col justify-between bg-perazzi-black p-6 text-white lg:col-span-4">
+    <div
+      className={`col-span-12 flex flex-col justify-between border-b border-white/10 p-6 lg:col-span-4 lg:border-b-0 lg:border-r ${FLYOUT_GLASS_PANEL}`}
+    >
       <div>
-        <Heading level={2} size="lg" className="mb-2 text-white">
+        <Heading level={2} size="lg" className="mb-2 text-white font-black! italic uppercase tracking-widest">
           Shotguns
         </Heading>
-        <Text className="text-white" leading="normal">
+        <Text className="text-white/70 italic" leading="normal">
           Explore dedicated Perazzi platforms—from high-trap geometry to MX race-ready builds.
         </Text>
       </div>
       <Link
         href="/shotguns"
-        className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-white/90"
+        className="mt-6 inline-flex items-center gap-1 text-sm font-semibold uppercase italic text-perazzi-red"
         onClick={onNavigate}
       >
         All shotguns <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
       </Link>
     </div>
-    <div className="col-span-12 grid grid-cols-2 gap-3 bg-card p-6 text-ink lg:col-span-8">
+    <div
+      className={`col-span-12 grid grid-cols-2 gap-3 p-6 lg:col-span-8 ${FLYOUT_GLASS_PANEL_ALT}`}
+    >
       {SHOTGUN_GRID.map((entry) => (
         <Link
           key={entry.title}
           href={entry.href}
-          className="rounded-2xl border border-border/70 bg-card/40 p-4 text-left shadow-soft transition-colors hover:border-ink/30 hover:bg-card/70"
+          className={`${FLYOUT_GLASS_ITEM} p-4 text-left`}
           onClick={onNavigate}
         >
-          <Heading level={3} size="sm" className="text-perazzi-red">
+          <Heading level={3} size="sm" className="text-white font-bold!">
             {entry.title}
           </Heading>
-          <Text size="sm" className="mt-1 text-ink" leading="normal">
+          <Text size="sm" className="mt-1 text-white/70 italic" leading="normal">
             {entry.description}
           </Text>
         </Link>
@@ -298,28 +309,26 @@ const ShotgunsFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) => (
   </div>
 );
 
-const ExperienceFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) => (
+const ExperienceFlyout: FlyoutRenderer = ({ onNavigate }) => (
   <div
-    className={`w-full rounded-3xl p-6 shadow-none lg:w-[520px] lg:shadow-elevated ${
-      textTone === "dark" ? "bg-perazzi-black text-white" : "bg-card text-ink"
-    }`}
+    className="w-full p-6 text-ink lg:w-[520px]"
   >
     <div className="grid gap-6 sm:grid-cols-2">
       <div>
-        <Text size="sm" className="font-semibold uppercase tracking-[0.3em] text-ink-muted" leading="normal">
+        <Text size="sm" className="font-semibold uppercase tracking-[0.2em] text-perazzi-red" leading="normal">
           TRAVEL
         </Text>
         <div className="mt-3 space-y-2">
           <Link
             href="/experience#visit"
-            className="flex items-center justify-between rounded-xl border border-border/70 px-3 py-2 text-sm font-semibold hover:border-perazzi-red/60"
+            className="flex items-center justify-between rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-ink transition-colors hover:border-white/30 hover:bg-white/10"
             onClick={onNavigate}
           >
             Plan a visit <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
           </Link>
           <Link
             href="/experience#fitting"
-            className="flex items-center justify-between rounded-xl border border-border/70 px-3 py-2 text-sm font-semibold hover:border-perazzi-red/60"
+            className="flex items-center justify-between rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-ink transition-colors hover:border-white/30 hover:bg-white/10"
             onClick={onNavigate}
           >
             Book a fitting <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
@@ -327,20 +336,20 @@ const ExperienceFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) =>
         </div>
       </div>
       <div>
-        <Text size="sm" className="font-semibold uppercase tracking-[0.3em] text-ink-muted" leading="normal">
+        <Text size="sm" className="font-semibold uppercase tracking-[0.2em] text-perazzi-red" leading="normal">
           INQUIRE
         </Text>
         <div className="mt-3 space-y-2">
           <Link
             href="/experience#dealers"
-            className="flex items-center justify-between rounded-xl border border-border/70 px-3 py-2 text-sm font-semibold hover:border-perazzi-red/60"
+            className="flex items-center justify-between rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-ink transition-colors hover:border-white/30 hover:bg-white/10"
             onClick={onNavigate}
           >
             Find a dealer <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
           </Link>
           <Link
             href="/journal"
-            className="flex items-center justify-between rounded-xl border border-border/70 px-3 py-2 text-sm font-semibold hover:border-perazzi-red/60"
+            className="flex items-center justify-between rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-ink transition-colors hover:border-white/30 hover:bg-white/10"
             onClick={onNavigate}
           >
             Visit the journal <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
@@ -350,7 +359,7 @@ const ExperienceFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) =>
     </div>
     <Link
       href="/experience#dealers"
-      className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-perazzi-black px-4 py-2 text-sm font-semibold text-perazzi-black transition-colors hover:bg-perazzi-black hover:text-white"
+      className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/5 px-4 py-2 text-sm font-semibold text-ink uppercase transition-colors hover:border-perazzi-red/60 hover:bg-perazzi-red"
       onClick={onNavigate}
     >
       Find a dealer
@@ -358,40 +367,42 @@ const ExperienceFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) =>
   </div>
 );
 
-const HeritageFlyout: FlyoutRenderer = ({ onNavigate, textTone = "light" }) => (
+const HeritageFlyout: FlyoutRenderer = ({ onNavigate }) => (
   <div
-    className={`grid w-full grid-cols-12 overflow-hidden rounded-3xl lg:w-[680px] ${
-      textTone === "dark" ? "text-white" : "text-perazzi-black"
-    }`}
+    className="grid w-full grid-cols-12 text-white lg:w-[680px]"
   >
-    <div className="col-span-12 flex flex-col justify-between bg-card p-6 text-ink lg:col-span-4">
+    <div
+      className={`col-span-12 flex flex-col justify-between border-b border-white/10 p-6 lg:col-span-4 lg:border-b-0 lg:border-r ${FLYOUT_GLASS_PANEL}`}
+    >
       <div>
-        <Heading level={2} size="lg" className="text-ink">
+        <Heading level={2} size="lg" className="mb-2 text-white font-black! italic uppercase tracking-widest">
           Heritage
         </Heading>
-        <Text className="mt-2 text-ink-muted" leading="normal">
+        <Text className="text-white/70 italic" leading="normal">
           Trace Perazzi craft across eras—factory milestones, champions, and oral histories.
         </Text>
       </div>
       <Link
         href="/heritage"
-        className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-perazzi-red"
+        className="mt-6 inline-flex items-center gap-1 text-sm font-semibold uppercase italic text-perazzi-red"
         onClick={onNavigate}
       >
         Explore heritage <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
       </Link>
     </div>
-    <div className="col-span-12 grid gap-3 bg-elevated p-6 text-ink lg:col-span-8 lg:grid-cols-3">
+    <div
+      className={`col-span-12 grid gap-3 p-6 lg:col-span-8 lg:grid-cols-3 ${FLYOUT_GLASS_PANEL_ALT}`}
+    >
       {HERITAGE_LINKS.map((section) => (
         <div key={section.title} className="space-y-2">
-          <Text size="sm" className="font-semibold uppercase tracking-[0.25em] text-perazzi-red" leading="normal">
+          <Text size="sm" className="font-semibold uppercase tracking-[0.2em] text-perazzi-red" leading="normal">
             {section.title}
           </Text>
           {section.links.map((link) => (
             <Link
               key={link.label}
               href={link.href}
-              className="block rounded-xl border border-border/60 bg-card/40 px-3 py-2 text-sm font-medium text-ink shadow-soft transition-colors hover:border-perazzi-red/50 hover:bg-card/70"
+              className="block rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-white/90 transition-colors hover:border-white/25 hover:bg-white/10"
               onClick={onNavigate}
             >
               {link.label}
@@ -487,16 +498,16 @@ const MobileMenu = ({
           </button>
         </Dialog.Trigger>
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-60 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
+          <Dialog.Overlay className="fixed inset-0 z-60 bg-black/80 backdrop-blur-none opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
           <Dialog.Content className="fixed inset-y-0 right-0 z-70 flex w-full max-w-sm flex-col outline-none translate-x-full transition-transform duration-200 data-[state=open]:translate-x-0">
             <Dialog.Title className="sr-only">{ariaLabel}</Dialog.Title>
-            <div className="flex h-full flex-col border-l border-border bg-card/95 text-ink shadow-elevated outline-none backdrop-blur-xl">
-              <div className="flex items-center justify-between border-b border-border px-6 py-4">
+            <div className="flex h-full flex-col border-l border-white/10 bg-canvas/5 text-ink shadow-elevated outline-none backdrop-blur-md">
+              <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
                 <Logo label={brandLabel} />
                 <Dialog.Close asChild>
                   <button
                     aria-label="Close navigation menu"
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full text-ink transition-colors hover:bg-ink/5 focus-ring"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full text-white transition-colors hover:bg-white/5 focus-ring"
                   >
                     <X className="h-6 w-6" strokeWidth={2} aria-hidden="true" />
                   </button>
@@ -512,7 +523,7 @@ const MobileMenu = ({
                   />
                 ))}
               </div>
-              <div className="border-t border-border px-6 py-4">
+              <div className="border-t border-white/10 px-6 py-4">
                 <CTAs tone="dark" />
               </div>
             </div>
@@ -542,12 +553,12 @@ const MobileMenuLink = ({
     : currentPath === item.href || currentPath.startsWith(`${item.href}/`);
 
   return (
-    <div className="border-b border-border py-4">
+    <div className="border-b border-white/10 py-4">
       <div className="flex items-center justify-between">
         <Link
           href={item.href}
           className={`text-base font-semibold tracking-tight transition-colors ${
-            isActive ? "text-perazzi-red" : "text-ink hover:text-perazzi-red"
+            isActive ? "text-perazzi-red" : "text-white hover:text-perazzi-red"
           }`}
           onClick={() => setMenuOpen(false)}
         >
@@ -560,14 +571,14 @@ const MobileMenuLink = ({
             aria-label={`Toggle ${item.text} links`}
             aria-expanded={open}
             aria-controls={contentId}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-ink transition-colors hover:bg-ink/5 focus-ring"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full text-white transition-colors hover:bg-white/5 focus-ring"
           >
             <motion.div animate={{ rotate: open ? 180 : 0 }}>
               <ChevronDown className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
             </motion.div>
           </button>
         ) : (
-          <ArrowRight className="h-5 w-5 text-ink" strokeWidth={2} aria-hidden="true" />
+          <ArrowRight className="h-5 w-5 text-white" strokeWidth={2} aria-hidden="true" />
         )}
       </div>
       {hasFold && FlyoutContent && (
@@ -582,7 +593,7 @@ const MobileMenuLink = ({
         >
           <div
             ref={ref}
-            className="overflow-hidden rounded-2xl border border-border/70 bg-card/60 shadow-soft"
+            className={FLYOUT_GLASS_WRAPPER}
           >
             <FlyoutContent onNavigate={() => setMenuOpen(false)} textTone="light" />
           </div>

@@ -78,7 +78,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
             priority
           />
           <div
-            className="absolute inset-0 bg-[color:var(--scrim-soft)]"
+            className="absolute inset-0 bg-(--scrim-soft)"
             aria-hidden
           />
           <div
@@ -306,7 +306,7 @@ function PinnedStagePanel({
 
   const media = (
     <div className="flex h-full w-full flex-col gap-4 p-4 sm:p-6">
-      <div className="relative aspect-[3/2] sm:aspect-[4/3] w-full overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]">
+      <div className="relative aspect-3/2 sm:aspect-4/3 w-full overflow-hidden rounded-2xl bg-(--color-canvas)">
         <Image
           src={stage.media.url}
           alt={stage.media.alt}
@@ -316,7 +316,7 @@ function PinnedStagePanel({
           priority={stage.order === 1}
         />
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[color:var(--scrim-strong)]/80 via-[color:var(--scrim-strong)]/50 to-transparent"
+          className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/80 via-(--scrim-strong)/50 to-transparent"
           aria-hidden
         />
       </div>

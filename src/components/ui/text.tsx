@@ -4,13 +4,13 @@ import { cn } from "@/lib/utils";
 
 const sizeClasses = {
   // Large body / emphasis text: slightly larger on bigger screens
-  lg: "text-base sm:text-lg",
+  lg: "!text-base sm:!text-xl",
   // Default body text: mobile-first, scales up at sm+
-  md: "text-sm sm:text-base font-light",
+  md: "!text-md sm:!text-base !font-light",
   // Secondary body / compact text
-  sm: "text-sm sm:text-sm",
+  sm: "!text-md sm:!text-md",
   // Microcopy: uppercase, tracked, mobile-first
-  xs: "text-[12px] sm:text-sm tracking-[0.35em] uppercase",
+  xs: "!text-[12px] sm:!text-md !font-semibold !italic !tracking-[0.2em] !uppercase",
 } as const;
 
 const leadingClasses = {

@@ -4,15 +4,15 @@ import { cn } from "@/lib/utils";
 
 const sizeClasses = {
   // Display / hero heading: tuned for mobile, scales up on larger screens
-  display: "text-3xl sm:text-4xl lg:text-5xl font-semibold font-serif tracking-tight",
+  display: "!text-3xl sm:!text-4xl lg:!text-5xl !font-semibold !font-serif !tracking-tight",
   // XL heading: primary section headings
-  xl: "text-xl sm:text-2xl lg:text-3xl font-bold",
+  xl: "!text-2xl sm:!text-3xl lg:!text-4xl !font-black !italic !uppercase !tracking-[0.1em]",
   // LG heading: strong subheadings
-  lg: "text-xl sm:text-2xl font-semibold",
+  lg: "!text-2xl sm:!text-2xl !font-semibold",
   // MD heading: default heading size
-  md: "text-lg sm:text-xl font-semibold",
+  md: "!text-xl sm:!text-2xl !font-semibold",
   // SM heading: compact / inline headings
-  sm: "text-base sm:text-lg font-medium",
+  sm: "!text-base sm:!text-lg !font-medium",
 } as const;
 
 type HeadingSize = keyof typeof sizeClasses;
