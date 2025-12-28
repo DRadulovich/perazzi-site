@@ -1,8 +1,9 @@
 // NOTE: Audited for mobile behavior per docs/GUIDES/Mobile-Design-Guide.md
 "use client";
 
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { PortableBody } from "@/components/journal/PortableBody";
 import { Button, Textarea } from "@/components/ui";
@@ -45,6 +46,15 @@ type JourneyChapterBarProps = {
   stations: BuildJourneyArticle[];
   activeStepIndex: number;
   isNavVisible: boolean;
+};
+
+type JourneyTransitionProps = {
+  heroUrl: string;
+  stepLabel: string;
+  currentTitle?: string;
+  nextStepLabel: string;
+  nextTitle?: string;
+  nextExcerpt?: string;
 };
 
 const SOUL_JOURNEY_STORAGE_KEY = "perazzi_soul_journey_v1";
@@ -261,6 +271,8 @@ function JourneyChapters({
         const answer = answers[stepKey] ?? "";
         const submitting = isSubmitting[stepKey] ?? false;
         const hasResponse = Boolean(artisanParagraphs[stepKey]);
+        const nextStation = stations[index + 1];
+        const nextStepLabel = (index + 2).toString().padStart(2, "0");
 
         return (
           <div key={station._id}>
@@ -391,34 +403,15 @@ function JourneyChapters({
 
             {/* Transition section: fullscreen image of the article just read,
                 with a quote block previewing the next step's excerpt */}
-            {hasHero && index < stations.length - 1 ? (
-              <section
-                className="relative min-h-[50vh] sm:min-h-[60vh] lg:min-h-screen"
-                aria-hidden="true"
-              >
-                <div
-                  className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                  style={{ backgroundImage: `url(${heroUrl})` }}
-                >
-                  <div className="absolute inset-0 bg-linear-to-b from-(--color-perazzi-black) via-perazzi-black/60 to-(--color-perazzi-black)" />
-                </div>
-                <div className="relative flex min-h-[50vh] sm:min-h-[60vh] lg:min-h-screen w-full items-center justify-center px-4 py-16 sm:py-24">
-                  {stations[index + 1]?.excerpt ? (
-                    <div className="max-w-2xl space-y-4 text-center">
-                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/80">
-                        Up next • Step {(index + 2).toString().padStart(2, "0")} — {stations[index + 1].title}
-                      </p>
-                      <blockquote className="text-base font-medium italic leading-relaxed text-white sm:text-lg sm:leading-relaxed">
-                        {stations[index + 1].excerpt}
-                      </blockquote>
-                    </div>
-                  ) : (
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/80">
-                      Transition • Step {stepLabel} — {station.title ?? "Untitled step"}
-                    </p>
-                  )}
-                </div>
-              </section>
+            {hasHero && nextStation ? (
+              <JourneyTransition
+                heroUrl={heroUrl!}
+                stepLabel={stepLabel}
+                currentTitle={station.title}
+                nextStepLabel={nextStepLabel}
+                nextTitle={nextStation.title}
+                nextExcerpt={nextStation.excerpt}
+              />
             ) : null}
           </div>
         );
@@ -513,6 +506,60 @@ function JourneyChapters({
         </div>
       </section>
     </>
+  );
+}
+
+function JourneyTransition({
+  heroUrl,
+  stepLabel,
+  currentTitle,
+  nextStepLabel,
+  nextTitle,
+  nextExcerpt,
+}: JourneyTransitionProps) {
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const prefersReducedMotion = useReducedMotion();
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"],
+  });
+  const parallaxY = useTransform(scrollYProgress, [0, 1], ["-4%", "8%"]);
+
+  return (
+    <section
+      ref={sectionRef}
+      className="relative isolate min-h-[50vh] sm:min-h-[60vh] lg:min-h-screen w-screen max-w-[100vw] overflow-hidden"
+      style={{ marginLeft: "calc(50% - 50vw)", marginRight: "calc(50% - 50vw)" }}
+      aria-hidden="true"
+    >
+      <motion.div
+        className="absolute inset-0"
+        style={{ y: prefersReducedMotion ? "0%" : parallaxY }}
+      >
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${heroUrl})` }}
+        />
+        <div className="absolute inset-0 bg-linear-to-b from-(--color-perazzi-black) via-perazzi-black/60 to-(--color-perazzi-black)" />
+      </motion.div>
+
+      <div className="relative flex min-h-[50vh] sm:min-h-[60vh] lg:min-h-screen w-full items-center justify-center px-4 py-16 sm:py-24">
+        {nextExcerpt ? (
+          <div className="max-w-2xl space-y-4 text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/80">
+              Up next • Step {nextStepLabel} — {nextTitle}
+            </p>
+            <blockquote className="text-base font-medium italic leading-relaxed text-white sm:text-lg sm:leading-relaxed">
+              {nextExcerpt}
+            </blockquote>
+          </div>
+        ) : (
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/80">
+            Transition • Step {stepLabel} — {currentTitle ?? "Untitled step"}
+          </p>
+        )}
+      </div>
+    </section>
   );
 }
 
