@@ -26,7 +26,7 @@ export default async function HomePage() {
         <Section
           padding="lg"
           bordered={false}
-          className="rounded-none border-t border-border bg-canvas shadow-none"
+          className="rounded-none border-t border-none! bg-canvas shadow-none!"
           aria-labelledby="home-guide-heading"
         >
           <Container

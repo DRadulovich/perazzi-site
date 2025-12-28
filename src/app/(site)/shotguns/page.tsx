@@ -116,7 +116,7 @@ export default async function ShotgunsLandingPage() {
       <Section
         padding="lg"
         bordered={false}
-        className="rounded-none border-t border-border bg-canvas shadow-none"
+        className="rounded-none border-t border-none! bg-canvas shadow-none!"
         aria-labelledby="discipline-fit-heading"
       >
         <Container
@@ -186,7 +186,7 @@ export default async function ShotgunsLandingPage() {
       <Section
         padding="lg"
         bordered={false}
-        className="rounded-none border-t border-border bg-canvas shadow-none"
+        className="rounded-none border-t border-none! bg-canvas shadow-none!"
         aria-labelledby="gauge-primer-heading"
       >
         <Container
@@ -249,7 +249,7 @@ export default async function ShotgunsLandingPage() {
       <Section
         padding="lg"
         bordered={false}
-        className="rounded-none border-t border-border bg-canvas shadow-none"
+        className="rounded-none border-t border-none! bg-canvas shadow-none!"
         aria-labelledby="trigger-choice-heading"
       >
         <Container
@@ -261,7 +261,7 @@ export default async function ShotgunsLandingPage() {
               id="trigger-choice-heading"
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-ink"
+              className="font-black! uppercase italic tracking-[0.2em] text-ink"
             >
               {triggerChoice.heading ?? "Trigger choice"}
             </Heading>
@@ -291,8 +291,8 @@ export default async function ShotgunsLandingPage() {
           </div>
 
           <div className="space-y-3 text-sm sm:text-base font-light italic text-ink-muted">
-            <Text className="font-semibold not-italic text-ink" leading="normal">
-              What to weigh:
+            <Text className="font-semibold! not-italic text-ink" leading="normal">
+              What to Weigh:
             </Text>
             <ul className="space-y-2">
               {(triggerChoice.bullets?.length

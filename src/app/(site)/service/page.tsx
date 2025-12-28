@@ -47,17 +47,12 @@ export default async function ServicePage() {
         })),
       }
     : null;
+  const faqSchemaJson = faqSchema ? JSON.stringify(faqSchema).replace(/</g, "\\u003c") : null;
 
   return (
     <div className="space-y-16">
-      {faqSchema ? (
-        <>
-          { }
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-          />
-        </>
+      {faqSchemaJson ? (
+        <script type="application/ld+json">{faqSchemaJson}</script>
       ) : null}
       <ServiceHero
         hero={hero}

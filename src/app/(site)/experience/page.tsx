@@ -163,7 +163,7 @@ export default async function ExperiencePage() {
         id="experience-visit-planning"
         padding="lg"
         bordered={false}
-        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none border-t border-border bg-canvas shadow-none"
+        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none! border-t border-none! bg-canvas shadow-none!"
         style={{
           marginLeft: "calc(50% - 50vw)",
           marginRight: "calc(50% - 50vw)",
@@ -232,7 +232,7 @@ export default async function ExperiencePage() {
         id="experience-booking-guide"
         padding="lg"
         bordered={false}
-        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none border-t border-border bg-canvas shadow-none"
+        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none! border-t border-none! bg-canvas shadow-none!"
         style={{
           marginLeft: "calc(50% - 50vw)",
           marginRight: "calc(50% - 50vw)",
@@ -301,7 +301,7 @@ export default async function ExperiencePage() {
         id="experience-travel-guide"
         padding="lg"
         bordered={false}
-        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none border-t border-border bg-canvas shadow-none"
+        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none! border-t border-none! bg-canvas shadow-none!"
         style={{
           marginLeft: "calc(50% - 50vw)",
           marginRight: "calc(50% - 50vw)",

@@ -32,7 +32,7 @@ export default async function BespokeBuildPage() {
       <Section
         padding="lg"
         bordered={false}
-        className="rounded-none border-t border-border bg-canvas shadow-none"
+        className="rounded-none border-t border-none! bg-canvas shadow-none!"
         aria-labelledby="bespoke-guide-heading"
       >
         <Container
