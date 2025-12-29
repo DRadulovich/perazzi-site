@@ -38,8 +38,8 @@ export function DisciplineHero({ hero, name }: DisciplineHeroProps) {
       className="relative overflow-hidden rounded-2xl bg-perazzi-black text-white sm:rounded-3xl"
     >
       <div
-        className="relative"
-        style={{ aspectRatio: ratio }}
+        className="relative aspect-dynamic"
+        style={{ "--aspect-ratio": ratio }}
       >
         <Image
           src={hero.url}

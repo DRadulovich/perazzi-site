@@ -31,8 +31,8 @@ export function EngHighlightsGrid({ highlights }: EngHighlightsGridProps) {
               className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated"
             >
               <div
-                className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
-                style={{ aspectRatio: ratio }}
+                className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)] aspect-dynamic"
+                style={{ "--aspect-ratio": ratio }}
               >
                 <Image
                   src={highlight.media.url}

@@ -119,11 +119,7 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
     <section
       ref={analyticsRef}
       data-analytics-id="EngravingGradesCarouselSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
-      style={{
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
-      }}
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
       aria-labelledby="engraving-grades-heading"
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -136,16 +132,7 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
           priority={false}
         />
         <div className="absolute inset-0 bg-[color:var(--scrim-soft)]" aria-hidden />
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
-              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 80%), " +
-              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 80%)",
-          }}
-          aria-hidden
-        />
+        <div className="absolute inset-0 overlay-gradient-canvas-80" aria-hidden />
       </div>
 
       <Container size="xl" className="relative z-10">
@@ -261,8 +248,8 @@ function GradeCard({ grade, ctaLabel }: GradeCardProps) {
   return (
     <article className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-5 sm:shadow-elevated lg:p-6">
       <div
-        className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
-        style={{ aspectRatio: ratio }}
+        className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)] aspect-dynamic"
+        style={{ "--aspect-ratio": ratio }}
       >
         {heroAsset ? (
           <Image

@@ -10,24 +10,24 @@ Legend
 ## Global visual levers (site-wide)
 
 1) Tokens + theme
-- Lever: `src/app/globals.css`
+- Lever: `src/styles/site-theme.css`
 - Controls: CSS variables for color/surfaces/ink/borders, focus ring, scrims; Tailwind @theme inline color bindings; premium radius/shadow utilities.
 - Use when: any site-wide color/surface change, or global radius/shadow adjustment.
 
 2) Fonts / typography tokens
-- Lever: `src/app/layout.tsx` (font variables) and `src/app/globals.css` (@theme inline font bindings)
+- Lever: `src/app/layout.tsx` (font variables) and `src/styles/site-theme.css` (@theme inline font bindings)
 - Controls: font families for headings/body/mono.
 
 3) Premium radius + shadow scale
-- Lever: `src/app/globals.css` (.rounded-*, .shadow-* utilities)
+- Lever: `src/styles/site-theme.css` (.rounded-*, .shadow-* utilities)
 - Controls: all uses of rounded-xl/2xl/3xl and shadow-soft/medium/elevated.
 
 4) Focus ring
-- Lever: `src/app/globals.css` (.focus-ring)
+- Lever: `src/styles/site-theme.css` (.focus-ring)
 - Controls: focus appearance on all components using the class.
 
 5) Prose (long-form typography)
-- Lever: `src/app/globals.css` (typography plugin + .prose overrides)
+- Lever: `src/styles/site-theme.css` (typography plugin + .prose overrides)
 - Controls: PortableText/SafeHtml blocks using className="prose ...".
 
 6) Theme switching
@@ -60,7 +60,7 @@ Overlays / interactions
 Rich text
 - Portable Text renderer: `src/components/PortableText.tsx`
 - Legacy HTML renderer: `src/components/SafeHtml.tsx`
-- Prose styling: `src/app/globals.css`
+- Prose styling: `src/styles/site-theme.css`
 
 Icons
 - Standard: lucide-react (use consistent size + strokeWidth per usage)
@@ -73,7 +73,7 @@ Icons
 - Primary navigation: `src/components/primary-nav.tsx`
   Lever: local for layout/visuals; uses lucide icons (size + stroke here)
 - Skip link: `src/components/skip-to-content.tsx`
-  Lever: `src/app/globals.css` (.skip-link)
+  Lever: `src/styles/site-theme.css` (.skip-link)
 
 ## Site sections by feature area
 
@@ -119,7 +119,6 @@ Journal
 Chat (site UI)
 - Chat panel + conversation: `src/components/chat/ChatPanel.tsx`, `ConversationView.tsx` (local)
 - Input + widget: `src/components/chat/ChatInput.tsx`, `ChatWidget.tsx` (local)
-- Chat-specific tokens: `src/app/chat.css` (theme overrides)
 
 Concierge (site UI)
 - Concierge shell + drawers: `src/components/concierge/ConciergePageShell.tsx`, `BuildSheetDrawer.tsx`, `SanityDetailsDrawer.tsx` (local)
@@ -133,11 +132,11 @@ Theme toggle
 - Change typography everywhere:
   - `src/components/ui/heading.tsx`
   - `src/components/ui/text.tsx`
-  - `src/app/globals.css` (prose)
+  - `src/styles/site-theme.css` (prose)
 
 - Change surfaces (cards/sections) everywhere:
   - `src/components/ui/section.tsx`
-  - `src/app/globals.css` (tokens + shadows + radii)
+  - `src/styles/site-theme.css` (tokens + shadows + radii)
 
 - Change buttons/inputs everywhere:
   - `src/components/ui/button.tsx`
@@ -152,7 +151,7 @@ Theme toggle
 - Change rich text rendering:
   - `src/components/PortableText.tsx`
   - `src/components/SafeHtml.tsx`
-  - `src/app/globals.css` (prose)
+  - `src/styles/site-theme.css` (prose)
 
 ## Notes
 - Most feature components are intentionally bespoke. They inherit tokens and typography primitives but keep local layout/visuals.

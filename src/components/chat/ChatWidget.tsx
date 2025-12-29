@@ -39,15 +39,18 @@ export function ChatWidget() {
     const root = document.documentElement;
     if (isMobile) {
       root.style.setProperty("--chat-rail-width", "0px");
+      root.style.setProperty("--chat-panel-width", "0px");
       return;
     }
     const widthValue = isOpen ? `${panelWidth}px` : "0px";
     root.style.setProperty("--chat-rail-width", widthValue);
+    root.style.setProperty("--chat-panel-width", widthValue);
   }, [isOpen, panelWidth, isMobile]);
 
   useEffect(
     () => () => {
       document.documentElement.style.removeProperty("--chat-rail-width");
+      document.documentElement.style.removeProperty("--chat-panel-width");
     },
     [],
   );
@@ -172,12 +175,7 @@ export function ChatWidget() {
           <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
             <Dialog.Portal>
               <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
-              <Dialog.Content className="fixed inset-x-0 z-60 overscroll-none outline-none data-[state=closed]:opacity-0 data-[state=closed]:translate-y-2 data-[state=open]:opacity-100 data-[state=open]:translate-y-0 transition duration-200"
-                style={{
-                  height: "var(--chat-sheet-height, 100vh)",
-                  top: "var(--chat-sheet-offset, 0px)",
-                }}
-              >
+              <Dialog.Content className="fixed inset-x-0 z-60 overscroll-none outline-none data-[state=closed]:opacity-0 data-[state=closed]:translate-y-2 data-[state=open]:opacity-100 data-[state=open]:translate-y-0 transition duration-200 chat-sheet">
                 <div className="absolute inset-0 p-3 sm:p-4">
                   <ChatPanel
                     open
@@ -196,8 +194,7 @@ export function ChatWidget() {
         <>
           {isOpen && (
             <aside
-              className="fixed right-0 top-0 z-50 flex h-full flex-col bg-transparent"
-              style={{ width: panelWidth }}
+              className="fixed right-0 top-0 z-50 flex h-full flex-col bg-transparent chat-panel-width"
             >
               <div
                 className="absolute left-0 top-0 z-50 h-full w-2 cursor-col-resize border-l border-transparent transition hover:border-l-subtle"

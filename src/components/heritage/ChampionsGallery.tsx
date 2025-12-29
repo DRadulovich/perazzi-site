@@ -69,11 +69,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
 
   return (
     <section
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
-      style={{
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
-      }}
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
       aria-labelledby="heritage-champions-heading"
     >
       {/* Full-bleed background image with soft scrim */}
@@ -90,16 +86,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
           className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, color-mix(in srgb, var(--color-black) 24%, transparent) 0%, color-mix(in srgb, var(--color-black) 6%, transparent) 50%, color-mix(in srgb, var(--color-black) 24%, transparent) 100%), " +
-              "linear-gradient(to bottom, color-mix(in srgb, var(--color-black) 100%, transparent) 0%, transparent 75%), " +
-              "linear-gradient(to top, color-mix(in srgb, var(--color-black) 100%, transparent) 0%, transparent 75%)",
-          }}
-          aria-hidden
-        />
+        <div className="absolute inset-0 overlay-gradient-ink" aria-hidden />
       </div>
 
       {/* Foreground glass container */}
@@ -274,13 +261,10 @@ type ChampionDetailProps = Readonly<{
 }>;
 
 function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
-  const ratio = 3 / 2; // Force 3:2 aspect ratio for champion images
-
   return (
     <>
       <div
-        className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
-        style={{ aspectRatio: ratio }}
+        className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-[3/2]"
       >
         <Image
           src={champion.image.url}

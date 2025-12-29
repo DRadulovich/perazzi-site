@@ -35,8 +35,8 @@ export function SeriesHero({ hero, analyticsId }: SeriesHeroProps) {
         </div>
         <div className="md:col-span-7 lg:col-span-7">
           <div
-            className="relative overflow-hidden rounded-2xl"
-            style={{ aspectRatio: ratio }}
+            className="relative overflow-hidden rounded-2xl aspect-dynamic"
+            style={{ "--aspect-ratio": ratio }}
           >
             <Image
               src={hero.media.url}

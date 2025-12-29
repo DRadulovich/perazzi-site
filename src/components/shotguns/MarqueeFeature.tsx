@@ -50,8 +50,8 @@ export function MarqueeFeature({ champion, fallbackText }: MarqueeFeatureProps) 
       className="grid gap-8 md:grid-cols-[minmax(280px,1fr)_minmax(320px,1fr)] md:items-center"
     >
       <div
-        className="relative overflow-hidden rounded-2xl bg-elevated ring-1 ring-border/70"
-        style={{ aspectRatio: ratio }}
+        className="relative overflow-hidden rounded-2xl bg-elevated ring-1 ring-border/70 aspect-dynamic"
+        style={{ "--aspect-ratio": ratio }}
       >
         <Image
           src={champion.image.url}

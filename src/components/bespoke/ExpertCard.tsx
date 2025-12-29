@@ -21,8 +21,8 @@ export function ExpertCard({ expert }: ExpertCardProps) {
       className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-5"
     >
       <div
-        className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
-        style={{ aspectRatio: ratio }}
+        className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-dynamic"
+        style={{ "--aspect-ratio": ratio }}
       >
         <Image
           src={expert.headshot.url}

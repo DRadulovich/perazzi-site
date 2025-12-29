@@ -35,12 +35,7 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
     <section
       ref={analyticsRef}
       data-analytics-id="ChampionStorySeen"
-      className="relative flex w-screen max-w-[100vw] items-center overflow-hidden py-10 sm:py-16"
-      style={{
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
-        marginTop: "15px",
-      }}
+      className="relative flex w-screen max-w-[100vw] items-center overflow-hidden py-10 sm:py-16 full-bleed mt-[15px]"
       aria-labelledby="champion-heading"
     >
       <div className="absolute inset-0 z-0 overflow-hidden">
@@ -53,16 +48,7 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
           priority={false}
         />
         <div className="absolute inset-0 bg-(--scrim-soft)" aria-hidden />
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
-              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 70%), " +
-              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 70%)",
-          }}
-          aria-hidden
-        />
+        <div className="pointer-events-none absolute inset-0 overlay-gradient-canvas-70" aria-hidden />
       </div>
 
       <Container size="xl" className="relative z-10">
@@ -77,8 +63,8 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
             transition={{ duration: 0.6, ease: [0.33, 1, 0.68, 1] }}
           >
             <div
-              className="relative overflow-hidden rounded-2xl bg-elevated ring-1 ring-border/70"
-              style={{ aspectRatio: ratio }}
+              className="relative overflow-hidden rounded-2xl bg-elevated ring-1 ring-border/70 aspect-dynamic"
+              style={{ "--aspect-ratio": ratio }}
             >
               <Image
                 src={champion.image.url}

@@ -377,10 +377,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                     alt={model.imageAlt || model.name}
                     fill
                     sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
-                    className="object-contain bg-perazzi-white transition-transform duration-500"
-                    style={{
-                      transform: "translate3d(var(--parallax-x,0px), var(--parallax-y,0px), 0)",
-                    }}
+                    className="object-contain bg-perazzi-white transition-transform duration-500 parallax-image"
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center bg-card text-ink-muted">

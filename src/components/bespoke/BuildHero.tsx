@@ -24,25 +24,18 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
     ["0%", prefersReducedMotion ? "0%" : "12%"],
   );
 
-  const mediaStyle = prefersReducedMotion
-    ? { height: "100vh" }
-    : { height: "100vh", y: parallax };
-
-  const sectionStyle = fullBleed
-    ? { marginLeft: "calc(50% - 50vw)", marginRight: "calc(50% - 50vw)" }
-    : undefined;
+  const mediaStyle = prefersReducedMotion ? undefined : { y: parallax };
 
   return (
     <section
       ref={containerRef}
       data-analytics-id="HeroSeen:bespoke"
       className={`relative isolate min-h-screen overflow-hidden bg-perazzi-black text-white ${
-        fullBleed ? "w-screen max-w-[100vw] rounded-none" : "rounded-3xl"
+        fullBleed ? "full-bleed w-screen max-w-[100vw] rounded-none" : "rounded-3xl"
       }`}
-      style={sectionStyle}
     >
       <motion.div
-        className="relative h-full w-full"
+        className="relative h-screen w-full"
         style={mediaStyle}
       >
           <Image

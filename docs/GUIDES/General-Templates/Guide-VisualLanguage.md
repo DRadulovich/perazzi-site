@@ -1,7 +1,7 @@
 # Perazzi Digital Visual Language
 
 Implementation note for Codex:
-- **Tokens, fonts, and base surfaces are defined in `src/app/globals.css`.**
+- **Tokens, fonts, and base surfaces are defined in `src/styles/site-theme.css`.**
 - Do **not** hardcode colors or fonts in components. Use Tailwind theme tokens (e.g. `text-perazzi-red`, `bg-canvas`) or the CSS variables defined there.
 
 ---
@@ -108,7 +108,7 @@ Codex does **not** adjust photography; it assumes images already follow this art
 
 ## 3. Surface & Material System
 
-### 3.1 Base tokens (from `globals.css`)
+### 3.1 Base tokens (from `src/styles/site-theme.css`)
 
 Use these variables and Tailwind bindings:
 
@@ -136,7 +136,7 @@ Do not introduce new raw hex colors in components unless explicitly asked to ext
 
 - Background: `bg-card` / `bg-elevated` according to theme.
 - Slight border: `border-border` when needed.
-- Soft radius: prefer `rounded-2xl` or `rounded-3xl` (note: overridden to sharper radii in `globals.css`).
+- Soft radius: prefer `rounded-2xl` or `rounded-3xl` (note: overridden to sharper radii in `src/styles/site-theme.css`).
 - Used for:
   - Service/utility sections.
   - Journal/heritage cards.
@@ -187,7 +187,7 @@ Use the container sizes defined in `@theme inline`:
   - Medium: `px-6`.
   - Desktop: `px-8` or equivalent.
 
-Do not introduce arbitrary max-widths; use the existing `max-w-*` utilities provided in the utilities layer in `globals.css`.
+Do not introduce arbitrary max-widths; use the existing `max-w-*` utilities provided in the utilities layer in `src/styles/site-theme.css`.
 
 ### 4.2 Vertical rhythm
 
@@ -250,7 +250,7 @@ Codex should default to these patterns and avoid inventing new ones without reas
 
 ### 5.2 CTAs and buttons
 
-Use the button classes defined in `globals.css`:
+Use the button classes defined in `src/styles/site-theme.css`:
 
 - Primary CTA:
   - `.btn--primary` or `.button-primary` (Perazzi red or ink, pill radius).
@@ -319,13 +319,13 @@ If an image is used as a **hero** or major cinematic strip, it must look clean a
 
 ---
 
-## 8. Typography (Baseline from `globals.css`)
+## 8. Typography (Baseline from `src/styles/site-theme.css`)
 
 Typography will be tuned more precisely after Perazzi provides final copy. For now:
 
 ### 8.1 Source of truth
 
-All typography-related tokens live in `src/app/globals.css`:
+All typography-related tokens live in `src/styles/site-theme.css`:
 
 - Fonts:
   - `--font-sans` → `var(--font-geist-sans)`, Inter, Segoe UI, system.

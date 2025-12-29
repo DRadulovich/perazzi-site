@@ -27,10 +27,7 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
       className="group flex h-full flex-col rounded-2xl border border-border bg-(--color-canvas)/30 p-4 shadow-soft backdrop-blur-sm transition-transform focus-ring hover:-translate-y-1 sm:rounded-3xl sm:bg-canvas/40 sm:p-6 sm:shadow-elevated"
       onClick={() => logAnalytics(`shotguns_platform_card_click:${platform.id}`)}
     >
-      <div
-        className="card-media relative rounded-2xl bg-(--surface-elevated) transition-transform duration-300 group-hover:scale-[1.01]"
-        style={{ aspectRatio: "16 / 9" }}
-      >
+      <div className="card-media relative rounded-2xl bg-(--surface-elevated) transition-transform duration-300 group-hover:scale-[1.01] aspect-[16/9]">
         <Image
           src={platform.hero.url}
           alt={platform.hero.alt}

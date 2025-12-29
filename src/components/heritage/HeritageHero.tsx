@@ -18,7 +18,6 @@ type HeritageHeroProps = Readonly<{
 }>;
 
 export function HeritageHero({ hero, breadcrumbs }: HeritageHeroProps) {
-  const HEADER_OFFSET = 80;
   const analyticsRef = useAnalyticsObserver("HeroSeen:heritage");
   const containerRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
@@ -44,13 +43,7 @@ export function HeritageHero({ hero, breadcrumbs }: HeritageHeroProps) {
 
   return (
     <section
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden min-h-screen pb-10 sm:pb-16"
-      style={{
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
-        marginTop: `-${HEADER_OFFSET}px`,
-        paddingTop: `${HEADER_OFFSET}px`,
-      }}
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden min-h-screen pb-10 sm:pb-16 full-bleed full-bleed-offset-top-lg"
       aria-labelledby="heritage-hero-heading"
     >
       <motion.div
@@ -65,15 +58,7 @@ export function HeritageHero({ hero, breadcrumbs }: HeritageHeroProps) {
           }}
         />
         <div className="absolute inset-0 bg-black/35" />
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, color-mix(in srgb, var(--color-black) 16%, transparent) 0%, color-mix(in srgb, var(--color-black) 4%, transparent) 50%, color-mix(in srgb, var(--color-black) 16%, transparent) 100%), " +
-              "linear-gradient(to bottom, color-mix(in srgb, var(--color-black) 60%, transparent) 0%, transparent 75%), " +
-              "linear-gradient(to top, color-mix(in srgb, var(--color-black) 60%, transparent) 0%, transparent 75%)",
-          }}
-        />
+        <div className="pointer-events-none absolute inset-0 overlay-gradient-hero" />
       </motion.div>
 
       <motion.section

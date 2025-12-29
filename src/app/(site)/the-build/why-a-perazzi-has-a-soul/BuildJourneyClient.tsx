@@ -304,8 +304,8 @@ function JourneyChapters({
 
                   {hasHero ? (
                     <figure
-                      className="relative overflow-hidden rounded-xl bg-card/0"
-                      style={{ aspectRatio: heroAspectRatio ?? 3 / 2 }}
+                      className="relative overflow-hidden rounded-xl bg-card/0 aspect-dynamic"
+                      style={{ "--aspect-ratio": heroAspectRatio ?? 3 / 2 }}
                     >
                       <Image
                         src={heroUrl!}
@@ -528,8 +528,7 @@ function JourneyTransition({
   return (
     <section
       ref={sectionRef}
-      className="relative isolate min-h-[50vh] sm:min-h-[60vh] lg:min-h-screen w-screen max-w-[100vw] overflow-hidden"
-      style={{ marginLeft: "calc(50% - 50vw)", marginRight: "calc(50% - 50vw)" }}
+      className="relative isolate min-h-[50vh] sm:min-h-[60vh] lg:min-h-screen w-screen max-w-[100vw] overflow-hidden full-bleed"
       aria-hidden="true"
     >
       <motion.div
@@ -590,10 +589,9 @@ function JourneyChapterBar({ stations, activeStepIndex, isNavVisible }: JourneyC
 
   return (
     <div
-      className={`fixed inset-x-0 bottom-0 z-30 border-t border-perazzi-black/50 bg-perazzi-black/85 text-xs text-white shadow-soft backdrop-blur-none sm:backdrop-blur-lg sm:text-sm transition-transform duration-300 ${
+      className={`fixed inset-x-0 bottom-0 z-30 border-t border-perazzi-black/50 bg-perazzi-black/85 text-xs text-white shadow-soft backdrop-blur-none sm:backdrop-blur-lg sm:text-sm transition-transform duration-300 safe-area-bottom ${
         isNavVisible ? "translate-y-0" : "translate-y-full sm:translate-y-0"
       }`}
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-2">
         <div className="flex min-w-0 flex-col sm:flex-row sm:items-baseline sm:gap-2">

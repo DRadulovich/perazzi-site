@@ -9,19 +9,9 @@ export const VisuallyHidden = forwardRef<
     <span
       ref={ref as never}
       className={cn(
-        "border-0 p-0",
+        "visually-hidden",
         className,
       )}
-      style={{
-        clip: "rect(0 0 0 0)",
-        clipPath: "inset(50%)",
-        height: "1px",
-        width: "1px",
-        margin: "-1px",
-        overflow: "hidden",
-        position: "absolute",
-        whiteSpace: "nowrap",
-      }}
       {...props}
     />
   );

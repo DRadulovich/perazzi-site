@@ -24,8 +24,8 @@ function TimelineContent({ stage, isPinned }: TimelineContentProps) {
   return (
     <>
       <div
-        className="relative w-full overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
-        style={{ aspectRatio: ratio }}
+        className="relative w-full overflow-hidden rounded-2xl bg-[color:var(--color-canvas)] aspect-dynamic"
+        style={{ "--aspect-ratio": ratio }}
       >
         <Image
           src={stage.media.url}

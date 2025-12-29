@@ -169,11 +169,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
       />
       <section
         id="perazzi-heritage"
-        className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-14 pb-16 sm:pb-20 -mb-16 sm:-mb-16 min-h-[80vh]"
-        style={{
-          marginLeft: "calc(50% - 50vw)",
-          marginRight: "calc(50% - 50vw)",
-        }}
+        className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-14 pb-16 sm:pb-20 -mb-16 sm:-mb-16 min-h-[80vh] full-bleed"
       >
         <div
           className="absolute inset-0 -z-10 bg-linear-to-t from-black via-black/50 to-canvas"
@@ -231,11 +227,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
       </section>
       <PerazziHeritageEras eras={eraGroups} />
       <section
-        className="relative isolate w-screen max-w-[100vw] overflow-hidden bg-black py-10 sm:py-16 -mt-16 -mb-16"
-        style={{
-          marginLeft: "calc(50% - 50vw)",
-          marginRight: "calc(50% - 50vw)",
-        }}
+        className="relative isolate w-screen max-w-[100vw] overflow-hidden bg-black py-10 sm:py-16 -mt-16 -mb-16 full-bleed"
         aria-labelledby="heritage-workshop-heading"
       >
         <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 text-white lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
@@ -302,11 +294,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
           Heritage champions section
         </div>
         <section
-          className="relative isolate w-screen max-w-[100vw] overflow-hidden bg-black py-10 sm:py-16 -mt-16 sm:-mt-16 -mb-16 sm:-mb-16 min-h-[70vh]"
-          style={{
-            marginLeft: "calc(50% - 50vw)",
-            marginRight: "calc(50% - 50vw)",
-          }}
+          className="relative isolate w-screen max-w-[100vw] overflow-hidden bg-black py-10 sm:py-16 -mt-16 sm:-mt-16 -mb-16 sm:-mb-16 min-h-[70vh] full-bleed"
           aria-labelledby="heritage-champions-intro-heading"
         >
           <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 text-white lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10 min-h-[50vh]">
@@ -357,19 +345,11 @@ export default async function HeritagePage(): Promise<ReactElement> {
       </section>
         <ChampionsGallery champions={champions} ui={championsGalleryUi} />
         <section
-          className="relative isolate z-0 w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 -mt-16 sm:-mt-16 -mb-16 sm:-mb-16 min-h-[60vh]"
-          style={{
-            marginLeft: "calc(50% - 50vw)",
-            marginRight: "calc(50% - 50vw)",
-          }}
+          className="relative isolate z-0 w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 -mt-16 sm:-mt-16 -mb-16 sm:-mb-16 min-h-[60vh] full-bleed"
           aria-labelledby="heritage-factory-intro-heading"
         >
           <div
-            className="absolute inset-0 -z-10"
-            style={{
-              backgroundImage:
-                "linear-gradient(to bottom, var(--perazzi-black) 0%, var(--color-canvas) 100%)",
-            }}
+            className="absolute inset-0 -z-10 bg-heritage-fade"
             aria-hidden="true"
           />
           <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 text-white lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10 min-h-[50vh]">

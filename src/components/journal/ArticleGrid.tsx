@@ -76,8 +76,8 @@ export function ArticleGrid({
               onClick={() => logAnalytics(`ArticleImpression:${item.slug}`)}
             >
               <div
-                className="card-media relative"
-                style={{ aspectRatio: item.hero.aspectRatio ?? 16 / 9 }}
+                className="card-media relative aspect-dynamic"
+                style={{ "--aspect-ratio": item.hero.aspectRatio ?? 16 / 9 }}
               >
                 <Image
                   src={item.hero.url}

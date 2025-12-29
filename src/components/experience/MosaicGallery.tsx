@@ -78,8 +78,8 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
           <li key={asset.id}>
             <button
               type="button"
-              className="group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card/60 shadow-soft backdrop-blur-sm ring-1 ring-border/70 transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:bg-card/80"
-              style={{ aspectRatio: asset.aspectRatio ?? 4 / 3 }}
+              className="group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card/60 shadow-soft backdrop-blur-sm ring-1 ring-border/70 transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:bg-card/80 aspect-dynamic"
+              style={{ "--aspect-ratio": asset.aspectRatio ?? 4 / 3 }}
               onClick={() => { openLightbox(index); }}
               aria-label={`Open photo ${index + 1}`}
             >
@@ -115,8 +115,8 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
                   Photo {(openIndex ?? 0) + 1} of {assets.length}
                 </p>
                 <div
-                  className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
-                  style={{ aspectRatio: currentAsset.aspectRatio ?? 3 / 2 }}
+                  className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-dynamic"
+                  style={{ "--aspect-ratio": currentAsset.aspectRatio ?? 3 / 2 }}
                 >
                   <Image
                     src={currentAsset.url}

@@ -28,8 +28,8 @@ export function GaugeHero({
       data-analytics-id={analyticsId}
     >
       <div
-        className="relative"
-        style={{ aspectRatio: ratio }}
+        className="relative aspect-dynamic"
+        style={{ "--aspect-ratio": ratio }}
       >
         <Image
           src={background.url}

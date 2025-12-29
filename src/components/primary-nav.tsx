@@ -155,8 +155,7 @@ const NavLink = ({ item, pathname, tone }: { item: NavItem; pathname: string; to
           <span
             className={`absolute -bottom-1 left-0 right-0 h-0.5 origin-left rounded-full transition-transform duration-300 ease-out ${
               tone === "light" ? "bg-white" : "bg-ink"
-            }`}
-            style={{ transform: isActive ? "scaleX(1)" : "scaleX(0)" }}
+            } ${isActive ? "scale-x-100" : "scale-x-0"}`}
           />
         </Link>
       </div>
@@ -181,8 +180,7 @@ const NavLink = ({ item, pathname, tone }: { item: NavItem; pathname: string; to
           <span
             className={`absolute -bottom-1 left-0 right-0 h-0.5 origin-left rounded-full transition-transform duration-300 ease-out ${
               tone === "light" ? "bg-white" : "bg-ink"
-            }`}
-            style={{ transform: showFlyout || isActive ? "scaleX(1)" : "scaleX(0)" }}
+            } ${(showFlyout || isActive) ? "scale-x-100" : "scale-x-0"}`}
           />
         </Link>
         <Popover.Trigger asChild>

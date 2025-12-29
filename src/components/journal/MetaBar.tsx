@@ -58,12 +58,12 @@ export function MetaBar({ article }: MetaBarProps) {
           <Text size="xs" className="tracking-[0.3em] text-ink-muted" leading="normal">
             Progress
           </Text>
-          <div className="mt-2 h-2 w-full rounded-full bg-border">
-            <div
-              className="h-full rounded-full bg-perazzi-red transition-all"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+            <div className="mt-2 h-2 w-full rounded-full bg-border">
+              <div
+                className="h-full rounded-full bg-perazzi-red transition-all width-dynamic"
+                style={{ "--dynamic-width": `${progress}%` }}
+              />
+            </div>
         </div>
       )}
       <Text className="font-semibold" leading="normal">

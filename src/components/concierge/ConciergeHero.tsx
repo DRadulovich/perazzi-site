@@ -22,8 +22,7 @@ export function ConciergeHero({ hero }: ConciergeHeroProps) {
     <section
       ref={heroRef}
       data-analytics-id="HeroSeen:concierge"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden bg-perazzi-black text-ink py-10 sm:py-16"
-      style={{ marginLeft: "calc(50% - 50vw)", marginRight: "calc(50% - 50vw)", marginTop: "-55px" }}
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden bg-perazzi-black text-ink py-10 sm:py-16 full-bleed full-bleed-offset-top-md"
     >
       <div
         className="absolute inset-0"
@@ -37,14 +36,7 @@ export function ConciergeHero({ hero }: ConciergeHeroProps) {
           sizes="(min-width: 1280px) 1200px, (min-width: 1024px) 80vw, 100vw"
           className="object-cover opacity-80"
         />
-        <div
-          className="absolute inset-0"
-          aria-hidden="true"
-          style={{
-            backgroundImage:
-              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent 0%) 0%, color-mix(in srgb, var(--color-canvas) 100%, transparent 100%) 100%, transparent 25%)",
-          }}
-        />
+        <div className="absolute inset-0 overlay-fade-canvas" aria-hidden="true" />
       </div>
 
       <div className="relative mx-auto grid max-w-6xl gap-10 px-6 py-12 sm:px-10 lg:px-16 md:grid-cols-12 lg:gap-16">

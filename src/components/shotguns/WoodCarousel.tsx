@@ -67,8 +67,8 @@ export function WoodCarousel({ grades }: WoodCarouselProps) {
               className="flex min-w-[260px] flex-col rounded-3xl border border-border/70 bg-card p-4 shadow-soft md:min-w-80 md:p-6 lg:min-w-0 lg:p-8"
             >
               <div
-                className="relative overflow-hidden rounded-xl bg-border"
-                style={{ aspectRatio: ratio }}
+                className="relative overflow-hidden rounded-xl bg-border aspect-dynamic"
+                style={{ "--aspect-ratio": ratio }}
               >
                 <Image
                   src={asset.url}

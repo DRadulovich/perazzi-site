@@ -7,12 +7,12 @@ Scope: site UI only (`src/app/(site)`, `src/components`). Admin/Studio are inten
 ## 1) The styling pipeline (source → output)
 
 ### 1.1 Tokens (CSS custom properties)
-- Primary source: `src/app/globals.css`
+- Primary source: `src/styles/site-theme.css`
   - `:root` defines light tokens.
   - `[data-theme="dark"]` overrides tokens for dark mode (applies to any subtree with `data-theme="dark"`).
 
 ### 1.2 Tailwind v4 theme bindings
-- Source: `src/app/globals.css` `@theme inline { ... }`
+- Source: `src/styles/site-theme.css` `@theme inline { ... }`
 - Effect: Tailwind utilities like `bg-card`, `text-ink`, `border-border` resolve to `--color-*` variables defined here.
 - Current bindings you rely on heavily:
   - `--color-canvas` → `bg-canvas`, `text-canvas`, etc.
@@ -23,7 +23,7 @@ Scope: site UI only (`src/app/(site)`, `src/components`). Admin/Studio are inten
   - `--color-perazzi-red|black|white` → `bg-perazzi-red`, etc.
 
 ### 1.3 Global semantic helpers + custom utilities
-- Source: `src/app/globals.css`
+- Source: `src/styles/site-theme.css`
 - These are **not** Tailwind-generated; they are bespoke classes that happen to resemble Tailwind names:
   - Focus ring: `.focus-ring` + `.focus-ring:focus-visible`
   - Radius scale overrides: `.rounded-xl`, `.rounded-2xl`, `.rounded-3xl` (with `!important`)
@@ -72,7 +72,7 @@ Most feature components are bespoke, but they generally fall into a few patterns
 ## 4) High-impact clashes (things currently fighting each other)
 
 ### 4.1 Two “brand reds” (and mixed naming)
-- `src/app/globals.css` defines both:
+- `src/styles/site-theme.css` defines both:
   - `--brand` / `--brand-hover` (legacy)
   - `--perazzi-red` (new system token)
 - Concierge components use `.bg-brand` / `.bg-brand-hover` while most of the site uses `bg-perazzi-red`.
@@ -82,15 +82,15 @@ Most feature components are bespoke, but they generally fall into a few patterns
 - Multiple components use Tailwind classes like:
   - `bg-subtle`, `divide-subtle`, `disabled:bg-subtle`, `hover:bg-subtle`
   - `ring-brand`, `focus-visible:ring-brand`, `hover:border-l-subtle`
-- But `src/app/globals.css` `@theme inline` does **not** define `--color-subtle` or `--color-brand`.
+- But `src/styles/site-theme.css` `@theme inline` does **not** define `--color-subtle` or `--color-brand`.
   - Result: those utilities either don’t exist in the generated CSS (e.g., `bg-subtle`) or resolve to undefined CSS variables (e.g., `ring-brand`), so intended styling silently fails.
 
 ### 4.3 A scrim token is referenced but not defined
-- `src/components/heritage/SerialLookup.tsx` uses `bg-(--scrim-hard)` but `src/app/globals.css` only defines `--scrim-soft` and `--scrim-strong`.
+- `src/components/heritage/SerialLookup.tsx` uses `bg-(--scrim-hard)` but `src/styles/site-theme.css` only defines `--scrim-soft` and `--scrim-strong`.
   - Result: the Serial Lookup overlay scrim may be missing/incorrect.
 
 ### 4.4 “Radius scale” overrides prevent legitimate local overrides
-- `src/app/globals.css` overrides `.rounded-xl|2xl|3xl` using `!important`.
+- `src/styles/site-theme.css` overrides `.rounded-xl|2xl|3xl` using `!important`.
 - `src/components/ui/button.tsx` hardcodes `rounded-xl` in all sizes.
 - Many feature components pass `className="rounded-full ..."` to `Button` expecting a pill.
   - Result: those `rounded-full` attempts likely lose to the hardcoded `rounded-xl` (and the `!important` override), creating inconsistent “pill” CTA styling across the site.

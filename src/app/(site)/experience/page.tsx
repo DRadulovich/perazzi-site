@@ -163,11 +163,7 @@ export default async function ExperiencePage() {
         id="experience-visit-planning"
         padding="lg"
         bordered={false}
-        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none! border-t border-none! bg-canvas shadow-none!"
-        style={{
-          marginLeft: "calc(50% - 50vw)",
-          marginRight: "calc(50% - 50vw)",
-        }}
+        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none! border-t border-none! bg-canvas shadow-none! full-bleed"
         aria-labelledby="experience-visit-planning-heading"
       >
         <Container
@@ -232,11 +228,7 @@ export default async function ExperiencePage() {
         id="experience-booking-guide"
         padding="lg"
         bordered={false}
-        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none! border-t border-none! bg-canvas shadow-none!"
-        style={{
-          marginLeft: "calc(50% - 50vw)",
-          marginRight: "calc(50% - 50vw)",
-        }}
+        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none! border-t border-none! bg-canvas shadow-none! full-bleed"
         aria-labelledby="experience-booking-guide-heading"
       >
         <Container
@@ -301,11 +293,7 @@ export default async function ExperiencePage() {
         id="experience-travel-guide"
         padding="lg"
         bordered={false}
-        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none! border-t border-none! bg-canvas shadow-none!"
-        style={{
-          marginLeft: "calc(50% - 50vw)",
-          marginRight: "calc(50% - 50vw)",
-        }}
+        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none! border-t border-none! bg-canvas shadow-none! full-bleed"
         aria-labelledby="experience-travel-guide-heading"
       >
         <Container

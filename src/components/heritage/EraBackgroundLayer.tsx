@@ -4,11 +4,6 @@ import * as React from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-const ERA_CANVAS_OVERLAY_GRADIENT =
-  "linear-gradient(to right, color-mix(in srgb, var(--color-black) 0%, transparent) 0%, color-mix(in srgb, var(--color-black) 0%, transparent) 0%, color-mix(in srgb, var(--color-black) 0%, transparent) 0%), " +
-  "linear-gradient(to bottom, color-mix(in srgb, var(--color-black) 100%, transparent) 0%, transparent 30%), " +
-  "linear-gradient(to top, color-mix(in srgb, var(--color-black) 100%, transparent) 0%, transparent 30%)";
-
 export type EraBackgroundLayerProps = Readonly<{
   src: string;
   overlayColor: string;
@@ -44,17 +39,12 @@ export function EraBackgroundLayer({
 
       <div className="absolute inset-0">
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 overlay-dynamic"
           style={{
-            background: overlayColor,
+            "--overlay-color": overlayColor,
           }}
         />
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage: ERA_CANVAS_OVERLAY_GRADIENT,
-          }}
-        />
+        <div className="pointer-events-none absolute inset-0 overlay-gradient-ink-30" />
       </div>
     </div>
   );

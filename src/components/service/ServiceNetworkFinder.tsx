@@ -190,10 +190,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
           )}
         </ul>
         <div className="space-y-3">
-          <div
-            className="relative overflow-hidden rounded-2xl border border-border/60 bg-(--color-canvas)"
-            style={{ aspectRatio: 3 / 2 }}
-          >
+          <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-(--color-canvas) aspect-[3/2]">
             <iframe
               key={mapSrc}
               src={mapSrc}

@@ -68,8 +68,8 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
             >
               <figure className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-4 sm:shadow-elevated">
                 <div
-                  className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
-                  style={{ aspectRatio: ratio }}
+                  className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)] aspect-dynamic"
+                  style={{ "--aspect-ratio": ratio }}
                 >
                   <Image
                     src={asset.url}
@@ -112,8 +112,8 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
                   {currentAsset.alt}
                 </Dialog.Title>
                 <div
-                  className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
-                  style={{ aspectRatio: currentAsset.aspectRatio ?? 3 / 2 }}
+                  className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)] aspect-dynamic"
+                  style={{ "--aspect-ratio": currentAsset.aspectRatio ?? 3 / 2 }}
                 >
                   <Image
                     src={currentAsset.url}

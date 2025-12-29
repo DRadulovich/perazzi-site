@@ -35,11 +35,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
     <section
       ref={analyticsRef}
       data-analytics-id="TriggerExplainerSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 mt-25"
-      style={{
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
-      }}
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 mt-25 full-bleed"
       aria-labelledby="trigger-explainer-heading"
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -52,16 +48,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
           priority={false}
         />
         <div className="absolute inset-0 bg-(--scrim-soft)" aria-hidden />
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
-              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%), " +
-              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%)",
-          }}
-          aria-hidden
-        />
+        <div className="pointer-events-none absolute inset-0 overlay-gradient-canvas" aria-hidden />
       </div>
 
       <Container size="xl" className="relative z-10">
@@ -125,8 +112,8 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
 
               <figure className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated">
                 <div
-                  className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
-                  style={{ aspectRatio: ratio }}
+                  className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-dynamic"
+                  style={{ "--aspect-ratio": ratio }}
                 >
                   <Image
                     src={explainer.diagram.url}

@@ -193,7 +193,6 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
     };
   }, [closeManifesto, getFocusableElements, manifestoOpen]);
 
-  const navReserve = 0;
   const overlayTransition = prefersReducedMotion ? { duration: 0.1 } : { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const };
   const panelTransition = prefersReducedMotion ? { duration: 0.1 } : { delay: 0.15, duration: 0.6, ease: [0.16, 1, 0.3, 1] as const };
 
@@ -202,14 +201,8 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
       ref={setRefs}
       data-analytics-id={analyticsId ?? "HeroSeen"}
       className={`relative isolate flex min-h-screen flex-col overflow-hidden bg-perazzi-black text-white ${
-        fullBleed ? "w-screen max-w-[100vw] rounded-none" : "w-full rounded-3xl"
+        fullBleed ? "full-bleed w-screen max-w-[100vw] rounded-none" : "w-full rounded-3xl"
       }`}
-      style={{
-        marginLeft: fullBleed ? "calc(50% - 50vw)" : undefined,
-        marginRight: fullBleed ? "calc(50% - 50vw)" : undefined,
-        minHeight: `calc(100vh - ${navReserve}px)`,
-        paddingTop: `${navReserve}px`,
-      }}
       aria-labelledby="home-hero-heading"
     >
       <motion.div

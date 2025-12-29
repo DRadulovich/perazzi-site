@@ -103,8 +103,8 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
     >
       {history.image ? (
         <div
-          className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
-          style={{ aspectRatio: history.image.aspectRatio ?? 1 }}
+          className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-dynamic"
+          style={{ "--aspect-ratio": history.image.aspectRatio ?? 1 }}
         >
           <Image
             src={history.image.url}

@@ -190,10 +190,10 @@ export function HeritageEraSection({
         sectionRef.current = el;
         registerEraRef?.(era.id, el);
       }}
-      className={cn("relative border-b border-white/5", className)}
+      className={cn("relative border-b border-white/5 min-h-dynamic", className)}
       aria-labelledby={`heritage-era-${index}`}
       style={{
-        minHeight: `${sectionMinHeight}vh`,
+        "--min-height": `${sectionMinHeight}vh`,
       }}
     >
       <a
@@ -209,10 +209,10 @@ export function HeritageEraSection({
 
       <div
         className={cn(
-          "relative sticky flex items-center",
+          "relative sticky flex items-center top-offset-dynamic",
           isShortViewport ? "h-[85vh]" : "h-screen",
         )}
-        style={{ top: headerOffset ?? 0 }}
+        style={{ "--top-offset": `${headerOffset ?? 0}px` }}
       >
         <EraBackgroundLayer
           src={era.backgroundSrc}

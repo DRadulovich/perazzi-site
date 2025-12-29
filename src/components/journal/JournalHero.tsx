@@ -85,8 +85,8 @@ export function JournalHero({ hero, breadcrumbs }: JournalHeroProps) {
           aria-hidden="true"
         >
           <div
-            className="relative overflow-hidden rounded-2xl"
-            style={{ aspectRatio: ratio }}
+            className="relative overflow-hidden rounded-2xl aspect-dynamic"
+            style={{ "--aspect-ratio": ratio }}
           >
             <Image
               src={hero.background.url}

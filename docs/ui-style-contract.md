@@ -4,9 +4,10 @@ Purpose: Keep the site UI high-end and consistent by enforcing one set of
 tokens, primitives, and interaction patterns. This does not apply to Studio.
 
 ## Source of truth
-- Tokens and theming live in `src/app/globals.css` (CSS variables + Tailwind @theme).
+- Tokens and theming live in `src/styles/site-theme.css` (CSS variables + Tailwind @theme).
+- `src/app/globals.css` is a thin import wrapper.
 - Theme switching uses `data-theme` on a container or ThemeProvider.
-- `src/lib/tokens.ts` is not the UI source of truth.
+- No other token files should be treated as source of truth.
 
 ## Official primitives (src/components/ui)
 - Button, Input, Textarea
@@ -21,7 +22,7 @@ Notes:
 
 ## Typography
 - Default typography uses `Heading` and `Text`.
-- Long-form uses `.prose` with tokenized colors in `globals.css`.
+- Long-form uses `.prose` with tokenized colors in `src/styles/site-theme.css`.
 - Bespoke hero typography is allowed only in hero sections.
 
 ## Motion

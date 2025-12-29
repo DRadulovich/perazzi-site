@@ -15,8 +15,6 @@ type FactoryPhotoEssayProps = Readonly<{
   readonly ui: FactoryEssayUi;
 }>;
 
-const CARD_ASPECT_RATIO = 3 / 2;
-
 export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const hasItems = items.length > 0;
@@ -101,8 +99,7 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 bg-black/80 backdrop-blur-sm" />
             <Dialog.Content
-              className="fixed inset-0 flex items-center justify-center overflow-y-auto px-4 sm:px-6 focus:outline-none"
-              style={{ paddingTop: "15vh", paddingBottom: "15vh" }}
+              className="fixed inset-0 flex items-center justify-center overflow-y-auto px-4 py-[15vh] sm:px-6 focus:outline-none"
             >
               <Dialog.Title className="sr-only">
                 Factory photo detail
@@ -118,10 +115,9 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
                     </p>
                   </Text>
                   <div
-                    className="relative w-full flex-1 min-h-0 overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
+                    className="relative w-full flex-1 min-h-0 overflow-hidden rounded-2xl bg-[color:var(--color-canvas)] max-h-[calc(70vh-8rem)] aspect-dynamic"
                     style={{
-                      aspectRatio: currentItem.image.aspectRatio ?? 3 / 2,
-                      maxHeight: "calc(70vh - 8rem)",
+                      "--aspect-ratio": currentItem.image.aspectRatio ?? 3 / 2,
                     }}
                   >
                     <Image
@@ -182,8 +178,7 @@ function PhotoCard({ item, onOpen }: PhotoCardProps) {
     <div ref={analyticsRef} data-analytics-id={`FactoryEssaySeen:${item.image.id}`}>
       <button
         type="button"
-        className="group relative w-full overflow-hidden rounded-2xl border border-border/60 bg-card/10 focus-ring sm:border-border/70 sm:bg-card"
-        style={{ aspectRatio: CARD_ASPECT_RATIO }}
+        className="group relative w-full overflow-hidden rounded-2xl border border-border/60 bg-card/10 focus-ring sm:border-border/70 sm:bg-card aspect-[3/2]"
         onClick={onOpen}
         aria-label={`Open photo essay item: ${item.image.alt}`}
       >

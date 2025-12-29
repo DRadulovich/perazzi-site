@@ -56,8 +56,8 @@ export function PortableGallery({ items }: PortableGalleryProps) {
           >
             <figure className="rounded-2xl border border-border/60 bg-card/70 p-3 shadow-soft">
               <div
-                className="relative overflow-hidden rounded-xl bg-border"
-                style={{ aspectRatio: asset.aspectRatio ?? 4 / 3 }}
+                className="relative overflow-hidden rounded-xl bg-border aspect-dynamic"
+                style={{ "--aspect-ratio": asset.aspectRatio ?? 4 / 3 }}
               >
                 <Image
                   src={asset.url}
@@ -95,8 +95,8 @@ export function PortableGallery({ items }: PortableGalleryProps) {
                   Photo {(openIndex ?? 0) + 1} of {length}
                 </p>
                 <div
-                  className="relative overflow-hidden rounded-2xl bg-border"
-                  style={{ aspectRatio: currentAsset.aspectRatio ?? 4 / 3 }}
+                  className="relative overflow-hidden rounded-2xl bg-border aspect-dynamic"
+                  style={{ "--aspect-ratio": currentAsset.aspectRatio ?? 4 / 3 }}
                 >
                   <Image
                     src={currentAsset.url}

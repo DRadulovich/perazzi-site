@@ -583,7 +583,7 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
   const rootClasses = cn(
     "relative z-40 flex h-full w-full flex-col text-ink outline-none",
     variant === "rail"
-      ? "border-l border-border bg-card/90 shadow-elevated backdrop-blur-xl"
+      ? "border-l border-border bg-card/90 shadow-elevated backdrop-blur-xl min-w-[320px]"
       : "overflow-hidden rounded-3xl border border-border bg-card/95 shadow-elevated backdrop-blur-xl",
     className,
   );
@@ -612,7 +612,6 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
         }}
         data-analytics-id="ChatPanelSeen"
         className={rootClasses}
-        style={{ minWidth: variant === "rail" ? "320px" : undefined }}
       >
       {sessionPromptOpen && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">

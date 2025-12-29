@@ -72,11 +72,7 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
     <section
       ref={analyticsRef}
       data-analytics-id="ExperiencePickerSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
-      style={{
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
-      }}
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
       aria-labelledby="experience-picker-heading"
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -92,16 +88,7 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
           className="absolute inset-0 bg-[color:var(--scrim-soft)]"
           aria-hidden
         />
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
-              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%), " +
-              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%)",
-          }}
-          aria-hidden
-        />
+        <div className="absolute inset-0 overlay-gradient-canvas" aria-hidden />
       </div>
 
       <Container size="xl" className="relative z-10">
@@ -159,8 +146,6 @@ function ExperiencePickerCard({
   microLabel,
   onAnchorClick,
 }: ExperiencePickerCardProps) {
-  const aspect = 3 / 2;
-
   return (
     <motion.article
       className="h-full"
@@ -180,10 +165,7 @@ function ExperiencePickerCard({
           }
         }}
       >
-        <div
-          className="relative"
-          style={{ aspectRatio: aspect }}
-        >
+        <div className="relative aspect-[3/2]">
           <Image
             src={item.media.url}
             alt={item.media.alt}

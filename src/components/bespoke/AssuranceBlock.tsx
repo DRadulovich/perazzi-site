@@ -63,8 +63,8 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
       {media ? (
         <figure className="mt-6 space-y-3 lg:mt-0">
           <div
-            className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
-            style={{ aspectRatio: ratio }}
+            className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-dynamic"
+            style={{ "--aspect-ratio": ratio }}
           >
             {media.kind === "image" ? (
               <Image

@@ -558,10 +558,10 @@ function EngravingCard({
             alt={engraving.imageAlt || `Engraving ${engraving.engravingId}`}
             fill
             sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
-            className="object-contain bg-white transition-transform duration-500 group-hover:scale-105"
-            style={{
-              objectPosition: engraving.engravingSide === "Under" ? "right center" : "center",
-            }}
+            className={clsx(
+              "object-contain bg-white transition-transform duration-500 group-hover:scale-105",
+              engraving.engravingSide === "Under" ? "object-right" : "object-center",
+            )}
           />
         ) : (
           <div className="flex h-full items-center justify-center text-neutral-600">
@@ -569,13 +569,7 @@ function EngravingCard({
           </div>
         )}
         {cardImageUrl ? (
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(circle at center, transparent 45%, rgba(0,0,0,0.4) 85%)",
-            }}
-          />
+          <div className="pointer-events-none absolute inset-0 radial-vignette" />
         ) : null}
         <div
           className={clsx(
@@ -675,11 +669,9 @@ function EngravingDetailDialog({
                     sizes="(min-width: 1024px) 70vw, 100vw"
                     className={clsx(
                       "object-contain bg-white transition-opacity duration-700",
+                      selected.engravingSide === "Under" ? "object-right" : "object-center",
                       heroLoaded ? "opacity-100" : "opacity-0",
                     )}
-                    style={{
-                      objectPosition: selected.engravingSide === "Under" ? "right center" : "center",
-                    }}
                     priority
                     onLoadingComplete={() => { setHeroLoaded(true); }}
                   />
@@ -767,13 +759,7 @@ function EngravingCompareDialog({
                         <div className="flex h-full items-center justify-center text-neutral-600">No Image</div>
                       )}
                       {compareImage ? (
-                        <div
-                          className="pointer-events-none absolute inset-0"
-                          style={{
-                            background:
-                              "radial-gradient(circle at center, transparent 45%, rgba(0,0,0,0.4) 85%)",
-                          }}
-                        />
+                        <div className="pointer-events-none absolute inset-0 radial-vignette" />
                       ) : null}
                     </div>
                     <div className="mt-4 space-y-1 text-white">

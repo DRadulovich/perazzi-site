@@ -36,8 +36,8 @@ export function TeaserBlock({
           <div className="flex flex-wrap gap-4">
             <figure className="w-40 rounded-2xl border border-white/30 bg-white/5 p-3">
               <div
-                className="relative overflow-hidden rounded-xl"
-                style={{ aspectRatio: engravingRatio }}
+                className="relative overflow-hidden rounded-xl aspect-dynamic"
+                style={{ "--aspect-ratio": engravingRatio }}
               >
                 <Image
                   src={engravingTile.url}
@@ -54,8 +54,8 @@ export function TeaserBlock({
             </figure>
             <figure className="w-40 rounded-2xl border border-white/30 bg-white/5 p-3">
               <div
-                className="relative overflow-hidden rounded-xl"
-                style={{ aspectRatio: woodRatio }}
+                className="relative overflow-hidden rounded-xl aspect-dynamic"
+                style={{ "--aspect-ratio": woodRatio }}
               >
                 <Image
                   src={woodTile.url}

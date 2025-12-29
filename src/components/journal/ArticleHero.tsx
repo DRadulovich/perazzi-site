@@ -25,7 +25,7 @@ export function ArticleHero({ article }: ArticleHeroProps) {
         {" · "}
         {article.readingTimeMins} min read
       </div>
-      <div className="relative" style={{ aspectRatio: ratio }}>
+      <div className="relative aspect-dynamic" style={{ "--aspect-ratio": ratio }}>
         <Image
           src={article.hero.url}
           alt={article.hero.alt}

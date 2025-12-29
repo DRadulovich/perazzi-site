@@ -69,9 +69,9 @@ export function BuildStepItem({
   const media = (
     <div
       className={`relative overflow-hidden rounded-2xl bg-(--color-canvas) ${
-        isPinned ? "flex-1 h-full min-h-0 w-full" : ""
+        isPinned ? "flex-1 h-full min-h-0 w-full" : "aspect-dynamic"
       }`}
-      style={isPinned ? undefined : { aspectRatio: ratio }}
+      style={isPinned ? undefined : { "--aspect-ratio": ratio }}
     >
       {step.media.kind === "video" ? (
         <video

@@ -15,7 +15,7 @@
    - Rendering: routes use server data-fetching; no custom `dynamic` flags beyond `next-studio` (forced static). Sanity fetches use CDN in production; React `cache()` memoizes results to encourage static generation where possible.
 
    2.2 Styling & Design System  
-   - Tailwind CSS v4 with inline design tokens in `globals.css`; typography via Geist (sans/mono) plus Playfair Display for serif accents.  
+   - Tailwind CSS v4 with inline design tokens in `src/styles/site-theme.css` (imported by `src/app/globals.css`); typography via Geist (sans/mono) plus Playfair Display for serif accents.  
    - Custom CSS variables for Perazzi palette, spacing scales, focus rings, scrims, and semantic helpers (`bg-canvas`, `text-ink-muted`).  
    - Radix UI primitives (Dialog, Tooltip, Collapsible, Slot) underpin accessible overlays/tooltips.  
    - class-variance-authority, clsx utilities; occasional styled-components within Sanity Studio ecosystem.

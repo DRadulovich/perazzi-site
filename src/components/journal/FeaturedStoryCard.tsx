@@ -31,8 +31,8 @@ export function FeaturedStoryCard({ article, hero, summary }: FeaturedStoryCardP
       >
         <figure className="space-y-3">
           <div
-            className="relative"
-            style={{ aspectRatio: ratio }}
+            className="relative aspect-dynamic"
+            style={{ "--aspect-ratio": ratio }}
           >
             <Image
               src={hero.url}

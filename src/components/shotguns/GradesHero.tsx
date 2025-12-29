@@ -23,8 +23,8 @@ export function GradesHero({ hero }: GradesHeroProps) {
       className="relative overflow-hidden rounded-3xl bg-perazzi-black text-white"
     >
       <div
-        className="relative"
-        style={{ aspectRatio: ratio }}
+        className="relative aspect-dynamic"
+        style={{ "--aspect-ratio": ratio }}
       >
         <Image
           src={hero.background.url}

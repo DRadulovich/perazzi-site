@@ -59,11 +59,7 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
       id="heritage-serial-lookup"
       ref={analyticsRef}
       data-analytics-id="SerialLookupSeen"
-      className="relative isolate w-screen max-w-[100vw] min-h-[75vh] overflow-hidden py-10 sm:py-16"
-      style={{
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
-      }}
+      className="relative isolate w-screen max-w-[100vw] min-h-[75vh] overflow-hidden py-10 sm:py-16 full-bleed"
       aria-labelledby="serial-lookup-heading"
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -79,16 +75,7 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
           className="absolute inset-0 bg-(--scrim-hard)"
           aria-hidden
         />
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, color-mix(in srgb, var(--color-black) 24%, transparent) 0%, color-mix(in srgb, var(--color-black) 6%, transparent) 50%, color-mix(in srgb, var(--color-black) 24%, transparent) 100%), " +
-              "linear-gradient(to bottom, color-mix(in srgb, var(--color-black) 100%, transparent) 0%, transparent 75%), " +
-              "linear-gradient(to top, color-mix(in srgb, var(--color-black) 100%, transparent) 0%, transparent 75%)",
-          }}
-          aria-hidden
-        />
+        <div className="absolute inset-0 overlay-gradient-ink" aria-hidden />
       </div>
 
       <div className="relative z-10 mx-auto flex min-h-[75vh] max-w-7xl items-center px-6 lg:px-10">
