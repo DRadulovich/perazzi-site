@@ -19,6 +19,7 @@ export function ChatWidget() {
   const [panelWidth, setPanelWidth] = useState(DEFAULT_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
   const [pendingPrompt, setPendingPrompt] = useState<ChatTriggerPayload | null>(null);
+  const [isHeroVisible, setIsHeroVisible] = useState(false);
   const pathname = usePathname();
   const hideTrigger = pathname.startsWith("/the-build/why-a-perazzi-has-a-soul");
 
@@ -33,6 +34,27 @@ export function ChatWidget() {
     query.addEventListener("change", listener);
     return () => { query.removeEventListener("change", listener); };
   }, []);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const heroHeading = document.getElementById("home-hero-heading");
+    if (!heroHeading || typeof IntersectionObserver === "undefined") {
+      setIsHeroVisible(false);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsHeroVisible(entry.isIntersecting);
+      },
+      { threshold: 0.15 },
+    );
+
+    observer.observe(heroHeading);
+    return () => {
+      observer.disconnect();
+    };
+  }, [pathname]);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -158,10 +180,10 @@ export function ChatWidget() {
     <>
       {isMobile ? (
         <>
-          {!isOpen && !hideTrigger && (
-            <div className="fixed bottom-5 right-5 z-40">
-              <Button
-                type="button"
+      {!isOpen && !hideTrigger && !isHeroVisible && (
+        <div className="fixed bottom-5 right-5 z-40">
+          <Button
+            type="button"
                 aria-label="Open Perazzi Concierge"
                 onClick={() => { setIsOpen(true); }}
                 size="lg"
@@ -210,7 +232,7 @@ export function ChatWidget() {
               />
             </aside>
           )}
-          {!isOpen && !hideTrigger && (
+          {!isOpen && !hideTrigger && !isHeroVisible && (
             <div className="fixed bottom-6 right-6 z-30">
               <Button
                 type="button"

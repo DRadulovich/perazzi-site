@@ -186,7 +186,7 @@ export function DisciplineRail({
             >
               {heading}
             </Heading>
-            <Text size="md" className="text-ink-muted">
+            <Text size="md" className="prose-journal text-ink-muted">
               {subheading}
             </Text>
           </div>

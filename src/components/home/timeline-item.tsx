@@ -36,10 +36,10 @@ function TimelineContent({ stage, isPinned }: TimelineContentProps) {
           loading={isPinned && stage.order === 1 ? "eager" : "lazy"}
         />
       </div>
-      <Text size="label-tight" className="mt-4 text-ink-muted">
+      <Text size="button" className="mt-4 text-ink-muted">
         Stage {stage.order}
       </Text>
-      <Heading level={3} size="sm" className="mt-2 text-ink">
+      <Heading level={3} size="sm" className="mt-2 type-button-plain text-ink">
         {stage.title}
       </Heading>
       <Text className="mt-2 text-ink-muted">{stage.body}</Text>

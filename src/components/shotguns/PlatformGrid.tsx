@@ -126,7 +126,7 @@ const PlatformHeader = ({ heading, subheading }: { heading: string; subheading: 
     >
       {heading}
     </Heading>
-    <Text className="mb-6 max-w-4xl text-ink-muted" leading="normal">
+    <Text className="prose-journal mb-6 max-w-4xl text-ink-muted" leading="normal">
       {subheading}
     </Text>
   </div>
@@ -250,7 +250,7 @@ const ChampionHighlight = ({
       }
     >
       {hallmark ? (
-        <p className="type-quote text-ink">{hallmark}</p>
+        <p className="type-quote font-artisan text-ink">{hallmark}</p>
       ) : null}
       {champion ? (
         <div className="flex items-center justify-center gap-5">
@@ -267,9 +267,9 @@ const ChampionHighlight = ({
           ) : null}
           <div className="space-y-2">
             {champion.name ? (
-              <Heading level={3} size="lg" className="text-ink">
+              <p className="type-body-title text-ink">
                 {champion.name}
-              </Heading>
+              </p>
             ) : null}
             {champion.title ? (
               <Text size="md" className="text-ink-muted" leading="normal">

@@ -97,12 +97,10 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                   >
                     {headingTitle}
                   </Heading>
-                  <Text size="lg" className="text-ink-muted">
+                  <Text size="lg" className="prose-journal text-ink-muted">
                     {headingEyebrow}
                   </Text>
-                  <Text className="max-w-3xl text-ink-muted lg:max-w-4xl">
-                    {headingInstructions}
-                  </Text>
+                  <span className="sr-only">{headingInstructions}</span>
                 </div>
               </div>
 
@@ -173,14 +171,14 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                             className="flex w-full items-center justify-between gap-3 text-left focus-ring"
                           >
                             <div>
-                              <Text size="label-tight" className="text-ink-muted">
+                              <Text size="button" className="text-ink-muted">
                                 Stage {stage.order}
                               </Text>
-                              <Text className="type-title-sm text-ink">
-                                {stage.title}
-                              </Text>
+                            <Text className="type-button-plain text-ink">
+                              {stage.title}
+                            </Text>
                             </div>
-                            <span className="type-label-tight text-perazzi-red/70">
+                            <span className="type-button text-perazzi-red/70">
                               {expanded ? "Collapse" : "Show more"}
                             </span>
                           </button>
@@ -212,7 +210,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                   asChild
                   variant="secondary"
                   size="lg"
-                  className="w-full"
+                  className="w-full type-body-title"
                 >
                   <Link href="/the-build/why-a-perazzi-has-a-soul">
                     See the full build story
@@ -264,13 +262,13 @@ function TimelineControlButton({
     >
       <span
         className={cn(
-          "block type-label-tight text-perazzi-red/80 group-hover:text-ink-muted/90",
+          "block type-button text-perazzi-red/80 group-hover:text-ink-muted/90",
           active && "text-card/80",
         )}
       >
         Stage {order}
       </span>
-      <span className="mt-0.5 block type-title-sm">
+      <span className="mt-0.5 block type-button-plain">
         {label}
       </span>
     </motion.button>
@@ -308,10 +306,10 @@ function PinnedStagePanel({
         />
       </div>
       <div className="space-y-3">
-        <Text size="label-tight" className="text-ink-muted">
+        <Text size="button" className="text-ink-muted">
           Stage {stage.order}
         </Text>
-        <Heading level={3} size="lg" className="text-ink">
+        <Heading level={3} size="lg" className="type-button-plain text-ink">
           {stage.title}
         </Heading>
         <Text className="text-ink-muted">

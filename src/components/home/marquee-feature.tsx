@@ -90,7 +90,7 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
             <Heading
               id="champion-heading"
               level={2}
-              size="lg"
+              size="xl"
               className="text-ink"
             >
               {champion.name}
@@ -101,7 +101,7 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
             <Text
               asChild
               size="lg"
-              className="border-l-2 border-perazzi-red/50 pl-4 type-quote text-ink"
+              className="border-l-2 border-perazzi-red/50 pl-4 type-quote font-artisan text-ink"
             >
               <blockquote>“{champion.quote}”</blockquote>
             </Text>

@@ -137,7 +137,7 @@ export default async function ShotgunsLandingPage() {
             </Heading>
             <div className="mb-6 space-y-4 lg:mb-10">
               {disciplineParagraphs.map((paragraph) => (
-                <Text key={paragraph} className="text-ink-muted">
+                <Text key={paragraph} className="prose-journal text-ink-muted">
                   {paragraph}
                 </Text>
               ))}
@@ -156,20 +156,20 @@ export default async function ShotgunsLandingPage() {
             </div>
           </div>
 
-          <div className="space-y-3 type-body text-ink-muted">
-            <Text className="text-ink" leading="normal">
+          <div className="prose-journal space-y-3 text-ink-muted">
+            <Text className="prose-journal text-ink" leading="normal">
               Three rhythms most clay shooters learn:
             </Text>
             <ul className="space-y-2">
               {disciplineBullets.map((item) => (
                 <li key={item.code ?? item.label}>
-                  <span className="type-title-sm text-ink">{item.label}</span>
+                  <span className="text-ink">{item.label}</span>
                   {" "}–{" "}
                   {item.description ?? ""}
                 </li>
               ))}
             </ul>
-            <Text className="text-ink-muted">
+            <Text className="prose-journal text-ink-muted">
               {disciplineClosing}
             </Text>
           </div>
@@ -202,7 +202,7 @@ export default async function ShotgunsLandingPage() {
             >
               {gaugeAdvisory.heading ?? "Gauge selection"}
             </Heading>
-            <Text className="mb-8 text-ink-muted">
+            <Text className="prose-journal mb-8 text-ink-muted">
               {gaugeAdvisory.intro
                 ?? "Decode how 12, 20, and 28 gauge choices shape recoil feel, swing speed, and payload — and how to pair them with your platform and disciplines."}
             </Text>
@@ -227,8 +227,8 @@ export default async function ShotgunsLandingPage() {
             </div>
           </div>
 
-          <div className="space-y-3 type-body text-ink-muted">
-            <Text className="text-ink" leading="normal">
+          <div className="prose-journal space-y-3 text-ink-muted">
+            <Text className="prose-journal text-ink" leading="normal">
               What to compare:
             </Text>
             <ul className="space-y-2">
@@ -238,7 +238,7 @@ export default async function ShotgunsLandingPage() {
                 </li>
               ))}
             </ul>
-            <Text className="text-ink-muted">
+            <Text className="prose-journal text-ink-muted">
               {gaugeAdvisory.closing
                 ?? "We’ll tailor gauge choice to your primary discipline, preferred swing, and how you like a gun to absorb recoil."}
             </Text>
@@ -265,7 +265,7 @@ export default async function ShotgunsLandingPage() {
             >
               {triggerChoice.heading ?? "Trigger choice"}
             </Heading>
-            <Text className="mb-8 text-ink-muted">
+            <Text className="prose-journal mb-8 text-ink-muted">
               {triggerChoice.intro
                 ?? "Decide when to choose a fixed trigger group for simplicity, or a detachable set for quick swaps, varied pull weights, and service resilience."}
             </Text>
@@ -290,8 +290,8 @@ export default async function ShotgunsLandingPage() {
             </div>
           </div>
 
-          <div className="space-y-3 type-body text-ink-muted">
-            <Text className="text-ink" leading="normal">
+          <div className="prose-journal space-y-3 text-ink-muted">
+            <Text className="prose-journal text-ink" leading="normal">
               What to Weigh:
             </Text>
             <ul className="space-y-2">
@@ -307,7 +307,7 @@ export default async function ShotgunsLandingPage() {
                     </li>
                   ))}
             </ul>
-            <Text className="text-ink-muted">
+            <Text className="prose-journal text-ink-muted">
               {triggerChoice.closing
                 ?? "We’ll align trigger choice to your platform, discipline rhythm, and how you like your release to feel under pressure."}
             </Text>

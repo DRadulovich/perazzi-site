@@ -29,7 +29,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
 
   const analyticsRef = useAnalyticsObserver<HTMLElement>("TriggerExplainerSeen");
   const copyClasses =
-    "prose prose-sm max-w-none text-ink prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4";
+    "prose prose-sm max-w-none prose-journal text-ink prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4";
 
   return (
     <section
@@ -70,7 +70,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
               >
                 {explainer.title}
               </Heading>
-              <Text className="text-ink-muted" leading="normal">
+              <Text className="prose-journal text-ink-muted" leading="normal">
                 {subheading}
               </Text>
               <CollapsibleTrigger

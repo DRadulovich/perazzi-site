@@ -248,7 +248,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
           <h1
             id="home-hero-heading"
             data-sanity-edit-target
-            className={`mb-10 transition-opacity duration-700 motion-reduce:transition-none ${
+            className={`mb-3 transition-opacity duration-700 motion-reduce:transition-none ${
               mediaLoaded ? "opacity-100 delay-100" : "opacity-0"
             }`}
           >
@@ -262,7 +262,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
             </button>
           </h1>
           {hero.background.caption ? (
-            <p className="mx-auto mt-3 mb-3 max-w-2xl type-body-lg text-white/80 md:max-w-4xl lg:max-w-4xl">
+            <p className="mx-auto mt-1 mb-3 max-w-7xl type-title-lg text-white/80">
               {hero.background.caption}
             </p>
           ) : null}

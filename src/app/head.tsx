@@ -19,7 +19,6 @@ export default function Head() {
   return (
     <>
       <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="" />
-      <link rel="stylesheet" href="https://use.typekit.net/sgz5dmx.css" />
       <link rel="preload" as="image" href={heroUrl} fetchPriority="high" />
 
       {/* nosemgrep: trusted static inline script (static string) */}
