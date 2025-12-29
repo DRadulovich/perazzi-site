@@ -103,3 +103,101 @@ Suggested consolidation path:
    - Update docs to explicitly declare `src/styles/site-theme.css` as the single source of truth and describe how to add/modify tokens there.
 
 This approach keeps all aesthetics centralized in one file while allowing components to reference shared tokens via Tailwind utilities and CSS variables.
+
+
+Okay, I narrowed it down to seven different fonts. I'll give the explanation here, let me know your thoughts:
+
+---
+
+# Adobe Embed Tag:
+```html
+<link rel="stylesheet" href="https://use.typekit.net/sgz5dmx.css">
+```
+
+## Hero Title: 
+* Mrs Eaves Roman Petite Caps
+
+## Hero Subtitle:
+* Mrs Eaves Italic
+
+## Eyebrow: 
+* Neue Haas Grotesk Text 55 Roman ALL CAPS
+
+## Group Parent Section Title: 
+* Mrs Eaves Roman Small Caps
+
+## Group Child Section Title:
+* Mrs Eaves Italic
+
+## Body: 
+* Neue Haas Grotesk Text 55 Roman
+
+## Body Italics & Quotes: 
+* Neue Haas Grotesk Text 56 Italic
+
+## Buttons: 
+* Neue Haas Grotesk Text 65 Medium
+
+## Journal Article Body:
+* Mrs Eaves Roman
+
+## Journal Article Quotes:
+* Mrs Eaves Italic
+
+## Soul Journey "Artisan" Font:
+* Adobe Handwriting Ernie
+
+---
+
+```css
+font-family: mrs-eaves, serif;
+font-weight: 400;
+font-style: normal;
+```
+
+```css
+font-family: mrs-eaves, serif;
+font-weight: 400;
+font-style: italic;
+```
+
+```css
+font-family: neue-haas-grotesk-text, sans-serif;
+font-weight: 400;
+font-style: normal;
+```
+
+```css
+font-family: neue-haas-grotesk-text, sans-serif;
+font-weight: 400;
+font-style: italic;
+```
+
+```css
+font-family: neue-haas-grotesk-text, sans-serif;
+font-weight: 500;
+font-style: normal;
+```
+
+```css
+font-family: adobe-handwriting-ernie, sans-serif;
+font-weight: 400;
+font-style: normal;
+```
+
+```css
+font-family: mrs-eaves-roman-small-caps, serif;
+font-weight: 400;
+font-style: normal;
+```
+
+```css
+font-family: mrs-eaves-roman-petite-caps, serif;
+font-weight: 400;
+font-style: normal;
+```
+
+
+
+
+
