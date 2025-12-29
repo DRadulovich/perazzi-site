@@ -24,9 +24,8 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
         {heading ? (
           <Text
             id="assurance-heading"
-            size="xs"
-            className="font-semibold tracking-[0.35em] text-ink-muted"
-            leading="normal"
+            size="label-tight"
+            className="text-ink-muted"
           >
             {heading}
           </Text>
@@ -43,16 +42,15 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
           />
         ) : null}
         {quote ? (
-          <blockquote className="rounded-2xl border-l-4 border-perazzi-red/60 bg-card/60 px-5 py-4 text-[13px] sm:text-sm italic leading-relaxed text-ink shadow-soft backdrop-blur-sm">
-            <Text asChild size="md" className="italic text-ink" leading="relaxed">
+          <blockquote className="rounded-2xl border-l-4 border-perazzi-red/60 bg-card/60 px-5 py-4 text-ink shadow-soft backdrop-blur-sm">
+            <Text asChild size="md" className="type-quote text-ink">
               <p>“{quote.text}”</p>
             </Text>
             {quote.author ? (
               <Text
                 asChild
-                size="xs"
-                className="mt-2 block not-italic tracking-[0.3em] text-ink-muted"
-                leading="normal"
+                size="label-tight"
+                className="mt-2 block text-ink-muted"
               >
                 <cite>{quote.author}</cite>
               </Text>
@@ -86,7 +84,7 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
             )}
           </div>
           {media.caption ? (
-            <Text asChild size="sm" className="text-ink-muted" leading="relaxed">
+            <Text asChild size="sm" className="text-ink-muted">
               <figcaption>{media.caption}</figcaption>
             </Text>
           ) : null}

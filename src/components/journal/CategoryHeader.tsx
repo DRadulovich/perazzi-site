@@ -10,7 +10,7 @@ type CategoryHeaderProps = Readonly<{
 export function CategoryHeader({ header }: CategoryHeaderProps) {
   return (
     <header className="space-y-3">
-      <Text size="xs" muted className="font-semibold">
+      <Text size="label-tight" muted>
         Journal
       </Text>
       <Heading level={1} size="xl" className="text-ink">
@@ -24,10 +24,10 @@ export function CategoryHeader({ header }: CategoryHeaderProps) {
       ) : null}
       {header.featured ? (
         <Text size="md" className="text-ink">
-          Featured: {" "}
+          Featured:{" "}
           <Link
             href={`/journal/${header.featured.slug}`}
-            className="font-semibold text-perazzi-red focus-ring"
+            className="text-perazzi-red focus-ring"
           >
             {header.featured.title}
           </Link>

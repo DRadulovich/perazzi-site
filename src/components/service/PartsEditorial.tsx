@@ -26,7 +26,7 @@ export function PartsEditorial({ partsEditorialSection }: PartsEditorialProps) {
       aria-labelledby="parts-editorial-heading"
     >
       <div className="space-y-2">
-        <Text size="xs" muted className="font-semibold">
+        <Text size="label-tight" muted>
           {heading}
         </Text>
         <Heading id="parts-editorial-heading" level={2} size="xl" className="text-ink">
@@ -43,7 +43,7 @@ export function PartsEditorial({ partsEditorialSection }: PartsEditorialProps) {
               <Heading level={3} size="md" className="text-ink">
                 {part.name}
               </Heading>
-              <Text size="xs" muted className="whitespace-nowrap">
+              <Text size="caption" muted className="whitespace-nowrap">
                 Fitment: {part.fitment}
               </Text>
             </div>
@@ -52,7 +52,7 @@ export function PartsEditorial({ partsEditorialSection }: PartsEditorialProps) {
             </Text>
             {part.notesHtml ? (
               <SafeHtml
-                className="mt-2 text-sm leading-relaxed text-ink-muted"
+                className="mt-2 type-body-sm text-ink-muted"
                 html={part.notesHtml}
               />
             ) : null}

@@ -93,11 +93,11 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                     id="craft-timeline-heading"
                     level={2}
                     size="xl"
-                    className="font-black uppercase italic tracking-[0.35em] text-ink"
+                    className="text-ink"
                   >
                     {headingTitle}
                   </Heading>
-                  <Text className="text-base sm:text-lg lg:text-xl font-light italic text-ink-muted" leading="normal">
+                  <Text size="lg" className="text-ink-muted">
                     {headingEyebrow}
                   </Text>
                   <Text className="max-w-3xl text-ink-muted lg:max-w-4xl">
@@ -109,7 +109,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
               {enablePinned ? (
                 <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
                   <div className="space-y-4 border-none bg-card/0 p-4 shadow-none sm:border-none sm:bg-card/0 sm:p-4 sm:shadow-none">
-                    <Text size="xs" className="mb-3 font-semibold text-ink" leading="normal">
+                    <Text size="label-tight" className="mb-3 text-ink">
                       {alternateTitle}
                     </Text>
                     <div className="space-y-1">
@@ -142,7 +142,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
               ) : (
                 <div className="space-y-8">
                   <div className="space-y-3">
-                    <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+                    <Text size="label-tight" className="text-ink-muted">
                       {alternateTitle}
                     </Text>
                     <Text size="sm" className="text-ink-muted">
@@ -173,14 +173,14 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                             className="flex w-full items-center justify-between gap-3 text-left focus-ring"
                           >
                             <div>
-                              <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+                              <Text size="label-tight" className="text-ink-muted">
                                 Stage {stage.order}
                               </Text>
-                              <Text className="font-semibold text-ink" leading="normal">
+                              <Text className="type-title-sm text-ink">
                                 {stage.title}
                               </Text>
                             </div>
-                            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red/70">
+                            <span className="type-label-tight text-perazzi-red/70">
                               {expanded ? "Collapse" : "Show more"}
                             </span>
                           </button>
@@ -264,13 +264,13 @@ function TimelineControlButton({
     >
       <span
         className={cn(
-          "block text-[11px] uppercase font-bold tracking-[0.25em] text-perazzi-red/80 group-hover:text-ink-muted/90",
+          "block type-label-tight text-perazzi-red/80 group-hover:text-ink-muted/90",
           active && "text-card/80",
         )}
       >
         Stage {order}
       </span>
-      <span className="mt-0.5 block text-sm font-semibold tracking-wide">
+      <span className="mt-0.5 block type-title-sm">
         {label}
       </span>
     </motion.button>
@@ -308,7 +308,7 @@ function PinnedStagePanel({
         />
       </div>
       <div className="space-y-3">
-        <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+        <Text size="label-tight" className="text-ink-muted">
           Stage {stage.order}
         </Text>
         <Heading level={3} size="lg" className="text-ink">
@@ -318,7 +318,7 @@ function PinnedStagePanel({
           {stage.body}
         </Text>
         {stage.media.caption ? (
-          <Text size="sm" className="text-ink-muted" leading="normal">
+          <Text size="caption" className="text-ink-muted">
             {stage.media.caption}
           </Text>
         ) : null}

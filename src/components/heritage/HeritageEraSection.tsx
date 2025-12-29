@@ -148,15 +148,14 @@ export function HeritageEraSection({
               <Heading
                 asChild
                 size="sm"
-                className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-neutral-300"
+                className="type-label-tight text-neutral-300"
               >
                 <h2 id={`heritage-era-${index}`}>{era.label}</h2>
               </Heading>
               <Text
                 asChild
-                size="xs"
-                className="mt-2 tracking-[0.25em] text-neutral-500"
-                leading="normal"
+                size="label-tight"
+                className="mt-2 text-neutral-500"
               >
                 <p>{yearRangeLabel}</p>
               </Text>
@@ -225,15 +224,14 @@ export function HeritageEraSection({
             <Heading
               asChild
               size="sm"
-              className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-neutral-300"
+              className="type-label-tight text-neutral-300"
             >
               <h2 id={`heritage-era-${index}`}>{era.label}</h2>
             </Heading>
             <Text
               asChild
-              size="xs"
-              className="mt-2 tracking-[0.25em] text-neutral-500"
-              leading="normal"
+              size="label-tight"
+              className="mt-2 text-neutral-500"
             >
               <p>{yearRangeLabel}</p>
             </Text>

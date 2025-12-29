@@ -30,12 +30,12 @@ export function RelatedList({ heading, items }: Readonly<RelatedListProps>) {
       <Heading id="related-articles-heading" level={2} size="lg" className="text-ink">
         {title}
       </Heading>
-      <ul className="space-y-2 text-sm sm:text-base leading-relaxed text-ink">
+      <ul className="space-y-2 type-body text-ink">
         {items.map((item) => (
           <li key={item.id}>
             <Link
               href={item.slug.startsWith("/") ? item.slug : `/${item.slug}`}
-              className="font-semibold text-perazzi-red focus-ring"
+              className="type-title-sm text-perazzi-red focus-ring"
               prefetch
               onClick={() => logAnalytics(`RelatedClick:${item.slug}`)}
             >

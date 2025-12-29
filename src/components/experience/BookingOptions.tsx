@@ -56,11 +56,11 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
               id="experience-booking-heading"
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-ink"
+              className="text-ink"
             >
               {heading}
             </Heading>
-            <Text size="md" muted leading="relaxed" className="mb-4 font-light italic">
+            <Text size="md" muted className="mb-4">
               {subheading}
             </Text>
           </div>
@@ -74,7 +74,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
                   <Heading level={3} size="sm" className="text-ink">
                     {option.title}
                   </Heading>
-                  <Text size="xs" muted className="font-semibold">
+                  <Text size="caption" muted>
                     {option.durationLabel ?? (option.durationMins ? `${option.durationMins} minutes` : "")}
                   </Text>
                   <SafeHtml
@@ -87,7 +87,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
                     asChild
                     variant="secondary"
                     size="lg"
-                    className="rounded-full px-6 py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em]"
+                    className="rounded-full px-6 py-3 type-button"
                     onClick={() =>
                       logAnalytics(`FittingCtaClick:${option.id}`)
                     }
@@ -110,7 +110,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
                   aria-controls={schedulerPanelId}
                   aria-expanded={schedulerOpen}
                   aria-describedby={schedulerNoteId}
-                  className="rounded-full px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em]"
+                  className="rounded-full px-4 py-2 type-button"
                   onClick={() => {
                     setSchedulerOpen((prev) => {
                       const next = !prev;
@@ -146,18 +146,18 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
                     aria-hidden={!schedulerOpen}
                   />
                 ) : (
-                  <div className="flex h-80 w-full items-center justify-center rounded-2xl border border-dashed border-border/70 text-sm sm:text-base text-ink-muted">
+                  <div className="flex h-80 w-full items-center justify-center rounded-2xl border border-dashed border-border/70 type-body-sm text-ink-muted">
                     The booking form appears here once you choose Begin Your Fitting.
                   </div>
                 )}
               </div>
-              <p className="text-[11px] sm:text-xs text-ink-muted">
+              <p className="type-caption text-ink-muted">
                 Prefer email?{" "}
                 <a
                   href={scheduler.fallbackHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-semibold text-perazzi-red focus-ring"
+                  className="text-perazzi-red focus-ring"
                 >
                   Open booking in a new tab{" "}
                   <span className="sr-only"> (opens in a new tab)</span>

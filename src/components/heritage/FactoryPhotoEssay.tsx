@@ -66,7 +66,7 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
       aria-labelledby="factory-essay-heading"
     >
       <div className="space-y-2">
-        <Text size="xs" className="font-semibold tracking-[0.35em] text-ink-muted" leading="normal">
+        <Text size="label-tight" className="text-ink-muted">
           {eyebrow}
         </Text>
         <Heading id="factory-essay-heading" level={2} size="xl" className="text-ink">
@@ -129,14 +129,14 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
                     />
                   </div>
                   {currentItem.image.caption ? (
-                    <Text asChild className="text-ink-muted" leading="relaxed">
-                      <figcaption>{currentItem.image.caption}</figcaption>
-                    </Text>
+                  <Text asChild className="text-ink-muted">
+                    <figcaption>{currentItem.image.caption}</figcaption>
+                  </Text>
                   ) : null}
                   <div className="flex justify-between">
                     <button
                       type="button"
-                      className="focus-ring rounded-full border border-border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink"
+                      className="focus-ring rounded-full border border-border px-4 py-2 type-button text-ink"
                       aria-label="Previous photo"
                       onClick={() => { goTo(-1); }}
                     >
@@ -144,14 +144,14 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
                     </button>
                     <button
                       type="button"
-                      className="focus-ring rounded-full border border-border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink"
+                      className="focus-ring rounded-full border border-border px-4 py-2 type-button text-ink"
                       aria-label="Next photo"
                       onClick={() => { goTo(1); }}
                     >
                       Next
                     </button>
                   </div>
-                  <Dialog.Close className="focus-ring absolute right-4 top-4 rounded-full border border-border bg-card px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink">
+                  <Dialog.Close className="focus-ring absolute right-4 top-4 rounded-full border border-border bg-card px-4 py-2 type-button text-ink">
                     Close
                   </Dialog.Close>
                 </figure>
@@ -190,7 +190,7 @@ function PhotoCard({ item, onOpen }: PhotoCardProps) {
           className="object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
         />
-        <span className="absolute inset-x-3 bottom-3 rounded-full bg-black/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-white">
+        <span className="absolute inset-x-3 bottom-3 rounded-full bg-black/60 px-3 py-2 type-button text-white">
           Expand
         </span>
       </button>

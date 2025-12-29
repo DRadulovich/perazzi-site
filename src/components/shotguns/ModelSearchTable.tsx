@@ -52,7 +52,7 @@ const FILTER_PANEL_CLASS =
 const CARD_SHELL_CLASS =
   "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/12 bg-perazzi-black/80 text-left shadow-medium ring-1 ring-white/10 backdrop-blur-sm transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red sm:rounded-3xl";
 const SPEC_PANEL_CLASS =
-  "grid gap-4 border-t border-white/10 bg-black/40 px-4 py-4 text-xs text-neutral-200 sm:grid-cols-2 sm:px-6 sm:py-5 sm:text-sm";
+  "grid gap-4 border-t border-white/10 bg-black/40 px-4 py-4 text-neutral-200 sm:grid-cols-2 sm:px-6 sm:py-5";
 const DETAIL_PANEL_CLASS =
   "flex-1 space-y-4 rounded-2xl border border-white/10 bg-black/40 p-4 sm:rounded-3xl sm:p-5";
 
@@ -286,24 +286,25 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
     >
       <div className={FILTER_PANEL_CLASS}>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <label className="flex w-full items-center gap-3 rounded-full border border-white/20 bg-black/40 px-4 py-2 text-sm text-neutral-300 focus-within:border-white">
+          <label className="flex w-full items-center gap-3 rounded-full border border-white/20 bg-black/40 px-4 py-2 type-body-sm text-neutral-300 focus-within:border-white">
             <span className="text-neutral-500">Search</span>
             <Input
               type="search"
               placeholder="Search models, gauges, triggers..."
               value={query}
               onChange={(event) => { handleQueryChange(event.target.value); }}
-              className="w-full border-0 bg-transparent px-0 py-0 text-base text-white placeholder:text-neutral-600 shadow-none focus:border-0"
+              className="w-full border-0 bg-transparent px-0 py-0 type-body-sm text-white placeholder:text-neutral-600 shadow-none focus:border-0"
             />
           </label>
           <Text
             asChild
+            size="caption"
             className="text-neutral-400"
             leading="normal"
           >
             <p aria-live="polite" aria-atomic="true">
-              Showing <span className="font-semibold text-white">{filteredModels.length}</span>{" "}
-              of <span className="font-semibold text-white">{models.length}</span>
+              Showing <span className="text-white">{filteredModels.length}</span>{" "}
+              of <span className="text-white">{models.length}</span>
             </p>
           </Text>
         </div>
@@ -384,17 +385,17 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                     No Image Available
                   </div>
                 )}
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-ink">
-                  <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
+                  <div className="absolute bottom-0 left-0 right-0 p-6 text-ink">
+                  <Text size="label-tight" className="text-perazzi-red">
                     {model.use}
                   </Text>
                  {/*
                     Keep highlight behavior consistent while showing only the model name on the card.
                   */}
-                  <Heading level={3} size="lg" className="leading-tight text-ink">
+                  <Heading level={3} size="lg" className="text-ink">
                     {highlightText(model.name, query)}
                   </Heading>
-                  <Text className="text-ink-muted" leading="normal">
+                  <Text size="sm" className="text-ink-muted">
                     {highlightText((model.gaugeNames || []).join(", ") || "", query)}
                   </Text>
                 </div>
@@ -499,13 +500,13 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                       </div>
                     )}
                     <div className="absolute bottom-6 left-6 right-6 text-black">
-                      <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
+                      <Text size="label-tight" className="text-perazzi-red">
                         {selectedModel.use}
                       </Text>
-                      <Heading level={2} size="xl" className="leading-tight text-black">
+                      <Heading level={2} size="xl" className="text-black">
                         {selectedModel.name}
                       </Heading>
-                      <Text className="text-neutral-300" leading="normal">
+                      <Text size="sm" className="text-neutral-300">
                         {selectedModel.version}
                       </Text>
                     </div>
@@ -580,7 +581,7 @@ function FilterGroup({
   };
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <Text asChild size="sm" className="uppercase tracking-[0.3em] text-neutral-500" leading="normal">
+      <Text asChild size="label-tight" className="text-neutral-500" leading="normal">
         <span>{label}</span>
       </Text>
       <div className="flex flex-wrap gap-2">
@@ -622,7 +623,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={clsx(
-        "rounded-full px-4 py-2 text-[11px] sm:text-xs uppercase tracking-widest transition",
+        "type-label-tight rounded-full px-4 py-2 transition",
         active
           ? "bg-white text-black"
           : "border border-white/20 bg-transparent text-white/70 hover:border-white/60",
@@ -637,10 +638,10 @@ function Spec({ label, value }: SpecProps) {
   const display = humanizeValue(value) ?? value;
   return (
     <div>
-      <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
+      <Text size="label-tight" className="text-perazzi-red">
         {label}
       </Text>
-      <Text className="text-white" leading="normal">
+      <Text size="sm" className="text-white">
         {display || "—"}
       </Text>
     </div>
@@ -651,10 +652,10 @@ function DetailGrid({ label, value }: SpecProps) {
   const display = humanizeValue(value) ?? value;
   return (
     <div>
-      <Text size="xs" className="font-semibold tracking-[0.4em] text-perazzi-red" leading="normal">
+      <Text size="label-tight" className="text-perazzi-red">
         {label}
       </Text>
-      <Text size="lg" className="text-lg text-white" leading="normal">
+      <Text size="sm" className="text-white">
         {display || "—"}
       </Text>
     </div>

@@ -29,7 +29,7 @@ export function CareGuidesDownloads({ guidesSection }: CareGuidesDownloadsProps)
       aria-labelledby="care-guides-heading"
     >
       <div className="space-y-2">
-        <Text size="xs" muted className="font-semibold">
+        <Text size="label-tight" muted>
           {careGuidesLabel}
         </Text>
         <Heading id="care-guides-heading" level={2} size="xl" className="text-ink">
@@ -51,19 +51,19 @@ export function CareGuidesDownloads({ guidesSection }: CareGuidesDownloadsProps)
               {guide.title}
             </Heading>
             <SafeHtml
-              className="text-sm leading-relaxed text-ink-muted"
+              className="type-body-sm text-ink-muted"
               html={guide.summaryHtml}
             />
             <a
               href={guide.fileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
+              className="mt-3 inline-flex items-center gap-2 type-button text-perazzi-red focus-ring"
               onClick={() => logAnalytics(`GuideDownload:${guide.id}`)}
             >
               {downloadButtonLabel}
               {guide.fileSize ? (
-                <span className="text-[11px] sm:text-xs text-ink-muted">
+                <span className="type-caption text-ink-muted">
                   ({guide.fileSize})
                 </span>
               ) : null}

@@ -66,15 +66,15 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                 id="trigger-explainer-heading"
                 level={2}
                 size="xl"
-                className="font-black uppercase italic tracking-[0.35em] text-ink"
+                className="text-ink"
               >
                 {explainer.title}
               </Heading>
-              <Text className="font-light italic text-ink-muted" leading="normal">
+              <Text className="text-ink-muted" leading="normal">
                 {subheading}
               </Text>
               <CollapsibleTrigger
-                className="mt-1 inline-flex w-fit items-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring lg:hidden"
+                className="type-button mt-1 inline-flex w-fit items-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring lg:hidden"
                 aria-controls="trigger-explainer-content"
                 data-analytics-id="TriggerExplainerToggle"
               >
@@ -98,7 +98,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                       key={link.href}
                       href={link.href}
                       data-analytics-id={`TriggerExplainerLink:${link.href}`}
-                      className="inline-flex items-center gap-2 rounded-full border border-perazzi-red/40 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red shadow-soft backdrop-blur-sm transition hover:border-perazzi-red hover:bg-card/85 focus-ring"
+                      className="type-button inline-flex items-center gap-2 rounded-full border border-perazzi-red/40 bg-card/60 px-4 py-2 text-perazzi-red shadow-soft backdrop-blur-sm transition hover:border-perazzi-red hover:bg-card/85 focus-ring"
                       onClick={() =>
                         logAnalytics(`TriggerExplainerLink:${link.href}`)
                       }
@@ -130,8 +130,8 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                 {explainer.diagram.caption ? (
                   <Text
                     asChild
-                    size="xs"
-                    className="mt-3 tracking-[0.2em] text-ink-muted"
+                    size="caption"
+                    className="mt-3 text-ink-muted"
                     leading="normal"
                   >
                     <figcaption>{explainer.diagram.caption}</figcaption>

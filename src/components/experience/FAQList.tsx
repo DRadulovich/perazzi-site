@@ -34,11 +34,11 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
           id="experience-faq-heading"
           level={2}
           size="xl"
-          className="font-black uppercase italic tracking-[0.35em] text-ink"
+          className="text-ink"
         >
           {title}
         </Heading>
-        <Text size="md" muted leading="relaxed" className="font-light italic">
+        <Text size="md" muted leading="relaxed">
           {subtitle}
         </Text>
       </div>
@@ -113,7 +113,7 @@ function FAQItemCard({ item, index }: FAQItemCardProps) {
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger
-        className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left text-sm font-semibold text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
+        className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left type-title-sm text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
         aria-expanded={open}
       >
         {item.q}
@@ -127,7 +127,7 @@ function FAQItemCard({ item, index }: FAQItemCardProps) {
           +
         </span>
       </CollapsibleTrigger>
-      <CollapsibleContent className="mt-2 overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 text-sm leading-relaxed text-ink-muted shadow-soft backdrop-blur-sm sm:bg-card/80">
+      <CollapsibleContent className="mt-2 overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 type-body-sm text-ink-muted shadow-soft backdrop-blur-sm sm:bg-card/80">
         <SafeHtml
           className="prose prose-sm max-w-none text-ink-muted"
           html={item.aHtml}

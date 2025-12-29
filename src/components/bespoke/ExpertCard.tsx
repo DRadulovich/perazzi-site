@@ -37,14 +37,14 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         <Heading level={3} size="sm" className="text-ink">
           {expert.name}
         </Heading>
-        <Text size="xs" muted className="font-semibold">
+        <Text size="caption" muted>
           {expert.role}
         </Text>
         <Text size="md" muted leading="relaxed">
           {expert.bioShort}
         </Text>
         {expert.quote ? (
-          <blockquote className="border-l-2 border-perazzi-red/40 pl-3 text-[13px] sm:text-sm italic leading-relaxed text-ink">
+          <blockquote className="border-l-2 border-perazzi-red/40 pl-3 type-quote text-ink">
             “{expert.quote}”
           </blockquote>
         ) : null}
@@ -53,7 +53,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         {expert.profileHref ? (
           <a
             href={expert.profileHref}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
           >
             Meet {expert.name.split(" ")[0]}
             <span aria-hidden="true">→</span>
@@ -62,7 +62,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
 
         <Dialog.Root open={open} onOpenChange={setOpen}>
           <Dialog.Trigger
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 type-button text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
             onClick={() => logAnalytics(`ExpertBio:${expert.id}`)}
           >
             Full bio
@@ -80,7 +80,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                 <Text size="md" muted leading="relaxed" className="mt-4">
                   {expert.bioShort}
                 </Text>
-                <Dialog.Close className="mt-6 inline-flex items-center justify-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring">
+                <Dialog.Close className="mt-6 inline-flex items-center justify-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 type-button text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring">
                   Close
                 </Dialog.Close>
               </div>

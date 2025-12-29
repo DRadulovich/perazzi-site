@@ -98,11 +98,11 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
               id="experience-picker-heading"
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-ink"
+              className="text-ink"
             >
               {heading}
             </Heading>
-            <Text size="md" muted leading="relaxed" className="mb-4 font-light italic">
+            <Text size="md" muted className="mb-4">
               {subheading}
             </Text>
           </div>
@@ -180,7 +180,7 @@ function ExperiencePickerCard({
           />
         </div>
         <div className="flex flex-1 flex-col gap-3 px-6 py-5">
-          <Text size="xs" muted className="font-semibold">
+          <Text size="label-tight" muted>
             {microLabel}
           </Text>
           <Heading level={3} size="sm" className="text-ink">
@@ -189,7 +189,7 @@ function ExperiencePickerCard({
           <Text size="md" muted leading="relaxed">
             {item.summary}
           </Text>
-          <span className="mt-auto inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+          <span className="mt-auto inline-flex items-center gap-2 type-button text-perazzi-red">
             {item.ctaLabel}
             <span aria-hidden="true">→</span>
           </span>

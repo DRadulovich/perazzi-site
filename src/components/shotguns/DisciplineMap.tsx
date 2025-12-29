@@ -30,8 +30,8 @@ export function DisciplineMap({ items, disciplines }: DisciplineMapProps) {
             >
               <Text
                 asChild
-                size="xs"
-                className="font-semibold tracking-[0.35em] text-ink-muted"
+                size="label-tight"
+                className="text-ink-muted"
                 leading="normal"
               >
                 <span>{label}</span>

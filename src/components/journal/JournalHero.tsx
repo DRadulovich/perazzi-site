@@ -48,7 +48,7 @@ export function JournalHero({ hero, breadcrumbs }: JournalHeroProps) {
         <div className="flex flex-col gap-6 md:col-span-5 lg:col-span-5">
           {breadcrumbs?.length ? (
             <nav aria-label="Breadcrumb">
-              <ol className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.3em] text-white/70">
+              <ol className="flex flex-wrap items-center gap-2 type-label-tight text-white/70">
                 {breadcrumbs.map((crumb, index) => (
                   <li key={crumb.href} className="flex items-center gap-2">
                     <Link
@@ -68,14 +68,14 @@ export function JournalHero({ hero, breadcrumbs }: JournalHeroProps) {
             </nav>
           ) : null}
           <div className="space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
+            <p className="type-label text-white/70">
               Journal
             </p>
-            <h1 className="text-balance text-3xl font-semibold leading-tight sm:text-4xl lg:text-5xl">
+            <h1 className="text-balance type-display">
               {hero.title}
             </h1>
             {hero.subheading ? (
-              <p className="text-lg text-white/80">{hero.subheading}</p>
+              <p className="type-body-lg text-white/80">{hero.subheading}</p>
             ) : null}
           </div>
         </div>

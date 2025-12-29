@@ -50,9 +50,11 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
   if (!verified.length) {
     return (
       <Section padding="md">
-        <blockquote className="text-base sm:text-lg italic leading-relaxed text-ink">
-          “Perazzi heritage is carried by every athlete who chooses calm precision.”
-        </blockquote>
+        <Text asChild className="type-quote text-ink">
+          <blockquote>
+            “Perazzi heritage is carried by every athlete who chooses calm precision.”
+          </blockquote>
+        </Text>
       </Section>
     );
   }
@@ -97,11 +99,11 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
               id="heritage-champions-heading"
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-ink"
+              className="text-ink"
             >
               {heading}
             </Heading>
-            <Text className="mb-6 font-light italic text-ink-muted">
+            <Text size="sm" className="mb-6 text-ink-muted">
               {subheading}
             </Text>
           </div>
@@ -116,7 +118,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
                 type="button"
                 aria-pressed={activeDiscipline === null}
                 className={cn(
-                  "rounded-full border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] focus-ring transition",
+                  "rounded-full border px-4 py-2 type-button focus-ring transition",
                   activeDiscipline === null
                     ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
                     : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
@@ -131,7 +133,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
                   type="button"
                   aria-pressed={activeDiscipline === discipline}
                   className={cn(
-                    "rounded-full border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] focus-ring transition",
+                    "rounded-full border px-4 py-2 type-button focus-ring transition",
                     activeDiscipline === discipline
                       ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
                       : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
@@ -153,8 +155,8 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
             {/* Left column – names list */}
             <div className="rounded-2xl bg-card/0 p-4 sm:rounded-3xl">
               <Text
-                size="xs"
-                className="mb-3 font-semibold text-ink-muted"
+                size="label-tight"
+                className="mb-3 text-ink-muted"
                 leading="normal"
               >
                 {championsLabel}
@@ -200,7 +202,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
                     key="no-champion"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-sm text-ink-muted"
+                    className="type-body-sm text-ink-muted"
                   >
                     Select a champion on the left to view their story.
                   </motion.p>
@@ -235,18 +237,18 @@ function ChampionNameItem({ champion, isActive, onSelect }: ChampionNameItemProp
         type="button"
         onClick={onSelect}
         className={cn(
-          "group w-full rounded-2xl px-3 py-2 text-left text-sm transition-colors focus-ring",
+          "group w-full rounded-2xl px-3 py-2 text-left transition-colors focus-ring",
           isActive
             ? "bg-ink text-card"
             : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
         )}
         aria-pressed={isActive}
       >
-        <span className="block text-sm font-semibold tracking-wide">
+        <span className="block type-title-sm">
           {champion.name}
         </span>
         {champion.title ? (
-          <span className="mt-0.5 block text-[11px] sm:text-xs uppercase tracking-[0.25em] text-ink-muted group-hover:text-ink-muted/90">
+          <span className="mt-0.5 block type-label-tight text-ink-muted group-hover:text-ink-muted/90">
             {champion.title}
           </span>
         ) : null}
@@ -288,7 +290,7 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
             {champion.name}
           </Heading>
           {champion.title ? (
-            <Text size="xs" className="text-ink-muted" leading="normal">
+            <Text size="label-tight" className="text-ink-muted">
               {champion.title}
             </Text>
           ) : null}
@@ -298,7 +300,7 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
           <Text
             asChild
             size="md"
-            className="border-l-2 border-perazzi-red/40 pl-3 text-[13px] sm:text-base italic text-ink"
+            className="border-l-2 border-perazzi-red/40 pl-3 type-quote text-ink"
           >
             <blockquote>“{champion.quote}”</blockquote>
           </Text>
@@ -313,10 +315,10 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
           champion.resume.winTwo ||
           champion.resume.winThree) ? (
           <div className="space-y-2">
-            <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+            <Text size="label-tight" className="text-ink-muted">
               Career Highlights
             </Text>
-            <ul className="space-y-1 text-sm leading-relaxed text-ink">
+            <ul className="space-y-1 type-body-sm text-ink">
               {champion.resume.winOne ? <li>• {champion.resume.winOne}</li> : null}
               {champion.resume.winTwo ? <li>• {champion.resume.winTwo}</li> : null}
               {champion.resume.winThree ? <li>• {champion.resume.winThree}</li> : null}
@@ -326,10 +328,10 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
 
         {champion.disciplines?.length ? (
           <div className="space-y-2">
-            <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+            <Text size="label-tight" className="text-ink-muted">
               Disciplines
             </Text>
-            <ul className="flex flex-wrap gap-2 text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+            <ul className="flex flex-wrap gap-2 type-label-tight text-ink-muted">
               {champion.disciplines.map((discipline) => (
                 <li
                   key={discipline}
@@ -344,10 +346,10 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
 
         {champion.platforms?.length ? (
           <div className="space-y-2">
-            <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+            <Text size="label-tight" className="text-ink-muted">
               Platforms
             </Text>
-            <ul className="flex flex-wrap gap-2 text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+            <ul className="flex flex-wrap gap-2 type-label-tight text-ink-muted">
               {champion.platforms.map((platform) => (
                 <li
                   key={platform}
@@ -363,7 +365,7 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
         {champion.article ? (
           <a
             href={`/${champion.article.slug}`}
-            className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
+            className="inline-flex items-center gap-2 type-button text-perazzi-red focus-ring"
           >
             {cardCtaLabel}
             <span aria-hidden="true">→</span>

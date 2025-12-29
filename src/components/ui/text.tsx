@@ -3,14 +3,14 @@ import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@/lib/utils";
 
 const sizeClasses = {
-  // Large body / emphasis text: slightly larger on bigger screens
-  lg: "!text-base sm:!text-xl",
-  // Default body text: mobile-first, scales up at sm+
-  md: "!text-md sm:!text-base !font-light",
-  // Secondary body / compact text
-  sm: "!text-md sm:!text-md",
-  // Microcopy: uppercase, tracked, mobile-first
-  xs: "!text-[12px] sm:!text-md !font-semibold !italic !tracking-[0.2em] !uppercase",
+  lg: "type-body-lg",
+  md: "type-body",
+  sm: "type-body-sm",
+  xs: "type-label",
+  label: "type-label",
+  "label-tight": "type-label-tight",
+  caption: "type-caption",
+  button: "type-button",
 } as const;
 
 const leadingClasses = {
@@ -34,20 +34,21 @@ export const Text = forwardRef<HTMLParagraphElement, TextProps>(
       asChild,
       size = "md",
       muted = false,
-      leading = "relaxed",
+      leading,
       className,
       ...props
     },
     ref,
   ) => {
     const Comp = asChild ? Slot : "p";
+    const leadingClass = leading ? leadingClasses[leading] : undefined;
     return (
       <Comp
         ref={ref as never}
         className={cn(
           "text-pretty",
           sizeClasses[size],
-          leadingClasses[leading],
+          leadingClass,
           muted && "text-ink-muted",
           className,
         )}

@@ -21,7 +21,7 @@ export function IntegrityAdvisory({ integrityAdvisory }: IntegrityAdvisoryProps)
       padding="md"
       className="space-y-4"
     >
-      <Text size="xs" muted className="font-semibold">
+      <Text size="label-tight" muted>
         Authenticity & fitment
       </Text>
       <Heading level={2} size="xl" className="text-ink">

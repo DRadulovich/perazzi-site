@@ -60,7 +60,7 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
         <Text size="lg" muted>
           We&apos;re shaping this story now. Check back shortly or explore other Journal features.
         </Text>
-        <Link href="/journal" className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring">
+        <Link href="/journal" className="type-button inline-flex items-center gap-2 text-perazzi-red focus-ring">
           Return to Journal{" "}
           <span aria-hidden="true">→</span>
         </Link>

@@ -131,11 +131,11 @@ export function BuildStepsScroller({
               id="build-steps-heading"
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-ink"
+              className="text-ink"
             >
               {heading}
             </Heading>
-            <Text size="md" muted leading="relaxed" className="font-light italic">
+            <Text size="md" muted leading="relaxed">
               {subheading}
             </Text>
             <Text size="md" muted leading="relaxed" className="max-w-xl">
@@ -145,14 +145,14 @@ export function BuildStepsScroller({
             <div className="flex flex-wrap items-center gap-4">
               <a
                 href="#build-steps-sequence"
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-ink/60 px-4 py-2 text-[11px] sm:text-sm font-semibold uppercase tracking-[0.2em] text-ink hover:border-ink focus-ring"
+                className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-ink/60 px-4 py-2 text-ink hover:border-ink focus-ring"
               >
                 <span>{ctaLabel}</span>
                 <span aria-hidden="true">↓</span>
               </a>
               <a
                 href={`#${skipTargetId}`}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 <span>Skip step-by-step</span>
                 <span aria-hidden="true">→</span>
@@ -166,7 +166,7 @@ export function BuildStepsScroller({
               {/* Scroll-snap cards column */}
               <div className="relative flex-1">
                 <nav className="absolute inset-x-3 top-3 z-20 hidden lg:block sm:inset-x-4 lg:inset-x-6 lg:top-4">
-                  <div className="grid grid-flow-col auto-cols-fr items-center gap-2 rounded-2xl border border-border/75 bg-card/75 px-4 py-3 text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted shadow-soft backdrop-blur-md">
+                  <div className="grid grid-flow-col auto-cols-fr items-center gap-2 rounded-2xl border border-border/75 bg-card/75 px-4 py-3 type-label-tight text-ink-muted shadow-soft backdrop-blur-md">
                     {mappedSteps.map((step, index) => {
                       const isActive = step.id === activeStepId;
                       const stepNumber = index + 1;
@@ -189,9 +189,7 @@ export function BuildStepsScroller({
                               isActive ? "bg-perazzi-red" : "bg-card"
                             }`}
                           />
-                          <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em]">
-                            {`Step ${stepNumber}`}
-                          </span>
+                          <span>{`Step ${stepNumber}`}</span>
                         </button>
                       );
                     })}
@@ -255,7 +253,7 @@ export function BuildStepsScroller({
                                 onClick={() => { toggleStepOpen(step.id); }}
                               >
                                 <div className="w-full space-y-1">
-                                  <Text size="xs" muted className="font-semibold">
+                                  <Text size="label-tight" muted>
                                     Step {index + 1} of {totalSteps}
                                   </Text>
                                   <Heading
@@ -267,7 +265,7 @@ export function BuildStepsScroller({
                                     {step.title}
                                   </Heading>
                                 </div>
-                                <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red/70">
+                                <span className="type-label-tight text-perazzi-red/70">
                                   {openStepId === step.id ? "Collapse" : "Read More"}
                                 </span>
                               </button>
@@ -297,13 +295,13 @@ export function BuildStepsScroller({
                                               e.stopPropagation();
                                               onStepCta?.(step.id);
                                             }}
-                                            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                                            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
                                           >
                                             {step.ctaLabel}
                                             <span aria-hidden="true">→</span>
                                           </a>
                                         ) : (
-                                          <span className="text-[11px] sm:text-xs uppercase tracking-[0.25em] text-ink-muted">
+                                          <span className="type-label-tight text-ink-muted">
                                             Bespoke moment {index + 1}
                                           </span>
                                         )}

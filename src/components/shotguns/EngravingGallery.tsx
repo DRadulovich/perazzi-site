@@ -125,21 +125,21 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
                   />
                 </div>
                 {currentAsset.caption ? (
-                  <Text className="mt-4 text-ink-muted" leading="normal">
+                  <Text size="sm" className="mt-4 text-ink-muted" leading="normal">
                     {currentAsset.caption}
                   </Text>
                 ) : null}
-                <div className="mt-4 flex items-center justify-between text-sm">
+                <div className="mt-4 flex items-center justify-between">
                   <button
                     type="button"
                     onClick={showPrev}
-                    className="rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-sm uppercase tracking-[0.3em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
+                    className="type-button rounded-full border border-border/70 bg-card/60 px-4 py-2 text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
                   >
                     Prev
                   </button>
                   <Text
                     asChild
-                    size="xs"
+                    size="caption"
                     className="text-ink-muted"
                     leading="normal"
                   >
@@ -150,7 +150,7 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
                   <button
                     type="button"
                     onClick={showNext}
-                    className="rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-sm uppercase tracking-[0.3em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
+                    className="type-button rounded-full border border-border/70 bg-card/60 px-4 py-2 text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
                   >
                     Next
                   </button>
@@ -158,7 +158,7 @@ export function EngravingGallery({ gallery, title }: EngravingGalleryProps) {
                 <Dialog.Close
                   type="button"
                   aria-label="Close engraving"
-                  className="absolute right-4 top-4 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-[0.3em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
+                  className="type-button absolute right-4 top-4 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
                 >
                   Close
                 </Dialog.Close>

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import type { FactoryAsset } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { Heading, Text } from "@/components/ui";
 
 type GaugeHeroProps = {
   title: string;
@@ -41,14 +42,16 @@ export function GaugeHero({
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent" />
         <div className="absolute inset-0 flex flex-col justify-end px-6 pb-10 sm:px-12">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/70">
+          <Text size="label-tight" className="text-white/70">
             Gauge primer
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold leading-tight sm:text-4xl">
+          </Text>
+          <Heading level={1} size="display" className="mt-2 text-white">
             {title}
-          </h1>
+          </Heading>
           {subheading ? (
-            <p className="mt-3 max-w-3xl text-sm text-white/80">{subheading}</p>
+            <Text size="sm" className="mt-3 max-w-3xl text-white/80">
+              {subheading}
+            </Text>
           ) : null}
         </div>
       </div>

@@ -65,7 +65,7 @@ export function ServiceRequest({
             logAnalytics(analyticsOpenId);
           }}
         >
-          <label className="flex flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">
+          <label className="flex flex-col type-label-tight text-ink">
             <span>Contact email</span>
             <Input
               type="email"
@@ -89,7 +89,7 @@ export function ServiceRequest({
           href={fallbackHref}
           target="_blank"
           rel="noreferrer"
-          className="font-semibold text-perazzi-red focus-ring"
+          className="text-perazzi-red focus-ring"
         >
           {fallbackLinkLabel ?? "Open the request form"}
           <span className="sr-only"> (opens in a new tab)</span>

@@ -124,20 +124,20 @@ export default async function ShotgunsLandingPage() {
           className="flex flex-col gap-10 px-0 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16"
         >
           <div className="space-y-4 text-ink">
-            <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+            <Text size="label-tight" className="text-ink-muted">
               {disciplineFit.eyebrow ?? "Discipline fit"}
             </Text>
             <Heading
               id="discipline-fit-heading"
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-ink"
+              className="text-ink"
             >
               {disciplineFit.heading ?? "The geometry of rhythm"}
             </Heading>
             <div className="mb-6 space-y-4 lg:mb-10">
               {disciplineParagraphs.map((paragraph) => (
-                <Text key={paragraph} className="font-light italic text-ink-muted">
+                <Text key={paragraph} className="text-ink-muted">
                   {paragraph}
                 </Text>
               ))}
@@ -156,20 +156,20 @@ export default async function ShotgunsLandingPage() {
             </div>
           </div>
 
-          <div className="space-y-3 text-sm sm:text-base font-light italic text-ink-muted">
-            <Text className="font-semibold not-italic text-ink" leading="normal">
+          <div className="space-y-3 type-body text-ink-muted">
+            <Text className="text-ink" leading="normal">
               Three rhythms most clay shooters learn:
             </Text>
             <ul className="space-y-2">
               {disciplineBullets.map((item) => (
                 <li key={item.code ?? item.label}>
-                  <span className="text-base sm:text-lg font-black not-italic text-ink">{item.label}</span>
+                  <span className="type-title-sm text-ink">{item.label}</span>
                   {" "}–{" "}
                   {item.description ?? ""}
                 </li>
               ))}
             </ul>
-            <Text className="font-light italic text-ink-muted">
+            <Text className="text-ink-muted">
               {disciplineClosing}
             </Text>
           </div>
@@ -198,11 +198,11 @@ export default async function ShotgunsLandingPage() {
               id="gauge-primer-heading"
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-ink"
+              className="text-ink"
             >
               {gaugeAdvisory.heading ?? "Gauge selection"}
             </Heading>
-            <Text className="mb-8 font-light italic text-ink-muted">
+            <Text className="mb-8 text-ink-muted">
               {gaugeAdvisory.intro
                 ?? "Decode how 12, 20, and 28 gauge choices shape recoil feel, swing speed, and payload — and how to pair them with your platform and disciplines."}
             </Text>
@@ -219,7 +219,7 @@ export default async function ShotgunsLandingPage() {
               />
               <Link
                 href={gaugeAdvisory.linkHref ?? landing.gaugesTeaser.href}
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="type-button inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 {gaugeAdvisory.linkLabel ?? "Explore gauges"}
                 <span aria-hidden="true">→</span>
@@ -227,18 +227,18 @@ export default async function ShotgunsLandingPage() {
             </div>
           </div>
 
-          <div className="space-y-3 text-sm sm:text-base font-light italic text-ink-muted">
-            <Text className="font-semibold not-italic text-ink" leading="normal">
+          <div className="space-y-3 type-body text-ink-muted">
+            <Text className="text-ink" leading="normal">
               What to compare:
             </Text>
             <ul className="space-y-2">
               {(gaugeAdvisory.bullets?.length ? gaugeAdvisory.bullets : landing.gaugesTeaser.bullets).map((item) => (
-                <li key={item} className="text-sm sm:text-base">
+                <li key={item}>
                   {item}
                 </li>
               ))}
             </ul>
-            <Text className="font-light italic text-ink-muted">
+            <Text className="text-ink-muted">
               {gaugeAdvisory.closing
                 ?? "We’ll tailor gauge choice to your primary discipline, preferred swing, and how you like a gun to absorb recoil."}
             </Text>
@@ -261,11 +261,11 @@ export default async function ShotgunsLandingPage() {
               id="trigger-choice-heading"
               level={2}
               size="xl"
-              className="font-black! uppercase italic tracking-[0.2em] text-ink"
+              className="text-ink"
             >
               {triggerChoice.heading ?? "Trigger choice"}
             </Heading>
-            <Text className="mb-8 font-light italic text-ink-muted">
+            <Text className="mb-8 text-ink-muted">
               {triggerChoice.intro
                 ?? "Decide when to choose a fixed trigger group for simplicity, or a detachable set for quick swaps, varied pull weights, and service resilience."}
             </Text>
@@ -282,7 +282,7 @@ export default async function ShotgunsLandingPage() {
               />
               <Link
                 href={triggerChoice.linkHref ?? "#trigger-explainer-heading"}
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="type-button inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 {triggerChoice.linkLabel ?? "See trigger details"}
                 <span aria-hidden="true">→</span>
@@ -290,8 +290,8 @@ export default async function ShotgunsLandingPage() {
             </div>
           </div>
 
-          <div className="space-y-3 text-sm sm:text-base font-light italic text-ink-muted">
-            <Text className="font-semibold! not-italic text-ink" leading="normal">
+          <div className="space-y-3 type-body text-ink-muted">
+            <Text className="text-ink" leading="normal">
               What to Weigh:
             </Text>
             <ul className="space-y-2">
@@ -302,12 +302,12 @@ export default async function ShotgunsLandingPage() {
                     "Removable group – fast swaps for pull weight or service, keeps you running at events.",
                     "Support & travel – how you compete, who services your gun, and what spares you carry.",
                   ]).map((item) => (
-                    <li key={item} className="text-sm sm:text-base">
+                    <li key={item}>
                       {item}
                     </li>
                   ))}
             </ul>
-            <Text className="font-light italic text-ink-muted">
+            <Text className="text-ink-muted">
               {triggerChoice.closing
                 ?? "We’ll align trigger choice to your platform, discipline rhythm, and how you like your release to feel under pressure."}
             </Text>

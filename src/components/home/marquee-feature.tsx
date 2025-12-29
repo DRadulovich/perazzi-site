@@ -84,35 +84,31 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
             viewport={{ once: true, amount: 0.4 }}
             transition={{ duration: 0.6, delay: 0.1, ease: [0.33, 1, 0.68, 1] }}
           >
-            <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+            <Text size="label-tight" className="text-ink-muted">
               {eyebrow}
             </Text>
             <Heading
               id="champion-heading"
               level={2}
               size="lg"
-              className="text-2xl sm:text-3xl text-ink"
+              className="text-ink"
             >
               {champion.name}
             </Heading>
-            <Text
-              asChild
-              size="md"
-              className="font-medium text-ink-muted not-italic"
-            >
-              <cite>{champion.title}</cite>
+            <Text size="sm" className="text-ink-muted">
+              {champion.title}
             </Text>
             <Text
               asChild
               size="lg"
-              className="border-l-2 border-perazzi-red/50 pl-4 text-base sm:text-lg italic text-ink"
+              className="border-l-2 border-perazzi-red/50 pl-4 type-quote text-ink"
             >
               <blockquote>“{champion.quote}”</blockquote>
             </Text>
             {champion.article ? (
               <a
                 href={`/journal/${champion.article.slug}`}
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-sm font-semibold uppercase tracking-[0.2em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 {champion.article.title}
                 <span aria-hidden="true">→</span>

@@ -29,7 +29,7 @@ export function NewsletterSignup() {
             setSubmitted(true);
           }}
         >
-          <label className="flex flex-1 flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">
+          <label className="flex flex-1 flex-col type-label-tight text-ink">
             <span>Email</span>
             <Input
               type="email"

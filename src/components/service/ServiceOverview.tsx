@@ -46,7 +46,7 @@ export function ServiceOverview({ overview }: ServiceOverviewProps) {
       aria-labelledby="service-overview-heading"
     >
       <div className="space-y-4">
-        <Text size="xs" muted className="font-semibold">
+        <Text size="label-tight" muted>
           {heading}
         </Text>
         <Heading id="service-overview-heading" level={2} size="xl" className="text-ink">
@@ -58,7 +58,7 @@ export function ServiceOverview({ overview }: ServiceOverviewProps) {
         />
       </div>
       <Section padding="sm" className="bg-card/75">
-        <Text size="xs" muted className="font-semibold">
+        <Text size="label-tight" muted>
           {checksHeading}
         </Text>
         {checksContent}

@@ -66,7 +66,7 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
       aria-labelledby="mosaic-gallery-heading"
     >
       <div className="space-y-2">
-        <Text size="xs" muted className="font-semibold">
+        <Text size="label-tight" muted>
           {eyebrow}
         </Text>
         <Heading id="mosaic-gallery-heading" level={2} size="xl" className="text-ink">
@@ -128,14 +128,14 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
                   />
                 </div>
                 {currentAsset.caption ? (
-                  <figcaption className="text-sm leading-relaxed text-ink-muted">
+                  <figcaption className="type-body-sm text-ink-muted">
                     {currentAsset.caption}
                   </figcaption>
                 ) : null}
                 <div className="flex justify-between">
                   <button
                     type="button"
-                    className="rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
+                    className="rounded-full border border-border/70 bg-card/60 px-4 py-2 type-button text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
                     onClick={() => { goTo(-1); }}
                     aria-label="Previous photo"
                   >
@@ -143,14 +143,14 @@ export function MosaicGallery({ assets, mosaicUi }: MosaicGalleryProps) {
                   </button>
                   <button
                     type="button"
-                    className="rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
+                    className="rounded-full border border-border/70 bg-card/60 px-4 py-2 type-button text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
                     onClick={() => { goTo(1); }}
                     aria-label="Next photo"
                   >
                     Next
                   </button>
                 </div>
-                <Dialog.Close className="absolute right-4 top-4 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring">
+                <Dialog.Close className="absolute right-4 top-4 rounded-full border border-border/70 bg-card/60 px-4 py-2 type-button text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring">
                   Close
                 </Dialog.Close>
               </figure>

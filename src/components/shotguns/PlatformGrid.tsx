@@ -122,11 +122,11 @@ const PlatformHeader = ({ heading, subheading }: { heading: string; subheading: 
       id="platforms-heading"
       level={2}
       size="xl"
-      className="font-black italic uppercase tracking-[0.35em] text-ink"
+      className="text-ink"
     >
       {heading}
     </Heading>
-    <Text className="mb-6 max-w-4xl font-light italic text-ink-muted" leading="normal">
+    <Text className="mb-6 max-w-4xl text-ink-muted" leading="normal">
       {subheading}
     </Text>
   </div>
@@ -148,7 +148,7 @@ const PlatformTabs = ({ platforms, activeIndex, onSelect }: PlatformTabsProps) =
           type="button"
           role="tab"
           aria-selected={isActive}
-          className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] focus-ring transition ${
+          className={`type-label-tight rounded-full border px-4 py-2 focus-ring transition ${
             isActive
               ? "border-perazzi-red bg-canvas/40 text-perazzi-red backdrop-blur-sm shadow-elevated"
               : "border-border/70 bg-transparent text-ink-muted hover:border-ink/60"
@@ -250,9 +250,7 @@ const ChampionHighlight = ({
       }
     >
       {hallmark ? (
-        <Text className="text-xl italic text-ink" leading="normal">
-          {hallmark}
-        </Text>
+        <p className="type-quote text-ink">{hallmark}</p>
       ) : null}
       {champion ? (
         <div className="flex items-center justify-center gap-5">
@@ -280,7 +278,7 @@ const ChampionHighlight = ({
             ) : null}
             {champion.resume?.winOne ? (
               <Text size="md" className="text-ink-muted" leading="normal">
-                Win highlight: <span className="font-medium">{champion.resume.winOne}</span>
+                Win highlight: <span className="text-ink">{champion.resume.winOne}</span>
               </Text>
             ) : null}
           </div>

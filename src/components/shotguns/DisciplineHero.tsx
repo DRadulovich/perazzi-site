@@ -3,6 +3,7 @@
 import Image from "next/image";
 import type { DisciplineSummary } from "@/types/catalog";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { Heading, Text } from "@/components/ui";
 
 type DisciplineHeroProps = Readonly<{
   hero?: DisciplineSummary["hero"];
@@ -19,12 +20,12 @@ export function DisciplineHero({ hero, name }: DisciplineHeroProps) {
         data-analytics-id="HeroSeen:discipline"
         className="rounded-2xl bg-perazzi-black px-4 py-10 text-white sm:rounded-3xl sm:px-6 sm:py-12"
       >
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold">
+        <Heading level={1} size="display" className="text-white">
           {name}
-        </h1>
-        <p className="mt-3 text-sm sm:text-base leading-relaxed text-white/75">
+        </Heading>
+        <Text size="sm" className="mt-3 text-white/75">
           Explore recommended platforms, setup recipes, and stories from the line.
-        </p>
+        </Text>
       </section>
     );
   }
@@ -51,9 +52,9 @@ export function DisciplineHero({ hero, name }: DisciplineHeroProps) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
         <div className="absolute inset-0 flex flex-col justify-end px-6 pb-10 sm:px-12">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold leading-tight">
+          <Heading level={1} size="display" className="text-white">
             {name}
-          </h1>
+          </Heading>
         </div>
       </div>
     </section>

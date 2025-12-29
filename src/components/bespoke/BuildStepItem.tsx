@@ -110,14 +110,14 @@ export function BuildStepItem({
   const caption = step.captionHtml ? (
     <SafeHtml
       as="figcaption"
-      className="rounded-2xl border border-border/70 bg-card/60 p-4 text-[11px] sm:text-xs leading-relaxed text-ink-muted shadow-soft backdrop-blur-sm"
+      className="rounded-2xl border border-border/70 bg-card/60 p-4 type-caption text-ink-muted shadow-soft backdrop-blur-sm"
       html={step.captionHtml}
     />
   ) : null;
 
   const header = (
     <header className="space-y-1">
-      <Text size="xs" muted className="font-semibold">
+      <Text size="label-tight" muted>
         Step {index + 1}
       </Text>
       <Heading level={3} size="md" className="text-ink">

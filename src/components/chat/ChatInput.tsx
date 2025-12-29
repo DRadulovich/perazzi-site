@@ -37,7 +37,7 @@ export function ChatInput({
         </label>
         <Textarea
           id="perazzi-chat-input"
-          className="h-24 px-4 py-3 pr-20 sm:text-base"
+          className="h-24 px-4 py-3 pr-20"
           placeholder="Ask something about Perazzi, service, or heritage..."
           value={value}
           onChange={(event) => setValue(event.target.value)}
@@ -61,7 +61,7 @@ export function ChatInput({
             className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-ink text-card shadow-soft transition hover:bg-ink/90 disabled:cursor-not-allowed disabled:bg-subtle disabled:text-ink-muted"
           >
             <span className="sr-only">Send</span>
-            <span className="text-base leading-none">
+            <span className="type-body-sm leading-none">
               {pending
                 ? "…"
                 : <ArrowUp className="h-4 w-4" strokeWidth={2} aria-hidden="true" />}

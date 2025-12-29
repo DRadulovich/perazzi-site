@@ -4,6 +4,7 @@ import { groq } from "next-sanity";
 import { SanityImageSource } from "@sanity/image-url/lib/types/types";
 
 import { ModelSearchTable } from "@/components/shotguns/ModelSearchTable";
+import { Heading, Text } from "@/components/ui";
 import { client } from "@/sanity/lib/client";
 import medalsHero from "@/../Photos/olympic-medals-1.jpg";
 
@@ -86,15 +87,15 @@ export default async function ModelSearchPage() {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
           <div className="absolute inset-0 flex flex-col justify-center gap-4 px-8 py-10 text-white sm:px-12 lg:px-16">
-            <p className="text-[11px] sm:text-xs uppercase tracking-[0.4em] text-white/70">Model Search</p>
-            <h1 className="text-2xl font-semibold leading-tight sm:text-3xl lg:text-4xl">
+            <Text size="label-tight" className="text-white/70">Model Search</Text>
+            <Heading level={1} size="display" className="text-white">
               The Perazzi Shotguns Database
-            </h1>
-            <p className="max-w-2xl text-sm sm:text-base leading-relaxed text-white/80">
+            </Heading>
+            <Text size="sm" className="max-w-2xl text-white/80">
               Browse every catalogued platform, grade, and gauge combination we maintain inside Sanity.
               Filter by competitive discipline or game application, then deep-dive into full-resolution
               photography and setup specs.
-            </p>
+            </Text>
           </div>
         </div>
       </section>

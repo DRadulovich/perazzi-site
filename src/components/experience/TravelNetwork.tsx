@@ -86,11 +86,11 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
               id="travel-network-heading"
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-ink"
+              className="text-ink"
             >
               {heading}
             </Heading>
-            <Text size="md" muted leading="relaxed" className="font-light italic">
+            <Text size="md" muted leading="relaxed">
               {lead}
             </Text>
             <Text size="md" muted leading="relaxed">
@@ -110,7 +110,7 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
                 role="tab"
                 aria-selected={activeTab === tab.key}
                 className={cn(
-                  "rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring",
+                  "type-label-tight rounded-full border border-border/70 bg-card/60 px-4 py-2 shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring",
                   activeTab === tab.key
                     ? "border-perazzi-red/60 bg-perazzi-red/10 text-perazzi-red"
                     : "text-ink",
@@ -118,7 +118,7 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
                 onClick={() => { setActiveTab(tab.key); }}
               >
                 {tab.label}
-                <span className="ml-2 text-[0.8em] text-ink-muted">({tab.count})</span>
+                <span className="ml-2 type-caption text-ink-muted">({tab.count})</span>
               </button>
             ))}
           </div>
@@ -140,7 +140,7 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
 function ScheduleList({ events, emptyText }: ScheduleListProps) {
   if (!events.length) {
     return (
-      <Text size="md" muted leading="relaxed">
+      <Text size="md" muted>
         {emptyText}
       </Text>
     );
@@ -153,17 +153,17 @@ function ScheduleList({ events, emptyText }: ScheduleListProps) {
           key={event._id}
           className="rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated md:p-6 lg:p-7"
         >
-          <Text size="xs" muted className="font-semibold">
+          <Text size="caption" muted>
             {formatDateRange(event.startDate, event.endDate)}
           </Text>
           <Heading level={3} size="sm" className="mt-2 text-ink">
             {event.eventName}
           </Heading>
-          <Text size="md" muted leading="relaxed">
+          <Text size="md" muted>
             {event.eventLocation}
           </Text>
           {event.location ? (
-            <Text size="md" muted leading="relaxed" className="mt-2">
+            <Text size="md" muted className="mt-2">
               {event.location}
             </Text>
           ) : null}
@@ -176,7 +176,7 @@ function ScheduleList({ events, emptyText }: ScheduleListProps) {
 function DealerList({ dealers, emptyText }: DealerListProps) {
   if (!dealers.length) {
     return (
-      <Text size="md" muted leading="relaxed">
+      <Text size="md" muted>
         {emptyText}
       </Text>
     );
@@ -189,10 +189,10 @@ function DealerList({ dealers, emptyText }: DealerListProps) {
           <Heading level={3} size="sm" className="text-ink">
             {dealer.dealerName}
           </Heading>
-          <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+          <Text size="caption" className="text-ink-muted">
             {dealer.state}
           </Text>
-          <Text asChild size="md" className="mt-2 text-ink-muted" leading="relaxed">
+          <Text asChild size="md" className="mt-2 text-ink-muted">
             <p>
               {dealer.address}
               <br />

@@ -709,7 +709,7 @@ export function ConciergePageShell() {
   if (nextFieldAfterCurrent) {
     nextStepContent = (
       <>
-        <Text className="font-semibold text-ink" leading="normal">
+        <Text className="type-title-sm text-ink">
           {getFieldLabel(nextFieldAfterCurrent.id)}
         </Text>
         {FIELD_DESCRIPTIONS[nextFieldAfterCurrent.id] ? (
@@ -726,7 +726,7 @@ export function ConciergePageShell() {
         <button
           type="button"
           onClick={handleBuildReview}
-          className="w-full rounded-full bg-brand px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+          className="w-full rounded-full bg-brand px-4 py-2 type-button text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
           disabled={!Object.keys(buildState).length}
         >
           Send build for review
@@ -739,9 +739,8 @@ export function ConciergePageShell() {
     <div className="space-y-8" id="concierge-workshop" tabIndex={-1}>
       <header className="space-y-3">
         <Text
-          size="xs"
-          className="font-semibold tracking-[0.25em] text-ink-muted"
-          leading="normal"
+          size="label-tight"
+          muted
         >
           Perazzi Build Planner
         </Text>
@@ -786,14 +785,14 @@ export function ConciergePageShell() {
         >
           <div className="flex items-center justify-between gap-3 border-b border-border/70 pb-3">
             <div>
-              <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
+              <Text size="label-tight" muted>
                 Conversation
               </Text>
               <Text muted>Context carries across each message.</Text>
             </div>
             <div className="flex items-center gap-3">
               {pending || isTyping ? (
-                <div className="flex items-center gap-2 text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+                <div className="flex items-center gap-2 type-label-tight text-ink-muted">
                   <span className="relative flex h-5 w-5 items-center justify-center">
                     <span className="absolute inline-flex h-full w-full animate-spin rounded-full border-2 border-border/70 border-t-transparent" />
                     <span className="inline-flex h-2 w-2 rounded-full bg-ink" />
@@ -804,7 +803,7 @@ export function ConciergePageShell() {
               <button
                 type="button"
                 onClick={handleClearChat}
-                className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
+                className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 type-button text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
               >
                 Clear chat
               </button>
@@ -824,12 +823,11 @@ export function ConciergePageShell() {
                 Something went wrong reaching the concierge. Please try again.
               </Text>
             ) : null}
-            <label
-              htmlFor="concierge-question"
-              className="block text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted"
-            >
-              Ask the workshop
-            </label>
+            <Text asChild size="label-tight" className="text-ink-muted">
+              <label htmlFor="concierge-question">
+                Ask the workshop
+              </label>
+            </Text>
             <div className="flex flex-col gap-3 sm:flex-row">
               <textarea
                 id="concierge-question"
@@ -837,13 +835,13 @@ export function ConciergePageShell() {
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask about platforms, fitting, service, or heritage…"
-                className="min-h-24 flex-1 rounded-2xl border border-border bg-card/70 px-3 py-2 text-sm sm:text-base text-ink shadow-soft backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+                className="min-h-24 flex-1 rounded-2xl border border-border bg-card/70 px-3 py-2 type-body-sm text-ink shadow-soft backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
                 disabled={pending}
               />
               <button
                 type="button"
                 onClick={handleSend}
-                className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-2xl bg-brand px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-card shadow-soft ring-1 ring-black/10 transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-2xl bg-brand px-4 py-2 type-button text-card shadow-soft ring-1 ring-black/10 transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-70"
                 disabled={pending || !draft.trim()}
               >
                 Send
@@ -860,12 +858,12 @@ export function ConciergePageShell() {
         >
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
+              <Text size="label-tight" muted>
                 Build navigator
               </Text>
               <button
                 type="button"
-                className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted transition hover:text-ink focus-ring"
+                className="type-button text-ink-muted transition hover:text-ink focus-ring"
                 onClick={resetBuild}
               >
                 Reset
@@ -878,7 +876,7 @@ export function ConciergePageShell() {
             ) : null}
 
             <div className="space-y-2 rounded-2xl border border-border/70 bg-card/60 px-3 py-3 shadow-soft backdrop-blur-sm">
-              <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
+              <Text size="label-tight" muted>
                 Current Build Category
               </Text>
               <Text className="text-ink" leading="normal">
@@ -887,12 +885,12 @@ export function ConciergePageShell() {
             </div>
 
             <div className="space-y-2 rounded-2xl border border-border/70 bg-card/60 px-3 py-3 shadow-soft backdrop-blur-sm">
-              <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
+              <Text size="label-tight" muted>
                 Current step
               </Text>
               {nextField ? (
                 <>
-                  <Text className="font-semibold text-ink" leading="normal">
+                  <Text className="type-title-sm text-ink">
                     {getFieldLabel(nextField.id)}
                   </Text>
                   {FIELD_DESCRIPTIONS[nextField.id] ? (
@@ -912,7 +910,7 @@ export function ConciergePageShell() {
                                 setHighlightedOption({ fieldId: nextField.id, value: opt.value });
                               }}
                               className={clsx(
-                                "w-full rounded-xl border bg-card/60 px-3 py-2 text-left text-sm font-semibold shadow-soft transition",
+                                "w-full rounded-xl border bg-card/60 px-3 py-2 text-left type-title-sm shadow-soft transition",
                                 isHighlighted
                                   ? "border-ink/40 bg-card/85 text-ink"
                                   : "border-border/70 text-ink-muted hover:border-ink/30 hover:bg-card/80 hover:text-ink",
@@ -926,7 +924,7 @@ export function ConciergePageShell() {
                       <button
                         type="button"
                         onClick={handleSelectHighlighted}
-                        className="mt-2 inline-flex w-full min-h-10 items-center justify-center rounded-full bg-brand px-3 py-2 text-center text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+                        className="mt-2 inline-flex w-full min-h-10 items-center justify-center rounded-full bg-brand px-3 py-2 text-center type-button text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
                         disabled={!highlightedOption || highlightedOption.fieldId !== nextField.id}
                       >
                         Select
@@ -936,14 +934,14 @@ export function ConciergePageShell() {
                         onClick={() => {
                           setDetailsDrawerOpen(true);
                         }}
-                        className="mt-2 inline-flex w-full min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-center text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
+                        className="mt-2 inline-flex w-full min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-center type-button text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
                       >
                         {infoLoading ? "Loading details…" : "View More Details"}
                       </button>
                       <button
                         type="button"
                         onClick={handleExplainCurrent}
-                        className="mt-2 inline-flex w-full min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-center text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
+                        className="mt-2 inline-flex w-full min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-center type-button text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
                       >
                         Explain these options
                       </button>
@@ -969,12 +967,12 @@ export function ConciergePageShell() {
                 onClick={() => {
                   setBuildSheetDrawerOpen(true);
                 }}
-                className="w-full rounded-full border border-perazzi-red bg-perazzi-red px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:border-ink hover:text-card"
+                className="w-full rounded-full border border-perazzi-red bg-perazzi-red px-3 py-2 text-center type-button text-white transition hover:border-ink hover:text-card"
               >
                 View Build Sheet
               </button>
               <div className="space-y-2 rounded-2xl border border-border/70 bg-card/70 px-3 py-3 shadow-soft backdrop-blur-sm">
-                <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
+                <Text size="label-tight" muted>
                   Next step
                 </Text>
                 {nextStepContent}
@@ -993,7 +991,7 @@ export function ConciergePageShell() {
               onClick={() => {
                 setSelectedInfoCard(null);
               }}
-              className="absolute right-4 top-4 rounded-full border border-border/70 bg-card/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/85 hover:text-ink"
+              className="absolute right-4 top-4 rounded-full border border-border/70 bg-card/70 px-3 py-1 type-button text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/85 hover:text-ink"
             >
               Close
             </button>
@@ -1019,45 +1017,32 @@ export function ConciergePageShell() {
                 <div className="grid gap-2">
                   {selectedInfoCard.platform ? (
                     <Text asChild className="text-ink" leading="normal">
-                      <p>
-                        <span className="font-semibold">Platform:</span> {selectedInfoCard.platform}
-                      </p>
+                      <p>Platform: {selectedInfoCard.platform}</p>
                     </Text>
                   ) : null}
                   {selectedInfoCard.grade ? (
                     <Text asChild className="text-ink" leading="normal">
-                      <p>
-                        <span className="font-semibold">Grade:</span> {selectedInfoCard.grade}
-                      </p>
+                      <p>Grade: {selectedInfoCard.grade}</p>
                     </Text>
                   ) : null}
                   {selectedInfoCard.gauges?.length ? (
                     <Text asChild className="text-ink" leading="normal">
-                      <p>
-                        <span className="font-semibold">Gauges:</span> {selectedInfoCard.gauges.join(", ")}
-                      </p>
+                      <p>Gauges: {selectedInfoCard.gauges.join(", ")}</p>
                     </Text>
                   ) : null}
                   {selectedInfoCard.triggerTypes?.length ? (
                     <Text asChild className="text-ink" leading="normal">
-                      <p>
-                        <span className="font-semibold">Trigger types:</span> {selectedInfoCard.triggerTypes.join(", ")}
-                      </p>
+                      <p>Trigger types: {selectedInfoCard.triggerTypes.join(", ")}</p>
                     </Text>
                   ) : null}
                   {selectedInfoCard.recommendedPlatforms?.length ? (
                     <Text asChild className="text-ink" leading="normal">
-                      <p>
-                        <span className="font-semibold">Recommended platforms:</span>{" "}
-                        {selectedInfoCard.recommendedPlatforms.join(", ")}
-                      </p>
+                      <p>Recommended platforms: {selectedInfoCard.recommendedPlatforms.join(", ")}</p>
                     </Text>
                   ) : null}
                   {selectedInfoCard.popularModels?.length ? (
                     <Text asChild className="text-ink" leading="normal">
-                      <p>
-                        <span className="font-semibold">Popular models:</span> {selectedInfoCard.popularModels.join(", ")}
-                      </p>
+                      <p>Popular models: {selectedInfoCard.popularModels.join(", ")}</p>
                     </Text>
                   ) : null}
                 </div>

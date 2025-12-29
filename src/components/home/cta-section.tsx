@@ -43,7 +43,7 @@ export function CTASection({ finale }: CTASectionProps) {
           id="final-cta-heading"
           level={2}
           size="lg"
-          className="text-2xl sm:text-3xl tracking-tight text-ink"
+          className="text-ink"
         >
           Join the legacy
         </Heading>

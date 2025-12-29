@@ -38,11 +38,11 @@ export default async function HomePage() {
                 id="home-guide-heading"
                 level={2}
                 size="xl"
-                className="font-black uppercase italic tracking-[0.35em] text-ink"
+                className="text-ink"
               >
                 {homeData.guideSection.title ?? "Need a guide?"}
               </Heading>
-              <Text className="mb-8 font-light italic text-ink-muted">
+              <Text className="mb-8 text-ink-muted">
                 {homeData.guideSection.intro
                   ?? "Ask how Perazzi links heritage, champions, and today’s platforms, then step into the catalog with a clearer sense of where you belong – whether that’s HT, MX, TM or beyond."}
               </Text>
@@ -59,7 +59,7 @@ export default async function HomePage() {
                 />
                 <Link
                   href={homeData.guideSection.linkHref ?? "/shotguns"}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                  className="type-button inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
                 >
                   {homeData.guideSection.linkLabel ?? "Explore shotguns"}
                   <span aria-hidden="true">→</span>
@@ -67,20 +67,20 @@ export default async function HomePage() {
               </div>
             </div>
 
-            <div className="space-y-3 text-sm sm:text-base font-light italic text-ink-muted">
-              <Text className="font-semibold not-italic text-ink" leading="normal">
+            <div className="space-y-3 type-body text-ink-muted">
+              <Text className="text-ink" leading="normal">
                 Three starting points most Perazzi shooters choose:
               </Text>
               <ul className="space-y-2">
                 {guidePlatforms.map((platform) => (
                   <li key={platform.code}>
-                    <span className="text-base sm:text-lg font-black not-italic text-ink">{platform.name ?? platform.code?.toUpperCase()}</span>
+                    <span className="type-title-sm text-ink">{platform.name ?? platform.code?.toUpperCase()}</span>
                     {" "}–{" "}
                     {platform.description ?? ""}
                   </li>
                 ))}
               </ul>
-              <Text className="font-light italic text-ink-muted">
+              <Text className="text-ink-muted">
                 {homeData.guideSection.closing
                   ?? "The concierge can map your disciplines, preferences, and ambitions to a starting platform and the right next pages to visit."}
               </Text>
@@ -92,7 +92,7 @@ export default async function HomePage() {
           <CTASection finale={homeData.finale} />
         ) : (
           <Section padding="md" className="text-center">
-            <Text size="lg" className="font-semibold" leading="normal">
+            <Text size="lg" className="text-ink" leading="normal">
               Final invitation coming soon
             </Text>
             <Text size="sm" className="mt-2 text-ink-muted">

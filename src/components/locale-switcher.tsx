@@ -27,10 +27,10 @@ export function LocaleSwitcher() {
   };
 
   return (
-    <label className="flex items-center gap-2 text-sm sm:text-base text-ink">
+    <label className="flex items-center gap-2 type-body-sm text-ink">
       <span>{t("label")}</span>
       <select
-        className="min-h-10 rounded-xl border border-border bg-transparent px-3 py-2 text-sm sm:text-base focus-ring"
+        className="min-h-10 rounded-xl border border-border bg-transparent px-3 py-2 type-body-sm focus-ring"
         value={locale}
         onChange={(event) => { handleChange(event.target.value); }}
         disabled={isPending}

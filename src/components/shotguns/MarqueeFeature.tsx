@@ -63,7 +63,7 @@ export function MarqueeFeature({ champion, fallbackText }: MarqueeFeatureProps) 
         />
       </div>
       <div className="space-y-4">
-        <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+        <Text size="label-tight" className="text-ink-muted" leading="normal">
           Champion spotlight
         </Text>
         {champion.name ? (
@@ -72,25 +72,17 @@ export function MarqueeFeature({ champion, fallbackText }: MarqueeFeatureProps) 
           </Heading>
         ) : null}
         {champion.title ? (
-          <Text
-            asChild
-            size="md"
-            className="font-medium text-ink-muted not-italic"
-          >
-            <cite>{champion.title}</cite>
+          <Text asChild size="sm" className="text-ink-muted">
+            <span>{champion.title}</span>
           </Text>
         ) : null}
-        <Text
-          asChild
-          size="lg"
-          className="border-l-2 border-perazzi-red/50 pl-4 text-lg sm:text-xl italic text-ink"
-        >
-          <blockquote>“{champion.quote}”</blockquote>
-        </Text>
+        <blockquote className="type-quote border-l-2 border-perazzi-red/50 pl-4 text-ink">
+          “{champion.quote}”
+        </blockquote>
         {champion.href ? (
           <a
             href={champion.href}
-            className="inline-flex min-h-10 items-center justify-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-perazzi-red focus-ring"
+            className="type-button inline-flex min-h-10 items-center justify-center gap-2 text-perazzi-red focus-ring"
           >
             <span>Meet the champions</span>
             <span aria-hidden="true">→</span>

@@ -49,10 +49,10 @@ export function ArticleFilters({
       aria-busy={isPending}
       className="grid gap-3 rounded-3xl border border-border/70 bg-card/70 p-4 md:grid-cols-3"
     >
-      <label className="flex flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">
+      <label className="flex flex-col type-label-tight text-ink">
         <span>Sort by</span>
         <select
-          className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 text-sm text-ink focus-ring"
+          className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 type-body-sm text-ink focus-ring"
           value={value.sort}
           onChange={(event) => { update({ sort: event.target.value as JournalFilterState["sort"] }); }}
         >
@@ -63,10 +63,10 @@ export function ArticleFilters({
           ))}
         </select>
       </label>
-      <label className="flex flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">
+      <label className="flex flex-col type-label-tight text-ink">
         <span>Filter tags</span>
         <select
-          className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 text-sm text-ink focus-ring"
+          className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 type-body-sm text-ink focus-ring"
           value={value.tag}
           onChange={(event) => { update({ tag: event.target.value }); }}
         >
@@ -78,10 +78,10 @@ export function ArticleFilters({
           ))}
         </select>
       </label>
-      <label className="flex flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">
+      <label className="flex flex-col type-label-tight text-ink">
         <span>Author</span>
         <select
-          className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 text-sm text-ink focus-ring"
+          className="mt-1 rounded-2xl border border-border/70 bg-card px-3 py-2 type-body-sm text-ink focus-ring"
           value={value.author}
           onChange={(event) => { update({ author: event.target.value }); }}
         >

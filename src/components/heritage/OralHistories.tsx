@@ -60,7 +60,7 @@ export function OralHistories({ histories, ui }: OralHistoriesProps) {
       aria-labelledby="oral-histories-heading"
     >
       <div className="space-y-2">
-        <Text size="xs" className="font-semibold tracking-[0.35em] text-ink-muted" leading="normal">
+        <Text size="label-tight" className="text-ink-muted">
           {eyebrow}
         </Text>
         <Heading id="oral-histories-heading" level={2} size="xl" className="text-ink">
@@ -122,11 +122,11 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
         <Text
           asChild
           size="md"
-          className="border-l-2 border-perazzi-red/50 pl-3 italic text-ink-muted"
+          className="border-l-2 border-perazzi-red/50 pl-3 type-quote text-ink-muted"
         >
           <blockquote>“{history.quote}”</blockquote>
         </Text>
-        <Text size="xs" className="text-ink-muted" leading="normal">
+        <Text size="caption" className="text-ink-muted">
           {history.attribution}
         </Text>
       </div>
@@ -157,7 +157,7 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
       {history.transcriptHtml ? (
         <Collapsible open={open} onOpenChange={setOpen}>
           <CollapsibleTrigger
-            className="mt-auto inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink focus-ring"
+            className="mt-auto inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 type-button text-ink focus-ring"
             aria-expanded={open}
             aria-controls={contentId}
           >
@@ -176,7 +176,7 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
           <CollapsibleContent
             id={contentId}
             className={cn(
-              "mt-4 overflow-hidden rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted sm:bg-card/70",
+              "mt-4 overflow-hidden rounded-2xl border border-border/60 bg-card/40 p-4 type-body-sm text-ink-muted sm:bg-card/70",
               prefersReducedMotion
                 ? "transition-none"
                 : "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
@@ -186,7 +186,7 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
           </CollapsibleContent>
           <noscript>
             <SafeHtml
-              className="mt-4 rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted sm:bg-card/70"
+              className="mt-4 rounded-2xl border border-border/60 bg-card/40 p-4 type-body-sm text-ink-muted sm:bg-card/70"
               html={history.transcriptHtml}
             />
           </noscript>

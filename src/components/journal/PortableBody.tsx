@@ -22,13 +22,13 @@ export function PortableBody({ blocks }: PortableBodyProps) {
     <div className="flex flex-col gap-6 lg:flex-row">
       {headingEntries.length ? (
         <nav aria-label="On this page" className="lg:w-64">
-          <a href="#article-content" className="text-xs text-perazzi-red focus-ring">
+          <a href="#article-content" className="type-caption text-perazzi-red focus-ring">
             Skip to article
           </a>
-          <a href="#article-content" className="mt-2 block text-xs text-perazzi-red focus-ring">
+          <a href="#article-content" className="mt-2 block type-caption text-perazzi-red focus-ring">
             Skip ToC
           </a>
-          <ul className="mt-4 space-y-2 text-sm text-ink">
+          <ul className="mt-4 space-y-2 type-body-sm text-ink">
             {headingEntries.map((heading) => (
               <li key={heading.id}>
                 <a

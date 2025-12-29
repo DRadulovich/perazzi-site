@@ -23,7 +23,7 @@ export function CategoryHub({ category, data }: HubProps) {
     <section className="space-y-4" aria-labelledby={`category-${category}`}>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-2">
-          <Text size="xs" muted className="font-semibold">
+          <Text size="label-tight" muted>
             {category.replace(/^[a-z]/, (c) => c.toUpperCase())}
           </Text>
           <Heading id={`category-${category}`} level={2} size="xl" className="text-ink">
@@ -37,7 +37,7 @@ export function CategoryHub({ category, data }: HubProps) {
         </div>
         <Link
           href={data.viewAllHref}
-          className="text-sm font-semibold text-perazzi-red focus-ring"
+          className="type-button text-perazzi-red focus-ring"
           onClick={() => logAnalytics(`CategoryTabClick:${category}`)}
         >
           View all →
@@ -65,7 +65,7 @@ export function CategoryHub({ category, data }: HubProps) {
                 />
               </div>
               <div className="space-y-2 p-5">
-                <Text size="xs" muted className="font-semibold">
+                <Text size="label-tight" muted>
                   {item.author}
                 </Text>
                 <Heading level={3} size="md" className="text-ink">
@@ -84,7 +84,7 @@ export function CategoryHub({ category, data }: HubProps) {
       {visibleCount < data.items.length ? (
         <button
           type="button"
-          className="text-sm font-semibold text-perazzi-red focus-ring"
+          className="type-button text-perazzi-red focus-ring"
           onClick={() => {
             setVisibleCount((prev) => Math.min(prev + 2, data.items.length));
             logAnalytics(`CategoryTabClick:${category}-load-more`);

@@ -71,7 +71,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
       aria-labelledby="service-network-heading"
     >
       <div className="space-y-2">
-        <Text size="xs" muted className="font-semibold">
+        <Text size="label-tight" muted>
           Service network
         </Text>
         <Heading id="service-network-heading" level={2} size="xl" className="text-ink">
@@ -84,10 +84,10 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
         ) : null}
       </div>
       <form role="search" className="flex flex-col gap-3 md:flex-row md:items-end">
-        <label className="flex w-full flex-col text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink">
+        <label className="flex w-full flex-col type-label-tight text-ink">
           <span>Location type</span>
           <select
-            className="mt-1 min-h-10 rounded-2xl border border-border/60 bg-card px-3 py-2 text-sm sm:text-base text-ink focus-ring sm:border-border/70"
+            className="mt-1 min-h-10 rounded-2xl border border-border/60 bg-card px-3 py-2 type-body-sm text-ink focus-ring sm:border-border/70"
             value={filter}
             onChange={(event) => {
               setFilter(event.target.value as ServiceLocationType | "All");
@@ -101,7 +101,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
             ))}
           </select>
         </label>
-        <label className="flex w-full flex-col text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink">
+        <label className="flex w-full flex-col type-label-tight text-ink">
           <span>Search by State or Name</span>
           <Input
             type="search"
@@ -112,13 +112,13 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
           />
         </label>
       </form>
-      <output className="block text-[11px] sm:text-xs leading-relaxed text-ink-muted" aria-live="polite">
+      <output className="block type-caption text-ink-muted" aria-live="polite">
         {filteredLocations.length} locations available.
       </output>
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         <ul className="space-y-4">
           {filteredLocations.length === 0 ? (
-            <li className="rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted sm:bg-card/70 sm:border-border/70">
+            <li className="rounded-2xl border border-border/60 bg-card/40 p-4 type-body-sm text-ink-muted sm:bg-card/70 sm:border-border/70">
               No locations match your filters. Try clearing the search or selecting a different type.
             </li>
           ) : (
@@ -140,25 +140,25 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
                       logAnalytics(`FinderResultClick:${location.id}`);
                     }}
                   >
-                    <Text size="xs" muted className="font-semibold">
+                    <Text size="label-tight" muted>
                       {location.type}
                     </Text>
                     <Heading level={3} size="md" className="text-ink">
                       {location.name}
                     </Heading>
                     <SafeHtml
-                      className="text-sm leading-relaxed text-ink-muted"
+                      className="type-body-sm text-ink-muted"
                       html={location.addressHtml}
                     />
-                    <div className="text-sm leading-relaxed text-ink">
+                    <div className="type-body-sm text-ink">
                       {location.contact ? (
                         <div>
-                          <span className="font-semibold">Contact:</span> {location.contact}
+                          <span>Contact:</span> {location.contact}
                         </div>
                       ) : null}
                       {location.phone ? (
                         <div>
-                          <span className="font-semibold">Phone:</span> {location.phone}
+                          <span>Phone:</span> {location.phone}
                         </div>
                       ) : null}
                       {location.email ? (
@@ -179,7 +179,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
                     </div>
                     {location.notesHtml ? (
                       <SafeHtml
-                        className="text-[11px] sm:text-xs leading-relaxed text-ink-muted"
+                        className="type-caption text-ink-muted"
                         html={location.notesHtml}
                       />
                     ) : null}
@@ -203,7 +203,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
             href={mapLinkHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
+            className="type-button inline-flex items-center gap-2 text-perazzi-red focus-ring"
           >
             {directionsLabel}
             <span aria-hidden="true">→</span>
@@ -211,7 +211,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
           </a>
           <a
             href="/service/request"
-            className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
+            className="type-button inline-flex items-center gap-2 text-perazzi-red focus-ring"
             onClick={() => logAnalytics("FinderResultClick:request")}
           >
             {primaryLabel}

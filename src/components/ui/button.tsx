@@ -26,11 +26,11 @@ const variantClasses: Record<ButtonVariant, string> = {
 
 const sizeClasses: Record<ButtonSize, string> = {
   // Compact button: micro/secondary actions
-  sm: "text-[11px] sm:text-xs px-sm py-2 rounded-xl",
+  sm: "type-button px-sm py-2 rounded-xl",
   // Default button: primary actions on mobile, secondary on larger screens
-  md: "text-[11px] sm:text-xs px-lg py-sm rounded-xl",
+  md: "type-button px-lg py-sm rounded-xl",
   // Large button: prominent CTAs
-  lg: "text-sm sm:text-base px-xl py-sm rounded-xl",
+  lg: "type-button-lg px-xl py-sm rounded-xl",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -51,7 +51,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         type={type as ComponentPropsWithoutRef<"button">["type"]}
         className={cn(
-          "focus-ring relative inline-flex min-h-10 items-center justify-center gap-xs font-medium uppercase tracking-[0.2em] transition-colors duration-150 disabled:pointer-events-none disabled:opacity-60",
+          "focus-ring relative inline-flex min-h-10 items-center justify-center gap-xs transition-colors duration-150 disabled:pointer-events-none disabled:opacity-60",
           variantClasses[variant],
           sizeClasses[size],
           className,

@@ -23,7 +23,7 @@ export function JournalSearch() {
         logAnalytics("SearchSubmitted");
       }}
     >
-      <label className="flex w-full flex-col text-xs font-semibold uppercase tracking-[0.3em] text-ink">
+      <label className="flex w-full flex-col type-label-tight text-ink">
         <span>Search the journal</span>
         <Input
           type="search"

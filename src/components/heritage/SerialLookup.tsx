@@ -85,20 +85,20 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
               id="serial-lookup-heading"
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-white"
+              className="text-white"
             >
               {heading}
             </Heading>
-            <Text className="font-light italic text-white/70" leading="relaxed">
+            <Text className="text-white/70">
               {subheading}
             </Text>
-            <Text className="text-white/70 md:text-lg">
+            <Text size="md" className="text-white/70">
               {instructions}
             </Text>
           </div>
           <form action={formAction} className="space-y-4" noValidate>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-              <label className="flex-1 text-sm font-medium text-white" htmlFor="serial-input">
+              <label className="flex-1 type-label-tight text-white" htmlFor="serial-input">
                 <span className="block">Serial Number</span>
                 <Input
                   id="serial-input"
@@ -108,7 +108,7 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
                   value={serial}
                   onChange={(event) => { setSerial(event.target.value); }}
                   className={cn(
-                    "mt-2 border-perazzi-black/50 bg-white/25 px-4 py-3 text-sm sm:text-base text-white",
+                    "mt-2 border-perazzi-black/50 bg-white/25 px-4 py-3 type-body-sm text-white",
                     "placeholder:text-white/70 focus:border-perazzi-red",
                   )}
                   aria-describedby={errorId}
@@ -120,7 +120,6 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
               <Text
                 asChild
                 className="text-perazzi-red"
-                leading="normal"
               >
                 <p id="serial-lookup-error">{state.message}</p>
               </Text>
@@ -147,7 +146,7 @@ function LookupResult({ state, emptyStateText }: Readonly<{ state: SerialLookupF
 
   if (pending) {
     return (
-      <Text asChild className="text-white/70" leading="normal">
+      <Text asChild size="sm" className="text-white/70">
         <p aria-live="polite">Consulting the archives...</p>
       </Text>
     );
@@ -155,7 +154,7 @@ function LookupResult({ state, emptyStateText }: Readonly<{ state: SerialLookupF
 
   if (state.status === "idle") {
     return (
-      <Text asChild className="text-white/70" leading="normal">
+      <Text asChild size="sm" className="text-white/70">
         <p aria-live="polite">{emptyStateText}</p>
       </Text>
     );
@@ -168,29 +167,29 @@ function LookupResult({ state, emptyStateText }: Readonly<{ state: SerialLookupF
   const { data } = state;
   return (
     <div className="rounded-2xl border border-perazzi-black/50 bg-perazzi-black/40 p-4 shadow-soft sm:bg-perazzi-black/70 md:p-6" aria-live="polite">
-      <Text size="xs" className="font-semibold tracking-[0.35em] text-white/70" leading="normal">
+      <Text size="label-tight" className="text-white/70">
         Record Found
       </Text>
       <Heading level={3} size="xl" className="mt-2 text-white">
         {data.year}
       </Heading>
-      <Text className="text-white/70" leading="normal">
+      <Text size="sm" className="text-white/70">
         Proof Code: {data.proofCode}
       </Text>
-      <dl className="mt-4 space-y-1 text-sm text-white/70">
+      <dl className="mt-4 space-y-1 type-body-sm text-white/70">
         <div className="flex items-center justify-between">
-          <Text asChild className="font-semibold text-white" leading="normal">
+          <Text asChild size="sm" className="type-nav text-white">
             <dt>Serial</dt>
           </Text>
-          <Text asChild className="text-white/70" leading="normal">
+          <Text asChild size="sm" className="text-white/70">
             <dd>{data.serial.toLocaleString()}</dd>
           </Text>
         </div>
         <div className="flex items-center justify-between">
-          <Text asChild className="font-semibold text-white" leading="normal">
+          <Text asChild size="sm" className="type-nav text-white">
             <dt>Production Range:</dt>
           </Text>
-          <Text asChild className="text-white/70" leading="normal">
+          <Text asChild size="sm" className="text-white/70">
             <dd>
               {data.range.start.toLocaleString()}-
               {data.range.end ? data.range.end.toLocaleString() : "present"}
@@ -199,10 +198,10 @@ function LookupResult({ state, emptyStateText }: Readonly<{ state: SerialLookupF
         </div>
         {data.model ? (
           <div className="flex items-center justify-between">
-            <Text asChild className="font-semibold text-white" leading="normal">
+            <Text asChild size="sm" className="type-nav text-white">
               <dt>Model Lineage:</dt>
             </Text>
-            <Text asChild className="text-white/70" leading="normal">
+            <Text asChild size="sm" className="text-white/70">
               <dd>{data.model}</dd>
             </Text>
           </div>

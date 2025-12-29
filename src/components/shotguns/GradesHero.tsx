@@ -3,6 +3,7 @@
 import Image from "next/image";
 import type { GradeSeries } from "@/types/catalog";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { Heading, Text } from "@/components/ui";
 
 type GradesHeroProps = {
   hero: {
@@ -36,13 +37,13 @@ export function GradesHero({ hero }: GradesHeroProps) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/50 to-transparent" />
         <div className="absolute inset-0 flex flex-col justify-end px-6 pb-10 sm:px-12">
-          <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">
+          <Heading level={1} size="display" className="text-white">
             {hero.title}
-          </h1>
+          </Heading>
           {hero.subheading ? (
-            <p className="mt-3 max-w-2xl text-sm text-white/75">
+            <Text size="sm" className="mt-3 max-w-2xl text-white/75">
               {hero.subheading}
-            </p>
+            </Text>
           ) : null}
         </div>
       </div>

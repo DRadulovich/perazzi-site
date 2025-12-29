@@ -51,11 +51,11 @@ export function MetaBar({ article }: MetaBarProps) {
   return (
     <aside
       aria-label="Article meta"
-      className="sticky top-6 space-y-4 rounded-2xl border border-border/70 bg-card/70 p-4 text-sm text-ink"
+      className="sticky top-6 space-y-4 rounded-2xl border border-border/70 bg-card/70 p-4 type-body-sm text-ink"
     >
       {reduceMotion ? null : (
         <div>
-          <Text size="xs" className="tracking-[0.3em] text-ink-muted" leading="normal">
+          <Text size="label-tight" className="text-ink-muted">
             Progress
           </Text>
             <div className="mt-2 h-2 w-full rounded-full bg-border">
@@ -66,7 +66,7 @@ export function MetaBar({ article }: MetaBarProps) {
             </div>
         </div>
       )}
-      <Text className="font-semibold" leading="normal">
+      <Text size="label-tight" className="text-ink" leading="normal">
         Share
       </Text>
       <button

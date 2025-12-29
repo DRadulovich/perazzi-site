@@ -239,7 +239,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
       <div className="relative z-10 flex flex-1">
         <div className="mx-auto flex w-full max-w-5xl flex-col items-center justify-center gap-2 px-6 pb-16 text-center sm:px-2 lg:gap-2 lg:pb-24">
           <p
-            className={`text-[11px] sm:text-xs font-bold uppercase tracking-[0.4em] text-white/80 transition-opacity duration-700 motion-reduce:transition-none ${
+            className={`type-label text-white/80 transition-opacity duration-700 motion-reduce:transition-none ${
               mediaLoaded ? "opacity-100" : "opacity-0"
             }`}
           >
@@ -256,13 +256,13 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
               type="button"
               ref={triggerRef}
               onClick={openManifesto}
-              className="flex flex-wrap justify-center gap-2 bg-transparent text-balance text-2xl font-bold leading-[1.12] text-white outline-none sm:text-3xl lg:text-4xl focus-ring cursor-pointer border-0 p-0"
+              className="flex flex-wrap justify-center gap-2 bg-transparent text-balance type-display text-white outline-none focus-ring cursor-pointer border-0 p-0"
             >
               <CleanText value={heroHeading} />
             </button>
           </h1>
           {hero.background.caption ? (
-            <p className="prose prose-base prose-invert italic font-light mx-auto mt-3 mb-3 max-w-2xl text-white/80 md:prose-lg md:max-w-4xl lg:max-w-4xl">
+            <p className="mx-auto mt-3 mb-3 max-w-2xl type-body-lg text-white/80 md:max-w-4xl lg:max-w-4xl">
               {hero.background.caption}
             </p>
           ) : null}
@@ -277,7 +277,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
               />
               <Link
                 href={secondaryHref}
-                className="inline-flex items-center justify-center rounded-full border border-white/30 bg-white/5 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-white/85 shadow-soft backdrop-blur-sm transition hover:border-white/50 hover:bg-white/10 hover:text-white focus-ring"
+                className="inline-flex items-center justify-center rounded-full border border-white/30 bg-white/5 px-4 py-2 type-button text-white/85 shadow-soft backdrop-blur-sm transition hover:border-white/50 hover:bg-white/10 hover:text-white focus-ring"
               >
                 {secondaryLabel}
               </Link>
@@ -314,7 +314,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
             <h2 id="manifesto-title" className="sr-only">
               Perazzi Manifesto
             </h2>
-            <div className="space-y-3 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] leading-6 text-white">
+            <div className="space-y-3 type-caps text-white">
               {[
                 "A Perazzi is not something you own.",
                 "It is something you grow into.",
@@ -337,7 +337,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
             </div>
             <motion.button
               type="button"
-              className="mt-8 inline-flex items-center justify-center rounded-full px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-white/70 underline underline-offset-4 transition hover:text-white focus-ring"
+              className="mt-8 inline-flex items-center justify-center rounded-full px-4 py-2 type-button text-white/70 underline underline-offset-4 transition hover:text-white focus-ring"
               onClick={closeManifesto}
               initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
               animate={{ opacity: 1 }}

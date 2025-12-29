@@ -14,7 +14,7 @@ export function AtAGlanceStrip({ data }: AtAGlanceStripProps) {
       <dl className="mt-6 grid gap-6 md:grid-cols-3">
         <div>
           <dt>
-            <Text size="xs" muted className="font-semibold">
+            <Text size="label-tight" muted>
               Trigger type
             </Text>
           </dt>
@@ -26,7 +26,7 @@ export function AtAGlanceStrip({ data }: AtAGlanceStripProps) {
         </div>
         <div>
           <dt>
-            <Text size="xs" muted className="font-semibold">
+            <Text size="label-tight" muted>
               Weight distribution
             </Text>
           </dt>
@@ -38,7 +38,7 @@ export function AtAGlanceStrip({ data }: AtAGlanceStripProps) {
         </div>
         <div>
           <dt>
-            <Text size="xs" muted className="font-semibold">
+            <Text size="label-tight" muted>
               Typical disciplines
             </Text>
           </dt>
@@ -55,7 +55,7 @@ export function AtAGlanceStrip({ data }: AtAGlanceStripProps) {
             <a
               key={link.href}
               href={link.href}
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-perazzi-red shadow-soft backdrop-blur-sm transition hover:border-perazzi-red/30 hover:bg-card/85 focus-ring"
+              className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-perazzi-red shadow-soft backdrop-blur-sm transition hover:border-perazzi-red/30 hover:bg-card/85 focus-ring"
             >
               {link.label}
               <span aria-hidden="true">→</span>

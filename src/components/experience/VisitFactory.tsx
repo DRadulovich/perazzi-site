@@ -60,11 +60,11 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
               id="visit-factory-heading"
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-ink"
+              className="text-ink"
             >
               {heading}
             </Heading>
-            <Text size="md" muted leading="relaxed" className="mb-4 font-light italic">
+            <Text size="md" muted className="mb-4">
               {subheading}
             </Text>
             <SafeHtml
@@ -75,25 +75,25 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
             <article className="space-y-5 rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated lg:p-7">
-              <Text size="xs" muted className="font-semibold">
+              <Text size="label-tight" muted>
                 Botticino headquarters
               </Text>
               <Heading level={3} size="sm" className="text-ink">
                 {visit.location.name}
               </Heading>
               <SafeHtml
-                className="text-sm leading-relaxed text-ink-muted"
+                className="type-body-sm text-ink-muted"
                 html={visit.location.addressHtml}
               />
               {visit.location.hoursHtml ? (
                 <SafeHtml
-                  className="text-[11px] sm:text-xs uppercase tracking-[0.25em] text-ink-muted"
+                  className="type-label-tight text-ink-muted"
                   html={visit.location.hoursHtml}
                 />
               ) : null}
               {visit.location.notesHtml ? (
                 <SafeHtml
-                  className="text-sm leading-relaxed text-ink-muted"
+                  className="type-body-sm text-ink-muted"
                   html={visit.location.notesHtml}
                 />
               ) : null}
@@ -133,7 +133,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                   href={mapHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
+                  className="inline-flex items-center gap-2 type-button text-perazzi-red focus-ring"
                 >
                   Open in Maps{" "}
                   <span className="sr-only">(opens in a new tab)</span>
@@ -145,7 +145,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
               {visit.whatToExpectHtml ? (
                 <Collapsible open={expectOpen} onOpenChange={setExpectOpen}>
                   <CollapsibleTrigger
-                    className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left text-sm font-semibold uppercase tracking-[0.2em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
+                    className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left type-label-tight text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
                     aria-expanded={expectOpen}
                     aria-controls="visit-expect-content"
                   >
@@ -162,7 +162,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                   </CollapsibleTrigger>
                   <CollapsibleContent
                     id="visit-expect-content"
-                    className="mt-3 rounded-2xl border border-border/70 bg-card/60 p-4 text-sm leading-relaxed text-ink-muted shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80"
+                    className="mt-3 rounded-2xl border border-border/70 bg-card/60 p-4 type-body-sm text-ink-muted shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80"
                   >
                     <SafeHtml
                       className="prose prose-sm max-w-none text-ink-muted"
@@ -171,12 +171,12 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                   </CollapsibleContent>
                 </Collapsible>
               ) : null}
-              <Button
-                asChild
-                size="lg"
-                onClick={() => logAnalytics("VisitCtaClick")}
-                className="rounded-full px-6 py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em]"
-              >
+                <Button
+                  asChild
+                  size="lg"
+                  onClick={() => logAnalytics("VisitCtaClick")}
+                  className="rounded-full px-6 py-3 type-button"
+                >
                 <a href={visit.cta.href}>{visit.cta.label}</a>
               </Button>
             </div>

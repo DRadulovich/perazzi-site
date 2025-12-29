@@ -57,14 +57,14 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
         animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: "easeOut" }}
       >
-        <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
+        <p className="type-label text-white/70">
           {hero.eyebrow}
         </p>
-        <h1 className="mt-1 mb-10 flex flex-wrap justify-center gap-2 text-balance text-2xl font-bold leading-[1.12] text-white transition-opacity duration-700 motion-reduce:transition-none sm:text-3xl lg:text-4xl">
+        <h1 className="mt-1 mb-10 flex flex-wrap justify-center gap-2 text-balance type-display text-white transition-opacity duration-700 motion-reduce:transition-none">
           {hero.title}
         </h1>
         <SafeHtml
-          className="prose prose-base prose-invert italic font-light mx-auto mt-3 mb-3 max-w-2xl text-white/80 md:prose-lg md:max-w-4xl lg:max-w-4xl"
+          className="mx-auto mt-3 mb-3 max-w-2xl type-body-lg text-white/80 md:max-w-4xl lg:max-w-4xl"
           html={hero.introHtml}
         />
       </motion.div>
@@ -72,7 +72,7 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
         className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center"
         aria-hidden="true"
       >
-        <span className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/5 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-white/85 shadow-soft backdrop-blur-sm">
+        <span className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/5 px-4 py-2 type-button text-white/85 shadow-soft backdrop-blur-sm">
           <span>Scroll</span>
           <span className="text-lg leading-none">↓</span>
         </span>

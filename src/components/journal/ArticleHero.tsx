@@ -10,17 +10,17 @@ export function ArticleHero({ article }: ArticleHeroProps) {
   const ratio = article.hero.aspectRatio ?? 16 / 9;
   return (
     <header className="space-y-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.35em] text-ink-muted">
+      <p className="type-label text-ink-muted">
         {article.category}
       </p>
-      <h1 className="text-4xl font-semibold text-ink">{article.title}</h1>
+      <h1 className="type-display text-ink">{article.title}</h1>
       {article.dekHtml ? (
         <SafeHtml
-          className="prose prose-lg text-ink-muted"
+          className="type-body-lg text-ink-muted"
           html={article.dekHtml}
         />
       ) : null}
-      <div className="text-sm text-ink-muted">
+      <div className="type-caption text-ink-muted">
         <time dateTime={article.dateISO}>{new Date(article.dateISO).toLocaleDateString()}</time>
         {" · "}
         {article.readingTimeMins} min read

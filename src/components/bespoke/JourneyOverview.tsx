@@ -41,7 +41,7 @@ export function JourneyOverview({ journey }: JourneyOverviewProps) {
               <li key={step.id}>
                 <a
                   href={step.href}
-                  className="group inline-flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/70 px-4 py-3 text-sm font-semibold text-ink shadow-soft backdrop-blur-sm transition-colors hover:border-perazzi-red/40 hover:bg-card/85 focus-ring"
+                  className="group inline-flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/70 px-4 py-3 type-title-sm text-ink shadow-soft backdrop-blur-sm transition-colors hover:border-perazzi-red/40 hover:bg-card/85 focus-ring"
                 >
                   <span>{step.label}</span>
                   <span
@@ -56,7 +56,7 @@ export function JourneyOverview({ journey }: JourneyOverviewProps) {
           </ol>
         </nav>
         <SafeHtml
-          className="text-[11px] sm:text-xs leading-relaxed text-ink-muted"
+          className="type-caption text-ink-muted"
           html={journey.disclaimerHtml}
         />
       </div>

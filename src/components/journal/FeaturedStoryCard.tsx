@@ -46,7 +46,7 @@ export function FeaturedStoryCard({ article, hero, summary }: FeaturedStoryCardP
           {summary ? (
             <SafeHtml
               as="figcaption"
-              className="px-6 text-sm text-ink-muted"
+              className="px-6 type-body-sm text-ink-muted"
               html={summary}
             />
           ) : null}
