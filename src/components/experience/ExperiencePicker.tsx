@@ -72,11 +72,7 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
     <section
       ref={analyticsRef}
       data-analytics-id="ExperiencePickerSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
-      style={{
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
-      }}
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
       aria-labelledby="experience-picker-heading"
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -92,16 +88,7 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
           className="absolute inset-0 bg-[color:var(--scrim-soft)]"
           aria-hidden
         />
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
-              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%), " +
-              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%)",
-          }}
-          aria-hidden
-        />
+        <div className="absolute inset-0 overlay-gradient-canvas" aria-hidden />
       </div>
 
       <Container size="xl" className="relative z-10">
@@ -111,11 +98,11 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
               id="experience-picker-heading"
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-ink"
+              className="text-ink"
             >
               {heading}
             </Heading>
-            <Text size="md" muted leading="relaxed" className="mb-4 font-light italic">
+            <Text size="md" className="type-section-subtitle text-ink-muted mb-4">
               {subheading}
             </Text>
           </div>
@@ -159,8 +146,6 @@ function ExperiencePickerCard({
   microLabel,
   onAnchorClick,
 }: ExperiencePickerCardProps) {
-  const aspect = 3 / 2;
-
   return (
     <motion.article
       className="h-full"
@@ -180,10 +165,7 @@ function ExperiencePickerCard({
           }
         }}
       >
-        <div
-          className="relative"
-          style={{ aspectRatio: aspect }}
-        >
+        <div className="relative aspect-[3/2]">
           <Image
             src={item.media.url}
             alt={item.media.alt}
@@ -198,16 +180,16 @@ function ExperiencePickerCard({
           />
         </div>
         <div className="flex flex-1 flex-col gap-3 px-6 py-5">
-          <Text size="xs" muted className="font-semibold">
+          <Text size="label-tight" muted>
             {microLabel}
           </Text>
-          <Heading level={3} size="sm" className="text-ink">
+          <Heading level={3} className="type-card-title text-ink">
             {item.title}
           </Heading>
-          <Text size="md" muted leading="relaxed">
+          <Text className="type-body text-ink-muted" leading="relaxed">
             {item.summary}
           </Text>
-          <span className="mt-auto inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red">
+          <span className="mt-auto inline-flex items-center gap-2 type-button text-perazzi-red">
             {item.ctaLabel}
             <span aria-hidden="true">→</span>
           </span>

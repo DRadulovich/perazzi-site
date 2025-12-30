@@ -33,11 +33,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
     <section
       ref={analyticsRef}
       data-analytics-id="VisitFactorySeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
-      style={{
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
-      }}
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
       aria-labelledby="visit-factory-heading"
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -54,16 +50,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
           className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
-              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%), " +
-              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%)",
-          }}
-          aria-hidden
-        />
+        <div className="absolute inset-0 overlay-gradient-canvas" aria-hidden />
       </div>
 
       <Container size="xl" className="relative z-10">
@@ -73,40 +60,40 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
               id="visit-factory-heading"
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-ink"
+              className="text-ink"
             >
               {heading}
             </Heading>
-            <Text size="md" muted leading="relaxed" className="mb-4 font-light italic">
+            <Text size="md" className="type-section-subtitle text-ink-muted mb-4">
               {subheading}
             </Text>
             <SafeHtml
-              className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg md:max-w-4xl lg:max-w-4xl prose-headings:text-ink prose-strong:text-ink"
+              className="prose-journal max-w-none text-ink-muted md:max-w-4xl lg:max-w-4xl"
               html={visit.introHtml}
             />
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
             <article className="space-y-5 rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated lg:p-7">
-              <Text size="xs" muted className="font-semibold">
+              <Text size="label-tight" muted>
                 Botticino headquarters
               </Text>
-              <Heading level={3} size="sm" className="text-ink">
+              <Heading level={3} size="sm" className="type-card-title text-ink">
                 {visit.location.name}
               </Heading>
               <SafeHtml
-                className="text-sm leading-relaxed text-ink-muted"
+                className="type-card-body text-ink-muted"
                 html={visit.location.addressHtml}
               />
               {visit.location.hoursHtml ? (
                 <SafeHtml
-                  className="text-[11px] sm:text-xs uppercase tracking-[0.25em] text-ink-muted"
+                  className="type-label-tight text-ink-muted"
                   html={visit.location.hoursHtml}
                 />
               ) : null}
               {visit.location.notesHtml ? (
                 <SafeHtml
-                  className="text-sm leading-relaxed text-ink-muted"
+                  className="type-card-body text-ink-muted"
                   html={visit.location.notesHtml}
                 />
               ) : null}
@@ -116,8 +103,8 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                 </p>
                 <div
                   id={mapPanelId}
-                  className="relative overflow-hidden rounded-2xl border border-border/70 bg-(--color-canvas) shadow-soft ring-1 ring-border/70"
-                  style={{ aspectRatio: visit.location.staticMap.aspectRatio ?? 3 / 2 }}
+                  className="relative overflow-hidden rounded-2xl border border-border/70 bg-(--color-canvas) shadow-soft ring-1 ring-border/70 aspect-dynamic"
+                  style={{ "--aspect-ratio": visit.location.staticMap.aspectRatio ?? 3 / 2 }}
                   aria-live="polite"
                 >
                   {visit.location.mapEmbedSrc ? (
@@ -146,7 +133,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                   href={mapHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
+                  className="inline-flex items-center gap-2 type-button text-perazzi-red focus-ring"
                 >
                   Open in Maps{" "}
                   <span className="sr-only">(opens in a new tab)</span>
@@ -158,7 +145,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
               {visit.whatToExpectHtml ? (
                 <Collapsible open={expectOpen} onOpenChange={setExpectOpen}>
                   <CollapsibleTrigger
-                    className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left text-sm font-semibold uppercase tracking-[0.2em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
+                    className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left type-card-title text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
                     aria-expanded={expectOpen}
                     aria-controls="visit-expect-content"
                   >
@@ -175,21 +162,21 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                   </CollapsibleTrigger>
                   <CollapsibleContent
                     id="visit-expect-content"
-                    className="mt-3 rounded-2xl border border-border/70 bg-card/60 p-4 text-sm leading-relaxed text-ink-muted shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80"
+                    className="mt-3 rounded-2xl border border-border/70 bg-card/60 p-4 type-card-body text-ink-muted shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80"
                   >
                     <SafeHtml
-                      className="prose prose-sm max-w-none text-ink-muted"
+                      className="max-w-none type-card-body text-ink-muted"
                       html={visit.whatToExpectHtml}
                     />
                   </CollapsibleContent>
                 </Collapsible>
               ) : null}
-              <Button
-                asChild
-                size="lg"
-                onClick={() => logAnalytics("VisitCtaClick")}
-                className="rounded-full px-6 py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em]"
-              >
+                <Button
+                  asChild
+                  size="lg"
+                  onClick={() => logAnalytics("VisitCtaClick")}
+                  className="rounded-full px-6 py-3 type-button"
+                >
                 <a href={visit.cta.href}>{visit.cta.label}</a>
               </Button>
             </div>

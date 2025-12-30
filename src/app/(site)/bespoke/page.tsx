@@ -44,11 +44,11 @@ export default async function BespokeBuildPage() {
               id="bespoke-guide-heading"
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-ink"
+              className="text-ink"
             >
               {bespokeGuide?.heading ?? "Need a bespoke guide?"}
             </Heading>
-            <Text className="mb-8 font-light italic text-ink-muted">
+            <Text className="mb-8 type-subsection text-ink-muted">
               {bespokeGuide?.body
                 ?? "Ask how fittings, platform choices, engraving, and finishing should flow for you—so your visit to the atelier is focused, confident, and personal."}
             </Text>
@@ -65,7 +65,7 @@ export default async function BespokeBuildPage() {
               />
               <Link
                 href={bespokeGuide?.linkHref ?? "/experience/visit"}
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="type-button inline-flex items-center justify-center gap-2 pill border border-perazzi-red/60 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 {bespokeGuide?.linkLabel ?? "Request a visit"}
                 <span aria-hidden="true">→</span>
@@ -73,8 +73,8 @@ export default async function BespokeBuildPage() {
             </div>
           </div>
 
-          <div className="space-y-3 text-sm sm:text-base font-light italic text-ink-muted">
-              <Text className="font-semibold not-italic text-ink" leading="normal">
+          <div className="space-y-3 type-subsection text-ink-muted">
+              <Text className="type-card-title text-ink !text-2xl" leading="normal">
                 Three things we’ll map together:
               </Text>
               <ul className="space-y-2">
@@ -88,13 +88,13 @@ export default async function BespokeBuildPage() {
                       const [label, ...rest] = item.split("—");
                       return (
                         <li key={item}>
-                          <span className="text-base sm:text-lg font-black not-italic text-ink">{label.trim()}</span>
+                          <span className="text-ink">{label.trim()}</span>
                           {rest.length ? ` — ${rest.join("—").trim()}` : ""}
                         </li>
                       );
                     })}
               </ul>
-              <Text className="font-light italic text-ink-muted">
+              <Text className="text-ink-muted">
                 The concierge aligns your disciplines, aesthetic cues, and schedule so the atelier session runs smoothly.
               </Text>
             </div>
@@ -112,7 +112,7 @@ export default async function BespokeBuildPage() {
         aria-labelledby="expert-section-heading"
       >
         <div className="space-y-2">
-          <Text size="xs" muted className="font-semibold">
+          <Text size="label-tight" muted>
             {expertsIntro?.eyebrow ?? "Atelier team"}
           </Text>
           <Heading id="expert-section-heading" level={2} size="xl" className="text-ink">

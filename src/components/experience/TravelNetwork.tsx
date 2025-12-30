@@ -59,11 +59,7 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
     <section
       ref={analyticsRef}
       data-analytics-id="TravelNetworkSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
-      style={{
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
-      }}
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
       aria-labelledby="travel-network-heading"
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -80,16 +76,7 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
           className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
-              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%), " +
-              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%)",
-          }}
-          aria-hidden
-        />
+        <div className="absolute inset-0 overlay-gradient-canvas" aria-hidden />
       </div>
 
       <Container size="xl" className="relative z-10">
@@ -99,14 +86,14 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
               id="travel-network-heading"
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-ink"
+              className="text-ink"
             >
               {heading}
             </Heading>
-            <Text size="md" muted leading="relaxed" className="font-light italic">
+            <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
               {lead}
             </Text>
-            <Text size="md" muted leading="relaxed">
+            <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
               {supporting}
             </Text>
           </div>
@@ -123,7 +110,7 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
                 role="tab"
                 aria-selected={activeTab === tab.key}
                 className={cn(
-                  "rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring",
+                  "type-label-tight pill border border-border/70 bg-card/60 shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring",
                   activeTab === tab.key
                     ? "border-perazzi-red/60 bg-perazzi-red/10 text-perazzi-red"
                     : "text-ink",
@@ -131,7 +118,7 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
                 onClick={() => { setActiveTab(tab.key); }}
               >
                 {tab.label}
-                <span className="ml-2 text-[0.8em] text-ink-muted">({tab.count})</span>
+                <span className="ml-2 type-caption text-ink-muted">({tab.count})</span>
               </button>
             ))}
           </div>
@@ -153,7 +140,7 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
 function ScheduleList({ events, emptyText }: ScheduleListProps) {
   if (!events.length) {
     return (
-      <Text size="md" muted leading="relaxed">
+      <Text size="md" muted>
         {emptyText}
       </Text>
     );
@@ -166,17 +153,17 @@ function ScheduleList({ events, emptyText }: ScheduleListProps) {
           key={event._id}
           className="rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated md:p-6 lg:p-7"
         >
-          <Text size="xs" muted className="font-semibold">
+          <Text className="type-button text-ink-muted">
             {formatDateRange(event.startDate, event.endDate)}
           </Text>
-          <Heading level={3} size="sm" className="mt-2 text-ink">
+          <Heading level={3} className="mt-2 mb-7 type-card-title text-ink text-3xl">
             {event.eventName}
           </Heading>
-          <Text size="md" muted leading="relaxed">
+          <Text className="type-card-title text-ink-muted">
             {event.eventLocation}
           </Text>
           {event.location ? (
-            <Text size="md" muted leading="relaxed" className="mt-2">
+            <Text size="md" muted className="mt-2">
               {event.location}
             </Text>
           ) : null}
@@ -189,7 +176,7 @@ function ScheduleList({ events, emptyText }: ScheduleListProps) {
 function DealerList({ dealers, emptyText }: DealerListProps) {
   if (!dealers.length) {
     return (
-      <Text size="md" muted leading="relaxed">
+      <Text size="md" muted>
         {emptyText}
       </Text>
     );
@@ -199,13 +186,13 @@ function DealerList({ dealers, emptyText }: DealerListProps) {
     <div className="grid gap-4 md:grid-cols-2">
       {dealers.map((dealer) => (
         <article key={dealer._id} className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated">
-          <Heading level={3} size="sm" className="text-ink">
+          <Heading level={3} className="mb-7 type-card-title text-ink text-3xl">
             {dealer.dealerName}
           </Heading>
-          <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+          <Text className="type-button text-ink-muted">
             {dealer.state}
           </Text>
-          <Text asChild size="md" className="mt-2 text-ink-muted" leading="relaxed">
+          <Text asChild className="mt-2 type-body text-ink-muted">
             <p>
               {dealer.address}
               <br />

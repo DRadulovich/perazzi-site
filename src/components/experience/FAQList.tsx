@@ -34,11 +34,11 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
           id="experience-faq-heading"
           level={2}
           size="xl"
-          className="font-black uppercase italic tracking-[0.35em] text-ink"
+          className="text-ink"
         >
           {title}
         </Heading>
-        <Text size="md" muted leading="relaxed" className="font-light italic">
+        <Text size="md" className="type-section-subtitle text-ink-muted" leading="relaxed">
           {subtitle}
         </Text>
       </div>
@@ -68,11 +68,7 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
     <section
       ref={analyticsRef}
       data-analytics-id="ExperienceFAQSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
-      style={{
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
-      }}
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
       aria-labelledby="experience-faq-heading"
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -89,16 +85,7 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
           className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
-              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%), " +
-              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%)",
-          }}
-          aria-hidden
-        />
+        <div className="absolute inset-0 overlay-gradient-canvas" aria-hidden />
       </div>
 
       <Container size="xl" className="relative z-10">
@@ -126,7 +113,7 @@ function FAQItemCard({ item, index }: FAQItemCardProps) {
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger
-        className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left text-sm font-semibold text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
+        className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left type-card-title text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
         aria-expanded={open}
       >
         {item.q}
@@ -140,9 +127,9 @@ function FAQItemCard({ item, index }: FAQItemCardProps) {
           +
         </span>
       </CollapsibleTrigger>
-      <CollapsibleContent className="mt-2 overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 text-sm leading-relaxed text-ink-muted shadow-soft backdrop-blur-sm sm:bg-card/80">
+      <CollapsibleContent className="mt-2 overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 type-card-body text-ink-muted shadow-soft backdrop-blur-sm sm:bg-card/80">
         <SafeHtml
-          className="prose prose-sm max-w-none text-ink-muted"
+          className="max-w-none type-card-body text-ink-muted"
           html={item.aHtml}
         />
       </CollapsibleContent>

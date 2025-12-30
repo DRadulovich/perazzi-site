@@ -163,11 +163,7 @@ export default async function ExperiencePage() {
         id="experience-visit-planning"
         padding="lg"
         bordered={false}
-        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none! border-t border-none! bg-canvas shadow-none!"
-        style={{
-          marginLeft: "calc(50% - 50vw)",
-          marginRight: "calc(50% - 50vw)",
-        }}
+        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none! border-t border-none! bg-canvas shadow-none! full-bleed"
         aria-labelledby="experience-visit-planning-heading"
       >
         <Container
@@ -179,11 +175,11 @@ export default async function ExperiencePage() {
               id="experience-visit-planning-heading"
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-ink"
+              className="text-ink"
             >
               {visitPlanningHeading}
             </Heading>
-            <Text size="md" muted leading="relaxed" className="mb-8 font-light italic">
+            <Text className="mb-8 type-subsection text-ink-muted" leading="relaxed">
               {visitPlanningIntro}
             </Text>
             <div className="flex flex-wrap justify-start gap-3">
@@ -197,7 +193,7 @@ export default async function ExperiencePage() {
               />
               <Link
                 href={visitPlanningLinkHref}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-sm border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 {visitPlanningLinkLabel}
                 <span aria-hidden="true">→</span>
@@ -205,8 +201,8 @@ export default async function ExperiencePage() {
             </div>
           </div>
 
-          <div className="space-y-3 text-sm sm:text-base font-light italic text-ink-muted">
-            <Text size="md" className="font-semibold not-italic text-ink">
+          <div className="space-y-3 type-subsection text-ink-muted">
+            <Text className="text-ink">
               What the concierge can line up:
             </Text>
             <ul className="space-y-2">
@@ -214,14 +210,14 @@ export default async function ExperiencePage() {
                 const [label, ...rest] = bullet.split(" - ");
                 return (
                   <li key={bullet}>
-                    <span className="text-base sm:text-lg font-black not-italic text-ink">{label}</span>
+                    <span className="text-ink">{label}</span>
                     {" "}-{" "}
                     {rest.join(" - ")}
                   </li>
                 );
               })}
             </ul>
-            <Text size="md" muted leading="relaxed" className="font-light italic">
+            <Text className="text-ink-muted" leading="relaxed">
               {visitPlanningClosing}
             </Text>
           </div>
@@ -232,11 +228,7 @@ export default async function ExperiencePage() {
         id="experience-booking-guide"
         padding="lg"
         bordered={false}
-        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none! border-t border-none! bg-canvas shadow-none!"
-        style={{
-          marginLeft: "calc(50% - 50vw)",
-          marginRight: "calc(50% - 50vw)",
-        }}
+        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none! border-t border-none! bg-canvas shadow-none! full-bleed"
         aria-labelledby="experience-booking-guide-heading"
       >
         <Container
@@ -248,11 +240,11 @@ export default async function ExperiencePage() {
               id="experience-booking-guide-heading"
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-ink"
+              className="text-ink"
             >
               {fittingGuidanceHeading}
             </Heading>
-            <Text size="md" muted leading="relaxed" className="mb-8 font-light italic">
+            <Text className="mb-8 type-subsection text-ink-muted" leading="relaxed">
               {fittingGuidanceIntro}
             </Text>
             <div className="flex flex-wrap justify-start gap-3">
@@ -266,7 +258,7 @@ export default async function ExperiencePage() {
               />
               <Link
                 href={fittingGuidanceLinkHref}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-sm border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 {fittingGuidanceLinkLabel}
                 <span aria-hidden="true">→</span>
@@ -274,8 +266,8 @@ export default async function ExperiencePage() {
             </div>
           </div>
 
-          <div className="space-y-3 text-sm sm:text-base font-light italic text-ink-muted">
-            <Text size="md" className="font-semibold not-italic text-ink">
+          <div className="space-y-3 type-subsection text-ink-muted">
+            <Text className="text-ink">
               What the concierge can clarify:
             </Text>
             <ul className="space-y-2">
@@ -283,14 +275,14 @@ export default async function ExperiencePage() {
                 const [label, ...rest] = bullet.split(" - ");
                 return (
                   <li key={bullet}>
-                    <span className="text-base sm:text-lg font-black not-italic text-ink">{label}</span>
+                    <span className="text-ink">{label}</span>
                     {" "}-{" "}
                     {rest.join(" - ")}
                   </li>
                 );
               })}
             </ul>
-            <Text size="md" muted leading="relaxed" className="font-light italic">
+            <Text className="text-ink-muted" leading="relaxed">
               {fittingGuidanceClosing}
             </Text>
           </div>
@@ -301,11 +293,7 @@ export default async function ExperiencePage() {
         id="experience-travel-guide"
         padding="lg"
         bordered={false}
-        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none! border-t border-none! bg-canvas shadow-none!"
-        style={{
-          marginLeft: "calc(50% - 50vw)",
-          marginRight: "calc(50% - 50vw)",
-        }}
+        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none! border-t border-none! bg-canvas shadow-none! full-bleed"
         aria-labelledby="experience-travel-guide-heading"
       >
         <Container
@@ -317,11 +305,11 @@ export default async function ExperiencePage() {
               id="experience-travel-guide-heading"
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-ink"
+              className="text-ink"
             >
               {travelHeading}
             </Heading>
-            <Text size="md" muted leading="relaxed" className="mb-8 font-light italic">
+            <Text className="mb-8 type-subsection text-ink-muted" leading="relaxed">
               {travelIntro}
             </Text>
             <div className="flex flex-wrap justify-start gap-3">
@@ -335,7 +323,7 @@ export default async function ExperiencePage() {
               />
               <Link
                 href={travelLinkHref}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-sm border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 {travelLinkLabel}
                 <span aria-hidden="true">→</span>
@@ -343,8 +331,8 @@ export default async function ExperiencePage() {
             </div>
           </div>
 
-          <div className="space-y-3 text-sm sm:text-base font-light italic text-ink-muted">
-            <Text size="md" className="font-semibold not-italic text-ink">
+          <div className="space-y-3 type-subsection text-ink-muted">
+            <Text className="text-ink">
               What the concierge can organize:
             </Text>
             <ul className="space-y-2">
@@ -352,14 +340,14 @@ export default async function ExperiencePage() {
                 const [label, ...rest] = bullet.split(" - ");
                 return (
                   <li key={bullet}>
-                    <span className="text-base sm:text-lg font-black not-italic text-ink">{label}</span>
+                    <span className="text-ink">{label}</span>
                     {" "}-{" "}
                     {rest.join(" - ")}
                   </li>
                 );
               })}
             </ul>
-            <Text size="md" muted leading="relaxed" className="font-light italic">
+            <Text className="text-ink-muted" leading="relaxed">
               {travelClosing}
             </Text>
           </div>

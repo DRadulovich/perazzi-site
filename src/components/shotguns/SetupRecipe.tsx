@@ -34,7 +34,7 @@ export function SetupRecipe({
             Editorial guidance
           </Heading>
           <CollapsibleTrigger
-            className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring md:hidden"
+            className="type-button inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-4 py-2 text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring md:hidden"
             aria-controls="setup-recipe-content"
           >
             {resolvedOpen ? "Hide recipe" : "Show recipe"}
@@ -47,7 +47,7 @@ export function SetupRecipe({
         >
           <dl className="grid gap-4 md:grid-cols-3">
             <div>
-              <Text asChild size="xs" className="font-semibold text-ink-muted" leading="normal">
+              <Text asChild size="label-tight" className="text-ink-muted" leading="normal">
                 <dt>POI range</dt>
               </Text>
               <Text asChild size="md" className="mt-2 text-ink" leading="relaxed">
@@ -55,7 +55,7 @@ export function SetupRecipe({
               </Text>
             </div>
             <div>
-              <Text asChild size="xs" className="font-semibold text-ink-muted" leading="normal">
+              <Text asChild size="label-tight" className="text-ink-muted" leading="normal">
                 <dt>Barrel lengths</dt>
               </Text>
               <Text asChild size="md" className="mt-2 text-ink" leading="relaxed">
@@ -63,7 +63,7 @@ export function SetupRecipe({
               </Text>
             </div>
             <div>
-              <Text asChild size="xs" className="font-semibold text-ink-muted" leading="normal">
+              <Text asChild size="label-tight" className="text-ink-muted" leading="normal">
                 <dt>Rib notes</dt>
               </Text>
               <Text asChild size="md" className="mt-2 text-ink" leading="relaxed">

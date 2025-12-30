@@ -50,9 +50,11 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
   if (!verified.length) {
     return (
       <Section padding="md">
-        <blockquote className="text-base sm:text-lg italic leading-relaxed text-ink">
-          “Perazzi heritage is carried by every athlete who chooses calm precision.”
-        </blockquote>
+        <Text asChild className="type-quote text-ink">
+          <blockquote>
+            “Perazzi heritage is carried by every athlete who chooses calm precision.”
+          </blockquote>
+        </Text>
       </Section>
     );
   }
@@ -69,11 +71,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
 
   return (
     <section
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
-      style={{
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
-      }}
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
       aria-labelledby="heritage-champions-heading"
     >
       {/* Full-bleed background image with soft scrim */}
@@ -90,16 +88,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
           className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, color-mix(in srgb, var(--color-black) 24%, transparent) 0%, color-mix(in srgb, var(--color-black) 6%, transparent) 50%, color-mix(in srgb, var(--color-black) 24%, transparent) 100%), " +
-              "linear-gradient(to bottom, color-mix(in srgb, var(--color-black) 100%, transparent) 0%, transparent 75%), " +
-              "linear-gradient(to top, color-mix(in srgb, var(--color-black) 100%, transparent) 0%, transparent 75%)",
-          }}
-          aria-hidden
-        />
+        <div className="absolute inset-0 overlay-gradient-ink" aria-hidden />
       </div>
 
       {/* Foreground glass container */}
@@ -110,11 +99,11 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
               id="heritage-champions-heading"
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-ink"
+              className="text-ink"
             >
               {heading}
             </Heading>
-            <Text className="mb-6 font-light italic text-ink-muted">
+            <Text className="type-section-subtitle mb-6 text-ink-muted">
               {subheading}
             </Text>
           </div>
@@ -129,7 +118,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
                 type="button"
                 aria-pressed={activeDiscipline === null}
                 className={cn(
-                  "rounded-full border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] focus-ring transition",
+                  "pill border type-button focus-ring transition",
                   activeDiscipline === null
                     ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
                     : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
@@ -144,7 +133,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
                   type="button"
                   aria-pressed={activeDiscipline === discipline}
                   className={cn(
-                    "rounded-full border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] focus-ring transition",
+                    "pill border type-button focus-ring transition",
                     activeDiscipline === discipline
                       ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
                       : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
@@ -166,8 +155,8 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
             {/* Left column – names list */}
             <div className="rounded-2xl bg-card/0 p-4 sm:rounded-3xl">
               <Text
-                size="xs"
-                className="mb-3 font-semibold text-ink-muted"
+                size="label-tight"
+                className="mb-3 text-ink-muted"
                 leading="normal"
               >
                 {championsLabel}
@@ -213,7 +202,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
                     key="no-champion"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-sm text-ink-muted"
+                    className="type-body-sm text-ink-muted"
                   >
                     Select a champion on the left to view their story.
                   </motion.p>
@@ -248,18 +237,15 @@ function ChampionNameItem({ champion, isActive, onSelect }: ChampionNameItemProp
         type="button"
         onClick={onSelect}
         className={cn(
-          "group w-full rounded-2xl px-3 py-2 text-left text-sm transition-colors focus-ring",
+          "group w-full rounded-2xl px-3 py-2 text-left transition-colors focus-ring",
           isActive
-            ? "bg-ink text-card"
+            ? "bg-perazzi-red text-card"
             : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
         )}
         aria-pressed={isActive}
       >
-        <span className="block text-sm font-semibold tracking-wide">
-          {champion.name}
-        </span>
         {champion.title ? (
-          <span className="mt-0.5 block text-[11px] sm:text-xs uppercase tracking-[0.25em] text-ink-muted group-hover:text-ink-muted/90">
+          <span className={cn("block type-card-title text-xl text-ink", isActive && "text-white")}>
             {champion.title}
           </span>
         ) : null}
@@ -274,13 +260,10 @@ type ChampionDetailProps = Readonly<{
 }>;
 
 function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
-  const ratio = 3 / 2; // Force 3:2 aspect ratio for champion images
-
   return (
     <>
       <div
-        className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
-        style={{ aspectRatio: ratio }}
+        className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-[3/2]"
       >
         <Image
           src={champion.image.url}
@@ -300,56 +283,51 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
       </div>
       <div className="space-y-4">
         <div className="space-y-1">
-          <Heading level={3} size="sm" className="text-ink">
+          <Heading level={3} className="type-section text-ink border-b border-perazzi-red/40 pb-2">
             {champion.name}
           </Heading>
-          {champion.title ? (
-            <Text size="xs" className="text-ink-muted" leading="normal">
-              {champion.title}
-            </Text>
-          ) : null}
         </div>
-
-        {champion.quote ? (
-          <Text
-            asChild
-            size="md"
-            className="border-l-2 border-perazzi-red/40 pl-3 text-[13px] sm:text-base italic text-ink"
-          >
-            <blockquote>“{champion.quote}”</blockquote>
-          </Text>
-        ) : null}
-
-        {champion.bio ? (
-          <Text className="text-ink-muted">{champion.bio}</Text>
-        ) : null}
 
         {champion.resume &&
         (champion.resume.winOne ||
           champion.resume.winTwo ||
           champion.resume.winThree) ? (
-          <div className="space-y-2">
-            <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+          <div className="space-y-2 mt-7">
+            <Text size="label-tight" className="text-ink-muted">
               Career Highlights
             </Text>
-            <ul className="space-y-1 text-sm leading-relaxed text-ink">
-              {champion.resume.winOne ? <li>• {champion.resume.winOne}</li> : null}
-              {champion.resume.winTwo ? <li>• {champion.resume.winTwo}</li> : null}
-              {champion.resume.winThree ? <li>• {champion.resume.winThree}</li> : null}
+            <ul className="space-y-1 type-card-title text-ink text-2xl list-none mb-7">
+              {champion.resume.winOne ? <li>{champion.resume.winOne}</li> : null}
+              {champion.resume.winTwo ? <li>{champion.resume.winTwo}</li> : null}
+              {champion.resume.winThree ? <li>{champion.resume.winThree}</li> : null}
             </ul>
           </div>
         ) : null}
 
+        {champion.bio ? (
+          <Text className="type-body text-ink-muted mb-7">{champion.bio}</Text>
+        ) : null}
+
+        {champion.quote ? (
+          <Text
+            asChild
+            size="md"
+            className="border-l-2 border-perazzi-red/40 pl-3 font-artisan text-ink text-2xl my-7"
+          >
+            <blockquote>“{champion.quote}”</blockquote>
+          </Text>
+        ) : null}
+
         {champion.disciplines?.length ? (
           <div className="space-y-2">
-            <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+            <Text size="label-tight" className="text-ink-muted">
               Disciplines
             </Text>
-            <ul className="flex flex-wrap gap-2 text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+            <ul className="flex flex-wrap gap-2 type-label-tight text-ink-muted">
               {champion.disciplines.map((discipline) => (
                 <li
                   key={discipline}
-                  className="rounded-full border border-border px-3 py-1"
+                  className="pill border border-border"
                 >
                   {discipline}
                 </li>
@@ -360,14 +338,14 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
 
         {champion.platforms?.length ? (
           <div className="space-y-2">
-            <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+            <Text size="label-tight" className="text-ink-muted">
               Platforms
             </Text>
-            <ul className="flex flex-wrap gap-2 text-[11px] sm:text-xs uppercase tracking-[0.2em] text-ink-muted">
+            <ul className="flex flex-wrap gap-2 type-label-tight text-ink-muted">
               {champion.platforms.map((platform) => (
                 <li
                   key={platform}
-                  className="rounded-full border border-border px-3 py-1"
+                  className="pill border border-border"
                 >
                   {platform}
                 </li>
@@ -379,7 +357,7 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
         {champion.article ? (
           <a
             href={`/${champion.article.slug}`}
-            className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
+            className="inline-flex items-center gap-2 type-button text-perazzi-red focus-ring"
           >
             {cardCtaLabel}
             <span aria-hidden="true">→</span>

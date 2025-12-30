@@ -15,7 +15,6 @@ type ServiceHeroProps = {
 };
 
 export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {
-  const HEADER_OFFSET = 80;
   const analyticsRef = useAnalyticsObserver("HeroSeen:service");
   const containerRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
@@ -39,13 +38,7 @@ export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {
 
   return (
     <section
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden min-h-screen pb-10 sm:pb-16"
-      style={{
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
-        marginTop: `-${HEADER_OFFSET}px`,
-        paddingTop: `${HEADER_OFFSET}px`,
-      }}
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden min-h-screen pb-10 sm:pb-16 full-bleed full-bleed-offset-top-lg"
       aria-labelledby="service-hero-heading"
     >
       <motion.div
@@ -58,15 +51,7 @@ export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {
           style={{ backgroundImage: `url(${hero.background.url})` }}
         />
         <div className="absolute inset-0 bg-black/35" />
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, color-mix(in srgb, var(--color-black) 16%, transparent) 0%, color-mix(in srgb, var(--color-black) 4%, transparent) 50%, color-mix(in srgb, var(--color-black) 16%, transparent) 100%), " +
-              "linear-gradient(to bottom, color-mix(in srgb, var(--color-black) 60%, transparent) 0%, transparent 75%), " +
-              "linear-gradient(to top, color-mix(in srgb, var(--color-black) 60%, transparent) 0%, transparent 75%)",
-          }}
-        />
+        <div className="pointer-events-none absolute inset-0 overlay-gradient-hero" />
       </motion.div>
 
       <motion.section
@@ -81,7 +66,7 @@ export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {
           <div className="flex flex-col gap-6 lg:max-w-4xl">
             {breadcrumbs?.length ? (
               <nav aria-label="Breadcrumb">
-                <ol className="flex flex-wrap items-center gap-2 text-[11px] sm:text-xs uppercase tracking-[0.3em] text-white/70">
+                <ol className="flex flex-wrap items-center gap-2 type-label-tight text-white/70">
                   {breadcrumbs.map((crumb, index) => (
                     <li key={crumb.href} className="flex items-center gap-2">
                       <Link
@@ -102,14 +87,14 @@ export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {
               </nav>
             ) : null}
             <div className="space-y-4 text-left">
-              <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.35em] text-white/70">
+              <p className="type-label text-white/70">
                 Service
               </p>
-              <h1 className="text-balance text-2xl font-semibold leading-tight sm:text-3xl lg:text-4xl">
+              <h1 className="text-balance type-section">
                 {hero.title}
               </h1>
               {hero.subheading ? (
-                <p className="text-sm sm:text-base leading-relaxed text-white/80">
+                <p className="type-card-body text-white/80 italic text-2xl">
                   {hero.subheading}
                 </p>
               ) : null}

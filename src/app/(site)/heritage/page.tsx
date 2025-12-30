@@ -169,11 +169,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
       />
       <section
         id="perazzi-heritage"
-        className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-14 pb-16 sm:pb-20 -mb-16 sm:-mb-16 min-h-[80vh]"
-        style={{
-          marginLeft: "calc(50% - 50vw)",
-          marginRight: "calc(50% - 50vw)",
-        }}
+        className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-14 pb-16 sm:pb-20 -mb-16 sm:-mb-16 min-h-[80vh] full-bleed"
       >
         <div
           className="absolute inset-0 -z-10 bg-linear-to-t from-black via-black/50 to-canvas"
@@ -181,13 +177,13 @@ export default async function HeritagePage(): Promise<ReactElement> {
         />
         <div className="relative mx-auto flex max-w-6xl flex-col gap-8 px-6 text-white lg:flex-row lg:items-center lg:gap-12">
           <div className="flex-1 space-y-4">
-            <Text size="xs" className="font-semibold tracking-[0.35em] text-white/70" leading="normal">
+            <Text size="label-tight" className="text-white/70">
               {heritageIntroEyebrow}
             </Text>
             <Heading
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-white"
+              className="text-white"
             >
               {heritageIntroHeading}
             </Heading>
@@ -199,7 +195,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
             <div className="hidden lg:flex lg:pt-2">
               <Link
                 href="#heritage-serial-lookup"
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/70 px-6 py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/70 px-6 py-3 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 Skip Perazzi Timeline
               </Link>
@@ -220,7 +216,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
             <div className="mt-6 flex justify-center lg:hidden">
               <Link
                 href="#heritage-serial-lookup"
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/70 px-6 py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/70 px-6 py-3 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 Skip Perazzi Timeline
               </Link>
@@ -231,11 +227,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
       </section>
       <PerazziHeritageEras eras={eraGroups} />
       <section
-        className="relative isolate w-screen max-w-[100vw] overflow-hidden bg-black py-10 sm:py-16 -mt-16 -mb-16"
-        style={{
-          marginLeft: "calc(50% - 50vw)",
-          marginRight: "calc(50% - 50vw)",
-        }}
+        className="relative isolate w-screen max-w-[100vw] overflow-hidden bg-black py-10 sm:py-16 -mt-16 -mb-16 full-bleed"
         aria-labelledby="heritage-workshop-heading"
       >
         <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 text-white lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10">
@@ -244,33 +236,33 @@ export default async function HeritagePage(): Promise<ReactElement> {
               id="heritage-workshop-heading"
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-white"
+              className="text-white"
             >
               {workshopHeading}
             </Heading>
-            <Text className="mb-8 font-light italic text-gray-300">
+            <Text className="mb-8 type-subsection text-gray-300">
               {workshopIntro}
             </Text>
             <div className="flex flex-wrap justify-start gap-3">
               <Link
                 href={workshopPrimaryHref}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-white/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-white hover:border-white hover:text-white focus-ring"
+                className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-white/60 text-white hover:border-white hover:text-white focus-ring"
               >
-                <span aria-hidden="true" className="text-lg leading-none">^</span>
+                <span aria-hidden="true" className="text-lg leading-none">↑</span>
                 {workshopPrimaryLabel}
               </Link>
               <Link
                 href={workshopSecondaryHref}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/70 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-perazzi-red/70 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
-                <span aria-hidden="true" className="text-lg leading-none">v</span>
+                <span aria-hidden="true" className="text-lg leading-none">↓</span>
                 {workshopSecondaryLabel}
               </Link>
             </div>
           </div>
 
-          <div className="space-y-3 text-sm sm:text-base font-light italic text-gray-300">
-            <Text className="font-semibold not-italic text-white" leading="normal">
+          <div className="space-y-3 type-subsection text-gray-300">
+            <Text className="text-white" leading="normal">
               What the atelier can surface:
             </Text>
             <ul className="space-y-2">
@@ -278,14 +270,14 @@ export default async function HeritagePage(): Promise<ReactElement> {
                 const [label, ...rest] = bullet.split(" - ");
                 return (
                   <li key={bullet}>
-                    <span className="text-base sm:text-lg font-black not-italic text-white">{label}</span>
+                    <span className="text-white">{label}</span>
                     {" "}-{" "}
                     {rest.join(" - ")}
                   </li>
                 );
               })}
             </ul>
-            <Text className="font-light italic text-gray-300">
+            <Text className="text-gray-300">
               {workshopClosing}
             </Text>
           </div>
@@ -302,11 +294,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
           Heritage champions section
         </div>
         <section
-          className="relative isolate w-screen max-w-[100vw] overflow-hidden bg-black py-10 sm:py-16 -mt-16 sm:-mt-16 -mb-16 sm:-mb-16 min-h-[70vh]"
-          style={{
-            marginLeft: "calc(50% - 50vw)",
-            marginRight: "calc(50% - 50vw)",
-          }}
+          className="relative isolate w-screen max-w-[100vw] overflow-hidden bg-black py-10 sm:py-16 -mt-16 sm:-mt-16 -mb-16 sm:-mb-16 min-h-[70vh] full-bleed"
           aria-labelledby="heritage-champions-intro-heading"
         >
           <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 text-white lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10 min-h-[50vh]">
@@ -315,11 +303,11 @@ export default async function HeritagePage(): Promise<ReactElement> {
                 id="heritage-champions-intro-heading"
                 level={2}
                 size="xl"
-                className="font-black uppercase italic tracking-[0.35em] text-white"
+                className="text-white"
               >
                 {championsIntroHeading}
               </Heading>
-              <Text className="mb-8 font-light italic text-gray-300">
+              <Text className="mb-8 type-subsection text-gray-300">
                 {championsIntroText}
               </Text>
               <ChatTriggerButton
@@ -333,8 +321,8 @@ export default async function HeritagePage(): Promise<ReactElement> {
               />
             </div>
 
-            <div className="space-y-3 text-sm sm:text-base font-light italic text-gray-300">
-            <Text className="font-semibold not-italic text-white" leading="normal">
+            <div className="space-y-3 type-subsection text-gray-300">
+            <Text className="text-white" leading="normal">
               What you&apos;ll see below:
             </Text>
             <ul className="space-y-2">
@@ -342,14 +330,14 @@ export default async function HeritagePage(): Promise<ReactElement> {
                 const [label, ...rest] = bullet.split(" - ");
                 return (
                   <li key={bullet}>
-                    <span className="text-base sm:text-lg font-black not-italic text-white">{label}</span>
+                    <span className="text-white">{label}</span>
                     {" "}-{" "}
                     {rest.join(" - ")}
                   </li>
                 );
               })}
             </ul>
-            <Text className="font-light italic text-gray-300">
+            <Text className="text-gray-300">
               {championsIntroClosing}
             </Text>
           </div>
@@ -357,32 +345,23 @@ export default async function HeritagePage(): Promise<ReactElement> {
       </section>
         <ChampionsGallery champions={champions} ui={championsGalleryUi} />
         <section
-          className="relative isolate z-0 w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 -mt-16 sm:-mt-16 -mb-16 sm:-mb-16 min-h-[60vh]"
-          style={{
-            marginLeft: "calc(50% - 50vw)",
-            marginRight: "calc(50% - 50vw)",
-          }}
+          className="relative isolate z-0 w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 -mt-16 sm:-mt-16 -mb-16 sm:-mb-16 min-h-[60vh] full-bleed"
           aria-labelledby="heritage-factory-intro-heading"
         >
           <div
-            className="absolute inset-0 -z-10"
-            style={{
-              backgroundImage:
-                "linear-gradient(to bottom, var(--perazzi-black) 0%, var(--color-canvas) 100%)",
-            }}
+            className="absolute inset-0 -z-10 bg-heritage-fade"
             aria-hidden="true"
           />
           <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 text-white lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10 min-h-[50vh]">
-            <div className="space-y-4">
+            <div className="space-y-4 type-subsection">
               <Heading
                 id="heritage-factory-intro-heading"
                 level={2}
-                size="xl"
-                className="font-black uppercase italic tracking-[0.35em] text-white"
+                className="text-white"
               >
                 {factoryHeading}
               </Heading>
-              <Text className="mb-8 font-light italic text-gray-300">
+              <Text className="mb-8 text-gray-300">
                 {factoryIntro}
               </Text>
               <ChatTriggerButton
@@ -396,8 +375,8 @@ export default async function HeritagePage(): Promise<ReactElement> {
               />
             </div>
 
-            <div className="space-y-3 text-sm sm:text-base font-light italic text-gray-300">
-            <Text className="font-semibold not-italic text-white" leading="normal">
+            <div className="space-y-3 type-subsection text-gray-300">
+            <Text className="text-white" leading="normal">
               What you&apos;ll see below:
             </Text>
             <ul className="space-y-2">
@@ -405,14 +384,14 @@ export default async function HeritagePage(): Promise<ReactElement> {
                 const [label, ...rest] = bullet.split(" - ");
                 return (
                   <li key={bullet}>
-                    <span className="text-base sm:text-lg font-black not-italic text-white">{label}</span>
+                    <span className="text-white">{label}</span>
                     {" "}-{" "}
                     {rest.join(" - ")}
                   </li>
                 );
               })}
             </ul>
-            <Text className="font-light italic text-gray-300">
+            <Text className="text-gray-300">
               {factoryClosing}
             </Text>
           </div>

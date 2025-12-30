@@ -31,7 +31,7 @@ export function CTASection({ finale }: CTASectionProps) {
       data-analytics-id="FinalCTASeen"
       padding="md"
       bordered={false}
-      className="bg-perazzi-black text-ink"
+      className="bg-canvas text-ink"
       initial={motionEnabled ? { opacity: 0, y: 30 } : false}
       whileInView={motionEnabled ? { opacity: 1, y: 0 } : undefined}
       viewport={{ once: true, amount: 0.6 }}
@@ -42,19 +42,20 @@ export function CTASection({ finale }: CTASectionProps) {
         <Heading
           id="final-cta-heading"
           level={2}
-          size="lg"
-          className="text-2xl sm:text-3xl tracking-tight text-ink"
+          size="xl"
+          className="text-ink"
         >
           Join the legacy
         </Heading>
-        <Text className="max-w-none text-ink/80 md:max-w-4xl lg:max-w-4xl">
+        <Text className="type-section-subtitle max-w-none text-ink/80 md:max-w-4xl lg:max-w-4xl">
           {finale.text}
         </Text>
         <div className="flex flex-wrap gap-4">
           <Button
             asChild
             variant="primary"
-            size="lg"
+            size="sm"
+            className="md:!type-button-lg md:!px-xl md:!py-sm"
             onClick={() => logAnalytics("FinalCTAClicked:primary")}
           >
             <a href={finale.ctaPrimary.href}>{finale.ctaPrimary.label}</a>
@@ -63,7 +64,8 @@ export function CTASection({ finale }: CTASectionProps) {
             <Button
               asChild
               variant="secondary"
-              size="lg"
+              size="sm"
+              className="md:!type-button-lg md:!px-xl md:!py-sm"
               onClick={() => logAnalytics("FinalCTAClicked:secondary")}
             >
               <a href={finale.ctaSecondary.href}>{finale.ctaSecondary.label}</a>

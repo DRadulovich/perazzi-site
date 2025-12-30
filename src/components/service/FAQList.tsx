@@ -31,7 +31,7 @@ export function FAQList({ items, heading, intro }: FAQListProps) {
       aria-labelledby="service-faq-heading"
     >
       <div className="space-y-2">
-        <Text size="xs" muted className="font-semibold">
+        <Text size="label-tight" muted>
           FAQ
         </Text>
         <Heading id="service-faq-heading" level={2} size="xl" className="text-ink">
@@ -67,7 +67,7 @@ function FAQItemCard({
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <div className="rounded-2xl border border-border/75 bg-card/75 p-4 shadow-soft focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-perazzi-red">
-        <CollapsibleTrigger className="flex w-full items-center justify-between text-left text-sm font-semibold text-ink">
+        <CollapsibleTrigger className="flex w-full items-center justify-between text-left type-nav text-ink">
           {item.q}
           <span
             aria-hidden="true"
@@ -81,7 +81,7 @@ function FAQItemCard({
         </CollapsibleTrigger>
         <CollapsibleContent>
           <SafeHtml
-            className={cn("mt-2 text-sm leading-relaxed text-ink-muted")}
+            className={cn("mt-2 type-body-sm text-ink-muted")}
             html={item.aHtml}
           />
         </CollapsibleContent>

@@ -26,12 +26,12 @@ export function PartsEditorial({ partsEditorialSection }: PartsEditorialProps) {
       aria-labelledby="parts-editorial-heading"
     >
       <div className="space-y-2">
-        <Text size="xs" muted className="font-semibold">
+        <Heading id="parts-editorial-heading" level={2} className="type-section text-ink">
           {heading}
-        </Text>
-        <Heading id="parts-editorial-heading" level={2} size="xl" className="text-ink">
-          {intro}
         </Heading>
+        <Text className="type-section-subtitle text-ink-muted">
+          {intro}
+        </Text>
       </div>
       <ul className="space-y-4">
         {parts.map((part) => (
@@ -40,10 +40,10 @@ export function PartsEditorial({ partsEditorialSection }: PartsEditorialProps) {
             className="rounded-2xl border border-border/75 bg-card/75 p-4 shadow-soft"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <Heading level={3} size="md" className="text-ink">
+              <Heading level={3} className="type-card-title text-ink">
                 {part.name}
               </Heading>
-              <Text size="xs" muted className="whitespace-nowrap">
+              <Text className="type-button text-ink-muted whitespace-nowrap">
                 Fitment: {part.fitment}
               </Text>
             </div>
@@ -52,7 +52,7 @@ export function PartsEditorial({ partsEditorialSection }: PartsEditorialProps) {
             </Text>
             {part.notesHtml ? (
               <SafeHtml
-                className="mt-2 text-sm leading-relaxed text-ink-muted"
+                className="mt-2 type-body-sm text-ink-muted"
                 html={part.notesHtml}
               />
             ) : null}

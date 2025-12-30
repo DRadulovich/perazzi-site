@@ -62,7 +62,7 @@ export function ArticleGrid({
 
   return (
     <div className="space-y-6">
-      <div aria-live="polite" className="text-xs text-ink-muted">
+      <div aria-live="polite" className="type-caption text-ink-muted">
         {totalItems === 0
           ? "No stories match the current filters."
           : `Showing ${pageStart}-${pageEnd} of ${totalItems} stories`}
@@ -76,8 +76,8 @@ export function ArticleGrid({
               onClick={() => logAnalytics(`ArticleImpression:${item.slug}`)}
             >
               <div
-                className="card-media relative"
-                style={{ aspectRatio: item.hero.aspectRatio ?? 16 / 9 }}
+                className="card-media relative aspect-dynamic"
+                style={{ "--aspect-ratio": item.hero.aspectRatio ?? 16 / 9 }}
               >
                 <Image
                   src={item.hero.url}
@@ -89,7 +89,7 @@ export function ArticleGrid({
                 />
               </div>
               <div className="space-y-2 p-5">
-                <Text size="xs" muted className="font-semibold">
+                <Text size="caption" muted>
                   {item.author} · {new Date(item.dateISO).toLocaleDateString()} · {item.readingTimeMins} min
                 </Text>
                 <Heading level={3} size="md" className="text-ink">
@@ -112,7 +112,7 @@ export function ArticleGrid({
             <button
               key={page}
               type="button"
-              className={`rounded-full border px-3 py-1 text-sm focus-ring ${
+              className={`rounded-full border px-3 py-1 type-body-sm focus-ring ${
                 page === pagination.page ? "border-perazzi-red text-perazzi-red" : "border-border text-ink"
               }`}
               aria-current={page === pagination.page ? "page" : undefined}

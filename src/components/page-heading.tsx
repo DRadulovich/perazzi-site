@@ -11,8 +11,7 @@ export function PageHeading({ title, description, kicker }: PageHeadingProps) {
     <section className="space-y-sm">
       {kicker ? (
         <Text
-          size="xs"
-          className="font-semibold tracking-[0.35em]"
+          size="label-tight"
           muted
         >
           {kicker}

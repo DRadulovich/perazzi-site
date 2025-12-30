@@ -29,17 +29,13 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
 
   const analyticsRef = useAnalyticsObserver<HTMLElement>("TriggerExplainerSeen");
   const copyClasses =
-    "prose prose-sm max-w-none text-ink prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4";
+    "max-w-none type-body text-ink [&_p]:mb-4 [&_p:last-child]:mb-0 prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4";
 
   return (
     <section
       ref={analyticsRef}
       data-analytics-id="TriggerExplainerSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 mt-25"
-      style={{
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
-      }}
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 mt-25 full-bleed"
       aria-labelledby="trigger-explainer-heading"
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -52,16 +48,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
           priority={false}
         />
         <div className="absolute inset-0 bg-(--scrim-soft)" aria-hidden />
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
-              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%), " +
-              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%)",
-          }}
-          aria-hidden
-        />
+        <div className="pointer-events-none absolute inset-0 overlay-gradient-canvas" aria-hidden />
       </div>
 
       <Container size="xl" className="relative z-10">
@@ -79,15 +66,15 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                 id="trigger-explainer-heading"
                 level={2}
                 size="xl"
-                className="font-black uppercase italic tracking-[0.35em] text-ink"
+                className="text-ink"
               >
                 {explainer.title}
               </Heading>
-              <Text className="font-light italic text-ink-muted" leading="normal">
+              <Text className="type-section-subtitle text-ink-muted" leading="normal">
                 {subheading}
               </Text>
               <CollapsibleTrigger
-                className="mt-1 inline-flex w-fit items-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring lg:hidden"
+                className="type-button mt-1 inline-flex w-fit items-center gap-2 rounded-sm border border-border/70 bg-card/60 px-4 py-2 text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring lg:hidden"
                 aria-controls="trigger-explainer-content"
                 data-analytics-id="TriggerExplainerToggle"
               >
@@ -97,7 +84,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
 
             <CollapsibleContent
               id="trigger-explainer-content"
-              className="grid gap-6 overflow-hidden transition-all duration-300 data-[state=closed]:opacity-0 data-[state=open]:opacity-100 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start"
+              className="grid gap-6 overflow-hidden px-2 py-3 transition-all duration-300 data-[state=closed]:opacity-0 data-[state=open]:opacity-100 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start"
             >
               <div className="rounded-2xl border border-border/0 bg-card/0 p-4 sm:rounded-3xl sm:p-6 lg:flex lg:h-full lg:flex-col lg:justify-start">
                 {explainer.copyPortableText?.length ? (
@@ -111,7 +98,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                       key={link.href}
                       href={link.href}
                       data-analytics-id={`TriggerExplainerLink:${link.href}`}
-                      className="inline-flex items-center gap-2 rounded-full border border-perazzi-red/40 bg-card/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red shadow-soft backdrop-blur-sm transition hover:border-perazzi-red hover:bg-card/85 focus-ring"
+                      className="type-button inline-flex items-center gap-2 rounded-sm border border-perazzi-red/40 bg-card/60 px-4 py-2 text-perazzi-red shadow-soft backdrop-blur-sm transition hover:border-perazzi-red hover:bg-card/85 focus-ring"
                       onClick={() =>
                         logAnalytics(`TriggerExplainerLink:${link.href}`)
                       }
@@ -125,8 +112,8 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
 
               <figure className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated">
                 <div
-                  className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
-                  style={{ aspectRatio: ratio }}
+                  className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-dynamic"
+                  style={{ "--aspect-ratio": ratio }}
                 >
                   <Image
                     src={explainer.diagram.url}
@@ -143,8 +130,8 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                 {explainer.diagram.caption ? (
                   <Text
                     asChild
-                    size="xs"
-                    className="mt-3 tracking-[0.2em] text-ink-muted"
+                    size="caption"
+                    className="mt-3 text-ink-muted"
                     leading="normal"
                   >
                     <figcaption>{explainer.diagram.caption}</figcaption>

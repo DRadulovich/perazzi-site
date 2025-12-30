@@ -10,7 +10,6 @@ import { getShotgunsSectionData } from "@/lib/shotguns-data";
 import { platformToSeriesEntry } from "@/lib/platform-series";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
 import { buildPlatformPrompt } from "@/lib/platform-prompts";
-import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 
 export default async function DCSeriesPage() {
@@ -25,14 +24,10 @@ export default async function DCSeriesPage() {
         className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-soft sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-5"
         aria-labelledby="dc-platform-guidance-heading"
       >
-        <Heading
-          asChild
-          size="sm"
-          className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted"
-        >
-          <h2 id="dc-platform-guidance-heading">Platform guidance</h2>
-        </Heading>
-        <Text className="mt-1 text-ink">
+        <h2 id="dc-platform-guidance-heading" className="type-card-title text-ink-muted leading-normal">
+          Platform guidance
+        </h2>
+        <Text className="mt-1 type-body text-ink">
           Questions about the DC Platform? Ask Perazzi.
         </Text>
         <div className="mt-4">

@@ -19,7 +19,7 @@ export function CleanText({ value }: CleanTextProps) {
   return (
     <>
       {cleaned}
-      <span style={{ display: "none" }}>{encoded}</span>
+      <span className="hidden">{encoded}</span>
     </>
   );
 }

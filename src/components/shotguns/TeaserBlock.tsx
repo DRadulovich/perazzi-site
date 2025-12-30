@@ -36,8 +36,8 @@ export function TeaserBlock({
           <div className="flex flex-wrap gap-4">
             <figure className="w-40 rounded-2xl border border-white/30 bg-white/5 p-3">
               <div
-                className="relative overflow-hidden rounded-xl"
-                style={{ aspectRatio: engravingRatio }}
+                className="relative overflow-hidden rounded-xl aspect-dynamic"
+                style={{ "--aspect-ratio": engravingRatio }}
               >
                 <Image
                   src={engravingTile.url}
@@ -48,14 +48,14 @@ export function TeaserBlock({
                   loading="lazy"
                 />
               </div>
-              <figcaption className="mt-2 text-[11px] sm:text-xs text-white/70">
-                Engraving atelier
-              </figcaption>
+              <Text asChild size="caption" className="mt-2 text-white/70">
+                <figcaption>Engraving atelier</figcaption>
+              </Text>
             </figure>
             <figure className="w-40 rounded-2xl border border-white/30 bg-white/5 p-3">
               <div
-                className="relative overflow-hidden rounded-xl"
-                style={{ aspectRatio: woodRatio }}
+                className="relative overflow-hidden rounded-xl aspect-dynamic"
+                style={{ "--aspect-ratio": woodRatio }}
               >
                 <Image
                   src={woodTile.url}
@@ -66,16 +66,16 @@ export function TeaserBlock({
                   loading="lazy"
                 />
               </div>
-              <figcaption className="mt-2 text-[11px] sm:text-xs text-white/70">
-                Wood provenance
-              </figcaption>
+              <Text asChild size="caption" className="mt-2 text-white/70">
+                <figcaption>Wood provenance</figcaption>
+              </Text>
             </figure>
           </div>
         </div>
         <div className="md:flex md:justify-end">
           <a
             href={href}
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-white/40 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-white focus-ring"
+            className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-white/40 px-4 py-2 text-white focus-ring"
           >
             <span>View grades</span>
             <span aria-hidden="true">→</span>

@@ -3,16 +3,11 @@ import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@/lib/utils";
 
 const sizeClasses = {
-  // Display / hero heading: tuned for mobile, scales up on larger screens
-  display: "!text-3xl sm:!text-4xl lg:!text-5xl !font-semibold !font-serif !tracking-tight",
-  // XL heading: primary section headings
-  xl: "!text-2xl sm:!text-3xl lg:!text-4xl !font-black !italic !uppercase !tracking-[0.1em]",
-  // LG heading: strong subheadings
-  lg: "!text-2xl sm:!text-2xl !font-semibold",
-  // MD heading: default heading size
-  md: "!text-xl sm:!text-2xl !font-semibold",
-  // SM heading: compact / inline headings
-  sm: "!text-base sm:!text-lg !font-medium",
+  display: "type-display",
+  xl: "type-section",
+  lg: "type-title-lg",
+  md: "type-title-md",
+  sm: "type-title-sm",
 } as const;
 
 type HeadingSize = keyof typeof sizeClasses;

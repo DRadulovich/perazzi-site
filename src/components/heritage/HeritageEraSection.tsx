@@ -148,15 +148,14 @@ export function HeritageEraSection({
               <Heading
                 asChild
                 size="sm"
-                className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-neutral-300"
+                className="type-label-tight text-neutral-300"
               >
                 <h2 id={`heritage-era-${index}`}>{era.label}</h2>
               </Heading>
               <Text
                 asChild
-                size="xs"
-                className="mt-2 tracking-[0.25em] text-neutral-500"
-                leading="normal"
+                size="label-tight"
+                className="mt-2 text-neutral-500"
               >
                 <p>{yearRangeLabel}</p>
               </Text>
@@ -190,10 +189,10 @@ export function HeritageEraSection({
         sectionRef.current = el;
         registerEraRef?.(era.id, el);
       }}
-      className={cn("relative border-b border-white/5", className)}
+      className={cn("relative border-b border-white/5 min-h-dynamic", className)}
       aria-labelledby={`heritage-era-${index}`}
       style={{
-        minHeight: `${sectionMinHeight}vh`,
+        "--min-height": `${sectionMinHeight}vh`,
       }}
     >
       <a
@@ -209,10 +208,10 @@ export function HeritageEraSection({
 
       <div
         className={cn(
-          "relative sticky flex items-center",
+          "relative sticky flex items-center top-offset-dynamic",
           isShortViewport ? "h-[85vh]" : "h-screen",
         )}
-        style={{ top: headerOffset ?? 0 }}
+        style={{ "--top-offset": `${headerOffset ?? 0}px` }}
       >
         <EraBackgroundLayer
           src={era.backgroundSrc}
@@ -225,15 +224,14 @@ export function HeritageEraSection({
             <Heading
               asChild
               size="sm"
-              className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-neutral-300"
+              className="type-label-tight text-neutral-300"
             >
               <h2 id={`heritage-era-${index}`}>{era.label}</h2>
             </Heading>
             <Text
               asChild
-              size="xs"
-              className="mt-2 tracking-[0.25em] text-neutral-500"
-              leading="normal"
+              size="label-tight"
+              className="mt-2 text-neutral-500"
             >
               <p>{yearRangeLabel}</p>
             </Text>

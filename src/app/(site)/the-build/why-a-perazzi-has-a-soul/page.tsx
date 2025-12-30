@@ -3,7 +3,7 @@ import { groq } from "next-sanity";
 
 import { BuildJourneyClient, type BuildJourneyArticle } from "./BuildJourneyClient";
 import { client } from "@/sanity/lib/client";
-import { Text } from "@/components/ui/text";
+import { Heading, Text } from "@/components/ui";
 
 const BUILD_JOURNEY_QUERY = groq`
   *[_type == "article" && isBuildJourneyStep == true] | order(buildStepOrder asc, title asc) {
@@ -62,15 +62,15 @@ function HeroSection() {
       </div>
       <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16 lg:py-24">
         <header className="max-w-2l space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-white/75">
+          <Text size="label-tight" className="text-white/75">
             Inside the Perazzi Factory
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight text-white lg:text-5xl">
+          </Text>
+          <Heading level={1} className="type-section text-white">
             Through the Eyes of the Makers
-          </h1>
-          <p className="text-sm leading-relaxed text-white/75 lg:text-base">
+          </Heading>
+          <Text className="type-section-subtitle text-white/75">
             Every Perazzi is born the same way: one frame of steel and walnut moving bench by bench through the same circle of hands, whether it’s a bespoke order or a gun you find on a dealer’s shelf. This page stitches those stations into one continuous build journey, following a single gun as it collects their decisions.
-          </p>
+          </Text>
         </header>
       </div>
     </section>

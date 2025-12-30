@@ -122,11 +122,11 @@ const PlatformHeader = ({ heading, subheading }: { heading: string; subheading: 
       id="platforms-heading"
       level={2}
       size="xl"
-      className="font-black italic uppercase tracking-[0.35em] text-ink"
+      className="text-ink"
     >
       {heading}
     </Heading>
-    <Text className="mb-6 max-w-4xl font-light italic text-ink-muted" leading="normal">
+    <Text className="type-section-subtitle mb-6 max-w-4xl text-ink-muted" leading="normal">
       {subheading}
     </Text>
   </div>
@@ -148,7 +148,7 @@ const PlatformTabs = ({ platforms, activeIndex, onSelect }: PlatformTabsProps) =
           type="button"
           role="tab"
           aria-selected={isActive}
-          className={`rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] focus-ring transition ${
+          className={`type-label-tight pill border focus-ring transition ${
             isActive
               ? "border-perazzi-red bg-canvas/40 text-perazzi-red backdrop-blur-sm shadow-elevated"
               : "border-border/70 bg-transparent text-ink-muted hover:border-ink/60"
@@ -206,7 +206,7 @@ const MobilePlatformCarousel = ({
   <div className="md:hidden">
     <div
       ref={scrollRef}
-      className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none"
+      className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none px-6 -mx-6 pt-6 pb-6 sm:mx-0 sm:px-6"
       aria-label="Swipe to explore platforms"
     >
       {platforms.map((platform, index) => (
@@ -250,9 +250,7 @@ const ChampionHighlight = ({
       }
     >
       {hallmark ? (
-        <Text className="text-xl italic text-ink" leading="normal">
-          {hallmark}
-        </Text>
+        <p className="type-quote font-artisan text-ink">{hallmark}</p>
       ) : null}
       {champion ? (
         <div className="flex items-center justify-center gap-5">
@@ -269,18 +267,18 @@ const ChampionHighlight = ({
           ) : null}
           <div className="space-y-2">
             {champion.name ? (
-              <Heading level={3} size="lg" className="text-ink">
+              <p className="type-body-title text-ink">
                 {champion.name}
-              </Heading>
+              </p>
             ) : null}
             {champion.title ? (
-              <Text size="md" className="text-ink-muted" leading="normal">
+              <Text size="md" className="type-label-tight text-ink-muted" leading="normal">
                 {champion.title}
               </Text>
             ) : null}
             {champion.resume?.winOne ? (
               <Text size="md" className="text-ink-muted" leading="normal">
-                Win highlight: <span className="font-medium">{champion.resume.winOne}</span>
+                Win highlight: <span className="text-ink">{champion.resume.winOne}</span>
               </Text>
             ) : null}
           </div>
@@ -339,16 +337,7 @@ const PlatformBackground = ({ background }: { background: PlatformBackground }) 
       priority={false}
     />
     <div className="absolute inset-0 bg-(--scrim-soft)" aria-hidden />
-    <div
-      className="pointer-events-none absolute inset-0"
-      style={{
-        backgroundImage:
-          "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
-          "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 70%), " +
-          "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 70%)",
-      }}
-      aria-hidden
-    />
+    <div className="pointer-events-none absolute inset-0 overlay-gradient-canvas-70" aria-hidden />
   </div>
 );
 
@@ -391,12 +380,7 @@ export function PlatformGrid({ platforms, ui }: PlatformGridProps) {
     <section
       ref={analyticsRef}
       data-analytics-id="PlatformGridSeen"
-      className="relative w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
-      style={{
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
-        minHeight: "80vh",
-      }}
+      className="relative w-screen max-w-[100vw] overflow-visible py-10 sm:py-16 min-h-[80vh] full-bleed"
       aria-labelledby="platforms-heading"
     >
       <PlatformBackground background={templates.background} />

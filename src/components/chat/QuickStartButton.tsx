@@ -13,7 +13,7 @@ export function QuickStartButton({ label, prompt, disabled, onSelect }: QuickSta
       type="button"
       variant="secondary"
       size="md"
-      className="w-full justify-start rounded-2xl px-4 py-3 text-left text-sm sm:text-base normal-case tracking-normal"
+      className="w-full justify-start rounded-2xl px-4 py-3 text-left type-button-plain"
       onClick={() => onSelect(prompt)}
       disabled={disabled}
     >

@@ -52,9 +52,9 @@ export function FAQList({
             key={item.q}
             className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:bg-card/80"
           >
-            <Text asChild className="font-semibold text-ink" leading="normal">
+            <Heading asChild level={3} size="sm" className="text-ink">
               <dt>{item.q}</dt>
-            </Text>
+            </Heading>
             <Text asChild className="mt-2 text-ink-muted" leading="relaxed">
               <dd>{item.a}</dd>
             </Text>

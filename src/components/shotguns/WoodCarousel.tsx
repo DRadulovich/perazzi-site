@@ -34,7 +34,7 @@ export function WoodCarousel({ grades }: WoodCarouselProps) {
         <div className="flex gap-2">
           <button
             type="button"
-            className="rounded-full border border-border px-3 py-2 text-xs uppercase tracking-[0.3em] text-ink focus-ring"
+            className="type-button rounded-full border border-border px-3 py-2 text-ink focus-ring"
             onClick={() => { scrollBy("prev"); }}
             aria-label="Scroll wood carousel left"
           >
@@ -42,7 +42,7 @@ export function WoodCarousel({ grades }: WoodCarouselProps) {
           </button>
           <button
             type="button"
-            className="rounded-full border border-border px-3 py-2 text-xs uppercase tracking-[0.3em] text-ink focus-ring"
+            className="type-button rounded-full border border-border px-3 py-2 text-ink focus-ring"
             onClick={() => { scrollBy("next"); }}
             aria-label="Scroll wood carousel right"
           >
@@ -67,8 +67,8 @@ export function WoodCarousel({ grades }: WoodCarouselProps) {
               className="flex min-w-[260px] flex-col rounded-3xl border border-border/70 bg-card p-4 shadow-soft md:min-w-80 md:p-6 lg:min-w-0 lg:p-8"
             >
               <div
-                className="relative overflow-hidden rounded-xl bg-border"
-                style={{ aspectRatio: ratio }}
+                className="relative overflow-hidden rounded-xl bg-border aspect-dynamic"
+                style={{ "--aspect-ratio": ratio }}
               >
                 <Image
                   src={asset.url}

@@ -19,12 +19,8 @@ export function PerazziHeritageEras({ eras, className }: Readonly<PerazziHeritag
     <section
       ref={analyticsRef}
       data-analytics-id="PerazziHeritageErasSeen"
-      className={cn("relative w-screen max-w-[100vw] min-h-screen", className)}
+      className={cn("relative w-screen max-w-[100vw] min-h-screen full-bleed", className)}
       aria-label="Perazzi heritage eras"
-      style={{
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
-      }}
     >
       <HeritageErasStack
         eras={eras}

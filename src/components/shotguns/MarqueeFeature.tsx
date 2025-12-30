@@ -49,48 +49,44 @@ export function MarqueeFeature({ champion, fallbackText }: MarqueeFeatureProps) 
       padding="md"
       className="grid gap-8 md:grid-cols-[minmax(280px,1fr)_minmax(320px,1fr)] md:items-center"
     >
-      <div
-        className="relative overflow-hidden rounded-2xl bg-elevated ring-1 ring-border/70"
-        style={{ aspectRatio: ratio }}
-      >
-        <Image
-          src={champion.image.url}
-          alt={champion.image.alt}
-          fill
-          sizes="(min-width: 1280px) 384px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-          className="object-cover"
-          loading="lazy"
-        />
+      <div className="space-y-4">
+        <div
+          className="relative overflow-hidden rounded-2xl bg-elevated ring-1 ring-border/70 aspect-dynamic"
+          style={{ "--aspect-ratio": ratio }}
+        >
+          <Image
+            src={champion.image.url}
+            alt={champion.image.alt}
+            fill
+            sizes="(min-width: 1280px) 384px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            className="object-cover"
+            loading="lazy"
+          />
+        </div>
+        <div className="space-y-2">
+          <Text className="type-button text-ink-muted" leading="normal">
+            Champion spotlight
+          </Text>
+          {champion.name ? (
+            <Heading level={2} size="xl" className="text-ink">
+              {champion.name}
+            </Heading>
+          ) : null}
+        </div>
       </div>
       <div className="space-y-4">
-        <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
-          Champion spotlight
-        </Text>
-        {champion.name ? (
-          <Heading level={2} size="xl" className="text-ink">
-            {champion.name}
-          </Heading>
-        ) : null}
         {champion.title ? (
-          <Text
-            asChild
-            size="md"
-            className="font-medium text-ink-muted not-italic"
-          >
-            <cite>{champion.title}</cite>
+          <Text asChild className="type-button text-ink-muted">
+            <span>{champion.title}</span>
           </Text>
         ) : null}
-        <Text
-          asChild
-          size="lg"
-          className="border-l-2 border-perazzi-red/50 pl-4 text-lg sm:text-xl italic text-ink"
-        >
-          <blockquote>“{champion.quote}”</blockquote>
-        </Text>
+        <blockquote className="type-quote border-l-2 border-perazzi-red/50 pl-4 text-ink font-artisan mt-7">
+          “{champion.quote}”
+        </blockquote>
         {champion.href ? (
           <a
             href={champion.href}
-            className="inline-flex min-h-10 items-center justify-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.2em] text-perazzi-red focus-ring"
+            className="type-button inline-flex min-h-10 items-center justify-center gap-2 text-perazzi-red focus-ring"
           >
             <span>Meet the champions</span>
             <span aria-hidden="true">→</span>

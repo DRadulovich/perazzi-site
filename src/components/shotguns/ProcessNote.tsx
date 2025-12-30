@@ -21,8 +21,8 @@ export function ProcessNote({
       <div className="space-y-3">
         <Text
           id="process-note-heading"
-          size="xs"
-          className="font-semibold text-ink-muted"
+          size="label-tight"
+          className="text-ink-muted"
           leading="normal"
         >
           {title}

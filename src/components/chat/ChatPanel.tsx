@@ -100,13 +100,13 @@ const markdownComponents = {
     <li className="mb-1 last:mb-0" {...props} />
   ),
   strong: (props: React.HTMLAttributes<HTMLElement>) => (
-    <strong className="font-semibold" {...props} />
+    <strong {...props} />
   ),
   table: (props: React.TableHTMLAttributes<HTMLTableElement>) => {
     const { children, ...rest } = props;
     return (
       <div className="my-4 overflow-x-auto">
-        <table className="w-full border-collapse text-left text-sm" {...rest}>
+        <table className="w-full border-collapse text-left type-body-sm" {...rest}>
           <caption className="sr-only">Assistant response table</caption>
           {children}
         </table>
@@ -114,10 +114,10 @@ const markdownComponents = {
     );
   },
   thead: (props: React.HTMLAttributes<HTMLTableSectionElement>) => (
-    <thead className="bg-subtle text-xs uppercase tracking-[0.2em] text-ink-muted" {...props} />
+    <thead className="bg-subtle type-label-tight text-ink-muted" {...props} />
   ),
   th: (props: React.ThHTMLAttributes<HTMLTableCellElement>) => (
-    <th className="border border-border/70 px-3 py-2 font-semibold text-ink" {...props} />
+    <th className="border border-border/70 px-3 py-2 text-ink" {...props} />
   ),
   td: (props: React.TdHTMLAttributes<HTMLTableCellElement>) => (
     <td className="border border-border/70 px-3 py-2 text-ink" {...props} />
@@ -144,7 +144,7 @@ function DebugRow(props: Readonly<{ label: string; value: unknown }>) {
   return (
     <div className="flex items-start justify-between gap-4">
       <dt className="text-ink-muted">{props.label}</dt>
-      <dd className="text-right font-mono text-[11px] sm:text-xs text-ink">{formatDebugValue(props.value)}</dd>
+      <dd className="text-right font-mono type-caption text-ink">{formatDebugValue(props.value)}</dd>
     </div>
   );
 }
@@ -157,11 +157,11 @@ function AdminDebugPanel(props: Readonly<{
   const titles = debug?.retrieval?.top_titles ?? [];
 
   return (
-    <div className="border-b border-border bg-card/80 px-6 py-4 text-[11px] sm:text-xs text-ink backdrop-blur-md">
+    <div className="border-b border-border bg-card/80 px-6 py-4 type-body-sm text-ink backdrop-blur-md">
       <div className="mb-3 flex items-center justify-between gap-3">
         <Text
-          size="xs"
-          className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.25em] text-ink-muted"
+          size="label-tight"
+          className="text-ink-muted"
           leading="normal"
         >
           Admin Debug
@@ -170,7 +170,7 @@ function AdminDebugPanel(props: Readonly<{
           type="button"
           variant="secondary"
           size="sm"
-          className="rounded-full px-2 py-1 text-[10px] sm:text-[11px] text-ink-muted hover:text-ink"
+          className="rounded-full px-2 py-1 type-ui text-ink-muted hover:text-ink"
           onClick={props.onClearToken}
         >
           Clear admin debug token
@@ -180,8 +180,8 @@ function AdminDebugPanel(props: Readonly<{
         <div className="grid gap-4">
           <section>
             <Text
-              size="xs"
-              className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted"
+              size="label-tight"
+              className="text-ink-muted"
               leading="normal"
             >
               Thread
@@ -200,8 +200,8 @@ function AdminDebugPanel(props: Readonly<{
 
           <section>
             <Text
-              size="xs"
-              className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted"
+              size="label-tight"
+              className="text-ink-muted"
               leading="normal"
             >
               Retrieval
@@ -221,15 +221,15 @@ function AdminDebugPanel(props: Readonly<{
                   top_titles
                 </Text>
                 {titles.length ? (
-                  <ul className="mt-1 list-disc space-y-1 pl-5 font-mono text-[11px] sm:text-xs">
+                  <ul className="mt-1 list-disc space-y-1 pl-5 font-mono type-caption">
                     {titles.map((title) => (
                       <li key={title}>{title}</li>
                     ))}
                   </ul>
                 ) : (
                   <Text
-                    size="sm"
-                    className="mt-1 font-mono text-[11px] sm:text-xs text-ink-muted"
+                    size="caption"
+                    className="mt-1 font-mono text-ink-muted"
                     leading="normal"
                   >
                     []
@@ -241,8 +241,8 @@ function AdminDebugPanel(props: Readonly<{
 
           <section>
             <Text
-              size="xs"
-              className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted"
+              size="label-tight"
+              className="text-ink-muted"
               leading="normal"
             >
               Usage
@@ -257,8 +257,8 @@ function AdminDebugPanel(props: Readonly<{
 
           <section>
             <Text
-              size="xs"
-              className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted"
+              size="label-tight"
+              className="text-ink-muted"
               leading="normal"
             >
               Flags
@@ -281,8 +281,8 @@ function AdminDebugPanel(props: Readonly<{
           {debug.triggers ? (
             <section>
               <Text
-                size="xs"
-                className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-ink-muted"
+                size="label-tight"
+                className="text-ink-muted"
                 leading="normal"
               >
                 Triggers
@@ -583,7 +583,7 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
   const rootClasses = cn(
     "relative z-40 flex h-full w-full flex-col text-ink outline-none",
     variant === "rail"
-      ? "border-l border-border bg-card/90 shadow-elevated backdrop-blur-xl"
+      ? "border-l border-border bg-card/90 shadow-elevated backdrop-blur-xl min-w-[320px]"
       : "overflow-hidden rounded-3xl border border-border bg-card/95 shadow-elevated backdrop-blur-xl",
     className,
   );
@@ -612,7 +612,6 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
         }}
         data-analytics-id="ChatPanelSeen"
         className={rootClasses}
-        style={{ minWidth: variant === "rail" ? "320px" : undefined }}
       >
       {sessionPromptOpen && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
@@ -624,7 +623,7 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
               We&apos;ll prepend this to a fresh random ID to reduce collisions (example: label_uuid).
             </Text>
             <div className="mt-4 space-y-3">
-              <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted">
+              <label className="block type-label-tight text-ink-muted">
                 Session label
                 <Input
                   ref={sessionInputRef}
@@ -668,7 +667,7 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
       <div className="space-y-3 border-b border-border bg-card/80 px-6 py-5 backdrop-blur-md">
         <div className="flex items-center justify-between">
           <div>
-            <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
+            <Text size="label-tight" className="text-ink-muted">
               {legacyMode ? "Legacy Conversation" : "Perazzi Concierge"}
             </Text>
             <Heading level={2} size="lg" className="text-ink">
@@ -681,7 +680,7 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
                 type="button"
                 variant="secondary"
                 size="sm"
-                className="rounded-full px-3 py-1.5 text-[11px] sm:text-xs text-ink-muted hover:text-ink"
+                className="rounded-full px-3 py-1.5 type-ui text-ink-muted hover:text-ink"
                 onClick={() => setAdminDebugOpen((prev) => !prev)}
                 aria-expanded={adminDebugOpen}
               >
@@ -693,7 +692,7 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
                 type="button"
                 variant="secondary"
                 size="sm"
-                className="rounded-full px-3 py-1.5 text-[11px] sm:text-xs text-ink-muted hover:text-ink"
+                className="rounded-full px-3 py-1.5 type-ui text-ink-muted hover:text-ink"
                 onClick={handleResetVisitor}
               >
                 Reset visitor
@@ -704,7 +703,7 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
                 type="button"
                 variant="secondary"
                 size="sm"
-                className="rounded-full px-3 py-1.5 text-[11px] sm:text-xs text-ink-muted hover:text-ink"
+                className="rounded-full px-3 py-1.5 type-ui text-ink-muted hover:text-ink"
                 onClick={exitLegacyMode}
               >
                 Exit
@@ -742,7 +741,7 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
       <div className="flex flex-1 flex-col overflow-hidden">
         <div
           ref={scrollRef}
-          className="min-h-0 flex-1 overflow-y-auto bg-canvas/30 px-6 py-10 text-sm text-ink"
+          className="min-h-0 flex-1 overflow-y-auto bg-canvas/30 px-6 py-10 type-body-sm text-ink"
         >
           <div
             className={cn(
@@ -753,16 +752,16 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
             )}
           >
             {legacyMode ? null : (
-              <div className="rounded-2xl border border-border/70 bg-card/60 p-4 text-sm text-ink shadow-soft backdrop-blur-sm sm:rounded-3xl sm:px-5 sm:py-4">
+              <div className="rounded-2xl border border-border/70 bg-card/60 p-4 type-body-sm text-ink shadow-soft backdrop-blur-sm sm:rounded-3xl sm:px-5 sm:py-4">
                 <div className="flex items-center justify-between gap-4">
-                  <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
+                  <Text size="label-tight" className="text-ink-muted">
                     Guided Questions
                   </Text>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="h-auto px-0 py-0 text-[11px] sm:text-xs text-ink-muted hover:text-ink"
+                    className="h-auto px-0 py-0 type-ui text-ink-muted hover:text-ink"
                     onClick={() => setShowQuickStarts((prev) => !prev)}
                   >
                     {showQuickStarts ? "Hide" : "Show"}
@@ -801,9 +800,9 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
               return (
                 <li key={msg.id} className="relative">
                   {showMarker && (
-                    <div className="mb-3 flex items-center gap-3 text-[11px] sm:text-xs uppercase tracking-[0.2em] text-white">
+                    <div className="type-label-tight mb-3 flex items-center gap-3 text-white">
                       <div className="flex-1 border-t border-perazzi-red" aria-hidden="true" />
-                      <span className="rounded-full bg-perazzi-red px-3 py-1 text-[11px] sm:text-xs tracking-[0.3em] text-white">
+                      <span className="rounded-full bg-perazzi-red px-3 py-1 text-white">
                         Perazzi Insight
                       </span>
                       <div className="flex-1 border-t border-perazzi-red" aria-hidden="true" />
@@ -830,9 +829,9 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
                       )}
 
                       {isAssistant && msg.archetypeBreakdown && (
-                        <div className="mt-3 text-[11px] sm:text-xs text-ink-muted">
+                        <div className="mt-3 type-caption text-ink-muted">
                           {msg.archetypeBreakdown.primary && (
-                            <Text className="font-semibold" leading="normal">
+                            <Text className="text-ink" leading="normal">
                               Archetype profile: {msg.archetypeBreakdown.primary.charAt(0).toUpperCase()}
                               {msg.archetypeBreakdown.primary.slice(1)}
                             </Text>
@@ -871,7 +870,7 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
                       })()}
 
                       {isAssistant && (
-                        <div className="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.2em]">
+                        <div className="mt-3 flex flex-wrap gap-2 type-label-tight">
                           <Button
                             type="button"
                             variant="secondary"
@@ -886,12 +885,12 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
                     </div>
                   </div>
                   {isTyping && index === messages.length - 1 && msg.role === "user" && (
-                    <div className="mt-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-ink-muted">
+                    <div className="mt-2 flex items-center gap-2 type-label-tight text-ink-muted">
                       <span className="relative flex h-5 w-5 items-center justify-center">
                         <span className="absolute inline-flex h-full w-full animate-spin rounded-full border-2 border-subtle border-t-transparent" />
                         <span className="inline-flex h-2 w-2 rounded-full bg-ink" />
                       </span>
-                      <span className="tracking-[0.08em]">Collecting references…</span>
+                      <span>Collecting references…</span>
                     </div>
                   )}
                 </li>

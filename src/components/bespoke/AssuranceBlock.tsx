@@ -24,35 +24,33 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
         {heading ? (
           <Text
             id="assurance-heading"
-            size="xs"
-            className="font-semibold tracking-[0.35em] text-ink-muted"
-            leading="normal"
+            size="label-tight"
+            className="text-ink-muted"
           >
             {heading}
           </Text>
         ) : null}
         {label ? (
-          <Heading level={2} size="lg" className="text-ink">
+          <Heading level={2} size="xl" className="text-ink">
             {label}
           </Heading>
         ) : null}
         {body ? (
           <SafeHtml
-            className="prose prose-base max-w-none leading-relaxed text-ink md:prose-lg"
+            className="max-w-none type-body text-ink [&_p]:mb-4 [&_p:last-child]:mb-0"
             html={body}
           />
         ) : null}
         {quote ? (
-          <blockquote className="rounded-2xl border-l-4 border-perazzi-red/60 bg-card/60 px-5 py-4 text-[13px] sm:text-sm italic leading-relaxed text-ink shadow-soft backdrop-blur-sm">
-            <Text asChild size="md" className="italic text-ink" leading="relaxed">
+          <blockquote className="rounded-2xl border-l-4 border-perazzi-red/60 bg-card/60 px-5 py-4 text-ink shadow-soft backdrop-blur-sm">
+            <Text asChild size="md" className="font-artisan text-ink text-2xl">
               <p>“{quote.text}”</p>
             </Text>
             {quote.author ? (
               <Text
                 asChild
-                size="xs"
-                className="mt-2 block not-italic tracking-[0.3em] text-ink-muted"
-                leading="normal"
+                size="label-tight"
+                className="mt-2 block text-ink-muted"
               >
                 <cite>{quote.author}</cite>
               </Text>
@@ -63,8 +61,8 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
       {media ? (
         <figure className="mt-6 space-y-3 lg:mt-0">
           <div
-            className="relative overflow-hidden rounded-2xl bg-(--color-canvas)"
-            style={{ aspectRatio: ratio }}
+            className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-dynamic"
+            style={{ "--aspect-ratio": ratio }}
           >
             {media.kind === "image" ? (
               <Image
@@ -86,7 +84,7 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
             )}
           </div>
           {media.caption ? (
-            <Text asChild size="sm" className="text-ink-muted" leading="relaxed">
+            <Text asChild size="sm" className="text-ink-muted">
               <figcaption>{media.caption}</figcaption>
             </Text>
           ) : null}

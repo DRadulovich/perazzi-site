@@ -72,8 +72,8 @@ export function HeritageEventSlide({
             ) : (
               <Text
                 asChild
-                size="xs"
-                className="flex w-full max-w-xl items-center justify-center rounded-2xl border border-dashed border-white/20 bg-black/20 tracking-[0.25em] text-neutral-500"
+                size="label-tight"
+                className="flex w-full max-w-xl items-center justify-center rounded-2xl border border-dashed border-white/20 bg-black/20 text-neutral-500"
                 leading="normal"
               >
                 <div>Perazzi archive</div>
@@ -89,17 +89,17 @@ export function HeritageEventSlide({
           >
             <div className="w-full space-y-5">
               <header className="space-y-1">
-                <Text size="xs" className="tracking-[0.28em] text-neutral-400" leading="normal">
+                <Text size="caption" className="text-neutral-400">
                   {event.date}
                 </Text>
-                <Heading level={3} size="sm" className="tracking-tight text-neutral-50">
+                <Heading level={3} className="type-card-title text-neutral-50">
                   {event.title}
                 </Heading>
               </header>
 
               {hasSummary
                 ? renderSummary(
-                  "hidden md:block prose prose-invert max-w-none text-sm leading-relaxed text-neutral-200 prose-p:mb-3 prose-p:mt-0 prose-strong:text-neutral-50 prose-em:text-neutral-200",
+                  "hidden md:block prose prose-invert max-w-none type-body leading-relaxed text-neutral-200 prose-p:mb-3 prose-p:mt-0 prose-strong:text-neutral-50 prose-em:text-neutral-200",
                 )
                 : null}
 
@@ -126,7 +126,7 @@ export function HeritageEventSlide({
                         href={link.href}
                         target={isExternal ? "_blank" : undefined}
                         rel={isExternal ? "noopener noreferrer" : undefined}
-                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-white/25 px-4 py-2 text-[11px] sm:text-xs uppercase tracking-[0.25em] text-neutral-100 transition-colors hover:border-white hover:bg-white/10 focus-ring"
+                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-white/25 px-4 py-2 type-button text-neutral-100 transition-colors hover:border-white hover:bg-white/10 focus-ring"
                       >
                         <span>{link.label}</span>
                         {isExternal ? (
@@ -154,7 +154,7 @@ export function HeritageEventSlide({
           >
             <div className="max-h-[80vh] w-full max-w-lg overflow-hidden rounded-2xl bg-black text-neutral-100 shadow-elevated">
               <div className="flex items-center justify-between border-b border-white/15 px-4 py-3">
-                <Text size="xs" className="tracking-[0.28em] text-neutral-400" leading="normal">
+                <Text size="caption" className="text-neutral-400">
                   {event.date}
                 </Text>
                 <Dialog.Close asChild>
@@ -172,14 +172,13 @@ export function HeritageEventSlide({
                 <Heading
                   id={`heritage-event-modal-${event.id}`}
                   level={3}
-                  size="sm"
-                  className="tracking-tight text-neutral-50"
+                  className="type-card-title text-neutral-50"
                 >
                   {event.title}
                 </Heading>
                 {hasSummary
                   ? renderSummary(
-                    "prose prose-invert max-w-none text-sm leading-relaxed text-neutral-200 prose-p:mb-3 prose-p:mt-0 prose-strong:text-neutral-50 prose-em:text-neutral-200",
+                    "prose prose-invert max-w-none type-body leading-relaxed text-neutral-200 prose-p:mb-3 prose-p:mt-0 prose-strong:text-neutral-50 prose-em:text-neutral-200",
                   )
                   : null}
               </div>

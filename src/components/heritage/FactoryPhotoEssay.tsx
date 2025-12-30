@@ -15,8 +15,6 @@ type FactoryPhotoEssayProps = Readonly<{
   readonly ui: FactoryEssayUi;
 }>;
 
-const CARD_ASPECT_RATIO = 3 / 2;
-
 export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const hasItems = items.length > 0;
@@ -68,7 +66,7 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
       aria-labelledby="factory-essay-heading"
     >
       <div className="space-y-2">
-        <Text size="xs" className="font-semibold tracking-[0.35em] text-ink-muted" leading="normal">
+        <Text size="label-tight" className="text-ink-muted">
           {eyebrow}
         </Text>
         <Heading id="factory-essay-heading" level={2} size="xl" className="text-ink">
@@ -76,7 +74,7 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
         </Heading>
         {introHtml ? (
           <SafeHtml
-            className="prose prose-sm max-w-3xl leading-relaxed text-ink-muted md:prose-lg"
+            className="type-section-subtitle max-w-3xl text-ink-muted"
             html={introHtml}
           />
         ) : null}
@@ -101,8 +99,7 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
           <Dialog.Portal>
             <Dialog.Overlay className="fixed inset-0 bg-black/80 backdrop-blur-sm" />
             <Dialog.Content
-              className="fixed inset-0 flex items-center justify-center overflow-y-auto px-4 sm:px-6 focus:outline-none"
-              style={{ paddingTop: "15vh", paddingBottom: "15vh" }}
+              className="fixed inset-0 flex items-center justify-center overflow-y-auto px-4 py-[15vh] sm:px-6 focus:outline-none"
             >
               <Dialog.Title className="sr-only">
                 Factory photo detail
@@ -118,10 +115,9 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
                     </p>
                   </Text>
                   <div
-                    className="relative w-full flex-1 min-h-0 overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
+                    className="relative w-full flex-1 min-h-0 overflow-hidden rounded-2xl bg-[color:var(--color-canvas)] max-h-[calc(70vh-8rem)] aspect-dynamic"
                     style={{
-                      aspectRatio: currentItem.image.aspectRatio ?? 3 / 2,
-                      maxHeight: "calc(70vh - 8rem)",
+                      "--aspect-ratio": currentItem.image.aspectRatio ?? 3 / 2,
                     }}
                   >
                     <Image
@@ -133,14 +129,14 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
                     />
                   </div>
                   {currentItem.image.caption ? (
-                    <Text asChild className="text-ink-muted" leading="relaxed">
-                      <figcaption>{currentItem.image.caption}</figcaption>
-                    </Text>
+                  <Text asChild className="text-ink-muted">
+                    <figcaption>{currentItem.image.caption}</figcaption>
+                  </Text>
                   ) : null}
                   <div className="flex justify-between">
                     <button
                       type="button"
-                      className="focus-ring rounded-full border border-border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink"
+                      className="focus-ring rounded-full border border-border px-4 py-2 type-button text-ink"
                       aria-label="Previous photo"
                       onClick={() => { goTo(-1); }}
                     >
@@ -148,14 +144,14 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
                     </button>
                     <button
                       type="button"
-                      className="focus-ring rounded-full border border-border px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink"
+                      className="focus-ring rounded-full border border-border px-4 py-2 type-button text-ink"
                       aria-label="Next photo"
                       onClick={() => { goTo(1); }}
                     >
                       Next
                     </button>
                   </div>
-                  <Dialog.Close className="focus-ring absolute right-4 top-4 rounded-full border border-border bg-card px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-ink">
+                  <Dialog.Close className="focus-ring absolute right-4 top-4 rounded-full border border-border bg-card px-4 py-2 type-button text-ink">
                     Close
                   </Dialog.Close>
                 </figure>
@@ -182,8 +178,7 @@ function PhotoCard({ item, onOpen }: PhotoCardProps) {
     <div ref={analyticsRef} data-analytics-id={`FactoryEssaySeen:${item.image.id}`}>
       <button
         type="button"
-        className="group relative w-full overflow-hidden rounded-2xl border border-border/60 bg-card/10 focus-ring sm:border-border/70 sm:bg-card"
-        style={{ aspectRatio: CARD_ASPECT_RATIO }}
+        className="group relative w-full overflow-hidden rounded-2xl border border-border/60 bg-card/10 focus-ring sm:border-border/70 sm:bg-card aspect-[3/2]"
         onClick={onOpen}
         aria-label={`Open photo essay item: ${item.image.alt}`}
       >
@@ -195,7 +190,7 @@ function PhotoCard({ item, onOpen }: PhotoCardProps) {
           className="object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
         />
-        <span className="absolute inset-x-3 bottom-3 rounded-full bg-black/60 px-3 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-white">
+        <span className="absolute inset-x-3 bottom-3 rounded-full bg-black/60 px-3 py-2 type-button text-white">
           Expand
         </span>
       </button>

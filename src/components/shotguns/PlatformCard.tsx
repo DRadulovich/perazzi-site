@@ -5,7 +5,6 @@ import Link from "next/link";
 import type { Platform } from "@/types/catalog";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
-import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 
 type PlatformCardProps = {
@@ -27,10 +26,7 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
       className="group flex h-full flex-col rounded-2xl border border-border bg-(--color-canvas)/30 p-4 shadow-soft backdrop-blur-sm transition-transform focus-ring hover:-translate-y-1 sm:rounded-3xl sm:bg-canvas/40 sm:p-6 sm:shadow-elevated"
       onClick={() => logAnalytics(`shotguns_platform_card_click:${platform.id}`)}
     >
-      <div
-        className="card-media relative rounded-2xl bg-(--surface-elevated) transition-transform duration-300 group-hover:scale-[1.01]"
-        style={{ aspectRatio: "16 / 9" }}
-      >
+      <div className="card-media relative rounded-2xl bg-(--surface-elevated) transition-transform duration-300 group-hover:scale-[1.01] aspect-[16/9]">
         <Image
           src={platform.hero.url}
           alt={platform.hero.alt}
@@ -49,33 +45,32 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
       </div>
 
       <header className="mt-4 space-y-1">
-        <Heading level={3} size="md" className="text-ink">
+        <h3 className="my-3 type-card-title text-ink uppercase text-2xl">
           {platform.name}
-        </Heading>
-        <Text className="text-ink-muted" leading="normal">
+        </h3>
+        <Text className="type-body text-ink-muted mb-7">
           {platform.tagline}
         </Text>
       </header>
 
       {platform.weightDistribution ? (
         <Text
-          size="xs"
-          className="mt-2 font-semibold tracking-[0.22em] text-ink-muted"
-          leading="normal"
+          size="caption"
+          className="mt-2 text-ink-muted"
         >
           {platform.weightDistribution}
         </Text>
       ) : null}
 
       <div className="mt-4">
-        <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+        <Text size="label-tight" className="text-ink-muted">
           Disciplines
         </Text>
-        <ul className="mt-2 flex flex-wrap gap-2 text-sm text-ink">
+        <ul className="mt-2 mb-7 flex flex-wrap gap-2 type-body-sm text-ink">
           {platform.typicalDisciplines.map((discipline) => (
             <li
               key={discipline}
-              className="rounded-full bg-(--surface-elevated)/85 px-3 py-1 text-[0.7rem] uppercase tracking-[0.18em] text-ink"
+              className="pill bg-(--surface-elevated)/85 type-label-tight text-ink"
             >
               {discipline}
             </li>
@@ -84,15 +79,15 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
       </div>
 
       {platform.fixedCounterpart ? (
-        <Text size="sm" className="mt-4 text-ink-muted" leading="normal">
+        <Text size="sm" className="mt-4 type-label-tight text-ink-muted">
           Fixed-trigger counterpart:{" "}
-          <span className="font-semibold">{platform.fixedCounterpart.name}</span>
+          <span className="text-ink">{platform.fixedCounterpart.name}</span>
         </Text>
       ) : null}
       {platform.detachableCounterpart ? (
-        <Text size="sm" className="mt-1 text-ink-muted" leading="normal">
+        <Text size="sm" className="mt-1 mb-7 type-label-tight text-ink-muted">
           Detachable counterpart:{" "}
-          <span className="font-semibold">{platform.detachableCounterpart.name}</span>
+          <span className="text-ink">{platform.detachableCounterpart.name}</span>
         </Text>
       ) : null}
 
@@ -101,7 +96,7 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
           <span className="w-1 self-stretch rounded-full bg-perazzi-red/80" />
           <div className="flex flex-col gap-4">
             {platform.hallmark ? (
-              <Text className="italic text-ink-muted" leading="normal">
+              <Text size="sm" className="text-ink-muted font-artisan text-lg" leading="normal">
                 {platform.hallmark}
               </Text>
             ) : null}
@@ -120,18 +115,18 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
                 ) : null}
                 <div>
                   {platform.champion?.name ? (
-                    <Text className="font-semibold text-ink" leading="normal">
+                    <p className="type-body-title text-ink">
                       {platform.champion.name}
-                    </Text>
+                    </p>
                   ) : null}
                   {platform.champion?.title ? (
-                    <Text size="sm" className="text-ink-muted" leading="normal">
+                    <Text size="sm" className="type-label-tight text-ink-muted" leading="normal">
                       {platform.champion.title}
                     </Text>
                   ) : null}
                   {platform.champion?.resume?.winOne ? (
                     <Text size="sm" className="mt-1 text-ink-muted" leading="normal">
-                      Win highlight: <span className="font-medium">{platform.champion.resume.winOne}</span>
+                      Win highlight: <span className="text-ink">{platform.champion.resume.winOne}</span>
                     </Text>
                   ) : null}
                 </div>
@@ -144,8 +139,8 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
       <div className="mt-auto pt-6">
         <Text
           asChild
-          size="sm"
-          className="inline-flex items-center gap-2 font-semibold uppercase tracking-[0.2em] text-perazzi-red"
+          size="button"
+          className="inline-flex items-center gap-2 text-perazzi-red"
           leading="normal"
         >
           <span>

@@ -42,7 +42,7 @@ const FILTER_PANEL_CLASS =
 const CARD_CLASS =
   "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-perazzi-black/80 text-left shadow-medium transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red sm:rounded-3xl sm:shadow-elevated";
 const SPEC_PANEL_CLASS =
-  "grid gap-4 border-t border-white/10 bg-black/40 px-4 py-4 text-[11px] sm:text-sm text-neutral-200 sm:grid-cols-2 sm:px-6 sm:py-5";
+  "grid gap-4 border-t border-white/10 bg-black/40 px-4 py-4 text-neutral-200 sm:grid-cols-2 sm:px-6 sm:py-5";
 
 function filterByQuery(engravings: EngravingRow[], query: string) {
   const needle = query.trim().toLowerCase();
@@ -238,20 +238,20 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
     >
       <div className={FILTER_PANEL_CLASS}>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <label className="flex w-full items-center gap-3 rounded-full border border-white/20 bg-black/40 px-4 py-2 text-sm text-neutral-300 focus-within:border-white">
+          <label className="flex w-full items-center gap-3 rounded-full border border-white/20 bg-black/40 px-4 py-2 type-body-sm text-neutral-300 focus-within:border-white">
             <span className="text-neutral-500">Search</span>
             <Input
               type="search"
               placeholder="Search engraving ID or grade…"
               value={query}
               onChange={(event) => { handleQueryChange(event.target.value); }}
-              className="w-full border-0 bg-transparent px-0 py-0 text-sm sm:text-base text-white placeholder:text-neutral-600 shadow-none focus:border-0"
+              className="w-full border-0 bg-transparent px-0 py-0 type-body-sm text-white placeholder:text-neutral-600 shadow-none focus:border-0"
             />
           </label>
-          <Text asChild className="text-neutral-400" leading="normal">
+          <Text asChild size="caption" className="text-neutral-400" leading="normal">
             <p aria-live="polite" aria-atomic="true">
-              Showing <span className="font-semibold text-white">{filteredEngravings.length}</span>{" "}
-              of <span className="font-semibold text-white">{engravings.length}</span>
+              Showing <span className="text-white">{filteredEngravings.length}</span>{" "}
+              of <span className="text-white">{engravings.length}</span>
             </p>
           </Text>
         </div>
@@ -311,10 +311,10 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
 function Spec({ label, value }: Readonly<{ label: string; value?: string }>) {
   return (
     <div>
-      <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
+      <Text size="label-tight" className="text-perazzi-red">
         {label}
       </Text>
-      <Text className="text-white" leading="normal">
+      <Text size="sm" className="text-white">
         {value || "—"}
       </Text>
     </div>
@@ -340,12 +340,10 @@ function FilterGroup({
     <div className="flex flex-wrap items-center gap-3">
       <Text
         asChild
-        size="xs"
+        size="label-tight"
         className={clsx(
-          "tracking-[0.3em]",
           tone === "dark" ? "text-neutral-500" : "text-ink-muted",
         )}
-        leading="normal"
       >
         <span>{label}</span>
       </Text>
@@ -391,7 +389,7 @@ function FilterChip({
     <button
       type="button"
       onClick={onClick}
-      className={clsx("rounded-full px-4 py-2 text-[11px] sm:text-xs uppercase tracking-widest transition", chipStateClass)}
+      className={clsx("type-label-tight pill transition", chipStateClass)}
     >
       {label}
     </button>
@@ -431,7 +429,7 @@ function FavoritesPanel({
   return (
     <div className="rounded-3xl border border-white/10 bg-black/30 p-4 text-white">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Text size="xs" className="font-semibold text-neutral-400" leading="normal">
+        <Text size="caption" className="text-neutral-400">
           Favorites ({favorites.length}/6)
         </Text>
         <Button
@@ -461,15 +459,15 @@ function FavoritesPanel({
                 {previewUrl ? (
                   <Image src={previewUrl} alt={fav.imageAlt || fav.engravingId} fill className="object-cover" />
                 ) : (
-                  <span className="text-xs text-black">No Image</span>
+                  <span className="type-caption text-black">No Image</span>
                 )}
               </button>
-              <Text size="sm" className="mt-2 font-semibold" leading="normal">
+              <Heading level={4} size="sm" className="mt-2 text-white">
                 #{fav.engravingId}
-              </Text>
+              </Heading>
               <button
                 type="button"
-                className="text-[11px] sm:text-xs uppercase tracking-[0.3em] text-white/60 hover:text-white"
+                className="type-label-tight text-white/60 hover:text-white"
                 onClick={() => { onToggle(fav); }}
               >
                 Remove
@@ -558,10 +556,10 @@ function EngravingCard({
             alt={engraving.imageAlt || `Engraving ${engraving.engravingId}`}
             fill
             sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
-            className="object-contain bg-white transition-transform duration-500 group-hover:scale-105"
-            style={{
-              objectPosition: engraving.engravingSide === "Under" ? "right center" : "center",
-            }}
+            className={clsx(
+              "object-contain bg-white transition-transform duration-500 group-hover:scale-105",
+              engraving.engravingSide === "Under" ? "object-right" : "object-center",
+            )}
           />
         ) : (
           <div className="flex h-full items-center justify-center text-neutral-600">
@@ -569,13 +567,7 @@ function EngravingCard({
           </div>
         )}
         {cardImageUrl ? (
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(circle at center, transparent 45%, rgba(0,0,0,0.4) 85%)",
-            }}
-          />
+          <div className="pointer-events-none absolute inset-0 radial-vignette" />
         ) : null}
         <div
           className={clsx(
@@ -583,13 +575,13 @@ function EngravingCard({
             engraving.engravingSide === "Right" ? "items-end text-right" : "items-start text-left",
           )}
         >
-          <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
+          <Text size="label-tight" className="text-perazzi-red">
             {engraving.gradeName}
           </Text>
-          <Heading level={3} size="lg" className="leading-tight text-black">
+          <Heading level={3} size="lg" className="text-black">
             {highlightText(`Engraving ${engraving.engravingId}`, query)}
           </Heading>
-          <Text className="text-black/70" leading="normal">
+          <Text size="sm" className="text-black/70">
             {highlightText(engraving.engravingSide, query)}
           </Text>
         </div>
@@ -675,11 +667,9 @@ function EngravingDetailDialog({
                     sizes="(min-width: 1024px) 70vw, 100vw"
                     className={clsx(
                       "object-contain bg-white transition-opacity duration-700",
+                      selected.engravingSide === "Under" ? "object-right" : "object-center",
                       heroLoaded ? "opacity-100" : "opacity-0",
                     )}
-                    style={{
-                      objectPosition: selected.engravingSide === "Under" ? "right center" : "center",
-                    }}
                     priority
                     onLoadingComplete={() => { setHeroLoaded(true); }}
                   />
@@ -692,13 +682,13 @@ function EngravingDetailDialog({
                     selected.engravingSide === "Right" ? "items-end text-right" : "items-start text-left",
                   )}
                 >
-                  <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
+                  <Text size="label-tight" className="text-perazzi-red">
                     {selected.gradeName}
                   </Text>
-                  <Heading level={2} size="xl" className="leading-tight text-black">
+                  <Heading level={2} size="xl" className="text-black">
                     Engraving {selected.engravingId}
                   </Heading>
-                  <Text className="text-black/70" leading="normal">
+                  <Text size="sm" className="text-black/70">
                     {selected.engravingSide}
                   </Text>
                 </div>
@@ -743,7 +733,7 @@ function EngravingCompareDialog({
               </Button>
             </Dialog.Close>
             <div className="space-y-4 border-b border-white/10 p-6 text-center">
-              <Text size="xs" className="tracking-[0.4em] text-white/70" leading="normal">
+              <Text size="label-tight" className="text-white/70">
                 Compare Engravings
               </Text>
               <Heading level={2} size="xl" className="text-white">
@@ -767,23 +757,17 @@ function EngravingCompareDialog({
                         <div className="flex h-full items-center justify-center text-neutral-600">No Image</div>
                       )}
                       {compareImage ? (
-                        <div
-                          className="pointer-events-none absolute inset-0"
-                          style={{
-                            background:
-                              "radial-gradient(circle at center, transparent 45%, rgba(0,0,0,0.4) 85%)",
-                          }}
-                        />
+                        <div className="pointer-events-none absolute inset-0 radial-vignette" />
                       ) : null}
                     </div>
                     <div className="mt-4 space-y-1 text-white">
-                      <Text size="xs" className="tracking-[0.35em] text-perazzi-red" leading="normal">
+                      <Text size="label-tight" className="text-perazzi-red">
                         {fav.gradeName}
                       </Text>
                       <Heading level={3} size="lg" className="text-white">
                         Engraving {fav.engravingId}
                       </Heading>
-                      <Text className="text-white/80" leading="normal">
+                      <Text size="sm" className="text-white/80">
                         {fav.engravingSide}
                       </Text>
                     </div>

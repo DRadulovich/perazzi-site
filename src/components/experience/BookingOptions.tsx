@@ -30,11 +30,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
     <section
       ref={analyticsRef}
       data-analytics-id="ExperienceBookingSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
-      style={{
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
-      }}
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
       aria-labelledby="experience-booking-heading"
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -50,16 +46,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
           className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
-              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%), " +
-              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%)",
-          }}
-          aria-hidden
-        />
+        <div className="absolute inset-0 overlay-gradient-canvas" aria-hidden />
       </div>
 
       <Container size="xl" className="relative z-10">
@@ -69,11 +56,11 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
               id="experience-booking-heading"
               level={2}
               size="xl"
-              className="font-black uppercase italic tracking-[0.35em] text-ink"
+              className="text-ink"
             >
               {heading}
             </Heading>
-            <Text size="md" muted leading="relaxed" className="mb-4 font-light italic">
+            <Text className="type-section-subtitle mb-4 text-ink-muted">
               {subheading}
             </Text>
           </div>
@@ -84,14 +71,14 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
                 className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-7 lg:p-8"
               >
                 <div className="space-y-2">
-                  <Heading level={3} size="sm" className="text-ink">
+                  <Heading level={3} className="type-card-title text-ink">
                     {option.title}
                   </Heading>
-                  <Text size="xs" muted className="font-semibold">
+                  <Text size="caption" muted>
                     {option.durationLabel ?? (option.durationMins ? `${option.durationMins} minutes` : "")}
                   </Text>
                   <SafeHtml
-                    className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg prose-headings:text-ink prose-strong:text-ink"
+                    className="type-body max-w-none leading-relaxed text-ink-muted"
                     html={option.descriptionHtml}
                   />
                 </div>
@@ -99,8 +86,8 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
                   <Button
                     asChild
                     variant="secondary"
-                    size="lg"
-                    className="rounded-full px-6 py-3 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em]"
+                    size="md"
+                    className="rounded-full px-6 py-3 type-button"
                     onClick={() =>
                       logAnalytics(`FittingCtaClick:${option.id}`)
                     }
@@ -114,7 +101,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
           {scheduler ? (
             <div className="space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-8 lg:p-10">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <Heading level={3} size="sm" className="text-ink">
+                <Heading level={3} className="type-card-title text-ink">
                   {scheduler.title}
                 </Heading>
                 <Button
@@ -123,7 +110,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
                   aria-controls={schedulerPanelId}
                   aria-expanded={schedulerOpen}
                   aria-describedby={schedulerNoteId}
-                  className="rounded-full px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em]"
+                  className="rounded-full px-4 py-2 type-button"
                   onClick={() => {
                     setSchedulerOpen((prev) => {
                       const next = !prev;
@@ -159,18 +146,18 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
                     aria-hidden={!schedulerOpen}
                   />
                 ) : (
-                  <div className="flex h-80 w-full items-center justify-center rounded-2xl border border-dashed border-border/70 text-sm sm:text-base text-ink-muted">
+                  <div className="flex h-80 w-full items-center justify-center rounded-2xl border border-dashed border-border/70 type-body-sm text-ink-muted">
                     The booking form appears here once you choose Begin Your Fitting.
                   </div>
                 )}
               </div>
-              <p className="text-[11px] sm:text-xs text-ink-muted">
+              <p className="type-caption text-ink-muted">
                 Prefer email?{" "}
                 <a
                   href={scheduler.fallbackHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-semibold text-perazzi-red focus-ring"
+                  className="text-perazzi-red focus-ring"
                 >
                   Open booking in a new tab{" "}
                   <span className="sr-only"> (opens in a new tab)</span>

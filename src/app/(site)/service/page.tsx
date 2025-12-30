@@ -47,7 +47,7 @@ export default async function ServicePage() {
         })),
       }
     : null;
-  const faqSchemaJson = faqSchema ? JSON.stringify(faqSchema).replace(/</g, "\\u003c") : null;
+  const faqSchemaJson = faqSchema ? JSON.stringify(faqSchema).replaceAll('<', String.raw`\u003c`) : null;
 
   return (
     <div className="space-y-16">
@@ -63,7 +63,7 @@ export default async function ServicePage() {
       />
       <ServiceOverview overview={overviewSection} />
       <Section padding="md" aria-labelledby="service-guidance-heading">
-        <Text asChild size="xs" muted className="font-semibold">
+        <Text asChild size="label-tight" muted>
           <h2 id="service-guidance-heading">
             {serviceGuidanceBlock.eyebrow ?? "Service guidance"}
           </h2>
@@ -97,7 +97,7 @@ export default async function ServicePage() {
         analyticsOpenId="RequestServiceOpen"
       />
       <Section padding="md" aria-labelledby="service-shipping-heading">
-        <Text asChild size="xs" muted className="font-semibold">
+        <Text asChild size="label-tight" muted>
           <h2 id="service-shipping-heading">
             {shippingPrepBlock.eyebrow ?? "Shipping prep"}
           </h2>

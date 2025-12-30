@@ -38,7 +38,7 @@ export function CTASection({
       data-analytics-id={dataAnalyticsId}
       padding="md"
       bordered={false}
-      className="bg-perazzi-black text-ink"
+      className="bg-canvas text-ink"
       initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
       whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.5 }}
@@ -49,14 +49,15 @@ export function CTASection({
         <Heading id="shotguns-cta-heading" level={2} size="xl" className="text-ink">
           Begin your fitting
         </Heading>
-        <Text size="lg" leading="relaxed" className="max-w-2xl text-ink/80">
+        <Text className="type-section-subtitle max-w-2xl text-ink/80">
           {text}
         </Text>
         <div className="flex flex-wrap gap-4">
           <Button
             asChild
             variant="primary"
-            size="lg"
+            size="sm"
+            className="md:!type-button-lg md:!px-xl md:!py-sm"
             onClick={() => { logClick("primary"); }}
           >
             <a href={primary.href}>{primary.label}</a>
@@ -65,7 +66,8 @@ export function CTASection({
             <Button
               asChild
               variant="secondary"
-              size="lg"
+              size="sm"
+              className="md:!type-button-lg md:!px-xl md:!py-sm"
               onClick={() => { logClick("secondary"); }}
             >
               <a href={secondary.href}>{secondary.label}</a>

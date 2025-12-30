@@ -55,10 +55,10 @@ export default async function FullScreenChatPage({ searchParams }: FullScreenCha
       contentClassName="flex w-full flex-1 flex-col max-w-none px-0"
     >
       <div className="border-b border-subtle bg-card px-6 py-6 sm:px-8 sm:py-8 lg:px-12">
-        <Text size="xs" className="tracking-[0.2em] text-ink-muted" leading="normal">
+        <Text size="label-tight" className="text-ink-muted">
           Perazzi Concierge
         </Text>
-        <Heading level={1} size="xl" className="text-2xl sm:text-3xl text-ink">
+        <Heading level={1} size="display" className="text-ink">
           Full-screen conversation
         </Heading>
         <Text className="mt-2 max-w-3xl text-ink-muted">

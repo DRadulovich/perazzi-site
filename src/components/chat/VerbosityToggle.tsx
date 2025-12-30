@@ -18,7 +18,7 @@ export function VerbosityToggle({ value, onChange, disabled = false }: Verbosity
   return (
     <fieldset className="flex flex-wrap items-center gap-2">
       <legend className="sr-only">Verbosity</legend>
-      <span className="text-xs font-semibold text-ink-muted">Verbosity</span>
+      <span className="type-label-tight text-ink-muted">Verbosity</span>
       <div
         className="inline-flex items-center rounded-full border border-border bg-card/70 p-1 shadow-soft backdrop-blur-sm"
         role="radiogroup"
@@ -38,7 +38,7 @@ export function VerbosityToggle({ value, onChange, disabled = false }: Verbosity
             />
             <span
               className={[
-                "block rounded-full px-3 py-1 text-xs font-semibold transition",
+                "block pill type-label-tight transition",
                 "text-ink-muted hover:bg-subtle",
                 "peer-checked:bg-ink peer-checked:text-card peer-checked:shadow-soft",
                 "peer-focus-visible:outline peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink",

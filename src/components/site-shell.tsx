@@ -57,11 +57,11 @@ export async function SiteShell({
           {children}
         </Container>
       </main>
-      <footer className="border-t border-subtle bg-card text-sm text-ink-muted">
+      <footer className="border-t border-subtle bg-card type-body-sm text-ink-muted">
         <Container size="xl" className="py-8 sm:py-12">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-12 md:gap-10">
             <div className="space-y-3 md:col-span-5">
-              <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+              <Text size="label-tight" muted>
                 Perazzi
               </Text>
               <Text className="text-ink">
@@ -69,7 +69,7 @@ export async function SiteShell({
               </Text>
             </div>
             <div className="space-y-3 md:col-span-4">
-              <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+              <Text size="label-tight" muted>
                 Explore
               </Text>
               <ul className="grid grid-cols-2 gap-3 text-ink sm:grid-cols-3 md:grid-cols-2">
@@ -77,7 +77,7 @@ export async function SiteShell({
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="font-semibold text-ink transition-colors hover:text-perazzi-red"
+                      className="type-nav text-ink transition-colors hover:text-perazzi-red"
                     >
                       {link.label}
                     </Link>
@@ -86,7 +86,7 @@ export async function SiteShell({
               </ul>
             </div>
             <div className="space-y-3 md:col-span-3">
-              <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+              <Text size="label-tight" muted>
                 Support
               </Text>
               <ul className="space-y-2 text-ink">
@@ -94,7 +94,7 @@ export async function SiteShell({
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="font-semibold text-ink transition-colors hover:text-perazzi-red"
+                      className="type-nav text-ink transition-colors hover:text-perazzi-red"
                     >
                       {link.label}
                     </Link>
@@ -103,8 +103,8 @@ export async function SiteShell({
               </ul>
             </div>
           </div>
-          <div className="mt-10 flex flex-col gap-3 border-t border-subtle pt-6 text-xs text-ink-muted sm:flex-row sm:items-center sm:justify-between">
-            <Text asChild size="sm" className="text-ink" leading="normal">
+          <div className="mt-10 flex flex-col gap-3 border-t border-subtle pt-6 type-caption text-ink-muted sm:flex-row sm:items-center sm:justify-between">
+            <Text asChild size="caption" className="text-ink">
               <span>Perazzi S.p.A · Botticino, Italy</span>
             </Text>
             <div className="flex flex-wrap gap-4">

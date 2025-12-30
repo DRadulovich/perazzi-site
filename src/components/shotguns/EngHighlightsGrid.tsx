@@ -19,7 +19,7 @@ export function EngHighlightsGrid({ highlights }: EngHighlightsGridProps) {
       className="space-y-4"
       aria-labelledby="engineering-highlights-heading"
     >
-      <Heading id="engineering-highlights-heading" level={2} size="md" className="text-ink">
+      <Heading id="engineering-highlights-heading" level={2} className="type-section text-ink">
         Engineering highlights
       </Heading>
       <div className="grid gap-6 md:grid-cols-2">
@@ -31,8 +31,8 @@ export function EngHighlightsGrid({ highlights }: EngHighlightsGridProps) {
               className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated"
             >
               <div
-                className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
-                style={{ aspectRatio: ratio }}
+                className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)] aspect-dynamic"
+                style={{ "--aspect-ratio": ratio }}
               >
                 <Image
                   src={highlight.media.url}
@@ -43,10 +43,10 @@ export function EngHighlightsGrid({ highlights }: EngHighlightsGridProps) {
                   loading="lazy"
                 />
               </div>
-              <Heading level={3} size="sm" className="mt-4 text-ink">
+              <Heading level={3} className="mt-4 type-card-title text-ink">
                 {highlight.title}
               </Heading>
-              <Text size="md" muted leading="relaxed" className="mt-2">
+              <Text className="mt-2 type-body text-ink-muted" leading="relaxed">
                 {highlight.body}
               </Text>
             </article>

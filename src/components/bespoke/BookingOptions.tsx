@@ -30,14 +30,14 @@ function BookingOptionCard({ option }: BookingOptionCardProps) {
       className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm transition-shadow hover:shadow-elevated sm:rounded-3xl sm:bg-card/80 sm:p-6"
     >
       <div className="space-y-2">
-        <Heading level={3} size="sm" className="text-ink">
+        <Heading level={3} size="sm" className="type-body-title text-ink">
           {option.title}
         </Heading>
-        <Text size="xs" muted className="font-semibold">
+        <Text size="caption" muted>
           {option.durationLabel ?? (option.durationMins ? `${option.durationMins} minutes` : "")}
         </Text>
         <SafeHtml
-          className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg"
+          className="max-w-none type-body text-ink-muted"
           html={option.descriptionHtml}
         />
       </div>
@@ -45,7 +45,8 @@ function BookingOptionCard({ option }: BookingOptionCardProps) {
         <Button
           asChild
           variant="secondary"
-          size="lg"
+          size="sm"
+          className="md:!type-button-lg md:!px-xl md:!py-sm"
           onClick={() => {
             logAnalytics(`BookingClicked:${option.id}`);
           }}
@@ -85,7 +86,7 @@ function WhatToExpectCollapsible({
       }}
     >
       <CollapsibleTrigger
-        className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/70 px-4 py-3 text-left text-sm font-semibold text-ink shadow-soft backdrop-blur-sm focus-ring md:px-6 md:py-4 md:text-base lg:px-7 lg:py-5"
+        className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/70 px-4 py-3 text-left type-body-title text-ink italic shadow-soft backdrop-blur-sm focus-ring md:px-6 md:py-4 lg:px-7 lg:py-5"
         aria-controls={contentId}
         aria-expanded={open}
       >
@@ -103,7 +104,7 @@ function WhatToExpectCollapsible({
       <CollapsibleContent
         id={contentId}
         className={cn(
-          "overflow-hidden px-4 pt-3 text-sm text-ink-muted md:px-6 md:pt-4 md:text-base lg:px-7 lg:pt-5",
+          "overflow-hidden px-4 pt-3 type-body-sm text-ink-muted md:px-6 md:pt-4 lg:px-7 lg:pt-5",
           reducedMotion
             ? "transition-none"
             : "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
@@ -171,7 +172,7 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
       aria-labelledby="booking-options-heading"
     >
       <div className="space-y-2">
-        <Text size="xs" muted className="font-semibold">
+        <Text size="label-tight" muted>
           Reserve time
         </Text>
         <Heading id="booking-options-heading" level={2} size="xl" className="text-ink">
@@ -187,7 +188,7 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
         aria-label="What to expect during your fitting"
         className="space-y-3 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm md:space-y-4 md:p-8 md:rounded-3xl md:bg-card/75 lg:space-y-5 lg:p-10"
       >
-        <Text size="xs" muted className="font-semibold">
+        <Text size="label-tight" muted>
           {resolvedWhatToExpectHeading}
         </Text>
         <div className="space-y-3 md:space-y-4 lg:space-y-5">
@@ -202,7 +203,7 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
         </div>
       </aside>
       <div className="space-y-3 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm md:space-y-4 md:p-8 md:rounded-3xl md:bg-card/75 lg:space-y-5 lg:p-10">
-        <Text size="xs" muted className="font-semibold">
+        <Text size="label-tight" muted>
           Schedule with the concierge
         </Text>
         {showScheduler ? (
@@ -223,14 +224,14 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
             Load scheduler
           </Button>
         )}
-        <Text asChild size="xs" className="text-ink-muted" leading="normal">
+        <Text asChild size="sm" className="text-ink-muted">
           <p>
             Prefer email?{" "}
             <a
               href={scheduler.fallback}
               target="_blank"
               rel="noreferrer"
-              className="font-semibold text-perazzi-red focus-ring"
+              className="text-perazzi-red focus-ring"
             >
               Open the request form<span className="sr-only"> (opens in a new tab)</span>
             </a>
@@ -238,7 +239,7 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
         </Text>
       </div>
       {resolvedNote ? (
-        <Text size="xs" className="text-ink-muted" leading="normal">
+        <Text size="caption" className="text-ink-muted">
           {resolvedNote}
         </Text>
       ) : null}

@@ -149,14 +149,13 @@ const NavLink = ({ item, pathname, tone }: { item: NavItem; pathname: string; to
       <div className="relative">
         <Link
           href={item.href}
-          className={`relative text-sm font-semibold transition-colors ${linkTextClass}`}
+          className={`relative inline-flex h-8 items-center type-button tracking-normal transition-colors ${linkTextClass}`}
         >
           {item.text}
           <span
             className={`absolute -bottom-1 left-0 right-0 h-0.5 origin-left rounded-full transition-transform duration-300 ease-out ${
               tone === "light" ? "bg-white" : "bg-ink"
-            }`}
-            style={{ transform: isActive ? "scaleX(1)" : "scaleX(0)" }}
+            } ${isActive ? "scale-x-100" : "scale-x-0"}`}
           />
         </Link>
       </div>
@@ -174,15 +173,14 @@ const NavLink = ({ item, pathname, tone }: { item: NavItem; pathname: string; to
         */}
         <Link
           href={item.href}
-          className={`relative text-sm font-semibold transition-colors ${linkTextClass}`}
+          className={`relative inline-flex h-8 items-center type-button tracking-normal transition-colors ${linkTextClass}`}
           onClick={() => setOpen(false)}
         >
           {item.text}
           <span
             className={`absolute -bottom-1 left-0 right-0 h-0.5 origin-left rounded-full transition-transform duration-300 ease-out ${
               tone === "light" ? "bg-white" : "bg-ink"
-            }`}
-            style={{ transform: showFlyout || isActive ? "scaleX(1)" : "scaleX(0)" }}
+            } ${(showFlyout || isActive) ? "scale-x-100" : "scale-x-0"}`}
           />
         </Link>
         <Popover.Trigger asChild>
@@ -240,7 +238,7 @@ const CTAs = ({ tone }: { tone: NavTone }) => (
   <div className="flex items-center gap-3">
     <Link
       href="/concierge"
-      className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+      className={`flex items-center gap-2 rounded-xl px-4 py-2 type-button tracking-normal transition-colors ${
         tone === "light"
           ? "border border-white/50 text-white/70 hover:bg-white/10 hover:text-white"
           : "border border-white/50 text-white/70 hover:border-white hover:bg-white/10 hover:text-white"
@@ -253,7 +251,7 @@ const CTAs = ({ tone }: { tone: NavTone }) => (
       href="https://store.perazzi.com"
       target="_blank"
       rel="noreferrer"
-      className={`rounded-xl border px-4 py-2 text-sm font-semibold text-white transition-colors ${
+      className={`rounded-xl border px-4 py-2 type-button tracking-normal text-white transition-colors ${
         tone === "light"
           ? "border-perazzi-red bg-perazzi-red hover:border-white"
           : "border-perazzi-red bg-perazzi-red hover:brightness-95"
@@ -272,16 +270,16 @@ const ShotgunsFlyout: FlyoutRenderer = ({ onNavigate }) => (
       className={`col-span-12 flex flex-col justify-between border-b border-white/10 p-6 lg:col-span-4 lg:border-b-0 lg:border-r ${FLYOUT_GLASS_PANEL}`}
     >
       <div>
-        <Heading level={2} size="lg" className="mb-2 text-white font-black! italic uppercase tracking-widest">
+        <Heading level={2} className="mb-2 type-card-title text-white">
           Shotguns
         </Heading>
-        <Text className="text-white/70 italic" leading="normal">
+        <Text className="type-body italic text-white/70" leading="normal">
           Explore dedicated Perazzi platforms—from high-trap geometry to MX race-ready builds.
         </Text>
       </div>
       <Link
         href="/shotguns"
-        className="mt-6 inline-flex items-center gap-1 text-sm font-semibold uppercase italic text-perazzi-red"
+        className="mt-6 inline-flex items-center gap-1 type-button text-perazzi-red"
         onClick={onNavigate}
       >
         All shotguns <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
@@ -297,7 +295,7 @@ const ShotgunsFlyout: FlyoutRenderer = ({ onNavigate }) => (
           className={`${FLYOUT_GLASS_ITEM} p-4 text-left`}
           onClick={onNavigate}
         >
-          <Heading level={3} size="sm" className="text-white font-bold!">
+          <Heading level={3} size="sm" className="text-white not-italic font-semibold">
             {entry.title}
           </Heading>
           <Text size="sm" className="mt-1 text-white/70 italic" leading="normal">
@@ -315,43 +313,43 @@ const ExperienceFlyout: FlyoutRenderer = ({ onNavigate }) => (
   >
     <div className="grid gap-6 sm:grid-cols-2">
       <div>
-        <Text size="sm" className="font-semibold uppercase tracking-[0.2em] text-perazzi-red" leading="normal">
+        <Text size="label-tight" className="text-perazzi-red" leading="normal">
           TRAVEL
         </Text>
         <div className="mt-3 space-y-2">
-          <Link
-            href="/experience#visit"
-            className="flex items-center justify-between rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-ink transition-colors hover:border-white/30 hover:bg-white/10"
-            onClick={onNavigate}
-          >
+            <Link
+              href="/experience#visit"
+              className="flex items-center justify-between rounded-xl border border-white/15 bg-white/5 px-3 py-2 type-nav text-ink not-italic font-semibold transition-colors hover:border-white/30 hover:bg-white/10"
+              onClick={onNavigate}
+            >
             Plan a visit <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
           </Link>
-          <Link
-            href="/experience#fitting"
-            className="flex items-center justify-between rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-ink transition-colors hover:border-white/30 hover:bg-white/10"
-            onClick={onNavigate}
-          >
+            <Link
+              href="/experience#fitting"
+              className="flex items-center justify-between rounded-xl border border-white/15 bg-white/5 px-3 py-2 type-nav text-ink not-italic font-semibold transition-colors hover:border-white/30 hover:bg-white/10"
+              onClick={onNavigate}
+            >
             Book a fitting <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
           </Link>
         </div>
       </div>
       <div>
-        <Text size="sm" className="font-semibold uppercase tracking-[0.2em] text-perazzi-red" leading="normal">
+        <Text size="label-tight" className="text-perazzi-red" leading="normal">
           INQUIRE
         </Text>
         <div className="mt-3 space-y-2">
-          <Link
-            href="/experience#dealers"
-            className="flex items-center justify-between rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-ink transition-colors hover:border-white/30 hover:bg-white/10"
-            onClick={onNavigate}
-          >
+            <Link
+              href="/experience#dealers"
+              className="flex items-center justify-between rounded-xl border border-white/15 bg-white/5 px-3 py-2 type-nav text-ink not-italic font-semibold transition-colors hover:border-white/30 hover:bg-white/10"
+              onClick={onNavigate}
+            >
             Find a dealer <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
           </Link>
-          <Link
-            href="/journal"
-            className="flex items-center justify-between rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm font-semibold text-ink transition-colors hover:border-white/30 hover:bg-white/10"
-            onClick={onNavigate}
-          >
+            <Link
+              href="/journal"
+              className="flex items-center justify-between rounded-xl border border-white/15 bg-white/5 px-3 py-2 type-nav text-ink not-italic font-semibold transition-colors hover:border-white/30 hover:bg-white/10"
+              onClick={onNavigate}
+            >
             Visit the journal <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
           </Link>
         </div>
@@ -359,7 +357,7 @@ const ExperienceFlyout: FlyoutRenderer = ({ onNavigate }) => (
     </div>
     <Link
       href="/experience#dealers"
-      className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/5 px-4 py-2 text-sm font-semibold text-ink uppercase transition-colors hover:border-perazzi-red/60 hover:bg-perazzi-red"
+      className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/5 px-4 py-2 type-button text-ink transition-colors hover:border-perazzi-red/60 hover:bg-perazzi-red"
       onClick={onNavigate}
     >
       Find a dealer
@@ -375,16 +373,16 @@ const HeritageFlyout: FlyoutRenderer = ({ onNavigate }) => (
       className={`col-span-12 flex flex-col justify-between border-b border-white/10 p-6 lg:col-span-4 lg:border-b-0 lg:border-r ${FLYOUT_GLASS_PANEL}`}
     >
       <div>
-        <Heading level={2} size="lg" className="mb-2 text-white font-black! italic uppercase tracking-widest">
+        <Heading level={2} className="mb-2 type-card-title text-white">
           Heritage
         </Heading>
-        <Text className="text-white/70 italic" leading="normal">
+        <Text className="type-body italic text-white/70" leading="normal">
           Trace Perazzi craft across eras—factory milestones, champions, and oral histories.
         </Text>
       </div>
       <Link
         href="/heritage"
-        className="mt-6 inline-flex items-center gap-1 text-sm font-semibold uppercase italic text-perazzi-red"
+        className="mt-6 inline-flex items-center gap-1 type-button text-perazzi-red"
         onClick={onNavigate}
       >
         Explore heritage <ArrowRight className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
@@ -395,14 +393,14 @@ const HeritageFlyout: FlyoutRenderer = ({ onNavigate }) => (
     >
       {HERITAGE_LINKS.map((section) => (
         <div key={section.title} className="space-y-2">
-          <Text size="sm" className="font-semibold uppercase tracking-[0.2em] text-perazzi-red" leading="normal">
+          <Text size="label-tight" className="text-perazzi-red" leading="normal">
             {section.title}
           </Text>
           {section.links.map((link) => (
             <Link
               key={link.label}
               href={link.href}
-              className="block rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-white/90 transition-colors hover:border-white/25 hover:bg-white/10"
+              className="block rounded-xl border border-white/10 bg-white/5 px-3 py-2 type-nav text-white/90 not-italic font-semibold transition-colors hover:border-white/25 hover:bg-white/10"
               onClick={onNavigate}
             >
               {link.label}
@@ -557,7 +555,7 @@ const MobileMenuLink = ({
       <div className="flex items-center justify-between">
         <Link
           href={item.href}
-          className={`text-base font-semibold tracking-tight transition-colors ${
+          className={`type-title-sm transition-colors ${
             isActive ? "text-perazzi-red" : "text-white hover:text-perazzi-red"
           }`}
           onClick={() => setMenuOpen(false)}

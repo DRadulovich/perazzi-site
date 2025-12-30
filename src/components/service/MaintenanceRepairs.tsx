@@ -29,12 +29,12 @@ export function MaintenanceRepairs({ maintenanceSection, guide }: MaintenanceRep
       aria-labelledby="maintenance-heading"
     >
       <div className="space-y-2">
-        <Text size="xs" muted className="font-semibold">
+        <Heading id="maintenance-heading" level={2} className="type-section text-ink">
           {heading}
-        </Text>
-        <Heading id="maintenance-heading" level={2} size="xl" className="text-ink">
-          {subheading}
         </Heading>
+        <Text className="type-section-subtitle text-ink-muted">
+          {subheading}
+        </Text>
       </div>
       <SafeHtml
         className="prose prose-sm max-w-none leading-relaxed text-ink-muted md:prose-lg"
@@ -45,19 +45,19 @@ export function MaintenanceRepairs({ maintenanceSection, guide }: MaintenanceRep
           href={guide.fileUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red focus-ring"
+          className="inline-flex items-center gap-2 type-button text-perazzi-red focus-ring"
           onClick={() => logAnalytics(`GuideDownload:${guide.id}`)}
         >
           Download {guide.title}
           {guide.fileSize ? (
-            <span className="text-[11px] sm:text-xs text-ink-muted">({guide.fileSize})</span>
+            <span className="type-caption text-ink-muted">({guide.fileSize})</span>
           ) : null}
           <span className="sr-only"> (opens in a new tab)</span>
         </a>
       ) : null}
       <Collapsible open={open} onOpenChange={setOpen}>
         <CollapsibleTrigger
-          className="flex w-full items-center justify-between rounded-2xl border border-border/60 bg-card/10 px-4 py-3 text-left text-sm font-semibold text-ink focus-ring sm:border-border sm:bg-card/40"
+          className="flex w-full items-center justify-between rounded-2xl border border-border/60 bg-card/10 px-4 py-3 text-left type-nav text-ink focus-ring sm:border-border sm:bg-card/40"
           aria-expanded={open}
           aria-controls="before-send-content"
         >
@@ -71,7 +71,7 @@ export function MaintenanceRepairs({ maintenanceSection, guide }: MaintenanceRep
         </CollapsibleTrigger>
         <CollapsibleContent
           id="before-send-content"
-          className="mt-3 rounded-2xl border border-border/60 bg-card/40 p-4 text-sm leading-relaxed text-ink-muted sm:bg-card/60"
+          className="mt-3 rounded-2xl border border-border/60 bg-card/40 p-4 type-body-sm text-ink-muted sm:bg-card/60"
         >
           <ul className="list-disc pl-5">
             <li>Record the serial number and trigger group number.</li>

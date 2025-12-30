@@ -119,11 +119,7 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
     <section
       ref={analyticsRef}
       data-analytics-id="EngravingGradesCarouselSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
-      style={{
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
-      }}
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
       aria-labelledby="engraving-grades-heading"
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -136,16 +132,7 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
           priority={false}
         />
         <div className="absolute inset-0 bg-[color:var(--scrim-soft)]" aria-hidden />
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
-              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 80%), " +
-              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 80%)",
-          }}
-          aria-hidden
-        />
+        <div className="absolute inset-0 overlay-gradient-canvas-80" aria-hidden />
       </div>
 
       <Container size="xl" className="relative z-10">
@@ -155,18 +142,18 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
               id="engraving-grades-heading"
               level={2}
               size="xl"
-              className="font-black italic uppercase tracking-[0.35em] text-ink"
+              className="text-ink"
             >
               {heading}
             </Heading>
-            <Text className="max-w-4xl font-light italic text-ink-muted" leading="normal">
+            <Text className="max-w-4xl type-section-subtitle text-ink-muted" leading="normal">
               {subheading}
             </Text>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
             <div className="space-y-3 rounded-2xl bg-transparent p-4 sm:rounded-3xl sm:p-5">
-              <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+              <Text size="label-tight" className="type-label-tight text-ink-muted" leading="normal">
                 Grade categories
               </Text>
               <div className="space-y-3">
@@ -179,7 +166,7 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
                     >
                       <button
                         type="button"
-                        className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold uppercase tracking-[0.2em] text-ink focus-ring"
+                        className="flex w-full items-center justify-between px-4 py-3 text-left type-label-tight text-ink focus-ring"
                         aria-expanded={isOpen}
                         onClick={() =>
                           setOpenCategory((prev) =>
@@ -209,14 +196,19 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
                                     type="button"
                                     onClick={() => { setActiveGradeId(grade.id); }}
                                     className={cn(
-                                      "group w-full rounded-2xl px-3 py-2 text-left text-sm transition-colors focus-ring",
+                                      "group w-full rounded-2xl px-3 py-2 text-left transition-colors focus-ring",
                                       isActive
-                                        ? "bg-ink text-card"
+                                        ? "bg-perazzi-red text-card"
                                         : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
                                     )}
                                     aria-pressed={isActive}
                                   >
-                                    <span className="block text-sm font-semibold tracking-wide">
+                                    <span
+                                      className={cn(
+                                        "block type-body-title text-ink text-base uppercase",
+                                        isActive && "text-white",
+                                      )}
+                                    >
                                       {grade.name}
                                     </span>
                                   </button>
@@ -261,8 +253,8 @@ function GradeCard({ grade, ctaLabel }: GradeCardProps) {
   return (
     <article className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-5 sm:shadow-elevated lg:p-6">
       <div
-        className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
-        style={{ aspectRatio: ratio }}
+        className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)] aspect-dynamic"
+        style={{ "--aspect-ratio": ratio }}
       >
         {heroAsset ? (
           <Image
@@ -282,27 +274,25 @@ function GradeCard({ grade, ctaLabel }: GradeCardProps) {
             <div>Imagery coming soon</div>
           </Text>
         )}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-1 p-4 text-black">
-          <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
-            Engraving Grade
-          </Text>
-          <Heading
-            level={3}
-            size="md"
-            className="uppercase tracking-[0.25em] text-black"
-          >
-            {grade.name}
-          </Heading>
-        </div>
       </div>
       <div className="mt-4 flex flex-1 flex-col gap-3">
-        <Text className="text-ink-muted" leading="normal">
+        <Text size="label-tight" className="type-card-title text-perazzi-red" leading="normal">
+          Engraving Grade
+        </Text>
+        <Heading
+          level={3}
+          size="md"
+          className="type-body-title text-ink text-xl sm:text-2xl lg:text-3xl uppercase not-italic"
+        >
+          {grade.name}
+        </Heading>
+        <Text className="type-body text-ink-muted" leading="normal">
           {grade.description}
         </Text>
         <div className="mt-auto pt-2">
           <Link
             href={`/engravings?grade=${gradeAnchor}`}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.3em] text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+            className="type-button inline-flex items-center justify-center gap-2 rounded-sm border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
           >
             {ctaLabel}
             <span aria-hidden="true">→</span>

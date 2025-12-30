@@ -159,11 +159,7 @@ export function DisciplineRail({
     <section
       ref={railAnalyticsRef}
       data-analytics-id="DisciplineRailSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
-      style={{
-        marginLeft: "calc(50% - 50vw)",
-        marginRight: "calc(50% - 50vw)",
-      }}
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
       aria-labelledby="discipline-rail-heading"
       >
       <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -176,16 +172,7 @@ export function DisciplineRail({
           priority={false}
         />
         <div className="absolute inset-0 bg-(--scrim-soft)" aria-hidden />
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
-              "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%), " +
-              "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%)",
-          }}
-          aria-hidden
-        />
+        <div className="absolute inset-0 overlay-gradient-canvas" aria-hidden />
       </div>
 
       <Container size="xl" className="relative z-10">
@@ -195,17 +182,17 @@ export function DisciplineRail({
               id="discipline-rail-heading"
               level={2}
               size="xl"
-              className="font-black italic uppercase tracking-[0.35em] text-ink"
+              className="text-ink"
             >
               {heading}
             </Heading>
-            <Text className="italic font-light text-ink-muted" leading="normal">
+            <Text size="md" className="type-section-subtitle text-ink-muted">
               {subheading}
             </Text>
           </div>
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
             <div className="space-y-3 rounded-2xl bg-card/0 p-4 sm:rounded-3xl sm:p-5">
-              <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+              <Text size="label-tight" className="type-label-tight text-ink-muted">
                 Discipline categories
               </Text>
               <div className="space-y-3">
@@ -218,7 +205,7 @@ export function DisciplineRail({
                     >
                       <button
                         type="button"
-                        className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold uppercase tracking-[0.2em] text-ink focus-ring"
+                        className="flex w-full items-center justify-between px-4 py-3 text-left type-label-tight text-ink focus-ring"
                         aria-expanded={isOpen}
                         onClick={() =>
                           setOpenCategory((prev) =>
@@ -248,17 +235,19 @@ export function DisciplineRail({
                                     type="button"
                                     onClick={() => { setActiveDisciplineId(discipline.id); }}
                                     className={cn(
-                                      "group w-full rounded-2xl px-3 py-2 text-left text-sm transition-colors focus-ring",
+                                      "group w-full rounded-2xl px-3 py-2 text-left transition-colors focus-ring",
                                       isActive
-                                        ? "bg-ink text-card"
+                                        ? "bg-perazzi-red text-card"
                                         : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
                                     )}
                                     aria-pressed={isActive}
                                   >
-                                    <span className="block text-sm font-semibold tracking-wide">
-                                      {discipline.name}
-                                    </span>
-                                    <span className="mt-0.5 block text-[11px] uppercase tracking-[0.25em] text-ink-muted group-hover:text-ink-muted/90">
+                                    <span
+                                      className={cn(
+                                        "mt-0.5 block type-label-tight group-hover:text-ink-muted/90",
+                                        isActive ? "text-white" : "text-ink-muted",
+                                      )}
+                                    >
                                       {discipline.id.replaceAll('-', " ")}
                                     </span>
                                   </button>
@@ -308,7 +297,7 @@ export function DisciplineRail({
             <div className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-perazzi-black/90 text-white shadow-elevated ring-1 ring-white/15 backdrop-blur-xl">
               <button
                 type="button"
-                className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-[11px] uppercase tracking-[0.3em] text-white shadow-soft backdrop-blur-sm transition hover:border-white/30 hover:bg-black/55 focus-ring sm:right-5 sm:top-5 sm:text-xs"
+                className="type-button absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-white shadow-soft backdrop-blur-sm transition hover:border-white/30 hover:bg-black/55 focus-ring sm:right-5 sm:top-5"
                 onClick={() => setModelModalOpen(false)}
               >
                 Close
@@ -328,21 +317,17 @@ export function DisciplineRail({
                     <div className="flex h-full items-center justify-center text-neutral-600">No Image Available</div>
                   )}
                   <div className="absolute inset-x-0 bottom-6 flex flex-col gap-2 px-6 text-black">
-                    <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
+                    <Text size="label-tight" className="text-perazzi-red">
                       {selectedModel.grade}
                     </Text>
                     <Heading
                       level={2}
                       size="xl"
-                      className="uppercase tracking-[0.2em] text-black"
+                      className="text-black"
                     >
                       {selectedModel.name}
                     </Heading>
-                    <Text
-                      size="lg"
-                      className="uppercase tracking-[0.2em] text-black/70"
-                      leading="normal"
-                    >
+                    <Text size="sm" className="text-black/70">
                       {selectedModel.use}
                     </Text>
                   </div>
@@ -415,35 +400,35 @@ function DisciplineCard({
             sizes="(min-width: 1024px) 33vw, 100vw"
           />
         ) : null}
-        <div className="pointer-events-none absolute inset-0 bg-black/50" />
-        <div className="absolute inset-x-0 bottom-0 flex flex-col items-center justify-end p-6 text-white">
-          <Text size="xs" className="font-semibold tracking-[0.35em] text-white" leading="normal">
-            {discipline.name}
-          </Text>
-        </div>
       </div>
-      <div className="flex flex-1 flex-col gap-6 p-6">
+          <div className="flex flex-1 flex-col gap-6 p-6">
+        <Heading
+          level={3}
+          className="type-card-title text-ink border-b border-perazzi-red/40 pb-2"
+        >
+          {discipline.name}
+        </Heading>
         {discipline.overviewPortableText?.length ? (
           <PortableText
-            className="prose prose-sm italic max-w-none text-ink-muted"
+            className="max-w-none type-body text-ink-muted mb-7"
             blocks={discipline.overviewPortableText}
           />
         ) : discipline.overviewHtml ? (
           <SafeHtml
-            className="prose prose-sm italic max-w-none text-ink-muted"
+            className="max-w-none type-body text-ink-muted mb-7"
             html={discipline.overviewHtml}
           />
         ) : null}
         {discipline.recommendedPlatforms?.length ? (
-          <div className="space-y-2">
-            <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+          <div className="space-y-2 mb-7">
+            <Text size="label-tight" className="type-card-title text-ink-muted">
               Recommended platforms
             </Text>
             <ul className="flex flex-wrap gap-2">
               {discipline.recommendedPlatforms.map((platformId) => (
                 <li
                   key={platformId}
-                  className="rounded-full border border-border px-3 py-1 text-xs uppercase tracking-[0.2em] text-ink-muted"
+                  className="pill border border-border type-label-tight text-ink-muted"
                 >
                   {platformName(platformId)}
                 </li>
@@ -453,7 +438,7 @@ function DisciplineCard({
         ) : null}
         {discipline.popularModels?.length ? (
           <div className="mt-auto flex flex-col gap-3">
-            <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+            <Text size="label-tight" className="type-card-title text-ink-muted">
               Most Popular Models
             </Text>
             <div className="flex flex-col gap-3">
@@ -477,7 +462,7 @@ function DisciplineCard({
                   <div className="pointer-events-none absolute inset-0 bg-perazzi-black/75 transition duration-500 group-hover:bg-perazzi-black/60" />
                   <span
                     className={cn(
-                      "absolute inset-0 flex items-center justify-center p-2 text-center text-md font-bold uppercase tracking-[0.3em] text-white transition-opacity duration-500 group-hover:opacity-0",
+                      "absolute inset-0 flex items-center justify-center p-2 text-center type-card-title text-white text-xl sm:text-2xl lg:text-3xl transition-opacity duration-500 group-hover:opacity-0",
                     )}
                   >
                     {loadingModelId === model.id ? "Loading…" : model.name || "Untitled"}
@@ -495,10 +480,10 @@ function DisciplineCard({
 function Detail({ label, value }: Readonly<{ label: string; value?: string }>) {
   return (
     <div>
-      <Text size="xs" className="font-semibold text-perazzi-red" leading="normal">
+      <Text size="label-tight" className="text-perazzi-red">
         {label}
       </Text>
-      <Text size="md" className="uppercase tracking-[0.2em] text-white" leading="normal">
+      <Text size="sm" className="text-white">
         {value || "—"}
       </Text>
     </div>

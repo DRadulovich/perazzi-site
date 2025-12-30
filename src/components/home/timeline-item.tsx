@@ -24,8 +24,8 @@ function TimelineContent({ stage, isPinned }: TimelineContentProps) {
   return (
     <>
       <div
-        className="relative w-full overflow-hidden rounded-2xl bg-[color:var(--color-canvas)]"
-        style={{ aspectRatio: ratio }}
+        className="relative w-full overflow-hidden rounded-2xl bg-[color:var(--color-canvas)] aspect-dynamic"
+        style={{ "--aspect-ratio": ratio }}
       >
         <Image
           src={stage.media.url}
@@ -36,15 +36,15 @@ function TimelineContent({ stage, isPinned }: TimelineContentProps) {
           loading={isPinned && stage.order === 1 ? "eager" : "lazy"}
         />
       </div>
-      <Text size="xs" className="mt-4 font-semibold text-ink-muted" leading="normal">
+      <Text size="button" className="mt-4 text-ink-muted">
         Stage {stage.order}
       </Text>
-      <Heading level={3} size="sm" className="mt-2 text-ink">
+      <Heading level={3} className="mt-4 type-body-title text-ink">
         {stage.title}
       </Heading>
-      <Text className="mt-2 text-ink-muted">{stage.body}</Text>
+      <Text className="mt-2 type-body text-ink-muted">{stage.body}</Text>
       {stage.media.caption ? (
-        <Text size="sm" className="mt-3 text-ink-muted" leading="normal">
+        <Text size="caption" className="mt-3 text-ink-muted" leading="normal">
           {stage.media.caption}
         </Text>
       ) : null}

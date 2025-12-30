@@ -11,9 +11,10 @@ type PortableTextChild = {
 
 type PortableBodyProps = {
   readonly blocks: ReadonlyArray<PortableBlock>;
+  readonly bodyClassName?: string;
 };
 
-export function PortableBody({ blocks }: PortableBodyProps) {
+export function PortableBody({ blocks, bodyClassName }: PortableBodyProps) {
   const headingEntries = useMemo(() => getHeadingEntries(blocks), [blocks]);
   const headingMap = new Map<number, string>();
   headingEntries.forEach((entry) => headingMap.set(entry.index, entry.id));
@@ -22,13 +23,13 @@ export function PortableBody({ blocks }: PortableBodyProps) {
     <div className="flex flex-col gap-6 lg:flex-row">
       {headingEntries.length ? (
         <nav aria-label="On this page" className="lg:w-64">
-          <a href="#article-content" className="text-xs text-perazzi-red focus-ring">
+          <a href="#article-content" className="type-caption text-perazzi-red focus-ring">
             Skip to article
           </a>
-          <a href="#article-content" className="mt-2 block text-xs text-perazzi-red focus-ring">
+          <a href="#article-content" className="mt-2 block type-caption text-perazzi-red focus-ring">
             Skip ToC
           </a>
-          <ul className="mt-4 space-y-2 text-sm text-ink">
+          <ul className="mt-4 space-y-2 type-body-sm text-ink">
             {headingEntries.map((heading) => (
               <li key={heading.id}>
                 <a
@@ -43,7 +44,10 @@ export function PortableBody({ blocks }: PortableBodyProps) {
           </ul>
         </nav>
       ) : null}
-      <article id="article-content" className="prose prose-lg max-w-none text-ink">
+      <article
+        id="article-content"
+        className={["prose prose-lg max-w-none text-ink", bodyClassName].filter(Boolean).join(" ")}
+      >
         {blocks.map((block, index) => renderBlock(block, headingMap.get(index) ?? `para-${index}`))}
       </article>
     </div>

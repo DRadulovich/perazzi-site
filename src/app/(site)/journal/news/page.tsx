@@ -11,7 +11,7 @@ export default async function JournalNewsPage({ searchParams }: NewsPageProps) {
   if (!data) {
     return (
       <section className="rounded-3xl border border-border/70 bg-card px-6 py-10 text-center text-ink shadow-soft sm:px-10">
-        <Text size="lg" className="font-semibold" leading="normal">
+        <Text size="lg" className="text-ink" leading="normal">
           News stories are coming soon.
         </Text>
       </section>

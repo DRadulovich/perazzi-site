@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import type { FactoryAsset } from "@/types/content";
+import { Text } from "@/components/ui";
 
 type PortableGalleryProps = {
   readonly items: readonly FactoryAsset[];
@@ -56,8 +57,8 @@ export function PortableGallery({ items }: PortableGalleryProps) {
           >
             <figure className="rounded-2xl border border-border/60 bg-card/70 p-3 shadow-soft">
               <div
-                className="relative overflow-hidden rounded-xl bg-border"
-                style={{ aspectRatio: asset.aspectRatio ?? 4 / 3 }}
+                className="relative overflow-hidden rounded-xl bg-border aspect-dynamic"
+                style={{ "--aspect-ratio": asset.aspectRatio ?? 4 / 3 }}
               >
                 <Image
                   src={asset.url}
@@ -69,9 +70,9 @@ export function PortableGallery({ items }: PortableGalleryProps) {
                 />
               </div>
               {asset.caption ? (
-                <figcaption className="mt-2 text-xs text-ink-muted">
-                  {asset.caption}
-                </figcaption>
+                <Text asChild size="caption" className="mt-2 text-ink-muted">
+                  <figcaption>{asset.caption}</figcaption>
+                </Text>
               ) : null}
             </figure>
           </button>
@@ -95,8 +96,8 @@ export function PortableGallery({ items }: PortableGalleryProps) {
                   Photo {(openIndex ?? 0) + 1} of {length}
                 </p>
                 <div
-                  className="relative overflow-hidden rounded-2xl bg-border"
-                  style={{ aspectRatio: currentAsset.aspectRatio ?? 4 / 3 }}
+                  className="relative overflow-hidden rounded-2xl bg-border aspect-dynamic"
+                  style={{ "--aspect-ratio": currentAsset.aspectRatio ?? 4 / 3 }}
                 >
                   <Image
                     src={currentAsset.url}
@@ -108,27 +109,27 @@ export function PortableGallery({ items }: PortableGalleryProps) {
                   />
                 </div>
                 {currentAsset.caption ? (
-                  <figcaption className="text-sm text-ink-muted">
-                    {currentAsset.caption}
-                  </figcaption>
+                  <Text asChild size="sm" className="text-ink-muted">
+                    <figcaption>{currentAsset.caption}</figcaption>
+                  </Text>
                 ) : null}
                 <div className="flex justify-between">
                   <button
                     type="button"
-                    className="focus-ring rounded-full border border-border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink"
+                    className="type-button focus-ring rounded-full border border-border px-4 py-2 text-ink"
                     onClick={() => { goTo(-1); }}
                   >
                     Previous
                   </button>
                   <button
                     type="button"
-                    className="focus-ring rounded-full border border-border px-4 py-2 text-xs font-semibold uppercase tracking-[0.3em] text-ink"
+                    className="type-button focus-ring rounded-full border border-border px-4 py-2 text-ink"
                     onClick={() => { goTo(1); }}
                   >
                     Next
                   </button>
                 </div>
-                <Dialog.Close className="focus-ring absolute right-4 top-4 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-ink">
+                <Dialog.Close className="type-button focus-ring absolute right-4 top-4 rounded-full border border-border bg-card px-3 py-1 text-ink">
                   Close
                 </Dialog.Close>
               </figure>

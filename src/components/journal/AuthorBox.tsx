@@ -24,7 +24,7 @@ export function AuthorBox({ author }: AuthorBoxProps) {
         </div>
       ) : null}
       <div className="space-y-2">
-        <Text size="xs" muted className="font-semibold">
+        <Text size="label-tight" muted>
           About the author
         </Text>
         <Heading level={3} size="md" className="text-ink">
@@ -37,7 +37,7 @@ export function AuthorBox({ author }: AuthorBoxProps) {
           />
         ) : null}
         {author.links?.length ? (
-          <div className="flex flex-wrap gap-2 text-sm">
+          <div className="flex flex-wrap gap-2 type-body-sm">
             {author.links.map((link) => (
               <a key={link.href} href={link.href} className="text-perazzi-red focus-ring">
                 {link.label}

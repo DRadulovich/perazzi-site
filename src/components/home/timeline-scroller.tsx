@@ -61,11 +61,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
           analyticsRef.current = node;
         }}
         data-analytics-id="CraftTimelineSeen"
-        className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16"
-        style={{
-          marginLeft: "calc(50% - 50vw)",
-          marginRight: "calc(50% - 50vw)",
-        }}
+        className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
         aria-labelledby="craft-timeline-heading"
       >
         <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -81,16 +77,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
             className="absolute inset-0 bg-(--scrim-soft)"
             aria-hidden
           />
-          <div
-            className="absolute inset-0"
-            style={{
-              backgroundImage:
-                "linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%), " +
-                "linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%), " +
-                "linear-gradient(to top, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%)",
-            }}
-            aria-hidden
-          />
+          <div className="absolute inset-0 overlay-gradient-canvas" aria-hidden />
         </div>
 
         <div
@@ -106,23 +93,21 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                     id="craft-timeline-heading"
                     level={2}
                     size="xl"
-                    className="font-black uppercase italic tracking-[0.35em] text-ink"
+                    className="text-ink"
                   >
                     {headingTitle}
                   </Heading>
-                  <Text className="text-base sm:text-lg lg:text-xl font-light italic text-ink-muted" leading="normal">
+                  <Text size="lg" className="type-section-subtitle text-ink-muted">
                     {headingEyebrow}
                   </Text>
-                  <Text className="max-w-3xl text-ink-muted lg:max-w-4xl">
-                    {headingInstructions}
-                  </Text>
+                  <span className="sr-only">{headingInstructions}</span>
                 </div>
               </div>
 
               {enablePinned ? (
                 <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
                   <div className="space-y-4 border-none bg-card/0 p-4 shadow-none sm:border-none sm:bg-card/0 sm:p-4 sm:shadow-none">
-                    <Text size="xs" className="mb-3 font-semibold text-ink" leading="normal">
+                    <Text size="label-tight" className="mb-3 text-ink">
                       {alternateTitle}
                     </Text>
                     <div className="space-y-1">
@@ -155,12 +140,8 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
               ) : (
                 <div className="space-y-8">
                   <div className="space-y-3">
-                    <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+                    <Text size="label-tight" className="text-ink-muted">
                       {alternateTitle}
-                    </Text>
-                    <Text size="sm" className="text-ink-muted">
-                      Scroll through each stage to follow the bespoke process
-                      from first measurements to the final finish. Tap a stage to see more.
                     </Text>
                   </div>
 
@@ -186,14 +167,14 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                             className="flex w-full items-center justify-between gap-3 text-left focus-ring"
                           >
                             <div>
-                              <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+                              <Text size="button" className="text-ink-muted mb-2">
                                 Stage {stage.order}
                               </Text>
-                              <Text className="font-semibold text-ink" leading="normal">
-                                {stage.title}
-                              </Text>
+                            <Text className="text-lg type-body-title text-ink">
+                              {stage.title}
+                            </Text>
                             </div>
-                            <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.25em] text-perazzi-red/70">
+                            <span className="type-button text-perazzi-red/70">
                               {expanded ? "Collapse" : "Show more"}
                             </span>
                           </button>
@@ -225,7 +206,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                   asChild
                   variant="secondary"
                   size="lg"
-                  className="w-full"
+                  className="w-full type-button-eaves text-ink"
                 >
                   <Link href="/the-build/why-a-perazzi-has-a-soul">
                     See the full build story
@@ -258,7 +239,7 @@ function TimelineControlButton({
   const baseClass = cn(
     "group w-full rounded-2xl px-3 py-2 text-left transition-colors focus-ring",
     active
-      ? "bg-ink text-card"
+      ? "bg-perazzi-red text-card"
       : "bg-transparent text-ink-muted hover:bg-ink/10 hover:text-ink",
   );
 
@@ -277,13 +258,18 @@ function TimelineControlButton({
     >
       <span
         className={cn(
-          "block text-[11px] uppercase font-bold tracking-[0.25em] text-perazzi-red/80 group-hover:text-ink-muted/90",
-          active && "text-card/80",
+          "block type-button group-hover:text-ink-muted/90",
+          active ? "text-ink" : "text-perazzi-red/80",
         )}
       >
         Stage {order}
       </span>
-      <span className="mt-0.5 block text-sm font-semibold tracking-wide">
+      <span
+        className={cn(
+          "mt-0.5 block type-card-title text-xl",
+          active ? "text-white" : "text-ink",
+        )}
+      >
         {label}
       </span>
     </motion.button>
@@ -321,17 +307,17 @@ function PinnedStagePanel({
         />
       </div>
       <div className="space-y-3">
-        <Text size="xs" className="font-semibold text-ink-muted" leading="normal">
+        <Text size="button" className="text-ink-muted">
           Stage {stage.order}
         </Text>
-        <Heading level={3} size="lg" className="text-ink">
+        <Heading level={3} size="lg" className="type-body-title text-ink not-italic">
           {stage.title}
         </Heading>
-        <Text className="text-ink-muted">
+        <Text className="type-body text-ink-muted">
           {stage.body}
         </Text>
         {stage.media.caption ? (
-          <Text size="sm" className="text-ink-muted" leading="normal">
+          <Text size="caption" className="text-ink-muted">
             {stage.media.caption}
           </Text>
         ) : null}
