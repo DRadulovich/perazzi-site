@@ -41,9 +41,9 @@
   --site-header-offset-md: 55px;
 
   /* Typography scale */
-  --type-display: clamp(2.6rem, 10.5vw, 6.5rem);
-  --type-section: clamp(1.7rem, 3vw, 2.7rem);
-  --type-title-lg: clamp(1.2rem, 1.6vw, 2.3rem);
+  --type-display: clamp(3.5rem, 9.5vw, 6.5rem);
+  --type-section: clamp(1.7rem, 4vw, 2.7rem);
+  --type-title-lg: clamp(1.3rem, 2.7vw, 1.8rem);
   --type-title-md: clamp(1.2rem, 1.8vw, 1.6rem);
   --type-title-sm: clamp(1.05rem, 1.4vw, 1.3rem);
   --type-body-lg: clamp(1rem, 1.1vw, 1.125rem);
@@ -275,8 +275,8 @@
     font-family: var(--font-serif-petite-caps);
     font-size: var(--type-display);
     font-weight: 400;
-    line-height: 1.05;
-    letter-spacing: -0.01em;
+    line-height: 1;
+    letter-spacing: 0.0em;
   }
 
   .type-section {
@@ -285,8 +285,8 @@
     font-weight: 400;
     font-style: normal;
     text-transform: none;
-    letter-spacing: 0.08em;
-    line-height: 1.12;
+    letter-spacing: 0.0em;
+    line-height: 1.0;
   }
 
   .type-title-lg {
@@ -326,6 +326,28 @@
     font-size: var(--type-body);
     font-weight: 400;
     line-height: 1.6;
+  }
+
+  .type-card-body {
+    font-family: var(--font-serif);
+    font-size: clamp(1.15rem, 1.35vw, 1.35rem);
+    font-weight: 400;
+    line-height: 1.25;
+  }
+
+  .type-card-title {
+    font-family: var(--font-serif-small-caps);
+    font-size: clamp(1.15rem, 1.35vw, 1.35rem);
+    font-weight: 400;
+    line-height: 1.2;
+  }
+
+  .type-section-subtitle {
+    font-family: var(--font-serif);
+    font-size: var(--type-title-md);
+    font-weight: 400;
+    font-style: italic;
+    line-height: 1.3;
   }
 
   .type-body-title {
@@ -566,9 +588,9 @@ body {
 }
 
 /* Premium radius scale */
-.rounded-3xl { border-radius: 1rem !important; } /* 16px */
-.rounded-2xl { border-radius: 0.75rem !important; } /* 12px */
-.rounded-xl { border-radius: 0.5rem !important; } /* 8px */
+.rounded-3xl { border-radius: 0.25rem !important; } /* 16px */
+.rounded-2xl { border-radius: 0.25rem !important; } /* 12px */
+.rounded-xl { border-radius: 0.25rem !important; } /* 8px */
 
 .bg-brand { background-color: var(--brand); color: var(--card); }
 .bg-brand-hover { background-color: var(--brand-hover); color: var(--card); }

@@ -146,14 +146,14 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
             >
               {heading}
             </Heading>
-            <Text className="max-w-4xl text-ink-muted" leading="normal">
+            <Text className="max-w-4xl type-section-subtitle text-ink-muted" leading="normal">
               {subheading}
             </Text>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
             <div className="space-y-3 rounded-2xl bg-transparent p-4 sm:rounded-3xl sm:p-5">
-              <Text size="label-tight" className="text-ink-muted" leading="normal">
+              <Text size="label-tight" className="type-card-title text-ink-muted" leading="normal">
                 Grade categories
               </Text>
               <div className="space-y-3">
@@ -203,7 +203,7 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
                                     )}
                                     aria-pressed={isActive}
                                   >
-                                    <span className="block type-title-sm">
+                                    <span className="block type-card-title">
                                       {grade.name}
                                     </span>
                                   </button>
@@ -270,26 +270,26 @@ function GradeCard({ grade, ctaLabel }: GradeCardProps) {
           </Text>
         )}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-1 p-4 text-black">
-          <Text size="label-tight" className="text-perazzi-red" leading="normal">
+          <Text size="label-tight" className="type-card-title text-perazzi-red" leading="normal">
             Engraving Grade
           </Text>
           <Heading
             level={3}
             size="md"
-            className="text-black"
+            className="type-card-title text-black"
           >
             {grade.name}
           </Heading>
         </div>
       </div>
       <div className="mt-4 flex flex-1 flex-col gap-3">
-        <Text className="text-ink-muted" leading="normal">
+        <Text className="type-card-body text-ink-muted" leading="normal">
           {grade.description}
         </Text>
         <div className="mt-auto pt-2">
           <Link
             href={`/engravings?grade=${gradeAnchor}`}
-            className="type-button inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+            className="type-button inline-flex items-center justify-center gap-2 rounded-sm border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
           >
             {ctaLabel}
             <span aria-hidden="true">→</span>

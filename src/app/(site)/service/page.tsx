@@ -47,7 +47,7 @@ export default async function ServicePage() {
         })),
       }
     : null;
-  const faqSchemaJson = faqSchema ? JSON.stringify(faqSchema).replace(/</g, "\\u003c") : null;
+  const faqSchemaJson = faqSchema ? JSON.stringify(faqSchema).replaceAll('<', String.raw`\u003c`) : null;
 
   return (
     <div className="space-y-16">

@@ -39,10 +39,10 @@ function TimelineContent({ stage, isPinned }: TimelineContentProps) {
       <Text size="button" className="mt-4 text-ink-muted">
         Stage {stage.order}
       </Text>
-      <Heading level={3} size="sm" className="mt-2 type-button-plain text-ink">
+      <Heading level={3} className="mt-2 type-card-title text-ink">
         {stage.title}
       </Heading>
-      <Text className="mt-2 text-ink-muted">{stage.body}</Text>
+      <Text className="mt-2 type-card-body text-ink-muted">{stage.body}</Text>
       {stage.media.caption ? (
         <Text size="caption" className="mt-3 text-ink-muted" leading="normal">
           {stage.media.caption}

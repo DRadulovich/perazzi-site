@@ -148,7 +148,7 @@ const PlatformTabs = ({ platforms, activeIndex, onSelect }: PlatformTabsProps) =
           type="button"
           role="tab"
           aria-selected={isActive}
-          className={`type-label-tight rounded-full border px-4 py-2 focus-ring transition ${
+          className={`type-label-tight rounded-sm border px-4 py-2 focus-ring transition ${
             isActive
               ? "border-perazzi-red bg-canvas/40 text-perazzi-red backdrop-blur-sm shadow-elevated"
               : "border-border/70 bg-transparent text-ink-muted hover:border-ink/60"
@@ -272,7 +272,7 @@ const ChampionHighlight = ({
               </p>
             ) : null}
             {champion.title ? (
-              <Text size="md" className="text-ink-muted" leading="normal">
+              <Text size="md" className="type-label-tight text-ink-muted" leading="normal">
                 {champion.title}
               </Text>
             ) : null}

@@ -46,10 +46,10 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
       </div>
 
       <header className="mt-4 space-y-1">
-        <Heading level={3} size="md" className="type-body-title text-ink">
+        <Heading level={3} size="md" className="my-3 type-card-title text-ink text-2xl not-italic">
           {platform.name}
         </Heading>
-        <Text className="text-ink-muted">
+        <Text className="type-card-body text-ink-muted mb-7">
           {platform.tagline}
         </Text>
       </header>
@@ -67,11 +67,11 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
         <Text size="label-tight" className="text-ink-muted">
           Disciplines
         </Text>
-        <ul className="mt-2 flex flex-wrap gap-2 type-body-sm text-ink">
+        <ul className="mt-2 mb-7 flex flex-wrap gap-2 type-body-sm text-ink">
           {platform.typicalDisciplines.map((discipline) => (
             <li
               key={discipline}
-              className="rounded-full bg-(--surface-elevated)/85 px-3 py-1 type-label-tight text-ink"
+              className="rounded-sm bg-(--surface-elevated)/85 px-3 py-1.5 type-label-tight text-ink"
             >
               {discipline}
             </li>
@@ -80,13 +80,13 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
       </div>
 
       {platform.fixedCounterpart ? (
-        <Text size="sm" className="mt-4 text-ink-muted">
+        <Text size="sm" className="mt-4 type-label-tight text-ink-muted">
           Fixed-trigger counterpart:{" "}
           <span className="text-ink">{platform.fixedCounterpart.name}</span>
         </Text>
       ) : null}
       {platform.detachableCounterpart ? (
-        <Text size="sm" className="mt-1 text-ink-muted">
+        <Text size="sm" className="mt-1 mb-7 type-label-tight text-ink-muted">
           Detachable counterpart:{" "}
           <span className="text-ink">{platform.detachableCounterpart.name}</span>
         </Text>
@@ -97,7 +97,7 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
           <span className="w-1 self-stretch rounded-full bg-perazzi-red/80" />
           <div className="flex flex-col gap-4">
             {platform.hallmark ? (
-              <Text size="sm" className="text-ink-muted font-artisan" leading="normal">
+              <Text size="sm" className="text-ink-muted font-artisan text-lg" leading="normal">
                 {platform.hallmark}
               </Text>
             ) : null}
@@ -121,7 +121,7 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
                     </p>
                   ) : null}
                   {platform.champion?.title ? (
-                    <Text size="sm" className="text-ink-muted" leading="normal">
+                    <Text size="sm" className="type-label-tight text-ink-muted" leading="normal">
                       {platform.champion.title}
                     </Text>
                   ) : null}

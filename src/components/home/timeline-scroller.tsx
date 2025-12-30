@@ -97,7 +97,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                   >
                     {headingTitle}
                   </Heading>
-                  <Text size="lg" className="prose-journal text-ink-muted">
+                  <Text size="lg" className="type-section-subtitle text-ink-muted">
                     {headingEyebrow}
                   </Text>
                   <span className="sr-only">{headingInstructions}</span>
@@ -174,7 +174,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                               <Text size="button" className="text-ink-muted">
                                 Stage {stage.order}
                               </Text>
-                            <Text className="type-button-plain text-ink">
+                            <Text className="text-lg type-body-title text-ink">
                               {stage.title}
                             </Text>
                             </div>
@@ -268,7 +268,7 @@ function TimelineControlButton({
       >
         Stage {order}
       </span>
-      <span className="mt-0.5 block type-button-plain">
+      <span className="mt-0.5 block type-card-title">
         {label}
       </span>
     </motion.button>
@@ -309,10 +309,10 @@ function PinnedStagePanel({
         <Text size="button" className="text-ink-muted">
           Stage {stage.order}
         </Text>
-        <Heading level={3} size="lg" className="type-button-plain text-ink">
+        <Heading level={3} size="lg" className="type-card-title text-ink not-italic">
           {stage.title}
         </Heading>
-        <Text className="text-ink-muted">
+        <Text className="type-card-body text-ink-muted">
           {stage.body}
         </Text>
         {stage.media.caption ? (

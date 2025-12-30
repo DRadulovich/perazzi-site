@@ -157,7 +157,7 @@ export default async function ShotgunsLandingPage() {
           </div>
 
           <div className="prose-journal space-y-3 text-ink-muted">
-            <Text className="prose-journal text-ink" leading="normal">
+            <Text className="type-card-title text-ink !text-2xl" leading="normal">
               Three rhythms most clay shooters learn:
             </Text>
             <ul className="space-y-2">
@@ -219,7 +219,7 @@ export default async function ShotgunsLandingPage() {
               />
               <Link
                 href={gaugeAdvisory.linkHref ?? landing.gaugesTeaser.href}
-                className="type-button inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="type-button inline-flex items-center justify-center gap-2 rounded-sm border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 {gaugeAdvisory.linkLabel ?? "Explore gauges"}
                 <span aria-hidden="true">→</span>
@@ -228,7 +228,7 @@ export default async function ShotgunsLandingPage() {
           </div>
 
           <div className="prose-journal space-y-3 text-ink-muted">
-            <Text className="prose-journal text-ink" leading="normal">
+            <Text className="type-card-title text-ink !text-2xl" leading="normal">
               What to compare:
             </Text>
             <ul className="space-y-2">
@@ -282,7 +282,7 @@ export default async function ShotgunsLandingPage() {
               />
               <Link
                 href={triggerChoice.linkHref ?? "#trigger-explainer-heading"}
-                className="type-button inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="type-button inline-flex items-center justify-center gap-2 rounded-sm border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 {triggerChoice.linkLabel ?? "See trigger details"}
                 <span aria-hidden="true">→</span>
@@ -291,7 +291,7 @@ export default async function ShotgunsLandingPage() {
           </div>
 
           <div className="prose-journal space-y-3 text-ink-muted">
-            <Text className="prose-journal text-ink" leading="normal">
+            <Text className="type-card-title text-ink !text-2xl" leading="normal">
               What to Weigh:
             </Text>
             <ul className="space-y-2">

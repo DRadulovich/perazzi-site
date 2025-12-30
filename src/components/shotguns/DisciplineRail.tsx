@@ -186,7 +186,7 @@ export function DisciplineRail({
             >
               {heading}
             </Heading>
-            <Text size="md" className="prose-journal text-ink-muted">
+            <Text size="md" className="type-section-subtitle text-ink-muted">
               {subheading}
             </Text>
           </div>
@@ -242,7 +242,7 @@ export function DisciplineRail({
                                     )}
                                     aria-pressed={isActive}
                                   >
-                                    <span className="block type-title-sm">
+                                    <span className="block type-card-title">
                                       {discipline.name}
                                     </span>
                                     <span className="mt-0.5 block type-label-tight text-ink-muted group-hover:text-ink-muted/90">
@@ -399,27 +399,27 @@ function DisciplineCard({
           />
         ) : null}
         <div className="pointer-events-none absolute inset-0 bg-black/50" />
-        <div className="absolute inset-x-0 bottom-0 flex flex-col items-center justify-end p-6 text-white">
-          <Heading level={3} size="sm" className="text-white">
+          <div className="absolute inset-x-0 bottom-0 flex flex-col items-center justify-end p-6 text-white">
+          <Heading level={3} size="sm" className="type-card-title text-white text-4xl">
             {discipline.name}
           </Heading>
         </div>
       </div>
-      <div className="flex flex-1 flex-col gap-6 p-6">
+          <div className="flex flex-1 flex-col gap-6 p-6">
         {discipline.overviewPortableText?.length ? (
           <PortableText
-            className="prose prose-sm max-w-none text-ink-muted"
+            className="max-w-none type-card-body text-ink-muted mb-7"
             blocks={discipline.overviewPortableText}
           />
         ) : discipline.overviewHtml ? (
           <SafeHtml
-            className="prose prose-sm max-w-none text-ink-muted"
+            className="max-w-none type-card-body text-ink-muted mb-7"
             html={discipline.overviewHtml}
           />
         ) : null}
         {discipline.recommendedPlatforms?.length ? (
-          <div className="space-y-2">
-            <Text size="label-tight" className="text-ink-muted">
+          <div className="space-y-2 mb-7">
+            <Text size="label-tight" className="type-card-title text-ink-muted">
               Recommended platforms
             </Text>
             <ul className="flex flex-wrap gap-2">
@@ -436,7 +436,7 @@ function DisciplineCard({
         ) : null}
         {discipline.popularModels?.length ? (
           <div className="mt-auto flex flex-col gap-3">
-            <Text size="label-tight" className="text-ink-muted">
+            <Text size="label-tight" className="type-card-title text-ink-muted">
               Most Popular Models
             </Text>
             <div className="flex flex-col gap-3">
@@ -460,7 +460,7 @@ function DisciplineCard({
                   <div className="pointer-events-none absolute inset-0 bg-perazzi-black/75 transition duration-500 group-hover:bg-perazzi-black/60" />
                   <span
                     className={cn(
-                      "absolute inset-0 flex items-center justify-center p-2 text-center type-title-sm text-white transition-opacity duration-500 group-hover:opacity-0",
+                      "absolute inset-0 flex items-center justify-center p-2 text-center type-card-title text-white transition-opacity duration-500 group-hover:opacity-0",
                     )}
                   >
                     {loadingModelId === model.id ? "Loading…" : model.name || "Untitled"}

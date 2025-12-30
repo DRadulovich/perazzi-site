@@ -18,6 +18,14 @@ Look for these sections:
    - `--font-artisan`
    - `--font-mono`
 
+Current font families (from the Adobe kit) map to:
+
+- Neue Haas Grotesk Text → `--font-sans` (`neue-haas-grotesk-text`)
+- Mrs Eaves Roman → `--font-serif` (`mrs-eaves`)
+- Mrs Eaves Roman Small Caps → `--font-serif-small-caps` (`mrs-eaves-roman-small-caps`)
+- Mrs Eaves Roman Petite Caps → `--font-serif-petite-caps` (`mrs-eaves-roman-petite-caps`)
+- Adobe Handwriting Ernie → `--font-artisan` (`adobe-handwriting-ernie`)
+
 2) **Type Size Tokens**
    - `--type-display`
    - `--type-section`
@@ -39,6 +47,7 @@ Look for these sections:
    - `.type-title-sm`
    - `.type-body-lg`
    - `.type-body`
+   - `.type-body-title`
    - `.type-body-sm`
    - `.type-caption`
    - `.type-label`
@@ -62,7 +71,8 @@ Use these from components or in Tailwind className strings:
 - `type-section` (Group Parent Section Title, Mrs Eaves Small Caps)
 - `type-title-lg` / `type-title-md` / `type-title-sm` (Group Child Section Title, Mrs Eaves Italic)
 - `type-body-lg` / `type-body` / `type-body-sm` (Body, Neue Haas 55 Roman)
-- `type-quote` (Body italics / quotes, Neue Haas 56 Italic)
+- `type-body-title` (Small caps body-title, Mrs Eaves Roman Small Caps)
+- `type-quote` (Quotes, Neue Haas 55 Roman)
 - `type-label` / `type-label-tight` (Eyebrow, Neue Haas 55 Roman, uppercase)
 - `type-button` / `type-button-lg` (Buttons, Neue Haas 65 Medium, uppercase)
 - `type-button-plain` (Sentence-case buttons, Neue Haas 55 Roman)
@@ -79,12 +89,29 @@ Use this mapping when tagging page content:
 - Group Parent Section Title → `type-section`
 - Group Child Section Title → `type-title-lg` / `type-title-md` / `type-title-sm` (italic)
 - Body → `type-body` (or `type-body-lg` for lead)
-- Body Italics / Quotes → `type-quote`
+- Body Italics / Quotes → `type-quote` (sans) or `prose-journal` (serif italics in articles)
+- Body Title (small caps) → `type-body-title`
 - Buttons → `type-button` or `type-button-lg`
 - Sentence-case Buttons → `type-button-plain`
 - Journal Article Body → `prose-journal` on the article container
 - Journal Article Quotes → handled by `prose-journal`
 - Soul Journey “Artisan” Font → `font-artisan`
+
+HERO TITLE
+`type-display`
+HERO EYEBROW
+`type-label-tight`
+SECTION TITLE
+`type-section`
+SECTION SUBTITLE
+`type-section-subtitle`
+CARD TITLE
+`type-card-title`
+CARD BODY
+`type-card-body`
+
+
+
 
 ## Common Edits (What You Can Modify)
 

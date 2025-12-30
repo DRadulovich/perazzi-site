@@ -37,15 +37,18 @@ export function ChatWidget() {
 
   useEffect(() => {
     if (typeof document === "undefined") return;
+    const updateHeroVisibility = (visible: boolean) => {
+      setIsHeroVisible(visible);
+    };
     const heroHeading = document.getElementById("home-hero-heading");
     if (!heroHeading || typeof IntersectionObserver === "undefined") {
-      setIsHeroVisible(false);
+      updateHeroVisibility(false);
       return;
     }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setIsHeroVisible(entry.isIntersecting);
+        updateHeroVisibility(entry.isIntersecting);
       },
       { threshold: 0.15 },
     );
