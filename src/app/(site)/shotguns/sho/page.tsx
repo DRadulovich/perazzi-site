@@ -32,7 +32,7 @@ export default async function SHOSeriesPage() {
         >
           <h2 id="sho-platform-guidance-heading">Platform guidance</h2>
         </Text>
-        <Text className="mt-1 text-ink">
+        <Text className="mt-1 type-body text-ink">
           Questions about the SHO Platform? Ask Perazzi.
         </Text>
         <div className="mt-4">

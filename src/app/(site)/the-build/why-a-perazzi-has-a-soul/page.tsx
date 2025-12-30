@@ -65,10 +65,10 @@ function HeroSection() {
           <Text size="label-tight" className="text-white/75">
             Inside the Perazzi Factory
           </Text>
-          <Heading level={1} size="display" className="text-white">
+          <Heading level={1} className="type-section text-white">
             Through the Eyes of the Makers
           </Heading>
-          <Text size="sm" className="text-white/75">
+          <Text className="type-section-subtitle text-white/75">
             Every Perazzi is born the same way: one frame of steel and walnut moving bench by bench through the same circle of hands, whether it’s a bespoke order or a gun you find on a dealer’s shelf. This page stitches those stations into one continuous build journey, following a single gun as it collects their decisions.
           </Text>
         </header>

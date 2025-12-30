@@ -13,7 +13,7 @@ export function DisciplineMap({ items, disciplines }: DisciplineMapProps) {
       className="space-y-4"
       aria-labelledby="discipline-map-heading"
     >
-      <Heading id="discipline-map-heading" level={2} size="lg" className="text-ink">
+      <Heading id="discipline-map-heading" level={2} className="type-section text-ink">
         Discipline pairing
       </Heading>
       <div className="flex flex-wrap gap-4">

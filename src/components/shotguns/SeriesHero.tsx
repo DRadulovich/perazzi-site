@@ -14,6 +14,10 @@ export function SeriesHero({ hero, analyticsId }: SeriesHeroProps) {
   const ratio = hero.media.aspectRatio ?? 16 / 9;
   const heroId = analyticsId ?? "HeroSeen:shotguns-series";
   const heroRef = useAnalyticsObserver(heroId);
+  const titleText = hero.title.replace(/\s*Platform\s*$/i, "").trim();
+  const subheadingText = hero.subheading
+    ? hero.subheading.replace(/\s*Platform\s*$/i, "").trim()
+    : "";
 
   return (
     <section
@@ -27,12 +31,12 @@ export function SeriesHero({ hero, analyticsId }: SeriesHeroProps) {
           <Text size="label-tight" className="text-white/80">
             Perazzi series
           </Text>
-          <Heading id="series-hero-heading" level={1} size="display" className="text-white">
-            {hero.title}
+          <Heading id="series-hero-heading" level={1} className="type-section text-white">
+            {titleText}
           </Heading>
-          {hero.subheading ? (
-            <Text size="md" className="text-white/80">
-              {hero.subheading}
+          {subheadingText ? (
+            <Text className="type-section-subtitle text-white/80">
+              {subheadingText}
             </Text>
           ) : null}
         </div>

@@ -11,9 +11,10 @@ type PortableTextChild = {
 
 type PortableBodyProps = {
   readonly blocks: ReadonlyArray<PortableBlock>;
+  readonly bodyClassName?: string;
 };
 
-export function PortableBody({ blocks }: PortableBodyProps) {
+export function PortableBody({ blocks, bodyClassName }: PortableBodyProps) {
   const headingEntries = useMemo(() => getHeadingEntries(blocks), [blocks]);
   const headingMap = new Map<number, string>();
   headingEntries.forEach((entry) => headingMap.set(entry.index, entry.id));
@@ -43,7 +44,10 @@ export function PortableBody({ blocks }: PortableBodyProps) {
           </ul>
         </nav>
       ) : null}
-      <article id="article-content" className="prose prose-lg max-w-none text-ink">
+      <article
+        id="article-content"
+        className={["prose prose-lg max-w-none text-ink", bodyClassName].filter(Boolean).join(" ")}
+      >
         {blocks.map((block, index) => renderBlock(block, headingMap.get(index) ?? `para-${index}`))}
       </article>
     </div>

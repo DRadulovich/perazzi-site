@@ -24,15 +24,10 @@ export default async function MXSeriesPage() {
         className="rounded-2xl border border-border/60 bg-card/10 p-4 shadow-soft sm:rounded-3xl sm:border-border/70 sm:bg-card sm:px-6 sm:py-5"
         aria-labelledby="mx-platform-guidance-heading"
       >
-        <Text
-          asChild
-          size="label-tight"
-          className="text-ink-muted"
-          leading="normal"
-        >
-          <h2 id="mx-platform-guidance-heading">Platform guidance</h2>
-        </Text>
-        <Text className="mt-1 text-ink">
+        <h2 id="mx-platform-guidance-heading" className="type-card-title text-ink-muted leading-normal">
+          Platform guidance
+        </h2>
+        <Text className="mt-1 type-body text-ink">
           Questions about the MX Platform? Ask Perazzi.
         </Text>
         <div className="mt-4">

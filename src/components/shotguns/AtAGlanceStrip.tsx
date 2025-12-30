@@ -8,7 +8,7 @@ type AtAGlanceStripProps = Readonly<{
 export function AtAGlanceStrip({ data }: AtAGlanceStripProps) {
   return (
     <Section padding="md" aria-labelledby="at-a-glance-heading">
-      <Heading id="at-a-glance-heading" level={2} size="lg" className="text-ink">
+      <Heading id="at-a-glance-heading" level={2} className="type-card-title text-ink">
         At a glance
       </Heading>
       <dl className="mt-6 grid gap-6 md:grid-cols-3">
@@ -19,7 +19,7 @@ export function AtAGlanceStrip({ data }: AtAGlanceStripProps) {
             </Text>
           </dt>
           <dd className="mt-2">
-            <Text size="md" className="text-ink">
+            <Text className="type-button text-ink">
               {data.triggerType}
             </Text>
           </dd>
@@ -31,7 +31,7 @@ export function AtAGlanceStrip({ data }: AtAGlanceStripProps) {
             </Text>
           </dt>
           <dd className="mt-2">
-            <Text size="md" className="text-ink">
+            <Text className="type-button text-ink">
               {data.weightDistribution}
             </Text>
           </dd>
@@ -43,7 +43,7 @@ export function AtAGlanceStrip({ data }: AtAGlanceStripProps) {
             </Text>
           </dt>
           <dd className="mt-2">
-            <Text size="md" className="text-ink">
+            <Text className="type-button text-ink">
               {data.typicalDisciplines.join(" · ")}
             </Text>
           </dd>
@@ -55,7 +55,7 @@ export function AtAGlanceStrip({ data }: AtAGlanceStripProps) {
             <a
               key={link.href}
               href={link.href}
-              className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-perazzi-red shadow-soft backdrop-blur-sm transition hover:border-perazzi-red/30 hover:bg-card/85 focus-ring"
+              className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-sm border border-border/70 bg-card/60 px-4 py-2 text-perazzi-red shadow-soft backdrop-blur-sm transition hover:border-perazzi-red/30 hover:bg-card/85 focus-ring"
             >
               {link.label}
               <span aria-hidden="true">→</span>

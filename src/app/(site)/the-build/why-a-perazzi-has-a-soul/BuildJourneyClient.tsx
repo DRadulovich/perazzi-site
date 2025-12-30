@@ -293,43 +293,47 @@ function JourneyChapters({
                   className="space-y-6 rounded-2xl border border-border bg-card p-4 shadow-soft
                              sm:rounded-3xl sm:border-border/70 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-elevated"
                 >
-                  <header className="space-y-3">
-                    <p className="type-label-tight text-ink-muted">
-                      Step {stepLabel}
-                    </p>
-                    <h2 className="type-title-lg text-ink">
-                      {station.title ?? "Untitled step"}
-                    </h2>
-                  </header>
+                  <header className="space-y-3" />
 
                   {hasHero ? (
-                    <figure
-                      className="relative overflow-hidden rounded-xl bg-card/0 aspect-dynamic"
-                      style={{ "--aspect-ratio": heroAspectRatio ?? 3 / 2 }}
-                    >
-                      <Image
-                        src={heroUrl!}
-                        alt={station.heroImage?.alt ?? station.title ?? "Build journey image"}
-                        fill
-                        sizes="(min-width: 1280px) 1100px, (min-width: 1024px) 900px, 100vw"
-                        className="object-cover"
-                        priority={index === 0}
-                      />
-                    </figure>
+                    <div className="space-y-3">
+                      <figure
+                        className="relative overflow-hidden rounded-xl bg-card/0 aspect-dynamic mb-7"
+                        style={{ "--aspect-ratio": heroAspectRatio ?? 3 / 2 }}
+                      >
+                        <Image
+                          src={heroUrl!}
+                          alt={station.heroImage?.alt ?? station.title ?? "Build journey image"}
+                          fill
+                          sizes="(min-width: 1280px) 1100px, (min-width: 1024px) 900px, 100vw"
+                          className="object-cover"
+                          priority={index === 0}
+                        />
+                      </figure>
+                      <div className="space-y-2">
+                        <span className="block h-px w-full bg-perazzi-red/40" aria-hidden="true" />
+                        <p className="type-label-tight text-ink-muted">
+                          Step {stepLabel}
+                        </p>
+                        <h2 className="type-card-title text-ink">
+                          {station.title ?? "Untitled step"}
+                        </h2>
+                      </div>
+                    </div>
                   ) : null}
 
                   {bodyBlocks.length ? (
-                    <div className="prose prose-invert prose-sm max-w-none lg:prose-base">
-                      <PortableBody blocks={bodyBlocks} />
+                    <div className="prose-journal max-w-none text-ink-muted leading-normal">
+                      <PortableBody blocks={bodyBlocks} bodyClassName="!text-2xl text-ink-muted leading-normal" />
                     </div>
                   ) : null}
 
                   {station.soulQuestion ? (
-                    <div className="mt-4 space-y-3 rounded-xl bg-card/5 p-4 sm:p-5">
-                      <p className="type-label-tight text-perazzi-red">
+                    <div className="mt-4 space-y-3 rounded-xl bg-card/5 p-4 sm:p-5 border-t border-perazzi-red/40 pt-4">
+                      <p className="type-card-title text-perazzi-red">
                         Reflection
                       </p>
-                      <p className="type-body-sm text-ink">
+                      <p className="prose-journal text-ink">
                         {station.soulQuestion}
                       </p>
 
@@ -375,7 +379,7 @@ function JourneyChapters({
                       >
                         <Textarea
                           rows={3}
-                          className="rounded-2xl border-border/60 bg-card/10"
+                          className="rounded-2xl border-border/60 bg-card/10 prose-journal text-ink"
                           placeholder="Write your answer here..."
                           value={answer}
                           onChange={(e) =>
@@ -451,10 +455,10 @@ function JourneyChapters({
               <p className="type-label-tight text-ink-muted">
                 Step 12
               </p>
-              <h2 className="type-title-lg text-ink">
+              <h2 className="type-section text-ink !text-4xl">
                 The Soul of Your Gun
               </h2>
-              <p className="type-body-lg text-ink">
+              <p className="prose-journal text-ink">
                 To understand where the soul of a Perazzi comes from, you would have to walk the line
                 backwards, listening not to the machines but to the people who lean over them. You’d
                 hear the quiet arguments they have with themselves: the “good enough” they decline, the
@@ -469,7 +473,7 @@ function JourneyChapters({
                 when it finally meets its shooter, it already carries a history of people who cared
                 about that meeting long before it happened.
               </p>
-              <p className="type-body-lg text-ink">
+              <p className="prose-journal text-ink">
                 Every gun that leaves Botticino is seen through this same lens. Whether it enters the factory as a bespoke order with a name already inked on the build sheet, or as “just” a serial number destined for a dealer’s rack, it passes under the same unforgiving lights and the same patient stares; it is measured by the same hands that have spent decades defending the standard behind the name on the building. No one here knows where a given gun will end up, but each is treated as if it will matter to someone in a way they cannot yet imagine. If you’ve stayed with this story long enough to walk the line in your mind and see the work through their eyes, consider what comes next a quiet thank you for that attention. As you look below, you’ll see that the journey you’ve just followed — the anonymous arc of “a” gun — has been quietly tied, step by step, to the details of “your” gun: the same work stations, the same choices, the same people, now converging on the one that will one day close in your hands.
               </p>
             </header>
@@ -481,22 +485,22 @@ function JourneyChapters({
                     key={stepKey}
                     className={`space-y-2 ${index > 0 ? "mt-6 border-t border-border pt-10" : ""}`}
                   >
-                    <p className="type-label-tight text-perazzi-red">
+                    <p className="type-card-title text-perazzi-red">
                       Step {stepKey} — {title}
                     </p>
 
                     {userAnswer ? (
                       <div className="space-y-1 rounded-xl px-3 py-2">
-                        <p className="type-label-tight text-ink-muted/80">
+                        <p className="type-card-title text-ink-muted/80">
                           Your reflection
                         </p>
-                        <p className="type-body-sm text-ink-muted">
+                        <p className="prose-journal text-ink-muted">
                           {userAnswer}
                         </p>
                       </div>
                     ) : null}
 
-                    <p className="type-title-lg text-ink font-artisan">
+                    <p className="type-title-lg text-ink font-artisan not-italic leading-relaxed">
                       {paragraph}
                     </p>
                   </div>
@@ -544,11 +548,11 @@ function JourneyTransition({
 
       <div className="relative flex min-h-[50vh] sm:min-h-[60vh] lg:min-h-screen w-full items-center justify-center px-4 py-16 sm:py-24">
         {nextExcerpt ? (
-          <div className="max-w-2xl space-y-4 text-center">
+          <div className="max-w-3xl space-y-4 text-center">
             <p className="type-label-tight text-white/80">
               Up next • Step {nextStepLabel} — {nextTitle}
             </p>
-            <blockquote className="type-quote text-white">
+            <blockquote className="type-quote text-white font-artisan text-3xl">
               {nextExcerpt}
             </blockquote>
           </div>
