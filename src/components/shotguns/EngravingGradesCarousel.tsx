@@ -153,7 +153,7 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
             <div className="space-y-3 rounded-2xl bg-transparent p-4 sm:rounded-3xl sm:p-5">
-              <Text size="label-tight" className="type-card-title text-ink-muted" leading="normal">
+              <Text size="label-tight" className="type-label-tight text-ink-muted" leading="normal">
                 Grade categories
               </Text>
               <div className="space-y-3">
@@ -198,12 +198,17 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
                                     className={cn(
                                       "group w-full rounded-2xl px-3 py-2 text-left transition-colors focus-ring",
                                       isActive
-                                        ? "bg-ink text-card"
+                                        ? "bg-perazzi-red text-card"
                                         : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
                                     )}
                                     aria-pressed={isActive}
                                   >
-                                    <span className="block type-card-title">
+                                    <span
+                                      className={cn(
+                                        "block type-body-title text-ink text-base uppercase",
+                                        isActive && "text-white",
+                                      )}
+                                    >
                                       {grade.name}
                                     </span>
                                   </button>
@@ -269,21 +274,19 @@ function GradeCard({ grade, ctaLabel }: GradeCardProps) {
             <div>Imagery coming soon</div>
           </Text>
         )}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-1 p-4 text-black">
-          <Text size="label-tight" className="type-card-title text-perazzi-red" leading="normal">
-            Engraving Grade
-          </Text>
-          <Heading
-            level={3}
-            size="md"
-            className="type-card-title text-black"
-          >
-            {grade.name}
-          </Heading>
-        </div>
       </div>
       <div className="mt-4 flex flex-1 flex-col gap-3">
-        <Text className="type-card-body text-ink-muted" leading="normal">
+        <Text size="label-tight" className="type-card-title text-perazzi-red" leading="normal">
+          Engraving Grade
+        </Text>
+        <Heading
+          level={3}
+          size="md"
+          className="type-body-title text-ink text-xl sm:text-2xl lg:text-3xl uppercase not-italic"
+        >
+          {grade.name}
+        </Heading>
+        <Text className="type-body text-ink-muted" leading="normal">
           {grade.description}
         </Text>
         <div className="mt-auto pt-2">

@@ -46,10 +46,10 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
       </div>
 
       <header className="mt-4 space-y-1">
-        <Heading level={3} size="md" className="my-3 type-card-title text-ink text-2xl not-italic">
+        <Heading level={3} size="md" className="my-3 type-button text-ink text-xl not-italic tracking-normal font-normal">
           {platform.name}
         </Heading>
-        <Text className="type-card-body text-ink-muted mb-7">
+        <Text className="type-body text-ink-muted mb-7">
           {platform.tagline}
         </Text>
       </header>
@@ -71,7 +71,7 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
           {platform.typicalDisciplines.map((discipline) => (
             <li
               key={discipline}
-              className="rounded-sm bg-(--surface-elevated)/85 px-3 py-1.5 type-label-tight text-ink"
+              className="pill bg-(--surface-elevated)/85 type-label-tight text-ink"
             >
               {discipline}
             </li>

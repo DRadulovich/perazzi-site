@@ -126,7 +126,7 @@ export function BuildStepsScroller({
         <div className="relative z-10 mx-auto flex w-full max-w-7xl px-6 lg:px-10">
         <div className="flex w-full flex-col gap-8 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-soft backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
           {/* Intro block */}
-          <div className="max-w-3xl space-y-3 shrink-0">
+          <div className="space-y-3 shrink-0">
             <Heading
               id="build-steps-heading"
               level={2}
@@ -135,24 +135,24 @@ export function BuildStepsScroller({
             >
               {heading}
             </Heading>
-            <Text size="md" muted leading="relaxed">
-              {subheading}
-            </Text>
-            <Text size="md" muted leading="relaxed" className="max-w-xl">
+            <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
               Scroll to move from moment to moment. Each step is a chapter in the
               ritual of building a Perazzi to your measure.
+            </Text>
+            <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
+              {subheading}
             </Text>
             <div className="flex flex-wrap items-center gap-4">
               <a
                 href="#build-steps-sequence"
-                className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-ink/60 px-4 py-2 text-ink hover:border-ink focus-ring"
+                className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-ink/60 text-ink hover:border-ink focus-ring"
               >
                 <span>{ctaLabel}</span>
                 <span aria-hidden="true">↓</span>
               </a>
               <a
                 href={`#${skipTargetId}`}
-                className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-perazzi-red/60 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 <span>Skip step-by-step</span>
                 <span aria-hidden="true">→</span>
@@ -180,7 +180,7 @@ export function BuildStepsScroller({
                           aria-current={isActive ? "step" : undefined}
                           className={`group flex w-full justify-center items-center gap-2 rounded-full border border-transparent px-3 py-1.5 transition focus-ring ${
                             isActive
-                              ? "bg-ink/10 text-ink"
+                              ? "bg-perazzi-red text-white"
                               : "text-ink-muted hover:text-ink"
                           }`}
                         >
@@ -260,7 +260,7 @@ export function BuildStepsScroller({
                                     id={`build-step-heading-${step.id}`}
                                     level={3}
                                     size="lg"
-                                    className="text-ink"
+                                    className="type-section-subtitle text-ink"
                                   >
                                     {step.title}
                                   </Heading>
@@ -283,7 +283,7 @@ export function BuildStepsScroller({
                                     <div className="space-y-4 pt-4">
                                       {step.bodyHtml ? (
                                         <SafeHtml
-                                          className="prose prose-sm max-w-none text-ink-muted sm:prose"
+                                          className="max-w-none type-body text-ink-muted"
                                           html={step.bodyHtml}
                                         />
                                       ) : null}
@@ -295,7 +295,7 @@ export function BuildStepsScroller({
                                               e.stopPropagation();
                                               onStepCta?.(step.id);
                                             }}
-                                            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                                            className="inline-flex min-h-10 items-center justify-center gap-2 pill border border-perazzi-red/60 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
                                           >
                                             {step.ctaLabel}
                                             <span aria-hidden="true">→</span>

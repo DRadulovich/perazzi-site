@@ -30,7 +30,7 @@ export function TagChips({ tags, onChange }: TagChipsProps) {
           key={tag.id}
           type="button"
           aria-pressed={selected.includes(tag.id)}
-          className={`type-label-tight rounded-full border px-4 py-2 focus-ring ${
+          className={`type-label-tight pill border focus-ring ${
             selected.includes(tag.id)
               ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
               : "border-border bg-card text-ink"

@@ -89,7 +89,7 @@ export function ConciergeHero({ hero }: ConciergeHeroProps) {
             <Text size="label-tight" className="text-ink/70">
               Workshop snapshot
             </Text>
-            <span className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 type-label-tight text-ink/80">
+            <span className="flex items-center gap-2 pill bg-white/10 type-label-tight text-ink/80">
               <span className="h-2 w-2 rounded-full bg-perazzi-red" aria-hidden="true" /><span>Live</span>
             </span>
           </div>
@@ -115,7 +115,7 @@ export function ConciergeHero({ hero }: ConciergeHeroProps) {
             {["Dealer brief ready", "Saved builds", "Desktop experience"].map((chip) => (
               <span
                 key={chip}
-                className="rounded-full border border-ink/20 bg-white/10 px-3 py-1 type-label-tight text-ink/80"
+                className="pill border border-ink/20 bg-white/10 type-label-tight text-ink/80"
               >
                 {chip}
               </span>

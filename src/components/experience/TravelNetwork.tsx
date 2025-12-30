@@ -110,7 +110,7 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
                 role="tab"
                 aria-selected={activeTab === tab.key}
                 className={cn(
-                  "type-label-tight rounded-full border border-border/70 bg-card/60 px-4 py-2 shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring",
+                  "type-label-tight pill border border-border/70 bg-card/60 shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring",
                   activeTab === tab.key
                     ? "border-perazzi-red/60 bg-perazzi-red/10 text-perazzi-red"
                     : "text-ink",

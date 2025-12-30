@@ -104,7 +104,7 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
                 {hero.title}
               </h1>
               {hero.subheading ? (
-                <p className="type-body text-white/80">
+                <p className="type-card-body text-white/80">
                   {hero.subheading}
                 </p>
               ) : null}

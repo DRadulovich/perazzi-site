@@ -102,7 +102,7 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
             >
               {heading}
             </Heading>
-            <Text size="md" muted className="mb-4">
+            <Text size="md" className="type-section-subtitle text-ink-muted mb-4">
               {subheading}
             </Text>
           </div>
@@ -183,10 +183,10 @@ function ExperiencePickerCard({
           <Text size="label-tight" muted>
             {microLabel}
           </Text>
-          <Heading level={3} size="sm" className="text-ink">
+          <Heading level={3} size="sm" className="type-card-title text-ink">
             {item.title}
           </Heading>
-          <Text size="md" muted leading="relaxed">
+          <Text size="md" className="type-card-body text-ink-muted" leading="relaxed">
             {item.summary}
           </Text>
           <span className="mt-auto inline-flex items-center gap-2 type-button text-perazzi-red">

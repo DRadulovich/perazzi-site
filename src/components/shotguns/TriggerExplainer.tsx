@@ -29,7 +29,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
 
   const analyticsRef = useAnalyticsObserver<HTMLElement>("TriggerExplainerSeen");
   const copyClasses =
-    "max-w-none type-card-body text-ink [&_p]:mb-4 [&_p:last-child]:mb-0 prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4";
+    "max-w-none type-body text-ink [&_p]:mb-4 [&_p:last-child]:mb-0 prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4";
 
   return (
     <section
@@ -84,7 +84,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
 
             <CollapsibleContent
               id="trigger-explainer-content"
-              className="grid gap-6 overflow-hidden transition-all duration-300 data-[state=closed]:opacity-0 data-[state=open]:opacity-100 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start"
+              className="grid gap-6 overflow-hidden px-2 py-3 transition-all duration-300 data-[state=closed]:opacity-0 data-[state=open]:opacity-100 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start"
             >
               <div className="rounded-2xl border border-border/0 bg-card/0 p-4 sm:rounded-3xl sm:p-6 lg:flex lg:h-full lg:flex-col lg:justify-start">
                 {explainer.copyPortableText?.length ? (

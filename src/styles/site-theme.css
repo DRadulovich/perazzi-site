@@ -58,6 +58,13 @@
   --tracking-tight: 0.2em;
 }
 
+@media (max-width: 1024px) {
+  :root {
+    --type-section: clamp(1.9rem, 4.6vw, 2.9rem);
+    --type-title-md: clamp(1.3rem, 2.2vw, 1.8rem);
+  }
+}
+
 [data-theme="dark"] {
   color-scheme: dark;
 
@@ -352,9 +359,15 @@
 
   .type-body-title {
     font-family: var(--font-serif-small-caps);
-    font-size: calc(clamp(0.95rem, 1.1vw, 1.1rem) * 2);
+    font-size: clamp(1.3rem, 2vw, 2.2rem);
     font-weight: 400;
     line-height: 1.4;
+  }
+
+  @media (max-width: 640px) {
+    .type-body-title {
+      font-size: clamp(1.4rem, 4vw, 2.2rem);
+    }
   }
 
   .type-body-sm {
@@ -433,6 +446,16 @@
     line-height: 1.2;
   }
 
+  .type-button-eaves {
+    font-family: var(--font-serif-petite-caps);
+    font-size: calc(var(--type-display) * 0.35);
+    font-weight: 400;
+    font-style: normal;
+    text-transform: none;
+    letter-spacing: 0em;
+    line-height: 1;
+  }
+
   .type-button-plain {
     font-family: var(--font-sans);
     font-size: var(--type-body-sm);
@@ -440,6 +463,27 @@
     line-height: 1.55;
     text-transform: none;
     letter-spacing: normal;
+  }
+
+  .type-subsection {
+    font-family: var(--font-serif);
+    font-size: var(--type-title-md);
+    font-weight: 400;
+    line-height: 1.5;
+  }
+
+  .type-subsection :where(p, li) {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+  }
+
+  .type-subsection :where(li > span) {
+    font-weight: 600;
+  }
+
+  .type-subsection :where(em, i, cite) {
+    font-style: italic;
   }
 
   .type-quote {
@@ -524,7 +568,7 @@ body {
 
 @media (max-width: 1024px) and (orientation: portrait) {
   .home-hero-media img {
-    object-position: right center;
+    object-position: center;
   }
 }
 
@@ -550,6 +594,10 @@ body {
 .text-ink-muted { color: var(--color-ink-muted); }
 .border-subtle { border-color: var(--border-color); }
 .border-border { border-color: var(--border-color); }
+.pill {
+  border-radius: 0.125rem;
+  padding: 0.5rem 1rem;
+}
 
 .card-media {
   overflow: hidden;

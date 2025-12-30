@@ -43,7 +43,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
     fill: true,
     priority: true,
     sizes: heroSizes,
-    className: "object-cover",
+    className: "object-cover object-center",
   });
 
   const tabletImageProps = hero.backgroundTablet
@@ -53,7 +53,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
         fill: true,
         priority: true,
         sizes: heroSizes,
-        className: "object-cover",
+        className: "object-cover object-center",
       }).props
     : null;
 
@@ -64,7 +64,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
         fill: true,
         priority: true,
         sizes: heroSizes,
-        className: "object-cover",
+        className: "object-cover object-center",
       }).props
     : null;
 
@@ -256,13 +256,13 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
               type="button"
               ref={triggerRef}
               onClick={openManifesto}
-              className="flex flex-wrap justify-center gap-2 bg-transparent text-balance type-display text-white outline-none focus-ring cursor-pointer border-0 p-0"
+              className="flex flex-wrap justify-center gap-2 bg-transparent text-balance type-display text-white outline-none focus-ring cursor-pointer border-0 p-0 leading-[0.85]"
             >
               <CleanText value={heroHeading} />
             </button>
           </h1>
           {hero.background.caption ? (
-            <p className="mx-auto mt-1 mb-3 max-w-7xl type-title-lg text-white/80">
+            <p className="mx-auto mt-1 mb-7 max-w-7xl font-artisan not-italic text-white/80 text-[1em] sm:text-[1.2em] lg:text-[1.4em]">
               {hero.background.caption}
             </p>
           ) : null}

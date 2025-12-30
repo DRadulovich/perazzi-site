@@ -30,14 +30,14 @@ function BookingOptionCard({ option }: BookingOptionCardProps) {
       className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm transition-shadow hover:shadow-elevated sm:rounded-3xl sm:bg-card/80 sm:p-6"
     >
       <div className="space-y-2">
-        <Heading level={3} size="sm" className="text-ink">
+        <Heading level={3} size="sm" className="type-body-title text-ink">
           {option.title}
         </Heading>
         <Text size="caption" muted>
           {option.durationLabel ?? (option.durationMins ? `${option.durationMins} minutes` : "")}
         </Text>
         <SafeHtml
-          className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg"
+          className="max-w-none type-body text-ink-muted"
           html={option.descriptionHtml}
         />
       </div>
@@ -45,7 +45,8 @@ function BookingOptionCard({ option }: BookingOptionCardProps) {
         <Button
           asChild
           variant="secondary"
-          size="lg"
+          size="sm"
+          className="md:!type-button-lg md:!px-xl md:!py-sm"
           onClick={() => {
             logAnalytics(`BookingClicked:${option.id}`);
           }}
@@ -85,7 +86,7 @@ function WhatToExpectCollapsible({
       }}
     >
       <CollapsibleTrigger
-        className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/70 px-4 py-3 text-left type-title-sm text-ink shadow-soft backdrop-blur-sm focus-ring md:px-6 md:py-4 lg:px-7 lg:py-5"
+        className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/70 px-4 py-3 text-left type-body-title text-ink italic shadow-soft backdrop-blur-sm focus-ring md:px-6 md:py-4 lg:px-7 lg:py-5"
         aria-controls={contentId}
         aria-expanded={open}
       >

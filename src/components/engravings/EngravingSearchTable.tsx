@@ -389,7 +389,7 @@ function FilterChip({
     <button
       type="button"
       onClick={onClick}
-      className={clsx("type-label-tight rounded-full px-4 py-2 transition", chipStateClass)}
+      className={clsx("type-label-tight pill transition", chipStateClass)}
     >
       {label}
     </button>

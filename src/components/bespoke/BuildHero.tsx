@@ -44,7 +44,7 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
             fill
             priority
             sizes="(min-width: 1536px) 1200px, (min-width: 1280px) 1100px, (min-width: 1024px) 80vw, 100vw"
-            className="object-cover"
+            className="object-cover object-center"
           />
         <div
           className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-transparent"
@@ -52,31 +52,22 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
         />
       </motion.div>
       <motion.div
-        className="absolute inset-0 flex flex-col justify-center px-6 py-16 text-center sm:px-10 lg:px-16"
+        className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 pb-16 text-center sm:px-2 lg:gap-2 lg:pb-24"
         initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
         animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: "easeOut" }}
       >
-        <p className="type-label text-white/70">
+        <p className="type-label text-white/80">
           {hero.eyebrow}
         </p>
-        <h1 className="mt-1 mb-10 flex flex-wrap justify-center gap-2 text-balance type-display text-white transition-opacity duration-700 motion-reduce:transition-none">
+        <h1 className="mb-3 flex flex-wrap justify-center gap-2 text-balance type-display text-white transition-opacity duration-700 motion-reduce:transition-none leading-[0.85]">
           {hero.title}
         </h1>
         <SafeHtml
-          className="mx-auto mt-3 mb-3 max-w-2xl type-body-lg text-white/80 md:max-w-4xl lg:max-w-4xl"
+          className="mx-auto mt-1 mb-7 max-w-7xl font-artisan not-italic text-white/80 text-[1em] sm:text-[1.2em] lg:text-[1.4em]"
           html={hero.introHtml}
         />
       </motion.div>
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center"
-        aria-hidden="true"
-      >
-        <span className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/5 px-4 py-2 type-button text-white/85 shadow-soft backdrop-blur-sm">
-          <span>Scroll</span>
-          <span className="text-lg leading-none">↓</span>
-        </span>
-      </div>
     </section>
   );
 }

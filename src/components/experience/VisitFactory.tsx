@@ -64,11 +64,11 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
             >
               {heading}
             </Heading>
-            <Text size="md" muted className="mb-4">
+            <Text size="md" className="type-section-subtitle text-ink-muted mb-4">
               {subheading}
             </Text>
             <SafeHtml
-              className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg md:max-w-4xl lg:max-w-4xl prose-headings:text-ink prose-strong:text-ink"
+              className="prose-journal max-w-none text-ink-muted md:max-w-4xl lg:max-w-4xl"
               html={visit.introHtml}
             />
           </div>
@@ -78,11 +78,11 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
               <Text size="label-tight" muted>
                 Botticino headquarters
               </Text>
-              <Heading level={3} size="sm" className="text-ink">
+              <Heading level={3} size="sm" className="type-card-title text-ink">
                 {visit.location.name}
               </Heading>
               <SafeHtml
-                className="type-body-sm text-ink-muted"
+                className="type-card-body text-ink-muted"
                 html={visit.location.addressHtml}
               />
               {visit.location.hoursHtml ? (
@@ -93,7 +93,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
               ) : null}
               {visit.location.notesHtml ? (
                 <SafeHtml
-                  className="type-body-sm text-ink-muted"
+                  className="type-card-body text-ink-muted"
                   html={visit.location.notesHtml}
                 />
               ) : null}
@@ -145,7 +145,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
               {visit.whatToExpectHtml ? (
                 <Collapsible open={expectOpen} onOpenChange={setExpectOpen}>
                   <CollapsibleTrigger
-                    className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left type-label-tight text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
+                    className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left type-card-title text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
                     aria-expanded={expectOpen}
                     aria-controls="visit-expect-content"
                   >
@@ -162,10 +162,10 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                   </CollapsibleTrigger>
                   <CollapsibleContent
                     id="visit-expect-content"
-                    className="mt-3 rounded-2xl border border-border/70 bg-card/60 p-4 type-body-sm text-ink-muted shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80"
+                    className="mt-3 rounded-2xl border border-border/70 bg-card/60 p-4 type-card-body text-ink-muted shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80"
                   >
                     <SafeHtml
-                      className="prose prose-sm max-w-none text-ink-muted"
+                      className="max-w-none type-card-body text-ink-muted"
                       html={visit.whatToExpectHtml}
                     />
                   </CollapsibleContent>

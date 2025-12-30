@@ -12,7 +12,6 @@ type ExpertCardProps = Readonly<{
 }>;
 
 export function ExpertCard({ expert }: ExpertCardProps) {
-  const ratio = expert.headshot.aspectRatio ?? 3 / 4;
   const [open, setOpen] = useState(false);
 
   return (
@@ -21,8 +20,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
       className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-5"
     >
       <div
-        className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-dynamic"
-        style={{ "--aspect-ratio": ratio }}
+        className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-[3/4] lg:aspect-[4/3]"
       >
         <Image
           src={expert.headshot.url}
@@ -34,17 +32,17 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         />
       </div>
       <div className="mt-4 space-y-1">
-        <Heading level={3} size="sm" className="text-ink">
+        <Heading level={3} size="sm" className="type-body-title text-ink">
           {expert.name}
         </Heading>
         <Text size="caption" muted>
           {expert.role}
         </Text>
-        <Text size="md" muted leading="relaxed">
+        <Text size="md" className="type-body text-ink-muted my-7" leading="relaxed">
           {expert.bioShort}
         </Text>
         {expert.quote ? (
-          <blockquote className="border-l-2 border-perazzi-red/40 pl-3 type-quote text-ink">
+          <blockquote className="border-l-2 border-perazzi-red/40 pl-3 font-artisan text-ink text-2xl">
             “{expert.quote}”
           </blockquote>
         ) : null}
@@ -53,7 +51,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         {expert.profileHref ? (
           <a
             href={expert.profileHref}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+            className="inline-flex items-center justify-center gap-2 pill border border-perazzi-red/60 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
           >
             Meet {expert.name.split(" ")[0]}
             <span aria-hidden="true">→</span>
@@ -62,7 +60,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
 
         <Dialog.Root open={open} onOpenChange={setOpen}>
           <Dialog.Trigger
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 type-button text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
+            className="inline-flex items-center justify-center gap-2 pill border border-border/70 bg-card/60 type-button text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
             onClick={() => logAnalytics(`ExpertBio:${expert.id}`)}
           >
             Full bio
@@ -71,16 +69,16 @@ export function ExpertCard({ expert }: ExpertCardProps) {
             <Dialog.Overlay className="fixed inset-0 bg-black/55 backdrop-blur-sm" />
           <Dialog.Content className="fixed inset-0 flex items-center justify-center p-4">
             <div className="max-w-lg rounded-2xl border border-border bg-card/95 p-4 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl focus:outline-none sm:rounded-3xl sm:p-6">
-                <Heading asChild level={3} size="sm" className="text-ink">
+                <Heading asChild level={3} size="sm" className="type-body-title text-ink">
                   <Dialog.Title>{expert.name}</Dialog.Title>
                 </Heading>
                 <Text asChild size="sm" muted className="mt-1">
                   <Dialog.Description>{expert.role}</Dialog.Description>
                 </Text>
-                <Text size="md" muted leading="relaxed" className="mt-4">
+                <Text size="md" className="mt-4 type-body text-ink-muted" leading="relaxed">
                   {expert.bioShort}
                 </Text>
-                <Dialog.Close className="mt-6 inline-flex items-center justify-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 type-button text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring">
+                <Dialog.Close className="mt-6 inline-flex items-center justify-center gap-2 pill border border-border/70 bg-card/60 type-button text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring">
                   Close
                 </Dialog.Close>
               </div>

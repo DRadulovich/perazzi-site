@@ -43,7 +43,7 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
         ) : null}
         {quote ? (
           <blockquote className="rounded-2xl border-l-4 border-perazzi-red/60 bg-card/60 px-5 py-4 text-ink shadow-soft backdrop-blur-sm">
-            <Text asChild size="md" className="type-quote text-ink">
+            <Text asChild size="md" className="font-artisan text-ink text-2xl">
               <p>“{quote.text}”</p>
             </Text>
             {quote.author ? (

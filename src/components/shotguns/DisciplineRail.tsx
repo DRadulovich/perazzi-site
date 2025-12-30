@@ -192,7 +192,7 @@ export function DisciplineRail({
           </div>
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
             <div className="space-y-3 rounded-2xl bg-card/0 p-4 sm:rounded-3xl sm:p-5">
-              <Text size="label-tight" className="text-ink-muted">
+              <Text size="label-tight" className="type-label-tight text-ink-muted">
                 Discipline categories
               </Text>
               <div className="space-y-3">
@@ -237,15 +237,17 @@ export function DisciplineRail({
                                     className={cn(
                                       "group w-full rounded-2xl px-3 py-2 text-left transition-colors focus-ring",
                                       isActive
-                                        ? "bg-ink text-card"
+                                        ? "bg-perazzi-red text-card"
                                         : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
                                     )}
                                     aria-pressed={isActive}
                                   >
-                                    <span className="block type-card-title">
-                                      {discipline.name}
-                                    </span>
-                                    <span className="mt-0.5 block type-label-tight text-ink-muted group-hover:text-ink-muted/90">
+                                    <span
+                                      className={cn(
+                                        "mt-0.5 block type-label-tight group-hover:text-ink-muted/90",
+                                        isActive ? "text-white" : "text-ink-muted",
+                                      )}
+                                    >
                                       {discipline.id.replaceAll('-', " ")}
                                     </span>
                                   </button>
@@ -399,21 +401,23 @@ function DisciplineCard({
           />
         ) : null}
         <div className="pointer-events-none absolute inset-0 bg-black/50" />
-          <div className="absolute inset-x-0 bottom-0 flex flex-col items-center justify-end p-6 text-white">
-          <Heading level={3} size="sm" className="type-card-title text-white text-4xl">
-            {discipline.name}
-          </Heading>
-        </div>
       </div>
           <div className="flex flex-1 flex-col gap-6 p-6">
+        <Heading
+          level={3}
+          size="sm"
+          className="type-body-title text-ink text-xl sm:text-2xl lg:text-3xl not-italic"
+        >
+          {discipline.name}
+        </Heading>
         {discipline.overviewPortableText?.length ? (
           <PortableText
-            className="max-w-none type-card-body text-ink-muted mb-7"
+            className="max-w-none type-body text-ink-muted mb-7"
             blocks={discipline.overviewPortableText}
           />
         ) : discipline.overviewHtml ? (
           <SafeHtml
-            className="max-w-none type-card-body text-ink-muted mb-7"
+            className="max-w-none type-body text-ink-muted mb-7"
             html={discipline.overviewHtml}
           />
         ) : null}
@@ -426,7 +430,7 @@ function DisciplineCard({
               {discipline.recommendedPlatforms.map((platformId) => (
                 <li
                   key={platformId}
-                  className="rounded-full border border-border px-3 py-1 type-label-tight text-ink-muted"
+                  className="pill border border-border type-label-tight text-ink-muted"
                 >
                   {platformName(platformId)}
                 </li>
@@ -460,7 +464,7 @@ function DisciplineCard({
                   <div className="pointer-events-none absolute inset-0 bg-perazzi-black/75 transition duration-500 group-hover:bg-perazzi-black/60" />
                   <span
                     className={cn(
-                      "absolute inset-0 flex items-center justify-center p-2 text-center type-card-title text-white transition-opacity duration-500 group-hover:opacity-0",
+                      "absolute inset-0 flex items-center justify-center p-2 text-center type-label-tight text-white text-xl sm:text-2xl lg:text-3xl transition-opacity duration-500 group-hover:opacity-0",
                     )}
                   >
                     {loadingModelId === model.id ? "Loading…" : model.name || "Untitled"}

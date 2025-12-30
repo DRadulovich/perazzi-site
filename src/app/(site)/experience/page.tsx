@@ -179,7 +179,7 @@ export default async function ExperiencePage() {
             >
               {visitPlanningHeading}
             </Heading>
-            <Text size="md" muted leading="relaxed" className="mb-8">
+            <Text className="mb-8 type-subsection text-ink-muted" leading="relaxed">
               {visitPlanningIntro}
             </Text>
             <div className="flex flex-wrap justify-start gap-3">
@@ -201,8 +201,8 @@ export default async function ExperiencePage() {
             </div>
           </div>
 
-          <div className="space-y-3 type-body text-ink-muted">
-            <Text size="md" className="text-ink">
+          <div className="space-y-3 type-subsection text-ink-muted">
+            <Text className="text-ink">
               What the concierge can line up:
             </Text>
             <ul className="space-y-2">
@@ -210,14 +210,14 @@ export default async function ExperiencePage() {
                 const [label, ...rest] = bullet.split(" - ");
                 return (
                   <li key={bullet}>
-                    <span className="type-title-sm text-ink">{label}</span>
+                    <span className="text-ink">{label}</span>
                     {" "}-{" "}
                     {rest.join(" - ")}
                   </li>
                 );
               })}
             </ul>
-            <Text size="md" muted leading="relaxed">
+            <Text className="text-ink-muted" leading="relaxed">
               {visitPlanningClosing}
             </Text>
           </div>
@@ -244,7 +244,7 @@ export default async function ExperiencePage() {
             >
               {fittingGuidanceHeading}
             </Heading>
-            <Text size="md" muted leading="relaxed" className="mb-8">
+            <Text className="mb-8 type-subsection text-ink-muted" leading="relaxed">
               {fittingGuidanceIntro}
             </Text>
             <div className="flex flex-wrap justify-start gap-3">
@@ -266,8 +266,8 @@ export default async function ExperiencePage() {
             </div>
           </div>
 
-          <div className="space-y-3 type-body text-ink-muted">
-            <Text size="md" className="text-ink">
+          <div className="space-y-3 type-subsection text-ink-muted">
+            <Text className="text-ink">
               What the concierge can clarify:
             </Text>
             <ul className="space-y-2">
@@ -275,14 +275,14 @@ export default async function ExperiencePage() {
                 const [label, ...rest] = bullet.split(" - ");
                 return (
                   <li key={bullet}>
-                    <span className="type-title-sm text-ink">{label}</span>
+                    <span className="text-ink">{label}</span>
                     {" "}-{" "}
                     {rest.join(" - ")}
                   </li>
                 );
               })}
             </ul>
-            <Text size="md" muted leading="relaxed">
+            <Text className="text-ink-muted" leading="relaxed">
               {fittingGuidanceClosing}
             </Text>
           </div>
@@ -309,7 +309,7 @@ export default async function ExperiencePage() {
             >
               {travelHeading}
             </Heading>
-            <Text size="md" muted leading="relaxed" className="mb-8">
+            <Text className="mb-8 type-subsection text-ink-muted" leading="relaxed">
               {travelIntro}
             </Text>
             <div className="flex flex-wrap justify-start gap-3">
@@ -331,8 +331,8 @@ export default async function ExperiencePage() {
             </div>
           </div>
 
-          <div className="space-y-3 type-body text-ink-muted">
-            <Text size="md" className="text-ink">
+          <div className="space-y-3 type-subsection text-ink-muted">
+            <Text className="text-ink">
               What the concierge can organize:
             </Text>
             <ul className="space-y-2">
@@ -340,14 +340,14 @@ export default async function ExperiencePage() {
                 const [label, ...rest] = bullet.split(" - ");
                 return (
                   <li key={bullet}>
-                    <span className="type-title-sm text-ink">{label}</span>
+                    <span className="text-ink">{label}</span>
                     {" "}-{" "}
                     {rest.join(" - ")}
                   </li>
                 );
               })}
             </ul>
-            <Text size="md" muted leading="relaxed">
+            <Text className="text-ink-muted" leading="relaxed">
               {travelClosing}
             </Text>
           </div>

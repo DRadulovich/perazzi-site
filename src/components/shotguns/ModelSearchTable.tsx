@@ -623,7 +623,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={clsx(
-        "type-label-tight rounded-full px-4 py-2 transition",
+        "type-label-tight pill transition",
         active
           ? "bg-white text-black"
           : "border border-white/20 bg-transparent text-white/70 hover:border-white/60",

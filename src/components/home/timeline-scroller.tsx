@@ -143,10 +143,6 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                     <Text size="label-tight" className="text-ink-muted">
                       {alternateTitle}
                     </Text>
-                    <Text size="sm" className="text-ink-muted">
-                      Scroll through each stage to follow the bespoke process
-                      from first measurements to the final finish. Tap a stage to see more.
-                    </Text>
                   </div>
 
                   <div className="space-y-3">
@@ -171,7 +167,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                             className="flex w-full items-center justify-between gap-3 text-left focus-ring"
                           >
                             <div>
-                              <Text size="button" className="text-ink-muted">
+                              <Text size="button" className="text-ink-muted mb-2">
                                 Stage {stage.order}
                               </Text>
                             <Text className="text-lg type-body-title text-ink">
@@ -210,7 +206,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
                   asChild
                   variant="secondary"
                   size="lg"
-                  className="w-full type-body-title"
+                  className="w-full type-button-eaves text-ink"
                 >
                   <Link href="/the-build/why-a-perazzi-has-a-soul">
                     See the full build story
@@ -243,7 +239,7 @@ function TimelineControlButton({
   const baseClass = cn(
     "group w-full rounded-2xl px-3 py-2 text-left transition-colors focus-ring",
     active
-      ? "bg-ink text-card"
+      ? "bg-perazzi-red text-card"
       : "bg-transparent text-ink-muted hover:bg-ink/10 hover:text-ink",
   );
 
@@ -262,13 +258,18 @@ function TimelineControlButton({
     >
       <span
         className={cn(
-          "block type-button text-perazzi-red/80 group-hover:text-ink-muted/90",
-          active && "text-card/80",
+          "block type-button group-hover:text-ink-muted/90",
+          active ? "text-ink" : "text-perazzi-red/80",
         )}
       >
         Stage {order}
       </span>
-      <span className="mt-0.5 block type-card-title">
+      <span
+        className={cn(
+          "mt-0.5 block type-section-subtitle",
+          active ? "text-white" : "text-ink",
+        )}
+      >
         {label}
       </span>
     </motion.button>
@@ -309,10 +310,10 @@ function PinnedStagePanel({
         <Text size="button" className="text-ink-muted">
           Stage {stage.order}
         </Text>
-        <Heading level={3} size="lg" className="type-card-title text-ink not-italic">
+        <Heading level={3} size="lg" className="type-body-title text-ink not-italic">
           {stage.title}
         </Heading>
-        <Text className="type-card-body text-ink-muted">
+        <Text className="type-body text-ink-muted">
           {stage.body}
         </Text>
         {stage.media.caption ? (

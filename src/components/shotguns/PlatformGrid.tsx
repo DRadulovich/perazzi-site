@@ -148,7 +148,7 @@ const PlatformTabs = ({ platforms, activeIndex, onSelect }: PlatformTabsProps) =
           type="button"
           role="tab"
           aria-selected={isActive}
-          className={`type-label-tight rounded-sm border px-4 py-2 focus-ring transition ${
+          className={`type-label-tight pill border focus-ring transition ${
             isActive
               ? "border-perazzi-red bg-canvas/40 text-perazzi-red backdrop-blur-sm shadow-elevated"
               : "border-border/70 bg-transparent text-ink-muted hover:border-ink/60"
@@ -206,7 +206,7 @@ const MobilePlatformCarousel = ({
   <div className="md:hidden">
     <div
       ref={scrollRef}
-      className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none"
+      className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none px-6 -mx-6 pt-6 pb-6 sm:mx-0 sm:px-6"
       aria-label="Swipe to explore platforms"
     >
       {platforms.map((platform, index) => (
@@ -380,7 +380,7 @@ export function PlatformGrid({ platforms, ui }: PlatformGridProps) {
     <section
       ref={analyticsRef}
       data-analytics-id="PlatformGridSeen"
-      className="relative w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 min-h-[80vh] full-bleed"
+      className="relative w-screen max-w-[100vw] overflow-visible py-10 sm:py-16 min-h-[80vh] full-bleed"
       aria-labelledby="platforms-heading"
     >
       <PlatformBackground background={templates.background} />

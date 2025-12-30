@@ -38,7 +38,7 @@ export function VerbosityToggle({ value, onChange, disabled = false }: Verbosity
             />
             <span
               className={[
-                "block rounded-full px-3 py-1 type-label-tight transition",
+                "block pill type-label-tight transition",
                 "text-ink-muted hover:bg-subtle",
                 "peer-checked:bg-ink peer-checked:text-card peer-checked:shadow-soft",
                 "peer-focus-visible:outline peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink",
