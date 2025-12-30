@@ -305,7 +305,7 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
         ) : null}
 
         {champion.bio ? (
-          <Text className="type-card-body text-ink-muted mb-7">{champion.bio}</Text>
+          <Text className="type-body text-ink-muted mb-7">{champion.bio}</Text>
         ) : null}
 
         {champion.quote ? (

@@ -92,14 +92,14 @@ export function HeritageEventSlide({
                 <Text size="caption" className="text-neutral-400">
                   {event.date}
                 </Text>
-                <Heading level={3} size="sm" className="text-neutral-50">
+                <Heading level={3} className="type-card-title text-neutral-50">
                   {event.title}
                 </Heading>
               </header>
 
               {hasSummary
                 ? renderSummary(
-                  "hidden md:block prose prose-invert max-w-none type-body-sm leading-relaxed text-neutral-200 prose-p:mb-3 prose-p:mt-0 prose-strong:text-neutral-50 prose-em:text-neutral-200",
+                  "hidden md:block prose prose-invert max-w-none type-body leading-relaxed text-neutral-200 prose-p:mb-3 prose-p:mt-0 prose-strong:text-neutral-50 prose-em:text-neutral-200",
                 )
                 : null}
 
@@ -172,14 +172,13 @@ export function HeritageEventSlide({
                 <Heading
                   id={`heritage-event-modal-${event.id}`}
                   level={3}
-                  size="sm"
-                  className="text-neutral-50"
+                  className="type-card-title text-neutral-50"
                 >
                   {event.title}
                 </Heading>
                 {hasSummary
                   ? renderSummary(
-                    "prose prose-invert max-w-none type-body-sm leading-relaxed text-neutral-200 prose-p:mb-3 prose-p:mt-0 prose-strong:text-neutral-50 prose-em:text-neutral-200",
+                    "prose prose-invert max-w-none type-body leading-relaxed text-neutral-200 prose-p:mb-3 prose-p:mt-0 prose-strong:text-neutral-50 prose-em:text-neutral-200",
                   )
                   : null}
               </div>

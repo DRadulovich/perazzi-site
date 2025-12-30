@@ -266,7 +266,7 @@ function TimelineControlButton({
       </span>
       <span
         className={cn(
-          "mt-0.5 block type-card-title not-italic",
+          "mt-0.5 block type-card-title text-xl",
           active ? "text-white" : "text-ink",
         )}
       >

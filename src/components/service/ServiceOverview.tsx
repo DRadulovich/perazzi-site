@@ -21,13 +21,13 @@ export function ServiceOverview({ overview }: ServiceOverviewProps) {
   if (hasCustomChecksHtml) {
     checksContent = (
       <SafeHtml
-        className="prose prose-base max-w-none leading-relaxed text-ink md:prose-lg"
+        className="prose max-w-none type-section-subtitle text-ink text-2xl"
         html={overview.checksHtml ?? ""}
       />
     );
   } else if (checksList.length) {
     checksContent = (
-      <ul className="prose prose-base max-w-none list-disc pl-5 leading-relaxed text-ink md:prose-lg">
+      <ul className="list-disc pl-5 type-section-subtitle text-ink text-2xl">
         {checksList.map((item) => (
           <li key={typeof item === "string" ? item : JSON.stringify(item)} className="marker:text-ink-muted">
             {item}
@@ -46,19 +46,19 @@ export function ServiceOverview({ overview }: ServiceOverviewProps) {
       aria-labelledby="service-overview-heading"
     >
       <div className="space-y-4">
-        <Text size="label-tight" muted>
+        <Heading id="service-overview-heading" level={2} className="type-section text-ink">
           {heading}
-        </Text>
-        <Heading id="service-overview-heading" level={2} size="xl" className="text-ink">
-          {subheading}
         </Heading>
+        <Text className="type-section-subtitle text-ink-muted">
+          {subheading}
+        </Text>
         <SafeHtml
-          className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg"
+          className="type-body max-w-none text-ink-muted"
           html={overview.introHtml}
         />
       </div>
       <Section padding="sm" className="bg-card/75">
-        <Text size="label-tight" muted>
+        <Text className="type-card-title text-ink-muted">
           {checksHeading}
         </Text>
         {checksContent}

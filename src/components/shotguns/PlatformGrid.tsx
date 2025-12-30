@@ -126,7 +126,7 @@ const PlatformHeader = ({ heading, subheading }: { heading: string; subheading: 
     >
       {heading}
     </Heading>
-    <Text className="prose-journal mb-6 max-w-4xl text-ink-muted" leading="normal">
+    <Text className="type-section-subtitle mb-6 max-w-4xl text-ink-muted" leading="normal">
       {subheading}
     </Text>
   </div>

@@ -193,7 +193,7 @@ export default async function ExperiencePage() {
               />
               <Link
                 href={visitPlanningLinkHref}
-                className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-sm border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 {visitPlanningLinkLabel}
                 <span aria-hidden="true">→</span>
@@ -258,7 +258,7 @@ export default async function ExperiencePage() {
               />
               <Link
                 href={fittingGuidanceLinkHref}
-                className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-sm border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 {fittingGuidanceLinkLabel}
                 <span aria-hidden="true">→</span>
@@ -323,7 +323,7 @@ export default async function ExperiencePage() {
               />
               <Link
                 href={travelLinkHref}
-                className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-sm border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
                 {travelLinkLabel}
                 <span aria-hidden="true">→</span>

@@ -183,10 +183,10 @@ function ExperiencePickerCard({
           <Text size="label-tight" muted>
             {microLabel}
           </Text>
-          <Heading level={3} size="sm" className="type-card-title text-ink">
+          <Heading level={3} className="type-card-title text-ink">
             {item.title}
           </Heading>
-          <Text size="md" className="type-card-body text-ink-muted" leading="relaxed">
+          <Text className="type-body text-ink-muted" leading="relaxed">
             {item.summary}
           </Text>
           <span className="mt-auto inline-flex items-center gap-2 type-button text-perazzi-red">

@@ -90,11 +90,11 @@ export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {
               <p className="type-label text-white/70">
                 Service
               </p>
-              <h1 className="text-balance type-display">
+              <h1 className="text-balance type-section">
                 {hero.title}
               </h1>
               {hero.subheading ? (
-                <p className="type-body text-white/80">
+                <p className="type-card-body text-white/80 italic text-2xl">
                   {hero.subheading}
                 </p>
               ) : null}

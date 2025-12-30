@@ -71,10 +71,10 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
       aria-labelledby="service-network-heading"
     >
       <div className="space-y-2">
-        <Text size="label-tight" muted>
+        <p className="type-section text-ink">
           Service network
-        </Text>
-        <Heading id="service-network-heading" level={2} size="xl" className="text-ink">
+        </p>
+        <Heading id="service-network-heading" level={2} className="type-section-subtitle text-ink">
           {heading}
         </Heading>
         {subheading ? (
@@ -130,7 +130,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
                     type="button"
                     aria-pressed={isActive}
                     className={cn(
-                      "flex flex-col gap-2 rounded-2xl border p-4 transition-colors focus-ring",
+                      "flex w-full flex-col gap-2 rounded-2xl border p-4 transition-colors focus-ring",
                       isActive
                         ? "border-perazzi-red bg-perazzi-red/5"
                         : "border-border/60 bg-card/40 sm:border-border/70 sm:bg-card/70",
@@ -143,7 +143,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
                     <Text size="label-tight" muted>
                       {location.type}
                     </Text>
-                    <Heading level={3} size="md" className="text-ink">
+                    <Heading level={3} className="type-card-title text-ink">
                       {location.name}
                     </Heading>
                     <SafeHtml

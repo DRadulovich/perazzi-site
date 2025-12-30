@@ -108,7 +108,7 @@ SECTION SUBTITLE
 CARD TITLE
 `type-card-title`
 CARD BODY
-`type-card-body`
+`type-body`
 
 
 

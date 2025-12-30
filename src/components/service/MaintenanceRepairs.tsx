@@ -29,12 +29,12 @@ export function MaintenanceRepairs({ maintenanceSection, guide }: MaintenanceRep
       aria-labelledby="maintenance-heading"
     >
       <div className="space-y-2">
-        <Text size="label-tight" muted>
+        <Heading id="maintenance-heading" level={2} className="type-section text-ink">
           {heading}
-        </Text>
-        <Heading id="maintenance-heading" level={2} size="xl" className="text-ink">
-          {subheading}
         </Heading>
+        <Text className="type-section-subtitle text-ink-muted">
+          {subheading}
+        </Text>
       </div>
       <SafeHtml
         className="prose prose-sm max-w-none leading-relaxed text-ink-muted md:prose-lg"

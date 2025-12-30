@@ -92,7 +92,7 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
             <Text className="type-section-subtitle text-white/70">
               {subheading}
             </Text>
-            <Text size="md" className="prose-journal text-white/70">
+            <Text className="type-body text-white/70">
               {instructions}
             </Text>
           </div>
@@ -135,7 +135,7 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
 function LookupSubmitButton({ label }: Readonly<{ label: string }>) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" size="lg" className="type-button-eaves text-ink min-h-12" disabled={pending}>
+    <Button type="submit" size="lg" className="type-button text-ink min-h-12" disabled={pending}>
       {pending ? "Tracing Lineage..." : label}
     </Button>
   );
@@ -146,7 +146,7 @@ function LookupResult({ state, emptyStateText }: Readonly<{ state: SerialLookupF
 
   if (pending) {
     return (
-      <Text asChild size="sm" className="prose-journal text-white/70">
+      <Text asChild className="type-section-subtitle text-white/70">
         <p aria-live="polite">Consulting the archives...</p>
       </Text>
     );
@@ -154,7 +154,7 @@ function LookupResult({ state, emptyStateText }: Readonly<{ state: SerialLookupF
 
   if (state.status === "idle") {
     return (
-      <Text asChild size="sm" className="prose-journal text-white/70">
+      <Text asChild className="type-section-subtitle text-white/70">
         <p aria-live="polite">{emptyStateText}</p>
       </Text>
     );

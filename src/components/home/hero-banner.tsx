@@ -275,12 +275,6 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
                   context: { pageUrl: "/" },
                 }}
               />
-              <Link
-                href={secondaryHref}
-                className="inline-flex items-center justify-center rounded-full border border-white/30 bg-white/5 px-4 py-2 type-button text-white/85 shadow-soft backdrop-blur-sm transition hover:border-white/50 hover:bg-white/10 hover:text-white focus-ring"
-              >
-                {secondaryLabel}
-              </Link>
             </div>
           )}
         </div>

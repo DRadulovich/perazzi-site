@@ -60,7 +60,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
             >
               {heading}
             </Heading>
-            <Text size="md" muted className="mb-4">
+            <Text className="type-section-subtitle mb-4 text-ink-muted">
               {subheading}
             </Text>
           </div>
@@ -71,14 +71,14 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
                 className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-7 lg:p-8"
               >
                 <div className="space-y-2">
-                  <Heading level={3} size="sm" className="text-ink">
+                  <Heading level={3} className="type-card-title text-ink">
                     {option.title}
                   </Heading>
                   <Text size="caption" muted>
                     {option.durationLabel ?? (option.durationMins ? `${option.durationMins} minutes` : "")}
                   </Text>
                   <SafeHtml
-                    className="prose prose-base max-w-none leading-relaxed text-ink-muted md:prose-lg prose-headings:text-ink prose-strong:text-ink"
+                    className="type-body max-w-none leading-relaxed text-ink-muted"
                     html={option.descriptionHtml}
                   />
                 </div>
@@ -86,7 +86,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
                   <Button
                     asChild
                     variant="secondary"
-                    size="lg"
+                    size="md"
                     className="rounded-full px-6 py-3 type-button"
                     onClick={() =>
                       logAnalytics(`FittingCtaClick:${option.id}`)
@@ -101,7 +101,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
           {scheduler ? (
             <div className="space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-8 lg:p-10">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <Heading level={3} size="sm" className="text-ink">
+                <Heading level={3} className="type-card-title text-ink">
                   {scheduler.title}
                 </Heading>
                 <Button

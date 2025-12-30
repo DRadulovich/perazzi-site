@@ -400,13 +400,11 @@ function DisciplineCard({
             sizes="(min-width: 1024px) 33vw, 100vw"
           />
         ) : null}
-        <div className="pointer-events-none absolute inset-0 bg-black/50" />
       </div>
           <div className="flex flex-1 flex-col gap-6 p-6">
         <Heading
           level={3}
-          size="sm"
-          className="type-body-title text-ink text-xl sm:text-2xl lg:text-3xl not-italic"
+          className="type-card-title text-ink border-b border-perazzi-red/40 pb-2"
         >
           {discipline.name}
         </Heading>
@@ -464,7 +462,7 @@ function DisciplineCard({
                   <div className="pointer-events-none absolute inset-0 bg-perazzi-black/75 transition duration-500 group-hover:bg-perazzi-black/60" />
                   <span
                     className={cn(
-                      "absolute inset-0 flex items-center justify-center p-2 text-center type-label-tight text-white text-xl sm:text-2xl lg:text-3xl transition-opacity duration-500 group-hover:opacity-0",
+                      "absolute inset-0 flex items-center justify-center p-2 text-center type-card-title text-white text-xl sm:text-2xl lg:text-3xl transition-opacity duration-500 group-hover:opacity-0",
                     )}
                   >
                     {loadingModelId === model.id ? "Loading…" : model.name || "Untitled"}

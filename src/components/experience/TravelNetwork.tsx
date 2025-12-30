@@ -90,10 +90,10 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
             >
               {heading}
             </Heading>
-            <Text size="md" muted leading="relaxed">
+            <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
               {lead}
             </Text>
-            <Text size="md" muted leading="relaxed">
+            <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
               {supporting}
             </Text>
           </div>
@@ -153,13 +153,13 @@ function ScheduleList({ events, emptyText }: ScheduleListProps) {
           key={event._id}
           className="rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated md:p-6 lg:p-7"
         >
-          <Text size="caption" muted>
+          <Text className="type-button text-ink-muted">
             {formatDateRange(event.startDate, event.endDate)}
           </Text>
-          <Heading level={3} size="sm" className="mt-2 text-ink">
+          <Heading level={3} className="mt-2 mb-7 type-card-title text-ink text-3xl">
             {event.eventName}
           </Heading>
-          <Text size="md" muted>
+          <Text className="type-card-title text-ink-muted">
             {event.eventLocation}
           </Text>
           {event.location ? (
@@ -186,13 +186,13 @@ function DealerList({ dealers, emptyText }: DealerListProps) {
     <div className="grid gap-4 md:grid-cols-2">
       {dealers.map((dealer) => (
         <article key={dealer._id} className="rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated">
-          <Heading level={3} size="sm" className="text-ink">
+          <Heading level={3} className="mb-7 type-card-title text-ink text-3xl">
             {dealer.dealerName}
           </Heading>
-          <Text size="caption" className="text-ink-muted">
+          <Text className="type-button text-ink-muted">
             {dealer.state}
           </Text>
-          <Text asChild size="md" className="mt-2 text-ink-muted">
+          <Text asChild className="mt-2 type-body text-ink-muted">
             <p>
               {dealer.address}
               <br />
