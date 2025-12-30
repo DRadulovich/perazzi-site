@@ -130,8 +130,7 @@ export function BuildStepsScroller({
             <Heading
               id="build-steps-heading"
               level={2}
-              size="xl"
-              className="text-ink"
+              className="type-section text-ink"
             >
               {heading}
             </Heading>
