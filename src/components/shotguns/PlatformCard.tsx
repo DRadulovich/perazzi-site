@@ -5,7 +5,6 @@ import Link from "next/link";
 import type { Platform } from "@/types/catalog";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
-import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 
 type PlatformCardProps = {

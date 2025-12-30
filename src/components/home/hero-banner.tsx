@@ -1,7 +1,6 @@
 "use client";
 
 import { getImageProps } from "next/image";
-import Link from "next/link";
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
@@ -106,8 +105,6 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
   const ctas = heroCtas ?? fallbackCtas;
   const primaryLabel = ctas.primaryLabel ?? fallbackCtas.primaryLabel;
   const primaryPrompt = ctas.primaryPrompt ?? fallbackCtas.primaryPrompt;
-  const secondaryLabel = ctas.secondaryLabel ?? fallbackCtas.secondaryLabel;
-  const secondaryHref = ctas.secondaryHref ?? fallbackCtas.secondaryHref;
 
   const getFocusableElements = useCallback((container: HTMLElement) => {
     return Array.from(

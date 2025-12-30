@@ -89,7 +89,6 @@ export function BuildStepsScroller({
     }
   };
 
-  const totalSteps = mappedSteps.length;
   const background = intro?.background ?? {
     url: "/redesign-photos/bespoke/pweb-bespoke-buildstepscroller-bg.jpg",
     alt: "Perazzi bespoke build steps background",
