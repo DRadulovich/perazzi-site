@@ -121,8 +121,7 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
         </Heading>
         <Text
           asChild
-          size="md"
-          className="border-l-2 border-perazzi-red/50 pl-3 type-quote text-ink-muted"
+          className="border-l-2 border-perazzi-red/50 pl-3 font-artisan text-ink-muted text-2xl"
         >
           <blockquote>“{history.quote}”</blockquote>
         </Text>

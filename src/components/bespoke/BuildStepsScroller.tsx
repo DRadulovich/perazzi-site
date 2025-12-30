@@ -253,14 +253,11 @@ export function BuildStepsScroller({
                                 onClick={() => { toggleStepOpen(step.id); }}
                               >
                                 <div className="w-full space-y-1">
-                                  <Text size="label-tight" muted>
-                                    Step {index + 1} of {totalSteps}
-                                  </Text>
                                   <Heading
                                     id={`build-step-heading-${step.id}`}
                                     level={3}
                                     size="lg"
-                                    className="type-section-subtitle text-ink"
+                                    className="type-card-title text-ink text-2xl sm:text-3xl"
                                   >
                                     {step.title}
                                   </Heading>

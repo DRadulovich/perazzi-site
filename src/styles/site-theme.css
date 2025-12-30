@@ -594,6 +594,7 @@ body {
 .text-ink-muted { color: var(--color-ink-muted); }
 .border-subtle { border-color: var(--border-color); }
 .border-border { border-color: var(--border-color); }
+.font-serif-petite-caps { font-family: var(--font-serif-petite-caps); }
 .pill {
   border-radius: 0.125rem;
   padding: 0.5rem 1rem;

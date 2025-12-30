@@ -103,7 +103,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
             >
               {heading}
             </Heading>
-            <Text size="sm" className="mb-6 text-ink-muted">
+            <Text className="type-section-subtitle mb-6 text-ink-muted">
               {subheading}
             </Text>
           </div>
@@ -118,7 +118,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
                 type="button"
                 aria-pressed={activeDiscipline === null}
                 className={cn(
-                  "rounded-full border px-4 py-2 type-button focus-ring transition",
+                  "pill border type-button focus-ring transition",
                   activeDiscipline === null
                     ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
                     : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
@@ -133,7 +133,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
                   type="button"
                   aria-pressed={activeDiscipline === discipline}
                   className={cn(
-                    "rounded-full border px-4 py-2 type-button focus-ring transition",
+                    "pill border type-button focus-ring transition",
                     activeDiscipline === discipline
                       ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
                       : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
@@ -239,16 +239,13 @@ function ChampionNameItem({ champion, isActive, onSelect }: ChampionNameItemProp
         className={cn(
           "group w-full rounded-2xl px-3 py-2 text-left transition-colors focus-ring",
           isActive
-            ? "bg-ink text-card"
+            ? "bg-perazzi-red text-card"
             : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
         )}
         aria-pressed={isActive}
       >
-        <span className="block type-title-sm">
-          {champion.name}
-        </span>
         {champion.title ? (
-          <span className="mt-0.5 block type-label-tight text-ink-muted group-hover:text-ink-muted/90">
+          <span className={cn("block type-card-title text-xl text-ink", isActive && "text-white")}>
             {champion.title}
           </span>
         ) : null}
@@ -286,44 +283,39 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
       </div>
       <div className="space-y-4">
         <div className="space-y-1">
-          <Heading level={3} size="sm" className="text-ink">
+          <Heading level={3} className="type-section text-ink border-b border-perazzi-red/40 pb-2">
             {champion.name}
           </Heading>
-          {champion.title ? (
-            <Text size="label-tight" className="text-ink-muted">
-              {champion.title}
-            </Text>
-          ) : null}
         </div>
-
-        {champion.quote ? (
-          <Text
-            asChild
-            size="md"
-            className="border-l-2 border-perazzi-red/40 pl-3 type-quote text-ink"
-          >
-            <blockquote>“{champion.quote}”</blockquote>
-          </Text>
-        ) : null}
-
-        {champion.bio ? (
-          <Text className="text-ink-muted">{champion.bio}</Text>
-        ) : null}
 
         {champion.resume &&
         (champion.resume.winOne ||
           champion.resume.winTwo ||
           champion.resume.winThree) ? (
-          <div className="space-y-2">
+          <div className="space-y-2 mt-7">
             <Text size="label-tight" className="text-ink-muted">
               Career Highlights
             </Text>
-            <ul className="space-y-1 type-body-sm text-ink">
-              {champion.resume.winOne ? <li>• {champion.resume.winOne}</li> : null}
-              {champion.resume.winTwo ? <li>• {champion.resume.winTwo}</li> : null}
-              {champion.resume.winThree ? <li>• {champion.resume.winThree}</li> : null}
+            <ul className="space-y-1 type-card-title text-ink text-2xl list-none mb-7">
+              {champion.resume.winOne ? <li>{champion.resume.winOne}</li> : null}
+              {champion.resume.winTwo ? <li>{champion.resume.winTwo}</li> : null}
+              {champion.resume.winThree ? <li>{champion.resume.winThree}</li> : null}
             </ul>
           </div>
+        ) : null}
+
+        {champion.bio ? (
+          <Text className="type-card-body text-ink-muted mb-7">{champion.bio}</Text>
+        ) : null}
+
+        {champion.quote ? (
+          <Text
+            asChild
+            size="md"
+            className="border-l-2 border-perazzi-red/40 pl-3 font-artisan text-ink text-2xl my-7"
+          >
+            <blockquote>“{champion.quote}”</blockquote>
+          </Text>
         ) : null}
 
         {champion.disciplines?.length ? (
@@ -335,7 +327,7 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
               {champion.disciplines.map((discipline) => (
                 <li
                   key={discipline}
-                  className="rounded-full border border-border px-3 py-1"
+                  className="pill border border-border"
                 >
                   {discipline}
                 </li>
@@ -353,7 +345,7 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
               {champion.platforms.map((platform) => (
                 <li
                   key={platform}
-                  className="rounded-full border border-border px-3 py-1"
+                  className="pill border border-border"
                 >
                   {platform}
                 </li>

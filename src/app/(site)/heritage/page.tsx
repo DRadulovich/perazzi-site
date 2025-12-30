@@ -240,28 +240,28 @@ export default async function HeritagePage(): Promise<ReactElement> {
             >
               {workshopHeading}
             </Heading>
-            <Text className="mb-8 text-gray-300">
+            <Text className="mb-8 type-subsection text-gray-300">
               {workshopIntro}
             </Text>
             <div className="flex flex-wrap justify-start gap-3">
               <Link
                 href={workshopPrimaryHref}
-                className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-white/60 px-4 py-2 text-white hover:border-white hover:text-white focus-ring"
+                className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-white/60 text-white hover:border-white hover:text-white focus-ring"
               >
-                <span aria-hidden="true" className="text-lg leading-none">^</span>
+                <span aria-hidden="true" className="text-lg leading-none">↑</span>
                 {workshopPrimaryLabel}
               </Link>
               <Link
                 href={workshopSecondaryHref}
-                className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/70 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-perazzi-red/70 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
               >
-                <span aria-hidden="true" className="text-lg leading-none">v</span>
+                <span aria-hidden="true" className="text-lg leading-none">↓</span>
                 {workshopSecondaryLabel}
               </Link>
             </div>
           </div>
 
-          <div className="space-y-3 type-body text-gray-300">
+          <div className="space-y-3 type-subsection text-gray-300">
             <Text className="text-white" leading="normal">
               What the atelier can surface:
             </Text>
@@ -270,7 +270,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
                 const [label, ...rest] = bullet.split(" - ");
                 return (
                   <li key={bullet}>
-                    <span className="type-title-sm text-white">{label}</span>
+                    <span className="text-white">{label}</span>
                     {" "}-{" "}
                     {rest.join(" - ")}
                   </li>
@@ -307,7 +307,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
               >
                 {championsIntroHeading}
               </Heading>
-              <Text className="mb-8 text-gray-300">
+              <Text className="mb-8 type-subsection text-gray-300">
                 {championsIntroText}
               </Text>
               <ChatTriggerButton
@@ -321,7 +321,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
               />
             </div>
 
-            <div className="space-y-3 type-body text-gray-300">
+            <div className="space-y-3 type-subsection text-gray-300">
             <Text className="text-white" leading="normal">
               What you&apos;ll see below:
             </Text>
@@ -330,7 +330,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
                 const [label, ...rest] = bullet.split(" - ");
                 return (
                   <li key={bullet}>
-                    <span className="type-title-sm text-white">{label}</span>
+                    <span className="text-white">{label}</span>
                     {" "}-{" "}
                     {rest.join(" - ")}
                   </li>
@@ -353,11 +353,10 @@ export default async function HeritagePage(): Promise<ReactElement> {
             aria-hidden="true"
           />
           <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 text-white lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16 lg:px-10 min-h-[50vh]">
-            <div className="space-y-4">
+            <div className="space-y-4 type-subsection">
               <Heading
                 id="heritage-factory-intro-heading"
                 level={2}
-                size="xl"
                 className="text-white"
               >
                 {factoryHeading}
@@ -376,7 +375,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
               />
             </div>
 
-            <div className="space-y-3 type-body text-gray-300">
+            <div className="space-y-3 type-subsection text-gray-300">
             <Text className="text-white" leading="normal">
               What you&apos;ll see below:
             </Text>
@@ -385,7 +384,7 @@ export default async function HeritagePage(): Promise<ReactElement> {
                 const [label, ...rest] = bullet.split(" - ");
                 return (
                   <li key={bullet}>
-                    <span className="type-title-sm text-white">{label}</span>
+                    <span className="text-white">{label}</span>
                     {" "}-{" "}
                     {rest.join(" - ")}
                   </li>

@@ -46,9 +46,9 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
       </div>
 
       <header className="mt-4 space-y-1">
-        <Heading level={3} size="md" className="my-3 type-button text-ink text-xl not-italic tracking-normal font-normal">
+        <h3 className="my-3 type-card-title text-ink uppercase text-2xl">
           {platform.name}
-        </Heading>
+        </h3>
         <Text className="type-body text-ink-muted mb-7">
           {platform.tagline}
         </Text>

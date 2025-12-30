@@ -31,13 +31,13 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
           </Text>
         ) : null}
         {label ? (
-          <Heading level={2} size="lg" className="text-ink">
+          <Heading level={2} size="xl" className="text-ink">
             {label}
           </Heading>
         ) : null}
         {body ? (
           <SafeHtml
-            className="prose prose-base max-w-none leading-relaxed text-ink md:prose-lg"
+            className="max-w-none type-body text-ink [&_p]:mb-4 [&_p:last-child]:mb-0"
             html={body}
           />
         ) : null}

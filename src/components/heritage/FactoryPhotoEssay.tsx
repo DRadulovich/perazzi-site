@@ -74,7 +74,7 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
         </Heading>
         {introHtml ? (
           <SafeHtml
-            className="prose prose-sm max-w-3xl leading-relaxed text-ink-muted md:prose-lg"
+            className="type-section-subtitle max-w-3xl text-ink-muted"
             html={introHtml}
           />
         ) : null}

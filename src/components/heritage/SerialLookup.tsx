@@ -89,16 +89,16 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
             >
               {heading}
             </Heading>
-            <Text className="text-white/70">
+            <Text className="type-section-subtitle text-white/70">
               {subheading}
             </Text>
-            <Text size="md" className="text-white/70">
+            <Text size="md" className="prose-journal text-white/70">
               {instructions}
             </Text>
           </div>
           <form action={formAction} className="space-y-4" noValidate>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-              <label className="flex-1 type-label-tight text-white" htmlFor="serial-input">
+              <label className="flex-1 font-serif-petite-caps text-white text-xl" htmlFor="serial-input">
                 <span className="block">Serial Number</span>
                 <Input
                   id="serial-input"
@@ -135,7 +135,7 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
 function LookupSubmitButton({ label }: Readonly<{ label: string }>) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" size="lg" disabled={pending}>
+    <Button type="submit" size="lg" className="type-button-eaves text-ink min-h-12" disabled={pending}>
       {pending ? "Tracing Lineage..." : label}
     </Button>
   );
@@ -146,7 +146,7 @@ function LookupResult({ state, emptyStateText }: Readonly<{ state: SerialLookupF
 
   if (pending) {
     return (
-      <Text asChild size="sm" className="text-white/70">
+      <Text asChild size="sm" className="prose-journal text-white/70">
         <p aria-live="polite">Consulting the archives...</p>
       </Text>
     );
@@ -154,7 +154,7 @@ function LookupResult({ state, emptyStateText }: Readonly<{ state: SerialLookupF
 
   if (state.status === "idle") {
     return (
-      <Text asChild size="sm" className="text-white/70">
+      <Text asChild size="sm" className="prose-journal text-white/70">
         <p aria-live="polite">{emptyStateText}</p>
       </Text>
     );
