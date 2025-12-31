@@ -3,10 +3,12 @@
 import Image from "next/image";
 import SafeHtml from "@/components/SafeHtml";
 import { PortableText } from "@/components/PortableText";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import type { ShotgunsLandingData } from "@/types/catalog";
 import { logAnalytics } from "@/lib/analytics";
+import { homeMotion } from "@/lib/motionConfig";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, Container, Heading, Section, Text } from "@/components/ui";
 
@@ -17,6 +19,9 @@ type TriggerExplainerProps = Readonly<{
 export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [manualOpen, setManualOpen] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const motionEnabled = !reduceMotion;
   const resolvedOpen = isDesktop ? true : manualOpen;
   const ratio = explainer.diagram.aspectRatio ?? 16 / 9;
   const subheading = explainer.subheading ?? "Removable or fixed—choose by confidence and feel.";
@@ -30,6 +35,10 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
   const analyticsRef = useAnalyticsObserver<HTMLElement>("TriggerExplainerSeen");
   const copyClasses =
     "max-w-none type-body text-ink [&_p]:mb-4 [&_p:last-child]:mb-0 prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4";
+
+  useEffect(() => {
+    setReduceMotion(Boolean(prefersReducedMotion));
+  }, [prefersReducedMotion]);
 
   return (
     <section
@@ -48,6 +57,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
           priority={false}
         />
         <div className="absolute inset-0 bg-(--scrim-soft)" aria-hidden />
+        <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
         <div className="pointer-events-none absolute inset-0 overlay-gradient-canvas" aria-hidden />
       </div>
 
@@ -61,7 +71,13 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
             }}
             className="space-y-4"
           >
-            <div className="space-y-3">
+            <motion.div
+              className="space-y-3"
+              initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
+              whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+              viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}
+              transition={motionEnabled ? homeMotion.revealFast : undefined}
+            >
               <Heading
                 id="trigger-explainer-heading"
                 level={2}
@@ -80,13 +96,19 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
               >
                 {resolvedOpen ? "Hide details" : "Show details"}
               </CollapsibleTrigger>
-            </div>
+            </motion.div>
 
             <CollapsibleContent
               id="trigger-explainer-content"
               className="grid gap-6 overflow-hidden px-2 py-3 transition-all duration-300 data-[state=closed]:opacity-0 data-[state=open]:opacity-100 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start"
             >
-              <div className="rounded-2xl border border-border/0 bg-card/0 p-4 sm:rounded-3xl sm:p-6 lg:flex lg:h-full lg:flex-col lg:justify-start">
+              <motion.div
+                className="rounded-2xl border border-border/0 bg-card/0 p-4 sm:rounded-3xl sm:p-6 lg:flex lg:h-full lg:flex-col lg:justify-start"
+                initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
+                whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+                viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
+                transition={motionEnabled ? homeMotion.revealFast : undefined}
+              >
                 {explainer.copyPortableText?.length ? (
                   <PortableText className={copyClasses} blocks={explainer.copyPortableText} />
                 ) : explainer.copyHtml ? (
@@ -98,7 +120,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                       key={link.href}
                       href={link.href}
                       data-analytics-id={`TriggerExplainerLink:${link.href}`}
-                      className="type-button inline-flex items-center gap-2 rounded-sm border border-perazzi-red/40 bg-card/60 px-4 py-2 text-perazzi-red shadow-soft backdrop-blur-sm transition hover:border-perazzi-red hover:bg-card/85 focus-ring"
+                      className="type-button inline-flex items-center gap-2 rounded-sm border border-perazzi-red/40 bg-card/60 px-4 py-2 text-perazzi-red shadow-soft backdrop-blur-sm transition hover:border-perazzi-red hover:bg-card/85 hover:translate-x-0.5 focus-ring"
                       onClick={() =>
                         logAnalytics(`TriggerExplainerLink:${link.href}`)
                       }
@@ -108,9 +130,15 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                     </a>
                   ))}
                 </div>
-              </div>
+              </motion.div>
 
-              <figure className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated">
+              <motion.figure
+                className="group rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated"
+                initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
+                whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+                viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
+                transition={motionEnabled ? homeMotion.revealFast : undefined}
+              >
                 <div
                   className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-dynamic"
                   style={{ "--aspect-ratio": ratio }}
@@ -120,8 +148,9 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                     alt=""
                     fill
                     sizes="(min-width: 1024px) 640px, 100vw"
-                    className="object-contain"
+                    className="object-contain transition-transform duration-700 ease-out group-hover:scale-[1.01]"
                   />
+                  <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
                   <div
                     className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/60 via-(--scrim-strong)/40 to-transparent"
                     aria-hidden
@@ -137,7 +166,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
                     <figcaption>{explainer.diagram.caption}</figcaption>
                   </Text>
                 ) : null}
-              </figure>
+              </motion.figure>
             </CollapsibleContent>
           </Collapsible>
         </Section>

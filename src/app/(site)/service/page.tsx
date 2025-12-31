@@ -8,10 +8,9 @@ import { ServiceRequest } from "@/components/service/ServiceRequest";
 import { PartsRequest } from "@/components/service/PartsRequest";
 import { CareGuidesDownloads } from "@/components/service/CareGuidesDownloads";
 import { FAQList } from "@/components/service/FAQList";
+import { ServiceGuidanceSection } from "@/components/service/ServiceGuidanceSection";
 import { CTASection } from "@/components/shotguns/CTASection";
 import { getServicePageData } from "@/lib/service-data";
-import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
-import { Section, Text } from "@/components/ui";
 
 export default async function ServicePage() {
   const {
@@ -50,7 +49,7 @@ export default async function ServicePage() {
   const faqSchemaJson = faqSchema ? JSON.stringify(faqSchema).replaceAll('<', String.raw`\u003c`) : null;
 
   return (
-    <div className="space-y-16">
+    <div className="space-y-16 service-page">
       {faqSchemaJson ? (
         <script type="application/ld+json">{faqSchemaJson}</script>
       ) : null}
@@ -62,28 +61,22 @@ export default async function ServicePage() {
         ]}
       />
       <ServiceOverview overview={overviewSection} />
-      <Section padding="md" aria-labelledby="service-guidance-heading">
-        <Text asChild size="label-tight" muted>
-          <h2 id="service-guidance-heading">
-            {serviceGuidanceBlock.eyebrow ?? "Service guidance"}
-          </h2>
-        </Text>
-        <Text className="mt-2" size="md" leading="relaxed">
-          {serviceGuidanceBlock.body ??
-            "Need help mapping out service and care cadence? Ask Perazzi for the recommended intervals and how to coordinate with the atelier."}
-        </Text>
-        <div className="mt-4">
-          <ChatTriggerButton
-            label={serviceGuidanceBlock.chatLabel ?? "Ask about service & care"}
-            payload={{
-              question:
-                serviceGuidanceBlock.chatPrompt ??
-                "Walk me through Perazzi's recommended care cadence, how the authorized centers coordinate with Botticino, and what an owner should prepare before scheduling service.",
-              context: { pageUrl: "/service", mode: "owner" },
-            }}
-          />
-        </div>
-      </Section>
+      <ServiceGuidanceSection
+        analyticsId="ServiceGuidanceSeen"
+        headingId="service-guidance-heading"
+        eyebrow={serviceGuidanceBlock.eyebrow ?? "Service guidance"}
+        body={
+          serviceGuidanceBlock.body ??
+          "Need help mapping out service and care cadence? Ask Perazzi for the recommended intervals and how to coordinate with the atelier."
+        }
+        chatLabel={serviceGuidanceBlock.chatLabel ?? "Ask about service & care"}
+        chatPayload={{
+          question:
+            serviceGuidanceBlock.chatPrompt ??
+            "Walk me through Perazzi's recommended care cadence, how the authorized centers coordinate with Botticino, and what an owner should prepare before scheduling service.",
+          context: { pageUrl: "/service", mode: "owner" },
+        }}
+      />
       <ServiceNetworkFinder locations={locations} ui={networkFinderUi} />
       <MaintenanceRepairs maintenanceSection={maintenanceSection} guide={guidesSection.guides[0]} />
       <PartsEditorial partsEditorialSection={partsEditorialSection} />
@@ -96,28 +89,22 @@ export default async function ServicePage() {
         fallbackHref={serviceRequestBlock.fallbackUrl}
         analyticsOpenId="RequestServiceOpen"
       />
-      <Section padding="md" aria-labelledby="service-shipping-heading">
-        <Text asChild size="label-tight" muted>
-          <h2 id="service-shipping-heading">
-            {shippingPrepBlock.eyebrow ?? "Shipping prep"}
-          </h2>
-        </Text>
-        <Text className="mt-2" size="md" leading="relaxed">
-          {shippingPrepBlock.body ??
-            "Wondering what to include when shipping your gun or scheduling an inspection? Ask before you book."}
-        </Text>
-        <div className="mt-4">
-          <ChatTriggerButton
-            label={shippingPrepBlock.chatLabel ?? "Ask before I ship"}
-            payload={{
-              question:
-                shippingPrepBlock.chatPrompt ??
-                "What information, paperwork, and packing steps should I complete before shipping a Perazzi in for service, and how does the concierge coordinate follow-ups?",
-              context: { pageUrl: "/service", mode: "owner" },
-            }}
-          />
-        </div>
-      </Section>
+      <ServiceGuidanceSection
+        analyticsId="ServiceShippingPrepSeen"
+        headingId="service-shipping-heading"
+        eyebrow={shippingPrepBlock.eyebrow ?? "Shipping prep"}
+        body={
+          shippingPrepBlock.body ??
+          "Wondering what to include when shipping your gun or scheduling an inspection? Ask before you book."
+        }
+        chatLabel={shippingPrepBlock.chatLabel ?? "Ask before I ship"}
+        chatPayload={{
+          question:
+            shippingPrepBlock.chatPrompt ??
+            "What information, paperwork, and packing steps should I complete before shipping a Perazzi in for service, and how does the concierge coordinate follow-ups?",
+          context: { pageUrl: "/service", mode: "owner" },
+        }}
+      />
       <PartsRequest partsRequestBlock={partsRequestBlock} />
       <CareGuidesDownloads guidesSection={guidesSection} />
       <FAQList items={faqItems} heading={faqSection.heading} intro={faqSection.intro} />

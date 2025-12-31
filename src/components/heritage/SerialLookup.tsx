@@ -3,11 +3,13 @@
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Image from "next/image";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { Button, Heading, Input, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import type { SerialLookupUi } from "@/types/heritage";
+import { homeMotion } from "@/lib/motionConfig";
 
 export interface SerialLookupSuccess {
   serial: number;
@@ -42,6 +44,8 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
   const analyticsRef = useAnalyticsObserver("SerialLookupSeen");
   const [serial, setSerial] = useState("");
   const [state, formAction] = useActionState(lookupAction, initialState);
+  const prefersReducedMotion = useReducedMotion();
+  const reduceMotion = Boolean(prefersReducedMotion);
   const errorId = state.status === "error" ? "serial-lookup-error" : undefined;
   const heading = ui.heading ?? "Heritage Record";
   const subheading = ui.subheading ?? "Discover when your story began";
@@ -59,7 +63,7 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
       id="heritage-serial-lookup"
       ref={analyticsRef}
       data-analytics-id="SerialLookupSeen"
-      className="relative isolate w-screen max-w-[100vw] min-h-[75vh] overflow-hidden py-10 sm:py-16 full-bleed"
+      className="relative isolate w-screen max-w-[100vw] min-h-[75vh] overflow-hidden py-10 sm:py-16 full-bleed scroll-mt-24"
       aria-labelledby="serial-lookup-heading"
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -75,11 +79,20 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
           className="absolute inset-0 bg-(--scrim-hard)"
           aria-hidden
         />
+        <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
         <div className="absolute inset-0 overlay-gradient-ink" aria-hidden />
       </div>
 
       <div className="relative z-10 mx-auto flex min-h-[75vh] max-w-7xl items-center px-6 lg:px-10">
-        <div className="space-y-6 rounded-2xl border border-perazzi-black/50 bg-card/0 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:border-perazzi-black/50 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
+        <motion.div
+          className="group relative isolate space-y-6 overflow-hidden rounded-2xl border border-perazzi-black/50 bg-card/0 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:border-perazzi-black/50 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10"
+          initial={reduceMotion ? false : { opacity: 0, y: 18, filter: "blur(12px)" }}
+          whileInView={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
+          viewport={reduceMotion ? undefined : { once: true, amount: 0.55 }}
+          transition={reduceMotion ? undefined : homeMotion.reveal}
+        >
+          <div className="pointer-events-none absolute inset-0 film-grain opacity-12" aria-hidden="true" />
+          <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
           <div className="space-y-2">
             <Heading
               id="serial-lookup-heading"
@@ -126,7 +139,7 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
             ) : null}
             <LookupResult state={state} emptyStateText={emptyStateText} />
           </form>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
@@ -143,70 +156,90 @@ function LookupSubmitButton({ label }: Readonly<{ label: string }>) {
 
 function LookupResult({ state, emptyStateText }: Readonly<{ state: SerialLookupFormState; emptyStateText: string }>) {
   const { pending } = useFormStatus();
+  const prefersReducedMotion = useReducedMotion();
+  const reduceMotion = Boolean(prefersReducedMotion);
 
-  if (pending) {
-    return (
-      <Text asChild className="type-section-subtitle text-white/70">
-        <p aria-live="polite">Consulting the archives...</p>
-      </Text>
-    );
-  }
-
-  if (state.status === "idle") {
-    return (
-      <Text asChild className="type-section-subtitle text-white/70">
-        <p aria-live="polite">{emptyStateText}</p>
-      </Text>
-    );
-  }
-
-  if (state.status === "error") {
-    return null;
-  }
-
-  const { data } = state;
   return (
-    <div className="rounded-2xl border border-perazzi-black/50 bg-perazzi-black/40 p-4 shadow-soft sm:bg-perazzi-black/70 md:p-6" aria-live="polite">
-      <Text size="label-tight" className="text-white/70">
-        Record Found
-      </Text>
-      <Heading level={3} size="xl" className="mt-2 text-white">
-        {data.year}
-      </Heading>
-      <Text size="sm" className="text-white/70">
-        Proof Code: {data.proofCode}
-      </Text>
-      <dl className="mt-4 space-y-1 type-body-sm text-white/70">
-        <div className="flex items-center justify-between">
-          <Text asChild size="sm" className="type-nav text-white">
-            <dt>Serial</dt>
+    <AnimatePresence mode="wait">
+      {pending ? (
+        <motion.div
+          key="pending"
+          initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+          animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+          exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
+          transition={reduceMotion ? undefined : homeMotion.micro}
+        >
+          <Text asChild className="type-section-subtitle text-white/70">
+            <p aria-live="polite">Consulting the archives...</p>
           </Text>
-          <Text asChild size="sm" className="text-white/70">
-            <dd>{data.serial.toLocaleString()}</dd>
+        </motion.div>
+      ) : state.status === "idle" ? (
+        <motion.div
+          key="idle"
+          initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+          animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+          exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
+          transition={reduceMotion ? undefined : homeMotion.micro}
+        >
+          <Text asChild className="type-section-subtitle text-white/70">
+            <p aria-live="polite">{emptyStateText}</p>
           </Text>
-        </div>
-        <div className="flex items-center justify-between">
-          <Text asChild size="sm" className="type-nav text-white">
-            <dt>Production Range:</dt>
+        </motion.div>
+      ) : state.status === "error" ? null : (
+        <motion.div
+          key="success"
+          className="relative isolate overflow-hidden rounded-2xl border border-perazzi-black/50 bg-perazzi-black/40 p-4 shadow-soft sm:bg-perazzi-black/70 md:p-6"
+          initial={reduceMotion ? false : { opacity: 0, y: 12, filter: "blur(10px)" }}
+          animate={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
+          exit={reduceMotion ? undefined : { opacity: 0, y: -10, filter: "blur(8px)" }}
+          transition={reduceMotion ? undefined : homeMotion.revealFast}
+          aria-live="polite"
+        >
+          <div className="pointer-events-none absolute inset-0 film-grain opacity-12" aria-hidden="true" />
+          <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
+
+          <Text size="label-tight" className="text-white/70">
+            Record Found
           </Text>
-          <Text asChild size="sm" className="text-white/70">
-            <dd>
-              {data.range.start.toLocaleString()}-
-              {data.range.end ? data.range.end.toLocaleString() : "present"}
-            </dd>
+          <Heading level={3} size="xl" className="mt-2 text-white">
+            {state.data.year}
+          </Heading>
+          <Text size="sm" className="text-white/70">
+            Proof Code: {state.data.proofCode}
           </Text>
-        </div>
-        {data.model ? (
-          <div className="flex items-center justify-between">
-            <Text asChild size="sm" className="type-nav text-white">
-              <dt>Model Lineage:</dt>
-            </Text>
-            <Text asChild size="sm" className="text-white/70">
-              <dd>{data.model}</dd>
-            </Text>
-          </div>
-        ) : null}
-      </dl>
-    </div>
+          <dl className="mt-4 space-y-1 type-body-sm text-white/70">
+            <div className="flex items-center justify-between">
+              <Text asChild size="sm" className="type-nav text-white">
+                <dt>Serial</dt>
+              </Text>
+              <Text asChild size="sm" className="text-white/70">
+                <dd>{state.data.serial.toLocaleString()}</dd>
+              </Text>
+            </div>
+            <div className="flex items-center justify-between">
+              <Text asChild size="sm" className="type-nav text-white">
+                <dt>Production Range:</dt>
+              </Text>
+              <Text asChild size="sm" className="text-white/70">
+                <dd>
+                  {state.data.range.start.toLocaleString()}-
+                  {state.data.range.end ? state.data.range.end.toLocaleString() : "present"}
+                </dd>
+              </Text>
+            </div>
+            {state.data.model ? (
+              <div className="flex items-center justify-between">
+                <Text asChild size="sm" className="type-nav text-white">
+                  <dt>Model Lineage:</dt>
+                </Text>
+                <Text asChild size="sm" className="text-white/70">
+                  <dd>{state.data.model}</dd>
+                </Text>
+              </div>
+            ) : null}
+          </dl>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

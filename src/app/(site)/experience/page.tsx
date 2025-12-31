@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Script from "next/script";
 import { ExperiencePicker } from "@/components/experience/ExperiencePicker";
 import { VisitFactory } from "@/components/experience/VisitFactory";
@@ -6,11 +5,10 @@ import { BookingOptions } from "@/components/experience/BookingOptions"; // Expe
 import { TravelNetwork } from "@/components/experience/TravelNetwork";
 import { MosaicGallery } from "@/components/experience/MosaicGallery";
 import { ExperienceHero } from "@/components/experience/ExperienceHero";
+import { ExperienceAdvisorySection } from "@/components/experience/ExperienceAdvisorySection";
 import { CTASection } from "@/components/shotguns/CTASection";
 import { getExperiencePageData } from "@/lib/experience-data";
 import { getExperienceNetworkData } from "@/sanity/queries/experience";
-import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
-import { Container, Heading, Section, Text } from "@/components/ui";
 import type { FAQItem } from "@/types/experience";
 
 export default async function ExperiencePage() {
@@ -159,200 +157,53 @@ export default async function ExperiencePage() {
         ]}
       />
       <ExperiencePicker items={pickerItems} faqSection={faqSection} pickerUi={pickerUi} />
-      <Section
-        id="experience-visit-planning"
-        padding="lg"
-        bordered={false}
-        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none! border-t border-none! bg-canvas shadow-none! full-bleed"
-        aria-labelledby="experience-visit-planning-heading"
-      >
-        <Container
-          size="xl"
-          className="flex flex-col gap-10 px-0 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16"
-        >
-          <div className="space-y-4 text-ink">
-            <Heading
-              id="experience-visit-planning-heading"
-              level={2}
-              size="xl"
-              className="text-ink"
-            >
-              {visitPlanningHeading}
-            </Heading>
-            <Text className="mb-8 type-subsection text-ink-muted" leading="relaxed">
-              {visitPlanningIntro}
-            </Text>
-            <div className="flex flex-wrap justify-start gap-3">
-              <ChatTriggerButton
-                label={visitPlanningChatLabel}
-                payload={{
-                  question: visitPlanningChatPrompt,
-                  context: { pageUrl: "/experience", mode: "prospect" },
-                }}
-                variant="outline"
-              />
-              <Link
-                href={visitPlanningLinkHref}
-                className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-sm border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
-              >
-                {visitPlanningLinkLabel}
-                <span aria-hidden="true">→</span>
-              </Link>
-            </div>
-          </div>
-
-          <div className="space-y-3 type-subsection text-ink-muted">
-            <Text className="text-ink">
-              What the concierge can line up:
-            </Text>
-            <ul className="space-y-2">
-              {visitPlanningBullets.map((bullet) => {
-                const [label, ...rest] = bullet.split(" - ");
-                return (
-                  <li key={bullet}>
-                    <span className="text-ink">{label}</span>
-                    {" "}-{" "}
-                    {rest.join(" - ")}
-                  </li>
-                );
-              })}
-            </ul>
-            <Text className="text-ink-muted" leading="relaxed">
-              {visitPlanningClosing}
-            </Text>
-          </div>
-        </Container>
-      </Section>
+      <ExperienceAdvisorySection
+        sectionId="experience-visit-planning"
+        headingId="experience-visit-planning-heading"
+        heading={visitPlanningHeading}
+        intro={visitPlanningIntro}
+        chatLabel={visitPlanningChatLabel}
+        chatPayload={{
+          question: visitPlanningChatPrompt,
+          context: { pageUrl: "/experience", mode: "prospect" },
+        }}
+        link={{ href: visitPlanningLinkHref, label: visitPlanningLinkLabel }}
+        rightTitle="What the concierge can line up:"
+        bullets={visitPlanningBullets}
+        closing={visitPlanningClosing}
+      />
       <VisitFactory visitFactorySection={visitFactorySection} />
-      <Section
-        id="experience-booking-guide"
-        padding="lg"
-        bordered={false}
-        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none! border-t border-none! bg-canvas shadow-none! full-bleed"
-        aria-labelledby="experience-booking-guide-heading"
-      >
-        <Container
-          size="xl"
-          className="flex flex-col gap-10 px-0 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16"
-        >
-          <div className="space-y-4 text-ink">
-            <Heading
-              id="experience-booking-guide-heading"
-              level={2}
-              size="xl"
-              className="text-ink"
-            >
-              {fittingGuidanceHeading}
-            </Heading>
-            <Text className="mb-8 type-subsection text-ink-muted" leading="relaxed">
-              {fittingGuidanceIntro}
-            </Text>
-            <div className="flex flex-wrap justify-start gap-3">
-              <ChatTriggerButton
-                label={fittingGuidanceChatLabel}
-                payload={{
-                  question: fittingGuidanceChatPrompt,
-                  context: { pageUrl: "/experience", mode: "prospect" },
-                }}
-                variant="outline"
-              />
-              <Link
-                href={fittingGuidanceLinkHref}
-                className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-sm border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
-              >
-                {fittingGuidanceLinkLabel}
-                <span aria-hidden="true">→</span>
-              </Link>
-            </div>
-          </div>
-
-          <div className="space-y-3 type-subsection text-ink-muted">
-            <Text className="text-ink">
-              What the concierge can clarify:
-            </Text>
-            <ul className="space-y-2">
-              {fittingGuidanceBullets.map((bullet) => {
-                const [label, ...rest] = bullet.split(" - ");
-                return (
-                  <li key={bullet}>
-                    <span className="text-ink">{label}</span>
-                    {" "}-{" "}
-                    {rest.join(" - ")}
-                  </li>
-                );
-              })}
-            </ul>
-            <Text className="text-ink-muted" leading="relaxed">
-              {fittingGuidanceClosing}
-            </Text>
-          </div>
-        </Container>
-      </Section>
+      <ExperienceAdvisorySection
+        sectionId="experience-booking-guide"
+        headingId="experience-booking-guide-heading"
+        heading={fittingGuidanceHeading}
+        intro={fittingGuidanceIntro}
+        chatLabel={fittingGuidanceChatLabel}
+        chatPayload={{
+          question: fittingGuidanceChatPrompt,
+          context: { pageUrl: "/experience", mode: "prospect" },
+        }}
+        link={{ href: fittingGuidanceLinkHref, label: fittingGuidanceLinkLabel }}
+        rightTitle="What the concierge can clarify:"
+        bullets={fittingGuidanceBullets}
+        closing={fittingGuidanceClosing}
+      />
       <BookingOptions bookingSection={bookingSection} />
-      <Section
-        id="experience-travel-guide"
-        padding="lg"
-        bordered={false}
-        className="relative isolate w-screen max-w-[100vw] scroll-mt-24 overflow-hidden rounded-none! border-t border-none! bg-canvas shadow-none! full-bleed"
-        aria-labelledby="experience-travel-guide-heading"
-      >
-        <Container
-          size="xl"
-          className="flex flex-col gap-10 px-0 lg:grid lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-center lg:gap-16"
-        >
-          <div className="space-y-4 text-ink">
-            <Heading
-              id="experience-travel-guide-heading"
-              level={2}
-              size="xl"
-              className="text-ink"
-            >
-              {travelHeading}
-            </Heading>
-            <Text className="mb-8 type-subsection text-ink-muted" leading="relaxed">
-              {travelIntro}
-            </Text>
-            <div className="flex flex-wrap justify-start gap-3">
-              <ChatTriggerButton
-                label={travelChatLabel}
-                payload={{
-                  question: travelChatPrompt,
-                  context: { pageUrl: "/experience", mode: "prospect" },
-                }}
-                variant="outline"
-              />
-              <Link
-                href={travelLinkHref}
-                className="type-button inline-flex min-h-10 items-center justify-center gap-2 rounded-sm border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
-              >
-                {travelLinkLabel}
-                <span aria-hidden="true">→</span>
-              </Link>
-            </div>
-          </div>
-
-          <div className="space-y-3 type-subsection text-ink-muted">
-            <Text className="text-ink">
-              What the concierge can organize:
-            </Text>
-            <ul className="space-y-2">
-              {travelBullets.map((bullet) => {
-                const [label, ...rest] = bullet.split(" - ");
-                return (
-                  <li key={bullet}>
-                    <span className="text-ink">{label}</span>
-                    {" "}-{" "}
-                    {rest.join(" - ")}
-                  </li>
-                );
-              })}
-            </ul>
-            <Text className="text-ink-muted" leading="relaxed">
-              {travelClosing}
-            </Text>
-          </div>
-        </Container>
-      </Section>
+      <ExperienceAdvisorySection
+        sectionId="experience-travel-guide"
+        headingId="experience-travel-guide-heading"
+        heading={travelHeading}
+        intro={travelIntro}
+        chatLabel={travelChatLabel}
+        chatPayload={{
+          question: travelChatPrompt,
+          context: { pageUrl: "/experience", mode: "prospect" },
+        }}
+        link={{ href: travelLinkHref, label: travelLinkLabel }}
+        rightTitle="What the concierge can organize:"
+        bullets={travelBullets}
+        closing={travelClosing}
+      />
       <TravelNetwork data={networkData} ui={travelNetworkUi} />
       <MosaicGallery assets={mosaic} mosaicUi={mosaicUi} />
       <CTASection

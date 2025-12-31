@@ -9,7 +9,7 @@ const conciergeHero: Parameters<typeof ConciergeHero>[0]["hero"] = {
   background: {
     id: "concierge-hero",
     kind: "image",
-    url: "/cinematic_background_photos/p-web-10.jpg",
+    url: "/redesign-photos/p-web-20.jpg",
     alt: "Cinematic view of the Perazzi workshop",
     aspectRatio: 16 / 9,
   },

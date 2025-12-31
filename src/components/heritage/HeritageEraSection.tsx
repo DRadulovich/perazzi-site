@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useInView, useMotionValueEvent, useScroll } from "framer-motion";
+import { motion, useInView, useMotionValueEvent, useScroll } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { HeritageEraWithEvents } from "@/types/heritage";
 import { EraBackgroundLayer } from "./EraBackgroundLayer";
@@ -9,6 +9,7 @@ import { HeritageEventSlide } from "./HeritageEventSlide";
 import { HeritageEventRail } from "./HeritageEventRail";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
+import { homeMotion } from "@/lib/motionConfig";
 
 export type HeritageEraSectionProps = Readonly<{
   era: HeritageEraWithEvents;
@@ -41,6 +42,7 @@ export function HeritageEraSection({
   const sectionRef = React.useRef<HTMLElement | null>(null);
   const eraFocusRef = React.useRef<HTMLAnchorElement | null>(null);
   const [isShortViewport, setIsShortViewport] = React.useState(false);
+  const reduceMotion = Boolean(prefersReducedMotion);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end start"],
@@ -220,7 +222,13 @@ export function HeritageEraSection({
         />
 
         <div className="relative z-10 w-full px-4 py-10 md:px-8 md:py-16">
-          <header className="mx-auto max-w-6xl pb-6">
+          <motion.header
+            className="mx-auto max-w-6xl pb-6"
+            initial={reduceMotion ? false : { opacity: 0, y: 14, filter: "blur(10px)" }}
+            whileInView={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
+            viewport={reduceMotion ? undefined : { once: true, amount: 0.6 }}
+            transition={reduceMotion ? undefined : homeMotion.revealFast}
+          >
             <Heading
               asChild
               size="sm"
@@ -235,7 +243,7 @@ export function HeritageEraSection({
             >
               <p>{yearRangeLabel}</p>
             </Text>
-          </header>
+          </motion.header>
 
           <HeritageEventRail
             events={era.events}

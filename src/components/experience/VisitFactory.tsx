@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { motion, useReducedMotion } from "framer-motion";
 import type { VisitFactoryData } from "@/types/experience";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 import SafeHtml from "@/components/SafeHtml";
+import { homeMotion } from "@/lib/motionConfig";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, Container, Heading, Section, Text } from "@/components/ui";
 
 type VisitFactoryProps = {
@@ -17,6 +19,8 @@ type VisitFactoryProps = {
 export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
   const analyticsRef = useAnalyticsObserver("VisitFactorySeen");
   const [expectOpen, setExpectOpen] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+  const motionEnabled = !prefersReducedMotion;
   const mapPanelId = "visit-map-panel";
   const mapNoteId = "visit-map-note";
   const visit = visitFactorySection;
@@ -50,12 +54,19 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
           className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
+        <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
         <div className="absolute inset-0 overlay-gradient-canvas" aria-hidden />
       </div>
 
       <Container size="xl" className="relative z-10">
         <Section padding="md" className="space-y-6 bg-card/40">
-          <div className="space-y-2">
+          <motion.div
+            className="space-y-2"
+            initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
+            whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+            viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}
+            transition={motionEnabled ? homeMotion.revealFast : undefined}
+          >
             <Heading
               id="visit-factory-heading"
               level={2}
@@ -71,10 +82,25 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
               className="prose-journal max-w-none text-ink-muted md:max-w-4xl lg:max-w-4xl"
               html={visit.introHtml}
             />
-          </div>
+          </motion.div>
 
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
-            <article className="space-y-5 rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated lg:p-7">
+          <motion.div
+            className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start"
+            initial={motionEnabled ? "hidden" : false}
+            whileInView={motionEnabled ? "show" : undefined}
+            viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
+            variants={{
+              hidden: {},
+              show: { transition: { staggerChildren: motionEnabled ? 0.1 : 0 } },
+            }}
+          >
+            <motion.article
+              className="space-y-5 rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated lg:p-7"
+              variants={{
+                hidden: { opacity: 0, y: 14, filter: "blur(10px)" },
+                show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
+              }}
+            >
               <Text size="label-tight" muted>
                 Botticino headquarters
               </Text>
@@ -103,7 +129,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                 </p>
                 <div
                   id={mapPanelId}
-                  className="relative overflow-hidden rounded-2xl border border-border/70 bg-(--color-canvas) shadow-soft ring-1 ring-border/70 aspect-dynamic"
+                  className="group relative overflow-hidden rounded-2xl border border-border/70 bg-(--color-canvas) shadow-soft ring-1 ring-border/70 aspect-dynamic"
                   style={{ "--aspect-ratio": visit.location.staticMap.aspectRatio ?? 3 / 2 }}
                   aria-live="polite"
                 >
@@ -121,9 +147,11 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                       alt={visit.location.staticMap.alt}
                       fill
                       sizes="(min-width: 1280px) 640px, (min-width: 1024px) 50vw, 100vw"
-                      className="object-cover"
+                      className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
                     />
                   )}
+                  <div className="pointer-events-none absolute inset-0 film-grain opacity-15" aria-hidden="true" />
+                  <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
                   <div
                     className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/70 via-(--scrim-strong)/40 to-transparent"
                     aria-hidden
@@ -133,19 +161,25 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                   href={mapHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 type-button text-perazzi-red focus-ring"
+                  className="inline-flex items-center gap-2 type-button text-perazzi-red transition hover:translate-x-0.5 focus-ring"
                 >
                   Open in Maps{" "}
                   <span className="sr-only">(opens in a new tab)</span>
                 </a>
               </div>
-            </article>
+            </motion.article>
 
-            <div className="space-y-4">
+            <motion.div
+              className="space-y-4"
+              variants={{
+                hidden: { opacity: 0, y: 14, filter: "blur(10px)" },
+                show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
+              }}
+            >
               {visit.whatToExpectHtml ? (
                 <Collapsible open={expectOpen} onOpenChange={setExpectOpen}>
                   <CollapsibleTrigger
-                    className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left type-card-title text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
+                    className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left type-card-title text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 hover:translate-x-0.5 focus-ring sm:rounded-3xl sm:bg-card/80"
                     aria-expanded={expectOpen}
                     aria-controls="visit-expect-content"
                   >
@@ -171,16 +205,16 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
                   </CollapsibleContent>
                 </Collapsible>
               ) : null}
-                <Button
-                  asChild
-                  size="lg"
-                  onClick={() => logAnalytics("VisitCtaClick")}
-                  className="rounded-full px-6 py-3 type-button"
-                >
+              <Button
+                asChild
+                size="lg"
+                onClick={() => logAnalytics("VisitCtaClick")}
+                className="rounded-full px-6 py-3 type-button"
+              >
                 <a href={visit.cta.href}>{visit.cta.label}</a>
               </Button>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </Section>
       </Container>
     </section>

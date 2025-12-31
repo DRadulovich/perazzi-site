@@ -1,12 +1,13 @@
 "use client";
 
 import { getImageProps } from "next/image";
-import { motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
 import { CleanText } from "@/components/system/CleanText";
 import type { HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { homeMotion } from "@/lib/motionConfig";
 import { ScrollIndicator } from "./scroll-indicator";
 
 type HeroBannerProps = Readonly<{
@@ -23,6 +24,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const heroImageRef = useRef<HTMLImageElement | null>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
+  const focusAfterCloseRef = useRef<HTMLElement | null>(null);
   const [mediaLoaded, setMediaLoaded] = useState(false);
   const [manifestoOpen, setManifestoOpen] = useState(false);
   const analyticsRef = useAnalyticsObserver(analyticsId ?? "HeroSeen");
@@ -83,6 +85,15 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
   }, [prefersReducedMotion]);
 
   useEffect(() => {
+    if (!manifestoOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [manifestoOpen]);
+
+  useEffect(() => {
     if (mediaLoaded) return;
     const img = heroImageRef.current;
     if (img?.complete && img.naturalWidth > 0) {
@@ -115,11 +126,8 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
   }, []);
 
   const closeManifesto = useCallback(() => {
+    focusAfterCloseRef.current = triggerRef.current ?? lastFocusedRef.current;
     setManifestoOpen(false);
-    const focusTarget = triggerRef.current ?? lastFocusedRef.current;
-    if (focusTarget) {
-      focusTarget.focus();
-    }
   }, []);
 
   const openManifesto = useCallback(() => {
@@ -190,8 +198,45 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
     };
   }, [closeManifesto, getFocusableElements, manifestoOpen]);
 
-  const overlayTransition = prefersReducedMotion ? { duration: 0.1 } : { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const };
-  const panelTransition = prefersReducedMotion ? { duration: 0.1 } : { delay: 0.15, duration: 0.6, ease: [0.16, 1, 0.3, 1] as const };
+  const motionEnabled = !reduceMotion;
+  const revealTransition = motionEnabled ? homeMotion.reveal : { duration: 0.01 };
+  const revealFastTransition = motionEnabled ? homeMotion.revealFast : { duration: 0.01 };
+  const overlayTransition = revealTransition;
+  const panelTransition = motionEnabled
+    ? { delay: 0.1, ...revealFastTransition }
+    : { duration: 0.01 };
+
+  const introContainerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: motionEnabled ? 0.12 : 0,
+        delayChildren: motionEnabled ? 0.1 : 0,
+      },
+    },
+  } as const;
+
+  const introItemVariants = {
+    hidden: { opacity: 0, y: 14, filter: "blur(10px)" },
+    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: revealTransition },
+  } as const;
+
+  const taglineVariants = {
+    hidden: { opacity: 0, y: 10, filter: "blur(8px)", letterSpacing: "0.55em" },
+    show: {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+      letterSpacing: "0.25em",
+      transition: revealFastTransition,
+    },
+  } as const;
+
+  const headingMaskVariants = {
+    hidden: { opacity: 0, clipPath: "inset(0 0 100% 0)" },
+    show: { opacity: 1, clipPath: "inset(0 0 0% 0)", transition: revealTransition },
+  } as const;
 
   return (
     <section
@@ -207,6 +252,8 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
         style={{
           y: reduceMotion ? "0%" : parallaxY,
         }}
+        animate={motionEnabled ? { scale: mediaLoaded ? 1.02 : 1.08 } : undefined}
+        transition={motionEnabled ? { duration: 1.2, ease: homeMotion.cinematicEase } : { duration: 0.01 }}
       >
         <picture className="absolute inset-0">
           {mobileImageProps ? (
@@ -231,40 +278,54 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
           />
         </picture>
         <div className="absolute inset-0 bg-linear-to-t from-black via-black/75 to-black/0" />
+        <div className="pointer-events-none absolute inset-0 radial-vignette opacity-90" aria-hidden="true" />
+        <div className="pointer-events-none absolute inset-0 film-grain opacity-25" aria-hidden="true" />
       </motion.div>
 
       <div className="relative z-10 flex flex-1">
-        <div className="mx-auto flex w-full max-w-5xl flex-col items-center justify-center gap-2 px-6 pb-16 text-center sm:px-2 lg:gap-2 lg:pb-24">
-          <p
-            className={`type-label text-white/80 transition-opacity duration-700 motion-reduce:transition-none ${
-              mediaLoaded ? "opacity-100" : "opacity-0"
-            }`}
+        <motion.div
+          className="mx-auto flex w-full max-w-5xl flex-col items-center justify-center gap-2 px-6 pb-16 text-center sm:px-2 lg:gap-2 lg:pb-24"
+          variants={introContainerVariants}
+          initial="hidden"
+          animate={mediaLoaded ? "show" : "hidden"}
+        >
+          <motion.p
+            className="type-label text-white/80"
+            variants={taglineVariants}
           >
             {hero.tagline}
-          </p>
-          <h1
+          </motion.p>
+          <motion.h1
             id="home-hero-heading"
             data-sanity-edit-target
-            className={`mb-3 transition-opacity duration-700 motion-reduce:transition-none ${
-              mediaLoaded ? "opacity-100 delay-100" : "opacity-0"
-            }`}
+            className="mb-3"
+            variants={headingMaskVariants}
           >
-            <button
+            <motion.button
               type="button"
               ref={triggerRef}
               onClick={openManifesto}
               className="flex flex-wrap justify-center gap-2 bg-transparent text-balance type-display text-white outline-none focus-ring cursor-pointer border-0 p-0 leading-[0.85]"
+              variants={introItemVariants}
+              whileHover={motionEnabled ? { y: -1 } : undefined}
+              whileTap={motionEnabled ? { y: 0 } : undefined}
             >
               <CleanText value={heroHeading} />
-            </button>
-          </h1>
+            </motion.button>
+          </motion.h1>
           {hero.background.caption ? (
-            <p className="mx-auto mt-1 mb-7 max-w-7xl font-artisan not-italic text-white/80 text-[1em] sm:text-[1.2em] lg:text-[1.4em]">
+            <motion.p
+              className="mx-auto mt-1 mb-7 max-w-7xl font-artisan not-italic text-white/80 text-[1em] sm:text-[1.2em] lg:text-[1.4em]"
+              variants={introItemVariants}
+            >
               {hero.background.caption}
-            </p>
+            </motion.p>
           ) : null}
           {hideCtas ? null : (
-            <div className="mt-0 flex flex-wrap items-center justify-center gap-4">
+            <motion.div
+              className="mt-0 flex flex-wrap items-center justify-center gap-4"
+              variants={introItemVariants}
+            >
               <ChatTriggerButton
                 label={primaryLabel}
                 payload={{
@@ -272,73 +333,82 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
                   context: { pageUrl: "/" },
                 }}
               />
-            </div>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
       </div>
 
       <ScrollIndicator className="bottom-10" />
 
-      {manifestoOpen && (
-        <motion.dialog
-          ref={dialogRef}
-          open
-          initial={{ opacity: prefersReducedMotion ? 1 : 0 }}
-          animate={{ opacity: 1 }}
-          transition={overlayTransition}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 px-6 text-center text-white backdrop-blur-sm"
-          aria-labelledby="manifesto-title"
-          aria-modal="true"
-          tabIndex={-1}
-          onClick={(event) => {
-            if (event.target === event.currentTarget) {
-              closeManifesto();
-            }
-          }}
-        >
-          <motion.div
-            initial={prefersReducedMotion ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={panelTransition}
-            className="max-w-2xl space-y-6 rounded-3xl border border-white/10 bg-black/45 p-8 shadow-elevated ring-1 ring-white/10 backdrop-blur-xl"
+      <AnimatePresence
+        onExitComplete={() => {
+          const focusTarget = focusAfterCloseRef.current;
+          focusAfterCloseRef.current = null;
+          focusTarget?.focus();
+        }}
+      >
+        {manifestoOpen ? (
+          <motion.dialog
+            key="manifesto"
+            ref={dialogRef}
+            open
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, pointerEvents: "none" }}
+            transition={overlayTransition}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 px-6 text-center text-white backdrop-blur-sm"
+            aria-labelledby="manifesto-title"
+            aria-modal="true"
+            tabIndex={-1}
+            onClick={(event) => {
+              if (event.target === event.currentTarget) {
+                closeManifesto();
+              }
+            }}
           >
-            <h2 id="manifesto-title" className="sr-only">
-              Perazzi Manifesto
-            </h2>
-            <div className="space-y-3 type-caps text-white">
-              {[
-                "A Perazzi is not something you own.",
-                "It is something you grow into.",
-                "A quiet companion to the parts of you that refuse to be ordinary.",
-                "It waits, patiently, for the moment you are ready to become it.",
-              ].map((line, idx) => (
-                <motion.p
-                  key={line}
-                  initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={
-                    prefersReducedMotion
-                      ? { duration: 0.01 }
-                      : { delay: 0.3 + idx * 0.15, duration: 0.5, ease: "easeOut" }
-                  }
-                >
-                  {line}
-                </motion.p>
-              ))}
-            </div>
-            <motion.button
-              type="button"
-              className="mt-8 inline-flex items-center justify-center rounded-full px-4 py-2 type-button text-white/70 underline underline-offset-4 transition hover:text-white focus-ring"
-              onClick={closeManifesto}
-              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={prefersReducedMotion ? { duration: 0.1 } : { delay: 1.2, duration: 0.35, ease: "easeOut" }}
+            <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.985, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.985, y: 8 }}
+              transition={panelTransition}
+              className="relative max-w-2xl space-y-6 rounded-3xl border border-white/10 bg-black/45 p-8 shadow-elevated ring-1 ring-white/10 backdrop-blur-xl"
             >
-              Close – return to the surface
-            </motion.button>
-          </motion.div>
-        </motion.dialog>
-      )}
+              <h2 id="manifesto-title" className="sr-only">
+                Perazzi Manifesto
+              </h2>
+              <div className="space-y-3 type-caps text-white">
+                {[
+                  "A Perazzi is not something you own.",
+                  "It is something you grow into.",
+                  "A quiet companion to the parts of you that refuse to be ordinary.",
+                  "It waits, patiently, for the moment you are ready to become it.",
+                ].map((line, idx) => (
+                  <motion.p
+                    key={line}
+                    initial={motionEnabled ? { opacity: 0, y: 10, filter: "blur(10px)" } : { opacity: 1 }}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    transition={motionEnabled ? { delay: 0.22 + idx * 0.12, ...revealFastTransition } : { duration: 0.01 }}
+                  >
+                    {line}
+                  </motion.p>
+                ))}
+              </div>
+              <motion.button
+                type="button"
+                className="mt-8 inline-flex items-center justify-center rounded-full px-4 py-2 type-button text-white/70 underline underline-offset-4 transition hover:text-white focus-ring"
+                onClick={closeManifesto}
+                initial={motionEnabled ? { opacity: 0 } : { opacity: 1 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={motionEnabled ? { delay: 0.85, ...homeMotion.micro } : { duration: 0.01 }}
+              >
+                Close – return to the surface
+              </motion.button>
+            </motion.div>
+          </motion.dialog>
+        ) : null}
+      </AnimatePresence>
     </section>
   );
 }

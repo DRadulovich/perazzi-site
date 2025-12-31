@@ -23,16 +23,16 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
       ref={analyticsRef}
       href={`/shotguns/${platform.slug}`}
       data-analytics-id={`PlatformCard:${platform.id}`}
-      className="group flex h-full flex-col rounded-2xl border border-border bg-(--color-canvas)/30 p-4 shadow-soft backdrop-blur-sm transition-transform focus-ring hover:-translate-y-1 sm:rounded-3xl sm:bg-canvas/40 sm:p-6 sm:shadow-elevated"
+      className="group flex h-full flex-col rounded-2xl border border-border bg-canvas/30 p-4 shadow-soft backdrop-blur-sm transition-transform focus-ring hover:-translate-y-1 sm:rounded-3xl sm:bg-canvas/40 sm:p-6 sm:shadow-elevated"
       onClick={() => logAnalytics(`shotguns_platform_card_click:${platform.id}`)}
     >
-      <div className="card-media relative rounded-2xl bg-(--surface-elevated) transition-transform duration-300 group-hover:scale-[1.01] aspect-[16/9]">
+      <div className="card-media relative rounded-2xl bg-(--surface-elevated) transition-transform duration-300 group-hover:scale-[1.01] aspect-video">
         <Image
           src={platform.hero.url}
           alt={platform.hero.alt}
           fill
           sizes="(min-width: 1024px) 600px, 100vw"
-          className="object-cover object-center"
+          className="object-cover object-center transition-transform duration-1400 ease-out will-change-transform group-hover:scale-[1.04]"
           priority={priority}
           loading={priority ? "eager" : "lazy"}
           quality={100}
@@ -42,6 +42,7 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
           className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/60 via-transparent to-transparent"
           aria-hidden
         />
+        <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
       </div>
 
       <header className="mt-4 space-y-1">

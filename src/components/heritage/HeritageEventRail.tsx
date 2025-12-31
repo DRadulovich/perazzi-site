@@ -1,11 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from "framer-motion";
+import { motion, useMotionValue, useTransform, type MotionValue } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { HeritageEvent } from "@/types/heritage";
 import { HeritageEventSlide } from "./HeritageEventSlide";
-import { heritageMotion } from "@/lib/motionConfig";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 
 export type HeritageEventRailProps = Readonly<{
@@ -20,6 +19,7 @@ export function HeritageEventRail({
   events,
   className,
   scrollProgress,
+  activeEventIndex = 0,
   prefersReducedMotion = false,
 }: HeritageEventRailProps) {
   const analyticsRef = useAnalyticsObserver<HTMLDivElement>("HeritageEventRailSeen");
@@ -33,7 +33,11 @@ export function HeritageEventRail({
   const progress = scrollProgress ?? fallbackProgress;
 
   React.useLayoutEffect(() => {
-    function measure() {
+    if (!containerRef.current || !trackRef.current) return;
+    let frameId = 0;
+
+    const measure = () => {
+      frameId = 0;
       if (!containerRef.current || !trackRef.current) return;
       const containerWidth = containerRef.current.clientWidth;
       const trackWidth = trackRef.current.scrollWidth;
@@ -42,22 +46,39 @@ export function HeritageEventRail({
         if (Math.abs(prev - offset) < 1) return prev;
         return offset;
       });
-    }
+    };
+
+    const scheduleMeasure = () => {
+      if (frameId) return;
+      frameId = globalThis.requestAnimationFrame(measure);
+    };
 
     measure();
 
-    window.addEventListener("resize", measure);
+    if (typeof ResizeObserver === "function") {
+      const observer = new ResizeObserver(() => {
+        scheduleMeasure();
+      });
+      observer.observe(containerRef.current);
+      observer.observe(trackRef.current);
+      return () => {
+        observer.disconnect();
+        if (frameId) globalThis.cancelAnimationFrame(frameId);
+      };
+    }
+
+    globalThis.addEventListener("resize", scheduleMeasure);
     return () => {
-      window.removeEventListener("resize", measure);
+      globalThis.removeEventListener("resize", scheduleMeasure);
+      if (frameId) globalThis.cancelAnimationFrame(frameId);
     };
   }, [events.length]);
 
-  const rawX: MotionValue<number> = useTransform(
+  const x: MotionValue<number> = useTransform(
     progress,
     [movementStart, travelEnd],
     [0, -maxOffset],
   );
-  const x = useSpring(rawX, heritageMotion.railSpring);
 
   if (!events || events.length === 0) {
     return null;
@@ -82,7 +103,7 @@ export function HeritageEventRail({
         className="flex h-full w-full will-change-transform"
         style={isScrollable && !isSingle && !prefersReducedMotion ? { x } : undefined}
       >
-        {events.map((event) => (
+        {events.map((event, index) => (
           <div
             key={event.id}
             className="flex h-full w-full flex-none items-stretch px-1 sm:px-2"
@@ -90,6 +111,7 @@ export function HeritageEventRail({
             <HeritageEventSlide
               event={event}
               className="w-full"
+              isActive={index === activeEventIndex}
             />
           </div>
         ))}

@@ -77,6 +77,7 @@ export type HeritageEraWithEvents = HeritageEra & {
 export type PerazziHeritageErasProps = {
   eras: HeritageEraWithEvents[];
   className?: string;
+  sectionId?: string;
 };
 
 export interface HeritageHero {

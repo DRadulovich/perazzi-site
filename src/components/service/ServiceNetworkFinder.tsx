@@ -8,6 +8,8 @@ import type { NetworkFinderUi, ServiceLocation, ServiceLocationType } from "@/ty
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
+import { LayoutGroup, motion, useReducedMotion } from "framer-motion";
+import { homeMotion } from "@/lib/motionConfig";
 
 type ServiceNetworkFinderProps = Readonly<{
   locations: ServiceLocation[];
@@ -20,6 +22,8 @@ const defaultMapLink = "https://maps.google.com/?q=Perazzi+service+network";
 
 export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProps) {
   const analyticsRef = useAnalyticsObserver("ServiceNetworkSeen");
+  const prefersReducedMotion = useReducedMotion();
+  const motionEnabled = !prefersReducedMotion;
   const [filter, setFilter] = useState<ServiceLocationType | "All">("All");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -67,10 +71,19 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
       ref={analyticsRef}
       data-analytics-id="ServiceNetworkSeen"
       padding="md"
-      className="space-y-6"
+      className="group relative space-y-6 overflow-hidden"
       aria-labelledby="service-network-heading"
     >
-      <div className="space-y-2">
+      <div className="pointer-events-none absolute inset-0 film-grain opacity-10" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
+
+      <motion.div
+        className="space-y-2"
+        initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
+        whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+        viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}
+        transition={motionEnabled ? homeMotion.revealFast : undefined}
+      >
         <p className="type-section text-ink">
           Service network
         </p>
@@ -82,8 +95,16 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
             {subheading}
           </Text>
         ) : null}
-      </div>
-      <form role="search" className="flex flex-col gap-3 md:flex-row md:items-end">
+      </motion.div>
+
+      <motion.form
+        role="search"
+        className="flex flex-col gap-3 md:flex-row md:items-end"
+        initial={motionEnabled ? { opacity: 0, y: 12, filter: "blur(10px)" } : false}
+        whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+        viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}
+        transition={motionEnabled ? homeMotion.revealFast : undefined}
+      >
         <label className="flex w-full flex-col type-label-tight text-ink">
           <span>Location type</span>
           <select
@@ -111,35 +132,84 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
             placeholder="e.g. FL, TX"
           />
         </label>
-      </form>
-      <output className="block type-caption text-ink-muted" aria-live="polite">
+      </motion.form>
+      <motion.output
+        className="block type-caption text-ink-muted"
+        aria-live="polite"
+        initial={motionEnabled ? { opacity: 0 } : false}
+        whileInView={motionEnabled ? { opacity: 1 } : undefined}
+        viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}
+        transition={motionEnabled ? homeMotion.micro : undefined}
+      >
         {filteredLocations.length} locations available.
-      </output>
+      </motion.output>
+
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-        <ul className="space-y-4">
+        <LayoutGroup id="service-network-results">
+          <motion.ul
+            className="space-y-4"
+            initial={motionEnabled ? "hidden" : false}
+            whileInView={motionEnabled ? "show" : undefined}
+            viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
+            variants={{
+              hidden: {},
+              show: { transition: { staggerChildren: motionEnabled ? 0.06 : 0 } },
+            }}
+          >
           {filteredLocations.length === 0 ? (
-            <li className="rounded-2xl border border-border/60 bg-card/40 p-4 type-body-sm text-ink-muted sm:bg-card/70 sm:border-border/70">
+            <motion.li
+              className="rounded-2xl border border-border/60 bg-card/40 p-4 type-body-sm text-ink-muted sm:bg-card/70 sm:border-border/70"
+              variants={{
+                hidden: { opacity: 0, y: 12, filter: "blur(10px)" },
+                show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
+              }}
+            >
               No locations match your filters. Try clearing the search or selecting a different type.
-            </li>
+            </motion.li>
           ) : (
             filteredLocations.map((location) => {
               const isActive = activeLocation?.id === location.id;
               return (
-                <li key={location.id}>
-                  <button
-                    type="button"
+                <motion.li
+                  key={location.id}
+                  variants={{
+                    hidden: { opacity: 0, y: 12, filter: "blur(10px)" },
+                    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
+                  }}
+                >
+                  <motion.div
+                    role="button"
+                    tabIndex={0}
                     aria-pressed={isActive}
                     className={cn(
-                      "flex w-full flex-col gap-2 rounded-2xl border p-4 transition-colors focus-ring",
+                      "group relative flex w-full cursor-pointer flex-col gap-2 overflow-hidden rounded-2xl border p-4 text-left transition focus-ring",
                       isActive
-                        ? "border-perazzi-red bg-perazzi-red/5"
-                        : "border-border/60 bg-card/40 sm:border-border/70 sm:bg-card/70",
+                        ? "border-perazzi-red bg-card/70 text-ink"
+                        : "border-border/60 bg-card/40 text-ink sm:border-border/70 sm:bg-card/70",
                     )}
                     onClick={() => {
                       setActiveLocationId(location.id);
                       logAnalytics(`FinderResultClick:${location.id}`);
                     }}
+                    onKeyDown={(event) => {
+                      if (event.currentTarget !== event.target) return;
+                      if (event.key !== "Enter" && event.key !== " " && event.key !== "Spacebar") return;
+                      event.preventDefault();
+                      setActiveLocationId(location.id);
+                      logAnalytics(`FinderResultClick:${location.id}`);
+                    }}
+                    whileHover={motionEnabled ? { x: 4, transition: homeMotion.micro } : undefined}
+                    whileTap={motionEnabled ? { scale: 0.99 } : undefined}
                   >
+                    {isActive ? (
+                      <motion.span
+                        layoutId="service-network-active"
+                        className="pointer-events-none absolute inset-0 rounded-2xl bg-perazzi-red/5"
+                        transition={homeMotion.springHighlight}
+                        aria-hidden="true"
+                      />
+                    ) : null}
+                    <span className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
                     <Text size="label-tight" muted>
                       {location.type}
                     </Text>
@@ -162,7 +232,11 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
                         </div>
                       ) : null}
                       {location.email ? (
-                        <a href={`mailto:${location.email}`} className="text-perazzi-red focus-ring">
+                        <a
+                          href={`mailto:${location.email}`}
+                          className="text-perazzi-red focus-ring"
+                          onClick={(event) => { event.stopPropagation(); }}
+                        >
                           {location.email}
                         </a>
                       ) : null}
@@ -172,6 +246,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
                           target="_blank"
                           rel="noreferrer"
                           className="block text-perazzi-red focus-ring"
+                          onClick={(event) => { event.stopPropagation(); }}
                         >
                           Website<span className="sr-only"> (opens in a new tab)</span>
                         </a>
@@ -183,14 +258,22 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
                         html={location.notesHtml}
                       />
                     ) : null}
-                  </button>
-                </li>
+                  </motion.div>
+                </motion.li>
               );
             })
           )}
-        </ul>
+          </motion.ul>
+        </LayoutGroup>
+
         <div className="space-y-3">
-          <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-(--color-canvas) aspect-[3/2]">
+          <motion.div
+            className="group relative overflow-hidden rounded-2xl border border-border/60 bg-(--color-canvas) shadow-soft aspect-[3/2]"
+            initial={motionEnabled ? { opacity: 0, y: 12, filter: "blur(10px)" } : false}
+            whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+            viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}
+            transition={motionEnabled ? homeMotion.revealFast : undefined}
+          >
             <iframe
               key={mapSrc}
               src={mapSrc}
@@ -198,25 +281,35 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
               className="h-full w-full"
               loading="lazy"
             />
-          </div>
-          <a
+            <div className="pointer-events-none absolute inset-0 film-grain opacity-12" aria-hidden="true" />
+            <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
+          </motion.div>
+          <motion.a
             href={mapLinkHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="type-button inline-flex items-center gap-2 text-perazzi-red focus-ring"
+            className="type-button inline-flex items-center gap-2 text-perazzi-red transition hover:translate-x-0.5 focus-ring"
+            initial={motionEnabled ? { opacity: 0, y: 10 } : false}
+            whileInView={motionEnabled ? { opacity: 1, y: 0 } : undefined}
+            viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}
+            transition={motionEnabled ? homeMotion.micro : undefined}
           >
             {directionsLabel}
             <span aria-hidden="true">→</span>
             <span className="sr-only"> (opens in a new tab)</span>
-          </a>
-          <a
+          </motion.a>
+          <motion.a
             href="/service/request"
-            className="type-button inline-flex items-center gap-2 text-perazzi-red focus-ring"
+            className="type-button inline-flex items-center gap-2 text-perazzi-red transition hover:translate-x-0.5 focus-ring"
             onClick={() => logAnalytics("FinderResultClick:request")}
+            initial={motionEnabled ? { opacity: 0, y: 10 } : false}
+            whileInView={motionEnabled ? { opacity: 1, y: 0 } : undefined}
+            viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}
+            transition={motionEnabled ? homeMotion.micro : undefined}
           >
             {primaryLabel}
             <span aria-hidden="true">→</span>
-          </a>
+          </motion.a>
         </div>
       </div>
     </Section>

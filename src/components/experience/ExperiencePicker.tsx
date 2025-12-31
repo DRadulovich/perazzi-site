@@ -8,6 +8,7 @@ import type { FAQItem, PickerItem, PickerUi } from "@/types/experience";
 import { FAQList } from "./FAQList";
 import { logAnalytics } from "@/lib/analytics";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { homeMotion } from "@/lib/motionConfig";
 import { Container, Heading, Section, Text } from "@/components/ui";
 
 type ExperiencePickerProps = {
@@ -22,6 +23,7 @@ type ExperiencePickerProps = {
 
 export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<ExperiencePickerProps>) {
   const prefersReducedMotion = useReducedMotion();
+  const reduceMotion = Boolean(prefersReducedMotion);
   const analyticsRef = useAnalyticsObserver<HTMLElement>("ExperiencePickerSeen");
   const anchorMap: Record<string, string | undefined> = {
     visit: "#experience-visit-planning",
@@ -88,12 +90,19 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
           className="absolute inset-0 bg-[color:var(--scrim-soft)]"
           aria-hidden
         />
+        <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
         <div className="absolute inset-0 overlay-gradient-canvas" aria-hidden />
       </div>
 
       <Container size="xl" className="relative z-10">
         <Section padding="md" className="space-y-6 bg-card/40">
-          <div className="space-y-2">
+          <motion.div
+            className="space-y-2"
+            initial={reduceMotion ? false : { opacity: 0, y: 14, filter: "blur(10px)" }}
+            whileInView={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
+            viewport={reduceMotion ? undefined : { once: true, amount: 0.6 }}
+            transition={reduceMotion ? undefined : homeMotion.revealFast}
+          >
             <Heading
               id="experience-picker-heading"
               level={2}
@@ -105,7 +114,7 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
             <Text size="md" className="type-section-subtitle text-ink-muted mb-4">
               {subheading}
             </Text>
-          </div>
+          </motion.div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:items-start">
             {items.map((item, index) => (
@@ -114,7 +123,8 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
                 item={item}
                 onAnchorClick={handleCardClick}
                 microLabel={pickerUi.microLabel ?? "Perazzi Experience"}
-                delay={prefersReducedMotion ? 0 : index * 0.08}
+                delay={reduceMotion ? 0 : index * 0.08}
+                reducedMotion={reduceMotion}
               />
             ))}
           </div>
@@ -133,6 +143,7 @@ type ExperiencePickerCardProps = Readonly<{
   readonly item: PickerItem;
   readonly delay: number;
   readonly microLabel: string;
+  readonly reducedMotion: boolean;
   readonly onAnchorClick?: (
     event: MouseEvent<HTMLAnchorElement>,
     href: string,
@@ -144,14 +155,16 @@ function ExperiencePickerCard({
   item,
   delay,
   microLabel,
+  reducedMotion,
   onAnchorClick,
 }: ExperiencePickerCardProps) {
   return (
     <motion.article
       className="h-full"
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: "easeOut", delay }}
+      initial={reducedMotion ? false : { opacity: 0, y: 16, filter: "blur(10px)" }}
+      whileInView={reducedMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
+      viewport={reducedMotion ? undefined : { once: true, amount: 0.35 }}
+      transition={reducedMotion ? undefined : { ...homeMotion.revealFast, delay }}
     >
       <Link
         href={item.href}
@@ -171,9 +184,11 @@ function ExperiencePickerCard({
             alt={item.media.alt}
             fill
             sizes="(min-width: 1280px) 384px, (min-width: 1024px) 50vw, (min-width: 640px) 50vw, 100vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
             loading="lazy"
           />
+          <div className="pointer-events-none absolute inset-0 film-grain opacity-15" aria-hidden="true" />
+          <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
           <div
             className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[color:var(--scrim-strong)]/70 via-[color:var(--scrim-strong)]/45 to-transparent transition-transform duration-300 group-hover:scale-105"
             aria-hidden
@@ -189,7 +204,7 @@ function ExperiencePickerCard({
           <Text className="type-body text-ink-muted" leading="relaxed">
             {item.summary}
           </Text>
-          <span className="mt-auto inline-flex items-center gap-2 type-button text-perazzi-red">
+          <span className="mt-auto inline-flex items-center gap-2 type-button text-perazzi-red transition group-hover:translate-x-0.5">
             {item.ctaLabel}
             <span aria-hidden="true">→</span>
           </span>

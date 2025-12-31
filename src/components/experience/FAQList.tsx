@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import type { FAQItem } from "@/types/experience";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -8,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 import { faq as faqFixture } from "@/content/experience/faq";
 import SafeHtml from "@/components/SafeHtml";
+import { homeMotion } from "@/lib/motionConfig";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, Container, Heading, Section, Text } from "@/components/ui";
 
 type FAQListProps = Readonly<{
@@ -17,8 +19,11 @@ type FAQListProps = Readonly<{
   lead?: string;
 }>;
 
+const MotionSection = motion(Section);
+
 export function FAQList({ items, embedded = false, heading, lead }: FAQListProps) {
   const analyticsRef = useAnalyticsObserver<HTMLElement>("ExperienceFAQSeen");
+  const prefersReducedMotion = useReducedMotion();
 
   const faqItems = items.length ? items : faqFixture;
 
@@ -27,9 +32,29 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
   const title = heading ?? "FAQ";
   const subtitle = lead ?? "Questions from future owners";
 
+  const motionEnabled = !prefersReducedMotion;
+
+  const list = {
+    hidden: {},
+    show: {
+      transition: { staggerChildren: motionEnabled ? 0.08 : 0 },
+    },
+  } as const;
+
+  const itemVariant = {
+    hidden: { opacity: 0, y: 14, filter: "blur(10px)" },
+    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
+  } as const;
+
   const content = (
     <>
-      <div className="space-y-2">
+      <motion.div
+        className="space-y-2"
+        initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
+        whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+        viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}
+        transition={motionEnabled ? homeMotion.revealFast : undefined}
+      >
         <Heading
           id="experience-faq-heading"
           level={2}
@@ -41,26 +66,38 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
         <Text size="md" className="type-section-subtitle text-ink-muted" leading="relaxed">
           {subtitle}
         </Text>
-      </div>
-      <div className="space-y-4">
+      </motion.div>
+      <motion.div
+        className="space-y-4"
+        variants={list}
+        initial={motionEnabled ? "hidden" : false}
+        whileInView={motionEnabled ? "show" : undefined}
+        viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
+      >
         {faqItems.map((item, index) => (
-          <FAQItemCard key={item.q} item={item} index={index} />
+          <motion.div key={item.q} variants={itemVariant}>
+            <FAQItemCard item={item} index={index} />
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </>
   );
 
   if (embedded) {
     return (
-      <Section
+      <MotionSection
         ref={analyticsRef}
         data-analytics-id="ExperienceFAQSeen"
         padding="md"
         className="space-y-6"
         aria-labelledby="experience-faq-heading"
+        initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(10px)" } : false}
+        whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+        viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
+        transition={motionEnabled ? homeMotion.reveal : undefined}
       >
         {content}
-      </Section>
+      </MotionSection>
     );
   }
 
@@ -85,13 +122,21 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
           className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
+        <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
         <div className="absolute inset-0 overlay-gradient-canvas" aria-hidden />
       </div>
 
       <Container size="xl" className="relative z-10">
-        <Section padding="md" className="space-y-6 bg-card/40">
+        <MotionSection
+          padding="md"
+          className="space-y-6 bg-card/40"
+          initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(10px)" } : false}
+          whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+          viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
+          transition={motionEnabled ? homeMotion.reveal : undefined}
+        >
           {content}
-        </Section>
+        </MotionSection>
       </Container>
     </section>
   );

@@ -3,7 +3,9 @@
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import SafeHtml from "@/components/SafeHtml";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { homeMotion } from "@/lib/motionConfig";
 import type { BuildHero } from "@/types/build";
 
 type BuildHeroProps = Readonly<{
@@ -14,6 +16,13 @@ type BuildHeroProps = Readonly<{
 export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
   const containerRef = useAnalyticsObserver("HeroSeen:bespoke");
   const prefersReducedMotion = useReducedMotion();
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    setReduceMotion(Boolean(prefersReducedMotion));
+  }, [prefersReducedMotion]);
+
+  const motionEnabled = !reduceMotion;
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
@@ -21,10 +30,23 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
   const parallax = useTransform(
     scrollYProgress,
     [0, 1],
-    ["0%", prefersReducedMotion ? "0%" : "12%"],
+    ["0%", motionEnabled ? "12%" : "0%"],
   );
 
-  const mediaStyle = prefersReducedMotion ? undefined : { y: parallax };
+  const mediaStyle = motionEnabled ? { y: parallax } : undefined;
+
+  const content = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: motionEnabled ? 0.12 : 0 },
+    },
+  } as const;
+
+  const item = {
+    hidden: { opacity: 0, y: 16, filter: "blur(12px)" },
+    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
+  } as const;
 
   return (
     <section
@@ -37,6 +59,9 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
       <motion.div
         className="relative h-screen w-full"
         style={mediaStyle}
+        initial={motionEnabled ? { scale: 1.03 } : false}
+        animate={motionEnabled ? { scale: 1 } : undefined}
+        transition={motionEnabled ? homeMotion.reveal : undefined}
       >
           <Image
             src={hero.media.url}
@@ -46,6 +71,7 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
             sizes="(min-width: 1536px) 1200px, (min-width: 1280px) 1100px, (min-width: 1024px) 80vw, 100vw"
             className="object-cover object-center"
           />
+        <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
         <div
           className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-transparent"
           aria-hidden="true"
@@ -53,20 +79,25 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
       </motion.div>
       <motion.div
         className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 pb-16 text-center sm:px-2 lg:gap-2 lg:pb-24"
-        initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
-        animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
+        variants={content}
+        initial={motionEnabled ? "hidden" : false}
+        animate={motionEnabled ? "show" : undefined}
       >
-        <p className="type-label text-white/80">
+        <motion.p className="type-label text-white/80" variants={item}>
           {hero.eyebrow}
-        </p>
-        <h1 className="mb-3 flex flex-wrap justify-center gap-2 text-balance type-display text-white transition-opacity duration-700 motion-reduce:transition-none leading-[0.85]">
+        </motion.p>
+        <motion.h1
+          className="mb-3 flex flex-wrap justify-center gap-2 text-balance type-display text-white transition-opacity duration-700 motion-reduce:transition-none leading-[0.85]"
+          variants={item}
+        >
           {hero.title}
-        </h1>
-        <SafeHtml
-          className="mx-auto mt-1 mb-7 max-w-7xl font-artisan not-italic text-white/80 text-[1em] sm:text-[1.2em] lg:text-[1.4em]"
-          html={hero.introHtml}
-        />
+        </motion.h1>
+        <motion.div variants={item}>
+          <SafeHtml
+            className="mx-auto mt-1 mb-7 max-w-7xl font-artisan not-italic text-white/80 text-[1em] sm:text-[1.2em] lg:text-[1.4em]"
+            html={hero.introHtml}
+          />
+        </motion.div>
       </motion.div>
     </section>
   );

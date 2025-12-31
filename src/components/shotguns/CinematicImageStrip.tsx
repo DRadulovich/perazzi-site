@@ -44,6 +44,7 @@ export function CinematicImageStrip({ src, image, alt }: CinematicImageStripProp
             className="object-cover"
             loading="lazy"
           />
+          <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
           <div
             className="absolute inset-0 bg-gradient-to-r from-black/25 via-black/10 to-black/25"
             aria-hidden="true"

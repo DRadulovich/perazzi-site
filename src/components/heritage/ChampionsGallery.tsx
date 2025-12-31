@@ -6,8 +6,9 @@ import type { ChampionEvergreen, ChampionsGalleryUi } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
 import { Container, Heading, Section, Text } from "@/components/ui";
+import { homeMotion } from "@/lib/motionConfig";
 
 type ChampionsGalleryProps = Readonly<{
   champions: ChampionEvergreen[];
@@ -15,6 +16,8 @@ type ChampionsGalleryProps = Readonly<{
 }>;
 
 export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
+  const prefersReducedMotion = useReducedMotion();
+  const reduceMotion = Boolean(prefersReducedMotion);
   const verified = champions.filter((champion) => Boolean(champion?.name));
 
   const disciplines = useMemo(() => {
@@ -88,13 +91,20 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
           className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
+        <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
         <div className="absolute inset-0 overlay-gradient-ink" aria-hidden />
       </div>
 
       {/* Foreground glass container */}
       <Container size="xl" className="relative z-10">
         <Section padding="md" className="space-y-6 bg-card/10">
-          <div className="space-y-2">
+          <motion.div
+            className="space-y-2"
+            initial={reduceMotion ? false : { opacity: 0, y: 14, filter: "blur(10px)" }}
+            whileInView={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
+            viewport={reduceMotion ? undefined : { once: true, amount: 0.6 }}
+            transition={reduceMotion ? undefined : homeMotion.revealFast}
+          >
             <Heading
               id="heritage-champions-heading"
               level={2}
@@ -106,52 +116,88 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
             <Text className="type-section-subtitle mb-6 text-ink-muted">
               {subheading}
             </Text>
-          </div>
+          </motion.div>
 
           {disciplines.length ? (
-            <fieldset
-              className="flex flex-wrap gap-2 border-0 p-0"
-              aria-label="Filter champions by discipline"
+            <motion.div
+              initial={reduceMotion ? false : { opacity: 0, y: 12, filter: "blur(10px)" }}
+              whileInView={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
+              viewport={reduceMotion ? undefined : { once: true, amount: 0.6 }}
+              transition={reduceMotion ? undefined : homeMotion.revealFast}
             >
-              <legend className="sr-only">Filter champions by discipline</legend>
-              <button
-                type="button"
-                aria-pressed={activeDiscipline === null}
-                className={cn(
-                  "pill border type-button focus-ring transition",
-                  activeDiscipline === null
-                    ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
-                    : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
-                )}
-                onClick={() => { setActiveDiscipline(null); }}
-              >
-                All
-              </button>
-              {disciplines.map((discipline) => (
-                <button
-                  key={discipline}
-                  type="button"
-                  aria-pressed={activeDiscipline === discipline}
-                  className={cn(
-                    "pill border type-button focus-ring transition",
-                    activeDiscipline === discipline
-                      ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
-                      : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
-                  )}
-                  onClick={() =>
-                    setActiveDiscipline(
-                      activeDiscipline === discipline ? null : discipline,
-                    )
-                  }
+              <LayoutGroup id="heritage-champions-discipline-filter">
+                <fieldset
+                  className="flex flex-wrap gap-2 border-0 p-0"
+                  aria-label="Filter champions by discipline"
                 >
-                  {discipline}
-                </button>
-              ))}
-            </fieldset>
+                  <legend className="sr-only">Filter champions by discipline</legend>
+                  <motion.button
+                    type="button"
+                    aria-pressed={activeDiscipline === null}
+                    className={cn(
+                      "relative overflow-hidden pill border type-button focus-ring transition",
+                      activeDiscipline === null
+                        ? "border-perazzi-red text-perazzi-red"
+                        : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
+                    )}
+                    onClick={() => { setActiveDiscipline(null); }}
+                    whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+                    transition={reduceMotion ? undefined : homeMotion.micro}
+                  >
+                    {activeDiscipline === null ? (
+                      <motion.span
+                        layoutId="heritage-champions-discipline-highlight"
+                        className="absolute inset-0 rounded-[0.125rem] bg-perazzi-red/10"
+                        transition={homeMotion.springHighlight}
+                        aria-hidden="true"
+                      />
+                    ) : null}
+                    <span className="relative z-10">All</span>
+                  </motion.button>
+                  {disciplines.map((discipline) => {
+                    const active = activeDiscipline === discipline;
+                    return (
+                      <motion.button
+                        key={discipline}
+                        type="button"
+                        aria-pressed={active}
+                        className={cn(
+                          "relative overflow-hidden pill border type-button focus-ring transition",
+                          active
+                            ? "border-perazzi-red text-perazzi-red"
+                            : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
+                        )}
+                        onClick={() =>
+                          setActiveDiscipline(active ? null : discipline)
+                        }
+                        whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+                        transition={reduceMotion ? undefined : homeMotion.micro}
+                      >
+                        {active ? (
+                          <motion.span
+                            layoutId="heritage-champions-discipline-highlight"
+                            className="absolute inset-0 rounded-[0.125rem] bg-perazzi-red/10"
+                            transition={homeMotion.springHighlight}
+                            aria-hidden="true"
+                          />
+                        ) : null}
+                        <span className="relative z-10">{discipline}</span>
+                      </motion.button>
+                    );
+                  })}
+                </fieldset>
+              </LayoutGroup>
+            </motion.div>
           ) : null}
 
           {/* Two-column layout: left = list of names, right = selected champion detail */}
-          <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)] lg:items-start">
+          <motion.div
+            className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)] lg:items-start"
+            initial={reduceMotion ? false : { opacity: 0, y: 18, filter: "blur(10px)" }}
+            whileInView={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
+            viewport={reduceMotion ? undefined : { once: true, amount: 0.4 }}
+            transition={reduceMotion ? undefined : homeMotion.reveal}
+          >
             {/* Left column – names list */}
             <div className="rounded-2xl bg-card/0 p-4 sm:rounded-3xl">
               <Text
@@ -169,6 +215,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
                       key={champion.id}
                       champion={champion}
                       isActive={champion.id === activeChampionId}
+                      reduceMotion={reduceMotion}
                       onSelect={() => {
                         setSelectedChampionId(champion.id);
                         logAnalytics(`ChampionProfileSelected:${champion.id}`);
@@ -189,10 +236,10 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
                 {selectedChampion ? (
                   <motion.div
                     key={selectedChampion.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    initial={reduceMotion ? false : { opacity: 0, y: 12, filter: "blur(10px)" }}
+                    animate={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
+                    exit={reduceMotion ? undefined : { opacity: 0, y: -10, filter: "blur(8px)" }}
+                    transition={reduceMotion ? undefined : homeMotion.micro}
                     className="flex flex-col gap-6"
                   >
                     <ChampionDetail champion={selectedChampion} cardCtaLabel={cardCtaLabel} />
@@ -200,8 +247,10 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
                 ) : (
                   <motion.p
                     key="no-champion"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
+                    initial={reduceMotion ? false : { opacity: 0 }}
+                    animate={reduceMotion ? undefined : { opacity: 1 }}
+                    exit={reduceMotion ? undefined : { opacity: 0 }}
+                    transition={reduceMotion ? undefined : homeMotion.micro}
                     className="type-body-sm text-ink-muted"
                   >
                     Select a champion on the left to view their story.
@@ -209,7 +258,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
                 )}
               </AnimatePresence>
             </div>
-          </div>
+          </motion.div>
         </Section>
       </Container>
     </section>
@@ -219,10 +268,11 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
 type ChampionNameItemProps = Readonly<{
   champion: ChampionEvergreen;
   isActive: boolean;
+  reduceMotion: boolean;
   onSelect: () => void;
 }>;
 
-function ChampionNameItem({ champion, isActive, onSelect }: ChampionNameItemProps) {
+function ChampionNameItem({ champion, isActive, reduceMotion, onSelect }: ChampionNameItemProps) {
   const analyticsRef = useAnalyticsObserver<HTMLLIElement>(
     `ChampionListItemViewed:${champion.id}`,
     { threshold: 0.3 },
@@ -233,23 +283,26 @@ function ChampionNameItem({ champion, isActive, onSelect }: ChampionNameItemProp
       ref={analyticsRef}
       data-analytics-id={`ChampionListItemViewed:${champion.id}`}
     >
-      <button
+      <motion.button
         type="button"
         onClick={onSelect}
         className={cn(
-          "group w-full rounded-2xl px-3 py-2 text-left transition-colors focus-ring",
+          "group relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left transition-colors focus-ring",
           isActive
             ? "bg-perazzi-red text-card"
             : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
         )}
         aria-pressed={isActive}
+        whileHover={reduceMotion ? undefined : { x: 4, transition: homeMotion.micro }}
+        whileTap={reduceMotion ? undefined : { scale: 0.99 }}
       >
+        <span className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
         {champion.title ? (
           <span className={cn("block type-card-title text-xl text-ink", isActive && "text-white")}>
             {champion.title}
           </span>
         ) : null}
-      </button>
+      </motion.button>
     </li>
   );
 }
@@ -263,16 +316,18 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
   return (
     <>
       <div
-        className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-[3/2]"
+        className="group relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-[3/2]"
       >
         <Image
           src={champion.image.url}
           alt={champion.image.alt}
           fill
           sizes="(min-width: 1024px) 320px, 100vw"
-          className="object-cover"
+          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
           loading="lazy"
         />
+        <div className="pointer-events-none absolute inset-0 film-grain opacity-12" aria-hidden="true" />
+        <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
         <div
           className={cn(
             "pointer-events-none absolute inset-0 bg-linear-to-t",
