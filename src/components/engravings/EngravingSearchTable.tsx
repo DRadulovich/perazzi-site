@@ -299,7 +299,11 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
       />
       {hasMore && !showSkeletons && <div ref={loadMoreRef} className="h-10 w-full" aria-hidden="true" />}
 
-      <EngravingDetailDialog selected={selected} onClose={closeModal} />
+      <EngravingDetailDialog
+        key={selected?._id ?? "empty"}
+        selected={selected}
+        onClose={closeModal}
+      />
 
       <EngravingCompareDialog
         open={compareOpen}
@@ -615,10 +619,6 @@ function EngravingDetailDialog({
   onClose: () => void;
 }>) {
   const [heroStatus, setHeroStatus] = useState<"idle" | "loaded" | "error">("idle");
-
-  useEffect(() => {
-    setHeroStatus("idle");
-  }, [selected?._id]);
 
   if (!selected) return null;
   const modalImageUrl = getSanityImageUrl(selected.image, { width: 3000, quality: 95 });

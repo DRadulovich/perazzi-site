@@ -76,17 +76,9 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const detailButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [lastFocusedId, setLastFocusedId] = useState<string | null>(null);
-  const [heroStatus, setHeroStatus] = useState<"idle" | "loaded" | "error">("idle");
   const analyticsRef = useAnalyticsObserver<HTMLElement>("ModelSearchTableSeen");
   const resetVisibleCount = useCallback(() => { setVisibleCount(PAGE_SIZE); }, []);
-  const closeModal = useCallback(() => {
-    setSelectedModel(null);
-    setHeroStatus("idle");
-  }, []);
-
-  useEffect(() => {
-    setHeroStatus("idle");
-  }, [selectedModel?._id]);
+  const closeModal = useCallback(() => { setSelectedModel(null); }, []);
 
   useEffect(() => {
     if (selectedModel || !lastFocusedId) return;
@@ -278,11 +270,6 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
   const renderItems: Array<ModelSearchRow | string> = showSkeletons
     ? skeletonPlaceholders
     : displayModels;
-  const modalImageUrl = selectedModel
-    ? getSanityImageUrl(selectedModel.image, { width: 3200, quality: 95 }) ||
-      selectedModel.imageFallbackUrl ||
-      null
-    : null;
 
   return (
     <section
@@ -378,7 +365,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
               onMouseMove={handleCardMouseMove}
               onMouseLeave={handleCardMouseLeave}
             >
-              <div className="card-media relative aspect-[16/10] w-full bg-perazzi-white">
+              <div className="card-media relative aspect-16/10 w-full bg-perazzi-white">
                 {cardImageUrl ? (
                   <Image
                     src={cardImageUrl}
@@ -436,7 +423,6 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                     detailButtonRefs.current[model._id] = node;
                   }}
                   onClick={() => {
-                    setHeroStatus("idle");
                     setSelectedModel(model);
                     setLastFocusedId(model._id);
                   }}
@@ -464,106 +450,129 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
         <div ref={loadMoreRef} className="h-10 w-full" aria-hidden="true" />
       )}
 
-      <Dialog.Root
-        open={Boolean(selectedModel)}
-        onOpenChange={(nextOpen) => {
-          if (!nextOpen) closeModal();
-        }}
-      >
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
-          <Dialog.Content className="fixed inset-0 z-[60] flex max-h-screen w-full items-center justify-center p-3 outline-none sm:p-4 md:p-6 data-[state=closed]:opacity-0 data-[state=closed]:translate-y-2 data-[state=open]:opacity-100 data-[state=open]:translate-y-0 transition duration-200">
-            {selectedModel ? (
-              <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-perazzi-black/90 text-white shadow-elevated ring-1 ring-white/15 backdrop-blur-xl">
-                <Dialog.Close asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 text-white shadow-soft backdrop-blur-sm hover:border-white/30 hover:bg-black/55 sm:right-5 sm:top-5"
-                  >
-                    Close
-                  </Button>
-                </Dialog.Close>
+      <ModelDetailDialog
+        key={selectedModel?._id ?? "empty"}
+        selectedModel={selectedModel}
+        onClose={closeModal}
+      />
+    </section>
+  );
+}
 
-                <div className="grid flex-1 gap-6 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[3fr,2fr]">
-                  <div className="relative aspect-[16/10] w-full overflow-hidden rounded-3xl bg-white">
-                    {modalImageUrl && heroStatus !== "error" ? (
-                      <Image
-                        src={modalImageUrl}
-                        alt={selectedModel.imageAlt || selectedModel.name}
-                        fill
-                        sizes="(min-width: 1024px) 80vw, 100vw"
-                        className={cn(
-                          "object-contain bg-white transition-opacity duration-700",
-                          heroStatus === "loaded" ? "opacity-100" : "opacity-0",
-                        )}
-                        priority
-                        onLoadingComplete={() => { setHeroStatus("loaded"); }}
-                        onError={() => { setHeroStatus("error"); }}
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-neutral-600">
-                        No Image Available
-                      </div>
+function ModelDetailDialog({
+  selectedModel,
+  onClose,
+}: Readonly<{
+  selectedModel: ModelSearchRow | null;
+  onClose: () => void;
+}>) {
+  const [heroStatus, setHeroStatus] = useState<"idle" | "loaded" | "error">("idle");
+
+  if (!selectedModel) return null;
+
+  const modalImageUrl =
+    getSanityImageUrl(selectedModel.image, { width: 3200, quality: 95 }) ||
+    selectedModel.imageFallbackUrl ||
+    null;
+
+  return (
+    <Dialog.Root
+      open={Boolean(selectedModel)}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
+        <Dialog.Content className="fixed inset-0 z-60 flex max-h-screen w-full items-center justify-center p-3 outline-none sm:p-4 md:p-6 data-[state=closed]:opacity-0 data-[state=closed]:translate-y-2 data-[state=open]:opacity-100 data-[state=open]:translate-y-0 transition duration-200">
+          <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-perazzi-black/90 text-white shadow-elevated ring-1 ring-white/15 backdrop-blur-xl">
+            <Dialog.Close asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 text-white shadow-soft backdrop-blur-sm hover:border-white/30 hover:bg-black/55 sm:right-5 sm:top-5"
+              >
+                Close
+              </Button>
+            </Dialog.Close>
+
+            <div className="grid flex-1 gap-6 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[3fr,2fr]">
+              <div className="relative aspect-16/10 w-full overflow-hidden rounded-3xl bg-white">
+                {modalImageUrl && heroStatus !== "error" ? (
+                  <Image
+                    src={modalImageUrl}
+                    alt={selectedModel.imageAlt || selectedModel.name}
+                    fill
+                    sizes="(min-width: 1024px) 80vw, 100vw"
+                    className={cn(
+                      "object-contain bg-white transition-opacity duration-700",
+                      heroStatus === "loaded" ? "opacity-100" : "opacity-0",
                     )}
-                    <div className="absolute bottom-6 left-6 right-6 text-black">
-                      <Text size="label-tight" className="text-perazzi-red">
-                        {selectedModel.use}
-                      </Text>
-                      <Heading level={2} size="xl" className="text-black">
-                        {selectedModel.name}
-                      </Heading>
-                      <Text size="sm" className="text-black/70">
-                        {selectedModel.version}
-                      </Text>
-                    </div>
+                    priority
+                    onLoadingComplete={() => { setHeroStatus("loaded"); }}
+                    onError={() => { setHeroStatus("error"); }}
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-neutral-600">
+                    No Image Available
                   </div>
-
-                  <div className={`${DETAIL_PANEL_CLASS} grid gap-3 sm:grid-cols-2 lg:grid-cols-3`}>
-                    {[
-                      { label: "Platform", value: selectedModel.platform },
-                      { label: "Use", value: selectedModel.use || undefined },
-                      { label: "Gauge", value: renderList(selectedModel.gaugeNames) },
-                      { label: "Trigger Type", value: renderList(selectedModel.triggerTypes) },
-                      { label: "Trigger Springs", value: renderList(selectedModel.triggerSprings) },
-                      { label: "Rib Type", value: renderList(selectedModel.ribTypes) },
-                      { label: "Rib Style", value: renderList(selectedModel.ribStyles) },
-                      {
-                        label: "Rib Notch",
-                        value:
-                          selectedModel.ribNotch !== null && selectedModel.ribNotch !== undefined
-                            ? String(selectedModel.ribNotch)
-                            : undefined,
-                      },
-                      {
-                        label: "Rib Height",
-                        value:
-                          selectedModel.ribHeight !== null && selectedModel.ribHeight !== undefined
-                            ? `${selectedModel.ribHeight} mm`
-                            : undefined,
-                      },
-                      { label: "Grade", value: selectedModel.grade || undefined },
-                    ]
-                      .filter((entry) => Boolean(entry.value))
-                      .map((entry) => (
-                        <DetailGrid key={entry.label} label={entry.label} value={entry.value} />
-                      ))}
-                  </div>
+                )}
+                <div className="absolute bottom-6 left-6 right-6 text-black">
+                  <Text size="label-tight" className="text-perazzi-red">
+                    {selectedModel.use}
+                  </Text>
+                  <Heading level={2} size="xl" className="text-black">
+                    {selectedModel.name}
+                  </Heading>
+                  <Text size="sm" className="text-black/70">
+                    {selectedModel.version}
+                  </Text>
                 </div>
               </div>
-            ) : null}
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
-    </section>
+
+              <div className={`${DETAIL_PANEL_CLASS} grid gap-3 sm:grid-cols-2 lg:grid-cols-3`}>
+                {[
+                  { label: "Platform", value: selectedModel.platform },
+                  { label: "Use", value: selectedModel.use || undefined },
+                  { label: "Gauge", value: renderList(selectedModel.gaugeNames) },
+                  { label: "Trigger Type", value: renderList(selectedModel.triggerTypes) },
+                  { label: "Trigger Springs", value: renderList(selectedModel.triggerSprings) },
+                  { label: "Rib Type", value: renderList(selectedModel.ribTypes) },
+                  { label: "Rib Style", value: renderList(selectedModel.ribStyles) },
+                  {
+                    label: "Rib Notch",
+                    value:
+                      selectedModel.ribNotch !== null && selectedModel.ribNotch !== undefined
+                        ? String(selectedModel.ribNotch)
+                        : undefined,
+                  },
+                  {
+                    label: "Rib Height",
+                    value:
+                      selectedModel.ribHeight !== null && selectedModel.ribHeight !== undefined
+                        ? `${selectedModel.ribHeight} mm`
+                        : undefined,
+                  },
+                  { label: "Grade", value: selectedModel.grade || undefined },
+                ]
+                  .filter((entry) => Boolean(entry.value))
+                  .map((entry) => (
+                    <DetailGrid key={entry.label} label={entry.label} value={entry.value} />
+                  ))}
+              </div>
+            </div>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 
 function CardSkeleton() {
   return (
     <div className="animate-pulse overflow-hidden rounded-2xl border border-white/5 bg-perazzi-black/60 sm:rounded-3xl">
-      <div className="aspect-[16/10] w-full bg-white" />
+      <div className="aspect-16/10 w-full bg-white" />
       <div className="space-y-3 border-t border-white/5 bg-black/30 p-4 sm:p-6">
         <div className="h-4 w-1/3 rounded bg-white/10" />
         <div className="h-6 w-2/3 rounded bg-white/10" />
