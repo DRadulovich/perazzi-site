@@ -33,11 +33,13 @@ export function EraBackgroundLayer({
           priority={false}
           loading="lazy"
           sizes="100vw"
-          className="object-cover"
+          className="object-cover scale-[1.02]"
         />
       </div>
 
       <div className="absolute inset-0">
+        <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
+        <div className="pointer-events-none absolute inset-0 radial-vignette" aria-hidden="true" />
         <div
           className="absolute inset-0 overlay-dynamic"
           style={{

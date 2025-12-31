@@ -20,6 +20,7 @@ export function HeritageEventRail({
   events,
   className,
   scrollProgress,
+  activeEventIndex = 0,
   prefersReducedMotion = false,
 }: HeritageEventRailProps) {
   const analyticsRef = useAnalyticsObserver<HTMLDivElement>("HeritageEventRailSeen");
@@ -82,7 +83,7 @@ export function HeritageEventRail({
         className="flex h-full w-full will-change-transform"
         style={isScrollable && !isSingle && !prefersReducedMotion ? { x } : undefined}
       >
-        {events.map((event) => (
+        {events.map((event, index) => (
           <div
             key={event.id}
             className="flex h-full w-full flex-none items-stretch px-1 sm:px-2"
@@ -90,6 +91,7 @@ export function HeritageEventRail({
             <HeritageEventSlide
               event={event}
               className="w-full"
+              isActive={index === activeEventIndex}
             />
           </div>
         ))}

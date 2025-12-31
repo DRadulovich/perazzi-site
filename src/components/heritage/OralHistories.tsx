@@ -3,11 +3,12 @@
 import SafeHtml from "@/components/SafeHtml";
 import { useEffect, useId, useState } from "react";
 import Image from "next/image";
-import { useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import type { OralHistoriesUi, OralHistory } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
+import { homeMotion } from "@/lib/motionConfig";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, Heading, Section, Text } from "@/components/ui";
 
 const FALLBACK_TRACK_SRC = `data:text/vtt;charset=utf-8,${encodeURIComponent(
@@ -41,6 +42,8 @@ function buildTranscriptTrack(transcriptHtml: string) {
 
 export function OralHistories({ histories, ui }: OralHistoriesProps) {
   const sectionRef = useAnalyticsObserver<HTMLElement>("OralHistoriesSeen");
+  const prefersReducedMotion = useReducedMotion();
+  const reduceMotion = Boolean(prefersReducedMotion);
 
   if (!histories.length) {
     return null;
@@ -59,24 +62,46 @@ export function OralHistories({ histories, ui }: OralHistoriesProps) {
       className="space-y-6"
       aria-labelledby="oral-histories-heading"
     >
-      <div className="space-y-2">
+      <motion.div
+        className="space-y-2"
+        initial={reduceMotion ? false : { opacity: 0, y: 14, filter: "blur(10px)" }}
+        whileInView={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
+        viewport={reduceMotion ? undefined : { once: true, amount: 0.6 }}
+        transition={reduceMotion ? undefined : homeMotion.revealFast}
+      >
         <Text size="label-tight" className="text-ink-muted">
           {eyebrow}
         </Text>
         <Heading id="oral-histories-heading" level={2} size="xl" className="text-ink">
           {heading}
         </Heading>
-      </div>
-      <div className="grid gap-6 md:grid-cols-2">
+      </motion.div>
+      <motion.div
+        className="grid gap-6 md:grid-cols-2"
+        initial={reduceMotion ? false : "hidden"}
+        whileInView={reduceMotion ? undefined : "show"}
+        viewport={reduceMotion ? undefined : { once: true, amount: 0.35 }}
+        variants={{
+          hidden: {},
+          show: { transition: { staggerChildren: reduceMotion ? 0 : 0.08 } },
+        }}
+      >
         {histories.map((history) => (
-          <OralHistoryCard
+          <motion.div
             key={history.id}
-            history={history}
-            readLabel={readLabel}
-            hideLabel={hideLabel}
-          />
+            variants={{
+              hidden: { opacity: 0, y: 14, filter: "blur(10px)" },
+              show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
+            }}
+          >
+            <OralHistoryCard
+              history={history}
+              readLabel={readLabel}
+              hideLabel={hideLabel}
+            />
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </Section>
   );
 }
@@ -88,6 +113,7 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
   const [open, setOpen] = useState(false);
   const contentId = useId();
   const prefersReducedMotion = useReducedMotion();
+  const reduceMotion = Boolean(prefersReducedMotion);
 
   useEffect(() => {
     if (open) {
@@ -99,8 +125,13 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
     <article
       ref={analyticsRef}
       data-analytics-id={`OralHistorySeen:${history.id}`}
-      className="flex h-full flex-col gap-4 rounded-2xl border border-border/75 bg-card/80 p-5 shadow-soft sm:rounded-3xl sm:p-6"
+      className={cn(
+        "group relative flex h-full flex-col gap-4 overflow-hidden rounded-2xl border border-border/75 bg-card/80 p-5 shadow-soft transition sm:rounded-3xl sm:p-6",
+        reduceMotion ? "transform-none" : "hover:-translate-y-0.5 hover:border-border/60 hover:bg-card/90",
+      )}
     >
+      <div className="pointer-events-none absolute inset-0 film-grain opacity-10" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
       {history.image ? (
         <div
           className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-dynamic"
@@ -111,8 +142,10 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
             alt={history.image.alt}
             fill
             sizes="(min-width: 1024px) 320px, 100vw"
-            className="object-cover"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
           />
+          <div className="pointer-events-none absolute inset-0 film-grain opacity-12" aria-hidden="true" />
+          <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
         </div>
       ) : null}
       <div className="space-y-2">
@@ -165,7 +198,7 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
               aria-hidden="true"
               className={cn(
                 "text-sm",
-                prefersReducedMotion ? "transition-none" : "transition-transform",
+                reduceMotion ? "transition-none" : "transition-transform",
                 open ? "rotate-45" : "rotate-0",
               )}
             >
@@ -176,7 +209,7 @@ function OralHistoryCard({ history, readLabel, hideLabel }: OralHistoryCardProps
             id={contentId}
             className={cn(
               "mt-4 overflow-hidden rounded-2xl border border-border/60 bg-card/40 p-4 type-body-sm text-ink-muted sm:bg-card/70",
-              prefersReducedMotion
+              reduceMotion
                 ? "transition-none"
                 : "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
             )}

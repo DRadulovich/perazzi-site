@@ -5,6 +5,7 @@ import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion
 import Image from "next/image";
 import Link from "next/link";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { homeMotion } from "@/lib/motionConfig";
 import type { ExperienceHero } from "@/types/experience";
 
 type Breadcrumb = {
@@ -44,6 +45,19 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
     ? undefined
     : { y: parallax };
 
+  const content = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: prefersReducedMotion ? 0 : 0.1 },
+    },
+  } as const;
+
+  const item = {
+    hidden: { opacity: 0, y: 16, filter: "blur(12px)" },
+    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
+  } as const;
+
   return (
     <section
       className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 min-h-screen full-bleed full-bleed-offset-top-lg"
@@ -61,6 +75,7 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
           }}
         />
         <div className="absolute inset-0 bg-black/35" />
+        <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
         <div className="pointer-events-none absolute inset-0 overlay-gradient-hero" />
       </motion.div>
 
@@ -68,12 +83,17 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
         ref={setRefs}
         data-analytics-id="HeroSeen:experience"
         className="relative z-10 mx-auto min-h-screen max-w-6xl overflow-hidden rounded-2xl border border-white/12 bg-black/40 text-white shadow-elevated ring-1 ring-white/10 backdrop-blur-xl sm:rounded-3xl"
-        initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
-        animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
+        initial={prefersReducedMotion ? false : { opacity: 0, y: 28, filter: "blur(12px)" }}
+        animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
+        transition={prefersReducedMotion ? undefined : homeMotion.reveal}
       >
-        <div className="flex min-h-screen flex-col gap-8 px-6 py-12 sm:px-10 lg:px-16">
-          <div className="flex flex-col gap-6 lg:max-w-4xl">
+        <motion.div
+          className="flex min-h-screen flex-col gap-8 px-6 py-12 sm:px-10 lg:px-16"
+          variants={content}
+          initial={prefersReducedMotion ? false : "hidden"}
+          animate={prefersReducedMotion ? undefined : "show"}
+        >
+          <motion.div className="flex flex-col gap-6 lg:max-w-4xl" variants={item}>
             {breadcrumbs?.length ? (
               <nav aria-label="Breadcrumb">
                 <ol className="flex flex-wrap items-center gap-2 type-label-tight text-white/70">
@@ -81,7 +101,7 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
                     <li key={crumb.href} className="flex items-center gap-2">
                       <Link
                         href={crumb.href}
-                        className="focus-ring rounded-full px-3 py-1 hover:text-white"
+                        className="focus-ring rounded-full px-3 py-1 transition hover:text-white"
                         prefetch={false}
                       >
                         {crumb.label}
@@ -100,7 +120,7 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
               <p className="type-label text-white/70">
                 Experience
               </p>
-              <h1 className="text-balance type-section">
+              <h1 id="experience-hero-heading" className="text-balance type-section">
                 {hero.title}
               </h1>
               {hero.subheading ? (
@@ -115,14 +135,15 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
             >
               Scroll
             </div>
-          </div>
+          </motion.div>
 
           <motion.div
             style={prefersReducedMotion ? undefined : mediaStyle}
             aria-hidden="true"
+            variants={item}
           >
             <div
-              className="relative aspect-[16/9] w-full min-h-[360px] overflow-hidden rounded-2xl bg-black/30 shadow-elevated ring-1 ring-white/10"
+              className="group relative aspect-[16/9] w-full min-h-[360px] overflow-hidden rounded-2xl bg-black/30 shadow-elevated ring-1 ring-white/10"
             >
               <Image
                 src={hero.background.url}
@@ -130,12 +151,14 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
                 fill
                 priority
                 sizes="(min-width: 1280px) 1200px, (min-width: 1024px) 960px, 100vw"
-                className="object-cover"
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.01]"
               />
+              <div className="pointer-events-none absolute inset-0 film-grain opacity-15" aria-hidden="true" />
+              <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       </motion.section>
     </section>
   );
