@@ -16,17 +16,19 @@ const OPTIONS: ReadonlyArray<{ value: TextVerbosity; label: string; title: strin
 
 export function VerbosityToggle({ value, onChange, disabled = false }: VerbosityToggleProps) {
   return (
-    <fieldset className="flex flex-wrap items-center gap-2">
+    <fieldset className="flex w-full flex-col gap-2">
       <legend className="sr-only">Verbosity</legend>
       <span className="type-label-tight text-ink-muted">Verbosity</span>
       <div
-        className="inline-flex items-center rounded-full border border-border bg-card/70 p-1 shadow-soft backdrop-blur-sm"
+        className="grid w-full grid-cols-3 gap-1 rounded-sm border border-border bg-card/70 p-1 shadow-soft backdrop-blur-sm"
         role="radiogroup"
         aria-label="Verbosity"
         aria-disabled={disabled}
       >
-        {OPTIONS.map((option) => (
-          <label key={option.value} className="cursor-pointer select-none">
+        {OPTIONS.map((option) => {
+          const isActive = value === option.value;
+          return (
+            <label key={option.value} className="flex cursor-pointer select-none">
             <input
               type="radio"
               name="pgpt-verbosity"
@@ -38,9 +40,10 @@ export function VerbosityToggle({ value, onChange, disabled = false }: Verbosity
             />
             <span
               className={[
-                "block pill type-label-tight transition",
-                "text-ink-muted hover:bg-subtle",
-                "peer-checked:bg-ink peer-checked:text-card peer-checked:shadow-soft",
+                "flex w-full items-center justify-center rounded-sm px-3 py-2 text-center type-label-tight transition",
+                isActive
+                  ? "bg-ink text-canvas shadow-soft"
+                  : "text-ink-muted hover:bg-subtle",
                 "peer-focus-visible:outline peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink",
                 "peer-disabled:cursor-not-allowed peer-disabled:opacity-60",
               ].join(" ")}
@@ -48,8 +51,9 @@ export function VerbosityToggle({ value, onChange, disabled = false }: Verbosity
             >
               {option.label}
             </span>
-          </label>
-        ))}
+            </label>
+          );
+        })}
       </div>
     </fieldset>
   );

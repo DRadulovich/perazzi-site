@@ -741,7 +741,7 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
       <div className="flex flex-1 flex-col overflow-hidden">
         <div
           ref={scrollRef}
-          className="min-h-0 flex-1 overflow-y-auto bg-canvas/30 px-6 py-10 type-body-sm text-ink"
+          className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto bg-canvas/30 px-6 py-10 type-body-sm text-ink"
         >
           <div
             className={cn(
@@ -792,13 +792,13 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
             Ask about heritage, platforms, or service, and I’ll help you connect the craft to your own journey.
           </Text>
         ) : (
-          <ul className="flex flex-col gap-6">
+          <ul className="flex min-w-0 flex-col gap-6">
             {messages.map((msg, index) => {
               const isAssistant = msg.role === "assistant";
               const showMarker =
                 isAssistant && (index === 0 || messages[index - 1]?.role !== "assistant");
               return (
-                <li key={msg.id} className="relative">
+                <li key={msg.id} className="relative min-w-0">
                   {showMarker && (
                     <div className="type-label-tight mb-3 flex items-center gap-3 text-white">
                       <div className="flex-1 border-t border-perazzi-red" aria-hidden="true" />
@@ -810,7 +810,7 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
                   )}
                   <div className={isAssistant ? "text-left" : "text-right"}>
                     <div
-                      className={`inline-block rounded-2xl px-4 py-3 ${
+                      className={`inline-block max-w-full break-words rounded-2xl px-4 py-3 ${
                         isAssistant
                           ? "bg-card/80 border border-border/70 text-ink shadow-soft backdrop-blur-sm"
                           : "bg-ink text-card shadow-soft"
