@@ -63,7 +63,7 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
       id="heritage-serial-lookup"
       ref={analyticsRef}
       data-analytics-id="SerialLookupSeen"
-      className="relative isolate w-screen max-w-[100vw] min-h-[75vh] overflow-hidden py-10 sm:py-16 full-bleed scroll-mt-24"
+      className="heritage-record relative isolate w-screen max-w-[100vw] min-h-[75vh] overflow-hidden py-10 sm:py-16 full-bleed scroll-mt-24"
       aria-labelledby="serial-lookup-heading"
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">

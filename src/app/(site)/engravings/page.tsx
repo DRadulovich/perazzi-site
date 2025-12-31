@@ -46,7 +46,7 @@ export default async function EngravingsPage() {
 
   return (
     <div className="space-y-12">
-      <section className="relative mb-12 overflow-hidden rounded-3xl border border-white/10 bg-black/60">
+      <section className="relative mb-12 overflow-hidden rounded-sm border border-white/10 bg-black/60">
         <div className="relative h-72 w-full sm:h-96 lg:h-112">
           <Image
             src={engravingHero}
@@ -61,13 +61,13 @@ export default async function EngravingsPage() {
             <Text size="label-tight" className="text-white/70">
               Engraving Search
             </Text>
-            <Heading level={1} size="display" className="text-white">
+            <Heading level={1} size="xl" className="text-white">
               The Perazzi Engraving Library
             </Heading>
-            <Text size="sm" className="max-w-2xl text-white/80">
+            <p className="max-w-2xl text-white/80 type-section-subtitle">
               A living archive of hand and light. Here, master engravers leave their signatures—lines that breathe,
               patterns that carry meaning—so your shotgun can wear a story as singular as its owner.
-            </Text>
+            </p>
           </div>
         </div>
       </section>

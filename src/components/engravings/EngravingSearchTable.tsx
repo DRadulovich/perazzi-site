@@ -38,9 +38,9 @@ const PREFERRED_GRADE_ORDER = [
 ];
 const PREFERRED_SIDE_ORDER = ["Left", "Under", "Right"];
 const FILTER_PANEL_CLASS =
-  "space-y-4 rounded-3xl border border-white/15 bg-[linear-gradient(135deg,var(--perazzi-black),color-mix(in srgb,var(--perazzi-black) 85%, black))]/95 px-4 py-5 shadow-elevated sm:px-6 sm:py-6";
+  "space-y-4 rounded-sm border border-border/70 bg-card/70 px-4 py-5 shadow-elevated backdrop-blur-sm sm:px-6 sm:py-6";
 const CARD_CLASS =
-  "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/10 bg-perazzi-black/80 text-left shadow-medium transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red sm:rounded-3xl sm:shadow-elevated";
+  "group flex h-full flex-col overflow-hidden rounded-sm border border-white/10 bg-perazzi-black/80 text-left shadow-medium transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red sm:shadow-elevated";
 const SPEC_PANEL_CLASS =
   "grid gap-4 border-t border-white/10 bg-black/40 px-4 py-4 text-neutral-200 sm:grid-cols-2 sm:px-6 sm:py-5";
 
@@ -120,6 +120,7 @@ function observeLoadMore(
 
 export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchProps>) {
   const [query, setQuery] = useState("");
+  const [filterQuery, setFilterQuery] = useState("");
   const [gradeFilters, setGradeFilters] = useState<string[]>([]);
   const [sideFilters, setSideFilters] = useState<string[]>([]);
   const [selected, setSelected] = useState<EngravingRow | null>(null);
@@ -173,7 +174,7 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
     button?.focus();
   }, [selected, lastFocusedId]);
 
-  const searchFiltered = useMemo(() => filterByQuery(engravings, query), [engravings, query]);
+  const searchFiltered = useMemo(() => filterByQuery(engravings, filterQuery), [engravings, filterQuery]);
   const optionCounts = useMemo(() => countOptions(searchFiltered), [searchFiltered]);
   const gradeOptions = useMemo(() => sortGradeOptions(optionCounts.grade), [optionCounts.grade]);
   const sideOptions = useMemo(() => sortSideOptions(optionCounts.side), [optionCounts.side]);
@@ -188,8 +189,9 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
   }, [filteredEngravings.length]);
 
   const handleQueryChange = (value: string) => {
+    setQuery(value);
     startTransition(() => {
-      setQuery(value);
+      setFilterQuery(value);
       setVisibleCount(PAGE_SIZE);
     });
   };
@@ -238,20 +240,20 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
     >
       <div className={FILTER_PANEL_CLASS}>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <label className="flex w-full items-center gap-3 rounded-full border border-white/20 bg-black/40 px-4 py-2 type-body-sm text-neutral-300 focus-within:border-white">
-            <span className="text-neutral-500">Search</span>
+          <label className="flex w-full items-center gap-3 rounded-sm border border-border/70 bg-card/60 px-4 py-2 type-body-sm text-ink-muted focus-within:border-ink/40">
+            <span className="text-ink-muted">Search</span>
             <Input
               type="search"
               placeholder="Search engraving ID or grade…"
               value={query}
               onChange={(event) => { handleQueryChange(event.target.value); }}
-              className="w-full border-0 bg-transparent px-0 py-0 type-body-sm text-white placeholder:text-neutral-600 shadow-none focus:border-0"
+              className="w-full border-0 bg-transparent px-0 py-0 type-body-sm text-ink placeholder:text-ink-muted shadow-none! focus:border-0"
             />
           </label>
-          <Text asChild size="caption" className="text-neutral-400" leading="normal">
+          <Text asChild size="caption" className="text-ink-muted" leading="normal">
             <p aria-live="polite" aria-atomic="true">
-              Showing <span className="text-white">{filteredEngravings.length}</span>{" "}
-              of <span className="text-white">{engravings.length}</span>
+              Showing <span className="text-ink">{filteredEngravings.length}</span>{" "}
+              of <span className="text-ink">{engravings.length}</span>
             </p>
           </Text>
         </div>
@@ -277,7 +279,7 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
               onClick={clearFilters}
               variant="ghost"
               size="sm"
-              className="rounded-full border border-white/30 text-white/80 hover:border-white hover:text-white hover:bg-white/5"
+              className="rounded-sm border border-border/70 text-ink-muted hover:border-ink/30 hover:bg-card/85 hover:text-ink"
             >
               Reset filters
             </Button>
@@ -288,7 +290,7 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
       <EngravingCardsGrid
         items={renderItems}
         favorites={favorites}
-        query={query}
+        query={filterQuery}
         toggleFavorite={toggleFavorite}
         onSelect={openDetails}
         onRegisterDetailButton={registerDetailButton}
@@ -297,7 +299,11 @@ export function EngravingSearchTable({ engravings }: Readonly<EngravingSearchPro
       />
       {hasMore && !showSkeletons && <div ref={loadMoreRef} className="h-10 w-full" aria-hidden="true" />}
 
-      <EngravingDetailDialog selected={selected} onClose={closeModal} />
+      <EngravingDetailDialog
+        key={selected?._id ?? "empty"}
+        selected={selected}
+        onClose={closeModal}
+      />
 
       <EngravingCompareDialog
         open={compareOpen}
@@ -326,25 +332,17 @@ function FilterGroup({
   options,
   values,
   onToggle,
-  tone = "dark",
 }: Readonly<{
   label: string;
   options: Array<{ value: string; count: number }>;
   values: string[];
   onToggle: (value: string) => void;
-  tone?: "light" | "dark";
 }>) {
   if (!options.length) return null;
   const total = options.reduce((sum, option) => sum + option.count, 0);
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <Text
-        asChild
-        size="label-tight"
-        className={clsx(
-          tone === "dark" ? "text-neutral-500" : "text-ink-muted",
-        )}
-      >
+      <Text asChild size="label-tight" className="text-ink-muted">
         <span>{label}</span>
       </Text>
       <div className="flex flex-wrap gap-2">
@@ -355,7 +353,6 @@ function FilterGroup({
             active={values.includes(option.value)}
             label={`${option.value} (${option.count})`}
             onClick={() => { onToggle(option.value); }}
-            tone={tone}
           />
         ))}
       </div>
@@ -367,29 +364,19 @@ function FilterChip({
   label,
   active,
   onClick,
-  tone = "dark",
 }: Readonly<{
   label: string;
   active: boolean;
   onClick: () => void;
-  tone?: "light" | "dark";
 }>) {
-  const toneClasses =
-    tone === "dark"
-      ? {
-          active: "bg-white text-black",
-          inactive: "border border-white/20 bg-transparent text-white/70 hover:border-white/60",
-        }
-      : {
-          active: "bg-ink text-white",
-          inactive: "border border-border bg-transparent text-ink/70 hover:border-ink",
-        };
-  const chipStateClass = active ? toneClasses.active : toneClasses.inactive;
+  const chipStateClass = active
+    ? "border border-ink bg-ink text-canvas"
+    : "border border-border/70 bg-card/40 text-ink/80 hover:border-ink/40 hover:bg-card/70";
   return (
     <button
       type="button"
       onClick={onClick}
-      className={clsx("type-label-tight pill transition", chipStateClass)}
+      className={clsx("type-label-tight pill transition focus-ring", chipStateClass)}
     >
       {label}
     </button>
@@ -399,7 +386,7 @@ function FilterChip({
 function CardSkeleton() {
   const skeletonRows = ["first", "second", "third", "fourth"];
   return (
-    <div className="animate-pulse overflow-hidden rounded-2xl border border-white/5 bg-perazzi-black/60 sm:rounded-3xl">
+    <div className="animate-pulse overflow-hidden rounded-sm border border-white/5 bg-perazzi-black/60">
       <div className="aspect-4/3 w-full bg-white/10" />
       <div className="space-y-3 border-t border-white/5 bg-black/30 p-4 sm:p-6">
         <div className="h-4 w-1/3 rounded bg-white/10" />
@@ -427,9 +414,9 @@ function FavoritesPanel({
 }>) {
   if (!favorites.length) return null;
   return (
-    <div className="rounded-3xl border border-white/10 bg-black/30 p-4 text-white">
+    <div className="rounded-sm border border-border/70 bg-card/60 p-4 text-ink shadow-soft backdrop-blur-sm">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Text size="caption" className="text-neutral-400">
+        <Text size="caption" className="text-ink-muted">
           Favorites ({favorites.length}/6)
         </Text>
         <Button
@@ -439,8 +426,8 @@ function FavoritesPanel({
           variant="ghost"
           size="sm"
           className={clsx(
-            "rounded-full border border-white/40 text-white hover:border-white hover:text-white hover:bg-white/5",
-            favorites.length < 2 && "border-white/20 text-white/40",
+            "rounded-sm border border-border/70 text-ink hover:border-ink/30 hover:bg-card/85",
+            favorites.length < 2 && "border-border/40 text-ink-muted",
           )}
         >
           Compare
@@ -450,24 +437,24 @@ function FavoritesPanel({
         {favorites.map((fav) => {
           const previewUrl = getSanityImageUrl(fav.image, { width: 200, quality: 70 });
           return (
-            <div key={fav._id} className="flex flex-col items-center text-center text-white">
+            <div key={fav._id} className="flex flex-col items-center text-center text-ink">
               <button
                 type="button"
-                className="relative h-16 w-16 overflow-hidden rounded-full border border-white/20 bg-white"
+                className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-sm border border-border/70 bg-canvas"
                 onClick={() => { onSelect(fav); }}
               >
                 {previewUrl ? (
                   <Image src={previewUrl} alt={fav.imageAlt || fav.engravingId} fill className="object-cover" />
                 ) : (
-                  <span className="type-caption text-black">No Image</span>
+                  <span className="type-caption text-ink">No Image</span>
                 )}
               </button>
-              <Heading level={4} size="sm" className="mt-2 text-white">
+              <Heading level={4} size="sm" className="mt-2 text-ink">
                 #{fav.engravingId}
               </Heading>
               <button
                 type="button"
-                className="type-label-tight text-white/60 hover:text-white"
+                className="type-label-tight text-ink-muted hover:text-ink"
                 onClick={() => { onToggle(fav); }}
               >
                 Remove
@@ -521,7 +508,7 @@ function EngravingCardsGrid({
       {!showSkeletons && filteredLength === 0 && (
         <Text
           asChild
-          className="col-span-full rounded-2xl border border-dashed border-white/20 py-16 text-center text-neutral-500 sm:rounded-3xl"
+          className="col-span-full rounded-sm border border-dashed border-border/70 bg-card/40 py-16 text-center text-ink-muted"
           leading="normal"
         >
           <p>No engravings match your current filters.</p>
@@ -600,7 +587,7 @@ function EngravingCard({
           variant="ghost"
           size="sm"
           className={clsx(
-            "rounded-full border px-5 text-white hover:border-white hover:text-white hover:bg-white/5",
+            "rounded-sm border px-5 text-white hover:border-white hover:text-white hover:bg-white/5",
             isFavorite
               ? "border-perazzi-red bg-perazzi-red/80 text-white hover:bg-perazzi-red/90"
               : "border-white/30",
@@ -615,7 +602,7 @@ function EngravingCard({
           onClick={() => { onSelect(engraving); }}
           variant="ghost"
           size="sm"
-          className="rounded-full border border-white/30 px-5 text-white hover:border-white hover:text-white hover:bg-white/5"
+          className="rounded-sm border border-white/30 px-5 text-white hover:border-white hover:text-white hover:bg-white/5"
         >
           View details
         </Button>
@@ -631,7 +618,7 @@ function EngravingDetailDialog({
   selected: EngravingRow | null;
   onClose: () => void;
 }>) {
-  const [heroLoaded, setHeroLoaded] = useState(false);
+  const [heroStatus, setHeroStatus] = useState<"idle" | "loaded" | "error">("idle");
 
   if (!selected) return null;
   const modalImageUrl = getSanityImageUrl(selected.image, { width: 3000, quality: 95 });
@@ -645,21 +632,21 @@ function EngravingDetailDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
         <Dialog.Content className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 md:p-6 outline-none">
-          <div className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-perazzi-black/95 text-white shadow-elevated">
+          <div className="relative flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-sm border border-white/10 bg-perazzi-black/95 text-white shadow-elevated">
             <Dialog.Close asChild>
               <Button
                 type="button"
                 variant="secondary"
                 size="sm"
-                className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 text-black hover:border-black hover:bg-white sm:right-5 sm:top-5"
+                className="absolute right-4 top-4 z-10 rounded-sm border border-black/30 bg-white/90 px-4 text-black hover:border-black hover:bg-white sm:right-5 sm:top-5"
               >
                 Close
               </Button>
             </Dialog.Close>
 
             <div className="grid flex-1 overflow-y-auto p-4 sm:p-6">
-              <div className="relative aspect-4/3 w-full overflow-hidden rounded-3xl bg-white">
-                {modalImageUrl ? (
+              <div className="relative aspect-4/3 w-full overflow-hidden rounded-sm bg-white">
+                {modalImageUrl && heroStatus !== "error" ? (
                   <Image
                     src={modalImageUrl}
                     alt={selected.imageAlt || `Engraving ${selected.engravingId}`}
@@ -668,10 +655,11 @@ function EngravingDetailDialog({
                     className={clsx(
                       "object-contain bg-white transition-opacity duration-700",
                       selected.engravingSide === "Under" ? "object-right" : "object-center",
-                      heroLoaded ? "opacity-100" : "opacity-0",
+                      heroStatus === "loaded" ? "opacity-100" : "opacity-0",
                     )}
                     priority
-                    onLoadingComplete={() => { setHeroLoaded(true); }}
+                    onLoadingComplete={() => { setHeroStatus("loaded"); }}
+                    onError={() => { setHeroStatus("error"); }}
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-neutral-600">No Image Available</div>
@@ -721,13 +709,13 @@ function EngravingCompareDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
         <Dialog.Content className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 outline-none">
-          <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-perazzi-black/95 text-white shadow-elevated">
+          <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-sm border border-white/10 bg-perazzi-black/95 text-white shadow-elevated">
             <Dialog.Close asChild>
               <Button
                 type="button"
                 variant="secondary"
                 size="sm"
-                className="absolute right-4 top-4 z-10 rounded-full border border-black/30 bg-white/90 px-4 text-black hover:border-black hover:bg-white sm:right-5 sm:top-5"
+                className="absolute right-4 top-4 z-10 rounded-sm border border-black/30 bg-white/90 px-4 text-black hover:border-black hover:bg-white sm:right-5 sm:top-5"
               >
                 Close
               </Button>
@@ -744,8 +732,8 @@ function EngravingCompareDialog({
               {favorites.map((fav) => {
                 const compareImage = getSanityImageUrl(fav.image, { width: 2400, quality: 95 });
                 return (
-                  <article key={fav._id} className="rounded-3xl border border-white/10 bg-black/30 p-4">
-                    <div className="relative aspect-4/3 w-full overflow-hidden rounded-2xl bg-white">
+                  <article key={fav._id} className="rounded-sm border border-white/10 bg-black/30 p-4">
+                    <div className="relative aspect-4/3 w-full overflow-hidden rounded-sm bg-white">
                       {compareImage ? (
                         <Image
                           src={compareImage}
@@ -783,9 +771,10 @@ function EngravingCompareDialog({
 }
 
 function highlightText(text: string, needle: string): ReactNode {
-  if (!needle.trim()) return text;
+  const trimmedNeedle = needle.trim();
+  if (!trimmedNeedle) return text;
   const escapePattern = /[.*+?^${}()|[\]\\]/g;
-  const escapedNeedle = needle.replaceAll(escapePattern, String.raw`\$&`);
+  const escapedNeedle = trimmedNeedle.replaceAll(escapePattern, String.raw`\$&`);
   const regex = new RegExp(String.raw`(${escapedNeedle})`, "ig");
   const occurrences = new Map<string, number>();
 
@@ -793,7 +782,7 @@ function highlightText(text: string, needle: string): ReactNode {
     const occurrenceIndex = (occurrences.get(part) ?? 0) + 1;
     occurrences.set(part, occurrenceIndex);
     const key = `${part}-${occurrenceIndex}`;
-    return part.toLowerCase() === needle.toLowerCase() ? (
+    return part.toLowerCase() === trimmedNeedle.toLowerCase() ? (
       <mark key={key} className="bg-transparent text-perazzi-red">
         {part}
       </mark>

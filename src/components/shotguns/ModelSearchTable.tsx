@@ -1,6 +1,5 @@
 "use client";
 
-import clsx from "clsx";
 import Image from "next/image";
 import { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
@@ -10,6 +9,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Button, Heading, Input, Text } from "@/components/ui";
 import { getSanityImageUrl } from "@/lib/sanityImage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { cn } from "@/lib/utils";
 
 type SpecList = readonly string[] | undefined;
 
@@ -48,7 +48,7 @@ type SpecProps = Readonly<{ label: string; value?: string }>;
 
 const PAGE_SIZE = 9;
 const FILTER_PANEL_CLASS =
-  "space-y-4 rounded-3xl border border-white/15 bg-[linear-gradient(135deg,var(--perazzi-black),color-mix(in srgb,var(--perazzi-black) 85%, black))]/95 px-4 py-5 shadow-elevated sm:px-6 sm:py-6";
+  "space-y-4 rounded-3xl border border-border/70 bg-card/70 px-4 py-5 shadow-elevated backdrop-blur-sm sm:px-6 sm:py-6";
 const CARD_SHELL_CLASS =
   "group flex h-full flex-col overflow-hidden rounded-2xl border border-white/12 bg-perazzi-black/80 text-left shadow-medium ring-1 ring-white/10 backdrop-blur-sm transition hover:-translate-y-1 hover:border-perazzi-red/70 focus-within:outline focus-within:outline-2 focus-within:outline-perazzi-red sm:rounded-3xl";
 const SPEC_PANEL_CLASS =
@@ -64,6 +64,7 @@ function resolveFilterValues(value: string, current: string[]) {
 
 export function ModelSearchTable({ models }: ModelShowcaseProps) {
   const [query, setQuery] = useState("");
+  const [filterQuery, setFilterQuery] = useState("");
   const [platformFilters, setPlatformFilters] = useState<string[]>([]);
   const [gaugeFilters, setGaugeFilters] = useState<string[]>([]);
   const [useFilters, setUseFilters] = useState<string[]>([]);
@@ -75,13 +76,9 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const detailButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [lastFocusedId, setLastFocusedId] = useState<string | null>(null);
-  const [heroLoaded, setHeroLoaded] = useState(false);
   const analyticsRef = useAnalyticsObserver<HTMLElement>("ModelSearchTableSeen");
   const resetVisibleCount = useCallback(() => { setVisibleCount(PAGE_SIZE); }, []);
-  const closeModal = useCallback(() => {
-    setSelectedModel(null);
-    setHeroLoaded(false);
-  }, []);
+  const closeModal = useCallback(() => { setSelectedModel(null); }, []);
 
   useEffect(() => {
     if (selectedModel || !lastFocusedId) return;
@@ -90,7 +87,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
   }, [selectedModel, lastFocusedId]);
 
   const searchFiltered = useMemo(() => {
-    const needle = query.trim().toLowerCase();
+    const needle = filterQuery.trim().toLowerCase();
     if (!needle) return models;
     return models.filter((model) => {
       const haystack = [
@@ -110,7 +107,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
         .toLowerCase();
       return haystack.includes(needle);
     });
-  }, [models, query]);
+  }, [models, filterQuery]);
 
   const optionCounts = useMemo(() => {
     const platform: Record<string, number> = {};
@@ -201,8 +198,9 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
   }, [incrementVisibleCount]);
 
   const handleQueryChange = (value: string) => {
+    setQuery(value);
     startTransition(() => {
-      setQuery(value);
+      setFilterQuery(value);
       resetVisibleCount();
     });
   };
@@ -272,11 +270,6 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
   const renderItems: Array<ModelSearchRow | string> = showSkeletons
     ? skeletonPlaceholders
     : displayModels;
-  const modalImageUrl = selectedModel
-    ? getSanityImageUrl(selectedModel.image, { width: 3200, quality: 95 }) ||
-      selectedModel.imageFallbackUrl ||
-      null
-    : null;
 
   return (
     <section
@@ -286,25 +279,26 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
     >
       <div className={FILTER_PANEL_CLASS}>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <label className="flex w-full items-center gap-3 rounded-full border border-white/20 bg-black/40 px-4 py-2 type-body-sm text-neutral-300 focus-within:border-white">
-            <span className="text-neutral-500">Search</span>
+          <label className="flex w-full items-center gap-3 rounded-full border border-border/70 bg-card/60 px-4 py-2 type-body-sm text-ink-muted focus-within:border-ink/40">
+            <span className="text-ink-muted">Search</span>
             <Input
               type="search"
               placeholder="Search models, gauges, triggers..."
               value={query}
               onChange={(event) => { handleQueryChange(event.target.value); }}
-              className="w-full border-0 bg-transparent px-0 py-0 type-body-sm text-white placeholder:text-neutral-600 shadow-none focus:border-0"
+              className="w-full border-0 bg-transparent px-0 py-0 type-body-sm text-ink placeholder:text-ink-muted shadow-none focus:shadow-none focus-visible:shadow-none focus:border-0"
+              style={{ boxShadow: "none" }}
             />
           </label>
           <Text
             asChild
             size="caption"
-            className="text-neutral-400"
+            className="text-ink-muted"
             leading="normal"
           >
             <p aria-live="polite" aria-atomic="true">
-              Showing <span className="text-white">{filteredModels.length}</span>{" "}
-              of <span className="text-white">{models.length}</span>
+              Showing <span className="text-ink">{filteredModels.length}</span>{" "}
+              of <span className="text-ink">{models.length}</span>
             </p>
           </Text>
         </div>
@@ -346,7 +340,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
               onClick={clearFilters}
               variant="ghost"
               size="sm"
-              className="rounded-full border border-white/30 text-white/80 hover:border-white hover:text-white hover:bg-white/5"
+              className="rounded-full border border-border/70 text-ink-muted hover:border-ink/30 hover:bg-card/85 hover:text-ink"
             >
               Reset filters
             </Button>
@@ -392,11 +386,11 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                  {/*
                     Keep highlight behavior consistent while showing only the model name on the card.
                   */}
-                  <Heading level={3} size="lg" className="text-ink">
-                    {highlightText(model.name, query)}
+                  <Heading level={3} size="lg" className="text-black">
+                    {highlightText(model.name, filterQuery)}
                   </Heading>
                   <Text size="sm" className="text-ink-muted">
-                    {highlightText((model.gaugeNames || []).join(", ") || "", query)}
+                    {highlightText((model.gaugeNames || []).join(", ") || "", filterQuery)}
                   </Text>
                 </div>
               </div>
@@ -429,7 +423,6 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                     detailButtonRefs.current[model._id] = node;
                   }}
                   onClick={() => {
-                    setHeroLoaded(false);
                     setSelectedModel(model);
                     setLastFocusedId(model._id);
                   }}
@@ -446,7 +439,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
         {!showSkeletons && filteredModels.length === 0 && (
           <Text
             asChild
-            className="col-span-full rounded-3xl border border-dashed border-white/20 py-16 text-center text-neutral-500"
+            className="col-span-full rounded-3xl border border-dashed border-border/70 bg-card/40 py-16 text-center text-ink-muted"
             leading="normal"
           >
             <p>No models match your current filters.</p>
@@ -457,98 +450,122 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
         <div ref={loadMoreRef} className="h-10 w-full" aria-hidden="true" />
       )}
 
-      <Dialog.Root
-        open={Boolean(selectedModel)}
-        onOpenChange={(nextOpen) => {
-          if (!nextOpen) closeModal();
-        }}
-      >
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
-          <Dialog.Content className="fixed inset-0 z-60 flex max-h-screen w-full items-center justify-center p-3 outline-none sm:p-4 md:p-6 data-[state=closed]:opacity-0 data-[state=closed]:translate-y-2 data-[state=open]:opacity-100 data-[state=open]:translate-y-0 transition duration-200">
-            {selectedModel ? (
-              <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-perazzi-black/90 text-white shadow-elevated ring-1 ring-white/15 backdrop-blur-xl">
-                <Dialog.Close asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 text-white shadow-soft backdrop-blur-sm hover:border-white/30 hover:bg-black/55 sm:right-5 sm:top-5"
-                  >
-                    Close
-                  </Button>
-                </Dialog.Close>
+      <ModelDetailDialog
+        key={selectedModel?._id ?? "empty"}
+        selectedModel={selectedModel}
+        onClose={closeModal}
+      />
+    </section>
+  );
+}
 
-                <div className="grid flex-1 gap-6 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[3fr,2fr]">
-                  <div className="relative aspect-16/10 w-full overflow-hidden rounded-3xl bg-white">
-                    {modalImageUrl ? (
-                      <Image
-                        src={modalImageUrl}
-                        alt={selectedModel.imageAlt || selectedModel.name}
-                        fill
-                        sizes="(min-width: 1024px) 80vw, 100vw"
-                        className={clsx(
-                          "object-contain bg-white transition-opacity duration-700",
-                          heroLoaded ? "opacity-100" : "opacity-0",
-                        )}
-                        priority
-                        onLoadingComplete={() => { setHeroLoaded(true); }}
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-neutral-600">
-                        No Image Available
-                      </div>
+function ModelDetailDialog({
+  selectedModel,
+  onClose,
+}: Readonly<{
+  selectedModel: ModelSearchRow | null;
+  onClose: () => void;
+}>) {
+  const [heroStatus, setHeroStatus] = useState<"idle" | "loaded" | "error">("idle");
+
+  if (!selectedModel) return null;
+
+  const modalImageUrl =
+    getSanityImageUrl(selectedModel.image, { width: 3200, quality: 95 }) ||
+    selectedModel.imageFallbackUrl ||
+    null;
+
+  return (
+    <Dialog.Root
+      open={Boolean(selectedModel)}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
+      }}
+    >
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-200 data-[state=open]:opacity-100" />
+        <Dialog.Content className="fixed inset-0 z-60 flex max-h-screen w-full items-center justify-center p-3 outline-none sm:p-4 md:p-6 data-[state=closed]:opacity-0 data-[state=closed]:translate-y-2 data-[state=open]:opacity-100 data-[state=open]:translate-y-0 transition duration-200">
+          <div className="relative flex max-h-full w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-perazzi-black/90 text-white shadow-elevated ring-1 ring-white/15 backdrop-blur-xl">
+            <Dialog.Close asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 text-white shadow-soft backdrop-blur-sm hover:border-white/30 hover:bg-black/55 sm:right-5 sm:top-5"
+              >
+                Close
+              </Button>
+            </Dialog.Close>
+
+            <div className="grid flex-1 gap-6 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[3fr,2fr]">
+              <div className="relative aspect-16/10 w-full overflow-hidden rounded-3xl bg-white">
+                {modalImageUrl && heroStatus !== "error" ? (
+                  <Image
+                    src={modalImageUrl}
+                    alt={selectedModel.imageAlt || selectedModel.name}
+                    fill
+                    sizes="(min-width: 1024px) 80vw, 100vw"
+                    className={cn(
+                      "object-contain bg-white transition-opacity duration-700",
+                      heroStatus === "loaded" ? "opacity-100" : "opacity-0",
                     )}
-                    <div className="absolute bottom-6 left-6 right-6 text-black">
-                      <Text size="label-tight" className="text-perazzi-red">
-                        {selectedModel.use}
-                      </Text>
-                      <Heading level={2} size="xl" className="text-black">
-                        {selectedModel.name}
-                      </Heading>
-                      <Text size="sm" className="text-neutral-300">
-                        {selectedModel.version}
-                      </Text>
-                    </div>
+                    priority
+                    onLoadingComplete={() => { setHeroStatus("loaded"); }}
+                    onError={() => { setHeroStatus("error"); }}
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-neutral-600">
+                    No Image Available
                   </div>
-
-                  <div className={`${DETAIL_PANEL_CLASS} grid gap-3 sm:grid-cols-2 lg:grid-cols-3`}>
-                    {[
-                      { label: "Platform", value: selectedModel.platform },
-                      { label: "Use", value: selectedModel.use || undefined },
-                      { label: "Gauge", value: renderList(selectedModel.gaugeNames) },
-                      { label: "Trigger Type", value: renderList(selectedModel.triggerTypes) },
-                      { label: "Trigger Springs", value: renderList(selectedModel.triggerSprings) },
-                      { label: "Rib Type", value: renderList(selectedModel.ribTypes) },
-                      { label: "Rib Style", value: renderList(selectedModel.ribStyles) },
-                      {
-                        label: "Rib Notch",
-                        value:
-                          selectedModel.ribNotch !== null && selectedModel.ribNotch !== undefined
-                            ? String(selectedModel.ribNotch)
-                            : undefined,
-                      },
-                      {
-                        label: "Rib Height",
-                        value:
-                          selectedModel.ribHeight !== null && selectedModel.ribHeight !== undefined
-                            ? `${selectedModel.ribHeight} mm`
-                            : undefined,
-                      },
-                      { label: "Grade", value: selectedModel.grade || undefined },
-                    ]
-                      .filter((entry) => Boolean(entry.value))
-                      .map((entry) => (
-                        <DetailGrid key={entry.label} label={entry.label} value={entry.value} />
-                      ))}
-                  </div>
+                )}
+                <div className="absolute bottom-6 left-6 right-6 text-black">
+                  <Text size="label-tight" className="text-perazzi-red">
+                    {selectedModel.use}
+                  </Text>
+                  <Heading level={2} size="xl" className="text-black">
+                    {selectedModel.name}
+                  </Heading>
+                  <Text size="sm" className="text-black/70">
+                    {selectedModel.version}
+                  </Text>
                 </div>
               </div>
-            ) : null}
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
-    </section>
+
+              <div className={`${DETAIL_PANEL_CLASS} grid gap-3 sm:grid-cols-2 lg:grid-cols-3`}>
+                {[
+                  { label: "Platform", value: selectedModel.platform },
+                  { label: "Use", value: selectedModel.use || undefined },
+                  { label: "Gauge", value: renderList(selectedModel.gaugeNames) },
+                  { label: "Trigger Type", value: renderList(selectedModel.triggerTypes) },
+                  { label: "Trigger Springs", value: renderList(selectedModel.triggerSprings) },
+                  { label: "Rib Type", value: renderList(selectedModel.ribTypes) },
+                  { label: "Rib Style", value: renderList(selectedModel.ribStyles) },
+                  {
+                    label: "Rib Notch",
+                    value:
+                      selectedModel.ribNotch !== null && selectedModel.ribNotch !== undefined
+                        ? String(selectedModel.ribNotch)
+                        : undefined,
+                  },
+                  {
+                    label: "Rib Height",
+                    value:
+                      selectedModel.ribHeight !== null && selectedModel.ribHeight !== undefined
+                        ? `${selectedModel.ribHeight} mm`
+                        : undefined,
+                  },
+                  { label: "Grade", value: selectedModel.grade || undefined },
+                ]
+                  .filter((entry) => Boolean(entry.value))
+                  .map((entry) => (
+                    <DetailGrid key={entry.label} label={entry.label} value={entry.value} />
+                  ))}
+              </div>
+            </div>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 
@@ -581,7 +598,7 @@ function FilterGroup({
   };
   return (
     <div className="flex flex-wrap items-center gap-3">
-      <Text asChild size="label-tight" className="text-neutral-500" leading="normal">
+      <Text asChild size="label-tight" className="text-ink-muted" leading="normal">
         <span>{label}</span>
       </Text>
       <div className="flex flex-wrap gap-2">
@@ -622,11 +639,11 @@ function FilterChip({
     <button
       type="button"
       onClick={onClick}
-      className={clsx(
-        "type-label-tight pill transition",
+      className={cn(
+        "type-label-tight pill transition focus-ring",
         active
-          ? "bg-white text-black"
-          : "border border-white/20 bg-transparent text-white/70 hover:border-white/60",
+          ? "border border-ink bg-ink text-canvas"
+          : "border border-border/70 bg-card/40 text-ink/80 hover:border-ink/40 hover:bg-card/70",
       )}
     >
       {label}

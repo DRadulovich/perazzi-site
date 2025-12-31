@@ -88,10 +88,10 @@ export default async function ModelSearchPage() {
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
           <div className="absolute inset-0 flex flex-col justify-center gap-4 px-8 py-10 text-white sm:px-12 lg:px-16">
             <Text size="label-tight" className="text-white/70">Model Search</Text>
-            <Heading level={1} size="display" className="text-white">
+            <Heading level={1} size="xl" className="text-white">
               The Perazzi Shotguns Database
             </Heading>
-            <Text size="sm" className="max-w-2xl text-white/80">
+            <Text className="type-section-subtitle max-w-2xl text-white/80">
               Browse every catalogued platform, grade, and gauge combination we maintain inside Sanity.
               Filter by competitive discipline or game application, then deep-dive into full-resolution
               photography and setup specs.
