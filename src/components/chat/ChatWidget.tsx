@@ -1,6 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ChatPanel } from "@/components/chat/ChatPanel";
@@ -190,10 +191,12 @@ export function ChatWidget() {
             onClick={() => { setIsOpen(true); }}
             className="chat-widget-trigger focus-ring flex h-12 w-12 items-center justify-center rounded-full bg-perazzi-red shadow-elevated ring-1 ring-black/10 hover:bg-perazzi-red/90 active:bg-perazzi-red/95"
           >
-            <img
+            <Image
               src="/images/pgpt-widget-icon.png"
               alt=""
               aria-hidden="true"
+              width={36}
+              height={36}
               className="h-9 w-9"
             />
           </button>
@@ -245,10 +248,12 @@ export function ChatWidget() {
                 onClick={() => setIsOpen(true)}
                 className="chat-widget-trigger focus-ring flex h-12 w-12 items-center justify-center rounded-full bg-perazzi-red shadow-elevated ring-1 ring-black/10 hover:bg-perazzi-red/90 active:bg-perazzi-red/95"
               >
-                <img
+                <Image
                   src="/images/pgpt-widget-icon.png"
                   alt=""
                   aria-hidden="true"
+                  width={36}
+                  height={36}
                   className="h-9 w-9"
                 />
               </button>
