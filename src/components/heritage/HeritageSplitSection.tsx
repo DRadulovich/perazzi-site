@@ -144,10 +144,7 @@ export function HeritageSplitSection({
                       {link.icon}
                     </span>
                   ) : null}
-                  <span className="relative">
-                    {link.label}
-                    <span className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
-                  </span>
+                  <span className="relative">{link.label}</span>
                 </Link>
               ))}
             </motion.div>
@@ -198,4 +195,3 @@ export function HeritageSplitSection({
     </motion.section>
   );
 }
-

@@ -3,6 +3,7 @@
 import { getImageProps } from "next/image";
 import { AnimatePresence, motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
 import { CleanText } from "@/components/system/CleanText";
 import type { HomeData } from "@/types/content";
@@ -27,6 +28,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
   const focusAfterCloseRef = useRef<HTMLElement | null>(null);
   const [mediaLoaded, setMediaLoaded] = useState(false);
   const [manifestoOpen, setManifestoOpen] = useState(false);
+  const [modalRoot, setModalRoot] = useState<HTMLElement | null>(null);
   const analyticsRef = useAnalyticsObserver(analyticsId ?? "HeroSeen");
   const prefersReducedMotion = useReducedMotion();
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -92,6 +94,11 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
       document.body.style.overflow = previousOverflow;
     };
   }, [manifestoOpen]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    setModalRoot(document.body);
+  }, []);
 
   useEffect(() => {
     if (mediaLoaded) return;
@@ -340,75 +347,80 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
 
       <ScrollIndicator className="bottom-10" />
 
-      <AnimatePresence
-        onExitComplete={() => {
-          const focusTarget = focusAfterCloseRef.current;
-          focusAfterCloseRef.current = null;
-          focusTarget?.focus();
-        }}
-      >
-        {manifestoOpen ? (
-          <motion.dialog
-            key="manifesto"
-            ref={dialogRef}
-            open
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, pointerEvents: "none" }}
-            transition={overlayTransition}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 px-6 text-center text-white backdrop-blur-sm"
-            aria-labelledby="manifesto-title"
-            aria-modal="true"
-            tabIndex={-1}
-            onClick={(event) => {
-              if (event.target === event.currentTarget) {
-                closeManifesto();
-              }
-            }}
-          >
-            <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.985, y: 8 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.985, y: 8 }}
-              transition={panelTransition}
-              className="relative max-w-2xl space-y-6 rounded-3xl border border-white/10 bg-black/45 p-8 shadow-elevated ring-1 ring-white/10 backdrop-blur-xl"
+      {modalRoot
+        ? createPortal(
+            <AnimatePresence
+              onExitComplete={() => {
+                const focusTarget = focusAfterCloseRef.current;
+                focusAfterCloseRef.current = null;
+                focusTarget?.focus();
+              }}
             >
-              <h2 id="manifesto-title" className="sr-only">
-                Perazzi Manifesto
-              </h2>
-              <div className="space-y-3 type-caps text-white">
-                {[
-                  "A Perazzi is not something you own.",
-                  "It is something you grow into.",
-                  "A quiet companion to the parts of you that refuse to be ordinary.",
-                  "It waits, patiently, for the moment you are ready to become it.",
-                ].map((line, idx) => (
-                  <motion.p
-                    key={line}
-                    initial={motionEnabled ? { opacity: 0, y: 10, filter: "blur(10px)" } : { opacity: 1 }}
-                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                    transition={motionEnabled ? { delay: 0.22 + idx * 0.12, ...revealFastTransition } : { duration: 0.01 }}
+              {manifestoOpen ? (
+                <motion.dialog
+                  key="manifesto"
+                  ref={dialogRef}
+                  open
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0, pointerEvents: "none" }}
+                  transition={overlayTransition}
+                  className="fixed inset-0 z-[80] flex items-center justify-center bg-black/65 px-6 text-center text-white backdrop-blur-sm"
+                  aria-labelledby="manifesto-title"
+                  aria-modal="true"
+                  tabIndex={-1}
+                  onClick={(event) => {
+                    if (event.target === event.currentTarget) {
+                      closeManifesto();
+                    }
+                  }}
+                >
+                  <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.985, y: 8 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.985, y: 8 }}
+                    transition={panelTransition}
+                    className="relative max-w-2xl space-y-6 rounded-3xl border border-white/10 bg-black/45 p-8 shadow-elevated ring-1 ring-white/10 backdrop-blur-xl"
                   >
-                    {line}
-                  </motion.p>
-                ))}
-              </div>
-              <motion.button
-                type="button"
-                className="mt-8 inline-flex items-center justify-center rounded-full px-4 py-2 type-button text-white/70 underline underline-offset-4 transition hover:text-white focus-ring"
-                onClick={closeManifesto}
-                initial={motionEnabled ? { opacity: 0 } : { opacity: 1 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={motionEnabled ? { delay: 0.85, ...homeMotion.micro } : { duration: 0.01 }}
-              >
-                Close – return to the surface
-              </motion.button>
-            </motion.div>
-          </motion.dialog>
-        ) : null}
-      </AnimatePresence>
+                    <h2 id="manifesto-title" className="sr-only">
+                      Perazzi Manifesto
+                    </h2>
+                    <div className="space-y-3 type-caps text-white">
+                      {[
+                        "A Perazzi is not something you own.",
+                        "It is something you grow into.",
+                        "A quiet companion to the parts of you that refuse to be ordinary.",
+                        "It waits, patiently, for the moment you are ready to become it.",
+                      ].map((line, idx) => (
+                        <motion.p
+                          key={line}
+                          initial={motionEnabled ? { opacity: 0, y: 10, filter: "blur(10px)" } : { opacity: 1 }}
+                          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                          transition={motionEnabled ? { delay: 0.22 + idx * 0.12, ...revealFastTransition } : { duration: 0.01 }}
+                        >
+                          {line}
+                        </motion.p>
+                      ))}
+                    </div>
+                    <motion.button
+                      type="button"
+                      className="mt-8 inline-flex items-center justify-center rounded-full px-4 py-2 type-button text-white/70 underline underline-offset-4 transition hover:text-white focus-ring"
+                      onClick={closeManifesto}
+                      initial={motionEnabled ? { opacity: 0 } : { opacity: 1 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={motionEnabled ? { delay: 0.85, ...homeMotion.micro } : { duration: 0.01 }}
+                    >
+                      Close – return to the surface
+                    </motion.button>
+                  </motion.div>
+                </motion.dialog>
+              ) : null}
+            </AnimatePresence>,
+            modalRoot,
+          )
+        : null}
     </section>
   );
 }

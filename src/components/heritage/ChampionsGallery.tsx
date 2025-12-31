@@ -296,7 +296,6 @@ function ChampionNameItem({ champion, isActive, reduceMotion, onSelect }: Champi
         whileHover={reduceMotion ? undefined : { x: 4, transition: homeMotion.micro }}
         whileTap={reduceMotion ? undefined : { scale: 0.99 }}
       >
-        <span className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
         {champion.title ? (
           <span className={cn("block type-card-title text-xl text-ink", isActive && "text-white")}>
             {champion.title}

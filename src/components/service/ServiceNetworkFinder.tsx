@@ -268,7 +268,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
 
         <div className="space-y-3">
           <motion.div
-            className="group relative overflow-hidden rounded-2xl border border-border/60 bg-(--color-canvas) shadow-soft aspect-[3/2]"
+            className="group relative overflow-hidden rounded-2xl border border-border/60 bg-(--color-canvas) shadow-soft aspect-3/2"
             initial={motionEnabled ? { opacity: 0, y: 12, filter: "blur(10px)" } : false}
             whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
             viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}

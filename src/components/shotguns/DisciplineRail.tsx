@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
 
 import type { Platform, ShotgunsLandingData } from "@/types/catalog";
@@ -75,6 +76,8 @@ export function DisciplineRail({
   const [modelError, setModelError] = useState<string | null>(null);
   const [openCategory, setOpenCategory] = useState<string | null>(DISCIPLINE_TABS[0]?.label ?? null);
   const [activeDisciplineId, setActiveDisciplineId] = useState<string | null>(null);
+  const [modalRoot, setModalRoot] = useState<HTMLElement | null>(null);
+  const modelRequestRef = useRef<AbortController | null>(null);
   const railAnalyticsRef = useAnalyticsObserver<HTMLElement>("DisciplineRailSeen");
   const motionEnabled = !reduceMotion;
 
@@ -82,27 +85,40 @@ export function DisciplineRail({
     setReduceMotion(Boolean(prefersReducedMotion));
   }, [prefersReducedMotion]);
 
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    setModalRoot(document.body);
+  }, []);
+
   const platformName = (platformId: string) =>
     platforms.find((platform) => platform.id === platformId)?.name ??
     platformId.replace("platform-", "").toUpperCase();
 
   const handleModelSelect = async (modelId: string) => {
     if (!modelId) return;
+    modelRequestRef.current?.abort();
+    const controller = new AbortController();
+    modelRequestRef.current = controller;
     setModelLoadingId(modelId);
     setModelError(null);
     try {
-      const response = await fetch(`/api/models/${modelId}`);
+      const response = await fetch(`/api/models/${modelId}`, { signal: controller.signal });
       if (!response.ok) {
         throw new Error("Unable to load model details.");
       }
       const data = (await response.json()) as ModelDetail;
+      if (controller.signal.aborted) return;
       setSelectedModel(data);
       setModelModalOpen(true);
       setModelModalPresent(true);
     } catch (error) {
+      if (controller.signal.aborted) return;
       setModelError(error instanceof Error ? error.message : "Something went wrong.");
     } finally {
-      setModelLoadingId(null);
+      if (modelRequestRef.current === controller) {
+        setModelLoadingId(null);
+        modelRequestRef.current = null;
+      }
     }
   };
 
@@ -294,7 +310,7 @@ export function DisciplineRail({
                                           isActive ? "text-white" : "text-ink-muted",
                                         )}
                                       >
-                                        {discipline.id.replaceAll("-", " ")}
+                                        {discipline.name || discipline.id.replaceAll("-", " ")}
                                       </span>
                                     </motion.button>
                                   </li>
@@ -310,7 +326,7 @@ export function DisciplineRail({
               </LayoutGroup>
             </div>
 
-            <div className="min-h-104">
+            <div className="min-h-[26rem]">
               <AnimatePresence initial={false} mode="popLayout">
                 {selectedDiscipline ? (
                   <motion.div
@@ -339,92 +355,97 @@ export function DisciplineRail({
           </div>
         </Section>
 
-        <AnimatePresence
-          onExitComplete={() => {
-            if (!modelModalOpen) setModelModalPresent(false);
-          }}
-        >
-          {modelModalOpen && selectedModel ? (
-            <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-              role="dialog"
-              aria-modal="true"
-              initial={motionEnabled ? { opacity: 0 } : false}
-              animate={{ opacity: 1 }}
-              exit={motionEnabled ? { opacity: 0 } : undefined}
-              transition={motionEnabled ? homeMotion.revealFast : undefined}
-            >
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-hidden />
-              <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
-              <button
-                type="button"
-                className="absolute inset-0 z-0 cursor-default border-0 bg-transparent"
-                aria-label="Close modal"
-                onClick={() => { setModelModalOpen(false); }}
-              />
-              <motion.div
-                className="relative z-10 flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-perazzi-black/90 text-white shadow-elevated ring-1 ring-white/15 backdrop-blur-xl"
-                initial={
-                  motionEnabled
-                    ? { opacity: 0, y: 18, scale: 0.985, filter: "blur(14px)" }
-                    : false
-                }
-                animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-                exit={motionEnabled ? { opacity: 0, y: 18, scale: 0.985, filter: "blur(14px)" } : undefined}
-                transition={motionEnabled ? homeMotion.revealFast : undefined}
+        {modalRoot
+          ? createPortal(
+              <AnimatePresence
+                onExitComplete={() => {
+                  if (!modelModalOpen) setModelModalPresent(false);
+                }}
               >
-                <div className="pointer-events-none absolute inset-0 film-grain opacity-10" aria-hidden="true" />
-                <button
-                  type="button"
-                  className="type-button absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-white shadow-soft backdrop-blur-sm transition hover:border-white/30 hover:bg-black/55 focus-ring sm:right-5 sm:top-5"
-                  onClick={() => setModelModalOpen(false)}
-                >
-                  Close
-                </button>
-
-                <div className="grid flex-1 gap-6 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[3fr,1.6fr]">
-                  <div className="group card-media relative aspect-16/10 w-full overflow-hidden rounded-3xl bg-white">
-                    {selectedModel.imageUrl ? (
-                      <Image
-                        src={selectedModel.imageUrl}
-                        alt={selectedModel.imageAlt || selectedModel.name}
-                        fill
-                        className="object-contain bg-white transition-transform duration-700 ease-out group-hover:scale-[1.01]"
-                        sizes="(min-width: 1024px) 70vw, 100vw"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-neutral-600">No Image Available</div>
-                    )}
-                    <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
-                    <div className="absolute inset-x-0 bottom-6 flex flex-col gap-2 px-6 text-black">
-                      <Text size="label-tight" className="text-perazzi-red">
-                        {selectedModel.grade}
-                      </Text>
-                      <Heading
-                        level={2}
-                        size="xl"
-                        className="text-black"
+                {modelModalOpen && selectedModel ? (
+                  <motion.div
+                    className="fixed inset-0 z-[80] flex items-center justify-center p-4"
+                    role="dialog"
+                    aria-modal="true"
+                    initial={motionEnabled ? { opacity: 0 } : false}
+                    animate={{ opacity: 1 }}
+                    exit={motionEnabled ? { opacity: 0 } : undefined}
+                    transition={motionEnabled ? homeMotion.revealFast : undefined}
+                  >
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-hidden />
+                    <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
+                    <button
+                      type="button"
+                      className="absolute inset-0 z-0 cursor-default border-0 bg-transparent"
+                      aria-label="Close modal"
+                      onClick={() => { setModelModalOpen(false); }}
+                    />
+                    <motion.div
+                      className="relative z-10 flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-perazzi-black/90 text-white shadow-elevated ring-1 ring-white/15 backdrop-blur-xl"
+                      initial={
+                        motionEnabled
+                          ? { opacity: 0, y: 18, scale: 0.985, filter: "blur(14px)" }
+                          : false
+                      }
+                      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+                      exit={motionEnabled ? { opacity: 0, y: 18, scale: 0.985, filter: "blur(14px)" } : undefined}
+                      transition={motionEnabled ? homeMotion.revealFast : undefined}
+                    >
+                      <div className="pointer-events-none absolute inset-0 film-grain opacity-10" aria-hidden="true" />
+                      <button
+                        type="button"
+                        className="type-button absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-white shadow-soft backdrop-blur-sm transition hover:border-white/30 hover:bg-black/55 focus-ring sm:right-5 sm:top-5"
+                        onClick={() => setModelModalOpen(false)}
                       >
-                        {selectedModel.name}
-                      </Heading>
-                      <Text size="sm" className="text-black/70">
-                        {selectedModel.use}
-                      </Text>
-                    </div>
-                  </div>
-                  <div className="grid gap-4 rounded-3xl border border-white/12 bg-black/35 p-4 shadow-soft ring-1 ring-white/10 backdrop-blur-sm sm:p-6 sm:grid-cols-2 lg:grid-cols-3">
-                    <Detail label="Platform" value={selectedModel.platform} />
-                    <Detail label="Gauge" value={selectedModel.gaugeNames?.join(", ")} />
-                    <Detail label="Trigger Type" value={selectedModel.triggerTypes?.join(", ")} />
-                    <Detail label="Trigger Springs" value={selectedModel.triggerSprings?.join(", ")} />
-                    <Detail label="Rib Type" value={selectedModel.ribTypes?.join(", ")} />
-                    <Detail label="Rib Style" value={selectedModel.ribStyles?.join(", ")} />
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
+                        Close
+                      </button>
+
+                      <div className="grid flex-1 gap-6 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[3fr,1.6fr]">
+                        <div className="group card-media relative aspect-16/10 w-full overflow-hidden rounded-3xl bg-white">
+                          {selectedModel.imageUrl ? (
+                            <Image
+                              src={selectedModel.imageUrl}
+                              alt={selectedModel.imageAlt || selectedModel.name}
+                              fill
+                              className="object-contain bg-white transition-transform duration-700 ease-out group-hover:scale-[1.01]"
+                              sizes="(min-width: 1024px) 70vw, 100vw"
+                            />
+                          ) : (
+                            <div className="flex h-full items-center justify-center text-neutral-600">No Image Available</div>
+                          )}
+                          <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
+                          <div className="absolute inset-x-0 bottom-6 flex flex-col gap-2 px-6 text-black">
+                            <Text size="label-tight" className="text-perazzi-red">
+                              {selectedModel.grade}
+                            </Text>
+                            <Heading
+                              level={2}
+                              size="xl"
+                              className="text-black"
+                            >
+                              {selectedModel.name}
+                            </Heading>
+                            <Text size="sm" className="text-black/70">
+                              {selectedModel.use}
+                            </Text>
+                          </div>
+                        </div>
+                        <div className="grid gap-4 rounded-3xl border border-white/12 bg-black/35 p-4 shadow-soft ring-1 ring-white/10 backdrop-blur-sm sm:p-6 sm:grid-cols-2 lg:grid-cols-3">
+                          <Detail label="Platform" value={selectedModel.platform} />
+                          <Detail label="Gauge" value={selectedModel.gaugeNames?.join(", ")} />
+                          <Detail label="Trigger Type" value={selectedModel.triggerTypes?.join(", ")} />
+                          <Detail label="Trigger Springs" value={selectedModel.triggerSprings?.join(", ")} />
+                          <Detail label="Rib Type" value={selectedModel.ribTypes?.join(", ")} />
+                          <Detail label="Rib Style" value={selectedModel.ribStyles?.join(", ")} />
+                        </div>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>,
+              modalRoot,
+            )
+          : null}
 
         {modelError ? (
           <Text

@@ -83,9 +83,7 @@ export function HeritageIntroSection({
               href="#heritage-serial-lookup"
               className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/70 px-6 py-3 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
             >
-              <span className="relative">
-                {"Skip Perazzi Timeline"}<span className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
-              </span>
+              <span className="relative">{"Skip Perazzi Timeline"}</span>
             </Link>
           </motion.div>
         </motion.div>
@@ -116,9 +114,7 @@ export function HeritageIntroSection({
               href="#heritage-serial-lookup"
               className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/70 px-6 py-3 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
             >
-              <span className="relative">
-                {"Skip Perazzi Timeline"}<span className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
-              </span>
+              <span className="relative">{"Skip Perazzi Timeline"}</span>
             </Link>
           </div>
         </motion.div>
