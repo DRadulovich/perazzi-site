@@ -148,3 +148,110 @@ Journal article body should use Mrs Eaves Roman:
 - Change sizes? Edit `--type-*` tokens.
 - Change font family/weight/transform? Edit `.type-*` classes.
 - Apply styles on pages? Use `Heading`, `Text`, or `type-*` classes.
+
+---
+
+# Typographic System Overview
+
+The typography of the Perazzi website is designed as a **conversation between heritage and precision**. Each typeface serves a distinct cognitive role, guiding the reader between moments of reverence, clarity, and action. The system deliberately separates *meaning* from *function*, allowing the experience to feel both human and exacting—much like a bespoke Perazzi itself.
+
+---
+
+## **Mrs Eaves — The Voice of Heritage, Craft, and Meaning**
+
+Mrs Eaves is used wherever the site speaks about *why* something matters. It carries history, imperfection, and humanity in its forms. This typeface is intentionally reserved for moments that ask the reader to slow down, reflect, or feel continuity with tradition.
+
+### **Hero Titles — Mrs Eaves Roman Petite Caps**
+
+**Intent:** Establish authority without spectacle
+**Feeling:** Engraved, deliberate, timeless
+**Purpose:** The hero title sets the emotional tone of the page. Petite caps evoke the language of engraving, archival book titles, and artisan marks—refined but restrained. At large scale, the compressed proportions create gravity without shouting, signaling mastery earned over time.
+
+This is the typographic equivalent of a hand-cut line: controlled, confident, and permanent.
+
+---
+
+### **Hero Subtitles & Quotes — Adobe Handwriting Ernie**
+
+**Intent:** Introduce human voice and narrative flow
+**Feeling:** Personal, reflective, human
+**Purpose:** The handwriting form is used where the site *speaks*, rather than declares. It suggests thought, dialogue, and intention—acting as a counterbalance to the authority of the caps above it. In both hero subtitles and qoutes, it signals a deeper layer of meaning within a larger structure, reminding the reader that human hands built this.
+
+This treatment implies that someone is present behind the craft.
+
+---
+
+### **Group Section Titles — Mrs Eaves Roman Small Caps**
+
+**Intent:** Create hierarchy within tradition
+**Feeling:** Editorial, composed, quietly formal
+**Purpose:** Small caps function as chapter markers. They establish structure while remaining within the serif world, preserving tonal continuity. Compared to the hero’s petite caps, they are less intense—signaling organization rather than proclamation.
+
+These titles orient the reader without breaking the spell of craftsmanship.
+
+---
+
+### **Journal Article Body — Mrs Eaves Roman**
+
+**Intent:** Create a distinct space for contemplation
+**Feeling:** Literary, reverent, unhurried
+**Purpose:** Journal articles are treated as a different cognitive environment from the rest of the site. Mrs Eaves Roman is used here to slow reading pace, encourage depth, and give the text room to breathe. Its wider proportions and softer rhythm signal that the reader has entered a reflective space, closer to a book or essay than a product page.
+
+This choice reinforces that knowledge, story, and lineage deserve patience.
+
+---
+
+## **Neue Haas Grotesk — The Voice of Clarity, Navigation, and Action**
+
+Neue Haas Grotesk is used wherever the site needs to *function*. It is neutral, precise, and invisible when used correctly. This typeface ensures that clarity never competes with meaning.
+
+### **Hero Eyebrows — Neue Haas Grotesk Text 55 Roman (All Caps)**
+
+**Intent:** Provide orientation and context
+**Feeling:** Calm, precise, modern
+**Purpose:** Eyebrows act as metadata. Using Neue Haas Grotesk in all caps distinguishes them from the emotional content below and signals factual framing—brand name, category, or section context. This keeps hierarchy clean and prevents confusion between narrative and navigation.
+
+It answers “where am I?” without demanding attention.
+
+---
+
+### **Body Copy — Neue Haas Grotesk Text 55 Roman**
+
+**Intent:** Maximize readability and effortlessness
+**Feeling:** Neutral, balanced, unobtrusive
+**Purpose:** The primary body copy uses Neue Haas Grotesk to disappear in service of content. Its proportions and spacing are optimized for screen reading, allowing users to move through complex information without fatigue. This ensures that comprehension remains frictionless.
+
+The font does not perform—it supports.
+
+---
+
+### **Body Italics — Neue Haas Grotesk Text 56 Italic**
+
+**Intent:** Emphasize without changing voice
+**Feeling:** Subtle, controlled, coherent
+**Purpose:** Italics are kept within the same family to preserve flow and continuity. Emphasis comes from rhythm and spacing rather than stylistic contrast, ensuring that quoted or highlighted material feels integrated, not ornamental.
+
+This keeps the reader anchored.
+
+---
+
+### **Buttons & UI Actions — Neue Haas Grotesk Text 65 Medium**
+
+**Intent:** Signal decisiveness and interactivity
+**Feeling:** Confident, intentional, engineered
+**Purpose:** A slightly heavier weight is used for buttons to communicate action without aggression. It distinguishes interactive elements from passive text while maintaining typographic consistency across the interface.
+
+This reinforces trust: actions feel deliberate, not promotional.
+
+---
+
+# System Philosophy (In Plain Terms)
+
+* **Mrs Eaves** handles *meaning, memory, and voice*
+* **Ernie** handles *the human element*
+* **Neue Haas Grotesk** handles *clarity, structure, and motion*
+
+Serif and sans-serif are not mixed arbitrarily. They are assigned roles based on how a reader thinks and feels at different moments in the experience. The result is a typographic system that mirrors Perazzi itself:
+**heritage and precision existing together without compromise.**
+
+

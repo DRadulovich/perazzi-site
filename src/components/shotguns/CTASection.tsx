@@ -3,7 +3,9 @@
 import { Button, Heading, Section, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { logAnalytics } from "@/lib/analytics";
+import { homeMotion } from "@/lib/motionConfig";
 
 type CTASectionProps = {
   readonly text: string;
@@ -24,6 +26,13 @@ export function CTASection({
 }: CTASectionProps) {
   const analyticsRef = useAnalyticsObserver(dataAnalyticsId);
   const prefersReducedMotion = useReducedMotion();
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    setReduceMotion(Boolean(prefersReducedMotion));
+  }, [prefersReducedMotion]);
+
+  const motionEnabled = !reduceMotion;
 
   const logClick = (type: "primary" | "secondary") => {
     logAnalytics(`FinalCTAClicked:${type}`);
@@ -32,6 +41,19 @@ export function CTASection({
     }
   };
 
+  const content = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: motionEnabled ? 0.12 : 0 },
+    },
+  } as const;
+
+  const item = {
+    hidden: { opacity: 0, y: 14, filter: "blur(10px)" },
+    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
+  } as const;
+
   return (
     <MotionSection
       ref={analyticsRef}
@@ -39,20 +61,30 @@ export function CTASection({
       padding="md"
       bordered={false}
       className="bg-canvas text-ink"
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
-      whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.5 }}
-      transition={{ duration: 0.5, ease: [0.33, 1, 0.68, 1] }}
+      initial={motionEnabled ? { opacity: 0, y: 30 } : false}
+      whileInView={motionEnabled ? { opacity: 1, y: 0 } : undefined}
+      viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}
+      transition={motionEnabled ? homeMotion.reveal : undefined}
       aria-labelledby="shotguns-cta-heading"
     >
-      <div className="space-y-6">
-        <Heading id="shotguns-cta-heading" level={2} size="xl" className="text-ink">
-          Begin your fitting
-        </Heading>
-        <Text className="type-section-subtitle max-w-2xl text-ink/80">
-          {text}
-        </Text>
-        <div className="flex flex-wrap gap-4">
+      <motion.div
+        className="space-y-6"
+        variants={content}
+        initial={motionEnabled ? "hidden" : false}
+        whileInView={motionEnabled ? "show" : undefined}
+        viewport={motionEnabled ? { once: true, amount: 0.7 } : undefined}
+      >
+        <motion.div variants={item}>
+          <Heading id="shotguns-cta-heading" level={2} size="xl" className="text-ink">
+            Begin your fitting
+          </Heading>
+        </motion.div>
+        <motion.div variants={item}>
+          <Text className="type-section-subtitle max-w-2xl text-ink/80">
+            {text}
+          </Text>
+        </motion.div>
+        <motion.div variants={item} className="flex flex-wrap gap-4">
           <Button
             asChild
             variant="primary"
@@ -73,8 +105,8 @@ export function CTASection({
               <a href={secondary.href}>{secondary.label}</a>
             </Button>
           ) : null}
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </MotionSection>
   );
 }

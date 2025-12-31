@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
 import { useMemo, useState, useRef, useEffect, useCallback } from "react";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import type { Platform, ShotgunsLandingData } from "@/types/catalog";
@@ -9,6 +9,7 @@ import { PlatformCard } from "./PlatformCard";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
 import { buildPlatformPrompt } from "@/lib/platform-prompts";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
+import { homeMotion } from "@/lib/motionConfig";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 
@@ -116,50 +117,103 @@ const createPayloadBuilder =
     return basePayload;
   };
 
-const PlatformHeader = ({ heading, subheading }: { heading: string; subheading: string }) => (
-  <div className="space-y-2">
-    <Heading
-      id="platforms-heading"
-      level={2}
-      size="xl"
-      className="text-ink"
+const PlatformHeader = ({
+  heading,
+  subheading,
+  motionEnabled,
+}: {
+  heading: string;
+  subheading: string;
+  motionEnabled: boolean;
+}) => {
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: motionEnabled ? 0.1 : 0 },
+    },
+  } as const;
+
+  const item = {
+    hidden: { opacity: 0, y: 14, filter: "blur(10px)" },
+    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
+  } as const;
+
+  return (
+    <motion.div
+      className="space-y-2"
+      variants={container}
+      initial={motionEnabled ? "hidden" : false}
+      whileInView={motionEnabled ? "show" : undefined}
+      viewport={motionEnabled ? { once: true, amount: 0.55 } : undefined}
     >
-      {heading}
-    </Heading>
-    <Text className="type-section-subtitle mb-6 max-w-4xl text-ink-muted" leading="normal">
-      {subheading}
-    </Text>
-  </div>
-);
+      <motion.div variants={item}>
+        <Heading
+          id="platforms-heading"
+          level={2}
+          size="xl"
+          className="text-ink"
+        >
+          {heading}
+        </Heading>
+      </motion.div>
+      <motion.div variants={item}>
+        <Text className="type-section-subtitle mb-6 max-w-4xl text-ink-muted" leading="normal">
+          {subheading}
+        </Text>
+      </motion.div>
+    </motion.div>
+  );
+};
 
 type PlatformTabsProps = {
   readonly platforms: readonly Platform[];
   readonly activeIndex: number;
   onSelect: (index: number) => void;
+  motionEnabled: boolean;
 };
 
-const PlatformTabs = ({ platforms, activeIndex, onSelect }: PlatformTabsProps) => (
-  <div role="tablist" aria-label="Platforms" className="flex flex-wrap gap-2">
-    {platforms.map((platform, index) => {
-      const isActive = index === activeIndex;
-      return (
-        <button
-          key={platform.id}
-          type="button"
-          role="tab"
-          aria-selected={isActive}
-          className={`type-label-tight pill border focus-ring transition ${
-            isActive
-              ? "border-perazzi-red bg-canvas/40 text-perazzi-red backdrop-blur-sm shadow-elevated"
-              : "border-border/70 bg-transparent text-ink-muted hover:border-ink/60"
-          }`}
-          onClick={() => { onSelect(index); }}
-        >
-          {platform.name}
-        </button>
-      );
-    })}
-  </div>
+const PlatformTabs = ({ platforms, activeIndex, onSelect, motionEnabled }: PlatformTabsProps) => (
+  <LayoutGroup id="shotguns-platform-tabs">
+    <div role="tablist" aria-label="Platforms" className="flex flex-wrap gap-2">
+      {platforms.map((platform, index) => {
+        const isActive = index === activeIndex;
+        const buttonClass = `group relative overflow-hidden type-label-tight pill border focus-ring transition ${
+          isActive
+            ? "border-perazzi-red text-perazzi-red shadow-elevated"
+            : "border-border/70 bg-transparent text-ink-muted hover:border-ink/60"
+        }`;
+
+        return (
+          <motion.button
+            key={platform.id}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            className={buttonClass}
+            onClick={() => { onSelect(index); }}
+            initial={false}
+            whileHover={motionEnabled ? { y: -1, transition: homeMotion.micro } : undefined}
+            whileTap={motionEnabled ? { y: 0, transition: homeMotion.micro } : undefined}
+          >
+            {isActive ? (
+              motionEnabled ? (
+                <motion.span
+                  layoutId="platform-tab-highlight"
+                  className="absolute inset-0 bg-canvas/55 backdrop-blur-sm"
+                  transition={homeMotion.springHighlight}
+                  aria-hidden="true"
+                />
+              ) : (
+                <span className="absolute inset-0 bg-canvas/55 backdrop-blur-sm" aria-hidden="true" />
+              )
+            ) : null}
+            <span className="relative z-10">{platform.name}</span>
+          </motion.button>
+        );
+      })}
+    </div>
+  </LayoutGroup>
 );
 
 type PlatformCardWithChatProps = {
@@ -306,15 +360,26 @@ const DesktopPlatformGrid = ({
   prefersReducedMotion,
 }: DesktopPlatformGridProps) => (
   <div className="hidden md:grid gap-6 md:grid-cols-2 min-h-[720px] sm:min-h-[820px] md:min-h-[750px] items-stretch">
-    {platform ? (
-      <PlatformCardWithChat
-        platform={platform}
-        priority={activeIndex === 0}
-        footerLabel={formatTemplate(cardFooterTemplate, platform.name)}
-        chatLabel={formatTemplate(chatLabelTemplate, platform.name)}
-        payload={buildPayload(platform)}
-      />
-    ) : null}
+    <AnimatePresence initial={false} mode="popLayout">
+      {platform ? (
+        <motion.div
+          key={platform.id}
+          className="h-full"
+          initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 12, filter: "blur(10px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: -12, filter: "blur(10px)" }}
+          transition={prefersReducedMotion ? undefined : homeMotion.revealFast}
+        >
+          <PlatformCardWithChat
+            platform={platform}
+            priority={activeIndex === 0}
+            footerLabel={formatTemplate(cardFooterTemplate, platform.name)}
+            chatLabel={formatTemplate(chatLabelTemplate, platform.name)}
+            payload={buildPayload(platform)}
+          />
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
     <div className="hidden h-full md:flex items-center justify-center">
       <ChampionHighlight
         hallmark={platform?.hallmark}
@@ -337,6 +402,7 @@ const PlatformBackground = ({ background }: { background: PlatformBackground }) 
       priority={false}
     />
     <div className="absolute inset-0 bg-(--scrim-soft)" aria-hidden />
+    <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
     <div className="pointer-events-none absolute inset-0 overlay-gradient-canvas-70" aria-hidden />
   </div>
 );
@@ -376,6 +442,8 @@ export function PlatformGrid({ platforms, ui }: PlatformGridProps) {
     scrollToIndex(scrollRef.current, index);
   }, []);
 
+  const motionEnabled = !prefersReducedMotion;
+
   return (
     <section
       ref={analyticsRef}
@@ -387,8 +455,13 @@ export function PlatformGrid({ platforms, ui }: PlatformGridProps) {
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
         <div className="space-y-8">
-          <PlatformHeader heading={templates.heading} subheading={templates.subheading} />
-          <PlatformTabs platforms={orderedPlatforms} activeIndex={activeIndex} onSelect={handleTabSelect} />
+          <PlatformHeader heading={templates.heading} subheading={templates.subheading} motionEnabled={motionEnabled} />
+          <PlatformTabs
+            platforms={orderedPlatforms}
+            activeIndex={activeIndex}
+            onSelect={handleTabSelect}
+            motionEnabled={motionEnabled}
+          />
 
           {/* Mobile carousel */}
           <MobilePlatformCarousel

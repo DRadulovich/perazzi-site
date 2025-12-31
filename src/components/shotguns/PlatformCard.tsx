@@ -32,7 +32,7 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
           alt={platform.hero.alt}
           fill
           sizes="(min-width: 1024px) 600px, 100vw"
-          className="object-cover object-center"
+          className="object-cover object-center transition-transform duration-[1400ms] ease-out will-change-transform group-hover:scale-[1.04]"
           priority={priority}
           loading={priority ? "eager" : "lazy"}
           quality={100}
@@ -42,6 +42,7 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
           className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/60 via-transparent to-transparent"
           aria-hidden
         />
+        <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
       </div>
 
       <header className="mt-4 space-y-1">

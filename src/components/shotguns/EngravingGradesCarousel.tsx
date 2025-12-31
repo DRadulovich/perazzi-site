@@ -2,10 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
 
 import type { GradeSeries, ShotgunsLandingData } from "@/types/catalog";
 import { getGradeAnchorId } from "@/lib/grade-anchors";
+import { homeMotion } from "@/lib/motionConfig";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { Container, Heading, Section, Text } from "@/components/ui";
@@ -42,6 +44,14 @@ const normalize = (value?: string | null) =>
     .replaceAll(/(^-)|(-$)/g, "") ?? "";
 
 export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselProps) {
+  const prefersReducedMotion = useReducedMotion();
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const motionEnabled = !reduceMotion;
+
+  useEffect(() => {
+    setReduceMotion(Boolean(prefersReducedMotion));
+  }, [prefersReducedMotion]);
+
   const resolvedTabLabels =
     ui?.categoryLabels?.length === GRADE_TABS.length
       ? ui.categoryLabels
@@ -132,12 +142,19 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
           priority={false}
         />
         <div className="absolute inset-0 bg-[color:var(--scrim-soft)]" aria-hidden />
+        <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
         <div className="absolute inset-0 overlay-gradient-canvas-80" aria-hidden />
       </div>
 
       <Container size="xl" className="relative z-10">
         <Section padding="md" className="space-y-6 bg-card/40">
-          <div className="space-y-3">
+          <motion.div
+            className="space-y-3"
+            initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
+            whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+            viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}
+            transition={motionEnabled ? homeMotion.revealFast : undefined}
+          >
             <Heading
               id="engraving-grades-heading"
               level={2}
@@ -149,89 +166,119 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
             <Text className="max-w-4xl type-section-subtitle text-ink-muted" leading="normal">
               {subheading}
             </Text>
-          </div>
+          </motion.div>
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
             <div className="space-y-3 rounded-2xl bg-transparent p-4 sm:rounded-3xl sm:p-5">
               <Text size="label-tight" className="type-label-tight text-ink-muted" leading="normal">
                 Grade categories
               </Text>
-              <div className="space-y-3">
-                {categories.map((category) => {
-                  const isOpen = resolvedOpenCategory === category.label;
-                  return (
-                    <div
-                      key={category.label}
-                      className="rounded-2xl border border-border/70 bg-card/60 backdrop-blur-sm sm:bg-card/75"
-                    >
-                      <button
-                        type="button"
-                        className="flex w-full items-center justify-between px-4 py-3 text-left type-label-tight text-ink focus-ring"
-                        aria-expanded={isOpen}
-                        onClick={() =>
-                          setOpenCategory((prev) =>
-                            prev === category.label ? null : category.label,
-                          )
-                        }
+              <LayoutGroup id="shotguns-engraving-grade-tabs">
+                <div className="space-y-3">
+                  {categories.map((category) => {
+                    const isOpen = resolvedOpenCategory === category.label;
+                    return (
+                      <div
+                        key={category.label}
+                        className="rounded-2xl border border-border/70 bg-card/60 backdrop-blur-sm sm:bg-card/75"
                       >
-                        {category.label}
-                        <span
-                          className={cn(
-                            "text-lg transition-transform",
-                            isOpen ? "rotate-45" : "rotate-0",
-                          )}
-                          aria-hidden="true"
+                        <button
+                          type="button"
+                          className="flex w-full items-center justify-between px-4 py-3 text-left type-label-tight text-ink focus-ring"
+                          aria-expanded={isOpen}
+                          onClick={() =>
+                            setOpenCategory((prev) =>
+                              prev === category.label ? null : category.label,
+                            )
+                          }
                         >
-                          +
-                        </span>
-                      </button>
-                      {isOpen ? (
-                        <div className="border-t border-border/70">
-                          <ul className="space-y-1 p-3">
-                            {category.grades.map((grade) => {
-                              const isActive = grade.id === resolvedActiveGradeId;
-                              return (
-                                <li key={grade.id}>
-                                  <button
-                                    type="button"
-                                    onClick={() => { setActiveGradeId(grade.id); }}
-                                    className={cn(
-                                      "group w-full rounded-2xl px-3 py-2 text-left transition-colors focus-ring",
-                                      isActive
-                                        ? "bg-perazzi-red text-card"
-                                        : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
-                                    )}
-                                    aria-pressed={isActive}
-                                  >
-                                    <span
+                          {category.label}
+                          <span
+                            className={cn(
+                              "text-lg transition-transform",
+                              isOpen ? "rotate-45" : "rotate-0",
+                            )}
+                            aria-hidden="true"
+                          >
+                            +
+                          </span>
+                        </button>
+                        {isOpen ? (
+                          <div className="border-t border-border/70">
+                            <ul className="space-y-1 p-3">
+                              {category.grades.map((grade) => {
+                                const isActive = grade.id === resolvedActiveGradeId;
+                                return (
+                                  <li key={grade.id}>
+                                    <motion.button
+                                      type="button"
+                                      onClick={() => { setActiveGradeId(grade.id); }}
                                       className={cn(
-                                        "block type-body-title text-ink text-base uppercase",
-                                        isActive && "text-white",
+                                        "group relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left transition-colors focus-ring",
+                                        isActive
+                                          ? "text-white"
+                                          : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
                                       )}
+                                      aria-pressed={isActive}
+                                      initial={false}
+                                      whileHover={motionEnabled ? { x: 2, transition: homeMotion.micro } : undefined}
+                                      whileTap={motionEnabled ? { x: 0, transition: homeMotion.micro } : undefined}
                                     >
-                                      {grade.name}
-                                    </span>
-                                  </button>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
+                                      {isActive ? (
+                                        motionEnabled ? (
+                                          <motion.span
+                                            layoutId="engraving-grade-active-highlight"
+                                            className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
+                                            transition={homeMotion.springHighlight}
+                                            aria-hidden="true"
+                                          />
+                                        ) : (
+                                          <span
+                                            className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
+                                            aria-hidden="true"
+                                          />
+                                        )
+                                      ) : null}
+                                      <span
+                                        className={cn(
+                                          "relative z-10 block type-body-title text-base uppercase",
+                                          isActive ? "text-white" : "text-ink-muted",
+                                        )}
+                                      >
+                                        {grade.name}
+                                      </span>
+                                    </motion.button>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              </LayoutGroup>
             </div>
 
             <div className="min-h-[26rem]">
-              {selectedGrade ? (
-                <GradeCard grade={selectedGrade} ctaLabel={ctaLabel} />
-              ) : (
-                <Text className="text-ink-muted" leading="normal">
-                  Select a grade to view details.
-                </Text>
-              )}
+              <AnimatePresence initial={false} mode="popLayout">
+                {selectedGrade ? (
+                  <motion.div
+                    key={selectedGrade.id}
+                    initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    exit={motionEnabled ? { opacity: 0, y: -14, filter: "blur(10px)" } : undefined}
+                    transition={motionEnabled ? homeMotion.revealFast : undefined}
+                  >
+                    <GradeCard grade={selectedGrade} ctaLabel={ctaLabel} />
+                  </motion.div>
+                ) : (
+                  <Text className="text-ink-muted" leading="normal">
+                    Select a grade to view details.
+                  </Text>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </Section>
@@ -251,7 +298,7 @@ function GradeCard({ grade, ctaLabel }: GradeCardProps) {
   const gradeAnchor = getGradeAnchorId(grade);
 
   return (
-    <article className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-5 sm:shadow-elevated lg:p-6">
+    <article className="group flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-5 sm:shadow-elevated lg:p-6">
       <div
         className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)] aspect-dynamic"
         style={{ "--aspect-ratio": ratio }}
@@ -262,7 +309,7 @@ function GradeCard({ grade, ctaLabel }: GradeCardProps) {
             alt={heroAsset.alt}
             fill
             sizes="(min-width: 1024px) 380px, 100vw"
-            className="object-cover"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
             loading="lazy"
           />
         ) : (
@@ -274,6 +321,7 @@ function GradeCard({ grade, ctaLabel }: GradeCardProps) {
             <div>Imagery coming soon</div>
           </Text>
         )}
+        <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
       </div>
       <div className="mt-4 flex flex-1 flex-col gap-3">
         <Text size="label-tight" className="type-card-title text-perazzi-red" leading="normal">
