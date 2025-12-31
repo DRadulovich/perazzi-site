@@ -54,11 +54,6 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
     return filteredLocations[0]?.id ?? null;
   }, [filteredLocations, activeLocationId]);
 
-  useEffect(() => {
-    if (resolvedActiveLocationId === activeLocationId) return;
-    setActiveLocationId(resolvedActiveLocationId);
-  }, [resolvedActiveLocationId, activeLocationId]);
-
   const activeLocation =
     filteredLocations.find((location) => location.id === resolvedActiveLocationId) ?? null;
 

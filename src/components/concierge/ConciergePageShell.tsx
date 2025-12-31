@@ -3,6 +3,7 @@
 import type React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale } from "next-intl";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
 import { ConversationView } from "@/components/chat/ConversationView";
 import { usePerazziAssistant } from "@/hooks/usePerazziAssistant";
 import { GuardrailNotice } from "@/components/concierge/GuardrailNotice";
@@ -10,6 +11,7 @@ import type { GuardrailStatus } from "@/components/concierge/GuardrailNotice";
 import { SanityDetailsDrawer } from "@/components/concierge/SanityDetailsDrawer";
 import { BuildSheetDrawer } from "@/components/concierge/BuildSheetDrawer";
 import { Heading, Text } from "@/components/ui";
+import { homeMotion } from "@/lib/motionConfig";
 import {
   getFieldOrder,
   getNextField,
@@ -163,6 +165,8 @@ const buildSafeEngravingsUrl = (query: string, byGrade = false) => {
 
 export function ConciergePageShell() {
   const locale = useLocale();
+  const prefersReducedMotion = useReducedMotion();
+  const [reduceMotion, setReduceMotion] = useState(false);
   const [draft, setDraft] = useState("");
   const [latestGuardrail, setLatestGuardrail] = useState<GuardrailStatus | undefined>(undefined);
   const [buildState, setBuildState] = useState<BuildState>({});
@@ -181,6 +185,9 @@ export function ConciergePageShell() {
   const [selectedInfoByField, setSelectedInfoByField] = useState<Partial<Record<string, InfoCard[]>>>({});
   const [savedBuilds, setSavedBuilds] = useState<SavedBuild[]>([]);
   const SAVES_KEY = "perazzi-build-saves";
+  const motionEnabled = !reduceMotion;
+  const revealTransition = motionEnabled ? homeMotion.reveal : { duration: 0.01 };
+  const revealFastTransition = motionEnabled ? homeMotion.revealFast : { duration: 0.01 };
 
   const {
     messages,
@@ -198,6 +205,10 @@ export function ConciergePageShell() {
       setLatestGuardrail(meta.guardrail?.status);
     },
   });
+
+  useEffect(() => {
+    setReduceMotion(Boolean(prefersReducedMotion));
+  }, [prefersReducedMotion]);
 
   useEffect(() => {
     if (locale) {
@@ -218,6 +229,17 @@ export function ConciergePageShell() {
       // ignore
     }
   }, []);
+
+  useEffect(() => {
+    if (!selectedInfoCard) return;
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSelectedInfoCard(null);
+      }
+    };
+    globalThis.addEventListener("keydown", handleKey);
+    return () => globalThis.removeEventListener("keydown", handleKey);
+  }, [selectedInfoCard]);
 
   const persistSaves = (saves: SavedBuild[]) => {
     try {
@@ -737,7 +759,13 @@ export function ConciergePageShell() {
 
   return (
     <div className="space-y-8" id="concierge-workshop" tabIndex={-1}>
-      <header className="space-y-3">
+      <motion.header
+        className="space-y-3"
+        initial={motionEnabled ? { opacity: 0, y: 28, filter: "blur(12px)" } : false}
+        whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+        viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
+        transition={motionEnabled ? revealTransition : undefined}
+      >
         <Text
           size="label-tight"
           muted
@@ -774,14 +802,18 @@ export function ConciergePageShell() {
             <Text muted>(NOTE: This immersive experience is best done on a computer, and not a mobile device.)</Text>
           </div>
         </div>
-      </header>
+      </motion.header>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         {/* Conversation */}
-        <section
+        <motion.section
           id="concierge-conversation"
-          className="flex min-h-[70vh] max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-6 lg:order-2"
+          className="flex min-h-[70vh] max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-6 lg:order-2 scroll-mt-24"
           tabIndex={-1}
+          initial={motionEnabled ? { opacity: 0, y: 22, filter: "blur(10px)" } : false}
+          whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+          viewport={motionEnabled ? { once: true, amount: 0.25 } : undefined}
+          transition={motionEnabled ? revealFastTransition : undefined}
         >
           <div className="flex items-center justify-between gap-3 border-b border-border/70 pb-3">
             <div>
@@ -848,13 +880,17 @@ export function ConciergePageShell() {
               </button>
             </div>
           </div>
-        </section>
+        </motion.section>
 
         {/* Build Navigator */}
-        <aside
+        <motion.aside
           id="concierge-navigator"
-          className="space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-6 lg:order-1"
+          className="space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-6 lg:order-1 scroll-mt-24"
           tabIndex={-1}
+          initial={motionEnabled ? { opacity: 0, y: 22, filter: "blur(10px)" } : false}
+          whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+          viewport={motionEnabled ? { once: true, amount: 0.25 } : undefined}
+          transition={motionEnabled ? revealFastTransition : undefined}
         >
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -898,29 +934,44 @@ export function ConciergePageShell() {
                   ) : null}
                   {displayOptions.length ? (
                     <>
-                      <div className="grid gap-2">
-                        {displayOptions.map((opt) => {
-                          const isHighlighted =
-                            highlightedOption?.fieldId === nextField.id && highlightedOption.value === opt.value;
-                          return (
-                            <button
-                              key={opt.value}
-                              type="button"
-                              onClick={() => {
-                                setHighlightedOption({ fieldId: nextField.id, value: opt.value });
-                              }}
-                              className={clsx(
-                                "w-full rounded-xl border bg-card/60 px-3 py-2 text-left type-title-sm shadow-soft transition",
-                                isHighlighted
-                                  ? "border-ink/40 bg-card/85 text-ink"
-                                  : "border-border/70 text-ink-muted hover:border-ink/30 hover:bg-card/80 hover:text-ink",
-                              )}
-                            >
-                              {opt.label ?? opt.value}
-                            </button>
-                          );
-                        })}
-                      </div>
+                      <LayoutGroup id="concierge-step-options">
+                        <div className="grid gap-2">
+                          {displayOptions.map((opt) => {
+                            const isHighlighted =
+                              highlightedOption?.fieldId === nextField.id && highlightedOption.value === opt.value;
+                            return (
+                              <motion.button
+                                key={opt.value}
+                                type="button"
+                                onClick={() => {
+                                  setHighlightedOption({ fieldId: nextField.id, value: opt.value });
+                                }}
+                                className={clsx(
+                                  "relative w-full overflow-hidden rounded-xl border bg-card/60 px-3 py-2 text-left type-title-sm shadow-soft transition focus-ring",
+                                  isHighlighted
+                                    ? "border-ink/40 text-ink"
+                                    : "border-border/70 text-ink-muted hover:border-ink/30 hover:bg-card/80 hover:text-ink",
+                                )}
+                                initial={false}
+                              >
+                                {isHighlighted ? (
+                                  motionEnabled ? (
+                                    <motion.span
+                                      layoutId="concierge-step-highlight"
+                                      className="absolute inset-0 bg-card/85"
+                                      transition={homeMotion.springHighlight}
+                                      aria-hidden="true"
+                                    />
+                                  ) : (
+                                    <span className="absolute inset-0 bg-card/85" aria-hidden="true" />
+                                  )
+                                ) : null}
+                                <span className="relative z-10">{opt.label ?? opt.value}</span>
+                              </motion.button>
+                            );
+                          })}
+                        </div>
+                      </LayoutGroup>
                       <button
                         type="button"
                         onClick={handleSelectHighlighted}
@@ -979,78 +1030,103 @@ export function ConciergePageShell() {
               </div>
             </div>
           </div>
-        </aside>
+        </motion.aside>
 
 
       </div>
-      {selectedInfoCard ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 py-8">
-          <div className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-border bg-card/95 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl">
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedInfoCard(null);
+      <AnimatePresence initial={false}>
+        {selectedInfoCard ? (
+          <motion.div
+            key="concierge-info-modal-backdrop"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 py-8"
+            initial={motionEnabled ? { opacity: 0 } : false}
+            animate={motionEnabled ? { opacity: 1 } : undefined}
+            exit={motionEnabled ? { opacity: 0 } : undefined}
+            transition={motionEnabled ? revealFastTransition : undefined}
+            onClick={() => {
+              setSelectedInfoCard(null);
+            }}
+          >
+            <motion.div
+              key={`concierge-info-modal-${selectedInfoCard.id}`}
+              className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-border bg-card/95 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Selection details"
+              initial={motionEnabled ? { opacity: 0, y: 18, filter: "blur(12px)" } : false}
+              animate={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+              exit={motionEnabled ? { opacity: 0, y: 10, filter: "blur(12px)" } : undefined}
+              transition={motionEnabled ? revealTransition : undefined}
+              onClick={(event) => {
+                event.stopPropagation();
               }}
-              className="absolute right-4 top-4 rounded-full border border-border/70 bg-card/70 px-3 py-1 type-button text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/85 hover:text-ink"
             >
-              Close
-            </button>
-            <div className="flex-1 space-y-4 overflow-y-auto p-6 pr-5">
-              {selectedInfoCard.imageUrl ? (
-                <Image
-                  src={selectedInfoCard.fullImageUrl ?? selectedInfoCard.imageUrl}
-                  alt={selectedInfoCard.title}
-                  width={1600}
-                  height={1000}
-                  className="w-full rounded-2xl object-cover"
-                />
-              ) : null}
-              <div className="space-y-2">
-                <Heading level={3} size="lg" className="text-ink">
-                  {selectedInfoCard.title}
-                </Heading>
-                {selectedInfoCard.description ? (
-                  <Text muted className="whitespace-pre-line">
-                    {selectedInfoCard.description}
-                  </Text>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedInfoCard(null);
+                }}
+                className="absolute right-4 top-4 rounded-full border border-border/70 bg-card/70 px-3 py-1 type-button text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/85 hover:text-ink"
+              >
+                Close
+              </button>
+              <div className="flex-1 space-y-4 overflow-y-auto p-6 pr-5">
+                {selectedInfoCard.imageUrl ? (
+                  <Image
+                    src={selectedInfoCard.fullImageUrl ?? selectedInfoCard.imageUrl}
+                    alt={selectedInfoCard.title}
+                    width={1600}
+                    height={1000}
+                    className="w-full rounded-2xl object-cover"
+                  />
                 ) : null}
-                <div className="grid gap-2">
-                  {selectedInfoCard.platform ? (
-                    <Text asChild className="text-ink" leading="normal">
-                      <p>Platform: {selectedInfoCard.platform}</p>
+                <div className="space-y-2">
+                  <Heading level={3} size="lg" className="text-ink">
+                    {selectedInfoCard.title}
+                  </Heading>
+                  {selectedInfoCard.description ? (
+                    <Text muted className="whitespace-pre-line">
+                      {selectedInfoCard.description}
                     </Text>
                   ) : null}
-                  {selectedInfoCard.grade ? (
-                    <Text asChild className="text-ink" leading="normal">
-                      <p>Grade: {selectedInfoCard.grade}</p>
-                    </Text>
-                  ) : null}
-                  {selectedInfoCard.gauges?.length ? (
-                    <Text asChild className="text-ink" leading="normal">
-                      <p>Gauges: {selectedInfoCard.gauges.join(", ")}</p>
-                    </Text>
-                  ) : null}
-                  {selectedInfoCard.triggerTypes?.length ? (
-                    <Text asChild className="text-ink" leading="normal">
-                      <p>Trigger types: {selectedInfoCard.triggerTypes.join(", ")}</p>
-                    </Text>
-                  ) : null}
-                  {selectedInfoCard.recommendedPlatforms?.length ? (
-                    <Text asChild className="text-ink" leading="normal">
-                      <p>Recommended platforms: {selectedInfoCard.recommendedPlatforms.join(", ")}</p>
-                    </Text>
-                  ) : null}
-                  {selectedInfoCard.popularModels?.length ? (
-                    <Text asChild className="text-ink" leading="normal">
-                      <p>Popular models: {selectedInfoCard.popularModels.join(", ")}</p>
-                    </Text>
-                  ) : null}
+                  <div className="grid gap-2">
+                    {selectedInfoCard.platform ? (
+                      <Text asChild className="text-ink" leading="normal">
+                        <p>Platform: {selectedInfoCard.platform}</p>
+                      </Text>
+                    ) : null}
+                    {selectedInfoCard.grade ? (
+                      <Text asChild className="text-ink" leading="normal">
+                        <p>Grade: {selectedInfoCard.grade}</p>
+                      </Text>
+                    ) : null}
+                    {selectedInfoCard.gauges?.length ? (
+                      <Text asChild className="text-ink" leading="normal">
+                        <p>Gauges: {selectedInfoCard.gauges.join(", ")}</p>
+                      </Text>
+                    ) : null}
+                    {selectedInfoCard.triggerTypes?.length ? (
+                      <Text asChild className="text-ink" leading="normal">
+                        <p>Trigger types: {selectedInfoCard.triggerTypes.join(", ")}</p>
+                      </Text>
+                    ) : null}
+                    {selectedInfoCard.recommendedPlatforms?.length ? (
+                      <Text asChild className="text-ink" leading="normal">
+                        <p>Recommended platforms: {selectedInfoCard.recommendedPlatforms.join(", ")}</p>
+                      </Text>
+                    ) : null}
+                    {selectedInfoCard.popularModels?.length ? (
+                      <Text asChild className="text-ink" leading="normal">
+                        <p>Popular models: {selectedInfoCard.popularModels.join(", ")}</p>
+                      </Text>
+                    ) : null}
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
       {detailsDrawerOpen && (
         <SanityDetailsDrawer
           open={detailsDrawerOpen}
