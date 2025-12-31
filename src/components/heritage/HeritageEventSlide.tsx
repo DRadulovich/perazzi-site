@@ -98,7 +98,7 @@ export function HeritageEventSlide({
                 />
                 <div className="pointer-events-none absolute inset-0 film-grain opacity-15" aria-hidden="true" />
                 <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" aria-hidden="true" />
+                <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/25 via-transparent to-transparent" aria-hidden="true" />
               </div>
             ) : (
               <Text
