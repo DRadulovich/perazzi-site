@@ -54,6 +54,11 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
     return filteredLocations[0]?.id ?? null;
   }, [filteredLocations, activeLocationId]);
 
+  useEffect(() => {
+    if (resolvedActiveLocationId === activeLocationId) return;
+    setActiveLocationId(resolvedActiveLocationId);
+  }, [resolvedActiveLocationId, activeLocationId]);
+
   const activeLocation =
     filteredLocations.find((location) => location.id === resolvedActiveLocationId) ?? null;
 
@@ -177,16 +182,24 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
                     show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
                   }}
                 >
-                  <motion.button
-                    type="button"
+                  <motion.div
+                    role="button"
+                    tabIndex={0}
                     aria-pressed={isActive}
                     className={cn(
-                      "group relative flex w-full flex-col gap-2 overflow-hidden rounded-2xl border p-4 text-left transition focus-ring",
+                      "group relative flex w-full cursor-pointer flex-col gap-2 overflow-hidden rounded-2xl border p-4 text-left transition focus-ring",
                       isActive
                         ? "border-perazzi-red bg-card/70 text-ink"
                         : "border-border/60 bg-card/40 text-ink sm:border-border/70 sm:bg-card/70",
                     )}
                     onClick={() => {
+                      setActiveLocationId(location.id);
+                      logAnalytics(`FinderResultClick:${location.id}`);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.currentTarget !== event.target) return;
+                      if (event.key !== "Enter" && event.key !== " " && event.key !== "Spacebar") return;
+                      event.preventDefault();
                       setActiveLocationId(location.id);
                       logAnalytics(`FinderResultClick:${location.id}`);
                     }}
@@ -224,7 +237,11 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
                         </div>
                       ) : null}
                       {location.email ? (
-                        <a href={`mailto:${location.email}`} className="text-perazzi-red focus-ring">
+                        <a
+                          href={`mailto:${location.email}`}
+                          className="text-perazzi-red focus-ring"
+                          onClick={(event) => { event.stopPropagation(); }}
+                        >
                           {location.email}
                         </a>
                       ) : null}
@@ -234,6 +251,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
                           target="_blank"
                           rel="noreferrer"
                           className="block text-perazzi-red focus-ring"
+                          onClick={(event) => { event.stopPropagation(); }}
                         >
                           Website<span className="sr-only"> (opens in a new tab)</span>
                         </a>
@@ -245,7 +263,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
                         html={location.notesHtml}
                       />
                     ) : null}
-                  </motion.button>
+                  </motion.div>
                 </motion.li>
               );
             })

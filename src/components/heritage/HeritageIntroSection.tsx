@@ -42,7 +42,7 @@ export function HeritageIntroSection({
   return (
     <section
       id="perazzi-heritage"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-14 pb-16 sm:pb-20 -mb-16 sm:-mb-16 min-h-[80vh] full-bleed"
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-14 pb-16 sm:pb-20 -mb-16 sm:-mb-16 min-h-[80vh] full-bleed scroll-mt-24"
       aria-labelledby="heritage-intro-heading"
     >
       <div
@@ -84,8 +84,7 @@ export function HeritageIntroSection({
               className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/70 px-6 py-3 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
             >
               <span className="relative">
-                Skip Perazzi Timeline
-                <span className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
+                {"Skip Perazzi Timeline"}<span className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
               </span>
             </Link>
           </motion.div>
@@ -118,8 +117,7 @@ export function HeritageIntroSection({
               className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-perazzi-red/70 px-6 py-3 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
             >
               <span className="relative">
-                Skip Perazzi Timeline
-                <span className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
+                {"Skip Perazzi Timeline"}<span className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
               </span>
             </Link>
           </div>
@@ -130,4 +128,3 @@ export function HeritageIntroSection({
     </section>
   );
 }
-

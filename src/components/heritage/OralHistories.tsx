@@ -56,10 +56,11 @@ export function OralHistories({ histories, ui }: OralHistoriesProps) {
 
   return (
     <Section
+      id="oral-histories"
       ref={sectionRef}
       data-analytics-id="OralHistoriesSeen"
       padding="md"
-      className="space-y-6"
+      className="space-y-6 scroll-mt-24"
       aria-labelledby="oral-histories-heading"
     >
       <motion.div

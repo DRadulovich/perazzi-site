@@ -49,7 +49,7 @@ export default async function ServicePage() {
   const faqSchemaJson = faqSchema ? JSON.stringify(faqSchema).replaceAll('<', String.raw`\u003c`) : null;
 
   return (
-    <div className="space-y-16">
+    <div className="space-y-16 service-page">
       {faqSchemaJson ? (
         <script type="application/ld+json">{faqSchemaJson}</script>
       ) : null}

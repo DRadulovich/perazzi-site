@@ -8,6 +8,7 @@ import { PortableText } from "@/components/PortableText";
 import { Button, Heading, Text } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { useLockBodyScroll } from "@/hooks/use-lock-body-scroll";
 import type { HeritageEvent, HeritageEventLink } from "@/types/heritage";
 import { heritageMotion, homeMotion } from "@/lib/motionConfig";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -32,14 +33,7 @@ export function HeritageEventSlide({
   const motionEnabled = !reduceMotion;
   const emphasized = isActive ?? true;
 
-  React.useEffect(() => {
-    if (!isModalOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [isModalOpen]);
+  useLockBodyScroll(isModalOpen);
 
   const renderSummary = (className: string) => {
     if (event.summaryPortableText?.length) {
@@ -75,7 +69,7 @@ export function HeritageEventSlide({
         <div
           className={cn(
             "flex h-full w-full flex-col md:flex-row",
-            "relative mx-auto max-w-6xl rounded-2xl border bg-black/60 shadow-soft backdrop-blur-sm ring-1 transition-shadow duration-300 ease-out",
+            "relative mx-auto max-w-6xl overflow-hidden rounded-2xl border bg-black/60 shadow-soft backdrop-blur-sm ring-1 transition-shadow duration-300 ease-out",
             emphasized ? "border-white/12 ring-white/10" : "border-white/8 ring-white/5",
           )}
         >

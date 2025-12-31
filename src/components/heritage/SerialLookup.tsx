@@ -63,7 +63,7 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
       id="heritage-serial-lookup"
       ref={analyticsRef}
       data-analytics-id="SerialLookupSeen"
-      className="relative isolate w-screen max-w-[100vw] min-h-[75vh] overflow-hidden py-10 sm:py-16 full-bleed"
+      className="relative isolate w-screen max-w-[100vw] min-h-[75vh] overflow-hidden py-10 sm:py-16 full-bleed scroll-mt-24"
       aria-labelledby="serial-lookup-heading"
     >
       <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -85,7 +85,7 @@ export function SerialLookup({ lookupAction, ui }: SerialLookupProps) {
 
       <div className="relative z-10 mx-auto flex min-h-[75vh] max-w-7xl items-center px-6 lg:px-10">
         <motion.div
-          className="group relative space-y-6 overflow-hidden rounded-2xl border border-perazzi-black/50 bg-card/0 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:border-perazzi-black/50 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10"
+          className="group relative isolate space-y-6 overflow-hidden rounded-2xl border border-perazzi-black/50 bg-card/0 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:border-perazzi-black/50 sm:bg-card/0 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10"
           initial={reduceMotion ? false : { opacity: 0, y: 18, filter: "blur(12px)" }}
           whileInView={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
           viewport={reduceMotion ? undefined : { once: true, amount: 0.55 }}
@@ -188,7 +188,7 @@ function LookupResult({ state, emptyStateText }: Readonly<{ state: SerialLookupF
       ) : state.status === "error" ? null : (
         <motion.div
           key="success"
-          className="relative overflow-hidden rounded-2xl border border-perazzi-black/50 bg-perazzi-black/40 p-4 shadow-soft sm:bg-perazzi-black/70 md:p-6"
+          className="relative isolate overflow-hidden rounded-2xl border border-perazzi-black/50 bg-perazzi-black/40 p-4 shadow-soft sm:bg-perazzi-black/70 md:p-6"
           initial={reduceMotion ? false : { opacity: 0, y: 12, filter: "blur(10px)" }}
           animate={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
           exit={reduceMotion ? undefined : { opacity: 0, y: -10, filter: "blur(8px)" }}

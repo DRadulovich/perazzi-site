@@ -7,6 +7,7 @@ import SafeHtml from "@/components/SafeHtml";
 import Image from "next/image";
 import type { FactoryEssayItem, FactoryEssayUi } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { useLockBodyScroll } from "@/hooks/use-lock-body-scroll";
 import { logAnalytics } from "@/lib/analytics";
 import { homeMotion } from "@/lib/motionConfig";
 import { Heading, Section, Text } from "@/components/ui";
@@ -61,14 +62,7 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
     return items[openIndex];
   }, [items, openIndex]);
 
-  useEffect(() => {
-    if (openIndex === null) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [openIndex]);
+  useLockBodyScroll(openIndex !== null);
 
   useEffect(() => {
     if (openIndex === null) return;
@@ -82,18 +76,19 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    globalThis.addEventListener("keydown", handleKeyDown);
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      globalThis.removeEventListener("keydown", handleKeyDown);
     };
   }, [goTo, openIndex]);
 
   return (
     <Section
+      id="factory-photo-essay"
       ref={sectionRef}
       data-analytics-id="FactoryPhotoEssaySeen"
       padding="md"
-      className="space-y-6"
+      className="space-y-6 scroll-mt-24"
       aria-labelledby="factory-essay-heading"
     >
       <motion.div

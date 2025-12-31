@@ -606,6 +606,11 @@ body {
   will-change: transform;
 }
 
+.service-page .film-grain {
+  animation: none;
+  will-change: auto;
+}
+
 .glint-sweep {
   background: linear-gradient(115deg, transparent 0%, rgba(255, 255, 255, 0.16) 45%, transparent 62%);
   transform: translateX(-65%) skewX(-12deg);

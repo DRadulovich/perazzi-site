@@ -170,7 +170,11 @@ export default async function HeritagePage(): Promise<ReactElement> {
         imageSrc={heritageIntroBackgroundSrc}
         imageAlt={heritageIntroBackgroundAlt}
       />
-      <PerazziHeritageEras eras={eraGroups} />
+      <PerazziHeritageEras
+        eras={eraGroups}
+        sectionId="timeline"
+        className="scroll-mt-24"
+      />
       <HeritageSplitSection
         className="bg-black -mt-16 -mb-16"
         headingId="heritage-workshop-heading"
@@ -198,14 +202,15 @@ export default async function HeritagePage(): Promise<ReactElement> {
       <section
         id="heritage-champions"
         tabIndex={-1}
-        className="space-y-16 focus:outline-none"
+        className="space-y-16 focus:outline-none scroll-mt-24"
         aria-labelledby="heritage-champions-heading-wrapper"
       >
         <div id="heritage-champions-heading-wrapper" className="sr-only">
           Heritage champions section
         </div>
         <HeritageSplitSection
-          className="bg-black -mt-16 sm:-mt-16 -mb-16 sm:-mb-16 min-h-[70vh]"
+          sectionId="champions"
+          className="bg-black -mt-16 sm:-mt-16 -mb-16 sm:-mb-16 min-h-[70vh] scroll-mt-24"
           contentClassName="min-h-[50vh]"
           headingId="heritage-champions-intro-heading"
           heading={championsIntroHeading}
@@ -250,7 +255,9 @@ export default async function HeritagePage(): Promise<ReactElement> {
         {oralHistories && oralHistories.length > 0 ? (
           <OralHistories histories={oralHistories} ui={oralHistoriesUi} />
         ) : null}
-        <RelatedList heading={relatedSection.heading} items={relatedSection.items} />
+        <div id="heritage-after-timeline" className="scroll-mt-24">
+          <RelatedList heading={relatedSection.heading} items={relatedSection.items} />
+        </div>
       </section>
       <CTASection
         dataAnalyticsId="FinalCTASeen"
