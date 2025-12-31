@@ -67,15 +67,16 @@ export function HeritageEventSlide({
           reduceMotion
             ? undefined
             : emphasized
-              ? { opacity: 1, scale: 1 }
-              : { opacity: 0.75, scale: 0.985 }
+              ? { opacity: 1 }
+              : { opacity: 0.84 }
         }
-        transition={reduceMotion ? undefined : heritageMotion.slideEmphasisSpring}
+        transition={reduceMotion ? undefined : heritageMotion.quickFade}
       >
         <div
           className={cn(
             "flex h-full w-full flex-col md:flex-row",
-            "relative mx-auto max-w-6xl rounded-2xl border border-white/10 bg-black/60 shadow-soft backdrop-blur-sm",
+            "relative mx-auto max-w-6xl rounded-2xl border bg-black/60 shadow-soft backdrop-blur-sm ring-1 transition-shadow duration-300 ease-out",
+            emphasized ? "border-white/12 ring-white/10" : "border-white/8 ring-white/5",
           )}
         >
           <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
