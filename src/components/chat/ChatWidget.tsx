@@ -1,10 +1,10 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ChatPanel } from "@/components/chat/ChatPanel";
-import { Button } from "@/components/ui";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
 import { CHAT_TRIGGER_EVENT } from "@/lib/chat-trigger";
 
@@ -185,16 +185,21 @@ export function ChatWidget() {
         <>
       {!isOpen && !hideTrigger && !isHeroVisible && (
         <div className="fixed bottom-5 right-5 z-40">
-          <Button
+          <button
             type="button"
-                aria-label="Open Perazzi Concierge"
-                onClick={() => { setIsOpen(true); }}
-                size="lg"
-                variant="primary"
-                className="rounded-full px-6 py-3 shadow-elevated ring-1 ring-black/10"
-              >
-                Perazzi Guide
-              </Button>
+            aria-label="Open Perazzi Concierge"
+            onClick={() => { setIsOpen(true); }}
+            className="chat-widget-trigger focus-ring flex h-12 w-12 items-center justify-center rounded-full bg-perazzi-red shadow-elevated ring-1 ring-black/10 hover:bg-perazzi-red/90 active:bg-perazzi-red/95"
+          >
+            <Image
+              src="/images/pgpt-widget-icon.png"
+              alt=""
+              aria-hidden="true"
+              width={36}
+              height={36}
+              className="h-9 w-9"
+            />
+          </button>
             </div>
           )}
           <Dialog.Root open={isOpen} onOpenChange={setIsOpen}>
@@ -237,16 +242,21 @@ export function ChatWidget() {
           )}
           {!isOpen && !hideTrigger && !isHeroVisible && (
             <div className="fixed bottom-6 right-6 z-30">
-              <Button
+              <button
                 type="button"
                 aria-label="Open Perazzi Concierge"
                 onClick={() => setIsOpen(true)}
-                size="lg"
-                variant="primary"
-                className="rounded-full px-6 py-3 shadow-elevated ring-1 ring-black/10"
+                className="chat-widget-trigger focus-ring flex h-12 w-12 items-center justify-center rounded-full bg-perazzi-red shadow-elevated ring-1 ring-black/10 hover:bg-perazzi-red/90 active:bg-perazzi-red/95"
               >
-                Open Perazzi Guide
-              </Button>
+                <Image
+                  src="/images/pgpt-widget-icon.png"
+                  alt=""
+                  aria-hidden="true"
+                  width={36}
+                  height={36}
+                  className="h-9 w-9"
+                />
+              </button>
             </div>
           )}
         </>

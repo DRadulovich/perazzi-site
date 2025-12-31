@@ -516,6 +516,28 @@
   box-sizing: border-box;
 }
 
+@keyframes chat-widget-pulse {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.04);
+  }
+}
+
+.chat-widget-trigger {
+  transition: transform 200ms ease, background-color 150ms ease;
+}
+
+.chat-widget-trigger:hover {
+  animation: chat-widget-pulse 1.2s ease-in-out infinite;
+}
+
+.chat-widget-trigger:active {
+  animation: none;
+  transform: scale(0.99);
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -663,6 +685,7 @@ body {
 .bg-elevated { background-color: var(--surface-elevated); }
 .text-ink { color: var(--color-ink); }
 .text-ink-muted { color: var(--color-ink-muted); }
+.text-canvas { color: var(--color-canvas); }
 .border-subtle { border-color: var(--border-color); }
 .border-border { border-color: var(--border-color); }
 .font-serif-petite-caps { font-family: var(--font-serif-petite-caps); }
