@@ -31,6 +31,7 @@ export default async function BuildJourneyPage() {
     return (
       <main className="bg-canvas text-ink">
         <HeroSection />
+        <IntroSection />
         <section className="px-4 py-16 sm:px-6">
           <Text>No build-journey steps are configured yet in Sanity.</Text>
         </section>
@@ -41,6 +42,7 @@ export default async function BuildJourneyPage() {
   return (
     <main className="bg-canvas text-ink">
       <HeroSection />
+      <IntroSection />
       <BuildJourneyClient stations={stations} />
     </main>
   );
@@ -48,11 +50,11 @@ export default async function BuildJourneyPage() {
 
 function HeroSection() {
   return (
-    <section className="relative bg-canvas">
+    <section className="relative isolate min-h-[60vh] sm:min-h-[70vh] lg:min-h-[80vh] w-screen max-w-[100vw] overflow-hidden bg-canvas full-bleed">
       <div className="absolute inset-0">
         <Image
-          src="/redesign-photos/heritage/pweb-heritage-era-4-bespoke.jpg"
-          alt="Bespoke Perazzi shotgun in the heritage workshop"
+          src="/images/p-web-d-25.jpg"
+          alt="Perazzi shotgun in the workshop"
           fill
           priority
           sizes="100vw"
@@ -60,15 +62,23 @@ function HeroSection() {
         />
         <div className="absolute inset-0 bg-linear-to-b from-black via-black/50 to-black" />
       </div>
-      <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16 lg:py-24">
+      <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16 lg:py-24" />
+    </section>
+  );
+}
+
+function IntroSection() {
+  return (
+    <section className="bg-canvas">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12">
         <header className="max-w-2l space-y-4">
-          <Text size="label-tight" className="text-white/75">
+          <Text size="label-tight" className="text-ink/70">
             Inside the Perazzi Factory
           </Text>
-          <Heading level={1} className="type-section text-white">
+          <Heading level={1} className="type-section text-ink">
             Through the Eyes of the Makers
           </Heading>
-          <Text className="type-section-subtitle text-white/75">
+          <Text className="type-section-subtitle text-ink/70">
             Every Perazzi is born the same way: one frame of steel and walnut moving bench by bench through the same circle of hands, whether it’s a bespoke order or a gun you find on a dealer’s shelf. This page stitches those stations into one continuous build journey, following a single gun as it collects their decisions.
           </Text>
         </header>

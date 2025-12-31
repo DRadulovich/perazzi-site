@@ -3,7 +3,7 @@
 
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { PortableBody } from "@/components/journal/PortableBody";
 import { Button, Textarea } from "@/components/ui";
@@ -40,12 +40,16 @@ type JourneyChaptersProps = {
   isSubmitting: Record<string, boolean>;
   setIsSubmitting: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   allComplete: boolean;
+  bodyTextSizeClassName: string;
+  stepAnchors: string[];
 };
 
 type JourneyChapterBarProps = {
   stations: BuildJourneyArticle[];
+  stepAnchors: string[];
   activeStepIndex: number;
   isNavVisible: boolean;
+  onJumpToIndex?: (index: number) => void;
 };
 
 type JourneyTransitionProps = {
@@ -57,7 +61,34 @@ type JourneyTransitionProps = {
   nextExcerpt?: string;
 };
 
+type BodyTextSize = "small" | "medium" | "large";
+
 const SOUL_JOURNEY_STORAGE_KEY = "perazzi_soul_journey_v1";
+
+const BODY_TEXT_SIZE_OPTIONS: Array<{ value: BodyTextSize; label: string }> = [
+  { value: "small", label: "Small" },
+  { value: "medium", label: "Medium" },
+  { value: "large", label: "Large" },
+];
+
+const BODY_TEXT_SIZE_CLASSES: Record<BodyTextSize, string> = {
+  small: "!text-xl",
+  medium: "!text-2xl",
+  large: "!text-3xl",
+};
+
+function buildJourneyStepAnchors(stations: BuildJourneyArticle[]) {
+  const usedIds = new Set<string>();
+  return stations.map((station, index) => {
+    const rawSlug = station.slug?.current?.trim();
+    let id = rawSlug || `step-${index + 1}`;
+    if (usedIds.has(id)) {
+      id = `step-${index + 1}`;
+    }
+    usedIds.add(id);
+    return id;
+  });
+}
 
 function getSanityImageAspectRatio(assetId?: string) {
   if (!assetId) return undefined;
@@ -78,6 +109,8 @@ export function BuildJourneyClient({ stations }: BuildJourneyClientProps) {
   const [isSubmitting, setIsSubmitting] = useState<Record<string, boolean>>({});
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [isNavVisible, setIsNavVisible] = useState(true);
+  const [bodyTextSize, setBodyTextSize] = useState<BodyTextSize>("medium");
+  const stepAnchors = useMemo(() => buildJourneyStepAnchors(stations), [stations]);
 
   // Hydrate answers and artisan paragraphs from localStorage (if present)
   useEffect(() => {
@@ -169,6 +202,7 @@ export function BuildJourneyClient({ stations }: BuildJourneyClientProps) {
     return artisanParagraphs[stepKey] ? count + 1 : count;
   }, 0);
   const allComplete = completedSteps >= totalSteps;
+  const bodyTextSizeClassName = BODY_TEXT_SIZE_CLASSES[bodyTextSize];
 
   useEffect(() => {
     const sections = Array.from(
@@ -212,6 +246,7 @@ export function BuildJourneyClient({ stations }: BuildJourneyClientProps) {
 
   return (
     <>
+      <BodyTextSizeControl value={bodyTextSize} onChange={setBodyTextSize} />
       <JourneyChapters
         stations={stations}
         answers={answers}
@@ -221,11 +256,15 @@ export function BuildJourneyClient({ stations }: BuildJourneyClientProps) {
         isSubmitting={isSubmitting}
         setIsSubmitting={setIsSubmitting}
         allComplete={allComplete}
+        bodyTextSizeClassName={bodyTextSizeClassName}
+        stepAnchors={stepAnchors}
       />
       <JourneyChapterBar
         stations={stations}
+        stepAnchors={stepAnchors}
         activeStepIndex={activeStepIndex}
         isNavVisible={isNavVisible}
+        onJumpToIndex={setActiveStepIndex}
       />
     </>
   );
@@ -240,6 +279,8 @@ function JourneyChapters({
   isSubmitting,
   setIsSubmitting,
   allComplete,
+  bodyTextSizeClassName,
+  stepAnchors,
 }: JourneyChaptersProps) {
   const orderedArtisanParagraphs = stations.map((station, index) => {
     const stepNumber = index + 1;
@@ -266,7 +307,7 @@ function JourneyChapters({
         }
         const heroUrl = station.heroImage?.asset?.url;
         const heroAspectRatio = getSanityImageAspectRatio(station.heroImage?.asset?._id);
-        const sectionId = station.slug?.current ?? `step-${stepNumber}`;
+        const sectionId = stepAnchors[index] ?? `step-${stepNumber}`;
         const hasHero = Boolean(heroUrl);
         const answer = answers[stepKey] ?? "";
         const submitting = isSubmitting[stepKey] ?? false;
@@ -324,7 +365,10 @@ function JourneyChapters({
 
                   {bodyBlocks.length ? (
                     <div className="prose-journal max-w-none text-ink-muted leading-normal">
-                      <PortableBody blocks={bodyBlocks} bodyClassName="!text-2xl text-ink-muted leading-normal" />
+                      <PortableBody
+                        blocks={bodyBlocks}
+                        bodyClassName={`${bodyTextSizeClassName} text-ink-muted leading-normal`}
+                      />
                     </div>
                   ) : null}
 
@@ -455,7 +499,7 @@ function JourneyChapters({
               <p className="type-label-tight text-ink-muted">
                 Step 12
               </p>
-              <h2 className="type-section text-ink !text-4xl">
+              <h2 className="type-section text-ink text-4xl!">
                 The Soul of Your Gun
               </h2>
               <p className="prose-journal text-ink">
@@ -566,9 +610,54 @@ function JourneyTransition({
   );
 }
 
-function JourneyChapterBar({ stations, activeStepIndex, isNavVisible }: JourneyChapterBarProps) {
-  if (!stations.length) return null;
+type BodyTextSizeControlProps = {
+  value: BodyTextSize;
+  onChange: (value: BodyTextSize) => void;
+};
 
+function BodyTextSizeControl({ value, onChange }: BodyTextSizeControlProps) {
+  return (
+    <section className="bg-canvas">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="space-y-1">
+          <p className="type-label-tight text-ink-muted">Reading settings</p>
+          <p className="type-card-title text-lg text-ink">Body Text Size</p>
+        </div>
+        <fieldset className="flex flex-wrap gap-2 border-0 p-0" aria-label="Body text size">
+          <legend className="sr-only">Body text size</legend>
+          {BODY_TEXT_SIZE_OPTIONS.map((option) => {
+            const isActive = option.value === value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={isActive}
+                className={`pill border type-button focus-ring transition ${
+                  isActive
+                    ? "border-perazzi-red bg-perazzi-red/10 text-perazzi-red"
+                    : "border-border/70 bg-card/70 text-ink hover:border-ink/20 hover:bg-card/85"
+                }`}
+                onClick={() => { onChange(option.value); }}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </fieldset>
+      </div>
+    </section>
+  );
+}
+
+function JourneyChapterBar({
+  stations,
+  stepAnchors,
+  activeStepIndex,
+  isNavVisible,
+  onJumpToIndex,
+}: JourneyChapterBarProps) {
+  const prefersReducedMotion = useReducedMotion();
+  if (!stations.length) return null;
   const total = stations.length;
   let clampedIndex = activeStepIndex;
   if (activeStepIndex < 0) {
@@ -584,12 +673,22 @@ function JourneyChapterBar({ stations, activeStepIndex, isNavVisible }: JourneyC
   const hasPrev = clampedIndex > 0;
   const hasNext = clampedIndex < total - 1;
 
-  const prevTargetId = hasPrev
-    ? stations[clampedIndex - 1].slug?.current ?? `step-${clampedIndex}`
-    : null;
-  const nextTargetId = hasNext
-    ? stations[clampedIndex + 1].slug?.current ?? `step-${clampedIndex + 2}`
-    : "step-12";
+  const prevTargetId = hasPrev ? stepAnchors[clampedIndex - 1] : null;
+  const nextTargetId = hasNext ? stepAnchors[clampedIndex + 1] : "step-12";
+
+  const jumpToTarget = (targetId: string, targetIndex?: number) => {
+    if (!targetId) return;
+    const target = document.getElementById(targetId);
+    if (!target) return;
+    const behavior: ScrollBehavior = prefersReducedMotion ? "auto" : "smooth";
+    target.scrollIntoView({ behavior, block: "start" });
+    if (typeof targetIndex === "number") {
+      onJumpToIndex?.(targetIndex);
+    }
+    if ("replaceState" in history) {
+      history.replaceState(null, "", `#${targetId}`);
+    }
+  };
 
   return (
     <div
@@ -611,6 +710,10 @@ function JourneyChapterBar({ stations, activeStepIndex, isNavVisible }: JourneyC
             <a
               href={`#${prevTargetId}`}
               className="type-button rounded-full border border-white/60 px-3 py-2 text-white hover:bg-card/10"
+              onClick={(event) => {
+                event.preventDefault();
+                jumpToTarget(prevTargetId, clampedIndex - 1);
+              }}
             >
               Previous
             </a>
@@ -619,6 +722,10 @@ function JourneyChapterBar({ stations, activeStepIndex, isNavVisible }: JourneyC
             <a
               href={`#${nextTargetId}`}
               className="type-button rounded-full border border-white/60 px-3 py-2 text-white hover:bg-card/10"
+              onClick={(event) => {
+                event.preventDefault();
+                jumpToTarget(nextTargetId, hasNext ? clampedIndex + 1 : undefined);
+              }}
             >
               Next
             </a>
