@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, Heading, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 import type { BuildPageData, BookingOption, WhatToExpectItem } from "@/types/build";
 import SafeHtml from "@/components/SafeHtml";
+import { homeMotion } from "@/lib/motionConfig";
 
 type BookingOptionsProps = Readonly<{
   booking: BuildPageData["booking"];
@@ -27,8 +28,9 @@ function BookingOptionCard({ option }: BookingOptionCardProps) {
     <article
       ref={optionRef}
       data-analytics-id={`BookingOptionSeen:${option.id}`}
-      className="flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm transition-shadow hover:shadow-elevated sm:rounded-3xl sm:bg-card/80 sm:p-6"
+      className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-ink/20 hover:bg-card/80 hover:shadow-elevated sm:rounded-3xl sm:bg-card/80 sm:p-6"
     >
+      <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
       <div className="space-y-2">
         <Heading level={3} size="sm" className="type-body-title text-ink">
           {option.title}
@@ -128,8 +130,27 @@ const scheduler = {
 export function BookingOptions({ booking, bookingSection }: BookingOptionsProps) {
   const analyticsRef = useAnalyticsObserver("BookingOptionsSeen");
   const isDesktop = useMediaQuery("(min-width: 1024px)") ?? false;
-  const prefersReducedMotion = useReducedMotion() ?? false;
+  const prefersReducedMotion = useReducedMotion();
+  const [reduceMotion, setReduceMotion] = useState(false);
   const [showScheduler, setShowScheduler] = useState(false);
+
+  useEffect(() => {
+    setReduceMotion(Boolean(prefersReducedMotion));
+  }, [prefersReducedMotion]);
+
+  const motionEnabled = !reduceMotion;
+
+  const grid = {
+    hidden: {},
+    show: {
+      transition: { staggerChildren: motionEnabled ? 0.08 : 0 },
+    },
+  } as const;
+
+  const item = {
+    hidden: { opacity: 0, y: 14, filter: "blur(10px)" },
+    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
+  } as const;
 
   const resolvedHeading = bookingSection?.heading ?? booking.headline;
   const resolvedOptions = bookingSection?.options?.length
@@ -171,22 +192,42 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
       className="space-y-6"
       aria-labelledby="booking-options-heading"
     >
-      <div className="space-y-2">
+      <motion.div
+        className="space-y-2"
+        initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
+        whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+        viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}
+        transition={motionEnabled ? homeMotion.revealFast : undefined}
+      >
         <Text size="label-tight" muted>
           Reserve time
         </Text>
         <Heading id="booking-options-heading" level={2} size="xl" className="text-ink">
           {resolvedHeading}
         </Heading>
-      </div>
-      <div className="grid gap-6 md:grid-cols-3">
+      </motion.div>
+
+      <motion.div
+        className="grid gap-6 md:grid-cols-3"
+        variants={grid}
+        initial={motionEnabled ? "hidden" : false}
+        whileInView={motionEnabled ? "show" : undefined}
+        viewport={motionEnabled ? { once: true, amount: 0.4 } : undefined}
+      >
         {resolvedOptions.map((option) => (
-          <BookingOptionCard key={option.id} option={option} />
+          <motion.div key={option.id} variants={item}>
+            <BookingOptionCard option={option} />
+          </motion.div>
         ))}
-      </div>
-      <aside
+      </motion.div>
+
+      <motion.aside
         aria-label="What to expect during your fitting"
         className="space-y-3 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm md:space-y-4 md:p-8 md:rounded-3xl md:bg-card/75 lg:space-y-5 lg:p-10"
+        initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
+        whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+        viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
+        transition={motionEnabled ? homeMotion.revealFast : undefined}
       >
         <Text size="label-tight" muted>
           {resolvedWhatToExpectHeading}
@@ -197,12 +238,19 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
               key={item.id}
               item={item}
               defaultOpen={isDesktop}
-              reducedMotion={prefersReducedMotion}
+              reducedMotion={reduceMotion}
             />
           ))}
         </div>
-      </aside>
-      <div className="space-y-3 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm md:space-y-4 md:p-8 md:rounded-3xl md:bg-card/75 lg:space-y-5 lg:p-10">
+      </motion.aside>
+
+      <motion.div
+        className="space-y-3 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm md:space-y-4 md:p-8 md:rounded-3xl md:bg-card/75 lg:space-y-5 lg:p-10"
+        initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
+        whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+        viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
+        transition={motionEnabled ? homeMotion.revealFast : undefined}
+      >
         <Text size="label-tight" muted>
           Schedule with the concierge
         </Text>
@@ -237,11 +285,19 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
             </a>
           </p>
         </Text>
-      </div>
+      </motion.div>
+
       {resolvedNote ? (
-        <Text size="caption" className="text-ink-muted">
-          {resolvedNote}
-        </Text>
+        <motion.div
+          initial={motionEnabled ? { opacity: 0, y: 10, filter: "blur(10px)" } : false}
+          whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+          viewport={motionEnabled ? { once: true, amount: 0.4 } : undefined}
+          transition={motionEnabled ? homeMotion.revealFast : undefined}
+        >
+          <Text size="caption" className="text-ink-muted">
+            {resolvedNote}
+          </Text>
+        </motion.div>
       ) : null}
     </section>
   );

@@ -1,12 +1,13 @@
 "use client";
 
 import NextImage from "next/image";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
 import SafeHtml from "@/components/SafeHtml";
 import { useMemo, useRef, useState, type MouseEvent } from "react";
 import type { FittingStage } from "@/types/build";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
+import { homeMotion } from "@/lib/motionConfig";
 import { Heading, Text } from "@/components/ui";
 
 type BuildStepsScrollerProps = Readonly<{
@@ -37,6 +38,7 @@ export function BuildStepsScroller({
   const trackerRef = useAnalyticsObserver("BuildStepsSeen");
   const prefersReducedMotion = useReducedMotion();
   const shouldReduceMotion = reduceMotion ?? prefersReducedMotion;
+  const motionEnabled = !shouldReduceMotion;
 
   const mappedSteps = useMemo(() => steps, [steps]);
   const seenStepsRef = useRef<Set<string>>(new Set());
@@ -97,6 +99,19 @@ export function BuildStepsScroller({
   const subheading = intro?.subheading ?? "Six moments that shape a bespoke Perazzi";
   const ctaLabel = intro?.ctaLabel ?? "Begin the ritual";
 
+  const introContent = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: motionEnabled ? 0.1 : 0 },
+    },
+  } as const;
+
+  const introItem = {
+    hidden: { opacity: 0, y: 14, filter: "blur(10px)" },
+    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
+  } as const;
+
   return (
     <section
       ref={trackerRef}
@@ -119,44 +134,57 @@ export function BuildStepsScroller({
           className="absolute inset-0 bg-(--scrim-soft)"
           aria-hidden
         />
+        <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
         <div className="pointer-events-none absolute inset-0 overlay-gradient-canvas" aria-hidden />
       </div>
 
-        <div className="relative z-10 mx-auto flex w-full max-w-7xl px-6 lg:px-10">
+      <div className="relative z-10 mx-auto flex w-full max-w-7xl px-6 lg:px-10">
         <div className="flex w-full flex-col gap-8 rounded-2xl border border-border/70 bg-card/40 p-4 shadow-soft backdrop-blur-md sm:rounded-3xl sm:bg-card/25 sm:px-6 sm:py-8 sm:shadow-elevated lg:px-10">
           {/* Intro block */}
-          <div className="space-y-3 shrink-0">
-            <Heading
-              id="build-steps-heading"
-              level={2}
-              className="type-section text-ink"
-            >
-              {heading}
-            </Heading>
-            <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
-              Scroll to move from moment to moment. Each step is a chapter in the
-              ritual of building a Perazzi to your measure.
-            </Text>
-            <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
-              {subheading}
-            </Text>
-            <div className="flex flex-wrap items-center gap-4">
+          <motion.div
+            className="space-y-3 shrink-0"
+            variants={introContent}
+            initial={motionEnabled ? "hidden" : false}
+            whileInView={motionEnabled ? "show" : undefined}
+            viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}
+          >
+            <motion.div variants={introItem}>
+              <Heading
+                id="build-steps-heading"
+                level={2}
+                className="type-section text-ink"
+              >
+                {heading}
+              </Heading>
+            </motion.div>
+            <motion.div variants={introItem}>
+              <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
+                Scroll to move from moment to moment. Each step is a chapter in the
+                ritual of building a Perazzi to your measure.
+              </Text>
+            </motion.div>
+            <motion.div variants={introItem}>
+              <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
+                {subheading}
+              </Text>
+            </motion.div>
+            <motion.div variants={introItem} className="flex flex-wrap items-center gap-4">
               <a
                 href="#build-steps-sequence"
-                className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-ink/60 text-ink hover:border-ink focus-ring"
+                className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-ink/60 text-ink transition hover:border-ink hover:translate-x-0.5 focus-ring"
               >
                 <span>{ctaLabel}</span>
                 <span aria-hidden="true">↓</span>
               </a>
               <a
                 href={`#${skipTargetId}`}
-                className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-perazzi-red/60 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-perazzi-red/60 text-perazzi-red transition hover:border-perazzi-red hover:text-perazzi-red hover:translate-x-0.5 focus-ring"
               >
                 <span>Skip step-by-step</span>
                 <span aria-hidden="true">→</span>
               </a>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* Sequence container: vertical scroll-snap with a sticky progress rail */}
           <div id="build-steps-sequence" className="relative">
@@ -164,34 +192,59 @@ export function BuildStepsScroller({
               {/* Scroll-snap cards column */}
               <div className="relative flex-1">
                 <nav className="absolute inset-x-3 top-3 z-20 hidden lg:block sm:inset-x-4 lg:inset-x-6 lg:top-4">
-                  <div className="grid grid-flow-col auto-cols-fr items-center gap-2 rounded-2xl border border-border/75 bg-card/75 px-4 py-3 type-label-tight text-ink-muted shadow-soft backdrop-blur-md">
-                    {mappedSteps.map((step, index) => {
-                      const isActive = step.id === activeStepId;
-                      const stepNumber = index + 1;
+                  <LayoutGroup id="bespoke-build-step-rail">
+                    <div className="grid grid-flow-col auto-cols-fr items-center gap-2 rounded-2xl border border-border/75 bg-card/75 px-4 py-3 type-label-tight text-ink-muted shadow-soft backdrop-blur-md">
+                      {mappedSteps.map((step, index) => {
+                        const isActive = step.id === activeStepId;
+                        const stepNumber = index + 1;
 
-                      return (
-                        <button
-                          key={step.id}
-                          type="button"
-                          onClick={() => { handleRailClick(index); }}
-                          aria-label={`Go to step ${stepNumber}: ${step.title}`}
-                          aria-current={isActive ? "step" : undefined}
-                          className={`group flex w-full justify-center items-center gap-2 rounded-full border border-transparent px-3 py-1.5 transition focus-ring ${
-                            isActive
-                              ? "bg-perazzi-red text-white"
-                              : "text-ink-muted hover:text-ink"
-                          }`}
-                        >
-                          <span
-                            className={`h-2 w-2 rounded-full border border-border transition ${
-                              isActive ? "bg-perazzi-red" : "bg-card"
+                        return (
+                          <motion.button
+                            key={step.id}
+                            type="button"
+                            onClick={() => { handleRailClick(index); }}
+                            aria-label={`Go to step ${stepNumber}: ${step.title}`}
+                            aria-current={isActive ? "step" : undefined}
+                            className={`group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-full border border-transparent px-3 py-1.5 transition focus-ring ${
+                              isActive
+                                ? "text-white"
+                                : "text-ink-muted hover:text-ink"
                             }`}
-                          />
-                          <span>{`Step ${stepNumber}`}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                            initial={false}
+                            whileHover={motionEnabled ? { y: -1, transition: homeMotion.micro } : undefined}
+                            whileTap={motionEnabled ? { y: 0, transition: homeMotion.micro } : undefined}
+                          >
+                            {isActive ? (
+                              motionEnabled ? (
+                                <motion.span
+                                  layoutId="bespoke-build-step-rail-highlight"
+                                  className="absolute inset-0 rounded-full bg-perazzi-red shadow-elevated ring-1 ring-white/10"
+                                  transition={homeMotion.springHighlight}
+                                  aria-hidden="true"
+                                />
+                              ) : (
+                                <span
+                                  className="absolute inset-0 rounded-full bg-perazzi-red shadow-elevated ring-1 ring-white/10"
+                                  aria-hidden="true"
+                                />
+                              )
+                            ) : null}
+                            <span
+                              className="relative z-10 flex items-center justify-center gap-2"
+                            >
+                              <span
+                                className={`h-2 w-2 rounded-full border transition ${
+                                  isActive ? "border-white/40 bg-white/85" : "border-border bg-card"
+                                }`}
+                                aria-hidden="true"
+                              />
+                              <span>{`Step ${stepNumber}`}</span>
+                            </span>
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  </LayoutGroup>
                 </nav>
 
                 <div
@@ -210,19 +263,15 @@ export function BuildStepsScroller({
                         }}
                         data-step-id={step.id}
                         aria-labelledby={`build-step-heading-${step.id}`}
-                        className="relative snap-start"
+                        className="group relative snap-start"
                         initial={
-                          shouldReduceMotion ? false : { opacity: 0, y: 16 }
+                          motionEnabled ? { opacity: 0, y: 16, filter: "blur(12px)" } : false
                         }
                         whileInView={
-                          shouldReduceMotion ? undefined : { opacity: 1, y: 0 }
+                          motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined
                         }
                         viewport={{ amount: 0.6, once: true }}
-                        transition={
-                          shouldReduceMotion
-                            ? undefined
-                            : { duration: 0.35, ease: "easeOut" }
-                        }
+                        transition={motionEnabled ? homeMotion.revealFast : undefined}
                         onViewportEnter={() => { handleStepEnter(step.id); }}
                       >
                         <div className="relative flex min-h-[80vh]">
@@ -234,10 +283,12 @@ export function BuildStepsScroller({
                                 alt={step.media.alt ?? step.title}
                                 fill
                                 sizes="100vw"
-                                className="object-cover object-center"
+                                className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.02]"
                                 loading="lazy"
                               />
                             ) : null}
+                            <div className="pointer-events-none absolute inset-0 film-grain opacity-15" aria-hidden="true" />
+                            <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
                             <div className="pointer-events-none absolute inset-0 overlay-gradient-ink-50" aria-hidden />
                           </div>
 
