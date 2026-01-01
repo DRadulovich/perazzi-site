@@ -149,30 +149,34 @@ export default async function ExperiencePage() {
           {JSON.stringify(faqJsonLd)}
         </Script>
       ) : null}
-      <ExperienceHero
-        hero={hero}
-        breadcrumbs={[
-          { label: "Home", href: "/" },
-          { label: "Experience", href: "/experience" },
-        ]}
-      />
-      <ExperiencePicker items={pickerItems} faqSection={faqSection} pickerUi={pickerUi} />
-      <ExperienceAdvisorySection
-        sectionId="experience-visit-planning"
-        headingId="experience-visit-planning-heading"
-        heading={visitPlanningHeading}
-        intro={visitPlanningIntro}
-        chatLabel={visitPlanningChatLabel}
-        chatPayload={{
-          question: visitPlanningChatPrompt,
-          context: { pageUrl: "/experience", mode: "prospect" },
-        }}
-        link={{ href: visitPlanningLinkHref, label: visitPlanningLinkLabel }}
-        rightTitle="What the concierge can line up:"
-        bullets={visitPlanningBullets}
-        closing={visitPlanningClosing}
-      />
-      <VisitFactory visitFactorySection={visitFactorySection} />
+      <div className="space-y-0">
+        <ExperienceHero
+          hero={hero}
+          breadcrumbs={[
+            { label: "Home", href: "/" },
+            { label: "Experience", href: "/experience" },
+          ]}
+        />
+        <ExperiencePicker items={pickerItems} faqSection={faqSection} pickerUi={pickerUi} />
+      </div>
+      <div className="space-y-0">
+        <ExperienceAdvisorySection
+          sectionId="experience-visit-planning"
+          headingId="experience-visit-planning-heading"
+          heading={visitPlanningHeading}
+          intro={visitPlanningIntro}
+          chatLabel={visitPlanningChatLabel}
+          chatPayload={{
+            question: visitPlanningChatPrompt,
+            context: { pageUrl: "/experience", mode: "prospect" },
+          }}
+          link={{ href: visitPlanningLinkHref, label: visitPlanningLinkLabel }}
+          rightTitle="What the concierge can line up:"
+          bullets={visitPlanningBullets}
+          closing={visitPlanningClosing}
+        />
+        <VisitFactory visitFactorySection={visitFactorySection} />
+      </div>
       <ExperienceAdvisorySection
         sectionId="experience-booking-guide"
         headingId="experience-booking-guide-heading"
