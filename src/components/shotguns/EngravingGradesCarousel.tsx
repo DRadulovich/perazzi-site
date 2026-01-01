@@ -23,12 +23,16 @@ type EngravingCategory = {
   grades: GradeSeries[];
 };
 
+type EngravingCarouselBackground = NonNullable<
+  NonNullable<ShotgunsLandingData["engravingCarouselUi"]>["background"]
+>;
+
 type EngravingRevealSectionProps = {
   readonly categories: EngravingCategory[];
   readonly selectedGrade: GradeSeries | null;
   readonly heading: string;
   readonly subheading: string;
-  readonly background: NonNullable<ShotgunsLandingData["engravingCarouselUi"]>["background"];
+  readonly background: EngravingCarouselBackground;
   readonly ctaLabel: string;
   readonly openCategory: string | null;
   readonly setOpenCategory: Dispatch<SetStateAction<string | null>>;

@@ -68,12 +68,16 @@ type DisciplineCategory = {
   disciplines: DisciplineCard[];
 };
 
+type DisciplineRailBackground = NonNullable<
+  NonNullable<ShotgunsLandingData["disciplineRailUi"]>["background"]
+>;
+
 type DisciplineRailRevealSectionProps = {
   readonly categories: DisciplineCategory[];
   readonly selectedDiscipline: DisciplineCard | null;
   readonly heading: string;
   readonly subheading: string;
-  readonly background: NonNullable<ShotgunsLandingData["disciplineRailUi"]>["background"];
+  readonly background: DisciplineRailBackground;
   readonly openCategory: string | null;
   readonly setOpenCategory: Dispatch<SetStateAction<string | null>>;
   readonly activeDisciplineId: string | null;

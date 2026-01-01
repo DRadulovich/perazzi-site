@@ -748,7 +748,7 @@ const PlatformGridRevealSection = ({
 
 export function PlatformGrid({ platforms, ui }: PlatformGridProps) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useReducedMotion() ?? false;
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const analyticsRef = useAnalyticsObserver("PlatformGridSeen");
 
