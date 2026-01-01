@@ -389,7 +389,10 @@ const DisciplineRailRevealSection = ({
     ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: railReveal.duration }
     : undefined;
   const railLayoutTransition = motionEnabled ? { layout: railReveal } : undefined;
-  const railMinHeight = enableTitleReveal ? "min-h-[calc(600px+12rem)]" : null;
+  const railMinHeight =
+    enableTitleReveal && !revealRail
+      ? "min-h-[clamp(360px,52vh,560px)]"
+      : null;
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
@@ -527,7 +530,7 @@ const DisciplineRailRevealSection = ({
       <Container size="xl" className="relative z-10">
         <motion.div
           ref={railShellRef}
-          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
+          style={enableTitleReveal && revealRail && expandedHeight ? { minHeight: expandedHeight } : undefined}
           className={cn(
             "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
             focusSurfaceTransition,
