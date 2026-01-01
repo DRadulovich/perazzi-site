@@ -1,15 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
-import { useMemo, useState, useRef, useEffect, useCallback } from "react";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { useMemo, useState, useRef, useEffect, useCallback, type Dispatch, type RefObject, type SetStateAction } from "react";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import type { Platform, ShotgunsLandingData } from "@/types/catalog";
 import { PlatformCard } from "./PlatformCard";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
 import { buildPlatformPrompt } from "@/lib/platform-prompts";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
 import { homeMotion } from "@/lib/motionConfig";
+import { cn } from "@/lib/utils";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 
@@ -117,63 +119,17 @@ const createPayloadBuilder =
     return basePayload;
   };
 
-const PlatformHeader = ({
-  heading,
-  subheading,
+const PlatformTabs = ({
+  platforms,
+  activeIndex,
+  onSelect,
   motionEnabled,
 }: {
-  heading: string;
-  subheading: string;
-  motionEnabled: boolean;
-}) => {
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: motionEnabled ? 0.1 : 0 },
-    },
-  } as const;
-
-  const item = {
-    hidden: { opacity: 0, y: 14, filter: "blur(10px)" },
-    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
-  } as const;
-
-  return (
-    <motion.div
-      className="space-y-2"
-      variants={container}
-      initial={motionEnabled ? "hidden" : false}
-      whileInView={motionEnabled ? "show" : undefined}
-      viewport={motionEnabled ? { once: true, amount: 0.55 } : undefined}
-    >
-      <motion.div variants={item}>
-        <Heading
-          id="platforms-heading"
-          level={2}
-          size="xl"
-          className="text-ink"
-        >
-          {heading}
-        </Heading>
-      </motion.div>
-      <motion.div variants={item}>
-        <Text className="type-section-subtitle mb-6 max-w-4xl text-ink-muted" leading="normal">
-          {subheading}
-        </Text>
-      </motion.div>
-    </motion.div>
-  );
-};
-
-type PlatformTabsProps = {
   readonly platforms: readonly Platform[];
   readonly activeIndex: number;
   onSelect: (index: number) => void;
   motionEnabled: boolean;
-};
-
-const PlatformTabs = ({ platforms, activeIndex, onSelect, motionEnabled }: PlatformTabsProps) => (
+}) => (
   <LayoutGroup id="shotguns-platform-tabs">
     <div role="tablist" aria-label="Platforms" className="flex flex-wrap gap-2">
       {platforms.map((platform, index) => {
@@ -391,38 +347,138 @@ const DesktopPlatformGrid = ({
   </div>
 );
 
-const PlatformBackground = ({ background }: { background: PlatformBackground }) => (
-  <div className="absolute inset-0 z-0 overflow-hidden">
-    <Image
-      src={background.url}
-      alt={background.alt}
-      fill
-      sizes="100vw"
-      className="object-cover"
-      priority={false}
-    />
-    <div className="absolute inset-0 bg-(--scrim-soft)" aria-hidden />
-    <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
-    <div className="pointer-events-none absolute inset-0 overlay-gradient-canvas-70" aria-hidden />
-  </div>
-);
+type PlatformGridRevealSectionProps = {
+  readonly platforms: readonly Platform[];
+  readonly templates: TemplateConfig;
+  readonly activeIndex: number;
+  readonly setActiveIndex: Dispatch<SetStateAction<number>>;
+  readonly buildPayload: (platform: Platform) => ChatTriggerPayload;
+  readonly enableTitleReveal: boolean;
+  readonly motionEnabled: boolean;
+  readonly prefersReducedMotion: boolean;
+  readonly sectionRef: RefObject<HTMLElement | null>;
+};
 
-export function PlatformGrid({ platforms, ui }: PlatformGridProps) {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const prefersReducedMotion = useReducedMotion() ?? false;
-  const analyticsRef = useAnalyticsObserver("PlatformGridSeen");
-
+const PlatformGridRevealSection = ({
+  platforms,
+  templates,
+  activeIndex,
+  setActiveIndex,
+  buildPayload,
+  enableTitleReveal,
+  motionEnabled,
+  prefersReducedMotion,
+  sectionRef,
+}: PlatformGridRevealSectionProps) => {
+  const [platformExpanded, setPlatformExpanded] = useState(!enableTitleReveal);
+  const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
+  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
+  const platformShellRef = useRef<HTMLDivElement | null>(null);
+  const headerThemeFrame = useRef<number | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const orderedPlatforms = useMemo(() => orderPlatforms(platforms), [platforms]);
-  const templates = useMemo(() => buildTemplates(ui), [ui]);
 
-  const activePlatform = orderedPlatforms[activeIndex] ?? orderedPlatforms[0];
-  const buildPayload = useMemo(
-    () => createPayloadBuilder(templates.chatPayloadTemplate),
-    [templates.chatPayloadTemplate],
+  const headingTitle = templates.heading;
+  const headingSubtitle = templates.subheading;
+  const revealGrid = !enableTitleReveal || platformExpanded;
+  const revealPhotoFocus = revealGrid;
+  const activePlatform = platforms[activeIndex] ?? platforms[0];
+  const parallaxStrength = "16%";
+  const parallaxEnabled = enableTitleReveal && !revealGrid;
+
+  const focusSurfaceTransition = "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
+  const focusFadeTransition = "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
+  const titleColorTransition = "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
+  const platformReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
+  const platformRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
+  const platformCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
+  const platformBodyReveal = platformReveal;
+  const readMoreReveal = motionEnabled
+    ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: platformReveal.duration }
+    : undefined;
+  const platformLayoutTransition = motionEnabled ? { layout: platformReveal } : undefined;
+  const platformMinHeight = enableTitleReveal ? "min-h-[calc(750px+18rem)]" : null;
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"],
+  });
+  const parallaxY = useTransform(
+    scrollYProgress,
+    [0, 1],
+    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
   );
+  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const backgroundScale = parallaxEnabled ? 1.32 : 1;
+  const backgroundScaleTransition = revealGrid ? platformReveal : platformCollapse;
+
+  const handleExpand = () => {
+    if (!enableTitleReveal) return;
+    if (headerThemeFrame.current !== null) {
+      cancelAnimationFrame(headerThemeFrame.current);
+    }
+    setPlatformExpanded(true);
+    headerThemeFrame.current = requestAnimationFrame(() => {
+      setHeaderThemeReady(true);
+      headerThemeFrame.current = null;
+    });
+  };
+
+  const handleCollapse = () => {
+    if (!enableTitleReveal) return;
+    if (headerThemeFrame.current !== null) {
+      cancelAnimationFrame(headerThemeFrame.current);
+      headerThemeFrame.current = null;
+    }
+    setHeaderThemeReady(false);
+    setPlatformExpanded(false);
+  };
+
+  const handleTabSelect = useCallback((index: number) => {
+    setActiveIndex(index);
+    scrollToIndex(scrollRef.current, index);
+  }, [setActiveIndex]);
+
+  const headingContainer = {
+    hidden: {},
+    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
+  } as const;
+
+  const headingItem = {
+    hidden: { y: 14, filter: "blur(10px)" },
+    show: { y: 0, filter: "blur(0px)", transition: platformReveal },
+  } as const;
 
   useEffect(() => {
+    if (!enableTitleReveal || !revealGrid) return;
+    const node = platformShellRef.current;
+    if (!node) return;
+
+    let frame = 0;
+    const updateHeight = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (!node) return;
+        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
+        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
+      });
+    };
+
+    updateHeight();
+
+    if (typeof ResizeObserver === "undefined") {
+      return () => { cancelAnimationFrame(frame); };
+    }
+
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(node);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [enableTitleReveal, revealGrid, activeIndex]);
+
+  useEffect(() => {
+    if (!revealGrid) return;
     const container = scrollRef.current;
     if (!container) return undefined;
 
@@ -435,54 +491,297 @@ export function PlatformGrid({ platforms, ui }: PlatformGridProps) {
     return () => {
       container.removeEventListener("scroll", handleScroll);
     };
+  }, [revealGrid, setActiveIndex]);
+
+  useEffect(() => () => {
+    if (headerThemeFrame.current !== null) {
+      cancelAnimationFrame(headerThemeFrame.current);
+    }
   }, []);
 
-  const handleTabSelect = useCallback((index: number) => {
-    setActiveIndex(index);
-    scrollToIndex(scrollRef.current, index);
-  }, []);
+  return (
+    <>
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <motion.div
+          className="absolute inset-0 will-change-transform"
+          style={parallaxStyle}
+          initial={false}
+          animate={motionEnabled ? { scale: backgroundScale } : undefined}
+          transition={motionEnabled ? backgroundScaleTransition : undefined}
+        >
+          <Image
+            src={templates.background.url}
+            alt={templates.background.alt}
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority={false}
+          />
+        </motion.div>
+        <div
+          className={cn(
+            "absolute inset-0 bg-(--scrim-strong)",
+            focusFadeTransition,
+            revealGrid ? "opacity-0" : "opacity-100",
+          )}
+          aria-hidden
+        />
+        <div
+          className={cn(
+            "absolute inset-0 bg-(--scrim-strong)",
+            focusFadeTransition,
+            revealPhotoFocus ? "opacity-100" : "opacity-0",
+          )}
+          aria-hidden
+        />
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-0 film-grain",
+            focusFadeTransition,
+            revealPhotoFocus ? "opacity-20" : "opacity-0",
+          )}
+          aria-hidden="true"
+        />
+        <div
+          className={cn(
+            "pointer-events-none absolute inset-0 overlay-gradient-canvas",
+            focusFadeTransition,
+            revealPhotoFocus ? "opacity-100" : "opacity-0",
+          )}
+          aria-hidden
+        />
+      </div>
 
+      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
+        <motion.div
+          ref={platformShellRef}
+          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
+          className={cn(
+            "relative flex flex-col space-y-8 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
+            focusSurfaceTransition,
+            revealPhotoFocus
+              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
+              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
+            platformMinHeight,
+          )}
+        >
+          <LayoutGroup id="shotguns-platform-grid-title">
+            <AnimatePresence initial={false}>
+              {revealGrid ? (
+                <motion.div
+                  key="platform-grid-header"
+                  className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
+                  initial={motionEnabled ? { opacity: 0 } : false}
+                  animate={motionEnabled ? { opacity: 1, transition: platformReveal } : undefined}
+                  exit={motionEnabled ? { opacity: 0, transition: platformRevealFast } : undefined}
+                >
+                  <motion.div
+                    className="space-y-3"
+                    variants={headingContainer}
+                    initial={motionEnabled ? "hidden" : false}
+                    animate={motionEnabled ? "show" : undefined}
+                  >
+                    <motion.div
+                      layoutId="platform-grid-title"
+                      layoutCrossfade={false}
+                      transition={platformLayoutTransition}
+                      className="relative"
+                    >
+                      <Heading
+                        id="platforms-heading"
+                        level={2}
+                        size="xl"
+                        className={cn(
+                          titleColorTransition,
+                          headerThemeReady ? "text-ink" : "text-white",
+                        )}
+                      >
+                        {headingTitle}
+                      </Heading>
+                    </motion.div>
+                    <motion.div
+                      layoutId="platform-grid-subtitle"
+                      layoutCrossfade={false}
+                      transition={platformLayoutTransition}
+                      className="relative"
+                    >
+                      <motion.div variants={headingItem}>
+                        <Text
+                          className={cn(
+                            "type-section-subtitle max-w-4xl",
+                            titleColorTransition,
+                            headerThemeReady ? "text-ink-muted" : "text-white",
+                          )}
+                          leading="normal"
+                        >
+                          {headingSubtitle}
+                        </Text>
+                      </motion.div>
+                    </motion.div>
+                  </motion.div>
+                  {enableTitleReveal ? (
+                    <button
+                      type="button"
+                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
+                      onClick={handleCollapse}
+                    >
+                      Collapse
+                    </button>
+                  ) : null}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="platform-grid-collapsed"
+                  className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
+                  initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
+                  animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
+                  exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
+                  transition={motionEnabled ? platformRevealFast : undefined}
+                >
+                  <motion.div
+                    layoutId="platform-grid-title"
+                    layoutCrossfade={false}
+                    transition={platformLayoutTransition}
+                    className="relative inline-flex text-white"
+                  >
+                    <Heading
+                      id="platforms-heading"
+                      level={2}
+                      size="xl"
+                      className="type-section-collapsed"
+                    >
+                      {headingTitle}
+                    </Heading>
+                    <button
+                      type="button"
+                      className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                      onPointerEnter={handleExpand}
+                      onFocus={handleExpand}
+                      onClick={handleExpand}
+                      aria-expanded={revealGrid}
+                      aria-controls="platform-grid-body"
+                      aria-labelledby="platforms-heading"
+                    >
+                      <span className="sr-only">Expand {headingTitle}</span>
+                    </button>
+                  </motion.div>
+                  <motion.div
+                    layoutId="platform-grid-subtitle"
+                    layoutCrossfade={false}
+                    transition={platformLayoutTransition}
+                    className="relative text-white"
+                  >
+                    <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+                      {headingSubtitle}
+                    </Text>
+                  </motion.div>
+                  <motion.div
+                    initial={motionEnabled ? { opacity: 0, y: 6 } : false}
+                    animate={motionEnabled ? { opacity: 1, y: 0, transition: readMoreReveal } : undefined}
+                    exit={motionEnabled ? { opacity: 0, y: 6, transition: platformRevealFast } : undefined}
+                    className="mt-3"
+                  >
+                    <Text
+                      size="button"
+                      className="text-white/80 cursor-pointer focus-ring"
+                      asChild
+                    >
+                      <button type="button" onClick={handleExpand}>
+                        Read more
+                      </button>
+                    </Text>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </LayoutGroup>
+
+          <AnimatePresence initial={false}>
+            {revealGrid ? (
+              <motion.div
+                key="platform-grid-body"
+                id="platform-grid-body"
+                className="space-y-8"
+                initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
+                animate={
+                  motionEnabled
+                    ? { opacity: 1, y: 0, filter: "blur(0px)", transition: platformBodyReveal }
+                    : undefined
+                }
+                exit={
+                  motionEnabled
+                    ? { opacity: 0, y: -16, filter: "blur(10px)", transition: platformCollapse }
+                    : undefined
+                }
+              >
+                <PlatformTabs
+                  platforms={platforms}
+                  activeIndex={activeIndex}
+                  onSelect={handleTabSelect}
+                  motionEnabled={motionEnabled}
+                />
+
+                <MobilePlatformCarousel
+                  platforms={platforms}
+                  cardFooterTemplate={templates.cardFooterTemplate}
+                  chatLabelTemplate={templates.chatLabelTemplate}
+                  buildPayload={buildPayload}
+                  scrollRef={scrollRef}
+                />
+
+                <DesktopPlatformGrid
+                  platform={activePlatform}
+                  activeIndex={activeIndex}
+                  cardFooterTemplate={templates.cardFooterTemplate}
+                  chatLabelTemplate={templates.chatLabelTemplate}
+                  buildPayload={buildPayload}
+                  prefersReducedMotion={prefersReducedMotion}
+                />
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </motion.div>
+      </div>
+    </>
+  );
+};
+
+export function PlatformGrid({ platforms, ui }: PlatformGridProps) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const prefersReducedMotion = useReducedMotion() ?? false;
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
+  const analyticsRef = useAnalyticsObserver("PlatformGridSeen");
+
+  const orderedPlatforms = useMemo(() => orderPlatforms(platforms), [platforms]);
+  const templates = useMemo(() => buildTemplates(ui), [ui]);
+  const buildPayload = useMemo(
+    () => createPayloadBuilder(templates.chatPayloadTemplate),
+    [templates.chatPayloadTemplate],
+  );
+
+  const enableTitleReveal = isDesktop && !prefersReducedMotion;
   const motionEnabled = !prefersReducedMotion;
+  const gridKey = enableTitleReveal ? "title-reveal" : "always-reveal";
 
   return (
     <section
       ref={analyticsRef}
       data-analytics-id="PlatformGridSeen"
-      className="relative w-screen max-w-[100vw] overflow-visible py-10 sm:py-16 min-h-[80vh] full-bleed"
+      className="relative isolate w-screen max-w-[100vw] overflow-visible py-10 sm:py-16 min-h-[80vh] full-bleed"
       aria-labelledby="platforms-heading"
     >
-      <PlatformBackground background={templates.background} />
-
-      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-        <div className="space-y-8">
-          <PlatformHeader heading={templates.heading} subheading={templates.subheading} motionEnabled={motionEnabled} />
-          <PlatformTabs
-            platforms={orderedPlatforms}
-            activeIndex={activeIndex}
-            onSelect={handleTabSelect}
-            motionEnabled={motionEnabled}
-          />
-
-          {/* Mobile carousel */}
-          <MobilePlatformCarousel
-            platforms={orderedPlatforms}
-            cardFooterTemplate={templates.cardFooterTemplate}
-            chatLabelTemplate={templates.chatLabelTemplate}
-            buildPayload={buildPayload}
-            scrollRef={scrollRef}
-          />
-
-          {/* Desktop grid */}
-          <DesktopPlatformGrid
-            platform={activePlatform}
-            activeIndex={activeIndex}
-            cardFooterTemplate={templates.cardFooterTemplate}
-            chatLabelTemplate={templates.chatLabelTemplate}
-            buildPayload={buildPayload}
-            prefersReducedMotion={prefersReducedMotion}
-          />
-        </div>
-      </div>
+      <PlatformGridRevealSection
+        key={gridKey}
+        platforms={orderedPlatforms}
+        templates={templates}
+        activeIndex={activeIndex}
+        setActiveIndex={setActiveIndex}
+        buildPayload={buildPayload}
+        enableTitleReveal={enableTitleReveal}
+        motionEnabled={motionEnabled}
+        prefersReducedMotion={prefersReducedMotion}
+        sectionRef={analyticsRef}
+      />
     </section>
   );
 }

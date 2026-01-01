@@ -109,8 +109,10 @@ export default async function ShotgunsLandingPage() {
 
   return (
     <div className="space-y-5">
-      <LandingHero hero={landing.hero} />
-      <PlatformGrid platforms={landing.platforms} ui={landing.platformGridUi} />
+      <div className="space-y-0">
+        <LandingHero hero={landing.hero} />
+        <PlatformGrid platforms={landing.platforms} ui={landing.platformGridUi} />
+      </div>
       <ShotgunsAdvisorySection
         headingId="discipline-fit-heading"
         eyebrow={disciplineFit.eyebrow ?? "Discipline fit"}

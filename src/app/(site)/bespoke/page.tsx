@@ -25,8 +25,10 @@ export default async function BespokeBuildPage() {
 
   return (
     <div className="space-y-16" id="bespoke-top">
-      <BuildHero hero={hero} fullBleed />
-      <BuildStepsScroller steps={steps} intro={stepsIntro} skipTargetId="bespoke-experts" />
+      <div className="space-y-0">
+        <BuildHero hero={hero} fullBleed />
+        <BuildStepsScroller steps={steps} intro={stepsIntro} skipTargetId="bespoke-experts" />
+      </div>
       <BespokeGuideSection guide={bespokeGuide} />
       <CinematicImageStrip
         src={(cinematicStrips?.[0]?.image?.url) ?? "/cinematic_background_photos/p-web-25.jpg"}

@@ -28,7 +28,7 @@ export function CinematicImageStrip({ src, image, alt }: CinematicImageStripProp
   return (
     <section
       ref={sectionRef}
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden bg-perazzi-black full-bleed"
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden bg-canvas full-bleed"
       aria-hidden="true"
     >
       <div className="relative cinematic-strip-height">
@@ -46,13 +46,13 @@ export function CinematicImageStrip({ src, image, alt }: CinematicImageStripProp
           />
           <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
           <div
-            className="absolute inset-0 bg-gradient-to-r from-black/25 via-black/10 to-black/25"
+            className="absolute inset-0 bg-(--scrim-soft)"
             aria-hidden="true"
           />
         </motion.div>
 
         <div
-          className="pointer-events-none absolute inset-0 overlay-gradient-canvas-70"
+          className="pointer-events-none absolute inset-0"
           aria-hidden="true"
         />
       </div>
