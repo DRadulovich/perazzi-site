@@ -363,6 +363,14 @@
     line-height: 1.3;
   }
 
+  .type-section-collapsed {
+    font-size: calc(var(--type-section) * 1.2);
+  }
+
+  .type-section-subtitle-collapsed {
+    font-size: calc(var(--type-title-md) * 1.2);
+  }
+
   .type-body-title {
     font-family: var(--font-serif-small-caps);
     font-size: clamp(1.3rem, 2vw, 2.2rem);

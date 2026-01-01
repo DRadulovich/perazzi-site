@@ -86,3 +86,62 @@
 ## Perazzi Heritage Eras Section
 
 * [ ] Eventually change this whole section into a full screen immersive navigatable scroller with its own route. 
+
+
+[-----------------------------------------------------------]
+
+Okay, I need your help (screenshot attached to this message in the chat for context) -- I am trying to figure out a way to make these sections feel more intentional instead of just a full screen of somewhat awkwardly laid out text. Here's some context to help you understand the purpose of each one:
+
+---
+# Context
+
+* Each one of these sections is supposed to be a child section to the parent section that is above it on the page
+* The goal of them is to somewhat add context or explain or pull together the information that is in the component sitting above it on the front-end of the website. 
+* The other goal of them is to somewhat be a CTA to pull people into using the Assistant by having a ChatTriggerButton that is an automated query into the Assistant API. 
+
+---
+
+# Goals:
+
+* I want to figure out a way to add to the aesthetic design of the website with this as opposed to what they currently are, which is just a bunch of text, as you can see in a screenshot of one of them as an example. 
+* I also want them to be more engaging and draw the user in to interacting with the assistant. 
+* At the same time, though, I don't want to draw attention away from their parent section above because this should be an addition to that, not the main attraction. 
+* I really need to figure out a way to make these sections more aesthetically pleasing and beautiful in a way that ties together with the rest of the website. 
+* Each one of these sections also acts as a visual break to separate the components on top and below of them. That way, there is a natural, consecutive sections within the website that feel like they're supposed to make sense. 
+
+---
+
+# Request for ChatGPT:
+
+* Could you please audit them and propose a couple different ideas as to how we can level them up so to speak and make them feel not just like a wall of text But still accomplish everything that I listed in the goals section. 
+* I'm not looking for a massive refactor and completely changing the way that they work. But I really do want some ideas on the layout, or the design, or the interactability, or visual language, or something.
+
+---
+
+# Subsection Locations & Names
+
+## Home Page
+* HomeGuideSection
+    - Need a Guide?
+
+## Shotguns Page -> `/shotguns`
+* ShotgunsAdvisorySection
+    - The Geometry of Rhythm
+    - Gauge Selection
+    - Choose with Intent
+
+## Bespoke Page -> `/bespoke`
+* BespokeGuideSection
+    - Need a Bespoke Guide?
+
+## Experience Page -> `/experience`
+* ExperienceAdvisorySection
+    - Visit Planning
+    - Fitting Guidance
+    - Meet Us on the Road
+
+## Heritage Page -> `/heritage`
+* HeritageSplitSection
+    - Ask the Workshop
+    - Champions Past and Present
+    - Inside the Botticino Atelier
