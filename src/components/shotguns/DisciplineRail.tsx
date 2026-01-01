@@ -247,7 +247,7 @@ export function DisciplineRail({
             >
               {modelModalOpen && selectedModel ? (
                 <motion.div
-                  className="fixed inset-0 z-[80] flex items-center justify-center p-4"
+                  className="fixed inset-0 z-80 flex items-center justify-center p-4"
                   role="dialog"
                   aria-modal="true"
                   initial={motionEnabled ? { opacity: 0 } : false}
@@ -380,7 +380,7 @@ const DisciplineRailRevealSection = ({
     ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: railReveal.duration }
     : undefined;
   const railLayoutTransition = motionEnabled ? { layout: railReveal } : undefined;
-  const railMinHeight = enableTitleReveal ? "min-h-[calc(720px+18rem)]" : null;
+  const railMinHeight = enableTitleReveal ? "min-h-[calc(600px+12rem)]" : null;
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
@@ -750,7 +750,7 @@ const DisciplineRailRevealSection = ({
                     </LayoutGroup>
                   </div>
 
-                  <div className="min-h-[26rem]">
+                  <div className="min-h-104">
                     <AnimatePresence initial={false} mode="popLayout">
                       {selectedDiscipline ? (
                         <motion.div
