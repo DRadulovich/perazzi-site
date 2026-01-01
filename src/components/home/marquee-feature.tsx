@@ -1,8 +1,8 @@
 "use client";
 
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import type { Champion, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -36,6 +36,7 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
         ui={ui}
         enableTitleReveal={enableTitleReveal}
         motionEnabled={motionEnabled}
+        scrollRef={analyticsRef}
       />
     </section>
   );
@@ -46,6 +47,7 @@ type MarqueeFeatureRevealSectionProps = Readonly<{
   ui: HomeData["marqueeUi"];
   enableTitleReveal: boolean;
   motionEnabled: boolean;
+  scrollRef: RefObject<HTMLElement | null>;
 }>;
 
 function MarqueeFeatureRevealSection({
@@ -53,6 +55,7 @@ function MarqueeFeatureRevealSection({
   ui,
   enableTitleReveal,
   motionEnabled,
+  scrollRef,
 }: MarqueeFeatureRevealSectionProps) {
   const [marqueeExpanded, setMarqueeExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
@@ -73,6 +76,8 @@ function MarqueeFeatureRevealSection({
 
   const revealMarquee = !enableTitleReveal || marqueeExpanded;
   const revealPhotoFocus = revealMarquee;
+  const parallaxStrength = "16%";
+  const parallaxEnabled = enableTitleReveal && !revealMarquee;
   const focusSurfaceTransition = "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const focusFadeTransition = "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const titleColorTransition = "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
@@ -85,6 +90,18 @@ function MarqueeFeatureRevealSection({
     : undefined;
   const marqueeLayoutTransition = motionEnabled ? { layout: marqueeReveal } : undefined;
   const marqueeMinHeight = enableTitleReveal ? "min-h-[calc(640px+12rem)]" : null;
+  const { scrollYProgress } = useScroll({
+    target: scrollRef,
+    offset: ["start end", "end start"],
+  });
+  const parallaxY = useTransform(
+    scrollYProgress,
+    [0, 1],
+    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
+  );
+  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const backgroundScale = parallaxEnabled ? 1.32 : 1;
+  const backgroundScaleTransition = revealMarquee ? marqueeReveal : marqueeCollapse;
 
   const handleMarqueeExpand = () => {
     if (!enableTitleReveal) return;
@@ -162,17 +179,25 @@ function MarqueeFeatureRevealSection({
   return (
     <>
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <Image
-          src={background.url}
-          alt={background.alt}
-          fill
-          sizes="100vw"
-          className="object-cover"
-          priority={false}
-        />
+        <motion.div
+          className="absolute inset-0 will-change-transform"
+          style={parallaxStyle}
+          initial={false}
+          animate={motionEnabled ? { scale: backgroundScale } : undefined}
+          transition={motionEnabled ? backgroundScaleTransition : undefined}
+        >
+          <Image
+            src={background.url}
+            alt={background.alt}
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority={false}
+          />
+        </motion.div>
         <div
           className={cn(
-            "absolute inset-0 bg-(--scrim-soft)",
+            "absolute inset-0 bg-(--scrim-strong)",
             focusFadeTransition,
             revealMarquee ? "opacity-0" : "opacity-100",
           )}
@@ -180,7 +205,7 @@ function MarqueeFeatureRevealSection({
         />
         <div
           className={cn(
-            "absolute inset-0 bg-(--scrim-soft)",
+            "absolute inset-0 bg-(--scrim-strong)",
             focusFadeTransition,
             revealPhotoFocus ? "opacity-100" : "opacity-0",
           )}

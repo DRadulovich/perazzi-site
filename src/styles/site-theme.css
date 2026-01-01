@@ -34,7 +34,7 @@
 
   /* Legibility on imagery */
   --scrim-strong: rgba(31, 31, 31, 0.66);
-  --scrim-soft: rgba(31, 31, 31, 0.4);
+  --scrim-soft: rgba(31, 31, 31, 0.5);
 
   /* Layout constants */
   --site-header-offset-lg: 80px;
@@ -86,7 +86,7 @@
   --focus-ring-inner: #0F0F10;
 
   --scrim-strong: rgba(0, 0, 0, 0.66);
-  --scrim-soft: rgba(0, 0, 0, 0.4);
+  --scrim-soft: rgba(0, 0, 0, 0.5);
 }
 
 /* Tailwind theme bindings (inline) */

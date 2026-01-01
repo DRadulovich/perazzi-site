@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import Image from "next/image";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import type { VisitFactoryData } from "@/types/experience";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -24,6 +24,7 @@ type VisitFactoryRevealSectionProps = {
   readonly background: { url: string; alt?: string };
   readonly enableTitleReveal: boolean;
   readonly motionEnabled: boolean;
+  readonly sectionRef: RefObject<HTMLElement | null>;
 };
 
 export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
@@ -58,6 +59,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
         background={background}
         enableTitleReveal={enableTitleReveal}
         motionEnabled={motionEnabled}
+        sectionRef={analyticsRef}
       />
     </section>
   );
@@ -70,6 +72,7 @@ const VisitFactoryRevealSection = ({
   background,
   enableTitleReveal,
   motionEnabled,
+  sectionRef,
 }: VisitFactoryRevealSectionProps) => {
   const [visitExpanded, setVisitExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
@@ -86,6 +89,8 @@ const VisitFactoryRevealSection = ({
 
   const revealVisit = !enableTitleReveal || visitExpanded;
   const revealPhotoFocus = revealVisit;
+  const parallaxStrength = "16%";
+  const parallaxEnabled = enableTitleReveal && !revealVisit;
   const focusSurfaceTransition =
     "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const focusFadeTransition =
@@ -101,6 +106,18 @@ const VisitFactoryRevealSection = ({
     : undefined;
   const visitLayoutTransition = motionEnabled ? { layout: visitReveal } : undefined;
   const visitMinHeight = enableTitleReveal ? "min-h-[calc(640px+16rem)]" : null;
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"],
+  });
+  const parallaxY = useTransform(
+    scrollYProgress,
+    [0, 1],
+    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
+  );
+  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const backgroundScale = parallaxEnabled ? 1.32 : 1;
+  const backgroundScaleTransition = revealVisit ? visitReveal : visitCollapse;
 
   const headingContainer = {
     hidden: {},
@@ -183,18 +200,26 @@ const VisitFactoryRevealSection = ({
   return (
     <>
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <Image
-          src={background.url}
-          alt={background.alt ?? "Perazzi Botticino factory background"}
-          fill
-          sizes="100vw"
-          className="object-cover"
-          priority={false}
-          loading="lazy"
-        />
+        <motion.div
+          className="absolute inset-0 will-change-transform"
+          style={parallaxStyle}
+          initial={false}
+          animate={motionEnabled ? { scale: backgroundScale } : undefined}
+          transition={motionEnabled ? backgroundScaleTransition : undefined}
+        >
+          <Image
+            src={background.url}
+            alt={background.alt ?? "Perazzi Botticino factory background"}
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority={false}
+            loading="lazy"
+          />
+        </motion.div>
         <div
           className={cn(
-            "absolute inset-0 bg-(--scrim-soft)",
+            "absolute inset-0 bg-(--scrim-strong)",
             focusFadeTransition,
             revealVisit ? "opacity-0" : "opacity-100",
           )}
@@ -202,7 +227,7 @@ const VisitFactoryRevealSection = ({
         />
         <div
           className={cn(
-            "absolute inset-0 bg-(--scrim-soft)",
+            "absolute inset-0 bg-(--scrim-strong)",
             focusFadeTransition,
             revealPhotoFocus ? "opacity-100" : "opacity-0",
           )}

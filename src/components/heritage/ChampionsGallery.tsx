@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import Image from "next/image";
 import type { ChampionEvergreen, ChampionsGalleryUi } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Container, Heading, Section, Text } from "@/components/ui";
 import { homeMotion } from "@/lib/motionConfig";
@@ -21,6 +21,7 @@ type ChampionsGalleryRevealSectionProps = Readonly<{
   ui: ChampionsGalleryUi;
   enableTitleReveal: boolean;
   motionEnabled: boolean;
+  sectionRef: RefObject<HTMLElement | null>;
 }>;
 
 export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
@@ -29,6 +30,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
   const enableTitleReveal = isDesktop && !prefersReducedMotion;
   const motionEnabled = !prefersReducedMotion;
   const galleryKey = enableTitleReveal ? "title-reveal" : "always-reveal";
+  const sectionRef = useRef<HTMLElement | null>(null);
 
   const verified = champions.filter((champion) => Boolean(champion?.name));
 
@@ -46,6 +48,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
 
   return (
     <section
+      ref={sectionRef}
       className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
       aria-labelledby="heritage-champions-heading"
     >
@@ -55,6 +58,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
         ui={ui}
         enableTitleReveal={enableTitleReveal}
         motionEnabled={motionEnabled}
+        sectionRef={sectionRef}
       />
     </section>
   );
@@ -65,6 +69,7 @@ const ChampionsGalleryRevealSection = ({
   ui,
   enableTitleReveal,
   motionEnabled,
+  sectionRef,
 }: ChampionsGalleryRevealSectionProps) => {
   const [galleryExpanded, setGalleryExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
@@ -115,6 +120,8 @@ const ChampionsGalleryRevealSection = ({
 
   const revealGallery = !enableTitleReveal || galleryExpanded;
   const revealPhotoFocus = revealGallery;
+  const parallaxStrength = "16%";
+  const parallaxEnabled = enableTitleReveal && !revealGallery;
   const focusSurfaceTransition =
     "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const focusFadeTransition =
@@ -130,6 +137,18 @@ const ChampionsGalleryRevealSection = ({
     : undefined;
   const galleryLayoutTransition = motionEnabled ? { layout: galleryReveal } : undefined;
   const galleryMinHeight = enableTitleReveal ? "min-h-[calc(700px+16rem)]" : null;
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"],
+  });
+  const parallaxY = useTransform(
+    scrollYProgress,
+    [0, 1],
+    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
+  );
+  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const backgroundScale = parallaxEnabled ? 1.32 : 1;
+  const backgroundScaleTransition = revealGallery ? galleryReveal : galleryCollapse;
 
   const headingContainer = {
     hidden: {},
@@ -208,17 +227,25 @@ const ChampionsGalleryRevealSection = ({
   return (
     <>
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <Image
-          src={background.url}
-          alt={background.alt}
-          fill
-          sizes="100vw"
-          className="object-cover"
-          loading="lazy"
-        />
+        <motion.div
+          className="absolute inset-0 will-change-transform"
+          style={parallaxStyle}
+          initial={false}
+          animate={motionEnabled ? { scale: backgroundScale } : undefined}
+          transition={motionEnabled ? backgroundScaleTransition : undefined}
+        >
+          <Image
+            src={background.url}
+            alt={background.alt}
+            fill
+            sizes="100vw"
+            className="object-cover"
+            loading="lazy"
+          />
+        </motion.div>
         <div
           className={cn(
-            "absolute inset-0 bg-(--scrim-soft)",
+            "absolute inset-0 bg-(--scrim-strong)",
             focusFadeTransition,
             revealGallery ? "opacity-0" : "opacity-100",
           )}
@@ -226,7 +253,7 @@ const ChampionsGalleryRevealSection = ({
         />
         <div
           className={cn(
-            "absolute inset-0 bg-(--scrim-soft)",
+            "absolute inset-0 bg-(--scrim-strong)",
             focusFadeTransition,
             revealPhotoFocus ? "opacity-100" : "opacity-0",
           )}

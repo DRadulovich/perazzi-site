@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import Image from "next/image";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 
 import type {
   AuthorizedDealerEntry,
@@ -28,6 +28,7 @@ type TravelNetworkRevealSectionProps = Readonly<{
   ui: TravelNetworkUi;
   enableTitleReveal: boolean;
   motionEnabled: boolean;
+  sectionRef: RefObject<HTMLElement | null>;
 }>;
 
 type ScheduleListProps = Readonly<{
@@ -61,6 +62,7 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
         ui={ui}
         enableTitleReveal={enableTitleReveal}
         motionEnabled={motionEnabled}
+        sectionRef={analyticsRef}
       />
     </section>
   );
@@ -71,6 +73,7 @@ const TravelNetworkRevealSection = ({
   ui,
   enableTitleReveal,
   motionEnabled,
+  sectionRef,
 }: TravelNetworkRevealSectionProps) => {
   const [networkExpanded, setNetworkExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
@@ -109,6 +112,8 @@ const TravelNetworkRevealSection = ({
 
   const revealNetwork = !enableTitleReveal || networkExpanded;
   const revealPhotoFocus = revealNetwork;
+  const parallaxStrength = "16%";
+  const parallaxEnabled = enableTitleReveal && !revealNetwork;
   const focusSurfaceTransition =
     "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const focusFadeTransition =
@@ -124,6 +129,18 @@ const TravelNetworkRevealSection = ({
     : undefined;
   const networkLayoutTransition = motionEnabled ? { layout: networkReveal } : undefined;
   const networkMinHeight = enableTitleReveal ? "min-h-[calc(720px+16rem)]" : null;
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"],
+  });
+  const parallaxY = useTransform(
+    scrollYProgress,
+    [0, 1],
+    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
+  );
+  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const backgroundScale = parallaxEnabled ? 1.32 : 1;
+  const backgroundScaleTransition = revealNetwork ? networkReveal : networkCollapse;
 
   const headingContainer = {
     hidden: {},
@@ -196,18 +213,26 @@ const TravelNetworkRevealSection = ({
   return (
     <>
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <Image
-          src={background.url}
-          alt={background.alt ?? "Perazzi travel network background"}
-          fill
-          sizes="100vw"
-          className="object-cover"
-          priority={false}
-          loading="lazy"
-        />
+        <motion.div
+          className="absolute inset-0 will-change-transform"
+          style={parallaxStyle}
+          initial={false}
+          animate={motionEnabled ? { scale: backgroundScale } : undefined}
+          transition={motionEnabled ? backgroundScaleTransition : undefined}
+        >
+          <Image
+            src={background.url}
+            alt={background.alt ?? "Perazzi travel network background"}
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority={false}
+            loading="lazy"
+          />
+        </motion.div>
         <div
           className={cn(
-            "absolute inset-0 bg-(--scrim-soft)",
+            "absolute inset-0 bg-(--scrim-strong)",
             focusFadeTransition,
             revealNetwork ? "opacity-0" : "opacity-100",
           )}
@@ -215,7 +240,7 @@ const TravelNetworkRevealSection = ({
         />
         <div
           className={cn(
-            "absolute inset-0 bg-(--scrim-soft)",
+            "absolute inset-0 bg-(--scrim-strong)",
             focusFadeTransition,
             revealPhotoFocus ? "opacity-100" : "opacity-0",
           )}

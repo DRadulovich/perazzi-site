@@ -3,8 +3,8 @@
 import Image from "next/image";
 import SafeHtml from "@/components/SafeHtml";
 import { PortableText } from "@/components/PortableText";
-import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
+import { useEffect, useRef, useState, type RefObject } from "react";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import type { ShotgunsLandingData } from "@/types/catalog";
 import { logAnalytics } from "@/lib/analytics";
 import { homeMotion } from "@/lib/motionConfig";
@@ -23,6 +23,7 @@ type TriggerExplainerRevealSectionProps = {
   readonly setManualOpen: (next: boolean) => void;
   readonly enableTitleReveal: boolean;
   readonly motionEnabled: boolean;
+  readonly sectionRef: RefObject<HTMLElement | null>;
 };
 
 export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
@@ -49,6 +50,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
         setManualOpen={setManualOpen}
         enableTitleReveal={enableTitleReveal}
         motionEnabled={motionEnabled}
+        sectionRef={analyticsRef}
       />
     </section>
   );
@@ -60,6 +62,7 @@ const TriggerExplainerRevealSection = ({
   setManualOpen,
   enableTitleReveal,
   motionEnabled,
+  sectionRef,
 }: TriggerExplainerRevealSectionProps) => {
   const [explainerExpanded, setExplainerExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
@@ -78,6 +81,8 @@ const TriggerExplainerRevealSection = ({
 
   const revealExplainer = !enableTitleReveal || explainerExpanded;
   const revealPhotoFocus = revealExplainer;
+  const parallaxStrength = "16%";
+  const parallaxEnabled = enableTitleReveal && !revealExplainer;
   const focusSurfaceTransition = "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const focusFadeTransition = "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const titleColorTransition = "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
@@ -90,6 +95,18 @@ const TriggerExplainerRevealSection = ({
     : undefined;
   const explainerLayoutTransition = motionEnabled ? { layout: explainerReveal } : undefined;
   const explainerMinHeight = enableTitleReveal ? "min-h-[calc(520px+18rem)]" : null;
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"],
+  });
+  const parallaxY = useTransform(
+    scrollYProgress,
+    [0, 1],
+    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
+  );
+  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const backgroundScale = parallaxEnabled ? 1.32 : 1;
+  const backgroundScaleTransition = revealExplainer ? explainerReveal : explainerCollapse;
 
   const copyClasses =
     "max-w-none type-body text-ink [&_p]:mb-4 [&_p:last-child]:mb-0 prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4";
@@ -226,17 +243,25 @@ const TriggerExplainerRevealSection = ({
   return (
     <>
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <Image
-          src={background.url}
-          alt={background.alt}
-          fill
-          sizes="100vw"
-          className="object-cover"
-          priority={false}
-        />
+        <motion.div
+          className="absolute inset-0 will-change-transform"
+          style={parallaxStyle}
+          initial={false}
+          animate={motionEnabled ? { scale: backgroundScale } : undefined}
+          transition={motionEnabled ? backgroundScaleTransition : undefined}
+        >
+          <Image
+            src={background.url}
+            alt={background.alt}
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority={false}
+          />
+        </motion.div>
         <div
           className={cn(
-            "absolute inset-0 bg-(--scrim-soft)",
+            "absolute inset-0 bg-(--scrim-strong)",
             focusFadeTransition,
             revealExplainer ? "opacity-0" : "opacity-100",
           )}
@@ -244,7 +269,7 @@ const TriggerExplainerRevealSection = ({
         />
         <div
           className={cn(
-            "absolute inset-0 bg-(--scrim-soft)",
+            "absolute inset-0 bg-(--scrim-strong)",
             focusFadeTransition,
             revealPhotoFocus ? "opacity-100" : "opacity-0",
           )}

@@ -1,9 +1,9 @@
 "use client";
 
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type RefObject } from "react";
 import type { FAQItem, PickerItem, PickerUi } from "@/types/experience";
 import { FAQList } from "./FAQList";
 import { logAnalytics } from "@/lib/analytics";
@@ -34,6 +34,7 @@ type ExperiencePickerRevealSectionProps = {
   readonly microLabel: string;
   readonly enableTitleReveal: boolean;
   readonly motionEnabled: boolean;
+  readonly sectionRef: RefObject<HTMLElement | null>;
   readonly onAnchorClick?: (
     event: MouseEvent<HTMLAnchorElement>,
     href: string,
@@ -115,6 +116,7 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
         microLabel={microLabel}
         enableTitleReveal={enableTitleReveal}
         motionEnabled={motionEnabled}
+        sectionRef={analyticsRef}
         onAnchorClick={handleCardClick}
       />
     </section>
@@ -132,6 +134,7 @@ const ExperiencePickerRevealSection = ({
   microLabel,
   enableTitleReveal,
   motionEnabled,
+  sectionRef,
   onAnchorClick,
 }: ExperiencePickerRevealSectionProps) => {
   const [pickerExpanded, setPickerExpanded] = useState(!enableTitleReveal);
@@ -142,6 +145,8 @@ const ExperiencePickerRevealSection = ({
 
   const revealPicker = !enableTitleReveal || pickerExpanded;
   const revealPhotoFocus = revealPicker;
+  const parallaxStrength = "16%";
+  const parallaxEnabled = enableTitleReveal && !revealPicker;
   const focusSurfaceTransition =
     "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const focusFadeTransition =
@@ -157,6 +162,18 @@ const ExperiencePickerRevealSection = ({
     : undefined;
   const pickerLayoutTransition = motionEnabled ? { layout: pickerReveal } : undefined;
   const pickerMinHeight = enableTitleReveal ? "min-h-[calc(720px+16rem)]" : null;
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"],
+  });
+  const parallaxY = useTransform(
+    scrollYProgress,
+    [0, 1],
+    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
+  );
+  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const backgroundScale = parallaxEnabled ? 1.32 : 1;
+  const backgroundScaleTransition = revealPicker ? pickerReveal : pickerCollapse;
 
   const headingContainer = {
     hidden: {},
@@ -229,17 +246,25 @@ const ExperiencePickerRevealSection = ({
   return (
     <>
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <Image
-          src={background.url}
-          alt={background.alt ?? "Perazzi experience background"}
-          fill
-          sizes="100vw"
-          className="object-cover"
-          priority={false}
-        />
+        <motion.div
+          className="absolute inset-0 will-change-transform"
+          style={parallaxStyle}
+          initial={false}
+          animate={motionEnabled ? { scale: backgroundScale } : undefined}
+          transition={motionEnabled ? backgroundScaleTransition : undefined}
+        >
+          <Image
+            src={background.url}
+            alt={background.alt ?? "Perazzi experience background"}
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority={false}
+          />
+        </motion.div>
         <div
           className={cn(
-            "absolute inset-0 bg-(--scrim-soft)",
+            "absolute inset-0 bg-(--scrim-strong)",
             focusFadeTransition,
             revealPicker ? "opacity-0" : "opacity-100",
           )}
@@ -247,7 +272,7 @@ const ExperiencePickerRevealSection = ({
         />
         <div
           className={cn(
-            "absolute inset-0 bg-(--scrim-soft)",
+            "absolute inset-0 bg-(--scrim-strong)",
             focusFadeTransition,
             revealPhotoFocus ? "opacity-100" : "opacity-0",
           )}

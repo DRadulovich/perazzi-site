@@ -1,9 +1,9 @@
 "use client";
 
 import NextImage from "next/image";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import SafeHtml from "@/components/SafeHtml";
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent, type RefObject } from "react";
 import type { FittingStage } from "@/types/build";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -40,6 +40,7 @@ type BuildStepsRevealSectionProps = {
   readonly skipTargetId?: string;
   readonly enableTitleReveal: boolean;
   readonly motionEnabled: boolean;
+  readonly sectionRef: RefObject<HTMLElement | null>;
 };
 
 export function BuildStepsScroller({
@@ -89,6 +90,7 @@ export function BuildStepsScroller({
         skipTargetId={skipTargetId}
         enableTitleReveal={enableTitleReveal}
         motionEnabled={motionEnabled}
+        sectionRef={trackerRef}
       />
 
       {skipTargetId ? (
@@ -112,6 +114,7 @@ const BuildStepsRevealSection = ({
   skipTargetId,
   enableTitleReveal,
   motionEnabled,
+  sectionRef,
 }: BuildStepsRevealSectionProps) => {
   const [buildStepsExpanded, setBuildStepsExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
@@ -136,6 +139,8 @@ const BuildStepsRevealSection = ({
 
   const revealBuildSteps = !enableTitleReveal || buildStepsExpanded;
   const revealPhotoFocus = revealBuildSteps;
+  const parallaxStrength = "16%";
+  const parallaxEnabled = enableTitleReveal && !revealBuildSteps;
   const focusSurfaceTransition =
     "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const focusFadeTransition =
@@ -151,6 +156,18 @@ const BuildStepsRevealSection = ({
     : undefined;
   const buildStepsLayoutTransition = motionEnabled ? { layout: buildStepsReveal } : undefined;
   const buildStepsMinHeight = enableTitleReveal ? "min-h-[calc(80vh+16rem)]" : null;
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"],
+  });
+  const parallaxY = useTransform(
+    scrollYProgress,
+    [0, 1],
+    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
+  );
+  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const backgroundScale = parallaxEnabled ? 1.32 : 1;
+  const backgroundScaleTransition = revealBuildSteps ? buildStepsReveal : buildStepsCollapse;
 
   const instructions =
     "Scroll to move from moment to moment. Each step is a chapter in the ritual of building a Perazzi to your measure.";
@@ -264,18 +281,26 @@ const BuildStepsRevealSection = ({
   return (
     <>
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <NextImage
-          src={background.url}
-          alt={background.alt ?? "Perazzi bespoke build steps background"}
-          fill
-          sizes="100vw"
-          className="object-cover"
-          priority={false}
-          loading="lazy"
-        />
+        <motion.div
+          className="absolute inset-0 will-change-transform"
+          style={parallaxStyle}
+          initial={false}
+          animate={motionEnabled ? { scale: backgroundScale } : undefined}
+          transition={motionEnabled ? backgroundScaleTransition : undefined}
+        >
+          <NextImage
+            src={background.url}
+            alt={background.alt ?? "Perazzi bespoke build steps background"}
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority={false}
+            loading="lazy"
+          />
+        </motion.div>
         <div
           className={cn(
-            "absolute inset-0 bg-(--scrim-soft)",
+            "absolute inset-0 bg-(--scrim-strong)",
             focusFadeTransition,
             revealBuildSteps ? "opacity-0" : "opacity-100",
           )}
@@ -283,7 +308,7 @@ const BuildStepsRevealSection = ({
         />
         <div
           className={cn(
-            "absolute inset-0 bg-(--scrim-soft)",
+            "absolute inset-0 bg-(--scrim-strong)",
             focusFadeTransition,
             revealPhotoFocus ? "opacity-100" : "opacity-0",
           )}

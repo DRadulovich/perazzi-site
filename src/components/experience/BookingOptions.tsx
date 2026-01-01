@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import Image from "next/image";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import SafeHtml from "@/components/SafeHtml";
 import { Button, Container, Heading, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -20,6 +20,7 @@ type BookingOptionsRevealSectionProps = Readonly<{
   bookingSection: BookingSection;
   enableTitleReveal: boolean;
   motionEnabled: boolean;
+  sectionRef: RefObject<HTMLElement | null>;
 }>;
 
 export function BookingOptions({ bookingSection }: BookingOptionsProps) {
@@ -45,6 +46,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
         bookingSection={bookingSection}
         enableTitleReveal={enableTitleReveal}
         motionEnabled={motionEnabled}
+        sectionRef={analyticsRef}
       />
     </section>
   );
@@ -54,6 +56,7 @@ const BookingOptionsRevealSection = ({
   bookingSection,
   enableTitleReveal,
   motionEnabled,
+  sectionRef,
 }: BookingOptionsRevealSectionProps) => {
   const [bookingExpanded, setBookingExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
@@ -74,6 +77,8 @@ const BookingOptionsRevealSection = ({
 
   const revealBooking = !enableTitleReveal || bookingExpanded;
   const revealPhotoFocus = revealBooking;
+  const parallaxStrength = "16%";
+  const parallaxEnabled = enableTitleReveal && !revealBooking;
   const focusSurfaceTransition =
     "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const focusFadeTransition =
@@ -89,6 +94,18 @@ const BookingOptionsRevealSection = ({
     : undefined;
   const bookingLayoutTransition = motionEnabled ? { layout: bookingReveal } : undefined;
   const bookingMinHeight = enableTitleReveal ? "min-h-[calc(720px+16rem)]" : null;
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"],
+  });
+  const parallaxY = useTransform(
+    scrollYProgress,
+    [0, 1],
+    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
+  );
+  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const backgroundScale = parallaxEnabled ? 1.32 : 1;
+  const backgroundScaleTransition = revealBooking ? bookingReveal : bookingCollapse;
 
   const headingContainer = {
     hidden: {},
@@ -161,17 +178,25 @@ const BookingOptionsRevealSection = ({
   return (
     <>
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <Image
-          src="/Photos/p-web-89.jpg"
-          alt="Perazzi booking options background"
-          fill
-          sizes="100vw"
-          className="object-cover"
-          priority={false}
-        />
+        <motion.div
+          className="absolute inset-0 will-change-transform"
+          style={parallaxStyle}
+          initial={false}
+          animate={motionEnabled ? { scale: backgroundScale } : undefined}
+          transition={motionEnabled ? backgroundScaleTransition : undefined}
+        >
+          <Image
+            src="/Photos/p-web-89.jpg"
+            alt="Perazzi booking options background"
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority={false}
+          />
+        </motion.div>
         <div
           className={cn(
-            "absolute inset-0 bg-(--scrim-soft)",
+            "absolute inset-0 bg-(--scrim-strong)",
             focusFadeTransition,
             revealBooking ? "opacity-0" : "opacity-100",
           )}
@@ -179,7 +204,7 @@ const BookingOptionsRevealSection = ({
         />
         <div
           className={cn(
-            "absolute inset-0 bg-(--scrim-soft)",
+            "absolute inset-0 bg-(--scrim-strong)",
             focusFadeTransition,
             revealPhotoFocus ? "opacity-100" : "opacity-0",
           )}

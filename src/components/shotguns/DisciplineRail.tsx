@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useMemo, useRef, useState, type Dispatch, type RefObject, type SetStateAction } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 
 import type { Platform, ShotgunsLandingData } from "@/types/catalog";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -83,6 +83,7 @@ type DisciplineRailRevealSectionProps = {
   readonly modelLoadingId: string | null;
   readonly enableTitleReveal: boolean;
   readonly motionEnabled: boolean;
+  readonly sectionRef: RefObject<HTMLElement | null>;
 };
 
 export function DisciplineRail({
@@ -236,6 +237,7 @@ export function DisciplineRail({
         modelLoadingId={modelLoadingId}
         enableTitleReveal={enableTitleReveal}
         motionEnabled={motionEnabled}
+        sectionRef={railAnalyticsRef}
       />
 
       {modalRoot
@@ -360,6 +362,7 @@ const DisciplineRailRevealSection = ({
   modelLoadingId,
   enableTitleReveal,
   motionEnabled,
+  sectionRef,
 }: DisciplineRailRevealSectionProps) => {
   const [railExpanded, setRailExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
@@ -369,6 +372,8 @@ const DisciplineRailRevealSection = ({
 
   const revealRail = !enableTitleReveal || railExpanded;
   const revealPhotoFocus = revealRail;
+  const parallaxStrength = "16%";
+  const parallaxEnabled = enableTitleReveal && !revealRail;
   const focusSurfaceTransition = "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const focusFadeTransition = "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const titleColorTransition = "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
@@ -381,6 +386,18 @@ const DisciplineRailRevealSection = ({
     : undefined;
   const railLayoutTransition = motionEnabled ? { layout: railReveal } : undefined;
   const railMinHeight = enableTitleReveal ? "min-h-[calc(600px+12rem)]" : null;
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"],
+  });
+  const parallaxY = useTransform(
+    scrollYProgress,
+    [0, 1],
+    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
+  );
+  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const backgroundScale = parallaxEnabled ? 1.32 : 1;
+  const backgroundScaleTransition = revealRail ? railReveal : railCollapse;
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
@@ -453,17 +470,25 @@ const DisciplineRailRevealSection = ({
   return (
     <>
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <Image
-          src={background.url}
-          alt={background.alt}
-          fill
-          sizes="100vw"
-          className="object-cover"
-          priority={false}
-        />
+        <motion.div
+          className="absolute inset-0 will-change-transform"
+          style={parallaxStyle}
+          initial={false}
+          animate={motionEnabled ? { scale: backgroundScale } : undefined}
+          transition={motionEnabled ? backgroundScaleTransition : undefined}
+        >
+          <Image
+            src={background.url}
+            alt={background.alt}
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority={false}
+          />
+        </motion.div>
         <div
           className={cn(
-            "absolute inset-0 bg-(--scrim-soft)",
+            "absolute inset-0 bg-(--scrim-strong)",
             focusFadeTransition,
             revealRail ? "opacity-0" : "opacity-100",
           )}
@@ -471,7 +496,7 @@ const DisciplineRailRevealSection = ({
         />
         <div
           className={cn(
-            "absolute inset-0 bg-(--scrim-soft)",
+            "absolute inset-0 bg-(--scrim-strong)",
             focusFadeTransition,
             revealPhotoFocus ? "opacity-100" : "opacity-0",
           )}

@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
-import { useMemo, useState, useRef, useEffect, useCallback, type Dispatch, type SetStateAction } from "react";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { useMemo, useState, useRef, useEffect, useCallback, type Dispatch, type RefObject, type SetStateAction } from "react";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import type { Platform, ShotgunsLandingData } from "@/types/catalog";
@@ -356,6 +356,7 @@ type PlatformGridRevealSectionProps = {
   readonly enableTitleReveal: boolean;
   readonly motionEnabled: boolean;
   readonly prefersReducedMotion: boolean;
+  readonly sectionRef: RefObject<HTMLElement | null>;
 };
 
 const PlatformGridRevealSection = ({
@@ -367,6 +368,7 @@ const PlatformGridRevealSection = ({
   enableTitleReveal,
   motionEnabled,
   prefersReducedMotion,
+  sectionRef,
 }: PlatformGridRevealSectionProps) => {
   const [platformExpanded, setPlatformExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
@@ -380,6 +382,8 @@ const PlatformGridRevealSection = ({
   const revealGrid = !enableTitleReveal || platformExpanded;
   const revealPhotoFocus = revealGrid;
   const activePlatform = platforms[activeIndex] ?? platforms[0];
+  const parallaxStrength = "16%";
+  const parallaxEnabled = enableTitleReveal && !revealGrid;
 
   const focusSurfaceTransition = "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const focusFadeTransition = "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
@@ -393,6 +397,18 @@ const PlatformGridRevealSection = ({
     : undefined;
   const platformLayoutTransition = motionEnabled ? { layout: platformReveal } : undefined;
   const platformMinHeight = enableTitleReveal ? "min-h-[calc(750px+18rem)]" : null;
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"],
+  });
+  const parallaxY = useTransform(
+    scrollYProgress,
+    [0, 1],
+    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
+  );
+  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const backgroundScale = parallaxEnabled ? 1.32 : 1;
+  const backgroundScaleTransition = revealGrid ? platformReveal : platformCollapse;
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
@@ -486,17 +502,25 @@ const PlatformGridRevealSection = ({
   return (
     <>
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <Image
-          src={templates.background.url}
-          alt={templates.background.alt}
-          fill
-          sizes="100vw"
-          className="object-cover"
-          priority={false}
-        />
+        <motion.div
+          className="absolute inset-0 will-change-transform"
+          style={parallaxStyle}
+          initial={false}
+          animate={motionEnabled ? { scale: backgroundScale } : undefined}
+          transition={motionEnabled ? backgroundScaleTransition : undefined}
+        >
+          <Image
+            src={templates.background.url}
+            alt={templates.background.alt}
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority={false}
+          />
+        </motion.div>
         <div
           className={cn(
-            "absolute inset-0 bg-(--scrim-soft)",
+            "absolute inset-0 bg-(--scrim-strong)",
             focusFadeTransition,
             revealGrid ? "opacity-0" : "opacity-100",
           )}
@@ -504,7 +528,7 @@ const PlatformGridRevealSection = ({
         />
         <div
           className={cn(
-            "absolute inset-0 bg-(--scrim-soft)",
+            "absolute inset-0 bg-(--scrim-strong)",
             focusFadeTransition,
             revealPhotoFocus ? "opacity-100" : "opacity-0",
           )}
@@ -756,6 +780,7 @@ export function PlatformGrid({ platforms, ui }: PlatformGridProps) {
         enableTitleReveal={enableTitleReveal}
         motionEnabled={motionEnabled}
         prefersReducedMotion={prefersReducedMotion}
+        sectionRef={analyticsRef}
       />
     </section>
   );
