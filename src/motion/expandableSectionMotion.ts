@@ -1,8 +1,8 @@
 // Shared timing/easing/stagger knobs for the expandable section motion system.
 // Keep this file constants-only so all consumers stay side-effect free.
 
-export const EXPAND_TIME_SCALE = 1;
-export const COLLAPSE_TIME_SCALE = EXPAND_TIME_SCALE * 0.5;
+export const EXPAND_TIME_SCALE = 4;
+export const COLLAPSE_TIME_SCALE = EXPAND_TIME_SCALE * 1;
 
 export const PREZOOM_MS = 180;
 export const CONTAINER_EXPAND_MS = 820;
