@@ -3,12 +3,34 @@
 import NextImage from "next/image";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import SafeHtml from "@/components/SafeHtml";
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type RefObject } from "react";
+import useMeasure from "react-use-measure";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import type { FittingStage } from "@/types/build";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { logAnalytics } from "@/lib/analytics";
 import { homeMotion } from "@/lib/motionConfig";
+import {
+  CONTAINER_EXPAND_MS,
+  EASE_CINEMATIC,
+  EXPANDED_HEADER_REVEAL_MS,
+  EXPAND_TIME_SCALE,
+  GLASS_REVEAL_MS,
+  STAGGER_BODY_ITEMS_MS,
+  STAGGER_HEADER_ITEMS_MS,
+  STAGGER_LIST_ITEMS_MS,
+} from "@/motion/expandableSectionMotion";
+import { createExpandableSectionVariants } from "@/motion/createExpandableSectionVariants";
+import { useExpandableSectionTimeline } from "@/motion/useExpandableSectionTimeline";
 import { cn } from "@/lib/utils";
 import { Heading, Text } from "@/components/ui";
 
@@ -41,6 +63,41 @@ type BuildStepsRevealSectionProps = {
   readonly enableTitleReveal: boolean;
   readonly motionEnabled: boolean;
   readonly sectionRef: RefObject<HTMLElement | null>;
+};
+
+type StepDetailProps = {
+  readonly open: boolean;
+  readonly motionEnabled: boolean;
+  readonly children: ReactNode;
+};
+
+const STEP_DETAIL_DURATION_MS = 250;
+
+const StepDetail = ({ open, motionEnabled, children }: StepDetailProps) => {
+  const [measureRef, { height }] = useMeasure();
+  const transition = {
+    duration: motionEnabled ? STEP_DETAIL_DURATION_MS / 1000 : 0,
+    ease: EASE_CINEMATIC,
+  };
+
+  return (
+    <AnimatePresence initial={false}>
+      {open ? (
+        <motion.div
+          key="content"
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height, opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={transition}
+          className="overflow-hidden"
+        >
+          <div ref={measureRef} className="space-y-4 pt-4">
+            {children}
+          </div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
 };
 
 export function BuildStepsScroller({
@@ -116,7 +173,6 @@ const BuildStepsRevealSection = ({
   motionEnabled,
   sectionRef,
 }: BuildStepsRevealSectionProps) => {
-  const [buildStepsExpanded, setBuildStepsExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
   const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const [activeStepId, setActiveStepId] = useState<string | undefined>(
@@ -129,6 +185,16 @@ const BuildStepsRevealSection = ({
   const seenStepsRef = useRef(new Set<string>());
   const stepRefs = useRef<(HTMLElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const {
+    expanded,
+    phase,
+    open,
+    close,
+    onTriggerKeyDown,
+    onEscapeKeyDown,
+    showExpanded,
+    showCollapsed,
+  } = useExpandableSectionTimeline({ defaultExpanded: !enableTitleReveal });
 
   const resolvedActiveStepId = steps.some((step) => step.id === activeStepId)
     ? activeStepId
@@ -137,29 +203,29 @@ const BuildStepsRevealSection = ({
     ? openStepId
     : undefined;
 
-  const revealBuildSteps = !enableTitleReveal || buildStepsExpanded;
+  const revealBuildSteps = phase === "expanded" || phase === "closingHold";
   const revealPhotoFocus = revealBuildSteps;
   const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealBuildSteps;
+  const parallaxEnabled = enableTitleReveal && !revealBuildSteps && motionEnabled;
   const focusSurfaceTransition =
-    "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const focusFadeTransition =
-    "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const titleColorTransition =
-    "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const buildStepsReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const buildStepsRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const buildStepsCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const buildStepsLayoutTransition = motionEnabled ? { layout: buildStepsReveal } : undefined;
+    "transition-[background-color,box-shadow,border-color,backdrop-filter]";
+  const titleColorTransition = "transition-colors";
+  const cinematicBezier = `cubic-bezier(${EASE_CINEMATIC.join(",")})`;
+  const transitionStyle = (durationMs: number) => ({
+    transitionDuration: `${motionEnabled ? Math.round(durationMs * EXPAND_TIME_SCALE) : 0}ms`,
+    transitionTimingFunction: motionEnabled ? cinematicBezier : "linear",
+  });
+  const focusSurfaceStyle = transitionStyle(GLASS_REVEAL_MS);
+  const titleColorStyle = transitionStyle(EXPANDED_HEADER_REVEAL_MS);
+  const buildStepsLayoutTransition = motionEnabled
+    ? {
+        layout: {
+          duration: (CONTAINER_EXPAND_MS / 1000) * EXPAND_TIME_SCALE,
+          ease: EASE_CINEMATIC,
+        },
+      }
+    : undefined;
   const buildStepsMinHeight = enableTitleReveal ? "min-h-[calc(80vh+16rem)]" : null;
-  const atmosphereStagger = motionEnabled ? 0.12 : 0;
-  const contentStagger = motionEnabled ? 0.12 : 0;
-  const cardStagger = motionEnabled ? 0.1 : 0;
-  const atmosphereDelay = motionEnabled ? 0.05 : 0;
-  const headerDelay = motionEnabled ? (enableTitleReveal && revealBuildSteps ? 0.12 : 0.22) : 0;
-  const bodyDelay = motionEnabled ? (enableTitleReveal ? 0.28 : 0.36) : 0;
-  const bodyChildDelay = motionEnabled ? 0.12 : 0;
-  const cardDelay = motionEnabled ? 0.12 : 0;
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
@@ -170,142 +236,75 @@ const BuildStepsRevealSection = ({
     ["0%", parallaxEnabled ? parallaxStrength : "0%"],
   );
   const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
-  const backgroundScale = parallaxEnabled ? 1.32 : 1;
-  const backgroundScaleTransition = revealBuildSteps ? buildStepsReveal : buildStepsCollapse;
+  const toSeconds = (ms: number) => ms / 1000;
+  const staggerTransition = (staggerMs: number, direction?: 1 | -1) => ({
+    transition: {
+      staggerChildren: motionEnabled ? toSeconds(staggerMs) : 0,
+      staggerDirection: direction,
+    },
+  });
+  const headerGroup = {
+    collapsed: staggerTransition(STAGGER_HEADER_ITEMS_MS, -1),
+    prezoom: staggerTransition(STAGGER_HEADER_ITEMS_MS),
+    expanded: staggerTransition(STAGGER_HEADER_ITEMS_MS),
+    closingHold: staggerTransition(STAGGER_HEADER_ITEMS_MS, -1),
+  } as const;
+  const bodyGroup = {
+    collapsed: staggerTransition(STAGGER_BODY_ITEMS_MS, -1),
+    prezoom: staggerTransition(STAGGER_BODY_ITEMS_MS),
+    expanded: staggerTransition(STAGGER_BODY_ITEMS_MS),
+    closingHold: staggerTransition(STAGGER_BODY_ITEMS_MS, -1),
+  } as const;
+  const itemsGroup = {
+    collapsed: staggerTransition(STAGGER_LIST_ITEMS_MS, -1),
+    prezoom: staggerTransition(STAGGER_LIST_ITEMS_MS),
+    expanded: staggerTransition(STAGGER_LIST_ITEMS_MS),
+    closingHold: staggerTransition(STAGGER_LIST_ITEMS_MS, -1),
+  } as const;
+  const slotVariants = createExpandableSectionVariants({
+    motionMode: motionEnabled ? "full" : "reduced",
+    backgroundScale: { collapsed: 1.32, prezoom: 1.12, expanded: 1 },
+    itemOffsetY: 12,
+    blurPx: 8,
+    glassScale: 0.985,
+  });
+  const surfaceVariants = createExpandableSectionVariants({
+    motionMode: motionEnabled ? "full" : "reduced",
+    itemOffsetY: 12,
+    blurPx: 0,
+    glassScale: 0.985,
+  });
+  const scrimInverted = {
+    collapsed: slotVariants.scrimTop.expanded,
+    prezoom: slotVariants.scrimTop.expanded,
+    expanded: slotVariants.scrimTop.collapsed,
+    closingHold: slotVariants.scrimTop.collapsed,
+  } as const;
+  const slotContext = {
+    collapsed: {},
+    prezoom: {},
+    expanded: {},
+    closingHold: {},
+  } as const;
+  const headerItem = slotVariants.expandedHeader;
+  const collapsedHeaderItem = slotVariants.collapsedHeader;
+  const bodyItem = slotVariants.content;
+  const ctaItem = slotVariants.ctaRow;
+  const surfaceItem = surfaceVariants.content;
+  const glassStyle = {
+    ...(enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : {}),
+    ...focusSurfaceStyle,
+  };
 
   const instructions =
     "Swipe horizontally or use the arrows/tabs to move from moment to moment. Each step is a chapter in the ritual of building a Perazzi to your measure.";
-
-  const atmosphereContainer = {
-    hidden: {},
-    show: {
-      transition: {
-        delayChildren: atmosphereDelay,
-        staggerChildren: atmosphereStagger,
-      },
-    },
-  } as const;
-
-  const atmosphereLayer = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { duration: 1.2, ease: homeMotion.cinematicEase },
-    },
-  } as const;
-
-  const atmosphereBackground = {
-    hidden: { opacity: 0, scale: backgroundScale * 1.04 },
-    show: {
-      opacity: 1,
-      scale: backgroundScale,
-      transition: {
-        opacity: { duration: 1.3, ease: homeMotion.cinematicEase },
-        scale: backgroundScaleTransition,
-      },
-    },
-  } as const;
-
-  const headerContainer = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        delay: headerDelay,
-        duration: buildStepsRevealFast.duration,
-        ease: buildStepsRevealFast.ease,
-        delayChildren: motionEnabled ? 0.08 : 0,
-        staggerChildren: contentStagger,
-      },
-    },
-    exit: { opacity: 0, transition: buildStepsRevealFast },
-  } as const;
-
-  const headerGroup = {
-    hidden: {},
-    show: { transition: { staggerChildren: contentStagger } },
-  } as const;
-
-  const headerItem = {
-    hidden: { opacity: 0, y: 12, filter: "blur(8px)" },
-    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: buildStepsRevealFast },
-  } as const;
-
-  const bodyContainer = {
-    hidden: { opacity: 0, y: 12 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        delay: bodyDelay,
-        duration: buildStepsRevealFast.duration,
-        ease: buildStepsRevealFast.ease,
-        delayChildren: bodyChildDelay,
-        staggerChildren: contentStagger,
-      },
-    },
-    exit: { opacity: 0, y: -12, transition: buildStepsCollapse },
-  } as const;
-
-  const bodyGroup = {
-    hidden: {},
-    show: { transition: { staggerChildren: contentStagger } },
-  } as const;
-
-  const bodyItem = {
-    hidden: { opacity: 0, y: 10 },
-    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
-  } as const;
-
-  const stepsContainer = {
-    hidden: { opacity: 0, y: 12 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: homeMotion.revealFast.duration,
-        ease: homeMotion.revealFast.ease,
-        delayChildren: cardDelay,
-        staggerChildren: cardStagger,
-      },
-    },
-  } as const;
-
-  const stepCard = {
-    hidden: { opacity: 0, y: 12 },
-    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
-  } as const;
-
-  const railContainer = {
-    hidden: {},
-    show: {
-      transition: {
-        staggerChildren: motionEnabled ? 0.08 : 0,
-      },
-    },
-  } as const;
-
-  const railStepsContainer = {
-    hidden: {},
-    show: {
-      transition: {
-        delayChildren: motionEnabled ? 0.04 : 0,
-        staggerChildren: motionEnabled ? 0.06 : 0,
-      },
-    },
-  } as const;
-
-  const railItem = {
-    hidden: { opacity: 0, y: 8 },
-    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
-  } as const;
 
   const handleBuildStepsExpand = () => {
     if (!enableTitleReveal) return;
     if (headerThemeFrame.current !== null) {
       cancelAnimationFrame(headerThemeFrame.current);
     }
-    setBuildStepsExpanded(true);
+    open();
     headerThemeFrame.current = requestAnimationFrame(() => {
       setHeaderThemeReady(true);
       headerThemeFrame.current = null;
@@ -319,7 +318,7 @@ const BuildStepsRevealSection = ({
       headerThemeFrame.current = null;
     }
     setHeaderThemeReady(false);
-    setBuildStepsExpanded(false);
+    close();
   };
 
   const handleStepEnter = useCallback(
@@ -481,62 +480,41 @@ const BuildStepsRevealSection = ({
   }, []);
 
   return (
-    <>
-      <motion.div
-        className="absolute inset-0 -z-10 overflow-hidden"
-        variants={atmosphereContainer}
-        initial={motionEnabled ? "hidden" : false}
-        animate={motionEnabled ? "show" : undefined}
-      >
-        <motion.div
-          className="absolute inset-0 will-change-transform"
-          style={parallaxStyle}
-          variants={atmosphereBackground}
-        >
-          <NextImage
-            src={background.url}
-            alt={background.alt ?? "Perazzi bespoke build steps background"}
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority={false}
-            loading="lazy"
+    <motion.div
+      variants={slotContext}
+      initial={motionEnabled ? "collapsed" : false}
+      animate={phase}
+    >
+      <motion.div className="absolute inset-0 -z-10 overflow-hidden">
+        <motion.div className="absolute inset-0" variants={slotVariants.background}>
+          <motion.div className="absolute inset-0 will-change-transform" style={parallaxStyle}>
+            <NextImage
+              src={background.url}
+              alt={background.alt ?? "Perazzi bespoke build steps background"}
+              fill
+              sizes="100vw"
+              className="object-cover"
+              priority={false}
+              loading="lazy"
+            />
+          </motion.div>
+        </motion.div>
+        <motion.div className="absolute inset-0" variants={scrimInverted}>
+          <div className="absolute inset-0 bg-(--scrim-strong)" aria-hidden />
+        </motion.div>
+        <motion.div className="absolute inset-0" variants={slotVariants.scrimBottom}>
+          <div className="absolute inset-0 bg-(--scrim-strong)" aria-hidden />
+        </motion.div>
+        <motion.div className="absolute inset-0" variants={slotVariants.scrimBottom}>
+          <div
+            className="pointer-events-none absolute inset-0 film-grain opacity-20"
+            aria-hidden="true"
           />
         </motion.div>
-        <motion.div className="absolute inset-0" variants={atmosphereLayer} aria-hidden>
+        <motion.div className="absolute inset-0" variants={slotVariants.scrimBottom}>
           <div
-            className={cn(
-              "absolute inset-0 bg-(--scrim-strong)",
-              motionEnabled ? focusFadeTransition : "",
-              revealBuildSteps ? "opacity-0" : "opacity-100",
-            )}
-          />
-        </motion.div>
-        <motion.div className="absolute inset-0" variants={atmosphereLayer} aria-hidden>
-          <div
-            className={cn(
-              "absolute inset-0 bg-(--scrim-strong)",
-              motionEnabled ? focusFadeTransition : "",
-              revealPhotoFocus ? "opacity-100" : "opacity-0",
-            )}
-          />
-        </motion.div>
-        <motion.div className="absolute inset-0" variants={atmosphereLayer} aria-hidden="true">
-          <div
-            className={cn(
-              "pointer-events-none absolute inset-0 film-grain",
-              motionEnabled ? focusFadeTransition : "",
-              revealPhotoFocus ? "opacity-20" : "opacity-0",
-            )}
-          />
-        </motion.div>
-        <motion.div className="absolute inset-0" variants={atmosphereLayer} aria-hidden>
-          <div
-            className={cn(
-              "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-              motionEnabled ? focusFadeTransition : "",
-              revealPhotoFocus ? "opacity-100" : "opacity-0",
-            )}
+            className="pointer-events-none absolute inset-0 overlay-gradient-canvas"
+            aria-hidden
           />
         </motion.div>
       </motion.div>
@@ -544,181 +522,188 @@ const BuildStepsRevealSection = ({
       <div className="relative z-10 mx-auto flex w-full max-w-7xl px-6 lg:px-10">
         <motion.div
           ref={buildStepsShellRef}
-          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
+          style={glassStyle}
           className={cn(
             "relative flex w-full flex-col space-y-8 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            motionEnabled ? focusSurfaceTransition : "",
+            focusSurfaceTransition,
             revealPhotoFocus
               ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
               : "border-transparent bg-transparent shadow-none backdrop-blur-none",
             buildStepsMinHeight,
           )}
+          variants={slotVariants.glass}
+          onKeyDown={onEscapeKeyDown}
         >
           <LayoutGroup id="bespoke-build-steps-title">
-            <AnimatePresence initial={false}>
-              {revealBuildSteps ? (
-                <motion.div
-                  key="build-steps-header"
-                  className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
-                  variants={headerContainer}
-                  initial={motionEnabled ? "hidden" : false}
-                  animate={motionEnabled ? "show" : undefined}
-                  exit={motionEnabled ? "exit" : undefined}
-                >
-                  <motion.div className="space-y-3" variants={headerGroup}>
-                    <motion.div variants={headerItem}>
-                      <motion.div
-                        layoutId="bespoke-build-steps-title"
-                        layoutCrossfade={false}
-                        transition={buildStepsLayoutTransition}
-                        className="relative"
+            {showExpanded ? (
+              <motion.div
+                key="build-steps-header"
+                className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
+                variants={slotContext}
+                initial={motionEnabled ? "collapsed" : false}
+                animate={phase}
+              >
+                <motion.div className="space-y-3" variants={headerGroup}>
+                  <motion.div variants={headerItem}>
+                    <motion.div
+                      layoutId="bespoke-build-steps-title"
+                      layoutCrossfade={false}
+                      transition={buildStepsLayoutTransition}
+                      className="relative"
+                    >
+                      <Heading
+                        id="build-steps-heading"
+                        level={2}
+                        size="xl"
+                        className={cn(
+                          titleColorTransition,
+                          headerThemeReady ? "text-ink" : "text-white",
+                        )}
+                        style={titleColorStyle}
                       >
-                        <Heading
-                          id="build-steps-heading"
-                          level={2}
-                          size="xl"
-                          className={cn(
-                            motionEnabled ? titleColorTransition : "",
-                            headerThemeReady ? "text-ink" : "text-white",
-                          )}
-                        >
-                          {heading}
-                        </Heading>
-                      </motion.div>
+                        {heading}
+                      </Heading>
                     </motion.div>
-                    <motion.div variants={headerItem}>
-                      <motion.div
-                        layoutId="bespoke-build-steps-subtitle"
-                        layoutCrossfade={false}
-                        transition={buildStepsLayoutTransition}
-                        className="relative"
+                  </motion.div>
+                  <motion.div variants={headerItem}>
+                    <motion.div
+                      layoutId="bespoke-build-steps-subtitle"
+                      layoutCrossfade={false}
+                      transition={buildStepsLayoutTransition}
+                      className="relative"
+                    >
+                      <Text
+                        size="lg"
+                        className={cn(
+                          "type-section-subtitle",
+                          titleColorTransition,
+                          headerThemeReady ? "text-ink-muted" : "text-white",
+                        )}
+                        style={titleColorStyle}
+                        leading="relaxed"
                       >
-                        <Text
-                          size="lg"
-                          className={cn(
-                            "type-section-subtitle",
-                            motionEnabled ? titleColorTransition : "",
-                            headerThemeReady ? "text-ink-muted" : "text-white",
-                          )}
-                          leading="relaxed"
-                        >
-                          {subheading}
-                        </Text>
-                      </motion.div>
-                    </motion.div>
-                    <motion.div variants={headerItem}>
-                      <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
-                        {instructions}
+                        {subheading}
                       </Text>
                     </motion.div>
-                    <motion.div variants={headerItem} className="flex flex-wrap items-center gap-4">
-                      <a
-                        href="#build-steps-sequence"
-                        className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-ink/60 text-ink transition hover:border-ink hover:translate-x-0.5 focus-ring"
-                      >
-                        <span>{ctaLabel}</span>
-                        <span aria-hidden="true">↓</span>
-                      </a>
-                      {skipTargetId ? (
-                        <a
-                          href={`#${skipTargetId}`}
-                          className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-perazzi-red/60 text-perazzi-red transition hover:border-perazzi-red hover:text-perazzi-red hover:translate-x-0.5 focus-ring"
-                        >
-                          <span>Skip step-by-step</span>
-                          <span aria-hidden="true">→</span>
-                        </a>
-                      ) : null}
-                    </motion.div>
                   </motion.div>
-                  {enableTitleReveal ? (
-                    <motion.button
-                      type="button"
-                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                      onClick={handleBuildStepsCollapse}
-                      variants={bodyItem}
+                  <motion.div variants={headerItem}>
+                    <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
+                      {instructions}
+                    </Text>
+                  </motion.div>
+                  <motion.div variants={headerItem} className="flex flex-wrap items-center gap-4">
+                    <a
+                      href="#build-steps-sequence"
+                      className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-ink/60 text-ink transition hover:border-ink hover:translate-x-0.5 focus-ring"
                     >
-                      Collapse
-                    </motion.button>
-                  ) : null}
+                      <span>{ctaLabel}</span>
+                      <span aria-hidden="true">↓</span>
+                    </a>
+                    {skipTargetId ? (
+                      <a
+                        href={`#${skipTargetId}`}
+                        className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-perazzi-red/60 text-perazzi-red transition hover:border-perazzi-red hover:text-perazzi-red hover:translate-x-0.5 focus-ring"
+                      >
+                        <span>Skip step-by-step</span>
+                        <span aria-hidden="true">→</span>
+                      </a>
+                    ) : null}
+                  </motion.div>
                 </motion.div>
-              ) : (
-                <motion.div
-                  key="build-steps-collapsed"
-                  className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  variants={headerContainer}
-                  initial={motionEnabled ? "hidden" : false}
-                  animate={motionEnabled ? "show" : undefined}
-                  exit={motionEnabled ? "exit" : undefined}
-                >
-                  <motion.div className="flex flex-col items-center gap-3" variants={headerGroup}>
-                    <motion.div variants={headerItem}>
-                      <motion.div
-                        layoutId="bespoke-build-steps-title"
-                        layoutCrossfade={false}
-                        transition={buildStepsLayoutTransition}
-                        className="relative inline-flex text-white"
+                {enableTitleReveal ? (
+                  <motion.button
+                    type="button"
+                    className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
+                    onClick={handleBuildStepsCollapse}
+                    variants={surfaceItem}
+                  >
+                    Collapse
+                  </motion.button>
+                ) : null}
+              </motion.div>
+            ) : null}
+            {showCollapsed ? (
+              <motion.div
+                key="build-steps-collapsed"
+                className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
+                variants={slotContext}
+                initial={motionEnabled ? "collapsed" : false}
+                animate={phase}
+              >
+                <motion.div variants={headerGroup} className="flex flex-col items-center gap-3">
+                  <motion.div
+                    layoutId="bespoke-build-steps-title"
+                    layoutCrossfade={false}
+                    transition={buildStepsLayoutTransition}
+                    className="relative inline-flex text-white"
+                  >
+                    <motion.div variants={collapsedHeaderItem}>
+                      <Heading
+                        id="build-steps-heading"
+                        level={2}
+                        size="xl"
+                        className="type-section-collapsed"
                       >
-                        <Heading
-                          id="build-steps-heading"
-                          level={2}
-                          size="xl"
-                          className="type-section-collapsed"
-                        >
-                          {heading}
-                        </Heading>
-                        <button
-                          type="button"
-                          className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                          onPointerEnter={handleBuildStepsExpand}
-                          onFocus={handleBuildStepsExpand}
-                          onClick={handleBuildStepsExpand}
-                          aria-expanded={revealBuildSteps}
-                          aria-controls="build-steps-body"
-                          aria-labelledby="build-steps-heading"
-                        >
-                          <span className="sr-only">Expand {heading}</span>
-                        </button>
-                      </motion.div>
+                        {heading}
+                      </Heading>
                     </motion.div>
-                    <motion.div variants={headerItem}>
-                      <motion.div
-                        layoutId="bespoke-build-steps-subtitle"
-                        layoutCrossfade={false}
-                        transition={buildStepsLayoutTransition}
-                        className="relative text-white"
-                      >
-                        <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                          {subheading}
-                        </Text>
-                      </motion.div>
+                    <button
+                      type="button"
+                      className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                      onPointerEnter={handleBuildStepsExpand}
+                      onFocus={handleBuildStepsExpand}
+                      onClick={handleBuildStepsExpand}
+                      onKeyDown={onTriggerKeyDown}
+                      aria-expanded={expanded}
+                      aria-controls="build-steps-body"
+                      aria-labelledby="build-steps-heading"
+                    >
+                      <span className="sr-only">Expand {heading}</span>
+                    </button>
+                  </motion.div>
+                  <motion.div
+                    layoutId="bespoke-build-steps-subtitle"
+                    layoutCrossfade={false}
+                    transition={buildStepsLayoutTransition}
+                    className="relative text-white"
+                  >
+                    <motion.div variants={collapsedHeaderItem}>
+                      <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+                        {subheading}
+                      </Text>
                     </motion.div>
                   </motion.div>
-                  <motion.div variants={bodyItem} className="mt-3">
+                </motion.div>
+                <motion.div variants={itemsGroup} className="mt-3">
+                  <motion.div variants={ctaItem}>
                     <Text
                       size="button"
                       className="text-white/80 cursor-pointer focus-ring"
                       asChild
                     >
-                      <button type="button" onClick={handleBuildStepsExpand}>
+                      <button type="button" onClick={handleBuildStepsExpand} onKeyDown={onTriggerKeyDown}>
                         Read more
                       </button>
                     </Text>
                   </motion.div>
                 </motion.div>
-              )}
-            </AnimatePresence>
+              </motion.div>
+            ) : null}
           </LayoutGroup>
 
-          <AnimatePresence initial={false}>
-            {revealBuildSteps ? (
+          <motion.div
+            variants={slotContext}
+            initial={motionEnabled ? "collapsed" : false}
+            animate={phase}
+          >
+            {showExpanded ? (
               <motion.div
                 key="build-steps-body"
                 id="build-steps-body"
                 className="space-y-6"
-                variants={bodyContainer}
-                initial={motionEnabled ? "hidden" : false}
-                animate={motionEnabled ? "show" : undefined}
-                exit={motionEnabled ? "exit" : undefined}
+                variants={slotContext}
+                initial={motionEnabled ? "collapsed" : false}
+                animate={phase}
               >
                 <motion.div id="build-steps-sequence" className="relative" variants={bodyGroup}>
                   <div className="flex min-w-0">
@@ -728,7 +713,7 @@ const BuildStepsRevealSection = ({
                         variants={bodyItem}
                       >
                         <LayoutGroup id="bespoke-build-step-rail">
-                          <motion.div className="flex items-center gap-3" variants={railContainer}>
+                          <motion.div className="flex items-center gap-3" variants={itemsGroup}>
                             <motion.button
                               type="button"
                               onClick={handlePrevClick}
@@ -740,14 +725,14 @@ const BuildStepsRevealSection = ({
                                   ? "hover:border-border hover:text-ink"
                                   : "cursor-not-allowed opacity-40",
                               )}
-                              variants={railItem}
+                              variants={surfaceItem}
                             >
                               <span aria-hidden="true">←</span>
                             </motion.button>
 
                             <motion.div
                               className="grid flex-1 grid-flow-col auto-cols-fr items-center gap-2 rounded-2xl border border-border/75 bg-card/75 px-4 py-3 type-label-tight text-ink-muted shadow-soft backdrop-blur-md"
-                              variants={railStepsContainer}
+                              variants={itemsGroup}
                             >
                               {steps.map((step, index) => {
                                 const isActive = step.id === resolvedActiveStepId;
@@ -765,7 +750,7 @@ const BuildStepsRevealSection = ({
                                         ? "text-white"
                                         : "text-ink-muted hover:text-ink"
                                     }`}
-                                    variants={railItem}
+                                    variants={surfaceItem}
                                     whileHover={motionEnabled ? { y: -1, transition: homeMotion.micro } : undefined}
                                     whileTap={motionEnabled ? { y: 0, transition: homeMotion.micro } : undefined}
                                   >
@@ -784,9 +769,7 @@ const BuildStepsRevealSection = ({
                                         />
                                       )
                                     ) : null}
-                                    <span
-                                      className="relative z-10 flex items-center justify-center gap-2"
-                                    >
+                                    <span className="relative z-10 flex items-center justify-center gap-2">
                                       <span
                                         className={`h-2 w-2 rounded-full border transition ${
                                           isActive ? "border-white/40 bg-white/85" : "border-border bg-card"
@@ -811,7 +794,7 @@ const BuildStepsRevealSection = ({
                                   ? "hover:border-border hover:text-ink"
                                   : "cursor-not-allowed opacity-40",
                               )}
-                              variants={railItem}
+                              variants={surfaceItem}
                             >
                               <span aria-hidden="true">→</span>
                             </motion.button>
@@ -822,7 +805,7 @@ const BuildStepsRevealSection = ({
                       <motion.div
                         className="flex h-[80vh] w-full min-w-0 overflow-x-auto overflow-y-hidden rounded-2xl border border-border/70 bg-card/30 shadow-soft backdrop-blur-sm snap-x snap-proximity lg:pt-24 sm:rounded-3xl"
                         ref={scrollContainerRef}
-                        variants={stepsContainer}
+                        variants={itemsGroup}
                       >
                         {steps.map((step, index) => {
                           const isImage =
@@ -838,7 +821,7 @@ const BuildStepsRevealSection = ({
                               data-step-id={step.id}
                               aria-labelledby={`build-step-heading-${step.id}`}
                               className="group relative w-full shrink-0 snap-start"
-                              variants={stepCard}
+                              variants={bodyItem}
                             >
                               <div className="relative flex h-full">
                                 <div className="absolute inset-0 overflow-hidden rounded-3xl">
@@ -880,98 +863,83 @@ const BuildStepsRevealSection = ({
                                       </span>
                                     </button>
 
-                                    <AnimatePresence initial={false}>
-                                      {isOpen ? (
-                                        <motion.div
-                                          key="content"
-                                          initial={{ height: 0, opacity: 0 }}
-                                          animate={{ height: "auto", opacity: 1 }}
-                                          exit={{ height: 0, opacity: 0 }}
-                                          transition={{ duration: 0.25, ease: "easeOut" }}
-                                          className="overflow-hidden"
-                                        >
-                                          <div className="space-y-4 pt-4">
-                                            {step.bodyHtml ? (
-                                              <SafeHtml
-                                                className="max-w-none type-body text-ink-muted"
-                                                html={step.bodyHtml}
-                                              />
-                                            ) : null}
-                                            <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
-                                              {step.ctaHref && step.ctaLabel ? (
-                                                <a
-                                                  href={step.ctaHref}
-                                                  onClick={(event) => {
-                                                    event.stopPropagation();
-                                                    onStepCta?.(step.id);
-                                                  }}
-                                                  className="inline-flex min-h-10 items-center justify-center gap-2 pill border border-perazzi-red/60 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
-                                                >
-                                                  {step.ctaLabel}
-                                                  <span aria-hidden="true">→</span>
-                                                </a>
-                                              ) : (
-                                                <span className="type-label-tight text-ink-muted">
-                                                  Bespoke moment {index + 1}
-                                                </span>
-                                              )}
-
-                                              <div className="flex items-center gap-2 lg:hidden">
-                                                <button
-                                                  type="button"
-                                                  onClick={handlePrevClick}
-                                                  disabled={!canScrollPrev}
-                                                  aria-label="Previous step"
-                                                  className={cn(
-                                                    "inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-card/80 text-ink-muted transition focus-ring",
-                                                    canScrollPrev
-                                                      ? "hover:border-border hover:text-ink"
-                                                      : "cursor-not-allowed opacity-40",
-                                                  )}
-                                                >
-                                                  <span aria-hidden="true">←</span>
-                                                </button>
-                                                {steps.map((mappedStep) => {
-                                                  const dotActive = mappedStep.id === resolvedActiveStepId;
-                                                  return (
-                                                    <button
-                                                      key={mappedStep.id}
-                                                      type="button"
-                                                      onClick={(event) =>
-                                                        { handleMobileDotClick(event, mappedStep.id); }
-                                                      }
-                                                      aria-label={`Go to step ${
-                                                        steps.findIndex((stepItem) => stepItem.id === mappedStep.id) + 1
-                                                      }`}
-                                                      aria-current={
-                                                        dotActive ? "step" : undefined
-                                                      }
-                                                      className={`h-2.5 w-2.5 rounded-full border border-border transition ${
-                                                        dotActive ? "bg-perazzi-red" : "bg-card"
-                                                      }`}
-                                                    />
-                                                  );
-                                                })}
-                                                <button
-                                                  type="button"
-                                                  onClick={handleNextClick}
-                                                  disabled={!canScrollNext}
-                                                  aria-label="Next step"
-                                                  className={cn(
-                                                    "inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-card/80 text-ink-muted transition focus-ring",
-                                                    canScrollNext
-                                                      ? "hover:border-border hover:text-ink"
-                                                      : "cursor-not-allowed opacity-40",
-                                                  )}
-                                                >
-                                                  <span aria-hidden="true">→</span>
-                                                </button>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </motion.div>
+                                    <StepDetail open={isOpen} motionEnabled={motionEnabled}>
+                                      {step.bodyHtml ? (
+                                        <SafeHtml
+                                          className="max-w-none type-body text-ink-muted"
+                                          html={step.bodyHtml}
+                                        />
                                       ) : null}
-                                    </AnimatePresence>
+                                      <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+                                        {step.ctaHref && step.ctaLabel ? (
+                                          <a
+                                            href={step.ctaHref}
+                                            onClick={(event) => {
+                                              event.stopPropagation();
+                                              onStepCta?.(step.id);
+                                            }}
+                                            className="inline-flex min-h-10 items-center justify-center gap-2 pill border border-perazzi-red/60 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                                          >
+                                            {step.ctaLabel}
+                                            <span aria-hidden="true">→</span>
+                                          </a>
+                                        ) : (
+                                          <span className="type-label-tight text-ink-muted">
+                                            Bespoke moment {index + 1}
+                                          </span>
+                                        )}
+
+                                        <div className="flex items-center gap-2 lg:hidden">
+                                          <button
+                                            type="button"
+                                            onClick={handlePrevClick}
+                                            disabled={!canScrollPrev}
+                                            aria-label="Previous step"
+                                            className={cn(
+                                              "inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-card/80 text-ink-muted transition focus-ring",
+                                              canScrollPrev
+                                                ? "hover:border-border hover:text-ink"
+                                                : "cursor-not-allowed opacity-40",
+                                            )}
+                                          >
+                                            <span aria-hidden="true">←</span>
+                                          </button>
+                                          {steps.map((mappedStep) => {
+                                            const dotActive = mappedStep.id === resolvedActiveStepId;
+                                            return (
+                                              <button
+                                                key={mappedStep.id}
+                                                type="button"
+                                                onClick={(event) =>
+                                                  { handleMobileDotClick(event, mappedStep.id); }
+                                                }
+                                                aria-label={`Go to step ${
+                                                  steps.findIndex((stepItem) => stepItem.id === mappedStep.id) + 1
+                                                }`}
+                                                aria-current={dotActive ? "step" : undefined}
+                                                className={`h-2.5 w-2.5 rounded-full border border-border transition ${
+                                                  dotActive ? "bg-perazzi-red" : "bg-card"
+                                                }`}
+                                              />
+                                            );
+                                          })}
+                                          <button
+                                            type="button"
+                                            onClick={handleNextClick}
+                                            disabled={!canScrollNext}
+                                            aria-label="Next step"
+                                            className={cn(
+                                              "inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-card/80 text-ink-muted transition focus-ring",
+                                              canScrollNext
+                                                ? "hover:border-border hover:text-ink"
+                                                : "cursor-not-allowed opacity-40",
+                                            )}
+                                          >
+                                            <span aria-hidden="true">→</span>
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </StepDetail>
                                   </div>
                                 </div>
                               </div>
@@ -984,9 +952,9 @@ const BuildStepsRevealSection = ({
                 </motion.div>
               </motion.div>
             ) : null}
-          </AnimatePresence>
+          </motion.div>
         </motion.div>
       </div>
-    </>
+    </motion.div>
   );
 };
