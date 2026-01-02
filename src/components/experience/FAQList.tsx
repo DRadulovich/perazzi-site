@@ -12,16 +12,24 @@ import SafeHtml from "@/components/SafeHtml";
 import { homeMotion } from "@/lib/motionConfig";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, Container, Heading, Section, Text } from "@/components/ui";
 
+type FAQListMotionOverrides = Readonly<{
+  mode?: "viewport" | "parent";
+  headingDelay?: number;
+  listDelay?: number;
+  itemStagger?: number;
+}>;
+
 type FAQListProps = Readonly<{
   items: FAQItem[];
   embedded?: boolean;
   heading?: string;
   lead?: string;
+  motionOverrides?: FAQListMotionOverrides;
 }>;
 
 const MotionSection = motion(Section);
 
-export function FAQList({ items, embedded = false, heading, lead }: FAQListProps) {
+export function FAQList({ items, embedded = false, heading, lead, motionOverrides }: FAQListProps) {
   const analyticsRef = useAnalyticsObserver<HTMLElement>("ExperienceFAQSeen");
   const prefersReducedMotion = useReducedMotion();
 
@@ -34,10 +42,21 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
 
   const motionEnabled = !prefersReducedMotion;
 
+  const motionMode = motionOverrides?.mode ?? "viewport";
+  const parentMotion = motionEnabled && motionMode === "parent";
+  const headingDelay = parentMotion ? motionOverrides?.headingDelay ?? 0 : 0;
+  const listDelay = parentMotion ? motionOverrides?.listDelay ?? 0 : 0;
+  const itemStagger = motionEnabled
+    ? (parentMotion ? motionOverrides?.itemStagger ?? 0.08 : 0.08)
+    : 0;
+
   const list = {
     hidden: {},
     show: {
-      transition: { staggerChildren: motionEnabled ? 0.08 : 0 },
+      transition: {
+        delayChildren: listDelay,
+        staggerChildren: itemStagger,
+      },
     },
   } as const;
 
@@ -46,14 +65,38 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
     show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
   } as const;
 
+  const headingVariant = {
+    hidden: { opacity: 0, y: 14, filter: "blur(10px)" },
+    show: {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+      transition: { ...homeMotion.revealFast, delay: headingDelay },
+    },
+  } as const;
+
   const content = (
     <>
       <motion.div
         className="space-y-2"
-        initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
-        whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-        viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}
-        transition={motionEnabled ? homeMotion.revealFast : undefined}
+        variants={parentMotion ? headingVariant : undefined}
+        initial={
+          parentMotion
+            ? "hidden"
+            : motionEnabled
+              ? { opacity: 0, y: 14, filter: "blur(10px)" }
+              : false
+        }
+        animate={parentMotion ? "show" : undefined}
+        whileInView={
+          parentMotion
+            ? undefined
+            : motionEnabled
+              ? { opacity: 1, y: 0, filter: "blur(0px)" }
+              : undefined
+        }
+        viewport={parentMotion ? undefined : motionEnabled ? { once: true, amount: 0.6 } : undefined}
+        transition={parentMotion ? undefined : motionEnabled ? homeMotion.revealFast : undefined}
       >
         <Heading
           id="experience-faq-heading"
@@ -70,9 +113,10 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
       <motion.div
         className="space-y-4"
         variants={list}
-        initial={motionEnabled ? "hidden" : false}
-        whileInView={motionEnabled ? "show" : undefined}
-        viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
+        initial={parentMotion ? "hidden" : motionEnabled ? "hidden" : false}
+        animate={parentMotion ? "show" : undefined}
+        whileInView={parentMotion ? undefined : motionEnabled ? "show" : undefined}
+        viewport={parentMotion ? undefined : motionEnabled ? { once: true, amount: 0.35 } : undefined}
       >
         {faqItems.map((item, index) => (
           <motion.div key={item.q} variants={itemVariant}>
@@ -91,10 +135,22 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
         padding="md"
         className="space-y-6"
         aria-labelledby="experience-faq-heading"
-        initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(10px)" } : false}
-        whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-        viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
-        transition={motionEnabled ? homeMotion.reveal : undefined}
+        initial={
+          parentMotion
+            ? false
+            : motionEnabled
+              ? { opacity: 0, y: 24, filter: "blur(10px)" }
+              : false
+        }
+        whileInView={
+          parentMotion
+            ? undefined
+            : motionEnabled
+              ? { opacity: 1, y: 0, filter: "blur(0px)" }
+              : undefined
+        }
+        viewport={parentMotion ? undefined : motionEnabled ? { once: true, amount: 0.35 } : undefined}
+        transition={parentMotion ? undefined : motionEnabled ? homeMotion.reveal : undefined}
       >
         {content}
       </MotionSection>
@@ -130,10 +186,22 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
         <MotionSection
           padding="md"
           className="space-y-6 bg-card/40"
-          initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(10px)" } : false}
-          whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-          viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
-          transition={motionEnabled ? homeMotion.reveal : undefined}
+          initial={
+            parentMotion
+              ? false
+              : motionEnabled
+                ? { opacity: 0, y: 24, filter: "blur(10px)" }
+                : false
+          }
+          whileInView={
+            parentMotion
+              ? undefined
+              : motionEnabled
+                ? { opacity: 1, y: 0, filter: "blur(0px)" }
+                : undefined
+          }
+          viewport={parentMotion ? undefined : motionEnabled ? { once: true, amount: 0.35 } : undefined}
+          transition={parentMotion ? undefined : motionEnabled ? homeMotion.reveal : undefined}
         >
           {content}
         </MotionSection>

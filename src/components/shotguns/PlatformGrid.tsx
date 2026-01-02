@@ -134,8 +134,8 @@ const PlatformTabs = ({
     hidden: {},
     show: {
       transition: {
-        staggerChildren: motionEnabled ? 0.1 : 0,
-        delayChildren: motionEnabled ? 0.08 : 0,
+        staggerChildren: motionEnabled ? 0.27 : 0,
+        delayChildren: motionEnabled ? 0.25 : 0,
       },
     },
   } as const;

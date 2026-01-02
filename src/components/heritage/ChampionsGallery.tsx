@@ -24,6 +24,11 @@ type ChampionsGalleryRevealSectionProps = Readonly<{
   sectionRef: RefObject<HTMLElement | null>;
 }>;
 
+const championListItemMotion = {
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
+} as const;
+
 export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
   const prefersReducedMotion = useReducedMotion();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
@@ -124,17 +129,11 @@ const ChampionsGalleryRevealSection = ({
   const parallaxEnabled = enableTitleReveal && !revealGallery;
   const focusSurfaceTransition =
     "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const focusFadeTransition =
-    "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const titleColorTransition =
     "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const galleryReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
   const galleryRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
   const galleryCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const galleryBodyReveal = galleryReveal;
-  const readMoreReveal = motionEnabled
-    ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: galleryReveal.duration }
-    : undefined;
   const galleryLayoutTransition = motionEnabled ? { layout: galleryReveal } : undefined;
   const galleryMinHeight = enableTitleReveal ? "min-h-[calc(700px+16rem)]" : null;
   const { scrollYProgress } = useScroll({
@@ -150,14 +149,164 @@ const ChampionsGalleryRevealSection = ({
   const backgroundScale = parallaxEnabled ? 1.32 : 1;
   const backgroundScaleTransition = revealGallery ? galleryReveal : galleryCollapse;
 
-  const headingContainer = {
+  const atmosphereStagger = motionEnabled ? 0.12 : 0;
+  const contentStagger = motionEnabled ? 0.12 : 0;
+  const listStagger = motionEnabled ? 0.1 : 0;
+
+  const atmosphereDelay = motionEnabled ? 0.05 : 0;
+  const headerDelay = motionEnabled ? (enableTitleReveal && revealGallery ? 0.16 : 0.24) : 0;
+  const bodyDelay = motionEnabled ? (enableTitleReveal ? 0.32 : 0.38) : 0;
+  const bodyChildDelay = motionEnabled ? 0.08 : 0;
+  const listDelay = motionEnabled ? 0.08 : 0;
+  const scrimFocusDelay = motionEnabled ? atmosphereStagger * 2 : 0;
+  const scrimFadeDelay = motionEnabled ? atmosphereStagger * 3 : 0;
+
+  const atmosphereState = revealPhotoFocus ? "focus" : "collapsed";
+
+  const atmosphereContainer = {
     hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
+    collapsed: {
+      transition: {
+        delayChildren: atmosphereDelay,
+        staggerChildren: atmosphereStagger,
+      },
+    },
+    focus: {
+      transition: {
+        delayChildren: atmosphereDelay,
+        staggerChildren: atmosphereStagger,
+      },
+    },
   } as const;
 
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: galleryReveal },
+  type AtmosphereLayerCustom = {
+    collapsed: number;
+    focus: number;
+    collapsedDelay?: number;
+    focusDelay?: number;
+  };
+
+  const atmosphereLayer = {
+    hidden: { opacity: 0 },
+    collapsed: ({ collapsed, collapsedDelay }: AtmosphereLayerCustom) => ({
+      opacity: collapsed,
+      transition: { duration: 1.2, ease: homeMotion.cinematicEase, delay: collapsedDelay ?? 0 },
+    }),
+    focus: ({ focus, focusDelay }: AtmosphereLayerCustom) => ({
+      opacity: focus,
+      transition: { duration: 1.2, ease: homeMotion.cinematicEase, delay: focusDelay ?? 0 },
+    }),
+  } as const;
+
+  const atmosphereBackground = {
+    hidden: { opacity: 0, scale: backgroundScale * 1.04 },
+    collapsed: {
+      opacity: 1,
+      scale: backgroundScale,
+      transition: {
+        opacity: { duration: 1.3, ease: homeMotion.cinematicEase },
+        scale: backgroundScaleTransition,
+      },
+    },
+    focus: {
+      opacity: 1,
+      scale: backgroundScale,
+      transition: {
+        opacity: { duration: 1.3, ease: homeMotion.cinematicEase },
+        scale: backgroundScaleTransition,
+      },
+    },
+  } as const;
+
+  const headerContainer = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        delay: headerDelay,
+        duration: galleryRevealFast.duration,
+        ease: galleryRevealFast.ease,
+        delayChildren: motionEnabled ? 0.08 : 0,
+        staggerChildren: contentStagger,
+      },
+    },
+    exit: { opacity: 0, transition: galleryRevealFast },
+  } as const;
+
+  const headerGroup = {
+    hidden: {},
+    show: { transition: { staggerChildren: contentStagger } },
+  } as const;
+
+  const headerItem = {
+    hidden: { opacity: 0, y: 12, filter: "blur(8px)" },
+    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: galleryRevealFast },
+  } as const;
+
+  const bodyContainer = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        delay: bodyDelay,
+        duration: galleryRevealFast.duration,
+        ease: galleryRevealFast.ease,
+        delayChildren: bodyChildDelay,
+        staggerChildren: contentStagger,
+      },
+    },
+    exit: { opacity: 0, y: -12, transition: galleryCollapse },
+  } as const;
+
+  const bodyItem = {
+    hidden: { opacity: 0, y: 12 },
+    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
+  } as const;
+
+  const filterGroup = {
+    hidden: { opacity: 0, y: 12 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        ...homeMotion.revealFast,
+        delayChildren: motionEnabled ? 0.04 : 0,
+        staggerChildren: listStagger,
+      },
+    },
+  } as const;
+
+  const filterItem = {
+    hidden: { opacity: 0, y: 8 },
+    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
+  } as const;
+
+  const gridContainer = {
+    hidden: { opacity: 0, y: 14 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        ...homeMotion.reveal,
+        delayChildren: listDelay,
+        staggerChildren: contentStagger,
+      },
+    },
+  } as const;
+
+  const gridItem = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
+  } as const;
+
+  const listContainer = {
+    hidden: {},
+    show: {
+      transition: {
+        delayChildren: listDelay,
+        staggerChildren: listStagger,
+      },
+    },
   } as const;
 
   const handleGalleryExpand = () => {
@@ -226,13 +375,16 @@ const ChampionsGalleryRevealSection = ({
 
   return (
     <>
-      <div className="absolute inset-0 -z-10 overflow-hidden">
+      <motion.div
+        className="absolute inset-0 -z-10 overflow-hidden"
+        variants={atmosphereContainer}
+        initial={motionEnabled ? "hidden" : false}
+        animate={motionEnabled ? atmosphereState : undefined}
+      >
         <motion.div
           className="absolute inset-0 will-change-transform"
           style={parallaxStyle}
-          initial={false}
-          animate={motionEnabled ? { scale: backgroundScale } : undefined}
-          transition={motionEnabled ? backgroundScaleTransition : undefined}
+          variants={atmosphereBackground}
         >
           <Image
             src={background.url}
@@ -243,39 +395,35 @@ const ChampionsGalleryRevealSection = ({
             loading="lazy"
           />
         </motion.div>
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealGallery ? "opacity-0" : "opacity-100",
-          )}
+        <motion.div
+          className="absolute inset-0 bg-(--scrim-strong)"
+          variants={motionEnabled ? atmosphereLayer : undefined}
+          custom={motionEnabled ? { collapsed: 1, focus: 0, focusDelay: scrimFadeDelay } : undefined}
+          style={motionEnabled ? undefined : { opacity: revealGallery ? 0 : 1 }}
           aria-hidden
         />
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
+        <motion.div
+          className="absolute inset-0 bg-(--scrim-strong)"
+          variants={motionEnabled ? atmosphereLayer : undefined}
+          custom={motionEnabled ? { collapsed: 0, focus: 1, focusDelay: scrimFocusDelay } : undefined}
+          style={motionEnabled ? undefined : { opacity: revealPhotoFocus ? 1 : 0 }}
           aria-hidden
         />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 film-grain",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-20" : "opacity-0",
-          )}
+        <motion.div
+          className="pointer-events-none absolute inset-0 film-grain"
+          variants={motionEnabled ? atmosphereLayer : undefined}
+          custom={motionEnabled ? { collapsed: 0, focus: 0.2 } : undefined}
+          style={motionEnabled ? undefined : { opacity: revealPhotoFocus ? 0.2 : 0 }}
           aria-hidden="true"
         />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 overlay-gradient-ink",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
+        <motion.div
+          className="pointer-events-none absolute inset-0 overlay-gradient-ink"
+          variants={motionEnabled ? atmosphereLayer : undefined}
+          custom={motionEnabled ? { collapsed: 0, focus: 1 } : undefined}
+          style={motionEnabled ? undefined : { opacity: revealPhotoFocus ? 1 : 0 }}
           aria-hidden
         />
-      </div>
+      </motion.div>
 
       <Container size="xl" className="relative z-10">
         <motion.div
@@ -296,41 +444,42 @@ const ChampionsGalleryRevealSection = ({
                 <motion.div
                   key="heritage-champions-header"
                   className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
-                  initial={motionEnabled ? { opacity: 0 } : false}
-                  animate={motionEnabled ? { opacity: 1, transition: galleryReveal } : undefined}
-                  exit={motionEnabled ? { opacity: 0, transition: galleryRevealFast } : undefined}
+                  variants={headerContainer}
+                  initial={motionEnabled ? "hidden" : false}
+                  animate={motionEnabled ? "show" : undefined}
+                  exit={motionEnabled ? "exit" : undefined}
                 >
                   <motion.div
                     className="space-y-3"
-                    variants={headingContainer}
-                    initial={motionEnabled ? "hidden" : false}
-                    animate={motionEnabled ? "show" : undefined}
+                    variants={headerGroup}
                   >
-                    <motion.div
-                      layoutId="heritage-champions-title"
-                      layoutCrossfade={false}
-                      transition={galleryLayoutTransition}
-                      className="relative"
-                    >
-                      <Heading
-                        id="heritage-champions-heading"
-                        level={2}
-                        size="xl"
-                        className={cn(
-                          titleColorTransition,
-                          headerThemeReady ? "text-ink" : "text-white",
-                        )}
+                    <motion.div variants={headerItem}>
+                      <motion.div
+                        layoutId="heritage-champions-title"
+                        layoutCrossfade={false}
+                        transition={galleryLayoutTransition}
+                        className="relative"
                       >
-                        {heading}
-                      </Heading>
+                        <Heading
+                          id="heritage-champions-heading"
+                          level={2}
+                          size="xl"
+                          className={cn(
+                            titleColorTransition,
+                            headerThemeReady ? "text-ink" : "text-white",
+                          )}
+                        >
+                          {heading}
+                        </Heading>
+                      </motion.div>
                     </motion.div>
-                    <motion.div
-                      layoutId="heritage-champions-subtitle"
-                      layoutCrossfade={false}
-                      transition={galleryLayoutTransition}
-                      className="relative"
-                    >
-                      <motion.div variants={headingItem}>
+                    <motion.div variants={headerItem}>
+                      <motion.div
+                        layoutId="heritage-champions-subtitle"
+                        layoutCrossfade={false}
+                        transition={galleryLayoutTransition}
+                        className="relative"
+                      >
                         <Text
                           className={cn(
                             "type-section-subtitle",
@@ -344,67 +493,69 @@ const ChampionsGalleryRevealSection = ({
                     </motion.div>
                   </motion.div>
                   {enableTitleReveal ? (
-                    <button
+                    <motion.button
                       type="button"
                       className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
                       onClick={handleGalleryCollapse}
+                      variants={bodyItem}
                     >
                       Collapse
-                    </button>
+                    </motion.button>
                   ) : null}
                 </motion.div>
               ) : (
                 <motion.div
                   key="heritage-champions-collapsed"
                   className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
-                  animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
-                  exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
-                  transition={motionEnabled ? galleryRevealFast : undefined}
+                  variants={headerContainer}
+                  initial={motionEnabled ? "hidden" : false}
+                  animate={motionEnabled ? "show" : undefined}
+                  exit={motionEnabled ? "exit" : undefined}
                 >
-                  <motion.div
-                    layoutId="heritage-champions-title"
-                    layoutCrossfade={false}
-                    transition={galleryLayoutTransition}
-                    className="relative inline-flex text-white"
-                  >
-                    <Heading
-                      id="heritage-champions-heading"
-                      level={2}
-                      size="xl"
-                      className="type-section-collapsed"
-                    >
-                      {heading}
-                    </Heading>
-                    <button
-                      type="button"
-                      className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                      onPointerEnter={handleGalleryExpand}
-                      onFocus={handleGalleryExpand}
-                      onClick={handleGalleryExpand}
-                      aria-expanded={revealGallery}
-                      aria-controls="heritage-champions-body"
-                      aria-labelledby="heritage-champions-heading"
-                    >
-                      <span className="sr-only">Expand {heading}</span>
-                    </button>
+                  <motion.div className="flex flex-col items-center gap-3" variants={headerGroup}>
+                    <motion.div variants={headerItem}>
+                      <motion.div
+                        layoutId="heritage-champions-title"
+                        layoutCrossfade={false}
+                        transition={galleryLayoutTransition}
+                        className="relative inline-flex text-white"
+                      >
+                        <Heading
+                          id="heritage-champions-heading"
+                          level={2}
+                          size="xl"
+                          className="type-section-collapsed"
+                        >
+                          {heading}
+                        </Heading>
+                        <button
+                          type="button"
+                          className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                          onPointerEnter={handleGalleryExpand}
+                          onFocus={handleGalleryExpand}
+                          onClick={handleGalleryExpand}
+                          aria-expanded={revealGallery}
+                          aria-controls="heritage-champions-body"
+                          aria-labelledby="heritage-champions-heading"
+                        >
+                          <span className="sr-only">Expand {heading}</span>
+                        </button>
+                      </motion.div>
+                    </motion.div>
+                    <motion.div variants={headerItem}>
+                      <motion.div
+                        layoutId="heritage-champions-subtitle"
+                        layoutCrossfade={false}
+                        transition={galleryLayoutTransition}
+                        className="relative text-white"
+                      >
+                        <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+                          {subheading}
+                        </Text>
+                      </motion.div>
+                    </motion.div>
                   </motion.div>
-                  <motion.div
-                    layoutId="heritage-champions-subtitle"
-                    layoutCrossfade={false}
-                    transition={galleryLayoutTransition}
-                    className="relative text-white"
-                  >
-                    <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                      {subheading}
-                    </Text>
-                  </motion.div>
-                  <motion.div
-                    initial={motionEnabled ? { opacity: 0, y: 6 } : false}
-                    animate={motionEnabled ? { opacity: 1, y: 0, transition: readMoreReveal } : undefined}
-                    exit={motionEnabled ? { opacity: 0, y: 6, transition: galleryRevealFast } : undefined}
-                    className="mt-3"
-                  >
+                  <motion.div variants={bodyItem} className="mt-3">
                     <Text
                       size="button"
                       className="text-white/80 cursor-pointer focus-ring"
@@ -426,23 +577,14 @@ const ChampionsGalleryRevealSection = ({
                 key="heritage-champions-body"
                 id="heritage-champions-body"
                 className="space-y-6"
-                initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
-                animate={
-                  motionEnabled
-                    ? { opacity: 1, y: 0, filter: "blur(0px)", transition: galleryBodyReveal }
-                    : undefined
-                }
-                exit={
-                  motionEnabled
-                    ? { opacity: 0, y: -16, filter: "blur(10px)", transition: galleryCollapse }
-                    : undefined
-                }
+                variants={bodyContainer}
+                initial={motionEnabled ? "hidden" : false}
+                animate={motionEnabled ? "show" : undefined}
+                exit={motionEnabled ? "exit" : undefined}
               >
                 {disciplines.length ? (
                   <motion.div
-                    initial={motionEnabled ? { opacity: 0, y: 12, filter: "blur(10px)" } : false}
-                    animate={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-                    transition={motionEnabled ? homeMotion.revealFast : undefined}
+                    variants={filterGroup}
                   >
                     <LayoutGroup id="heritage-champions-discipline-filter">
                       <fieldset
@@ -462,6 +604,7 @@ const ChampionsGalleryRevealSection = ({
                           onClick={() => { setActiveDiscipline(null); }}
                           whileTap={motionEnabled ? { scale: 0.98 } : undefined}
                           transition={motionEnabled ? homeMotion.micro : undefined}
+                          variants={filterItem}
                         >
                           {activeDiscipline === null ? (
                             <motion.span
@@ -491,6 +634,7 @@ const ChampionsGalleryRevealSection = ({
                               }
                               whileTap={motionEnabled ? { scale: 0.98 } : undefined}
                               transition={motionEnabled ? homeMotion.micro : undefined}
+                              variants={filterItem}
                             >
                               {active ? (
                                 <motion.span
@@ -511,11 +655,12 @@ const ChampionsGalleryRevealSection = ({
 
                 <motion.div
                   className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)] lg:items-start"
-                  initial={motionEnabled ? { opacity: 0, y: 18, filter: "blur(10px)" } : false}
-                  animate={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-                  transition={motionEnabled ? homeMotion.reveal : undefined}
+                  variants={gridContainer}
                 >
-                  <div className="rounded-2xl bg-card/0 p-4 sm:rounded-3xl">
+                  <motion.div
+                    className="rounded-2xl bg-card/0 p-4 sm:rounded-3xl"
+                    variants={gridItem}
+                  >
                     <Text
                       size="label-tight"
                       className="mb-3 text-ink-muted"
@@ -525,7 +670,11 @@ const ChampionsGalleryRevealSection = ({
                     </Text>
 
                     {filteredChampions.length ? (
-                      <ul className="space-y-1" aria-label="Select a champion to view their profile">
+                      <motion.ul
+                        className="space-y-1"
+                        aria-label="Select a champion to view their profile"
+                        variants={listContainer}
+                      >
                         {filteredChampions.map((champion) => (
                           <ChampionNameItem
                             key={champion.id}
@@ -538,15 +687,18 @@ const ChampionsGalleryRevealSection = ({
                             }}
                           />
                         ))}
-                      </ul>
+                      </motion.ul>
                     ) : (
                       <Text size="sm" className="text-ink-muted">
                         No champions in this discipline yet—select another to continue exploring the lineage.
                       </Text>
                     )}
-                  </div>
+                  </motion.div>
 
-                  <div className="min-h-72 rounded-2xl border border-border/75 bg-card/75 p-5 shadow-soft sm:rounded-3xl">
+                  <motion.div
+                    className="min-h-72 rounded-2xl border border-border/75 bg-card/75 p-5 shadow-soft sm:rounded-3xl"
+                    variants={gridItem}
+                  >
                     <AnimatePresence mode="wait">
                       {selectedChampion ? (
                         <motion.div
@@ -572,7 +724,7 @@ const ChampionsGalleryRevealSection = ({
                         </motion.p>
                       )}
                     </AnimatePresence>
-                  </div>
+                  </motion.div>
                 </motion.div>
               </motion.div>
             ) : null}
@@ -597,9 +749,10 @@ function ChampionNameItem({ champion, isActive, reduceMotion, onSelect }: Champi
   );
 
   return (
-    <li
+    <motion.li
       ref={analyticsRef}
       data-analytics-id={`ChampionListItemViewed:${champion.id}`}
+      variants={reduceMotion ? undefined : championListItemMotion}
     >
       <motion.button
         type="button"
@@ -620,7 +773,7 @@ function ChampionNameItem({ champion, isActive, reduceMotion, onSelect }: Champi
           </span>
         ) : null}
       </motion.button>
-    </li>
+    </motion.li>
   );
 }
 

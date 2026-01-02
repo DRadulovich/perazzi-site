@@ -81,17 +81,11 @@ const BookingOptionsRevealSection = ({
   const parallaxEnabled = enableTitleReveal && !revealBooking;
   const focusSurfaceTransition =
     "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const focusFadeTransition =
-    "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const titleColorTransition =
     "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const bookingReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
   const bookingRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
   const bookingCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const bookingBodyReveal = bookingReveal;
-  const readMoreReveal = motionEnabled
-    ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: bookingReveal.duration }
-    : undefined;
   const bookingLayoutTransition = motionEnabled ? { layout: bookingReveal } : undefined;
   const bookingMinHeight = enableTitleReveal ? "min-h-[calc(720px+16rem)]" : null;
   const { scrollYProgress } = useScroll({
@@ -107,14 +101,132 @@ const BookingOptionsRevealSection = ({
   const backgroundScale = parallaxEnabled ? 1.32 : 1;
   const backgroundScaleTransition = revealBooking ? bookingReveal : bookingCollapse;
 
-  const headingContainer = {
+  const atmosphereStagger = motionEnabled ? 0.12 : 0;
+  const contentStagger = motionEnabled ? 0.12 : 0;
+  const listStagger = motionEnabled ? 0.1 : 0;
+
+  const atmosphereDelay = motionEnabled ? 0.05 : 0;
+  const headerDelay = motionEnabled ? (enableTitleReveal && revealBooking ? 0.12 : 0.22) : 0;
+  const bodyDelay = motionEnabled ? (enableTitleReveal ? 0.24 : 0.32) : 0;
+  const listDelay = motionEnabled ? 0.1 : 0;
+  const scrimFocusDelay = motionEnabled ? atmosphereStagger * 2 : 0;
+  const scrimFadeDelay = motionEnabled ? atmosphereStagger * 3 : 0;
+
+  const atmosphereState = revealPhotoFocus ? "focus" : "collapsed";
+
+  type AtmosphereLayerCustom = {
+    collapsed: number;
+    focus: number;
+    collapsedDelay?: number;
+    focusDelay?: number;
+  };
+
+  const atmosphereContainer = {
     hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
+    collapsed: {
+      transition: {
+        delayChildren: atmosphereDelay,
+        staggerChildren: atmosphereStagger,
+      },
+    },
+    focus: {
+      transition: {
+        delayChildren: atmosphereDelay,
+        staggerChildren: atmosphereStagger,
+      },
+    },
   } as const;
 
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: bookingReveal },
+  const atmosphereLayer = {
+    hidden: { opacity: 0 },
+    collapsed: ({ collapsed, collapsedDelay }: AtmosphereLayerCustom) => ({
+      opacity: collapsed,
+      transition: { duration: 1.2, ease: homeMotion.cinematicEase, delay: collapsedDelay ?? 0 },
+    }),
+    focus: ({ focus, focusDelay }: AtmosphereLayerCustom) => ({
+      opacity: focus,
+      transition: { duration: 1.2, ease: homeMotion.cinematicEase, delay: focusDelay ?? 0 },
+    }),
+  } as const;
+
+  const atmosphereBackground = {
+    hidden: { opacity: 0, scale: backgroundScale * 1.04 },
+    collapsed: {
+      opacity: 1,
+      scale: backgroundScale,
+      transition: {
+        opacity: { duration: 1.3, ease: homeMotion.cinematicEase },
+        scale: backgroundScaleTransition,
+      },
+    },
+    focus: {
+      opacity: 1,
+      scale: backgroundScale,
+      transition: {
+        opacity: { duration: 1.3, ease: homeMotion.cinematicEase },
+        scale: backgroundScaleTransition,
+      },
+    },
+  } as const;
+
+  const headerContainer = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        delay: headerDelay,
+        duration: bookingRevealFast.duration,
+        ease: bookingRevealFast.ease,
+        delayChildren: motionEnabled ? 0.08 : 0,
+        staggerChildren: contentStagger,
+      },
+    },
+    exit: { opacity: 0, transition: bookingRevealFast },
+  } as const;
+
+  const headerGroup = {
+    hidden: {},
+    show: { transition: { staggerChildren: contentStagger } },
+  } as const;
+
+  const headerItem = {
+    hidden: { opacity: 0, y: 12, filter: "blur(8px)" },
+    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: bookingRevealFast },
+  } as const;
+
+  const bodyItem = {
+    hidden: { opacity: 0, y: 12 },
+    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
+  } as const;
+
+  const bodyContainer = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        delay: bodyDelay,
+        duration: bookingRevealFast.duration,
+        ease: bookingRevealFast.ease,
+        delayChildren: motionEnabled ? 0.12 : 0,
+        staggerChildren: contentStagger,
+      },
+    },
+    exit: { opacity: 0, y: -12, transition: bookingCollapse },
+  } as const;
+
+  const optionsContainer = {
+    hidden: {},
+    show: {
+      transition: {
+        delayChildren: listDelay,
+        staggerChildren: listStagger,
+      },
+    },
+  } as const;
+
+  const optionItem = {
+    hidden: { opacity: 0, y: 14, filter: "blur(10px)" },
+    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
   } as const;
 
   const handleBookingExpand = () => {
@@ -177,13 +289,16 @@ const BookingOptionsRevealSection = ({
 
   return (
     <>
-      <div className="absolute inset-0 -z-10 overflow-hidden">
+      <motion.div
+        className="absolute inset-0 -z-10 overflow-hidden"
+        variants={atmosphereContainer}
+        initial={motionEnabled ? "hidden" : false}
+        animate={motionEnabled ? atmosphereState : undefined}
+      >
         <motion.div
           className="absolute inset-0 will-change-transform"
           style={parallaxStyle}
-          initial={false}
-          animate={motionEnabled ? { scale: backgroundScale } : undefined}
-          transition={motionEnabled ? backgroundScaleTransition : undefined}
+          variants={atmosphereBackground}
         >
           <Image
             src="/Photos/p-web-89.jpg"
@@ -194,39 +309,35 @@ const BookingOptionsRevealSection = ({
             priority={false}
           />
         </motion.div>
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealBooking ? "opacity-0" : "opacity-100",
-          )}
+        <motion.div
+          className="absolute inset-0 bg-(--scrim-strong)"
+          variants={motionEnabled ? atmosphereLayer : undefined}
+          custom={motionEnabled ? { collapsed: 1, focus: 0, focusDelay: scrimFadeDelay } : undefined}
+          style={motionEnabled ? undefined : { opacity: revealBooking ? 0 : 1 }}
           aria-hidden
         />
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
+        <motion.div
+          className="absolute inset-0 bg-(--scrim-strong)"
+          variants={motionEnabled ? atmosphereLayer : undefined}
+          custom={motionEnabled ? { collapsed: 0, focus: 1, focusDelay: scrimFocusDelay } : undefined}
+          style={motionEnabled ? undefined : { opacity: revealPhotoFocus ? 1 : 0 }}
           aria-hidden
         />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 film-grain",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-20" : "opacity-0",
-          )}
+        <motion.div
+          className="pointer-events-none absolute inset-0 film-grain"
+          variants={motionEnabled ? atmosphereLayer : undefined}
+          custom={motionEnabled ? { collapsed: 0, focus: 0.2 } : undefined}
+          style={motionEnabled ? undefined : { opacity: revealPhotoFocus ? 0.2 : 0 }}
           aria-hidden="true"
         />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
+        <motion.div
+          className="pointer-events-none absolute inset-0 overlay-gradient-canvas"
+          variants={motionEnabled ? atmosphereLayer : undefined}
+          custom={motionEnabled ? { collapsed: 0, focus: 1 } : undefined}
+          style={motionEnabled ? undefined : { opacity: revealPhotoFocus ? 1 : 0 }}
           aria-hidden
         />
-      </div>
+      </motion.div>
 
       <Container size="xl" className="relative z-10">
         <motion.div
@@ -247,41 +358,46 @@ const BookingOptionsRevealSection = ({
                 <motion.div
                   key="experience-booking-header"
                   className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
-                  initial={motionEnabled ? { opacity: 0 } : false}
-                  animate={motionEnabled ? { opacity: 1, transition: bookingReveal } : undefined}
-                  exit={motionEnabled ? { opacity: 0, transition: bookingRevealFast } : undefined}
+                  variants={headerContainer}
+                  initial={motionEnabled ? "hidden" : false}
+                  animate={motionEnabled ? "show" : undefined}
+                  exit={motionEnabled ? "exit" : undefined}
                 >
                   <motion.div
                     className="space-y-3"
-                    variants={headingContainer}
-                    initial={motionEnabled ? "hidden" : false}
-                    animate={motionEnabled ? "show" : undefined}
+                    variants={headerGroup}
                   >
                     <motion.div
-                      layoutId="experience-booking-title"
-                      layoutCrossfade={false}
-                      transition={bookingLayoutTransition}
-                      className="relative"
+                      variants={headerItem}
                     >
-                      <Heading
-                        id="experience-booking-heading"
-                        level={2}
-                        size="xl"
-                        className={cn(
-                          titleColorTransition,
-                          headerThemeReady ? "text-ink" : "text-white",
-                        )}
+                      <motion.div
+                        layoutId="experience-booking-title"
+                        layoutCrossfade={false}
+                        transition={bookingLayoutTransition}
+                        className="relative"
                       >
-                        {heading}
-                      </Heading>
+                        <Heading
+                          id="experience-booking-heading"
+                          level={2}
+                          size="xl"
+                          className={cn(
+                            titleColorTransition,
+                            headerThemeReady ? "text-ink" : "text-white",
+                          )}
+                        >
+                          {heading}
+                        </Heading>
+                      </motion.div>
                     </motion.div>
                     <motion.div
-                      layoutId="experience-booking-subtitle"
-                      layoutCrossfade={false}
-                      transition={bookingLayoutTransition}
-                      className="relative"
+                      variants={headerItem}
                     >
-                      <motion.div variants={headingItem}>
+                      <motion.div
+                        layoutId="experience-booking-subtitle"
+                        layoutCrossfade={false}
+                        transition={bookingLayoutTransition}
+                        className="relative"
+                      >
                         <Text
                           className={cn(
                             "type-section-subtitle",
@@ -296,67 +412,69 @@ const BookingOptionsRevealSection = ({
                     </motion.div>
                   </motion.div>
                   {enableTitleReveal ? (
-                    <button
+                    <motion.button
                       type="button"
                       className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
                       onClick={handleBookingCollapse}
+                      variants={bodyItem}
                     >
                       Collapse
-                    </button>
+                    </motion.button>
                   ) : null}
                 </motion.div>
               ) : (
                 <motion.div
                   key="experience-booking-collapsed"
                   className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
-                  animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
-                  exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
-                  transition={motionEnabled ? bookingRevealFast : undefined}
+                  variants={headerContainer}
+                  initial={motionEnabled ? "hidden" : false}
+                  animate={motionEnabled ? "show" : undefined}
+                  exit={motionEnabled ? "exit" : undefined}
                 >
-                  <motion.div
-                    layoutId="experience-booking-title"
-                    layoutCrossfade={false}
-                    transition={bookingLayoutTransition}
-                    className="relative inline-flex text-white"
-                  >
-                    <Heading
-                      id="experience-booking-heading"
-                      level={2}
-                      size="xl"
-                      className="type-section-collapsed"
-                    >
-                      {heading}
-                    </Heading>
-                    <button
-                      type="button"
-                      className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                      onPointerEnter={handleBookingExpand}
-                      onFocus={handleBookingExpand}
-                      onClick={handleBookingExpand}
-                      aria-expanded={revealBooking}
-                      aria-controls="experience-booking-body"
-                      aria-labelledby="experience-booking-heading"
-                    >
-                      <span className="sr-only">Expand {heading}</span>
-                    </button>
+                  <motion.div className="flex flex-col items-center gap-3" variants={headerGroup}>
+                    <motion.div variants={headerItem}>
+                      <motion.div
+                        layoutId="experience-booking-title"
+                        layoutCrossfade={false}
+                        transition={bookingLayoutTransition}
+                        className="relative inline-flex text-white"
+                      >
+                        <Heading
+                          id="experience-booking-heading"
+                          level={2}
+                          size="xl"
+                          className="type-section-collapsed"
+                        >
+                          {heading}
+                        </Heading>
+                        <button
+                          type="button"
+                          className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                          onPointerEnter={handleBookingExpand}
+                          onFocus={handleBookingExpand}
+                          onClick={handleBookingExpand}
+                          aria-expanded={revealBooking}
+                          aria-controls="experience-booking-body"
+                          aria-labelledby="experience-booking-heading"
+                        >
+                          <span className="sr-only">Expand {heading}</span>
+                        </button>
+                      </motion.div>
+                    </motion.div>
+                    <motion.div variants={headerItem}>
+                      <motion.div
+                        layoutId="experience-booking-subtitle"
+                        layoutCrossfade={false}
+                        transition={bookingLayoutTransition}
+                        className="relative text-white"
+                      >
+                        <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+                          {subheading}
+                        </Text>
+                      </motion.div>
+                    </motion.div>
                   </motion.div>
-                  <motion.div
-                    layoutId="experience-booking-subtitle"
-                    layoutCrossfade={false}
-                    transition={bookingLayoutTransition}
-                    className="relative text-white"
-                  >
-                    <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                      {subheading}
-                    </Text>
-                  </motion.div>
-                  <motion.div
-                    initial={motionEnabled ? { opacity: 0, y: 6 } : false}
-                    animate={motionEnabled ? { opacity: 1, y: 0, transition: readMoreReveal } : undefined}
-                    exit={motionEnabled ? { opacity: 0, y: 6, transition: bookingRevealFast } : undefined}
-                    className="mt-3"
-                  >
+                  <motion.div variants={bodyItem} className="mt-3">
                     <Text
                       size="button"
                       className="text-white/80 cursor-pointer focus-ring"
@@ -378,35 +496,20 @@ const BookingOptionsRevealSection = ({
                 key="experience-booking-body"
                 id="experience-booking-body"
                 className="space-y-6"
-                initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
-                animate={
-                  motionEnabled
-                    ? { opacity: 1, y: 0, filter: "blur(0px)", transition: bookingBodyReveal }
-                    : undefined
-                }
-                exit={
-                  motionEnabled
-                    ? { opacity: 0, y: -16, filter: "blur(10px)", transition: bookingCollapse }
-                    : undefined
-                }
+                variants={bodyContainer}
+                initial={motionEnabled ? "hidden" : false}
+                animate={motionEnabled ? "show" : undefined}
+                exit={motionEnabled ? "exit" : undefined}
               >
                 <motion.div
                   className="grid gap-6 md:gap-8 lg:gap-10 md:grid-cols-2 xl:grid-cols-3"
-                  initial={motionEnabled ? "hidden" : false}
-                  animate={motionEnabled ? "show" : undefined}
-                  variants={{
-                    hidden: {},
-                    show: { transition: { staggerChildren: motionEnabled ? 0.08 : 0 } },
-                  }}
+                  variants={optionsContainer}
                 >
                   {options.map((option) => (
                     <motion.article
                       key={option.id}
                       className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 transition hover:-translate-y-0.5 hover:border-ink/20 hover:bg-card/80 hover:shadow-elevated sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-7 lg:p-8"
-                      variants={{
-                        hidden: { opacity: 0, y: 14, filter: "blur(10px)" },
-                        show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
-                      }}
+                      variants={optionItem}
                     >
                       <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
                       <div className="space-y-2">
@@ -441,9 +544,7 @@ const BookingOptionsRevealSection = ({
                 {scheduler ? (
                   <motion.div
                     className="space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-8 lg:p-10"
-                    initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
-                    animate={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-                    transition={motionEnabled ? homeMotion.revealFast : undefined}
+                    variants={bodyItem}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <Heading level={3} className="type-card-title text-ink">

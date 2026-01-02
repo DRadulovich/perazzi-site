@@ -251,14 +251,132 @@ const EngravingGradesRevealSection = ({
     setCarouselExpanded(false);
   };
 
-  const headingContainer = {
+  const atmosphereStagger = motionEnabled ? 0.12 : 0;
+  const contentStagger = motionEnabled ? 0.12 : 0;
+  const listStagger = motionEnabled ? 0.25 : 0;
+  const nestedStagger = motionEnabled ? 0.08 : 0;
+  const atmosphereDelay = motionEnabled ? 0.05 : 0;
+  const headerDelay = motionEnabled ? 0.28 : 0;
+  const bodyDelay = motionEnabled ? 0.44 : 0;
+
+  const atmosphereContainer = {
     hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
+    show: {
+      transition: {
+        delayChildren: atmosphereDelay,
+        staggerChildren: atmosphereStagger,
+      },
+    },
   } as const;
 
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: carouselReveal },
+  const atmosphereLayer = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { duration: 1.2, ease: homeMotion.cinematicEase },
+    },
+  } as const;
+
+  const atmosphereBackground = {
+    hidden: { opacity: 0, scale: backgroundScale * 1.04 },
+    show: {
+      opacity: 1,
+      scale: backgroundScale,
+      transition: {
+        opacity: { duration: 1.2, ease: homeMotion.cinematicEase },
+        scale: backgroundScaleTransition,
+      },
+    },
+  } as const;
+
+  const headerContainer = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        delay: headerDelay,
+        delayChildren: motionEnabled ? 0.08 : 0,
+        staggerChildren: contentStagger,
+      },
+    },
+    exit: { opacity: 0, transition: carouselRevealFast },
+  } as const;
+
+  const headerGroup = {
+    hidden: {},
+    show: { transition: { staggerChildren: contentStagger } },
+  } as const;
+
+  const headerItem = {
+    hidden: { opacity: 0, y: 12, filter: "blur(8px)" },
+    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: carouselRevealFast },
+  } as const;
+
+  const bodyContainer = {
+    hidden: { opacity: 0, y: 12 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { ...carouselBodyReveal, delay: bodyDelay },
+    },
+    exit: { opacity: 0, y: -12, transition: carouselCollapse },
+  } as const;
+
+  const bodyGrid = {
+    hidden: {},
+    show: {
+      transition: {
+        delayChildren: motionEnabled ? 0.12 : 0,
+        staggerChildren: contentStagger,
+      },
+    },
+  } as const;
+
+  const bodyColumn = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        ...carouselRevealFast,
+        delayChildren: motionEnabled ? 0.08 : 0,
+        staggerChildren: contentStagger,
+      },
+    },
+  } as const;
+
+  const bodyItem = {
+    hidden: { opacity: 0, y: 10, filter: "blur(6px)" },
+    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
+  } as const;
+
+  const listContainer = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: listStagger,
+        delayChildren: motionEnabled ? 0.06 : 0,
+      },
+    },
+  } as const;
+
+  const listItem = {
+    hidden: { opacity: 0, y: 8 },
+    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
+  } as const;
+
+  const nestedList = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: nestedStagger,
+        delayChildren: motionEnabled ? 0.04 : 0,
+      },
+    },
+  } as const;
+
+  const nestedItem = {
+    hidden: { opacity: 0, y: 8 },
+    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
   } as const;
 
   useEffect(() => {
@@ -299,13 +417,16 @@ const EngravingGradesRevealSection = ({
 
   return (
     <>
-      <div className="absolute inset-0 -z-10 overflow-hidden">
+      <motion.div
+        className="absolute inset-0 -z-10 overflow-hidden"
+        variants={atmosphereContainer}
+        initial={motionEnabled ? "hidden" : false}
+        animate={motionEnabled ? "show" : undefined}
+      >
         <motion.div
           className="absolute inset-0 will-change-transform"
           style={parallaxStyle}
-          initial={false}
-          animate={motionEnabled ? { scale: backgroundScale } : undefined}
-          transition={motionEnabled ? backgroundScaleTransition : undefined}
+          variants={atmosphereBackground}
         >
           <Image
             src={background.url}
@@ -316,39 +437,47 @@ const EngravingGradesRevealSection = ({
             priority={false}
           />
         </motion.div>
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealCarousel ? "opacity-0" : "opacity-100",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 film-grain",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-20" : "opacity-0",
-          )}
-          aria-hidden="true"
-        />
-        <div
-          className={cn(
-            "absolute inset-0 overlay-gradient-canvas-80",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-      </div>
+        <motion.div className="absolute inset-0" variants={atmosphereLayer}>
+          <div
+            className={cn(
+              "absolute inset-0 bg-(--scrim-strong)",
+              focusFadeTransition,
+              revealCarousel ? "opacity-0" : "opacity-100",
+            )}
+            aria-hidden
+          />
+        </motion.div>
+        <motion.div className="absolute inset-0" variants={atmosphereLayer}>
+          <div
+            className={cn(
+              "absolute inset-0 bg-(--scrim-strong)",
+              focusFadeTransition,
+              revealPhotoFocus ? "opacity-100" : "opacity-0",
+            )}
+            aria-hidden
+          />
+        </motion.div>
+        <motion.div className="absolute inset-0" variants={atmosphereLayer}>
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-0 film-grain",
+              focusFadeTransition,
+              revealPhotoFocus ? "opacity-20" : "opacity-0",
+            )}
+            aria-hidden="true"
+          />
+        </motion.div>
+        <motion.div className="absolute inset-0" variants={atmosphereLayer}>
+          <div
+            className={cn(
+              "absolute inset-0 overlay-gradient-canvas-80",
+              focusFadeTransition,
+              revealPhotoFocus ? "opacity-100" : "opacity-0",
+            )}
+            aria-hidden
+          />
+        </motion.div>
+      </motion.div>
 
       <Container size="xl" className="relative z-10">
         <motion.div
@@ -369,15 +498,14 @@ const EngravingGradesRevealSection = ({
                 <motion.div
                   key="engraving-grades-header"
                   className="relative z-10 space-y-4 md:flex md:items-start md:justify-between md:gap-8"
-                  initial={motionEnabled ? { opacity: 0 } : false}
-                  animate={motionEnabled ? { opacity: 1, transition: carouselReveal } : undefined}
-                  exit={motionEnabled ? { opacity: 0, transition: carouselRevealFast } : undefined}
+                  variants={headerContainer}
+                  initial={motionEnabled ? "hidden" : false}
+                  animate={motionEnabled ? "show" : undefined}
+                  exit={motionEnabled ? "exit" : undefined}
                 >
                   <motion.div
                     className="space-y-3"
-                    variants={headingContainer}
-                    initial={motionEnabled ? "hidden" : false}
-                    animate={motionEnabled ? "show" : undefined}
+                    variants={headerGroup}
                   >
                     <motion.div
                       layoutId="engraving-grades-title"
@@ -385,17 +513,19 @@ const EngravingGradesRevealSection = ({
                       transition={carouselLayoutTransition}
                       className="relative"
                     >
-                      <Heading
-                        id="engraving-grades-heading"
-                        level={2}
-                        size="xl"
-                        className={cn(
-                          titleColorTransition,
-                          headerThemeReady ? "text-ink" : "text-white",
-                        )}
-                      >
-                        {heading}
-                      </Heading>
+                      <motion.div variants={headerItem}>
+                        <Heading
+                          id="engraving-grades-heading"
+                          level={2}
+                          size="xl"
+                          className={cn(
+                            titleColorTransition,
+                            headerThemeReady ? "text-ink" : "text-white",
+                          )}
+                        >
+                          {heading}
+                        </Heading>
+                      </motion.div>
                     </motion.div>
                     <motion.div
                       layoutId="engraving-grades-subtitle"
@@ -403,7 +533,7 @@ const EngravingGradesRevealSection = ({
                       transition={carouselLayoutTransition}
                       className="relative"
                     >
-                      <motion.div variants={headingItem}>
+                      <motion.div variants={headerItem}>
                         <Text
                           className={cn(
                             "max-w-4xl type-section-subtitle",
@@ -418,13 +548,14 @@ const EngravingGradesRevealSection = ({
                     </motion.div>
                   </motion.div>
                   {enableTitleReveal ? (
-                    <button
+                    <motion.button
                       type="button"
                       className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
                       onClick={handleCollapse}
+                      variants={headerItem}
                     >
                       Collapse
-                    </button>
+                    </motion.button>
                   ) : null}
                 </motion.div>
               ) : (
@@ -500,31 +631,33 @@ const EngravingGradesRevealSection = ({
                 key="engraving-grades-body"
                 id="engraving-grades-body"
                 className="space-y-6"
-                initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
-                animate={
-                  motionEnabled
-                    ? { opacity: 1, y: 0, filter: "blur(0px)", transition: carouselBodyReveal }
-                    : undefined
-                }
-                exit={
-                  motionEnabled
-                    ? { opacity: 0, y: -16, filter: "blur(10px)", transition: carouselCollapse }
-                    : undefined
-                }
+                variants={bodyContainer}
+                initial={motionEnabled ? "hidden" : false}
+                animate={motionEnabled ? "show" : undefined}
+                exit={motionEnabled ? "exit" : undefined}
               >
-                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
-                  <div className="space-y-3 rounded-2xl bg-transparent p-4 sm:rounded-3xl sm:p-5">
-                    <Text size="label-tight" className="type-label-tight text-ink-muted" leading="normal">
-                      Grade categories
-                    </Text>
+                <motion.div
+                  className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start"
+                  variants={bodyGrid}
+                >
+                  <motion.div
+                    className="space-y-3 rounded-2xl bg-transparent p-4 sm:rounded-3xl sm:p-5"
+                    variants={bodyColumn}
+                  >
+                    <motion.div variants={bodyItem}>
+                      <Text size="label-tight" className="type-label-tight text-ink-muted" leading="normal">
+                        Grade categories
+                      </Text>
+                    </motion.div>
                     <LayoutGroup id="shotguns-engraving-grade-tabs">
-                      <div className="space-y-3">
+                      <motion.div className="space-y-3" variants={listContainer}>
                         {categories.map((category) => {
                           const isOpen = resolvedOpenCategory === category.label;
                           return (
-                            <div
+                            <motion.div
                               key={category.label}
                               className="rounded-2xl border border-border/70 bg-card/60 backdrop-blur-sm sm:bg-card/75"
+                              variants={listItem}
                             >
                               <button
                                 type="button"
@@ -549,11 +682,16 @@ const EngravingGradesRevealSection = ({
                               </button>
                               {isOpen ? (
                                 <div className="border-t border-border/70">
-                                  <ul className="space-y-1 p-3">
+                                  <motion.ul
+                                    className="space-y-1 p-3"
+                                    variants={nestedList}
+                                    initial={motionEnabled ? "hidden" : false}
+                                    animate={motionEnabled ? "show" : undefined}
+                                  >
                                     {category.grades.map((grade) => {
                                       const isActive = grade.id === activeGradeId;
                                       return (
-                                        <li key={grade.id}>
+                                        <motion.li key={grade.id} variants={nestedItem}>
                                           <motion.button
                                             type="button"
                                             onClick={() => { setActiveGradeId(grade.id); }}
@@ -591,28 +729,28 @@ const EngravingGradesRevealSection = ({
                                             >
                                               {grade.name}
                                             </span>
-                                          </motion.button>
-                                        </li>
+                                            </motion.button>
+                                        </motion.li>
                                       );
                                     })}
-                                  </ul>
+                                  </motion.ul>
                                 </div>
                               ) : null}
-                            </div>
+                            </motion.div>
                           );
                         })}
-                      </div>
+                      </motion.div>
                     </LayoutGroup>
-                  </div>
+                  </motion.div>
 
-                  <div className="min-h-[26rem]">
+                  <motion.div className="min-h-104" variants={bodyColumn}>
                     <AnimatePresence initial={false} mode="popLayout">
                       {selectedGrade ? (
                         <motion.div
                           key={selectedGrade.id}
-                          initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
-                          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                          exit={motionEnabled ? { opacity: 0, y: -14, filter: "blur(10px)" } : undefined}
+                          initial={motionEnabled ? { opacity: 0, y: 14 } : false}
+                          animate={motionEnabled ? { opacity: 1, y: 0 } : undefined}
+                          exit={motionEnabled ? { opacity: 0, y: -14 } : undefined}
                           transition={motionEnabled ? homeMotion.revealFast : undefined}
                         >
                           <GradeCard grade={selectedGrade} ctaLabel={ctaLabel} />
@@ -623,8 +761,8 @@ const EngravingGradesRevealSection = ({
                         </Text>
                       )}
                     </AnimatePresence>
-                  </div>
-                </div>
+                  </motion.div>
+                </motion.div>
               </motion.div>
             ) : null}
           </AnimatePresence>
@@ -643,12 +781,54 @@ function GradeCard({ grade, ctaLabel }: GradeCardProps) {
   const heroAsset = grade.gallery?.[0];
   const ratio = heroAsset?.aspectRatio ?? 3 / 2;
   const gradeAnchor = getGradeAnchorId(grade);
+  const prefersReducedMotion = useReducedMotion();
+  const motionEnabled = !prefersReducedMotion;
+
+  const cardContainer = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: motionEnabled ? 0.12 : 0,
+      },
+    },
+  } as const;
+
+  const cardMedia = {
+    hidden: { opacity: 0, scale: 1.02 },
+    show: { opacity: 1, scale: 1, transition: homeMotion.revealFast },
+  } as const;
+
+  const cardContent = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: motionEnabled ? 0.1 : 0,
+        delayChildren: motionEnabled ? 0.08 : 0,
+      },
+    },
+  } as const;
+
+  const cardTextItem = {
+    hidden: { opacity: 0, y: 10, filter: "blur(8px)" },
+    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
+  } as const;
+
+  const cardBlock = {
+    hidden: { opacity: 0, y: 8 },
+    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
+  } as const;
 
   return (
-    <article className="group flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-5 sm:shadow-elevated lg:p-6">
-      <div
-        className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)] aspect-dynamic"
+    <motion.article
+      className="group flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-5 sm:shadow-elevated lg:p-6"
+      variants={cardContainer}
+      initial={motionEnabled ? "hidden" : false}
+      animate={motionEnabled ? "show" : undefined}
+    >
+      <motion.div
+        className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-dynamic"
         style={{ "--aspect-ratio": ratio }}
+        variants={cardMedia}
       >
         {heroAsset ? (
           <Image
@@ -669,22 +849,28 @@ function GradeCard({ grade, ctaLabel }: GradeCardProps) {
           </Text>
         )}
         <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
-      </div>
-      <div className="mt-4 flex flex-1 flex-col gap-3">
-        <Text size="label-tight" className="type-card-title text-perazzi-red" leading="normal">
-          Engraving Grade
-        </Text>
-        <Heading
-          level={3}
-          size="md"
-          className="type-body-title text-ink text-xl sm:text-2xl lg:text-3xl uppercase not-italic"
-        >
-          {grade.name}
-        </Heading>
-        <Text className="type-body text-ink-muted" leading="normal">
-          {grade.description}
-        </Text>
-        <div className="mt-auto pt-2">
+      </motion.div>
+      <motion.div className="mt-4 flex flex-1 flex-col gap-3" variants={cardContent}>
+        <motion.div variants={cardTextItem}>
+          <Text size="label-tight" className="type-card-title text-perazzi-red" leading="normal">
+            Engraving Grade
+          </Text>
+        </motion.div>
+        <motion.div variants={cardTextItem}>
+          <Heading
+            level={3}
+            size="md"
+            className="type-body-title text-ink text-xl sm:text-2xl lg:text-3xl uppercase not-italic"
+          >
+            {grade.name}
+          </Heading>
+        </motion.div>
+        <motion.div variants={cardTextItem}>
+          <Text className="type-body text-ink-muted" leading="normal">
+            {grade.description}
+          </Text>
+        </motion.div>
+        <motion.div className="mt-auto pt-2" variants={cardBlock}>
           <Link
             href={`/engravings?grade=${gradeAnchor}`}
             className="type-button inline-flex items-center justify-center gap-2 rounded-sm border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
@@ -692,8 +878,8 @@ function GradeCard({ grade, ctaLabel }: GradeCardProps) {
             {ctaLabel}
             <span aria-hidden="true">→</span>
           </Link>
-        </div>
-      </div>
-    </article>
+        </motion.div>
+      </motion.div>
+    </motion.article>
   );
 }
