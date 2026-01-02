@@ -129,48 +129,70 @@ const PlatformTabs = ({
   readonly activeIndex: number;
   onSelect: (index: number) => void;
   motionEnabled: boolean;
-}) => (
-  <LayoutGroup id="shotguns-platform-tabs">
-    <div role="tablist" aria-label="Platforms" className="flex flex-wrap gap-2">
-      {platforms.map((platform, index) => {
-        const isActive = index === activeIndex;
-        const buttonClass = `group relative overflow-hidden type-label-tight pill border focus-ring transition ${
-          isActive
-            ? "border-perazzi-red text-perazzi-red shadow-elevated"
-            : "border-border/70 bg-transparent text-ink-muted hover:border-ink/60"
-        }`;
+}) => {
+  const tabListVariants = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: motionEnabled ? 0.1 : 0,
+        delayChildren: motionEnabled ? 0.08 : 0,
+      },
+    },
+  } as const;
 
-        return (
-          <motion.button
-            key={platform.id}
-            type="button"
-            role="tab"
-            aria-selected={isActive}
-            className={buttonClass}
-            onClick={() => { onSelect(index); }}
-            initial={false}
-            whileHover={motionEnabled ? { y: -1, transition: homeMotion.micro } : undefined}
-            whileTap={motionEnabled ? { y: 0, transition: homeMotion.micro } : undefined}
-          >
-            {isActive ? (
-              motionEnabled ? (
-                <motion.span
-                  layoutId="platform-tab-highlight"
-                  className="absolute inset-0 bg-canvas/55 backdrop-blur-sm"
-                  transition={homeMotion.springHighlight}
-                  aria-hidden="true"
-                />
-              ) : (
-                <span className="absolute inset-0 bg-canvas/55 backdrop-blur-sm" aria-hidden="true" />
-              )
-            ) : null}
-            <span className="relative z-10">{platform.name}</span>
-          </motion.button>
-        );
-      })}
-    </div>
-  </LayoutGroup>
-);
+  const tabItemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
+  } as const;
+
+  return (
+    <LayoutGroup id="shotguns-platform-tabs">
+      <motion.div
+        role="tablist"
+        aria-label="Platforms"
+        className="flex flex-wrap gap-2"
+        variants={motionEnabled ? tabListVariants : undefined}
+      >
+        {platforms.map((platform, index) => {
+          const isActive = index === activeIndex;
+          const buttonClass = `group relative overflow-hidden type-label-tight pill border focus-ring transition ${
+            isActive
+              ? "border-perazzi-red text-perazzi-red shadow-elevated"
+              : "border-border/70 bg-transparent text-ink-muted hover:border-ink/60"
+          }`;
+
+          return (
+            <motion.button
+              key={platform.id}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              className={buttonClass}
+              onClick={() => { onSelect(index); }}
+              variants={motionEnabled ? tabItemVariants : undefined}
+              whileHover={motionEnabled ? { y: -1, transition: homeMotion.micro } : undefined}
+              whileTap={motionEnabled ? { y: 0, transition: homeMotion.micro } : undefined}
+            >
+              {isActive ? (
+                motionEnabled ? (
+                  <motion.span
+                    layoutId="platform-tab-highlight"
+                    className="absolute inset-0 bg-canvas/55 backdrop-blur-sm"
+                    transition={homeMotion.springHighlight}
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <span className="absolute inset-0 bg-canvas/55 backdrop-blur-sm" aria-hidden="true" />
+                )
+              ) : null}
+              <span className="relative z-10">{platform.name}</span>
+            </motion.button>
+          );
+        })}
+      </motion.div>
+    </LayoutGroup>
+  );
+};
 
 type PlatformCardWithChatProps = {
   platform: Platform;
@@ -204,6 +226,7 @@ type MobilePlatformCarouselProps = {
   readonly chatLabelTemplate: string;
   buildPayload: (platform: Platform) => ChatTriggerPayload;
   scrollRef: React.RefObject<HTMLDivElement | null>;
+  motionEnabled: boolean;
 };
 
 const MobilePlatformCarousel = ({
@@ -212,27 +235,51 @@ const MobilePlatformCarousel = ({
   chatLabelTemplate,
   buildPayload,
   scrollRef,
-}: MobilePlatformCarouselProps) => (
-  <div className="md:hidden">
-    <div
-      ref={scrollRef}
-      className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none px-6 -mx-6 pt-6 pb-6 sm:mx-0 sm:px-6"
-      aria-label="Swipe to explore platforms"
-    >
-      {platforms.map((platform, index) => (
-        <div key={platform.id} data-index={index} className="snap-center shrink-0 w-[85vw] max-w-sm">
-          <PlatformCardWithChat
-            platform={platform}
-            priority={index === 0}
-            footerLabel={formatTemplate(cardFooterTemplate, platform.name)}
-            chatLabel={formatTemplate(chatLabelTemplate, platform.name)}
-            payload={buildPayload(platform)}
-          />
-        </div>
-      ))}
+  motionEnabled,
+}: MobilePlatformCarouselProps) => {
+  const railVariants = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: motionEnabled ? 0.1 : 0,
+        delayChildren: motionEnabled ? 0.08 : 0,
+      },
+    },
+  } as const;
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 12 },
+    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
+  } as const;
+
+  return (
+    <div className="md:hidden">
+      <motion.div
+        ref={scrollRef}
+        className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none px-6 -mx-6 pt-6 pb-6 sm:mx-0 sm:px-6"
+        aria-label="Swipe to explore platforms"
+        variants={motionEnabled ? railVariants : undefined}
+      >
+        {platforms.map((platform, index) => (
+          <motion.div
+            key={platform.id}
+            data-index={index}
+            className="snap-center shrink-0 w-[85vw] max-w-sm"
+            variants={motionEnabled ? cardVariants : undefined}
+          >
+            <PlatformCardWithChat
+              platform={platform}
+              priority={index === 0}
+              footerLabel={formatTemplate(cardFooterTemplate, platform.name)}
+              chatLabel={formatTemplate(chatLabelTemplate, platform.name)}
+              payload={buildPayload(platform)}
+            />
+          </motion.div>
+        ))}
+      </motion.div>
     </div>
-  </div>
-);
+  );
+};
 
 type ChampionHighlightProps = {
   hallmark?: string | null;
@@ -322,7 +369,7 @@ const DesktopPlatformGrid = ({
           key={platform.id}
           className="h-full"
           initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 12, filter: "blur(10px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, filter: "blur(0px)" }}
           exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: -12, filter: "blur(10px)" }}
           transition={prefersReducedMotion ? undefined : homeMotion.revealFast}
         >
@@ -391,7 +438,6 @@ const PlatformGridRevealSection = ({
   const platformReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
   const platformRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
   const platformCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const platformBodyReveal = platformReveal;
   const readMoreReveal = motionEnabled
     ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: platformReveal.duration }
     : undefined;
@@ -409,6 +455,71 @@ const PlatformGridRevealSection = ({
   const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
   const backgroundScale = parallaxEnabled ? 1.32 : 1;
   const backgroundScaleTransition = revealGrid ? platformReveal : platformCollapse;
+
+  const atmosphereContainer = {
+    hidden: {},
+    show: { transition: { staggerChildren: motionEnabled ? 0.12 : 0 } },
+  } as const;
+
+  const atmosphereMedia = {
+    hidden: { opacity: 0, scale: 1.04 },
+    show: {
+      opacity: 1,
+      scale: 1,
+      transition: { duration: 1.6, ease: homeMotion.cinematicEase },
+    },
+  } as const;
+
+  const atmosphereLayer = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { duration: 1.2, ease: homeMotion.cinematicEase } },
+  } as const;
+
+  const headerContainer = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: motionEnabled ? 0.12 : 0,
+        delayChildren: motionEnabled ? 0.24 : 0,
+      },
+    },
+  } as const;
+
+  const headingContainer = {
+    hidden: {},
+    show: { transition: { staggerChildren: motionEnabled ? 0.1 : 0 } },
+  } as const;
+
+  const headerTitle = {
+    hidden: { opacity: 1, y: 8 },
+    show: { opacity: 1, y: 0, transition: homeMotion.reveal },
+  } as const;
+
+  const headerItem = {
+    hidden: { opacity: 0, y: 12 },
+    show: { opacity: 1, y: 0, transition: homeMotion.reveal },
+  } as const;
+
+  const headerCopy = {
+    hidden: { opacity: 0, y: 12, filter: "blur(6px)" },
+    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.reveal },
+  } as const;
+
+  const bodyContainer = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: motionEnabled ? 0.12 : 0,
+        delayChildren: motionEnabled ? 0.42 : 0,
+      },
+    },
+    exit: { opacity: 0, transition: platformCollapse },
+  } as const;
+
+  const bodyItem = {
+    hidden: { opacity: 0, y: 14 },
+    show: { opacity: 1, y: 0, transition: homeMotion.reveal },
+  } as const;
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
@@ -436,16 +547,6 @@ const PlatformGridRevealSection = ({
     setActiveIndex(index);
     scrollToIndex(scrollRef.current, index);
   }, [setActiveIndex]);
-
-  const headingContainer = {
-    hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
-  } as const;
-
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: platformReveal },
-  } as const;
 
   useEffect(() => {
     if (!enableTitleReveal || !revealGrid) return;
@@ -501,56 +602,86 @@ const PlatformGridRevealSection = ({
 
   return (
     <>
-      <div className="absolute inset-0 -z-10 overflow-hidden">
+      <motion.div
+        className="absolute inset-0 -z-10 overflow-hidden"
+        variants={motionEnabled ? atmosphereContainer : undefined}
+        initial={motionEnabled ? "hidden" : false}
+        animate={motionEnabled ? "show" : undefined}
+      >
         <motion.div
-          className="absolute inset-0 will-change-transform"
-          style={parallaxStyle}
-          initial={false}
-          animate={motionEnabled ? { scale: backgroundScale } : undefined}
-          transition={motionEnabled ? backgroundScaleTransition : undefined}
+          className="absolute inset-0"
+          variants={motionEnabled ? atmosphereMedia : undefined}
         >
-          <Image
-            src={templates.background.url}
-            alt={templates.background.alt}
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority={false}
+          <motion.div
+            className="absolute inset-0 will-change-transform"
+            style={parallaxStyle}
+            initial={false}
+            animate={motionEnabled ? { scale: backgroundScale } : undefined}
+            transition={motionEnabled ? backgroundScaleTransition : undefined}
+          >
+            <Image
+              src={templates.background.url}
+              alt={templates.background.alt}
+              fill
+              sizes="100vw"
+              className="object-cover"
+              priority={false}
+            />
+          </motion.div>
+        </motion.div>
+        <motion.div
+          className="absolute inset-0"
+          variants={motionEnabled ? atmosphereLayer : undefined}
+          aria-hidden
+        >
+          <div
+            className={cn(
+              "absolute inset-0 bg-(--scrim-strong)",
+              focusFadeTransition,
+              revealGrid ? "opacity-0" : "opacity-100",
+            )}
           />
         </motion.div>
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealGrid ? "opacity-0" : "opacity-100",
-          )}
+        <motion.div
+          className="absolute inset-0"
+          variants={motionEnabled ? atmosphereLayer : undefined}
           aria-hidden
-        />
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 film-grain",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-20" : "opacity-0",
-          )}
+        >
+          <div
+            className={cn(
+              "absolute inset-0 bg-(--scrim-strong)",
+              focusFadeTransition,
+              revealPhotoFocus ? "opacity-100" : "opacity-0",
+            )}
+          />
+        </motion.div>
+        <motion.div
+          className="absolute inset-0 pointer-events-none"
+          variants={motionEnabled ? atmosphereLayer : undefined}
           aria-hidden="true"
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
+        >
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-0 film-grain",
+              focusFadeTransition,
+              revealPhotoFocus ? "opacity-20" : "opacity-0",
+            )}
+          />
+        </motion.div>
+        <motion.div
+          className="absolute inset-0 pointer-events-none"
+          variants={motionEnabled ? atmosphereLayer : undefined}
           aria-hidden
-        />
-      </div>
+        >
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-0 overlay-gradient-canvas",
+              focusFadeTransition,
+              revealPhotoFocus ? "opacity-100" : "opacity-0",
+            )}
+          />
+        </motion.div>
+      </motion.div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
         <motion.div
@@ -571,21 +702,21 @@ const PlatformGridRevealSection = ({
                 <motion.div
                   key="platform-grid-header"
                   className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
-                  initial={motionEnabled ? { opacity: 0 } : false}
-                  animate={motionEnabled ? { opacity: 1, transition: platformReveal } : undefined}
+                  variants={motionEnabled ? headerContainer : undefined}
+                  initial={motionEnabled ? "hidden" : false}
+                  animate={motionEnabled ? "show" : undefined}
                   exit={motionEnabled ? { opacity: 0, transition: platformRevealFast } : undefined}
                 >
                   <motion.div
                     className="space-y-3"
-                    variants={headingContainer}
-                    initial={motionEnabled ? "hidden" : false}
-                    animate={motionEnabled ? "show" : undefined}
+                    variants={motionEnabled ? headingContainer : undefined}
                   >
                     <motion.div
                       layoutId="platform-grid-title"
                       layoutCrossfade={false}
                       transition={platformLayoutTransition}
                       className="relative"
+                      variants={motionEnabled ? headerTitle : undefined}
                     >
                       <Heading
                         id="platforms-heading"
@@ -605,7 +736,7 @@ const PlatformGridRevealSection = ({
                       transition={platformLayoutTransition}
                       className="relative"
                     >
-                      <motion.div variants={headingItem}>
+                      <motion.div variants={motionEnabled ? headerCopy : undefined}>
                         <Text
                           className={cn(
                             "type-section-subtitle max-w-4xl",
@@ -620,13 +751,15 @@ const PlatformGridRevealSection = ({
                     </motion.div>
                   </motion.div>
                   {enableTitleReveal ? (
-                    <button
-                      type="button"
-                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                      onClick={handleCollapse}
-                    >
-                      Collapse
-                    </button>
+                    <motion.div variants={motionEnabled ? headerItem : undefined}>
+                      <button
+                        type="button"
+                        className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
+                        onClick={handleCollapse}
+                      >
+                        Collapse
+                      </button>
+                    </motion.div>
                   ) : null}
                 </motion.div>
               ) : (
@@ -702,41 +835,41 @@ const PlatformGridRevealSection = ({
                 key="platform-grid-body"
                 id="platform-grid-body"
                 className="space-y-8"
-                initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
-                animate={
-                  motionEnabled
-                    ? { opacity: 1, y: 0, filter: "blur(0px)", transition: platformBodyReveal }
-                    : undefined
-                }
-                exit={
-                  motionEnabled
-                    ? { opacity: 0, y: -16, filter: "blur(10px)", transition: platformCollapse }
-                    : undefined
-                }
+                variants={motionEnabled ? bodyContainer : undefined}
+                initial={motionEnabled ? "hidden" : false}
+                animate={motionEnabled ? "show" : undefined}
+                exit={motionEnabled ? "exit" : undefined}
               >
-                <PlatformTabs
-                  platforms={platforms}
-                  activeIndex={activeIndex}
-                  onSelect={handleTabSelect}
-                  motionEnabled={motionEnabled}
-                />
+                <motion.div variants={motionEnabled ? bodyItem : undefined}>
+                  <PlatformTabs
+                    platforms={platforms}
+                    activeIndex={activeIndex}
+                    onSelect={handleTabSelect}
+                    motionEnabled={motionEnabled}
+                  />
+                </motion.div>
 
-                <MobilePlatformCarousel
-                  platforms={platforms}
-                  cardFooterTemplate={templates.cardFooterTemplate}
-                  chatLabelTemplate={templates.chatLabelTemplate}
-                  buildPayload={buildPayload}
-                  scrollRef={scrollRef}
-                />
+                <motion.div variants={motionEnabled ? bodyItem : undefined}>
+                  <MobilePlatformCarousel
+                    platforms={platforms}
+                    cardFooterTemplate={templates.cardFooterTemplate}
+                    chatLabelTemplate={templates.chatLabelTemplate}
+                    buildPayload={buildPayload}
+                    scrollRef={scrollRef}
+                    motionEnabled={motionEnabled}
+                  />
+                </motion.div>
 
-                <DesktopPlatformGrid
-                  platform={activePlatform}
-                  activeIndex={activeIndex}
-                  cardFooterTemplate={templates.cardFooterTemplate}
-                  chatLabelTemplate={templates.chatLabelTemplate}
-                  buildPayload={buildPayload}
-                  prefersReducedMotion={prefersReducedMotion}
-                />
+                <motion.div variants={motionEnabled ? bodyItem : undefined}>
+                  <DesktopPlatformGrid
+                    platform={activePlatform}
+                    activeIndex={activeIndex}
+                    cardFooterTemplate={templates.cardFooterTemplate}
+                    chatLabelTemplate={templates.chatLabelTemplate}
+                    buildPayload={buildPayload}
+                    prefersReducedMotion={prefersReducedMotion}
+                  />
+                </motion.div>
               </motion.div>
             ) : null}
           </AnimatePresence>
