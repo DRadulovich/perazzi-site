@@ -19,6 +19,8 @@ export const STAGGER_HEADER_ITEMS_MS = 120;
 export const STAGGER_BODY_ITEMS_MS = 100;
 export const STAGGER_LIST_ITEMS_MS = 120;
 export const STAGGER_LETTERS_MS = 15;
+// Extra time for short staggered exits; override closingHoldMs for longer lists.
+export const DEFAULT_EXIT_STAGGER_BUFFER_MS = STAGGER_LIST_ITEMS_MS * 3;
 
 export const EASE_CINEMATIC = [0.16, 1, 0.3, 1] as const;
 export const EASE_SOFT = "easeInOut" as const;

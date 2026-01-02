@@ -7,6 +7,7 @@ import {
   CONTAINER_EXPAND_MS,
   CONTENT_REVEAL_MS,
   CTA_REVEAL_MS,
+  DEFAULT_EXIT_STAGGER_BUFFER_MS,
   EXPANDED_HEADER_REVEAL_MS,
   EXPAND_TIME_SCALE,
   GLASS_REVEAL_MS,
@@ -23,17 +24,20 @@ export type ExpandableSectionPhase =
   | "expanded"
   | "closingHold";
 
+export type ExpandableSectionMountStrategy = "presence" | "always";
+
 export type UseExpandableSectionTimelineOptions = {
   defaultExpanded?: boolean;
   expanded?: boolean;
   onExpandedChange?: (nextExpanded: boolean) => void;
   prezoomMs?: number;
   closingHoldMs?: number;
+  mountStrategy?: ExpandableSectionMountStrategy;
 };
 
 const DEFAULT_PREZOOM_MS = PREZOOM_MS * EXPAND_TIME_SCALE;
 const DEFAULT_CLOSING_HOLD_MS =
-  Math.max(
+  (Math.max(
     CONTAINER_EXPAND_MS,
     SCRIM_CONVERGE_MS,
     GLASS_REVEAL_MS,
@@ -43,7 +47,7 @@ const DEFAULT_CLOSING_HOLD_MS =
     CONTENT_REVEAL_MS,
     LIST_REVEAL_MS,
     CTA_REVEAL_MS
-  ) * COLLAPSE_TIME_SCALE;
+  ) + DEFAULT_EXIT_STAGGER_BUFFER_MS) * COLLAPSE_TIME_SCALE;
 
 export function useExpandableSectionTimeline(
   options: UseExpandableSectionTimelineOptions = {}
@@ -54,6 +58,7 @@ export function useExpandableSectionTimeline(
     onExpandedChange,
     prezoomMs = DEFAULT_PREZOOM_MS,
     closingHoldMs = DEFAULT_CLOSING_HOLD_MS,
+    mountStrategy = "presence",
   } = options;
 
   const isControlled = controlledExpanded !== undefined;
@@ -64,6 +69,10 @@ export function useExpandableSectionTimeline(
   const [phase, setPhase] = useState<ExpandableSectionPhase>(
     expanded ? "expanded" : "collapsed"
   );
+  const showExpanded =
+    mountStrategy === "always" || phase === "expanded" || phase === "closingHold";
+  const showCollapsed =
+    mountStrategy === "always" || phase === "collapsed" || phase === "prezoom";
 
   const phaseRef = useRef<ExpandableSectionPhase>(phase);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -182,6 +191,8 @@ export function useExpandableSectionTimeline(
   return {
     expanded,
     phase,
+    showExpanded,
+    showCollapsed,
     open,
     close,
     toggle,
