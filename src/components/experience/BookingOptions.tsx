@@ -2,13 +2,25 @@
 
 import { useEffect, useRef, useState, type RefObject } from "react";
 import Image from "next/image";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import SafeHtml from "@/components/SafeHtml";
 import { Button, Container, Heading, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { logAnalytics } from "@/lib/analytics";
-import { homeMotion } from "@/lib/motionConfig";
+import {
+  CONTENT_REVEAL_MS,
+  CONTAINER_EXPAND_MS,
+  EASE_CINEMATIC,
+  EXPANDED_HEADER_REVEAL_MS,
+  EXPAND_TIME_SCALE,
+  GLASS_REVEAL_MS,
+  STAGGER_BODY_ITEMS_MS,
+  STAGGER_HEADER_ITEMS_MS,
+  STAGGER_LIST_ITEMS_MS,
+} from "@/motion/expandableSectionMotion";
+import { createExpandableSectionVariants } from "@/motion/createExpandableSectionVariants";
+import { useExpandableSectionTimeline } from "@/motion/useExpandableSectionTimeline";
 import { cn } from "@/lib/utils";
 import type { BookingSection } from "@/types/experience";
 
@@ -58,14 +70,25 @@ const BookingOptionsRevealSection = ({
   motionEnabled,
   sectionRef,
 }: BookingOptionsRevealSectionProps) => {
-  const [bookingExpanded, setBookingExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
   const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const [schedulerOpen, setSchedulerOpen] = useState(false);
   const [schedulerLoaded, setSchedulerLoaded] = useState(false);
+  const [schedulerHeight, setSchedulerHeight] = useState<number | null>(null);
 
   const bookingShellRef = useRef<HTMLDivElement | null>(null);
+  const schedulerContentRef = useRef<HTMLDivElement | null>(null);
   const headerThemeFrame = useRef<number | null>(null);
+  const {
+    expanded,
+    phase,
+    open,
+    close,
+    onTriggerKeyDown,
+    onEscapeKeyDown,
+    showExpanded,
+    showCollapsed,
+  } = useExpandableSectionTimeline({ defaultExpanded: !enableTitleReveal });
 
   const schedulerPanelId = "experience-scheduler-panel";
   const schedulerNoteId = "experience-scheduler-note";
@@ -75,18 +98,28 @@ const BookingOptionsRevealSection = ({
   const subheading = bookingSection.subheading ?? "Choose the session that fits your journey";
   const optionCtaLabel = bookingSection.optionCtaLabel ?? "Reserve this session";
 
-  const revealBooking = !enableTitleReveal || bookingExpanded;
+  const revealBooking = phase === "expanded" || phase === "closingHold";
   const revealPhotoFocus = revealBooking;
   const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealBooking;
+  const parallaxEnabled = enableTitleReveal && !revealBooking && motionEnabled;
   const focusSurfaceTransition =
-    "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const titleColorTransition =
-    "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const bookingReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const bookingRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const bookingCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const bookingLayoutTransition = motionEnabled ? { layout: bookingReveal } : undefined;
+    "transition-[background-color,box-shadow,border-color,backdrop-filter]";
+  const titleColorTransition = "transition-colors";
+  const cinematicBezier = `cubic-bezier(${EASE_CINEMATIC.join(",")})`;
+  const transitionStyle = (durationMs: number) => ({
+    transitionDuration: `${motionEnabled ? Math.round(durationMs * EXPAND_TIME_SCALE) : 0}ms`,
+    transitionTimingFunction: motionEnabled ? cinematicBezier : "linear",
+  });
+  const focusSurfaceStyle = transitionStyle(GLASS_REVEAL_MS);
+  const titleColorStyle = transitionStyle(EXPANDED_HEADER_REVEAL_MS);
+  const bookingLayoutTransition = motionEnabled
+    ? {
+        layout: {
+          duration: (CONTAINER_EXPAND_MS / 1000) * EXPAND_TIME_SCALE,
+          ease: EASE_CINEMATIC,
+        },
+      }
+    : undefined;
   const bookingMinHeight = enableTitleReveal ? "min-h-[calc(720px+16rem)]" : null;
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -98,143 +131,70 @@ const BookingOptionsRevealSection = ({
     ["0%", parallaxEnabled ? parallaxStrength : "0%"],
   );
   const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
-  const backgroundScale = parallaxEnabled ? 1.32 : 1;
-  const backgroundScaleTransition = revealBooking ? bookingReveal : bookingCollapse;
-
-  const atmosphereStagger = motionEnabled ? 0.12 : 0;
-  const contentStagger = motionEnabled ? 0.12 : 0;
-  const listStagger = motionEnabled ? 0.1 : 0;
-
-  const atmosphereDelay = motionEnabled ? 0.05 : 0;
-  const headerDelay = motionEnabled ? (enableTitleReveal && revealBooking ? 0.12 : 0.22) : 0;
-  const bodyDelay = motionEnabled ? (enableTitleReveal ? 0.24 : 0.32) : 0;
-  const listDelay = motionEnabled ? 0.1 : 0;
-  const scrimFocusDelay = motionEnabled ? atmosphereStagger * 2 : 0;
-  const scrimFadeDelay = motionEnabled ? atmosphereStagger * 3 : 0;
-
-  const atmosphereState = revealPhotoFocus ? "focus" : "collapsed";
-
-  type AtmosphereLayerCustom = {
-    collapsed: number;
-    focus: number;
-    collapsedDelay?: number;
-    focusDelay?: number;
-  };
-
-  const atmosphereContainer = {
-    hidden: {},
-    collapsed: {
-      transition: {
-        delayChildren: atmosphereDelay,
-        staggerChildren: atmosphereStagger,
-      },
+  const toSeconds = (ms: number) => ms / 1000;
+  const staggerTransition = (staggerMs: number, direction?: 1 | -1) => ({
+    transition: {
+      staggerChildren: motionEnabled ? toSeconds(staggerMs) : 0,
+      staggerDirection: direction,
     },
-    focus: {
-      transition: {
-        delayChildren: atmosphereDelay,
-        staggerChildren: atmosphereStagger,
-      },
-    },
-  } as const;
-
-  const atmosphereLayer = {
-    hidden: { opacity: 0 },
-    collapsed: ({ collapsed, collapsedDelay }: AtmosphereLayerCustom) => ({
-      opacity: collapsed,
-      transition: { duration: 1.2, ease: homeMotion.cinematicEase, delay: collapsedDelay ?? 0 },
-    }),
-    focus: ({ focus, focusDelay }: AtmosphereLayerCustom) => ({
-      opacity: focus,
-      transition: { duration: 1.2, ease: homeMotion.cinematicEase, delay: focusDelay ?? 0 },
-    }),
-  } as const;
-
-  const atmosphereBackground = {
-    hidden: { opacity: 0, scale: backgroundScale * 1.04 },
-    collapsed: {
-      opacity: 1,
-      scale: backgroundScale,
-      transition: {
-        opacity: { duration: 1.3, ease: homeMotion.cinematicEase },
-        scale: backgroundScaleTransition,
-      },
-    },
-    focus: {
-      opacity: 1,
-      scale: backgroundScale,
-      transition: {
-        opacity: { duration: 1.3, ease: homeMotion.cinematicEase },
-        scale: backgroundScaleTransition,
-      },
-    },
-  } as const;
-
-  const headerContainer = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        delay: headerDelay,
-        duration: bookingRevealFast.duration,
-        ease: bookingRevealFast.ease,
-        delayChildren: motionEnabled ? 0.08 : 0,
-        staggerChildren: contentStagger,
-      },
-    },
-    exit: { opacity: 0, transition: bookingRevealFast },
-  } as const;
-
+  });
   const headerGroup = {
-    hidden: {},
-    show: { transition: { staggerChildren: contentStagger } },
+    collapsed: staggerTransition(STAGGER_HEADER_ITEMS_MS, -1),
+    prezoom: staggerTransition(STAGGER_HEADER_ITEMS_MS),
+    expanded: staggerTransition(STAGGER_HEADER_ITEMS_MS),
+    closingHold: staggerTransition(STAGGER_HEADER_ITEMS_MS, -1),
   } as const;
-
-  const headerItem = {
-    hidden: { opacity: 0, y: 12, filter: "blur(8px)" },
-    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: bookingRevealFast },
+  const bodyGroup = {
+    collapsed: staggerTransition(STAGGER_BODY_ITEMS_MS, -1),
+    prezoom: staggerTransition(STAGGER_BODY_ITEMS_MS),
+    expanded: staggerTransition(STAGGER_BODY_ITEMS_MS),
+    closingHold: staggerTransition(STAGGER_BODY_ITEMS_MS, -1),
   } as const;
-
-  const bodyItem = {
-    hidden: { opacity: 0, y: 12 },
-    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
+  const itemsGroup = {
+    collapsed: staggerTransition(STAGGER_LIST_ITEMS_MS, -1),
+    prezoom: staggerTransition(STAGGER_LIST_ITEMS_MS),
+    expanded: staggerTransition(STAGGER_LIST_ITEMS_MS),
+    closingHold: staggerTransition(STAGGER_LIST_ITEMS_MS, -1),
   } as const;
-
-  const bodyContainer = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        delay: bodyDelay,
-        duration: bookingRevealFast.duration,
-        ease: bookingRevealFast.ease,
-        delayChildren: motionEnabled ? 0.12 : 0,
-        staggerChildren: contentStagger,
-      },
-    },
-    exit: { opacity: 0, y: -12, transition: bookingCollapse },
+  const slotVariants = createExpandableSectionVariants({
+    motionMode: motionEnabled ? "full" : "reduced",
+    scrimMode: "dualFocusFade",
+    backgroundScale: { collapsed: 1.32, prezoom: 1.12, expanded: 1 },
+    itemOffsetY: 12,
+    blurPx: 8,
+    glassScale: 0.985,
+  });
+  const surfaceVariants = createExpandableSectionVariants({
+    motionMode: motionEnabled ? "full" : "reduced",
+    scrimMode: "dualFocusFade",
+    itemOffsetY: 12,
+    blurPx: 0,
+    glassScale: 0.985,
+  });
+  const slotContext = {
+    collapsed: {},
+    prezoom: {},
+    expanded: {},
+    closingHold: {},
   } as const;
-
-  const optionsContainer = {
-    hidden: {},
-    show: {
-      transition: {
-        delayChildren: listDelay,
-        staggerChildren: listStagger,
-      },
-    },
-  } as const;
-
-  const optionItem = {
-    hidden: { opacity: 0, y: 14, filter: "blur(10px)" },
-    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
-  } as const;
+  const headerItem = slotVariants.expandedHeader;
+  const collapsedHeaderItem = slotVariants.collapsedHeader;
+  const bodyItem = slotVariants.content;
+  const surfaceItem = surfaceVariants.content;
+  const glassStyle = {
+    ...(enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : {}),
+    ...focusSurfaceStyle,
+  };
+  const schedulerTransition = motionEnabled
+    ? { duration: toSeconds(CONTENT_REVEAL_MS), ease: EASE_CINEMATIC }
+    : undefined;
 
   const handleBookingExpand = () => {
     if (!enableTitleReveal) return;
     if (headerThemeFrame.current !== null) {
       cancelAnimationFrame(headerThemeFrame.current);
     }
-    setBookingExpanded(true);
+    open();
     headerThemeFrame.current = requestAnimationFrame(() => {
       setHeaderThemeReady(true);
       headerThemeFrame.current = null;
@@ -248,7 +208,7 @@ const BookingOptionsRevealSection = ({
       headerThemeFrame.current = null;
     }
     setHeaderThemeReady(false);
-    setBookingExpanded(false);
+    close();
   };
 
   useEffect(() => {
@@ -281,6 +241,36 @@ const BookingOptionsRevealSection = ({
     };
   }, [enableTitleReveal, revealBooking, schedulerOpen, schedulerLoaded, options.length]);
 
+  useEffect(() => {
+    if (!schedulerLoaded) return;
+    const node = schedulerContentRef.current;
+    if (!node) return;
+
+    let frame = 0;
+    const updateHeight = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (!node) return;
+        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
+        setSchedulerHeight((prev) => (prev === nextHeight ? prev : nextHeight));
+      });
+    };
+
+    updateHeight();
+
+    if (typeof ResizeObserver === "undefined") {
+      return () => { cancelAnimationFrame(frame); };
+    }
+
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(node);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [schedulerLoaded, schedulerOpen]);
+
   useEffect(() => () => {
     if (headerThemeFrame.current !== null) {
       cancelAnimationFrame(headerThemeFrame.current);
@@ -288,61 +278,42 @@ const BookingOptionsRevealSection = ({
   }, []);
 
   return (
-    <>
-      <motion.div
-        className="absolute inset-0 -z-10 overflow-hidden"
-        variants={atmosphereContainer}
-        initial={motionEnabled ? "hidden" : false}
-        animate={motionEnabled ? atmosphereState : undefined}
-      >
-        <motion.div
-          className="absolute inset-0 will-change-transform"
-          style={parallaxStyle}
-          variants={atmosphereBackground}
-        >
-          <Image
-            src="/Photos/p-web-89.jpg"
-            alt="Perazzi booking options background"
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority={false}
-          />
+    <motion.div
+      variants={slotContext}
+      initial={motionEnabled ? "collapsed" : false}
+      animate={phase}
+    >
+      <motion.div className="absolute inset-0 -z-10 overflow-hidden">
+        <motion.div className="absolute inset-0" variants={slotVariants.background}>
+          <motion.div className="absolute inset-0 will-change-transform" style={parallaxStyle}>
+            <Image
+              src="/Photos/p-web-89.jpg"
+              alt="Perazzi booking options background"
+              fill
+              sizes="100vw"
+              className="object-cover"
+              priority={false}
+            />
+          </motion.div>
         </motion.div>
-        <motion.div
-          className="absolute inset-0 bg-(--scrim-strong)"
-          variants={motionEnabled ? atmosphereLayer : undefined}
-          custom={motionEnabled ? { collapsed: 1, focus: 0, focusDelay: scrimFadeDelay } : undefined}
-          style={motionEnabled ? undefined : { opacity: revealBooking ? 0 : 1 }}
-          aria-hidden
-        />
-        <motion.div
-          className="absolute inset-0 bg-(--scrim-strong)"
-          variants={motionEnabled ? atmosphereLayer : undefined}
-          custom={motionEnabled ? { collapsed: 0, focus: 1, focusDelay: scrimFocusDelay } : undefined}
-          style={motionEnabled ? undefined : { opacity: revealPhotoFocus ? 1 : 0 }}
-          aria-hidden
-        />
-        <motion.div
-          className="pointer-events-none absolute inset-0 film-grain"
-          variants={motionEnabled ? atmosphereLayer : undefined}
-          custom={motionEnabled ? { collapsed: 0, focus: 0.2 } : undefined}
-          style={motionEnabled ? undefined : { opacity: revealPhotoFocus ? 0.2 : 0 }}
-          aria-hidden="true"
-        />
-        <motion.div
-          className="pointer-events-none absolute inset-0 overlay-gradient-canvas"
-          variants={motionEnabled ? atmosphereLayer : undefined}
-          custom={motionEnabled ? { collapsed: 0, focus: 1 } : undefined}
-          style={motionEnabled ? undefined : { opacity: revealPhotoFocus ? 1 : 0 }}
-          aria-hidden
-        />
+        <motion.div className="absolute inset-0" variants={slotVariants.scrimTop}>
+          <div className="absolute inset-0 bg-(--scrim-strong)" aria-hidden />
+        </motion.div>
+        <motion.div className="absolute inset-0" variants={slotVariants.scrimBottom}>
+          <div className="absolute inset-0 bg-(--scrim-strong)" aria-hidden />
+        </motion.div>
+        <motion.div className="absolute inset-0 pointer-events-none" variants={slotVariants.scrimBottom}>
+          <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
+        </motion.div>
+        <motion.div className="absolute inset-0 pointer-events-none" variants={slotVariants.scrimBottom}>
+          <div className="pointer-events-none absolute inset-0 overlay-gradient-canvas" aria-hidden />
+        </motion.div>
       </motion.div>
 
       <Container size="xl" className="relative z-10">
         <motion.div
           ref={bookingShellRef}
-          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
+          style={glassStyle}
           className={cn(
             "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
             focusSurfaceTransition,
@@ -351,278 +322,290 @@ const BookingOptionsRevealSection = ({
               : "border-transparent bg-transparent shadow-none backdrop-blur-none",
             bookingMinHeight,
           )}
+          variants={slotVariants.glass}
+          onKeyDown={onEscapeKeyDown}
         >
           <LayoutGroup id="experience-booking-title">
-            <AnimatePresence initial={false}>
-              {revealBooking ? (
-                <motion.div
-                  key="experience-booking-header"
-                  className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
-                  variants={headerContainer}
-                  initial={motionEnabled ? "hidden" : false}
-                  animate={motionEnabled ? "show" : undefined}
-                  exit={motionEnabled ? "exit" : undefined}
-                >
+            {showExpanded ? (
+              <motion.div
+                key="experience-booking-header"
+                className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
+                variants={slotContext}
+                initial={motionEnabled ? "collapsed" : false}
+                animate={phase}
+              >
+                <motion.div className="space-y-3" variants={headerGroup}>
                   <motion.div
-                    className="space-y-3"
-                    variants={headerGroup}
+                    layoutId="experience-booking-title"
+                    layoutCrossfade={false}
+                    transition={bookingLayoutTransition}
+                    className="relative"
                   >
-                    <motion.div
-                      variants={headerItem}
-                    >
-                      <motion.div
-                        layoutId="experience-booking-title"
-                        layoutCrossfade={false}
-                        transition={bookingLayoutTransition}
-                        className="relative"
+                    <motion.div variants={headerItem}>
+                      <Heading
+                        id="experience-booking-heading"
+                        level={2}
+                        size="xl"
+                        className={cn(
+                          titleColorTransition,
+                          headerThemeReady ? "text-ink" : "text-white",
+                        )}
+                        style={titleColorStyle}
                       >
-                        <Heading
-                          id="experience-booking-heading"
-                          level={2}
-                          size="xl"
-                          className={cn(
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink" : "text-white",
-                          )}
-                        >
-                          {heading}
-                        </Heading>
-                      </motion.div>
-                    </motion.div>
-                    <motion.div
-                      variants={headerItem}
-                    >
-                      <motion.div
-                        layoutId="experience-booking-subtitle"
-                        layoutCrossfade={false}
-                        transition={bookingLayoutTransition}
-                        className="relative"
-                      >
-                        <Text
-                          className={cn(
-                            "type-section-subtitle",
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink-muted" : "text-white",
-                          )}
-                          leading="relaxed"
-                        >
-                          {subheading}
-                        </Text>
-                      </motion.div>
+                        {heading}
+                      </Heading>
                     </motion.div>
                   </motion.div>
-                  {enableTitleReveal ? (
-                    <motion.button
+                  <motion.div
+                    layoutId="experience-booking-subtitle"
+                    layoutCrossfade={false}
+                    transition={bookingLayoutTransition}
+                    className="relative"
+                  >
+                    <motion.div variants={headerItem}>
+                      <Text
+                        className={cn(
+                          "type-section-subtitle",
+                          titleColorTransition,
+                          headerThemeReady ? "text-ink-muted" : "text-white",
+                        )}
+                        style={titleColorStyle}
+                        leading="relaxed"
+                      >
+                        {subheading}
+                      </Text>
+                    </motion.div>
+                  </motion.div>
+                </motion.div>
+                {enableTitleReveal ? (
+                  <motion.div variants={surfaceItem}>
+                    <button
                       type="button"
                       className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
                       onClick={handleBookingCollapse}
-                      variants={bodyItem}
                     >
                       Collapse
-                    </motion.button>
-                  ) : null}
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="experience-booking-collapsed"
-                  className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  variants={headerContainer}
-                  initial={motionEnabled ? "hidden" : false}
-                  animate={motionEnabled ? "show" : undefined}
-                  exit={motionEnabled ? "exit" : undefined}
-                >
-                  <motion.div className="flex flex-col items-center gap-3" variants={headerGroup}>
-                    <motion.div variants={headerItem}>
-                      <motion.div
-                        layoutId="experience-booking-title"
-                        layoutCrossfade={false}
-                        transition={bookingLayoutTransition}
-                        className="relative inline-flex text-white"
+                    </button>
+                  </motion.div>
+                ) : null}
+              </motion.div>
+            ) : null}
+            {showCollapsed ? (
+              <motion.div
+                key="experience-booking-collapsed"
+                className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
+                variants={slotContext}
+                initial={motionEnabled ? "collapsed" : false}
+                animate={phase}
+              >
+                <motion.div className="flex flex-col items-center gap-3" variants={headerGroup}>
+                  <motion.div
+                    layoutId="experience-booking-title"
+                    layoutCrossfade={false}
+                    transition={bookingLayoutTransition}
+                    className="relative inline-flex text-white"
+                  >
+                    <motion.div variants={collapsedHeaderItem}>
+                      <Heading
+                        id="experience-booking-heading"
+                        level={2}
+                        size="xl"
+                        className="type-section-collapsed"
                       >
-                        <Heading
-                          id="experience-booking-heading"
-                          level={2}
-                          size="xl"
-                          className="type-section-collapsed"
-                        >
-                          {heading}
-                        </Heading>
-                        <button
-                          type="button"
-                          className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                          onPointerEnter={handleBookingExpand}
-                          onFocus={handleBookingExpand}
-                          onClick={handleBookingExpand}
-                          aria-expanded={revealBooking}
-                          aria-controls="experience-booking-body"
-                          aria-labelledby="experience-booking-heading"
-                        >
-                          <span className="sr-only">Expand {heading}</span>
-                        </button>
-                      </motion.div>
+                        {heading}
+                      </Heading>
                     </motion.div>
-                    <motion.div variants={headerItem}>
-                      <motion.div
-                        layoutId="experience-booking-subtitle"
-                        layoutCrossfade={false}
-                        transition={bookingLayoutTransition}
-                        className="relative text-white"
-                      >
-                        <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                          {subheading}
-                        </Text>
-                      </motion.div>
+                    <button
+                      type="button"
+                      className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                      onPointerEnter={handleBookingExpand}
+                      onFocus={handleBookingExpand}
+                      onClick={handleBookingExpand}
+                      onKeyDown={onTriggerKeyDown}
+                      aria-expanded={expanded}
+                      aria-controls="experience-booking-body"
+                      aria-labelledby="experience-booking-heading"
+                    >
+                      <span className="sr-only">Expand {heading}</span>
+                    </button>
+                  </motion.div>
+                  <motion.div
+                    layoutId="experience-booking-subtitle"
+                    layoutCrossfade={false}
+                    transition={bookingLayoutTransition}
+                    className="relative text-white"
+                  >
+                    <motion.div variants={collapsedHeaderItem}>
+                      <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+                        {subheading}
+                      </Text>
                     </motion.div>
                   </motion.div>
-                  <motion.div variants={bodyItem} className="mt-3">
+                </motion.div>
+                <motion.div variants={itemsGroup} className="mt-3">
+                  <motion.div variants={collapsedHeaderItem}>
                     <Text
                       size="button"
                       className="text-white/80 cursor-pointer focus-ring"
                       asChild
                     >
-                      <button type="button" onClick={handleBookingExpand}>
+                      <button type="button" onClick={handleBookingExpand} onKeyDown={onTriggerKeyDown}>
                         Read more
                       </button>
                     </Text>
                   </motion.div>
                 </motion.div>
-              )}
-            </AnimatePresence>
+              </motion.div>
+            ) : null}
           </LayoutGroup>
 
-          <AnimatePresence initial={false}>
-            {revealBooking ? (
+          <motion.div
+            variants={slotContext}
+            initial={motionEnabled ? "collapsed" : false}
+            animate={phase}
+          >
+            {showExpanded ? (
               <motion.div
                 key="experience-booking-body"
                 id="experience-booking-body"
                 className="space-y-6"
-                variants={bodyContainer}
-                initial={motionEnabled ? "hidden" : false}
-                animate={motionEnabled ? "show" : undefined}
-                exit={motionEnabled ? "exit" : undefined}
+                variants={slotContext}
+                initial={motionEnabled ? "collapsed" : false}
+                animate={phase}
               >
-                <motion.div
-                  className="grid gap-6 md:gap-8 lg:gap-10 md:grid-cols-2 xl:grid-cols-3"
-                  variants={optionsContainer}
-                >
-                  {options.map((option) => (
-                    <motion.article
-                      key={option.id}
-                      className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 transition hover:-translate-y-0.5 hover:border-ink/20 hover:bg-card/80 hover:shadow-elevated sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-7 lg:p-8"
-                      variants={optionItem}
+                <motion.div className="space-y-6" variants={bodyGroup}>
+                  <motion.div
+                    className="grid gap-6 md:gap-8 lg:gap-10 md:grid-cols-2 xl:grid-cols-3"
+                    variants={itemsGroup}
+                  >
+                    {options.map((option) => (
+                      <motion.article
+                        key={option.id}
+                        className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 transition hover:-translate-y-0.5 hover:border-ink/20 hover:bg-card/80 hover:shadow-elevated sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-7 lg:p-8"
+                        variants={bodyItem}
+                      >
+                        <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
+                        <div className="space-y-2">
+                          <Heading level={3} className="type-card-title text-ink">
+                            {option.title}
+                          </Heading>
+                          <Text size="caption" muted>
+                            {option.durationLabel ?? (option.durationMins ? `${option.durationMins} minutes` : "")}
+                          </Text>
+                          <SafeHtml
+                            className="type-body max-w-none leading-relaxed text-ink-muted"
+                            html={option.descriptionHtml}
+                          />
+                        </div>
+                        <div className="mt-auto pt-6">
+                          <Button
+                            asChild
+                            variant="secondary"
+                            size="md"
+                            className="rounded-full px-6 py-3 type-button"
+                            onClick={() =>
+                              logAnalytics(`FittingCtaClick:${option.id}`)
+                            }
+                          >
+                            <a href={option.href}>{optionCtaLabel}</a>
+                          </Button>
+                        </div>
+                      </motion.article>
+                    ))}
+                  </motion.div>
+
+                  {scheduler ? (
+                    <motion.div
+                      className="space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-8 lg:p-10"
+                      variants={bodyItem}
                     >
-                      <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
-                      <div className="space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
                         <Heading level={3} className="type-card-title text-ink">
-                          {option.title}
+                          {scheduler.title}
                         </Heading>
-                        <Text size="caption" muted>
-                          {option.durationLabel ?? (option.durationMins ? `${option.durationMins} minutes` : "")}
-                        </Text>
-                        <SafeHtml
-                          className="type-body max-w-none leading-relaxed text-ink-muted"
-                          html={option.descriptionHtml}
-                        />
-                      </div>
-                      <div className="mt-auto pt-6">
                         <Button
-                          asChild
-                          variant="secondary"
-                          size="md"
-                          className="rounded-full px-6 py-3 type-button"
-                          onClick={() =>
-                            logAnalytics(`FittingCtaClick:${option.id}`)
-                          }
+                          variant="primary"
+                          size="sm"
+                          aria-controls={schedulerPanelId}
+                          aria-expanded={schedulerOpen}
+                          aria-describedby={schedulerNoteId}
+                          className="rounded-full px-4 py-2 type-button"
+                          onClick={() => {
+                            setSchedulerOpen((prev) => {
+                              const next = !prev;
+                              if (next && !schedulerLoaded) {
+                                setSchedulerLoaded(true);
+                              }
+                              logAnalytics(
+                                `ExperienceScheduler:${next ? "open" : "close"}`,
+                              );
+                              return next;
+                            });
+                          }}
                         >
-                          <a href={option.href}>{optionCtaLabel}</a>
+                          {schedulerOpen
+                            ? scheduler.toggleCloseLabel ?? "Hide scheduler"
+                            : scheduler.toggleOpenLabel ?? "Begin Your Fitting"}
                         </Button>
                       </div>
-                    </motion.article>
-                  ))}
-                </motion.div>
-
-                {scheduler ? (
-                  <motion.div
-                    className="space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-8 lg:p-10"
-                    variants={bodyItem}
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <Heading level={3} className="type-card-title text-ink">
-                        {scheduler.title}
-                      </Heading>
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        aria-controls={schedulerPanelId}
-                        aria-expanded={schedulerOpen}
-                        aria-describedby={schedulerNoteId}
-                        className="rounded-full px-4 py-2 type-button"
-                        onClick={() => {
-                          setSchedulerOpen((prev) => {
-                            const next = !prev;
-                            if (next && !schedulerLoaded) {
-                              setSchedulerLoaded(true);
+                      <p id={schedulerNoteId} className="sr-only">
+                        {scheduler.helperText ?? "Selecting Begin Your Fitting loads an embedded booking form below."}
+                      </p>
+                      <div
+                        id={schedulerPanelId}
+                        className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:bg-card/80 md:p-4 lg:p-5"
+                        aria-live="polite"
+                      >
+                        {schedulerLoaded ? (
+                          <motion.div
+                            className="overflow-hidden"
+                            initial={motionEnabled ? { height: 0, opacity: 0, filter: "blur(10px)" } : false}
+                            animate={schedulerOpen
+                              ? (motionEnabled
+                                ? { height: schedulerHeight ?? 480, opacity: 1, filter: "blur(0px)" }
+                                : { height: schedulerHeight ?? 480, opacity: 1 })
+                              : (motionEnabled
+                                ? { height: 0, opacity: 0, filter: "blur(10px)" }
+                                : { height: 0, opacity: 0 })
                             }
-                            logAnalytics(
-                              `ExperienceScheduler:${next ? "open" : "close"}`,
-                            );
-                            return next;
-                          });
-                        }}
-                      >
-                        {schedulerOpen
-                          ? scheduler.toggleCloseLabel ?? "Hide scheduler"
-                          : scheduler.toggleOpenLabel ?? "Begin Your Fitting"}
-                      </Button>
-                    </div>
-                    <p id={schedulerNoteId} className="sr-only">
-                      {scheduler.helperText ?? "Selecting Begin Your Fitting loads an embedded booking form below."}
-                    </p>
-                    <div
-                      id={schedulerPanelId}
-                      className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:bg-card/80 md:p-4 lg:p-5"
-                      aria-live="polite"
-                    >
-                      {schedulerLoaded ? (
-                        <motion.div
-                          className="overflow-hidden"
-                          initial={motionEnabled ? { height: 0, opacity: 0, filter: "blur(10px)" } : false}
-                          animate={schedulerOpen ? { height: "auto", opacity: 1, filter: "blur(0px)" } : { height: 0, opacity: 0, filter: "blur(10px)" }}
-                          transition={motionEnabled ? homeMotion.revealFast : undefined}
-                          aria-hidden={!schedulerOpen}
+                            transition={schedulerTransition}
+                            aria-hidden={!schedulerOpen}
+                          >
+                            <div ref={schedulerContentRef}>
+                              <iframe
+                                src={scheduler.src}
+                                title={scheduler.iframeTitle ?? `Booking — ${scheduler.title}`}
+                                className="h-[480px] w-full rounded-2xl border border-border/70 bg-card/0"
+                                loading="lazy"
+                              />
+                            </div>
+                          </motion.div>
+                        ) : (
+                          <div className="flex h-80 w-full items-center justify-center rounded-2xl border border-dashed border-border/70 type-body-sm text-ink-muted">
+                            The booking form appears here once you choose Begin Your Fitting.
+                          </div>
+                        )}
+                      </div>
+                      <p className="type-caption text-ink-muted">
+                        Prefer email?{" "}
+                        <a
+                          href={scheduler.fallbackHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-perazzi-red focus-ring"
                         >
-                          <iframe
-                            src={scheduler.src}
-                            title={scheduler.iframeTitle ?? `Booking — ${scheduler.title}`}
-                            className="h-[480px] w-full rounded-2xl border border-border/70 bg-card/0"
-                            loading="lazy"
-                          />
-                        </motion.div>
-                      ) : (
-                        <div className="flex h-80 w-full items-center justify-center rounded-2xl border border-dashed border-border/70 type-body-sm text-ink-muted">
-                          The booking form appears here once you choose Begin Your Fitting.
-                        </div>
-                      )}
-                    </div>
-                    <p className="type-caption text-ink-muted">
-                      Prefer email?{" "}
-                      <a
-                        href={scheduler.fallbackHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-perazzi-red focus-ring"
-                      >
-                        Open booking in a new tab{" "}
-                        <span className="sr-only"> (opens in a new tab)</span>
-                      </a>
-                    </p>
-                  </motion.div>
-                ) : null}
+                          Open booking in a new tab{" "}
+                          <span className="sr-only"> (opens in a new tab)</span>
+                        </a>
+                      </p>
+                    </motion.div>
+                  ) : null}
+                </motion.div>
               </motion.div>
             ) : null}
-          </AnimatePresence>
+          </motion.div>
         </motion.div>
       </Container>
-    </>
+    </motion.div>
   );
 };
