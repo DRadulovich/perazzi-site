@@ -26,8 +26,8 @@ export function IntegrityAdvisory({ integrityAdvisory }: IntegrityAdvisoryProps)
       data-analytics-id="IntegrityAdvisorySeen"
       padding="md"
       className="group relative space-y-4 overflow-hidden"
-      initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(10px)" } : false}
-      whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+      initial={motionEnabled ? { opacity: 0, y: 24 } : false}
+      whileInView={motionEnabled ? { opacity: 1, y: 0 } : undefined}
       viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
       transition={motionEnabled ? homeMotion.reveal : undefined}
     >
@@ -39,7 +39,7 @@ export function IntegrityAdvisory({ integrityAdvisory }: IntegrityAdvisoryProps)
         initial={motionEnabled ? "hidden" : false}
         whileInView={motionEnabled ? "show" : undefined}
         viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}
-        variants={{ hidden: {}, show: { transition: { staggerChildren: motionEnabled ? 0.08 : 0 } } }}
+        variants={{ hidden: {}, show: { transition: { staggerChildren: motionEnabled ? homeMotion.staggerShort : 0 } } }}
       >
         <motion.div
           variants={{

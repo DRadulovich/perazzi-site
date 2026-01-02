@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useEffect, useRef, useState, type Dispatch, type RefObject, type SetStateAction } from "react";
 import type { FittingStage, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useHeightLock } from "@/hooks/use-height-lock";
 import { logAnalytics } from "@/lib/analytics";
-import { homeMotion } from "@/lib/motionConfig";
+import { getSectionHeadingVariants, homeMotion } from "@/lib/motionConfig";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
@@ -106,7 +107,6 @@ function TimelineRevealSection({
 }: TimelineRevealSectionProps) {
   const [timelineExpanded, setTimelineExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const timelineShellRef = useRef<HTMLDivElement | null>(null);
   const headerThemeFrame = useRef<number | null>(null);
 
@@ -122,19 +122,26 @@ function TimelineRevealSection({
   const revealTimeline = !enableTitleReveal || timelineExpanded;
   const revealPhotoFocus = revealTimeline;
   const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealTimeline;
+  const sectionInView = useInView(scrollRef, { amount: 0.35 });
+  const parallaxEnabled = motionEnabled && revealTimeline && sectionInView;
   const focusSurfaceTransition = "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const focusFadeTransition = "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const titleColorTransition = "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const timelineReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const timelineRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const timelineCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const timelineBodyReveal = timelineReveal;
+  const timelineReveal = homeMotion.revealSlow;
+  const timelineRevealFast = homeMotion.reveal;
+  const timelineCollapse = homeMotion.collapse;
+  const timelineBodyReveal = motionEnabled
+    ? { ...timelineReveal, delay: homeMotion.sectionHeader.bodyDelay }
+    : timelineReveal;
   const readMoreReveal = motionEnabled
-    ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: timelineReveal.duration }
+    ? { ...homeMotion.revealFast, delay: homeMotion.sectionHeader.readMoreDelayAfterHeader }
     : undefined;
   const timelineLayoutTransition = motionEnabled ? { layout: timelineReveal } : undefined;
   const timelineMinHeight = enableTitleReveal ? "min-h-[calc(640px+18rem)]" : null;
+  const expandedHeight = useHeightLock(timelineShellRef, {
+    enabled: enableTitleReveal && revealTimeline,
+    duration: timelineReveal.duration,
+  });
   const { scrollYProgress } = useScroll({
     target: scrollRef,
     offset: ["start end", "end start"],
@@ -169,45 +176,10 @@ function TimelineRevealSection({
     setTimelineExpanded(false);
   };
 
-  const headingContainer = {
-    hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
-  } as const;
-
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: timelineReveal },
-  } as const;
-
-  useEffect(() => {
-    if (!enableTitleReveal || !revealTimeline) return;
-    const node = timelineShellRef.current;
-    if (!node) return;
-
-    let frame = 0;
-    const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
-    }
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealTimeline, resolvedActiveStage]);
+  const { headingContainer, headingItem } = getSectionHeadingVariants({
+    motionEnabled,
+    transition: timelineReveal,
+  });
 
   useEffect(() => () => {
     if (headerThemeFrame.current !== null) {
@@ -307,6 +279,7 @@ function TimelineRevealSection({
                         layoutCrossfade={false}
                         transition={timelineLayoutTransition}
                         className="relative"
+                        variants={headingItem}
                       >
                         <Heading
                           id="craft-timeline-heading"
@@ -325,19 +298,18 @@ function TimelineRevealSection({
                         layoutCrossfade={false}
                         transition={timelineLayoutTransition}
                         className="relative"
+                        variants={headingItem}
                       >
-                        <motion.div variants={headingItem}>
-                          <Text
-                            size="lg"
-                            className={cn(
-                              "type-section-subtitle",
-                              titleColorTransition,
-                              headerThemeReady ? "text-ink-muted" : "text-white",
-                            )}
-                          >
-                            {headingEyebrow}
-                          </Text>
-                        </motion.div>
+                        <Text
+                          size="lg"
+                          className={cn(
+                            "type-section-subtitle",
+                            titleColorTransition,
+                            headerThemeReady ? "text-ink-muted" : "text-white",
+                          )}
+                        >
+                          {headingEyebrow}
+                        </Text>
                       </motion.div>
                       <span className="sr-only">{headingInstructions}</span>
                     </motion.div>
@@ -355,9 +327,9 @@ function TimelineRevealSection({
                   <motion.div
                     key="craft-timeline-title-collapsed"
                     className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                    initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
-                    animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
-                    exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
+                    initial={motionEnabled ? { opacity: 0 } : false}
+                    animate={motionEnabled ? { opacity: 1 } : undefined}
+                    exit={motionEnabled ? { opacity: 0 } : undefined}
                     transition={motionEnabled ? timelineRevealFast : undefined}
                   >
                     <motion.div
@@ -424,15 +396,15 @@ function TimelineRevealSection({
                   key="craft-timeline-body"
                   id="craft-timeline-body"
                   className="space-y-6"
-                  initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
+                  initial={motionEnabled ? { opacity: 0, y: 24 } : false}
                   animate={
                     motionEnabled
-                      ? { opacity: 1, y: 0, filter: "blur(0px)", transition: timelineBodyReveal }
+                      ? { opacity: 1, y: 0, transition: timelineBodyReveal }
                       : undefined
                   }
                   exit={
                     motionEnabled
-                      ? { opacity: 0, y: -16, filter: "blur(10px)", transition: timelineCollapse }
+                      ? { opacity: 0, y: -16, transition: timelineCollapse }
                       : undefined
                   }
                 >
@@ -657,7 +629,7 @@ function PinnedStagePanel({
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: motionEnabled ? 0.08 : 0 },
+      transition: { staggerChildren: motionEnabled ? homeMotion.staggerShort : 0 },
     },
   } as const;
 

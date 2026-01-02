@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef } from "react";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -16,15 +16,17 @@ export function JournalHero({ hero, breadcrumbs }: JournalHeroProps) {
   const analyticsRef = useAnalyticsObserver("HeroSeen:journal");
   const containerRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
+  const sectionInView = useInView(containerRef, { amount: 0.35 });
   const ratio = hero.background.aspectRatio ?? 16 / 9;
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
   });
+  const parallaxEnabled = !prefersReducedMotion && sectionInView;
   const parallax = useTransform(
     scrollYProgress,
     [0, 1],
-    ["0%", prefersReducedMotion ? "0%" : "12%"],
+    ["0%", parallaxEnabled ? "12%" : "0%"],
   );
 
   const setRefs = useCallback(
@@ -81,7 +83,7 @@ export function JournalHero({ hero, breadcrumbs }: JournalHeroProps) {
         </div>
         <motion.div
           className="md:col-span-7 lg:col-span-7"
-          style={prefersReducedMotion ? undefined : { y: parallax }}
+          style={parallaxEnabled ? { y: parallax } : undefined}
           aria-hidden="true"
         >
           <div

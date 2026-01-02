@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import SafeHtml from "@/components/SafeHtml";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -23,23 +23,25 @@ export function BuildHero({ hero, fullBleed = false }: BuildHeroProps) {
   }, [prefersReducedMotion]);
 
   const motionEnabled = !reduceMotion;
+  const sectionInView = useInView(containerRef, { amount: 0.35 });
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
   });
+  const parallaxEnabled = motionEnabled && sectionInView;
   const parallax = useTransform(
     scrollYProgress,
     [0, 1],
-    ["0%", motionEnabled ? "12%" : "0%"],
+    ["0%", parallaxEnabled ? "12%" : "0%"],
   );
 
-  const mediaStyle = motionEnabled ? { y: parallax } : undefined;
+  const mediaStyle = parallaxEnabled ? { y: parallax } : undefined;
 
   const content = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: motionEnabled ? 0.12 : 0 },
+      transition: { staggerChildren: motionEnabled ? homeMotion.staggerLong : 0 },
     },
   } as const;
 

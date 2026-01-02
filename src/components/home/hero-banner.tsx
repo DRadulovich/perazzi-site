@@ -2,7 +2,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { vercelStegaSplit } from "@vercel/stega";
-import { motion, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useInView, useMotionValueEvent, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { getImageProps } from "next/image";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
@@ -73,15 +73,17 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
       }).props
     : null;
 
+  const sectionInView = useInView(sectionRef, { amount: 0.35 });
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end start"],
   });
 
+  const parallaxEnabled = !reduceMotion && sectionInView;
   const parallaxY = useTransform(
     scrollYProgress,
     [0, 1],
-    ["0%", "15%"],
+    ["0%", parallaxEnabled ? "15%" : "0%"],
   );
 
   useEffect(() => {
@@ -184,7 +186,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: motionEnabled ? 0.12 : 0,
+        staggerChildren: motionEnabled ? homeMotion.staggerLong : 0,
         delayChildren: motionEnabled ? 0.1 : 0,
       },
     },
@@ -222,9 +224,7 @@ export function HeroBanner({ hero, heroCtas, analyticsId, fullBleed = false, hid
     >
       <motion.div
         className="absolute inset-0 home-hero-media"
-        style={{
-          y: reduceMotion ? "0%" : parallaxY,
-        }}
+        style={parallaxEnabled ? { y: parallaxY } : undefined}
         animate={motionEnabled ? { scale: mediaLoaded ? 1.02 : 1.08 } : undefined}
         transition={motionEnabled ? { duration: 1.2, ease: homeMotion.cinematicEase } : { duration: 0.01 }}
       >

@@ -37,7 +37,7 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
   const list = {
     hidden: {},
     show: {
-      transition: { staggerChildren: motionEnabled ? 0.08 : 0 },
+      transition: { staggerChildren: motionEnabled ? homeMotion.staggerShort : 0 },
     },
   } as const;
 
@@ -91,8 +91,8 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
         padding="md"
         className="space-y-6"
         aria-labelledby="experience-faq-heading"
-        initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(10px)" } : false}
-        whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+        initial={motionEnabled ? { opacity: 0, y: 24 } : false}
+        whileInView={motionEnabled ? { opacity: 1, y: 0 } : undefined}
         viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
         transition={motionEnabled ? homeMotion.reveal : undefined}
       >
@@ -130,8 +130,8 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
         <MotionSection
           padding="md"
           className="space-y-6 bg-card/40"
-          initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(10px)" } : false}
-          whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+          initial={motionEnabled ? { opacity: 0, y: 24 } : false}
+          whileInView={motionEnabled ? { opacity: 1, y: 0 } : undefined}
           viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
           transition={motionEnabled ? homeMotion.reveal : undefined}
         >

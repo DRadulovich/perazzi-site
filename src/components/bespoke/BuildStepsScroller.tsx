@@ -1,14 +1,15 @@
 "use client";
 
 import NextImage from "next/image";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import SafeHtml from "@/components/SafeHtml";
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type RefObject } from "react";
 import type { FittingStage } from "@/types/build";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useHeightLock } from "@/hooks/use-height-lock";
 import { logAnalytics } from "@/lib/analytics";
-import { homeMotion } from "@/lib/motionConfig";
+import { getSectionHeadingVariants, homeMotion } from "@/lib/motionConfig";
 import { cn } from "@/lib/utils";
 import { Heading, Text } from "@/components/ui";
 
@@ -118,7 +119,6 @@ const BuildStepsRevealSection = ({
 }: BuildStepsRevealSectionProps) => {
   const [buildStepsExpanded, setBuildStepsExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const [activeStepId, setActiveStepId] = useState<string | undefined>(
     () => initialStepId ?? steps[0]?.id,
   );
@@ -140,22 +140,29 @@ const BuildStepsRevealSection = ({
   const revealBuildSteps = !enableTitleReveal || buildStepsExpanded;
   const revealPhotoFocus = revealBuildSteps;
   const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealBuildSteps;
+  const sectionInView = useInView(sectionRef, { amount: 0.35 });
+  const parallaxEnabled = motionEnabled && revealBuildSteps && sectionInView;
   const focusSurfaceTransition =
     "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const focusFadeTransition =
     "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const titleColorTransition =
     "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const buildStepsReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const buildStepsRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const buildStepsCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const buildStepsBodyReveal = buildStepsReveal;
+  const buildStepsReveal = homeMotion.revealSlow;
+  const buildStepsRevealFast = homeMotion.reveal;
+  const buildStepsCollapse = homeMotion.collapse;
+  const buildStepsBodyReveal = motionEnabled
+    ? { ...buildStepsReveal, delay: homeMotion.sectionHeader.bodyDelay }
+    : buildStepsReveal;
   const readMoreReveal = motionEnabled
-    ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: buildStepsReveal.duration }
+    ? { ...homeMotion.revealFast, delay: homeMotion.sectionHeader.readMoreDelayAfterHeader }
     : undefined;
   const buildStepsLayoutTransition = motionEnabled ? { layout: buildStepsReveal } : undefined;
   const buildStepsMinHeight = enableTitleReveal ? "min-h-[calc(80vh+16rem)]" : null;
+  const expandedHeight = useHeightLock(buildStepsShellRef, {
+    enabled: enableTitleReveal && revealBuildSteps,
+    duration: buildStepsReveal.duration,
+  });
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
@@ -172,15 +179,10 @@ const BuildStepsRevealSection = ({
   const instructions =
     "Scroll to move from moment to moment. Each step is a chapter in the ritual of building a Perazzi to your measure.";
 
-  const headingContainer = {
-    hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
-  } as const;
-
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: buildStepsReveal },
-  } as const;
+  const { headingContainer, headingItem } = getSectionHeadingVariants({
+    motionEnabled,
+    transition: buildStepsReveal,
+  });
 
   const handleBuildStepsExpand = () => {
     if (!enableTitleReveal) return;
@@ -241,36 +243,6 @@ const BuildStepsRevealSection = ({
       handleRailClick(targetIndex);
     }
   };
-
-  useEffect(() => {
-    if (!enableTitleReveal || !revealBuildSteps) return;
-    const node = buildStepsShellRef.current;
-    if (!node) return;
-
-    let frame = 0;
-    const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
-    }
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealBuildSteps, resolvedActiveStepId, resolvedOpenStepId, steps.length]);
 
   useEffect(() => () => {
     if (headerThemeFrame.current !== null) {
@@ -366,6 +338,7 @@ const BuildStepsRevealSection = ({
                       layoutCrossfade={false}
                       transition={buildStepsLayoutTransition}
                       className="relative"
+                      variants={headingItem}
                     >
                       <Heading
                         id="build-steps-heading"
@@ -384,20 +357,19 @@ const BuildStepsRevealSection = ({
                       layoutCrossfade={false}
                       transition={buildStepsLayoutTransition}
                       className="relative"
+                      variants={headingItem}
                     >
-                      <motion.div variants={headingItem}>
-                        <Text
-                          size="lg"
-                          className={cn(
-                            "type-section-subtitle",
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink-muted" : "text-white",
-                          )}
-                          leading="relaxed"
-                        >
-                          {subheading}
-                        </Text>
-                      </motion.div>
+                      <Text
+                        size="lg"
+                        className={cn(
+                          "type-section-subtitle",
+                          titleColorTransition,
+                          headerThemeReady ? "text-ink-muted" : "text-white",
+                        )}
+                        leading="relaxed"
+                      >
+                        {subheading}
+                      </Text>
                     </motion.div>
                     <motion.div variants={headingItem}>
                       <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
@@ -437,9 +409,9 @@ const BuildStepsRevealSection = ({
                 <motion.div
                   key="build-steps-collapsed"
                   className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
-                  animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
-                  exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
+                  initial={motionEnabled ? { opacity: 0 } : false}
+                  animate={motionEnabled ? { opacity: 1 } : undefined}
+                  exit={motionEnabled ? { opacity: 0 } : undefined}
                   transition={motionEnabled ? buildStepsRevealFast : undefined}
                 >
                   <motion.div
@@ -506,15 +478,15 @@ const BuildStepsRevealSection = ({
                 key="build-steps-body"
                 id="build-steps-body"
                 className="space-y-6"
-                initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
+                initial={motionEnabled ? { opacity: 0, y: 24 } : false}
                 animate={
                   motionEnabled
-                    ? { opacity: 1, y: 0, filter: "blur(0px)", transition: buildStepsBodyReveal }
+                    ? { opacity: 1, y: 0, transition: buildStepsBodyReveal }
                     : undefined
                 }
                 exit={
                   motionEnabled
-                    ? { opacity: 0, y: -16, filter: "blur(10px)", transition: buildStepsCollapse }
+                    ? { opacity: 0, y: -16, transition: buildStepsCollapse }
                     : undefined
                 }
               >

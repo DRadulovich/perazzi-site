@@ -79,8 +79,8 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
 
       <motion.div
         className="space-y-2"
-        initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
-        whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+        initial={motionEnabled ? { opacity: 0, y: 14 } : false}
+        whileInView={motionEnabled ? { opacity: 1, y: 0 } : undefined}
         viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}
         transition={motionEnabled ? homeMotion.revealFast : undefined}
       >
@@ -100,8 +100,8 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
       <motion.form
         role="search"
         className="flex flex-col gap-3 md:flex-row md:items-end"
-        initial={motionEnabled ? { opacity: 0, y: 12, filter: "blur(10px)" } : false}
-        whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+        initial={motionEnabled ? { opacity: 0, y: 12 } : false}
+        whileInView={motionEnabled ? { opacity: 1, y: 0 } : undefined}
         viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}
         transition={motionEnabled ? homeMotion.revealFast : undefined}
       >
@@ -153,7 +153,7 @@ export function ServiceNetworkFinder({ locations, ui }: ServiceNetworkFinderProp
             viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
             variants={{
               hidden: {},
-              show: { transition: { staggerChildren: motionEnabled ? 0.06 : 0 } },
+              show: { transition: { staggerChildren: motionEnabled ? homeMotion.staggerShort : 0 } },
             }}
           >
           {filteredLocations.length === 0 ? (

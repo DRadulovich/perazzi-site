@@ -118,7 +118,7 @@ export function FactoryPhotoEssay({ items, introHtml, ui }: FactoryPhotoEssayPro
         viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
         variants={{
           hidden: {},
-          show: { transition: { staggerChildren: motionEnabled ? 0.08 : 0 } },
+          show: { transition: { staggerChildren: motionEnabled ? homeMotion.staggerShort : 0 } },
         }}
       >
         {items.map((item, index) => (

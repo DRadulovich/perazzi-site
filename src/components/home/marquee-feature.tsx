@@ -1,12 +1,13 @@
 "use client";
 
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import type { Champion, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { homeMotion } from "@/lib/motionConfig";
+import { useHeightLock } from "@/hooks/use-height-lock";
+import { getSectionHeadingVariants, homeMotion } from "@/lib/motionConfig";
 import { cn } from "@/lib/utils";
 import { Container, Heading, Text } from "@/components/ui";
 
@@ -59,7 +60,6 @@ function MarqueeFeatureRevealSection({
 }: MarqueeFeatureRevealSectionProps) {
   const [marqueeExpanded, setMarqueeExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const marqueeShellRef = useRef<HTMLDivElement | null>(null);
   const headerThemeFrame = useRef<number | null>(null);
 
@@ -77,19 +77,24 @@ function MarqueeFeatureRevealSection({
   const revealMarquee = !enableTitleReveal || marqueeExpanded;
   const revealPhotoFocus = revealMarquee;
   const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealMarquee;
+  const sectionInView = useInView(scrollRef, { amount: 0.35 });
+  const parallaxEnabled = motionEnabled && revealMarquee && sectionInView;
   const focusSurfaceTransition = "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const focusFadeTransition = "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const titleColorTransition = "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const marqueeReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const marqueeRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const marqueeCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
+  const marqueeReveal = homeMotion.revealSlow;
+  const marqueeRevealFast = homeMotion.reveal;
+  const marqueeCollapse = homeMotion.collapse;
   const marqueeBodyReveal = marqueeReveal;
   const readMoreReveal = motionEnabled
-    ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: marqueeReveal.duration }
+    ? { ...homeMotion.revealFast, delay: homeMotion.sectionHeader.readMoreDelayAfterHeader }
     : undefined;
   const marqueeLayoutTransition = motionEnabled ? { layout: marqueeReveal } : undefined;
   const marqueeMinHeight = enableTitleReveal ? "min-h-[calc(640px+12rem)]" : null;
+  const expandedHeight = useHeightLock(marqueeShellRef, {
+    enabled: enableTitleReveal && revealMarquee,
+    duration: marqueeReveal.duration,
+  });
   const { scrollYProgress } = useScroll({
     target: scrollRef,
     offset: ["start end", "end start"],
@@ -125,50 +130,25 @@ function MarqueeFeatureRevealSection({
     setMarqueeExpanded(false);
   };
 
-  const copyContainer = {
+  const { headingContainer, headingItem } = getSectionHeadingVariants({
+    motionEnabled,
+    transition: marqueeReveal,
+  });
+
+  const bodyContainer = {
     hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
+    show: {
+      transition: {
+        staggerChildren: motionEnabled ? homeMotion.staggerShort : 0,
+        delayChildren: motionEnabled ? homeMotion.sectionHeader.bodyDelay : 0,
+      },
+    },
   } as const;
 
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: marqueeReveal },
-  } as const;
-
-  const copyItem = {
+  const bodyItem = {
     hidden: { opacity: 0, y: 14, filter: "blur(10px)" },
     show: { opacity: 1, y: 0, filter: "blur(0px)", transition: marqueeReveal },
   } as const;
-
-  useEffect(() => {
-    if (!enableTitleReveal || !revealMarquee) return;
-    const node = marqueeShellRef.current;
-    if (!node) return;
-
-    let frame = 0;
-    const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
-    }
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealMarquee]);
 
   useEffect(() => () => {
     if (headerThemeFrame.current !== null) {
@@ -249,15 +229,15 @@ function MarqueeFeatureRevealSection({
                   key="marquee-feature-body"
                   id="marquee-feature-body"
                   className="relative z-10"
-                  initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
+                  initial={motionEnabled ? { opacity: 0, y: 24 } : false}
                   animate={
                     motionEnabled
-                      ? { opacity: 1, y: 0, filter: "blur(0px)", transition: marqueeBodyReveal }
+                      ? { opacity: 1, y: 0, transition: marqueeBodyReveal }
                       : undefined
                   }
                   exit={
                     motionEnabled
-                      ? { opacity: 0, y: -16, filter: "blur(10px)", transition: marqueeCollapse }
+                      ? { opacity: 0, y: -16, transition: marqueeCollapse }
                       : undefined
                   }
                 >
@@ -287,42 +267,44 @@ function MarqueeFeatureRevealSection({
                     </motion.div>
 
                     <div className="mt-8 md:mt-0 md:flex md:items-start md:justify-between md:gap-8">
-                      <motion.div
-                        className="space-y-4"
-                        variants={copyContainer}
-                        initial={motionEnabled ? "hidden" : false}
-                        animate={motionEnabled ? "show" : undefined}
-                      >
-                        <motion.div variants={headingItem}>
-                          <Text size="label-tight" className="text-ink-muted">
-                            {eyebrow}
-                          </Text>
-                        </motion.div>
+                      <div className="space-y-4">
                         <motion.div
-                          layoutId="marquee-feature-title"
-                          layoutCrossfade={false}
-                          transition={marqueeLayoutTransition}
-                          className="relative"
-                        >
-                          <Heading
-                            id="champion-heading"
-                            level={2}
-                            size="xl"
-                            className={cn(
-                              titleColorTransition,
-                              headerThemeReady ? "text-ink" : "text-white",
-                            )}
-                          >
-                            {headingTitle}
-                          </Heading>
-                        </motion.div>
-                        <motion.div
-                          layoutId="marquee-feature-subtitle"
-                          layoutCrossfade={false}
-                          transition={marqueeLayoutTransition}
-                          className="relative"
+                          className="space-y-4"
+                          variants={headingContainer}
+                          initial={motionEnabled ? "hidden" : false}
+                          animate={motionEnabled ? "show" : undefined}
                         >
                           <motion.div variants={headingItem}>
+                            <Text size="label-tight" className="text-ink-muted">
+                              {eyebrow}
+                            </Text>
+                          </motion.div>
+                          <motion.div
+                            layoutId="marquee-feature-title"
+                            layoutCrossfade={false}
+                            transition={marqueeLayoutTransition}
+                            className="relative"
+                            variants={headingItem}
+                          >
+                            <Heading
+                              id="champion-heading"
+                              level={2}
+                              size="xl"
+                              className={cn(
+                                titleColorTransition,
+                                headerThemeReady ? "text-ink" : "text-white",
+                              )}
+                            >
+                              {headingTitle}
+                            </Heading>
+                          </motion.div>
+                          <motion.div
+                            layoutId="marquee-feature-subtitle"
+                            layoutCrossfade={false}
+                            transition={marqueeLayoutTransition}
+                            className="relative"
+                            variants={headingItem}
+                          >
                             <Text
                               size="lg"
                               className={cn(
@@ -335,28 +317,35 @@ function MarqueeFeatureRevealSection({
                             </Text>
                           </motion.div>
                         </motion.div>
-                        <motion.div variants={copyItem}>
-                          <Text
-                            asChild
-                            size="lg"
-                            className="border-l-2 border-perazzi-red/50 pl-4 type-quote font-artisan text-ink"
-                          >
-                            <blockquote>“{champion.quote}”</blockquote>
-                          </Text>
+                        <motion.div
+                          className="space-y-4"
+                          variants={bodyContainer}
+                          initial={motionEnabled ? "hidden" : false}
+                          animate={motionEnabled ? "show" : undefined}
+                        >
+                          <motion.div variants={bodyItem}>
+                            <Text
+                              asChild
+                              size="lg"
+                              className="border-l-2 border-perazzi-red/50 pl-4 type-quote font-artisan text-ink"
+                            >
+                              <blockquote>“{champion.quote}”</blockquote>
+                            </Text>
+                          </motion.div>
+                          {champion.article ? (
+                            <motion.a
+                              href={`/journal/${champion.article.slug}`}
+                              className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                              variants={bodyItem}
+                              whileHover={motionEnabled ? { y: -1, transition: homeMotion.micro } : undefined}
+                              whileTap={motionEnabled ? { y: 0, transition: homeMotion.micro } : undefined}
+                            >
+                              {champion.article.title}
+                              <span aria-hidden="true">→</span>
+                            </motion.a>
+                          ) : null}
                         </motion.div>
-                        {champion.article ? (
-                          <motion.a
-                            href={`/journal/${champion.article.slug}`}
-                            className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
-                            variants={copyItem}
-                            whileHover={motionEnabled ? { y: -1, transition: homeMotion.micro } : undefined}
-                            whileTap={motionEnabled ? { y: 0, transition: homeMotion.micro } : undefined}
-                          >
-                            {champion.article.title}
-                            <span aria-hidden="true">→</span>
-                          </motion.a>
-                        ) : null}
-                      </motion.div>
+                      </div>
                       {enableTitleReveal ? (
                         <button
                           type="button"
@@ -373,9 +362,9 @@ function MarqueeFeatureRevealSection({
                 <motion.div
                   key="marquee-feature-collapsed"
                   className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
-                  animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
-                  exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
+                  initial={motionEnabled ? { opacity: 0 } : false}
+                  animate={motionEnabled ? { opacity: 1 } : undefined}
+                  exit={motionEnabled ? { opacity: 0 } : undefined}
                   transition={motionEnabled ? marqueeRevealFast : undefined}
                 >
                   <motion.div

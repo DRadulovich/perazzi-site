@@ -5,11 +5,12 @@ import Image from "next/image";
 import type { ChampionEvergreen, ChampionsGalleryUi } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
+import { useHeightLock } from "@/hooks/use-height-lock";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Container, Heading, Section, Text } from "@/components/ui";
-import { homeMotion } from "@/lib/motionConfig";
+import { getSectionHeadingVariants, homeMotion } from "@/lib/motionConfig";
 
 type ChampionsGalleryProps = Readonly<{
   champions: ChampionEvergreen[];
@@ -73,7 +74,6 @@ const ChampionsGalleryRevealSection = ({
 }: ChampionsGalleryRevealSectionProps) => {
   const [galleryExpanded, setGalleryExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const [activeDiscipline, setActiveDiscipline] = useState<string | null>(null);
   const [selectedChampionId, setSelectedChampionId] = useState<string | null>(() => {
     return champions[0]?.id ?? null;
@@ -121,22 +121,29 @@ const ChampionsGalleryRevealSection = ({
   const revealGallery = !enableTitleReveal || galleryExpanded;
   const revealPhotoFocus = revealGallery;
   const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealGallery;
+  const sectionInView = useInView(sectionRef, { amount: 0.35 });
+  const parallaxEnabled = motionEnabled && revealGallery && sectionInView;
   const focusSurfaceTransition =
     "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const focusFadeTransition =
     "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const titleColorTransition =
     "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const galleryReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const galleryRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const galleryCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const galleryBodyReveal = galleryReveal;
+  const galleryReveal = homeMotion.revealSlow;
+  const galleryRevealFast = homeMotion.reveal;
+  const galleryCollapse = homeMotion.collapse;
+  const galleryBodyReveal = motionEnabled
+    ? { ...galleryReveal, delay: homeMotion.sectionHeader.bodyDelay }
+    : galleryReveal;
   const readMoreReveal = motionEnabled
-    ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: galleryReveal.duration }
+    ? { ...homeMotion.revealFast, delay: homeMotion.sectionHeader.readMoreDelayAfterHeader }
     : undefined;
   const galleryLayoutTransition = motionEnabled ? { layout: galleryReveal } : undefined;
   const galleryMinHeight = enableTitleReveal ? "min-h-[calc(700px+16rem)]" : null;
+  const expandedHeight = useHeightLock(galleryShellRef, {
+    enabled: enableTitleReveal && revealGallery,
+    duration: galleryReveal.duration,
+  });
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
@@ -150,15 +157,10 @@ const ChampionsGalleryRevealSection = ({
   const backgroundScale = parallaxEnabled ? 1.32 : 1;
   const backgroundScaleTransition = revealGallery ? galleryReveal : galleryCollapse;
 
-  const headingContainer = {
-    hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
-  } as const;
-
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: galleryReveal },
-  } as const;
+  const { headingContainer, headingItem } = getSectionHeadingVariants({
+    motionEnabled,
+    transition: galleryReveal,
+  });
 
   const handleGalleryExpand = () => {
     if (!enableTitleReveal) return;
@@ -181,42 +183,6 @@ const ChampionsGalleryRevealSection = ({
     setHeaderThemeReady(false);
     setGalleryExpanded(false);
   };
-
-  useEffect(() => {
-    if (!enableTitleReveal || !revealGallery) return;
-    const node = galleryShellRef.current;
-    if (!node) return;
-
-    let frame = 0;
-    const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
-    }
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [
-    enableTitleReveal,
-    revealGallery,
-    activeDiscipline,
-    activeChampionId,
-    champions.length,
-  ]);
 
   useEffect(() => () => {
     if (headerThemeFrame.current !== null) {
@@ -311,6 +277,7 @@ const ChampionsGalleryRevealSection = ({
                       layoutCrossfade={false}
                       transition={galleryLayoutTransition}
                       className="relative"
+                      variants={headingItem}
                     >
                       <Heading
                         id="heritage-champions-heading"
@@ -329,18 +296,17 @@ const ChampionsGalleryRevealSection = ({
                       layoutCrossfade={false}
                       transition={galleryLayoutTransition}
                       className="relative"
+                      variants={headingItem}
                     >
-                      <motion.div variants={headingItem}>
-                        <Text
-                          className={cn(
-                            "type-section-subtitle",
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink-muted" : "text-white",
-                          )}
-                        >
-                          {subheading}
-                        </Text>
-                      </motion.div>
+                      <Text
+                        className={cn(
+                          "type-section-subtitle",
+                          titleColorTransition,
+                          headerThemeReady ? "text-ink-muted" : "text-white",
+                        )}
+                      >
+                        {subheading}
+                      </Text>
                     </motion.div>
                   </motion.div>
                   {enableTitleReveal ? (
@@ -357,9 +323,9 @@ const ChampionsGalleryRevealSection = ({
                 <motion.div
                   key="heritage-champions-collapsed"
                   className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
-                  animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
-                  exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
+                  initial={motionEnabled ? { opacity: 0 } : false}
+                  animate={motionEnabled ? { opacity: 1 } : undefined}
+                  exit={motionEnabled ? { opacity: 0 } : undefined}
                   transition={motionEnabled ? galleryRevealFast : undefined}
                 >
                   <motion.div
@@ -426,15 +392,15 @@ const ChampionsGalleryRevealSection = ({
                 key="heritage-champions-body"
                 id="heritage-champions-body"
                 className="space-y-6"
-                initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
+                initial={motionEnabled ? { opacity: 0, y: 24 } : false}
                 animate={
                   motionEnabled
-                    ? { opacity: 1, y: 0, filter: "blur(0px)", transition: galleryBodyReveal }
+                    ? { opacity: 1, y: 0, transition: galleryBodyReveal }
                     : undefined
                 }
                 exit={
                   motionEnabled
-                    ? { opacity: 0, y: -16, filter: "blur(10px)", transition: galleryCollapse }
+                    ? { opacity: 0, y: -16, transition: galleryCollapse }
                     : undefined
                 }
               >

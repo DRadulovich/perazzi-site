@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, type MouseEvent, type RefObject } from "react";
@@ -9,7 +9,8 @@ import { FAQList } from "./FAQList";
 import { logAnalytics } from "@/lib/analytics";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { homeMotion } from "@/lib/motionConfig";
+import { useHeightLock } from "@/hooks/use-height-lock";
+import { getSectionHeadingVariants, homeMotion } from "@/lib/motionConfig";
 import { cn } from "@/lib/utils";
 import { Container, Heading, Text } from "@/components/ui";
 
@@ -139,29 +140,35 @@ const ExperiencePickerRevealSection = ({
 }: ExperiencePickerRevealSectionProps) => {
   const [pickerExpanded, setPickerExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const pickerShellRef = useRef<HTMLDivElement | null>(null);
   const headerThemeFrame = useRef<number | null>(null);
 
   const revealPicker = !enableTitleReveal || pickerExpanded;
   const revealPhotoFocus = revealPicker;
   const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealPicker;
+  const sectionInView = useInView(sectionRef, { amount: 0.35 });
+  const parallaxEnabled = motionEnabled && revealPicker && sectionInView;
   const focusSurfaceTransition =
     "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const focusFadeTransition =
     "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const titleColorTransition =
     "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const pickerReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const pickerRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const pickerCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const pickerBodyReveal = pickerReveal;
+  const pickerReveal = homeMotion.revealSlow;
+  const pickerRevealFast = homeMotion.reveal;
+  const pickerCollapse = homeMotion.collapse;
+  const pickerBodyReveal = motionEnabled
+    ? { ...pickerReveal, delay: homeMotion.sectionHeader.bodyDelay }
+    : pickerReveal;
   const readMoreReveal = motionEnabled
-    ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: pickerReveal.duration }
+    ? { ...homeMotion.revealFast, delay: homeMotion.sectionHeader.readMoreDelayAfterHeader }
     : undefined;
   const pickerLayoutTransition = motionEnabled ? { layout: pickerReveal } : undefined;
   const pickerMinHeight = enableTitleReveal ? "min-h-[calc(720px+16rem)]" : null;
+  const expandedHeight = useHeightLock(pickerShellRef, {
+    enabled: enableTitleReveal && revealPicker,
+    duration: pickerReveal.duration,
+  });
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
@@ -175,15 +182,10 @@ const ExperiencePickerRevealSection = ({
   const backgroundScale = parallaxEnabled ? 1.32 : 1;
   const backgroundScaleTransition = revealPicker ? pickerReveal : pickerCollapse;
 
-  const headingContainer = {
-    hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
-  } as const;
-
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: pickerReveal },
-  } as const;
+  const { headingContainer, headingItem } = getSectionHeadingVariants({
+    motionEnabled,
+    transition: pickerReveal,
+  });
 
   const handlePickerExpand = () => {
     if (!enableTitleReveal) return;
@@ -206,36 +208,6 @@ const ExperiencePickerRevealSection = ({
     setHeaderThemeReady(false);
     setPickerExpanded(false);
   };
-
-  useEffect(() => {
-    if (!enableTitleReveal || !revealPicker) return;
-    const node = pickerShellRef.current;
-    if (!node) return;
-
-    let frame = 0;
-    const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
-    }
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealPicker, items.length, faqItems.length]);
 
   useEffect(() => () => {
     if (headerThemeFrame.current !== null) {
@@ -330,6 +302,7 @@ const ExperiencePickerRevealSection = ({
                       layoutCrossfade={false}
                       transition={pickerLayoutTransition}
                       className="relative"
+                      variants={headingItem}
                     >
                       <Heading
                         id="experience-picker-heading"
@@ -348,19 +321,18 @@ const ExperiencePickerRevealSection = ({
                       layoutCrossfade={false}
                       transition={pickerLayoutTransition}
                       className="relative"
+                      variants={headingItem}
                     >
-                      <motion.div variants={headingItem}>
-                        <Text
-                          size="lg"
-                          className={cn(
-                            "type-section-subtitle",
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink-muted" : "text-white",
-                          )}
-                        >
-                          {subheading}
-                        </Text>
-                      </motion.div>
+                      <Text
+                        size="lg"
+                        className={cn(
+                          "type-section-subtitle",
+                          titleColorTransition,
+                          headerThemeReady ? "text-ink-muted" : "text-white",
+                        )}
+                      >
+                        {subheading}
+                      </Text>
                     </motion.div>
                   </motion.div>
                   {enableTitleReveal ? (
@@ -377,9 +349,9 @@ const ExperiencePickerRevealSection = ({
                 <motion.div
                   key="experience-picker-collapsed"
                   className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
-                  animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
-                  exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
+                  initial={motionEnabled ? { opacity: 0 } : false}
+                  animate={motionEnabled ? { opacity: 1 } : undefined}
+                  exit={motionEnabled ? { opacity: 0 } : undefined}
                   transition={motionEnabled ? pickerRevealFast : undefined}
                 >
                   <motion.div
@@ -446,15 +418,15 @@ const ExperiencePickerRevealSection = ({
                 key="experience-picker-body"
                 id="experience-picker-body"
                 className="space-y-6"
-                initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
+                initial={motionEnabled ? { opacity: 0, y: 24 } : false}
                 animate={
                   motionEnabled
-                    ? { opacity: 1, y: 0, filter: "blur(0px)", transition: pickerBodyReveal }
+                    ? { opacity: 1, y: 0, transition: pickerBodyReveal }
                     : undefined
                 }
                 exit={
                   motionEnabled
-                    ? { opacity: 0, y: -16, filter: "blur(10px)", transition: pickerCollapse }
+                    ? { opacity: 0, y: -16, transition: pickerCollapse }
                     : undefined
                 }
               >

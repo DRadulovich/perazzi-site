@@ -34,8 +34,8 @@ export function MaintenanceRepairs({ maintenanceSection, guide }: MaintenanceRep
       padding="md"
       className="group relative space-y-4 overflow-hidden"
       aria-labelledby="maintenance-heading"
-      initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(10px)" } : false}
-      whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+      initial={motionEnabled ? { opacity: 0, y: 24 } : false}
+      whileInView={motionEnabled ? { opacity: 1, y: 0 } : undefined}
       viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
       transition={motionEnabled ? homeMotion.reveal : undefined}
     >

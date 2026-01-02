@@ -761,8 +761,8 @@ export function ConciergePageShell() {
     <div className="space-y-8" id="concierge-workshop" tabIndex={-1}>
       <motion.header
         className="space-y-3"
-        initial={motionEnabled ? { opacity: 0, y: 28, filter: "blur(12px)" } : false}
-        whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+        initial={motionEnabled ? { opacity: 0, y: 28 } : false}
+        whileInView={motionEnabled ? { opacity: 1, y: 0 } : undefined}
         viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
         transition={motionEnabled ? revealTransition : undefined}
       >

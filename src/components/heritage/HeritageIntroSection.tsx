@@ -30,7 +30,7 @@ export function HeritageIntroSection({
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: reduceMotion ? 0 : 0.08 },
+      transition: { staggerChildren: reduceMotion ? 0 : homeMotion.staggerShort },
     },
   } as const;
 

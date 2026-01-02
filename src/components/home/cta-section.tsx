@@ -30,7 +30,7 @@ export function CTASection({ finale }: CTASectionProps) {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: motionEnabled ? 0.12 : 0 },
+      transition: { staggerChildren: motionEnabled ? homeMotion.staggerLong : 0 },
     },
   } as const;
 

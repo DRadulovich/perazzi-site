@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState, type RefObject } from "react";
 import Image from "next/image";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import SafeHtml from "@/components/SafeHtml";
 import { Button, Container, Heading, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useHeightLock } from "@/hooks/use-height-lock";
 import { logAnalytics } from "@/lib/analytics";
-import { homeMotion } from "@/lib/motionConfig";
+import { getSectionHeadingVariants, homeMotion } from "@/lib/motionConfig";
 import { cn } from "@/lib/utils";
 import type { BookingSection } from "@/types/experience";
 
@@ -60,7 +61,6 @@ const BookingOptionsRevealSection = ({
 }: BookingOptionsRevealSectionProps) => {
   const [bookingExpanded, setBookingExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const [schedulerOpen, setSchedulerOpen] = useState(false);
   const [schedulerLoaded, setSchedulerLoaded] = useState(false);
 
@@ -78,22 +78,29 @@ const BookingOptionsRevealSection = ({
   const revealBooking = !enableTitleReveal || bookingExpanded;
   const revealPhotoFocus = revealBooking;
   const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealBooking;
+  const sectionInView = useInView(sectionRef, { amount: 0.35 });
+  const parallaxEnabled = motionEnabled && revealBooking && sectionInView;
   const focusSurfaceTransition =
     "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const focusFadeTransition =
     "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const titleColorTransition =
     "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const bookingReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const bookingRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const bookingCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const bookingBodyReveal = bookingReveal;
+  const bookingReveal = homeMotion.revealSlow;
+  const bookingRevealFast = homeMotion.reveal;
+  const bookingCollapse = homeMotion.collapse;
+  const bookingBodyReveal = motionEnabled
+    ? { ...bookingReveal, delay: homeMotion.sectionHeader.bodyDelay }
+    : bookingReveal;
   const readMoreReveal = motionEnabled
-    ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: bookingReveal.duration }
+    ? { ...homeMotion.revealFast, delay: homeMotion.sectionHeader.readMoreDelayAfterHeader }
     : undefined;
   const bookingLayoutTransition = motionEnabled ? { layout: bookingReveal } : undefined;
   const bookingMinHeight = enableTitleReveal ? "min-h-[calc(720px+16rem)]" : null;
+  const expandedHeight = useHeightLock(bookingShellRef, {
+    enabled: enableTitleReveal && revealBooking,
+    duration: bookingReveal.duration,
+  });
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
@@ -107,15 +114,10 @@ const BookingOptionsRevealSection = ({
   const backgroundScale = parallaxEnabled ? 1.32 : 1;
   const backgroundScaleTransition = revealBooking ? bookingReveal : bookingCollapse;
 
-  const headingContainer = {
-    hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
-  } as const;
-
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: bookingReveal },
-  } as const;
+  const { headingContainer, headingItem } = getSectionHeadingVariants({
+    motionEnabled,
+    transition: bookingReveal,
+  });
 
   const handleBookingExpand = () => {
     if (!enableTitleReveal) return;
@@ -138,36 +140,6 @@ const BookingOptionsRevealSection = ({
     setHeaderThemeReady(false);
     setBookingExpanded(false);
   };
-
-  useEffect(() => {
-    if (!enableTitleReveal || !revealBooking) return;
-    const node = bookingShellRef.current;
-    if (!node) return;
-
-    let frame = 0;
-    const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
-    }
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealBooking, schedulerOpen, schedulerLoaded, options.length]);
 
   useEffect(() => () => {
     if (headerThemeFrame.current !== null) {
@@ -262,6 +234,7 @@ const BookingOptionsRevealSection = ({
                       layoutCrossfade={false}
                       transition={bookingLayoutTransition}
                       className="relative"
+                      variants={headingItem}
                     >
                       <Heading
                         id="experience-booking-heading"
@@ -280,19 +253,18 @@ const BookingOptionsRevealSection = ({
                       layoutCrossfade={false}
                       transition={bookingLayoutTransition}
                       className="relative"
+                      variants={headingItem}
                     >
-                      <motion.div variants={headingItem}>
-                        <Text
-                          className={cn(
-                            "type-section-subtitle",
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink-muted" : "text-white",
-                          )}
-                          leading="relaxed"
-                        >
-                          {subheading}
-                        </Text>
-                      </motion.div>
+                      <Text
+                        className={cn(
+                          "type-section-subtitle",
+                          titleColorTransition,
+                          headerThemeReady ? "text-ink-muted" : "text-white",
+                        )}
+                        leading="relaxed"
+                      >
+                        {subheading}
+                      </Text>
                     </motion.div>
                   </motion.div>
                   {enableTitleReveal ? (
@@ -309,9 +281,9 @@ const BookingOptionsRevealSection = ({
                 <motion.div
                   key="experience-booking-collapsed"
                   className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
-                  animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
-                  exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
+                  initial={motionEnabled ? { opacity: 0 } : false}
+                  animate={motionEnabled ? { opacity: 1 } : undefined}
+                  exit={motionEnabled ? { opacity: 0 } : undefined}
                   transition={motionEnabled ? bookingRevealFast : undefined}
                 >
                   <motion.div
@@ -378,15 +350,15 @@ const BookingOptionsRevealSection = ({
                 key="experience-booking-body"
                 id="experience-booking-body"
                 className="space-y-6"
-                initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
+                initial={motionEnabled ? { opacity: 0, y: 24 } : false}
                 animate={
                   motionEnabled
-                    ? { opacity: 1, y: 0, filter: "blur(0px)", transition: bookingBodyReveal }
+                    ? { opacity: 1, y: 0, transition: bookingBodyReveal }
                     : undefined
                 }
                 exit={
                   motionEnabled
-                    ? { opacity: 0, y: -16, filter: "blur(10px)", transition: bookingCollapse }
+                    ? { opacity: 0, y: -16, transition: bookingCollapse }
                     : undefined
                 }
               >
@@ -396,7 +368,7 @@ const BookingOptionsRevealSection = ({
                   animate={motionEnabled ? "show" : undefined}
                   variants={{
                     hidden: {},
-                    show: { transition: { staggerChildren: motionEnabled ? 0.08 : 0 } },
+                    show: { transition: { staggerChildren: motionEnabled ? homeMotion.staggerShort : 0 } },
                   }}
                 >
                   {options.map((option) => (

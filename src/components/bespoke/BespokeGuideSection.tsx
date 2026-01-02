@@ -34,14 +34,14 @@ export function BespokeGuideSection({ guide }: BespokeGuideSectionProps) {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: motionEnabled ? 0.1 : 0 },
+      transition: { staggerChildren: motionEnabled ? homeMotion.staggerLong : 0 },
     },
   } as const;
 
   const list = {
     hidden: {},
     show: {
-      transition: { staggerChildren: motionEnabled ? 0.06 : 0 },
+      transition: { staggerChildren: motionEnabled ? homeMotion.staggerShort : 0 },
     },
   } as const;
 
@@ -80,8 +80,8 @@ export function BespokeGuideSection({ guide }: BespokeGuideSectionProps) {
       bordered={false}
       className="rounded-none border-t border-none! bg-canvas shadow-none!"
       aria-labelledby="bespoke-guide-heading"
-      initial={motionEnabled ? { opacity: 0, y: 28, filter: "blur(10px)" } : false}
-      whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+      initial={motionEnabled ? { opacity: 0, y: 28 } : false}
+      whileInView={motionEnabled ? { opacity: 1, y: 0 } : undefined}
       viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
       transition={motionEnabled ? homeMotion.reveal : undefined}
     >

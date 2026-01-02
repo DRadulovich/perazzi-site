@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import Image from "next/image";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 
 import type {
   AuthorizedDealerEntry,
@@ -13,8 +13,9 @@ import type {
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useHeightLock } from "@/hooks/use-height-lock";
 import { Container, Heading, Text } from "@/components/ui";
-import { homeMotion } from "@/lib/motionConfig";
+import { getSectionHeadingVariants, homeMotion } from "@/lib/motionConfig";
 
 type TabKey = "schedule" | "dealers";
 
@@ -77,7 +78,6 @@ const TravelNetworkRevealSection = ({
 }: TravelNetworkRevealSectionProps) => {
   const [networkExpanded, setNetworkExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>("schedule");
   const networkShellRef = useRef<HTMLDivElement | null>(null);
   const headerThemeFrame = useRef<number | null>(null);
@@ -113,22 +113,29 @@ const TravelNetworkRevealSection = ({
   const revealNetwork = !enableTitleReveal || networkExpanded;
   const revealPhotoFocus = revealNetwork;
   const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealNetwork;
+  const sectionInView = useInView(sectionRef, { amount: 0.35 });
+  const parallaxEnabled = motionEnabled && revealNetwork && sectionInView;
   const focusSurfaceTransition =
     "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const focusFadeTransition =
     "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const titleColorTransition =
     "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const networkReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const networkRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const networkCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const networkBodyReveal = networkReveal;
+  const networkReveal = homeMotion.revealSlow;
+  const networkRevealFast = homeMotion.reveal;
+  const networkCollapse = homeMotion.collapse;
+  const networkBodyReveal = motionEnabled
+    ? { ...networkReveal, delay: homeMotion.sectionHeader.bodyDelay }
+    : networkReveal;
   const readMoreReveal = motionEnabled
-    ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: networkReveal.duration }
+    ? { ...homeMotion.revealFast, delay: homeMotion.sectionHeader.readMoreDelayAfterHeader }
     : undefined;
   const networkLayoutTransition = motionEnabled ? { layout: networkReveal } : undefined;
   const networkMinHeight = enableTitleReveal ? "min-h-[calc(720px+16rem)]" : null;
+  const expandedHeight = useHeightLock(networkShellRef, {
+    enabled: enableTitleReveal && revealNetwork,
+    duration: networkReveal.duration,
+  });
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
@@ -142,15 +149,10 @@ const TravelNetworkRevealSection = ({
   const backgroundScale = parallaxEnabled ? 1.32 : 1;
   const backgroundScaleTransition = revealNetwork ? networkReveal : networkCollapse;
 
-  const headingContainer = {
-    hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
-  } as const;
-
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: networkReveal },
-  } as const;
+  const { headingContainer, headingItem } = getSectionHeadingVariants({
+    motionEnabled,
+    transition: networkReveal,
+  });
 
   const handleNetworkExpand = () => {
     if (!enableTitleReveal) return;
@@ -173,36 +175,6 @@ const TravelNetworkRevealSection = ({
     setHeaderThemeReady(false);
     setNetworkExpanded(false);
   };
-
-  useEffect(() => {
-    if (!enableTitleReveal || !revealNetwork) return;
-    const node = networkShellRef.current;
-    if (!node) return;
-
-    let frame = 0;
-    const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
-    }
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealNetwork, activeTab, data.dealers.length, data.scheduledEvents.length]);
 
   useEffect(() => () => {
     if (headerThemeFrame.current !== null) {
@@ -298,6 +270,7 @@ const TravelNetworkRevealSection = ({
                       layoutCrossfade={false}
                       transition={networkLayoutTransition}
                       className="relative"
+                      variants={headingItem}
                     >
                       <Heading
                         id="travel-network-heading"
@@ -316,19 +289,18 @@ const TravelNetworkRevealSection = ({
                       layoutCrossfade={false}
                       transition={networkLayoutTransition}
                       className="relative"
+                      variants={headingItem}
                     >
-                      <motion.div variants={headingItem}>
-                        <Text
-                          className={cn(
-                            "type-section-subtitle",
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink-muted" : "text-white",
-                          )}
-                          leading="relaxed"
-                        >
-                          {lead}
-                        </Text>
-                      </motion.div>
+                      <Text
+                        className={cn(
+                          "type-section-subtitle",
+                          titleColorTransition,
+                          headerThemeReady ? "text-ink-muted" : "text-white",
+                        )}
+                        leading="relaxed"
+                      >
+                        {lead}
+                      </Text>
                     </motion.div>
                     <motion.div variants={headingItem}>
                       <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
@@ -350,9 +322,9 @@ const TravelNetworkRevealSection = ({
                 <motion.div
                   key="travel-network-collapsed"
                   className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
-                  animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
-                  exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
+                  initial={motionEnabled ? { opacity: 0 } : false}
+                  animate={motionEnabled ? { opacity: 1 } : undefined}
+                  exit={motionEnabled ? { opacity: 0 } : undefined}
                   transition={motionEnabled ? networkRevealFast : undefined}
                 >
                   <motion.div
@@ -419,15 +391,15 @@ const TravelNetworkRevealSection = ({
                 key="travel-network-body"
                 id="travel-network-body"
                 className="space-y-6"
-                initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
+                initial={motionEnabled ? { opacity: 0, y: 24 } : false}
                 animate={
                   motionEnabled
-                    ? { opacity: 1, y: 0, filter: "blur(0px)", transition: networkBodyReveal }
+                    ? { opacity: 1, y: 0, transition: networkBodyReveal }
                     : undefined
                 }
                 exit={
                   motionEnabled
-                    ? { opacity: 0, y: -16, filter: "blur(10px)", transition: networkCollapse }
+                    ? { opacity: 0, y: -16, transition: networkCollapse }
                     : undefined
                 }
               >
@@ -485,9 +457,9 @@ const TravelNetworkRevealSection = ({
                   <AnimatePresence initial={false} mode="popLayout">
                     <motion.div
                       key={activeTab}
-                      initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
-                      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                      exit={motionEnabled ? { opacity: 0, y: -14, filter: "blur(10px)" } : undefined}
+                      initial={motionEnabled ? { opacity: 0, y: 14 } : false}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={motionEnabled ? { opacity: 0, y: -14 } : undefined}
                       transition={motionEnabled ? homeMotion.revealFast : undefined}
                     >
                       {activeTab === "schedule" ? (
@@ -531,7 +503,7 @@ function ScheduleList({ events, emptyText, motionEnabled }: ScheduleListProps & 
       animate={motionEnabled ? "show" : undefined}
       variants={{
         hidden: {},
-        show: { transition: { staggerChildren: motionEnabled ? 0.06 : 0 } },
+        show: { transition: { staggerChildren: motionEnabled ? homeMotion.staggerShort : 0 } },
       }}
     >
       {events.map((event) => (
@@ -580,7 +552,7 @@ function DealerList({ dealers, emptyText, motionEnabled }: DealerListProps & { m
       animate={motionEnabled ? "show" : undefined}
       variants={{
         hidden: {},
-        show: { transition: { staggerChildren: motionEnabled ? 0.06 : 0 } },
+        show: { transition: { staggerChildren: motionEnabled ? homeMotion.staggerShort : 0 } },
       }}
     >
       {dealers.map((dealer) => (

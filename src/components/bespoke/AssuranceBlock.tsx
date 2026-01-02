@@ -34,8 +34,8 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
       padding="md"
       className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] lg:gap-8"
       aria-labelledby="assurance-heading"
-      initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(10px)" } : false}
-      whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+      initial={motionEnabled ? { opacity: 0, y: 24 } : false}
+      whileInView={motionEnabled ? { opacity: 1, y: 0 } : undefined}
       viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
       transition={motionEnabled ? homeMotion.reveal : undefined}
     >

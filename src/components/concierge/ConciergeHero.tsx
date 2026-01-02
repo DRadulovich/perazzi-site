@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import type { FactoryAsset } from "@/types/content";
@@ -30,6 +30,7 @@ export function ConciergeHero({ hero }: ConciergeHeroProps) {
   }, [prefersReducedMotion]);
 
   const motionEnabled = !reduceMotion;
+  const sectionInView = useInView(sectionRef, { amount: 0.35 });
   const revealTransition = motionEnabled ? homeMotion.reveal : { duration: 0.01 };
   const revealFastTransition = motionEnabled ? homeMotion.revealFast : { duration: 0.01 };
 
@@ -38,10 +39,11 @@ export function ConciergeHero({ hero }: ConciergeHeroProps) {
     offset: ["start start", "end start"],
   });
 
+  const parallaxEnabled = motionEnabled && sectionInView;
   const parallaxY = useTransform(
     scrollYProgress,
     [0, 1],
-    ["0%", reduceMotion ? "0%" : "12%"],
+    ["0%", parallaxEnabled ? "12%" : "0%"],
   );
 
   const setRefs = useCallback(
@@ -56,7 +58,7 @@ export function ConciergeHero({ hero }: ConciergeHeroProps) {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: motionEnabled ? 0.12 : 0 },
+      transition: { staggerChildren: motionEnabled ? homeMotion.staggerLong : 0 },
     },
   } as const;
 
@@ -74,7 +76,7 @@ export function ConciergeHero({ hero }: ConciergeHeroProps) {
     >
       <motion.div
         className="absolute inset-0"
-        style={reduceMotion ? undefined : { y: parallaxY }}
+        style={parallaxEnabled ? { y: parallaxY } : undefined}
         initial={motionEnabled ? { scale: 1.06 } : undefined}
         animate={motionEnabled ? { scale: 1.02 } : undefined}
         transition={motionEnabled ? { duration: 1.2, ease: homeMotion.cinematicEase } : undefined}

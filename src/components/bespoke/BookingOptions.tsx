@@ -143,7 +143,7 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
   const grid = {
     hidden: {},
     show: {
-      transition: { staggerChildren: motionEnabled ? 0.08 : 0 },
+      transition: { staggerChildren: motionEnabled ? homeMotion.staggerShort : 0 },
     },
   } as const;
 

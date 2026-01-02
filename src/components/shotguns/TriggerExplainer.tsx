@@ -4,13 +4,14 @@ import Image from "next/image";
 import SafeHtml from "@/components/SafeHtml";
 import { PortableText } from "@/components/PortableText";
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import type { ShotgunsLandingData } from "@/types/catalog";
 import { logAnalytics } from "@/lib/analytics";
-import { homeMotion } from "@/lib/motionConfig";
+import { getSectionHeadingVariants, homeMotion } from "@/lib/motionConfig";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useHeightLock } from "@/hooks/use-height-lock";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, Container, Heading, Text } from "@/components/ui";
 
 type TriggerExplainerProps = Readonly<{
@@ -66,7 +67,6 @@ const TriggerExplainerRevealSection = ({
 }: TriggerExplainerRevealSectionProps) => {
   const [explainerExpanded, setExplainerExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const explainerShellRef = useRef<HTMLDivElement | null>(null);
   const headerThemeFrame = useRef<number | null>(null);
 
@@ -82,19 +82,26 @@ const TriggerExplainerRevealSection = ({
   const revealExplainer = !enableTitleReveal || explainerExpanded;
   const revealPhotoFocus = revealExplainer;
   const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealExplainer;
+  const sectionInView = useInView(sectionRef, { amount: 0.35 });
+  const parallaxEnabled = motionEnabled && revealExplainer && sectionInView;
   const focusSurfaceTransition = "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const focusFadeTransition = "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const titleColorTransition = "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const explainerReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const explainerRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const explainerCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const explainerBodyReveal = explainerReveal;
+  const explainerReveal = homeMotion.revealSlow;
+  const explainerRevealFast = homeMotion.reveal;
+  const explainerCollapse = homeMotion.collapse;
+  const explainerBodyReveal = motionEnabled
+    ? { ...explainerReveal, delay: homeMotion.sectionHeader.bodyDelay }
+    : explainerReveal;
   const readMoreReveal = motionEnabled
-    ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: explainerReveal.duration }
+    ? { ...homeMotion.revealFast, delay: homeMotion.sectionHeader.readMoreDelayAfterHeader }
     : undefined;
   const explainerLayoutTransition = motionEnabled ? { layout: explainerReveal } : undefined;
   const explainerMinHeight = enableTitleReveal ? "min-h-[calc(520px+18rem)]" : null;
+  const expandedHeight = useHeightLock(explainerShellRef, {
+    enabled: enableTitleReveal && revealExplainer,
+    duration: explainerReveal.duration,
+  });
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
@@ -172,15 +179,10 @@ const TriggerExplainerRevealSection = ({
     </>
   );
 
-  const headingContainer = {
-    hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
-  } as const;
-
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: explainerReveal },
-  } as const;
+  const { headingContainer, headingItem } = getSectionHeadingVariants({
+    motionEnabled,
+    transition: explainerReveal,
+  });
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
@@ -203,36 +205,6 @@ const TriggerExplainerRevealSection = ({
     setHeaderThemeReady(false);
     setExplainerExpanded(false);
   };
-
-  useEffect(() => {
-    if (!enableTitleReveal || !revealExplainer) return;
-    const node = explainerShellRef.current;
-    if (!node) return;
-
-    let frame = 0;
-    const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
-    }
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealExplainer, manualOpen]);
 
   useEffect(() => () => {
     if (headerThemeFrame.current !== null) {
@@ -330,14 +302,15 @@ const TriggerExplainerRevealSection = ({
                       initial={motionEnabled ? "hidden" : false}
                       animate={motionEnabled ? "show" : undefined}
                     >
-                      <motion.div
-                        layoutId="trigger-explainer-title"
-                        layoutCrossfade={false}
-                        transition={explainerLayoutTransition}
-                        className="relative"
-                      >
-                        <Heading
-                          id="trigger-explainer-heading"
+                    <motion.div
+                      layoutId="trigger-explainer-title"
+                      layoutCrossfade={false}
+                      transition={explainerLayoutTransition}
+                      className="relative"
+                      variants={headingItem}
+                    >
+                      <Heading
+                        id="trigger-explainer-heading"
                           level={2}
                           size="xl"
                           className={cn(
@@ -348,25 +321,25 @@ const TriggerExplainerRevealSection = ({
                           {explainer.title}
                         </Heading>
                       </motion.div>
-                      <motion.div
-                        layoutId="trigger-explainer-subtitle"
-                        layoutCrossfade={false}
-                        transition={explainerLayoutTransition}
-                        className="relative"
+                    <motion.div
+                      layoutId="trigger-explainer-subtitle"
+                      layoutCrossfade={false}
+                      transition={explainerLayoutTransition}
+                      className="relative"
+                      variants={headingItem}
+                    >
+                      <Text
+                        className={cn(
+                          "type-section-subtitle",
+                          titleColorTransition,
+                          headerThemeReady ? "text-ink-muted" : "text-white",
+                        )}
+                        leading="normal"
                       >
-                        <motion.div variants={headingItem}>
-                          <Text
-                            className={cn(
-                              "type-section-subtitle",
-                              titleColorTransition,
-                              headerThemeReady ? "text-ink-muted" : "text-white",
-                            )}
-                            leading="normal"
-                          >
-                            {subheading}
-                          </Text>
-                        </motion.div>
-                      </motion.div>
+                        {subheading}
+                      </Text>
+                    </motion.div>
+                    <motion.div variants={headingItem}>
                       <CollapsibleTrigger
                         className="type-button mt-1 inline-flex w-fit items-center gap-2 rounded-sm border border-border/70 bg-card/60 px-4 py-2 text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring lg:hidden"
                         aria-controls="trigger-explainer-content"
@@ -374,6 +347,7 @@ const TriggerExplainerRevealSection = ({
                       >
                         {manualOpen ? "Hide details" : "Show details"}
                       </CollapsibleTrigger>
+                    </motion.div>
                     </motion.div>
                     <CollapsibleContent
                       id="trigger-explainer-content"
@@ -396,9 +370,9 @@ const TriggerExplainerRevealSection = ({
                 <motion.div
                   key="trigger-explainer-collapsed"
                   className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
-                  animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
-                  exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
+                  initial={motionEnabled ? { opacity: 0 } : false}
+                  animate={motionEnabled ? { opacity: 1 } : undefined}
+                  exit={motionEnabled ? { opacity: 0 } : undefined}
                   transition={motionEnabled ? explainerRevealFast : undefined}
                 >
                   <motion.div
@@ -465,15 +439,15 @@ const TriggerExplainerRevealSection = ({
                 key="trigger-explainer-body"
                 id="trigger-explainer-body"
                 className="space-y-6"
-                initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
+                initial={motionEnabled ? { opacity: 0, y: 24 } : false}
                 animate={
                   motionEnabled
-                    ? { opacity: 1, y: 0, filter: "blur(0px)", transition: explainerBodyReveal }
+                    ? { opacity: 1, y: 0, transition: explainerBodyReveal }
                     : undefined
                 }
                 exit={
                   motionEnabled
-                    ? { opacity: 0, y: -16, filter: "blur(10px)", transition: explainerCollapse }
+                    ? { opacity: 0, y: -16, transition: explainerCollapse }
                     : undefined
                 }
               >

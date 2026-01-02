@@ -35,8 +35,8 @@ export function FAQList({ items, heading, intro }: FAQListProps) {
       padding="md"
       className="group relative space-y-6 overflow-hidden"
       aria-labelledby="service-faq-heading"
-      initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(10px)" } : false}
-      whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+      initial={motionEnabled ? { opacity: 0, y: 24 } : false}
+      whileInView={motionEnabled ? { opacity: 1, y: 0 } : undefined}
       viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
       transition={motionEnabled ? homeMotion.reveal : undefined}
     >
@@ -70,7 +70,7 @@ export function FAQList({ items, heading, intro }: FAQListProps) {
         viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
         variants={{
           hidden: {},
-          show: { transition: { staggerChildren: motionEnabled ? 0.06 : 0 } },
+          show: { transition: { staggerChildren: motionEnabled ? homeMotion.staggerShort : 0 } },
         }}
       >
         {items.map((item, index) => (

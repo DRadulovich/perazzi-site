@@ -60,14 +60,14 @@ export function HeritageSplitSection({
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: reduceMotion ? 0 : 0.1 },
+      transition: { staggerChildren: reduceMotion ? 0 : homeMotion.staggerLong },
     },
   } as const;
 
   const list = {
     hidden: {},
     show: {
-      transition: { staggerChildren: reduceMotion ? 0 : 0.06 },
+      transition: { staggerChildren: reduceMotion ? 0 : homeMotion.staggerShort },
     },
   } as const;
 
@@ -86,8 +86,8 @@ export function HeritageSplitSection({
         className,
       )}
       aria-labelledby={headingId}
-      initial={reduceMotion ? false : { opacity: 0, y: 18, filter: "blur(10px)" }}
-      whileInView={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
+      initial={reduceMotion ? false : { opacity: 0, y: 18 }}
+      whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
       viewport={reduceMotion ? undefined : { once: true, amount: 0.35 }}
       transition={reduceMotion ? undefined : homeMotion.reveal}
     >

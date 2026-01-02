@@ -1,16 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useMemo, useState, useRef, useEffect, useCallback, type Dispatch, type RefObject, type SetStateAction } from "react";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useHeightLock } from "@/hooks/use-height-lock";
 import type { Platform, ShotgunsLandingData } from "@/types/catalog";
 import { PlatformCard } from "./PlatformCard";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
 import { buildPlatformPrompt } from "@/lib/platform-prompts";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
-import { homeMotion } from "@/lib/motionConfig";
+import { getSectionHeadingVariants, homeMotion } from "@/lib/motionConfig";
 import { cn } from "@/lib/utils";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
@@ -372,7 +373,6 @@ const PlatformGridRevealSection = ({
 }: PlatformGridRevealSectionProps) => {
   const [platformExpanded, setPlatformExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const platformShellRef = useRef<HTMLDivElement | null>(null);
   const headerThemeFrame = useRef<number | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -383,20 +383,27 @@ const PlatformGridRevealSection = ({
   const revealPhotoFocus = revealGrid;
   const activePlatform = platforms[activeIndex] ?? platforms[0];
   const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealGrid;
+  const sectionInView = useInView(sectionRef, { amount: 0.35 });
+  const parallaxEnabled = motionEnabled && revealGrid && sectionInView;
 
   const focusSurfaceTransition = "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const focusFadeTransition = "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const titleColorTransition = "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const platformReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const platformRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const platformCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const platformBodyReveal = platformReveal;
+  const platformReveal = homeMotion.revealSlow;
+  const platformRevealFast = homeMotion.reveal;
+  const platformCollapse = homeMotion.collapse;
+  const platformBodyReveal = motionEnabled
+    ? { ...platformReveal, delay: homeMotion.sectionHeader.bodyDelay }
+    : platformReveal;
   const readMoreReveal = motionEnabled
-    ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: platformReveal.duration }
+    ? { ...homeMotion.revealFast, delay: homeMotion.sectionHeader.readMoreDelayAfterHeader }
     : undefined;
   const platformLayoutTransition = motionEnabled ? { layout: platformReveal } : undefined;
   const platformMinHeight = enableTitleReveal ? "min-h-[calc(750px+18rem)]" : null;
+  const expandedHeight = useHeightLock(platformShellRef, {
+    enabled: enableTitleReveal && revealGrid,
+    duration: platformReveal.duration,
+  });
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
@@ -437,45 +444,10 @@ const PlatformGridRevealSection = ({
     scrollToIndex(scrollRef.current, index);
   }, [setActiveIndex]);
 
-  const headingContainer = {
-    hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
-  } as const;
-
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: platformReveal },
-  } as const;
-
-  useEffect(() => {
-    if (!enableTitleReveal || !revealGrid) return;
-    const node = platformShellRef.current;
-    if (!node) return;
-
-    let frame = 0;
-    const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
-    }
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealGrid, activeIndex]);
+  const { headingContainer, headingItem } = getSectionHeadingVariants({
+    motionEnabled,
+    transition: platformReveal,
+  });
 
   useEffect(() => {
     if (!revealGrid) return;
@@ -586,6 +558,7 @@ const PlatformGridRevealSection = ({
                       layoutCrossfade={false}
                       transition={platformLayoutTransition}
                       className="relative"
+                      variants={headingItem}
                     >
                       <Heading
                         id="platforms-heading"
@@ -604,19 +577,18 @@ const PlatformGridRevealSection = ({
                       layoutCrossfade={false}
                       transition={platformLayoutTransition}
                       className="relative"
+                      variants={headingItem}
                     >
-                      <motion.div variants={headingItem}>
-                        <Text
-                          className={cn(
-                            "type-section-subtitle max-w-4xl",
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink-muted" : "text-white",
-                          )}
-                          leading="normal"
-                        >
-                          {headingSubtitle}
-                        </Text>
-                      </motion.div>
+                      <Text
+                        className={cn(
+                          "type-section-subtitle max-w-4xl",
+                          titleColorTransition,
+                          headerThemeReady ? "text-ink-muted" : "text-white",
+                        )}
+                        leading="normal"
+                      >
+                        {headingSubtitle}
+                      </Text>
                     </motion.div>
                   </motion.div>
                   {enableTitleReveal ? (
@@ -633,9 +605,9 @@ const PlatformGridRevealSection = ({
                 <motion.div
                   key="platform-grid-collapsed"
                   className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
-                  animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
-                  exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
+                  initial={motionEnabled ? { opacity: 0 } : false}
+                  animate={motionEnabled ? { opacity: 1 } : undefined}
+                  exit={motionEnabled ? { opacity: 0 } : undefined}
                   transition={motionEnabled ? platformRevealFast : undefined}
                 >
                   <motion.div
@@ -702,15 +674,15 @@ const PlatformGridRevealSection = ({
                 key="platform-grid-body"
                 id="platform-grid-body"
                 className="space-y-8"
-                initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
+                initial={motionEnabled ? { opacity: 0, y: 24 } : false}
                 animate={
                   motionEnabled
-                    ? { opacity: 1, y: 0, filter: "blur(0px)", transition: platformBodyReveal }
+                    ? { opacity: 1, y: 0, transition: platformBodyReveal }
                     : undefined
                 }
                 exit={
                   motionEnabled
-                    ? { opacity: 0, y: -16, filter: "blur(10px)", transition: platformCollapse }
+                    ? { opacity: 0, y: -16, transition: platformCollapse }
                     : undefined
                 }
               >

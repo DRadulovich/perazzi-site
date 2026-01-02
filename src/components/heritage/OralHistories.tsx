@@ -84,7 +84,7 @@ export function OralHistories({ histories, ui }: OralHistoriesProps) {
         viewport={reduceMotion ? undefined : { once: true, amount: 0.35 }}
         variants={{
           hidden: {},
-          show: { transition: { staggerChildren: reduceMotion ? 0 : 0.08 } },
+          show: { transition: { staggerChildren: reduceMotion ? 0 : homeMotion.staggerShort } },
         }}
       >
         {histories.map((history) => (

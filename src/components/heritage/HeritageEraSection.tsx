@@ -84,6 +84,7 @@ export function HeritageEraSection({
   }, [totalEvents, era.id, onActiveEventChange]);
 
   useMotionValueEvent(scrollYProgress, "change", (value) => {
+    if (!isInView) return;
     const progress = Math.min(1, Math.max(0, value));
     const prevProgress = lastProgressRef.current;
     if (Math.abs(progress - prevProgress) > 0.01) {

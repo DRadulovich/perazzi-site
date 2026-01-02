@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef } from "react";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -22,15 +22,16 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
   const analyticsRef = useAnalyticsObserver("HeroSeen:experience");
   const containerRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
+  const sectionInView = useInView(containerRef, { amount: 0.35 });
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
   });
-
+  const parallaxEnabled = !prefersReducedMotion && sectionInView;
   const parallax = useTransform(
     scrollYProgress,
     [0, 1],
-    ["0%", prefersReducedMotion ? "0%" : "12%"],
+    ["0%", parallaxEnabled ? "12%" : "0%"],
   );
 
   const setRefs = useCallback(
@@ -41,15 +42,13 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
     [analyticsRef],
   );
 
-  const mediaStyle = prefersReducedMotion
-    ? undefined
-    : { y: parallax };
+  const mediaStyle = parallaxEnabled ? { y: parallax } : undefined;
 
   const content = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: prefersReducedMotion ? 0 : 0.1 },
+      transition: { staggerChildren: prefersReducedMotion ? 0 : homeMotion.staggerLong },
     },
   } as const;
 
@@ -83,8 +82,8 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
         ref={setRefs}
         data-analytics-id="HeroSeen:experience"
         className="relative z-10 mx-auto min-h-screen max-w-6xl overflow-hidden rounded-2xl border border-white/12 bg-black/40 text-white shadow-elevated ring-1 ring-white/10 backdrop-blur-xl sm:rounded-3xl"
-        initial={prefersReducedMotion ? false : { opacity: 0, y: 28, filter: "blur(12px)" }}
-        animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
+        initial={prefersReducedMotion ? false : { opacity: 0, y: 28 }}
+        animate={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
         transition={prefersReducedMotion ? undefined : homeMotion.reveal}
       >
         <motion.div

@@ -26,7 +26,7 @@ export function BespokeExpertsSection({ experts, intro }: BespokeExpertsSectionP
   const grid = {
     hidden: {},
     show: {
-      transition: { staggerChildren: motionEnabled ? 0.08 : 0 },
+      transition: { staggerChildren: motionEnabled ? homeMotion.staggerShort : 0 },
     },
   } as const;
 
@@ -76,4 +76,3 @@ export function BespokeExpertsSection({ experts, intro }: BespokeExpertsSectionP
     </section>
   );
 }
-

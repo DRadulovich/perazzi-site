@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef } from "react";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -20,14 +20,16 @@ export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {
   const containerRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
   const reduceMotion = Boolean(prefersReducedMotion);
+  const sectionInView = useInView(containerRef, { amount: 0.35 });
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
   });
+  const parallaxEnabled = !reduceMotion && sectionInView;
   const parallax = useTransform(
     scrollYProgress,
     [0, 1],
-    ["0%", reduceMotion ? "0%" : "12%"],
+    ["0%", parallaxEnabled ? "12%" : "0%"],
   );
 
   const setRefs = useCallback(
@@ -38,13 +40,13 @@ export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {
     [analyticsRef],
   );
 
-  const mediaStyle = reduceMotion ? undefined : { y: parallax };
+  const mediaStyle = parallaxEnabled ? { y: parallax } : undefined;
 
   const content = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: reduceMotion ? 0 : 0.1 },
+      transition: { staggerChildren: reduceMotion ? 0 : homeMotion.staggerLong },
     },
   } as const;
 
@@ -76,8 +78,8 @@ export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {
         ref={setRefs}
         data-analytics-id="HeroSeen:service"
         className="relative z-10 mx-auto min-h-screen max-w-6xl overflow-hidden rounded-2xl border border-white/12 bg-black/40 text-white shadow-elevated ring-1 ring-white/10 backdrop-blur-xl sm:rounded-3xl"
-        initial={reduceMotion ? false : { opacity: 0, y: 28, filter: "blur(12px)" }}
-        animate={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
+        initial={reduceMotion ? false : { opacity: 0, y: 28 }}
+        animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
         transition={reduceMotion ? undefined : homeMotion.reveal}
       >
         <motion.div

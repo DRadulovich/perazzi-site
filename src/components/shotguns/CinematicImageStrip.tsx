@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import Image from "next/image";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 
 type CinematicImageStripProps = Readonly<{
   src?: string;
@@ -14,10 +14,12 @@ type CinematicImageStripProps = Readonly<{
 export function CinematicImageStrip({ src, image, alt }: CinematicImageStripProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
+  const sectionInView = useInView(sectionRef, { amount: 0.35 });
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
   });
+  const parallaxEnabled = !prefersReducedMotion && sectionInView;
   const parallaxY = useTransform(scrollYProgress, [0, 1], ["-4%", "8%"]);
 
   const resolvedSrc = image?.url ?? src ?? "";
@@ -34,7 +36,7 @@ export function CinematicImageStrip({ src, image, alt }: CinematicImageStripProp
       <div className="relative cinematic-strip-height">
         <motion.div
           className="absolute inset-0"
-          style={{ y: prefersReducedMotion ? "0%" : parallaxY }}
+          style={parallaxEnabled ? { y: parallaxY } : undefined}
         >
           <Image
             src={resolvedSrc}

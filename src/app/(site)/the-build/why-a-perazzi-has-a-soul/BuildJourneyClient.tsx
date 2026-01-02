@@ -1,7 +1,7 @@
 // NOTE: Audited for mobile behavior per docs/GUIDES/Mobile-Design-Guide.md
 "use client";
 
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -567,11 +567,18 @@ function JourneyTransition({
 }: JourneyTransitionProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
+  const sectionInView = useInView(sectionRef, { amount: 0.35 });
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
   });
-  const parallaxY = useTransform(scrollYProgress, [0, 1], ["-4%", "8%"]);
+  const parallaxEnabled = !prefersReducedMotion && sectionInView;
+  const parallaxY = useTransform(
+    scrollYProgress,
+    [0, 1],
+    ["-4%", parallaxEnabled ? "8%" : "-4%"],
+  );
+  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
 
   return (
     <section
@@ -581,7 +588,7 @@ function JourneyTransition({
     >
       <motion.div
         className="absolute inset-0"
-        style={{ y: prefersReducedMotion ? "0%" : parallaxY }}
+        style={parallaxStyle}
       >
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"

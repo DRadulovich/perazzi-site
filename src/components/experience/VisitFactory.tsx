@@ -2,15 +2,16 @@
 
 import { useEffect, useRef, useState, type RefObject } from "react";
 import Image from "next/image";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useInView, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import type { VisitFactoryData } from "@/types/experience";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useHeightLock } from "@/hooks/use-height-lock";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 import SafeHtml from "@/components/SafeHtml";
-import { homeMotion } from "@/lib/motionConfig";
+import { getSectionHeadingVariants, homeMotion } from "@/lib/motionConfig";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, Container, Heading, Text } from "@/components/ui";
 
 type VisitFactoryProps = {
@@ -76,7 +77,6 @@ const VisitFactoryRevealSection = ({
 }: VisitFactoryRevealSectionProps) => {
   const [visitExpanded, setVisitExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const [expectOpen, setExpectOpen] = useState(false);
   const visitShellRef = useRef<HTMLDivElement | null>(null);
   const headerThemeFrame = useRef<number | null>(null);
@@ -90,22 +90,29 @@ const VisitFactoryRevealSection = ({
   const revealVisit = !enableTitleReveal || visitExpanded;
   const revealPhotoFocus = revealVisit;
   const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealVisit;
+  const sectionInView = useInView(sectionRef, { amount: 0.35 });
+  const parallaxEnabled = motionEnabled && revealVisit && sectionInView;
   const focusSurfaceTransition =
     "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const focusFadeTransition =
     "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
   const titleColorTransition =
     "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const visitReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const visitRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const visitCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const visitBodyReveal = visitReveal;
+  const visitReveal = homeMotion.revealSlow;
+  const visitRevealFast = homeMotion.reveal;
+  const visitCollapse = homeMotion.collapse;
+  const visitBodyReveal = motionEnabled
+    ? { ...visitReveal, delay: homeMotion.sectionHeader.bodyDelay }
+    : visitReveal;
   const readMoreReveal = motionEnabled
-    ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: visitReveal.duration }
+    ? { ...homeMotion.revealFast, delay: homeMotion.sectionHeader.readMoreDelayAfterHeader }
     : undefined;
   const visitLayoutTransition = motionEnabled ? { layout: visitReveal } : undefined;
   const visitMinHeight = enableTitleReveal ? "min-h-[calc(640px+16rem)]" : null;
+  const expandedHeight = useHeightLock(visitShellRef, {
+    enabled: enableTitleReveal && revealVisit,
+    duration: visitReveal.duration,
+  });
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
@@ -119,19 +126,14 @@ const VisitFactoryRevealSection = ({
   const backgroundScale = parallaxEnabled ? 1.32 : 1;
   const backgroundScaleTransition = revealVisit ? visitReveal : visitCollapse;
 
-  const headingContainer = {
-    hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
-  } as const;
-
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: visitReveal },
-  } as const;
+  const { headingContainer, headingItem } = getSectionHeadingVariants({
+    motionEnabled,
+    transition: visitReveal,
+  });
 
   const detailsContainer = {
     hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.1 : 0 } },
+    show: { transition: { staggerChildren: motionEnabled ? homeMotion.staggerShort : 0 } },
   } as const;
 
   const detailsItem = {
@@ -160,36 +162,6 @@ const VisitFactoryRevealSection = ({
     setHeaderThemeReady(false);
     setVisitExpanded(false);
   };
-
-  useEffect(() => {
-    if (!enableTitleReveal || !revealVisit) return;
-    const node = visitShellRef.current;
-    if (!node) return;
-
-    let frame = 0;
-    const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
-    }
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealVisit, expectOpen]);
 
   useEffect(() => () => {
     if (headerThemeFrame.current !== null) {
@@ -285,6 +257,7 @@ const VisitFactoryRevealSection = ({
                       layoutCrossfade={false}
                       transition={visitLayoutTransition}
                       className="relative"
+                      variants={headingItem}
                     >
                       <Heading
                         id="visit-factory-heading"
@@ -303,19 +276,18 @@ const VisitFactoryRevealSection = ({
                       layoutCrossfade={false}
                       transition={visitLayoutTransition}
                       className="relative"
+                      variants={headingItem}
                     >
-                      <motion.div variants={headingItem}>
-                        <Text
-                          size="lg"
-                          className={cn(
-                            "type-section-subtitle",
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink-muted" : "text-white",
-                          )}
-                        >
-                          {subheading}
-                        </Text>
-                      </motion.div>
+                      <Text
+                        size="lg"
+                        className={cn(
+                          "type-section-subtitle",
+                          titleColorTransition,
+                          headerThemeReady ? "text-ink-muted" : "text-white",
+                        )}
+                      >
+                        {subheading}
+                      </Text>
                     </motion.div>
                     {visit.introHtml ? (
                       <motion.div variants={headingItem}>
@@ -340,9 +312,9 @@ const VisitFactoryRevealSection = ({
                 <motion.div
                   key="visit-factory-collapsed"
                   className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
-                  animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
-                  exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
+                  initial={motionEnabled ? { opacity: 0 } : false}
+                  animate={motionEnabled ? { opacity: 1 } : undefined}
+                  exit={motionEnabled ? { opacity: 0 } : undefined}
                   transition={motionEnabled ? visitRevealFast : undefined}
                 >
                   <motion.div
@@ -409,15 +381,15 @@ const VisitFactoryRevealSection = ({
                 key="visit-factory-body"
                 id="visit-factory-body"
                 className="space-y-6"
-                initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
+                initial={motionEnabled ? { opacity: 0, y: 24 } : false}
                 animate={
                   motionEnabled
-                    ? { opacity: 1, y: 0, filter: "blur(0px)", transition: visitBodyReveal }
+                    ? { opacity: 1, y: 0, transition: visitBodyReveal }
                     : undefined
                 }
                 exit={
                   motionEnabled
-                    ? { opacity: 0, y: -16, filter: "blur(10px)", transition: visitCollapse }
+                    ? { opacity: 0, y: -16, transition: visitCollapse }
                     : undefined
                 }
               >
