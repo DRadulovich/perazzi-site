@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { LayoutGroup, motion, useReducedMotion, useScroll, useTransform, type Variants } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState, type MouseEvent, type RefObject } from "react";
@@ -9,7 +9,17 @@ import { FAQList } from "./FAQList";
 import { logAnalytics } from "@/lib/analytics";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { homeMotion } from "@/lib/motionConfig";
+import {
+  CONTAINER_EXPAND_MS,
+  EASE_CINEMATIC,
+  EXPANDED_HEADER_REVEAL_MS,
+  EXPAND_TIME_SCALE,
+  GLASS_REVEAL_MS,
+  STAGGER_HEADER_ITEMS_MS,
+  STAGGER_LIST_ITEMS_MS,
+} from "@/motion/expandableSectionMotion";
+import { createExpandableSectionVariants } from "@/motion/createExpandableSectionVariants";
+import { useExpandableSectionTimeline } from "@/motion/useExpandableSectionTimeline";
 import { cn } from "@/lib/utils";
 import { Container, Heading, Text } from "@/components/ui";
 
@@ -137,26 +147,43 @@ const ExperiencePickerRevealSection = ({
   sectionRef,
   onAnchorClick,
 }: ExperiencePickerRevealSectionProps) => {
-  const [pickerExpanded, setPickerExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
   const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const pickerShellRef = useRef<HTMLDivElement | null>(null);
   const headerThemeFrame = useRef<number | null>(null);
+  const {
+    expanded,
+    phase,
+    open,
+    close,
+    onTriggerKeyDown,
+    onEscapeKeyDown,
+    showExpanded,
+    showCollapsed,
+  } = useExpandableSectionTimeline({ defaultExpanded: !enableTitleReveal });
 
-  const revealPicker = !enableTitleReveal || pickerExpanded;
+  const revealPicker = phase === "expanded" || phase === "closingHold";
   const revealPhotoFocus = revealPicker;
   const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealPicker;
+  const parallaxEnabled = enableTitleReveal && !revealPicker && motionEnabled;
   const focusSurfaceTransition =
-    "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const focusFadeTransition =
-    "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const titleColorTransition =
-    "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const pickerReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const pickerRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const pickerCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const pickerLayoutTransition = motionEnabled ? { layout: pickerReveal } : undefined;
+    "transition-[background-color,box-shadow,border-color,backdrop-filter]";
+  const titleColorTransition = "transition-colors";
+  const cinematicBezier = `cubic-bezier(${EASE_CINEMATIC.join(",")})`;
+  const transitionStyle = (durationMs: number) => ({
+    transitionDuration: `${motionEnabled ? Math.round(durationMs * EXPAND_TIME_SCALE) : 0}ms`,
+    transitionTimingFunction: motionEnabled ? cinematicBezier : "linear",
+  });
+  const focusSurfaceStyle = transitionStyle(GLASS_REVEAL_MS);
+  const titleColorStyle = transitionStyle(EXPANDED_HEADER_REVEAL_MS);
+  const pickerLayoutTransition = motionEnabled
+    ? {
+        layout: {
+          duration: (CONTAINER_EXPAND_MS / 1000) * EXPAND_TIME_SCALE,
+          ease: EASE_CINEMATIC,
+        },
+      }
+    : undefined;
   const pickerMinHeight = enableTitleReveal ? "min-h-[calc(720px+16rem)]" : null;
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -168,109 +195,66 @@ const ExperiencePickerRevealSection = ({
     ["0%", parallaxEnabled ? parallaxStrength : "0%"],
   );
   const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
-  const backgroundScale = parallaxEnabled ? 1.32 : 1;
-  const backgroundScaleTransition = revealPicker ? pickerReveal : pickerCollapse;
-
-  const atmosphereStagger = motionEnabled ? 0.12 : 0;
-  const contentStagger = motionEnabled ? 0.12 : 0;
-  const listStagger = motionEnabled ? 0.25 : 0;
-  const atmosphereDelay = motionEnabled ? 0.05 : 0;
-  const headerDelay = motionEnabled ? 0.24 : 0;
-  const bodyDelay = motionEnabled ? 0.56 : 0;
-  const listDelay = motionEnabled ? 0.12 : 0;
-  const bodyChildDelay = motionEnabled ? 0.12 : 0;
-  const lastCardOffset = listStagger * Math.max(items.length - 1, 0);
-  const faqHeadingDelay = motionEnabled
-    ? bodyDelay + bodyChildDelay + listDelay + lastCardOffset + 0.15
-    : 0;
-  const faqListDelay = motionEnabled ? faqHeadingDelay + 0.15 : 0;
-
-  const atmosphereContainer = {
-    hidden: {},
-    show: {
-      transition: {
-        delayChildren: atmosphereDelay,
-        staggerChildren: atmosphereStagger,
-      },
+  const toSeconds = (ms: number) => ms / 1000;
+  const staggerTransition = (staggerMs: number, direction?: 1 | -1) => ({
+    transition: {
+      staggerChildren: motionEnabled ? toSeconds(staggerMs) : 0,
+      staggerDirection: direction,
     },
-  } as const;
-
-  const atmosphereLayer = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { duration: 1.2, ease: homeMotion.cinematicEase },
-    },
-  } as const;
-
-  const atmosphereBackground = {
-    hidden: { opacity: 0, scale: backgroundScale * 1.04 },
-    show: {
-      opacity: 1,
-      scale: backgroundScale,
-      transition: {
-        opacity: { duration: 1.3, ease: homeMotion.cinematicEase },
-        scale: backgroundScaleTransition,
-      },
-    },
-  } as const;
-
-  const headerContainer = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        delay: headerDelay,
-        delayChildren: motionEnabled ? 0.08 : 0,
-        staggerChildren: contentStagger,
-      },
-    },
-    exit: { opacity: 0, transition: pickerRevealFast },
-  } as const;
-
+  });
   const headerGroup = {
-    hidden: {},
-    show: { transition: { staggerChildren: contentStagger } },
+    collapsed: staggerTransition(STAGGER_HEADER_ITEMS_MS, -1),
+    prezoom: staggerTransition(STAGGER_HEADER_ITEMS_MS),
+    expanded: staggerTransition(STAGGER_HEADER_ITEMS_MS),
+    closingHold: staggerTransition(STAGGER_HEADER_ITEMS_MS, -1),
   } as const;
-
-  const headerItem = {
-    hidden: { opacity: 0, y: 12, filter: "blur(8px)" },
-    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: pickerRevealFast },
+  const itemsGroup = {
+    collapsed: staggerTransition(STAGGER_LIST_ITEMS_MS, -1),
+    prezoom: staggerTransition(STAGGER_LIST_ITEMS_MS),
+    expanded: staggerTransition(STAGGER_LIST_ITEMS_MS),
+    closingHold: staggerTransition(STAGGER_LIST_ITEMS_MS, -1),
   } as const;
-
-  const bodyItem = {
-    hidden: { opacity: 0, y: 10 },
-    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
+  const slotVariants = createExpandableSectionVariants({
+    motionMode: motionEnabled ? "full" : "reduced",
+    backgroundScale: { collapsed: 1.32, prezoom: 1.12, expanded: 1 },
+    itemOffsetY: 12,
+    blurPx: 8,
+    glassScale: 0.985,
+  });
+  const surfaceVariants = createExpandableSectionVariants({
+    motionMode: motionEnabled ? "full" : "reduced",
+    itemOffsetY: 12,
+    blurPx: 0,
+    glassScale: 0.985,
+  });
+  const scrimInverted = {
+    collapsed: slotVariants.scrimTop.expanded,
+    prezoom: slotVariants.scrimTop.expanded,
+    expanded: slotVariants.scrimTop.collapsed,
+    closingHold: slotVariants.scrimTop.collapsed,
   } as const;
-
-  const bodyContainer = {
-    hidden: {},
-    show: {
-      transition: {
-        delay: bodyDelay,
-        delayChildren: bodyChildDelay,
-        staggerChildren: contentStagger,
-      },
-    },
-    exit: { opacity: 0, y: -12, transition: pickerCollapse },
+  const slotContext = {
+    collapsed: {},
+    prezoom: {},
+    expanded: {},
+    closingHold: {},
   } as const;
-
-  const cardsContainer = {
-    hidden: {},
-    show: {
-      transition: {
-        delayChildren: listDelay,
-        staggerChildren: listStagger,
-      },
-    },
-  } as const;
+  const headerItem = slotVariants.expandedHeader;
+  const collapsedHeaderItem = slotVariants.collapsedHeader;
+  const bodyItem = slotVariants.content;
+  const ctaItem = slotVariants.ctaRow;
+  const surfaceItem = surfaceVariants.content;
+  const glassStyle = {
+    ...(enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : {}),
+    ...focusSurfaceStyle,
+  };
 
   const handlePickerExpand = () => {
     if (!enableTitleReveal) return;
     if (headerThemeFrame.current !== null) {
       cancelAnimationFrame(headerThemeFrame.current);
     }
-    setPickerExpanded(true);
+    open();
     headerThemeFrame.current = requestAnimationFrame(() => {
       setHeaderThemeReady(true);
       headerThemeFrame.current = null;
@@ -284,7 +268,7 @@ const ExperiencePickerRevealSection = ({
       headerThemeFrame.current = null;
     }
     setHeaderThemeReady(false);
-    setPickerExpanded(false);
+    close();
   };
 
   useEffect(() => {
@@ -324,69 +308,42 @@ const ExperiencePickerRevealSection = ({
   }, []);
 
   return (
-    <>
-      <motion.div
-        className="absolute inset-0 -z-10 overflow-hidden"
-        variants={atmosphereContainer}
-        initial={motionEnabled ? "hidden" : false}
-        animate={motionEnabled ? "show" : undefined}
-      >
-        <motion.div
-          className="absolute inset-0 will-change-transform"
-          style={parallaxStyle}
-          variants={atmosphereBackground}
-        >
-          <Image
-            src={background.url}
-            alt={background.alt ?? "Perazzi experience background"}
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority={false}
-          />
+    <motion.div
+      variants={slotContext}
+      initial={motionEnabled ? "collapsed" : false}
+      animate={phase}
+    >
+      <motion.div className="absolute inset-0 -z-10 overflow-hidden">
+        <motion.div className="absolute inset-0" variants={slotVariants.background}>
+          <motion.div className="absolute inset-0 will-change-transform" style={parallaxStyle}>
+            <Image
+              src={background.url}
+              alt={background.alt ?? "Perazzi experience background"}
+              fill
+              sizes="100vw"
+              className="object-cover"
+              priority={false}
+            />
+          </motion.div>
         </motion.div>
-        <motion.div className="absolute inset-0" variants={atmosphereLayer} aria-hidden>
-          <div
-            className={cn(
-              "absolute inset-0 bg-(--scrim-strong)",
-              focusFadeTransition,
-              revealPicker ? "opacity-0" : "opacity-100",
-            )}
-          />
+        <motion.div className="absolute inset-0" variants={scrimInverted}>
+          <div className="absolute inset-0 bg-(--scrim-strong)" aria-hidden />
         </motion.div>
-        <motion.div className="absolute inset-0" variants={atmosphereLayer} aria-hidden>
-          <div
-            className={cn(
-              "absolute inset-0 bg-(--scrim-strong)",
-              focusFadeTransition,
-              revealPhotoFocus ? "opacity-100" : "opacity-0",
-            )}
-          />
+        <motion.div className="absolute inset-0" variants={slotVariants.scrimBottom}>
+          <div className="absolute inset-0 bg-(--scrim-strong)" aria-hidden />
         </motion.div>
-        <motion.div className="absolute inset-0" variants={atmosphereLayer} aria-hidden>
-          <div
-            className={cn(
-              "pointer-events-none absolute inset-0 film-grain",
-              focusFadeTransition,
-              revealPhotoFocus ? "opacity-20" : "opacity-0",
-            )}
-          />
+        <motion.div className="absolute inset-0" variants={slotVariants.scrimBottom}>
+          <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
         </motion.div>
-        <motion.div className="absolute inset-0" variants={atmosphereLayer} aria-hidden>
-          <div
-            className={cn(
-              "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-              focusFadeTransition,
-              revealPhotoFocus ? "opacity-100" : "opacity-0",
-            )}
-          />
+        <motion.div className="absolute inset-0" variants={slotVariants.scrimBottom}>
+          <div className="pointer-events-none absolute inset-0 overlay-gradient-canvas" aria-hidden />
         </motion.div>
       </motion.div>
 
       <Container size="xl" className="relative z-10">
         <motion.div
           ref={pickerShellRef}
-          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
+          style={glassStyle}
           className={cn(
             "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
             focusSurfaceTransition,
@@ -395,164 +352,160 @@ const ExperiencePickerRevealSection = ({
               : "border-transparent bg-transparent shadow-none backdrop-blur-none",
             pickerMinHeight,
           )}
+          variants={slotVariants.glass}
+          onKeyDown={onEscapeKeyDown}
         >
           <LayoutGroup id="experience-picker-title">
-            <AnimatePresence initial={false}>
-              {revealPicker ? (
-                <motion.div
-                  key="experience-picker-header"
-                  className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
-                  variants={headerContainer}
-                  initial={motionEnabled ? "hidden" : false}
-                  animate={motionEnabled ? "show" : undefined}
-                  exit={motionEnabled ? "exit" : undefined}
-                >
-                  <motion.div
-                    className="space-y-3"
-                    variants={headerGroup}
-                  >
+            {showExpanded ? (
+              <motion.div
+                key="experience-picker-header"
+                className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
+                variants={slotContext}
+                initial={motionEnabled ? "collapsed" : false}
+                animate={phase}
+              >
+                <motion.div className="space-y-3" variants={headerGroup}>
+                  <motion.div variants={headerItem}>
                     <motion.div
-                      variants={headerItem}
+                      layoutId="experience-picker-title"
+                      layoutCrossfade={false}
+                      transition={pickerLayoutTransition}
+                      className="relative"
                     >
-                      <motion.div
-                        layoutId="experience-picker-title"
-                        layoutCrossfade={false}
-                        transition={pickerLayoutTransition}
-                        className="relative"
+                      <Heading
+                        id="experience-picker-heading"
+                        level={2}
+                        size="xl"
+                        className={cn(
+                          titleColorTransition,
+                          headerThemeReady ? "text-ink" : "text-white",
+                        )}
+                        style={titleColorStyle}
                       >
-                        <Heading
-                          id="experience-picker-heading"
-                          level={2}
-                          size="xl"
-                          className={cn(
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink" : "text-white",
-                          )}
-                        >
-                          {heading}
-                        </Heading>
-                      </motion.div>
-                    </motion.div>
-                    <motion.div
-                      variants={headerItem}
-                    >
-                      <motion.div
-                        layoutId="experience-picker-subtitle"
-                        layoutCrossfade={false}
-                        transition={pickerLayoutTransition}
-                        className="relative"
-                      >
-                        <Text
-                          size="lg"
-                          className={cn(
-                            "type-section-subtitle",
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink-muted" : "text-white",
-                          )}
-                        >
-                          {subheading}
-                        </Text>
-                      </motion.div>
+                        {heading}
+                      </Heading>
                     </motion.div>
                   </motion.div>
-                  {enableTitleReveal ? (
-                    <motion.button
-                      type="button"
-                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                      onClick={handlePickerCollapse}
-                      variants={bodyItem}
+                  <motion.div variants={headerItem}>
+                    <motion.div
+                      layoutId="experience-picker-subtitle"
+                      layoutCrossfade={false}
+                      transition={pickerLayoutTransition}
+                      className="relative"
                     >
-                      Collapse
-                    </motion.button>
-                  ) : null}
+                      <Text
+                        size="lg"
+                        className={cn(
+                          "type-section-subtitle",
+                          titleColorTransition,
+                          headerThemeReady ? "text-ink-muted" : "text-white",
+                        )}
+                        style={titleColorStyle}
+                      >
+                        {subheading}
+                      </Text>
+                    </motion.div>
+                  </motion.div>
                 </motion.div>
-              ) : (
-                <motion.div
-                  key="experience-picker-collapsed"
-                  className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  variants={headerContainer}
-                  initial={motionEnabled ? "hidden" : false}
-                  animate={motionEnabled ? "show" : undefined}
-                  exit={motionEnabled ? "exit" : undefined}
-                >
-                  <motion.div className="flex flex-col items-center gap-3" variants={headerGroup}>
-                    <motion.div
-                      variants={headerItem}
-                    >
-                      <motion.div
-                        layoutId="experience-picker-title"
-                        layoutCrossfade={false}
-                        transition={pickerLayoutTransition}
-                        className="relative inline-flex text-white"
+                {enableTitleReveal ? (
+                  <motion.button
+                    type="button"
+                    className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
+                    onClick={handlePickerCollapse}
+                    variants={surfaceItem}
+                  >
+                    Collapse
+                  </motion.button>
+                ) : null}
+              </motion.div>
+            ) : null}
+            {showCollapsed ? (
+              <motion.div
+                key="experience-picker-collapsed"
+                className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
+                variants={slotContext}
+                initial={motionEnabled ? "collapsed" : false}
+                animate={phase}
+              >
+                <motion.div variants={headerGroup} className="flex flex-col items-center gap-3">
+                  <motion.div
+                    layoutId="experience-picker-title"
+                    layoutCrossfade={false}
+                    transition={pickerLayoutTransition}
+                    className="relative inline-flex text-white"
+                  >
+                    <motion.div variants={collapsedHeaderItem}>
+                      <Heading
+                        id="experience-picker-heading"
+                        level={2}
+                        size="xl"
+                        className="type-section-collapsed"
                       >
-                        <Heading
-                          id="experience-picker-heading"
-                          level={2}
-                          size="xl"
-                          className="type-section-collapsed"
-                        >
-                          {heading}
-                        </Heading>
-                        <button
-                          type="button"
-                          className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                          onPointerEnter={handlePickerExpand}
-                          onFocus={handlePickerExpand}
-                          onClick={handlePickerExpand}
-                          aria-expanded={revealPicker}
-                          aria-controls="experience-picker-body"
-                          aria-labelledby="experience-picker-heading"
-                        >
-                          <span className="sr-only">Expand {heading}</span>
-                        </button>
-                      </motion.div>
+                        {heading}
+                      </Heading>
                     </motion.div>
-                    <motion.div
-                      variants={headerItem}
+                    <button
+                      type="button"
+                      className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                      onPointerEnter={handlePickerExpand}
+                      onFocus={handlePickerExpand}
+                      onClick={handlePickerExpand}
+                      onKeyDown={onTriggerKeyDown}
+                      aria-expanded={expanded}
+                      aria-controls="experience-picker-body"
+                      aria-labelledby="experience-picker-heading"
                     >
-                      <motion.div
-                        layoutId="experience-picker-subtitle"
-                        layoutCrossfade={false}
-                        transition={pickerLayoutTransition}
-                        className="relative text-white"
-                      >
-                        <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                          {subheading}
-                        </Text>
-                      </motion.div>
-                    </motion.div>
+                      <span className="sr-only">Expand {heading}</span>
+                    </button>
                   </motion.div>
                   <motion.div
-                    variants={bodyItem}
-                    className="mt-3"
+                    layoutId="experience-picker-subtitle"
+                    layoutCrossfade={false}
+                    transition={pickerLayoutTransition}
+                    className="relative text-white"
                   >
+                    <motion.div variants={collapsedHeaderItem}>
+                      <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+                        {subheading}
+                      </Text>
+                    </motion.div>
+                  </motion.div>
+                </motion.div>
+                <motion.div variants={itemsGroup} className="mt-3">
+                  <motion.div variants={ctaItem}>
                     <Text
                       size="button"
                       className="text-white/80 cursor-pointer focus-ring"
                       asChild
                     >
-                      <button type="button" onClick={handlePickerExpand}>
+                      <button type="button" onClick={handlePickerExpand} onKeyDown={onTriggerKeyDown}>
                         Read more
                       </button>
                     </Text>
                   </motion.div>
                 </motion.div>
-              )}
-            </AnimatePresence>
+              </motion.div>
+            ) : null}
           </LayoutGroup>
 
-          <AnimatePresence initial={false}>
-            {revealPicker ? (
+          <motion.div
+            variants={slotContext}
+            initial={motionEnabled ? "collapsed" : false}
+            animate={phase}
+          >
+            {showExpanded ? (
               <motion.div
                 key="experience-picker-body"
                 id="experience-picker-body"
                 className="space-y-6"
-                variants={bodyContainer}
-                initial={motionEnabled ? "hidden" : false}
-                animate={motionEnabled ? "show" : undefined}
-                exit={motionEnabled ? "exit" : undefined}
+                variants={slotContext}
+                initial={motionEnabled ? "collapsed" : false}
+                animate={phase}
               >
-                <motion.div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:items-start" variants={cardsContainer}>
+                <motion.div
+                  className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:items-start"
+                  variants={itemsGroup}
+                >
                   {items.map((item) => (
                     <ExperiencePickerCard
                       key={item.id}
@@ -560,11 +513,12 @@ const ExperiencePickerRevealSection = ({
                       onAnchorClick={onAnchorClick}
                       microLabel={microLabel}
                       reducedMotion={!motionEnabled}
+                      variants={surfaceItem}
                     />
                   ))}
                 </motion.div>
                 {faqItems.length ? (
-                  <div className="pt-4">
+                  <motion.div className="pt-4" variants={bodyItem}>
                     <FAQList
                       items={faqItems}
                       embedded
@@ -574,21 +528,21 @@ const ExperiencePickerRevealSection = ({
                         motionEnabled
                           ? {
                               mode: "parent",
-                              headingDelay: faqHeadingDelay,
-                              listDelay: faqListDelay,
-                              itemStagger: 0.15,
+                              headingVariant: bodyItem,
+                              listVariant: itemsGroup,
+                              itemVariant: surfaceItem,
                             }
                           : undefined
                       }
                     />
-                  </div>
+                  </motion.div>
                 ) : null}
               </motion.div>
             ) : null}
-          </AnimatePresence>
+          </motion.div>
         </motion.div>
       </Container>
-    </>
+    </motion.div>
   );
 };
 
@@ -596,6 +550,7 @@ type ExperiencePickerCardProps = Readonly<{
   readonly item: PickerItem;
   readonly microLabel: string;
   readonly reducedMotion: boolean;
+  readonly variants?: Variants;
   readonly onAnchorClick?: (
     event: MouseEvent<HTMLAnchorElement>,
     href: string,
@@ -603,21 +558,17 @@ type ExperiencePickerCardProps = Readonly<{
   ) => void;
 }>;
 
-const pickerCardVariants = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
-} as const;
-
 function ExperiencePickerCard({
   item,
   microLabel,
   reducedMotion,
+  variants,
   onAnchorClick,
 }: ExperiencePickerCardProps) {
   return (
     <motion.article
       className="h-full"
-      variants={reducedMotion ? undefined : pickerCardVariants}
+      variants={reducedMotion ? undefined : variants}
     >
       <Link
         href={item.href}
