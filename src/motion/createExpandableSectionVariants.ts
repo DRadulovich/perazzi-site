@@ -106,12 +106,12 @@ export function createExpandableSectionVariants(
   if (itemOffsetY) visibleItem.y = 0;
   if (blurPx) visibleItem.filter = "blur(0px)";
 
-  const hiddenGlass: Record<string, number | string> = {
-    ...hiddenItem,
+  const collapsedGlass: Record<string, number | string> = {
+    opacity: 1,
     scale: glassScale,
   };
-  const visibleGlass: Record<string, number | string> = {
-    ...visibleItem,
+  const expandedGlass: Record<string, number | string> = {
+    opacity: 1,
     scale: 1,
   };
 
@@ -207,19 +207,19 @@ export function createExpandableSectionVariants(
     },
     glass: {
       collapsed: {
-        ...hiddenGlass,
+        ...collapsedGlass,
         transition: collapseTransition(GLASS_REVEAL_MS),
       },
       prezoom: {
-        ...hiddenGlass,
+        ...collapsedGlass,
         transition: expandTransition(GLASS_REVEAL_MS),
       },
       expanded: {
-        ...visibleGlass,
+        ...expandedGlass,
         transition: expandTransition(GLASS_REVEAL_MS),
       },
       closingHold: {
-        ...hiddenGlass,
+        ...collapsedGlass,
         transition: collapseTransition(GLASS_REVEAL_MS),
       },
     },
