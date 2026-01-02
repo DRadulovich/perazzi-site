@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type RefObject } from "react";
 import Image from "next/image";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import type { VisitFactoryData } from "@/types/experience";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -10,7 +10,18 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 import SafeHtml from "@/components/SafeHtml";
-import { homeMotion } from "@/lib/motionConfig";
+import {
+  CONTAINER_EXPAND_MS,
+  EASE_CINEMATIC,
+  EXPANDED_HEADER_REVEAL_MS,
+  EXPAND_TIME_SCALE,
+  GLASS_REVEAL_MS,
+  STAGGER_BODY_ITEMS_MS,
+  STAGGER_HEADER_ITEMS_MS,
+  STAGGER_LIST_ITEMS_MS,
+} from "@/motion/expandableSectionMotion";
+import { createExpandableSectionVariants } from "@/motion/createExpandableSectionVariants";
+import { useExpandableSectionTimeline } from "@/motion/useExpandableSectionTimeline";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, Container, Heading, Text } from "@/components/ui";
 
 type VisitFactoryProps = {
@@ -74,12 +85,21 @@ const VisitFactoryRevealSection = ({
   motionEnabled,
   sectionRef,
 }: VisitFactoryRevealSectionProps) => {
-  const [visitExpanded, setVisitExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
   const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const [expectOpen, setExpectOpen] = useState(false);
   const visitShellRef = useRef<HTMLDivElement | null>(null);
   const headerThemeFrame = useRef<number | null>(null);
+  const {
+    expanded,
+    phase,
+    open,
+    close,
+    onTriggerKeyDown,
+    onEscapeKeyDown,
+    showExpanded,
+    showCollapsed,
+  } = useExpandableSectionTimeline({ defaultExpanded: !enableTitleReveal });
 
   const mapPanelId = "visit-map-panel";
   const mapNoteId = "visit-map-note";
@@ -87,18 +107,28 @@ const VisitFactoryRevealSection = ({
     visit.location.mapLinkHref ??
     `https://maps.google.com/?q=${encodeURIComponent(visit.location.name)}`;
 
-  const revealVisit = !enableTitleReveal || visitExpanded;
+  const revealVisit = phase === "expanded" || phase === "closingHold";
   const revealPhotoFocus = revealVisit;
   const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealVisit;
+  const parallaxEnabled = enableTitleReveal && !revealVisit && motionEnabled;
   const focusSurfaceTransition =
-    "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const titleColorTransition =
-    "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const visitReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const visitRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const visitCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const visitLayoutTransition = motionEnabled ? { layout: visitReveal } : undefined;
+    "transition-[background-color,box-shadow,border-color,backdrop-filter]";
+  const titleColorTransition = "transition-colors";
+  const cinematicBezier = `cubic-bezier(${EASE_CINEMATIC.join(",")})`;
+  const transitionStyle = (durationMs: number) => ({
+    transitionDuration: `${motionEnabled ? Math.round(durationMs * EXPAND_TIME_SCALE) : 0}ms`,
+    transitionTimingFunction: motionEnabled ? cinematicBezier : "linear",
+  });
+  const focusSurfaceStyle = transitionStyle(GLASS_REVEAL_MS);
+  const titleColorStyle = transitionStyle(EXPANDED_HEADER_REVEAL_MS);
+  const visitLayoutTransition = motionEnabled
+    ? {
+        layout: {
+          duration: (CONTAINER_EXPAND_MS / 1000) * EXPAND_TIME_SCALE,
+          ease: EASE_CINEMATIC,
+        },
+      }
+    : undefined;
   const visitMinHeight = enableTitleReveal ? "min-h-[calc(640px+16rem)]" : null;
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -110,143 +140,67 @@ const VisitFactoryRevealSection = ({
     ["0%", parallaxEnabled ? parallaxStrength : "0%"],
   );
   const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
-  const backgroundScale = parallaxEnabled ? 1.32 : 1;
-  const backgroundScaleTransition = revealVisit ? visitReveal : visitCollapse;
-
-  const atmosphereStagger = motionEnabled ? 0.12 : 0;
-  const contentStagger = motionEnabled ? 0.12 : 0;
-  const listStagger = motionEnabled ? 0.12 : 0;
-
-  const atmosphereDelay = motionEnabled ? 0.05 : 0;
-  const headerDelay = motionEnabled ? (enableTitleReveal && revealVisit ? 0.12 : 0.22) : 0;
-  const bodyDelay = motionEnabled ? (enableTitleReveal ? 0.24 : 0.32) : 0;
-  const listDelay = motionEnabled ? 0.1 : 0;
-  const scrimFocusDelay = motionEnabled ? atmosphereStagger * 2 : 0;
-  const scrimFadeDelay = motionEnabled ? atmosphereStagger * 3 : 0;
-
-  const atmosphereState = revealPhotoFocus ? "focus" : "collapsed";
-
-  const atmosphereContainer = {
-    hidden: {},
-    collapsed: {
-      transition: {
-        delayChildren: atmosphereDelay,
-        staggerChildren: atmosphereStagger,
-      },
+  const toSeconds = (ms: number) => ms / 1000;
+  const staggerTransition = (staggerMs: number, direction?: 1 | -1) => ({
+    transition: {
+      staggerChildren: motionEnabled ? toSeconds(staggerMs) : 0,
+      staggerDirection: direction,
     },
-    focus: {
-      transition: {
-        delayChildren: atmosphereDelay,
-        staggerChildren: atmosphereStagger,
-      },
-    },
-  } as const;
-
-  type AtmosphereLayerCustom = {
-    collapsed: number;
-    focus: number;
-    collapsedDelay?: number;
-    focusDelay?: number;
-  };
-
-  const atmosphereLayer = {
-    hidden: { opacity: 0 },
-    collapsed: ({ collapsed, collapsedDelay }: AtmosphereLayerCustom) => ({
-      opacity: collapsed,
-      transition: { duration: 1.2, ease: homeMotion.cinematicEase, delay: collapsedDelay ?? 0 },
-    }),
-    focus: ({ focus, focusDelay }: AtmosphereLayerCustom) => ({
-      opacity: focus,
-      transition: { duration: 1.2, ease: homeMotion.cinematicEase, delay: focusDelay ?? 0 },
-    }),
-  } as const;
-
-  const atmosphereBackground = {
-    hidden: { opacity: 0, scale: backgroundScale * 1.04 },
-    collapsed: {
-      opacity: 1,
-      scale: backgroundScale,
-      transition: {
-        opacity: { duration: 1.3, ease: homeMotion.cinematicEase },
-        scale: backgroundScaleTransition,
-      },
-    },
-    focus: {
-      opacity: 1,
-      scale: backgroundScale,
-      transition: {
-        opacity: { duration: 1.3, ease: homeMotion.cinematicEase },
-        scale: backgroundScaleTransition,
-      },
-    },
-  } as const;
-
-  const headerContainer = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        delay: headerDelay,
-        duration: visitRevealFast.duration,
-        ease: visitRevealFast.ease,
-        delayChildren: motionEnabled ? 0.08 : 0,
-        staggerChildren: contentStagger,
-      },
-    },
-    exit: { opacity: 0, transition: visitRevealFast },
-  } as const;
-
+  });
   const headerGroup = {
-    hidden: {},
-    show: { transition: { staggerChildren: contentStagger } },
+    collapsed: staggerTransition(STAGGER_HEADER_ITEMS_MS, -1),
+    prezoom: staggerTransition(STAGGER_HEADER_ITEMS_MS),
+    expanded: staggerTransition(STAGGER_HEADER_ITEMS_MS),
+    closingHold: staggerTransition(STAGGER_HEADER_ITEMS_MS, -1),
   } as const;
-
-  const headerItem = {
-    hidden: { opacity: 0, y: 12, filter: "blur(8px)" },
-    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: visitRevealFast },
+  const bodyGroup = {
+    collapsed: staggerTransition(STAGGER_BODY_ITEMS_MS, -1),
+    prezoom: staggerTransition(STAGGER_BODY_ITEMS_MS),
+    expanded: staggerTransition(STAGGER_BODY_ITEMS_MS),
+    closingHold: staggerTransition(STAGGER_BODY_ITEMS_MS, -1),
   } as const;
-
-  const bodyItem = {
-    hidden: { opacity: 0, y: 10 },
-    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
+  const itemsGroup = {
+    collapsed: staggerTransition(STAGGER_LIST_ITEMS_MS, -1),
+    prezoom: staggerTransition(STAGGER_LIST_ITEMS_MS),
+    expanded: staggerTransition(STAGGER_LIST_ITEMS_MS),
+    closingHold: staggerTransition(STAGGER_LIST_ITEMS_MS, -1),
   } as const;
-
-  const bodyContainer = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        delay: bodyDelay,
-        duration: visitRevealFast.duration,
-        ease: visitRevealFast.ease,
-        delayChildren: motionEnabled ? 0.12 : 0,
-        staggerChildren: contentStagger,
-      },
-    },
-    exit: { opacity: 0, y: -12, transition: visitCollapse },
+  const slotVariants = createExpandableSectionVariants({
+    motionMode: motionEnabled ? "full" : "reduced",
+    scrimMode: "dualFocusFade",
+    backgroundScale: { collapsed: 1.32, prezoom: 1.12, expanded: 1 },
+    itemOffsetY: 12,
+    blurPx: 8,
+    glassScale: 0.985,
+  });
+  const surfaceVariants = createExpandableSectionVariants({
+    motionMode: motionEnabled ? "full" : "reduced",
+    scrimMode: "dualFocusFade",
+    itemOffsetY: 12,
+    blurPx: 0,
+    glassScale: 0.985,
+  });
+  const slotContext = {
+    collapsed: {},
+    prezoom: {},
+    expanded: {},
+    closingHold: {},
   } as const;
-
-  const detailsContainer = {
-    hidden: {},
-    show: {
-      transition: {
-        delayChildren: listDelay,
-        staggerChildren: listStagger,
-      },
-    },
-  } as const;
-
-  const detailsItem = {
-    hidden: { opacity: 0, y: 14 },
-    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
-  } as const;
+  const headerItem = slotVariants.expandedHeader;
+  const collapsedHeaderItem = slotVariants.collapsedHeader;
+  const bodyItem = slotVariants.content;
+  const surfaceItem = surfaceVariants.content;
+  const glassStyle = {
+    ...(enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : {}),
+    ...focusSurfaceStyle,
+  };
 
   const handleVisitExpand = () => {
     if (!enableTitleReveal) return;
     if (headerThemeFrame.current !== null) {
       cancelAnimationFrame(headerThemeFrame.current);
     }
-    setVisitExpanded(true);
+    open();
     headerThemeFrame.current = requestAnimationFrame(() => {
       setHeaderThemeReady(true);
       headerThemeFrame.current = null;
@@ -260,7 +214,7 @@ const VisitFactoryRevealSection = ({
       headerThemeFrame.current = null;
     }
     setHeaderThemeReady(false);
-    setVisitExpanded(false);
+    close();
   };
 
   useEffect(() => {
@@ -300,62 +254,43 @@ const VisitFactoryRevealSection = ({
   }, []);
 
   return (
-    <>
-      <motion.div
-        className="absolute inset-0 -z-10 overflow-hidden"
-        variants={atmosphereContainer}
-        initial={motionEnabled ? "hidden" : false}
-        animate={motionEnabled ? atmosphereState : undefined}
-      >
-        <motion.div
-          className="absolute inset-0 will-change-transform"
-          style={parallaxStyle}
-          variants={atmosphereBackground}
-        >
-          <Image
-            src={background.url}
-            alt={background.alt ?? "Perazzi Botticino factory background"}
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority={false}
-            loading="lazy"
-          />
+    <motion.div
+      variants={slotContext}
+      initial={motionEnabled ? "collapsed" : false}
+      animate={phase}
+    >
+      <motion.div className="absolute inset-0 -z-10 overflow-hidden">
+        <motion.div className="absolute inset-0" variants={slotVariants.background}>
+          <motion.div className="absolute inset-0 will-change-transform" style={parallaxStyle}>
+            <Image
+              src={background.url}
+              alt={background.alt ?? "Perazzi Botticino factory background"}
+              fill
+              sizes="100vw"
+              className="object-cover"
+              priority={false}
+              loading="lazy"
+            />
+          </motion.div>
         </motion.div>
-        <motion.div
-          className="absolute inset-0 bg-(--scrim-strong)"
-          variants={motionEnabled ? atmosphereLayer : undefined}
-          custom={motionEnabled ? { collapsed: 1, focus: 0, focusDelay: scrimFadeDelay } : undefined}
-          style={motionEnabled ? undefined : { opacity: revealVisit ? 0 : 1 }}
-          aria-hidden
-        />
-        <motion.div
-          className="absolute inset-0 bg-(--scrim-strong)"
-          variants={motionEnabled ? atmosphereLayer : undefined}
-          custom={motionEnabled ? { collapsed: 0, focus: 1, focusDelay: scrimFocusDelay } : undefined}
-          style={motionEnabled ? undefined : { opacity: revealPhotoFocus ? 1 : 0 }}
-          aria-hidden
-        />
-        <motion.div
-          className="pointer-events-none absolute inset-0 film-grain"
-          variants={motionEnabled ? atmosphereLayer : undefined}
-          custom={motionEnabled ? { collapsed: 0, focus: 0.2 } : undefined}
-          style={motionEnabled ? undefined : { opacity: revealPhotoFocus ? 0.2 : 0 }}
-          aria-hidden="true"
-        />
-        <motion.div
-          className="pointer-events-none absolute inset-0 overlay-gradient-canvas"
-          variants={motionEnabled ? atmosphereLayer : undefined}
-          custom={motionEnabled ? { collapsed: 0, focus: 1 } : undefined}
-          style={motionEnabled ? undefined : { opacity: revealPhotoFocus ? 1 : 0 }}
-          aria-hidden
-        />
+        <motion.div className="absolute inset-0" variants={slotVariants.scrimTop}>
+          <div className="absolute inset-0 bg-(--scrim-strong)" aria-hidden />
+        </motion.div>
+        <motion.div className="absolute inset-0" variants={slotVariants.scrimBottom}>
+          <div className="absolute inset-0 bg-(--scrim-strong)" aria-hidden />
+        </motion.div>
+        <motion.div className="absolute inset-0 pointer-events-none" variants={slotVariants.scrimBottom}>
+          <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
+        </motion.div>
+        <motion.div className="absolute inset-0 pointer-events-none" variants={slotVariants.scrimBottom}>
+          <div className="pointer-events-none absolute inset-0 overlay-gradient-canvas" aria-hidden />
+        </motion.div>
       </motion.div>
 
       <Container size="xl" className="relative z-10">
         <motion.div
           ref={visitShellRef}
-          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
+          style={glassStyle}
           className={cn(
             "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
             focusSurfaceTransition,
@@ -364,167 +299,172 @@ const VisitFactoryRevealSection = ({
               : "border-transparent bg-transparent shadow-none backdrop-blur-none",
             visitMinHeight,
           )}
+          variants={slotVariants.glass}
+          onKeyDown={onEscapeKeyDown}
         >
           <LayoutGroup id="visit-factory-title">
-            <AnimatePresence initial={false}>
-              {revealVisit ? (
-                <motion.div
-                  key="visit-factory-header"
-                  className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
-                  variants={headerContainer}
-                  initial={motionEnabled ? "hidden" : false}
-                  animate={motionEnabled ? "show" : undefined}
-                  exit={motionEnabled ? "exit" : undefined}
-                >
+            {showExpanded ? (
+              <motion.div
+                key="visit-factory-header"
+                className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
+                variants={slotContext}
+                initial={motionEnabled ? "collapsed" : false}
+                animate={phase}
+              >
+                <motion.div className="space-y-3" variants={headerGroup}>
                   <motion.div
-                    className="space-y-3"
-                    variants={headerGroup}
+                    layoutId="visit-factory-title"
+                    layoutCrossfade={false}
+                    transition={visitLayoutTransition}
+                    className="relative"
                   >
                     <motion.div variants={headerItem}>
-                      <motion.div
-                        layoutId="visit-factory-title"
-                        layoutCrossfade={false}
-                        transition={visitLayoutTransition}
-                        className="relative"
+                      <Heading
+                        id="visit-factory-heading"
+                        level={2}
+                        size="xl"
+                        className={cn(
+                          titleColorTransition,
+                          headerThemeReady ? "text-ink" : "text-white",
+                        )}
+                        style={titleColorStyle}
                       >
-                        <Heading
-                          id="visit-factory-heading"
-                          level={2}
-                          size="xl"
-                          className={cn(
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink" : "text-white",
-                          )}
-                        >
-                          {heading}
-                        </Heading>
-                      </motion.div>
+                        {heading}
+                      </Heading>
                     </motion.div>
-                    <motion.div variants={headerItem}>
-                      <motion.div
-                        layoutId="visit-factory-subtitle"
-                        layoutCrossfade={false}
-                        transition={visitLayoutTransition}
-                        className="relative"
-                      >
-                        <Text
-                          size="lg"
-                          className={cn(
-                            "type-section-subtitle",
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink-muted" : "text-white",
-                          )}
-                        >
-                          {subheading}
-                        </Text>
-                      </motion.div>
-                    </motion.div>
-                    {visit.introHtml ? (
-                      <motion.div variants={headerItem}>
-                        <SafeHtml
-                          className="prose-journal max-w-none text-ink-muted md:max-w-4xl lg:max-w-4xl"
-                          html={visit.introHtml}
-                        />
-                      </motion.div>
-                    ) : null}
                   </motion.div>
-                  {enableTitleReveal ? (
-                    <motion.button
+                  <motion.div
+                    layoutId="visit-factory-subtitle"
+                    layoutCrossfade={false}
+                    transition={visitLayoutTransition}
+                    className="relative"
+                  >
+                    <motion.div variants={headerItem}>
+                      <Text
+                        size="lg"
+                        className={cn(
+                          "type-section-subtitle",
+                          titleColorTransition,
+                          headerThemeReady ? "text-ink-muted" : "text-white",
+                        )}
+                        style={titleColorStyle}
+                      >
+                        {subheading}
+                      </Text>
+                    </motion.div>
+                  </motion.div>
+                  {visit.introHtml ? (
+                    <motion.div variants={headerItem}>
+                      <SafeHtml
+                        className="prose-journal max-w-none text-ink-muted md:max-w-4xl lg:max-w-4xl"
+                        html={visit.introHtml}
+                      />
+                    </motion.div>
+                  ) : null}
+                </motion.div>
+                {enableTitleReveal ? (
+                  <motion.div variants={surfaceItem}>
+                    <button
                       type="button"
                       className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
                       onClick={handleVisitCollapse}
-                      variants={bodyItem}
                     >
                       Collapse
-                    </motion.button>
-                  ) : null}
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="visit-factory-collapsed"
-                  className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  variants={headerContainer}
-                  initial={motionEnabled ? "hidden" : false}
-                  animate={motionEnabled ? "show" : undefined}
-                  exit={motionEnabled ? "exit" : undefined}
-                >
-                  <motion.div className="flex flex-col items-center gap-3" variants={headerGroup}>
-                    <motion.div variants={headerItem}>
-                      <motion.div
-                        layoutId="visit-factory-title"
-                        layoutCrossfade={false}
-                        transition={visitLayoutTransition}
-                        className="relative inline-flex text-white"
+                    </button>
+                  </motion.div>
+                ) : null}
+              </motion.div>
+            ) : null}
+            {showCollapsed ? (
+              <motion.div
+                key="visit-factory-collapsed"
+                className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
+                variants={slotContext}
+                initial={motionEnabled ? "collapsed" : false}
+                animate={phase}
+              >
+                <motion.div className="flex flex-col items-center gap-3" variants={headerGroup}>
+                  <motion.div
+                    layoutId="visit-factory-title"
+                    layoutCrossfade={false}
+                    transition={visitLayoutTransition}
+                    className="relative inline-flex text-white"
+                  >
+                    <motion.div variants={collapsedHeaderItem}>
+                      <Heading
+                        id="visit-factory-heading"
+                        level={2}
+                        size="xl"
+                        className="type-section-collapsed"
                       >
-                        <Heading
-                          id="visit-factory-heading"
-                          level={2}
-                          size="xl"
-                          className="type-section-collapsed"
-                        >
-                          {heading}
-                        </Heading>
-                        <button
-                          type="button"
-                          className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                          onPointerEnter={handleVisitExpand}
-                          onFocus={handleVisitExpand}
-                          onClick={handleVisitExpand}
-                          aria-expanded={revealVisit}
-                          aria-controls="visit-factory-body"
-                          aria-labelledby="visit-factory-heading"
-                        >
-                          <span className="sr-only">Expand {heading}</span>
-                        </button>
-                      </motion.div>
+                        {heading}
+                      </Heading>
                     </motion.div>
-                    <motion.div variants={headerItem}>
-                      <motion.div
-                        layoutId="visit-factory-subtitle"
-                        layoutCrossfade={false}
-                        transition={visitLayoutTransition}
-                        className="relative text-white"
-                      >
-                        <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                          {subheading}
-                        </Text>
-                      </motion.div>
+                    <button
+                      type="button"
+                      className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                      onPointerEnter={handleVisitExpand}
+                      onFocus={handleVisitExpand}
+                      onClick={handleVisitExpand}
+                      onKeyDown={onTriggerKeyDown}
+                      aria-expanded={expanded}
+                      aria-controls="visit-factory-body"
+                      aria-labelledby="visit-factory-heading"
+                    >
+                      <span className="sr-only">Expand {heading}</span>
+                    </button>
+                  </motion.div>
+                  <motion.div
+                    layoutId="visit-factory-subtitle"
+                    layoutCrossfade={false}
+                    transition={visitLayoutTransition}
+                    className="relative text-white"
+                  >
+                    <motion.div variants={collapsedHeaderItem}>
+                      <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+                        {subheading}
+                      </Text>
                     </motion.div>
                   </motion.div>
-                  <motion.div variants={bodyItem} className="mt-3">
+                </motion.div>
+                <motion.div variants={itemsGroup} className="mt-3">
+                  <motion.div variants={collapsedHeaderItem}>
                     <Text
                       size="button"
                       className="text-white/80 cursor-pointer focus-ring"
                       asChild
                     >
-                      <button type="button" onClick={handleVisitExpand}>
+                      <button type="button" onClick={handleVisitExpand} onKeyDown={onTriggerKeyDown}>
                         Read more
                       </button>
                     </Text>
                   </motion.div>
                 </motion.div>
-              )}
-            </AnimatePresence>
+              </motion.div>
+            ) : null}
           </LayoutGroup>
 
-          <AnimatePresence initial={false}>
-            {revealVisit ? (
+          <motion.div
+            variants={slotContext}
+            initial={motionEnabled ? "collapsed" : false}
+            animate={phase}
+          >
+            {showExpanded ? (
               <motion.div
                 key="visit-factory-body"
                 id="visit-factory-body"
                 className="space-y-6"
-                variants={bodyContainer}
-                initial={motionEnabled ? "hidden" : false}
-                animate={motionEnabled ? "show" : undefined}
-                exit={motionEnabled ? "exit" : undefined}
+                variants={slotContext}
+                initial={motionEnabled ? "collapsed" : false}
+                animate={phase}
               >
                 <motion.div
                   className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start"
-                  variants={detailsContainer}
+                  variants={bodyGroup}
                 >
                   <motion.article
                     className="space-y-5 rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated lg:p-7"
-                    variants={detailsItem}
+                    variants={bodyItem}
                   >
                     <Text size="label-tight" muted>
                       Botticino headquarters
@@ -594,7 +534,7 @@ const VisitFactoryRevealSection = ({
                     </div>
                   </motion.article>
 
-                  <motion.div className="space-y-4" variants={detailsItem}>
+                  <motion.div className="space-y-4" variants={bodyItem}>
                     {visit.whatToExpectHtml ? (
                       <Collapsible open={expectOpen} onOpenChange={setExpectOpen}>
                         <CollapsibleTrigger
@@ -636,9 +576,9 @@ const VisitFactoryRevealSection = ({
                 </motion.div>
               </motion.div>
             ) : null}
-          </AnimatePresence>
+          </motion.div>
         </motion.div>
       </Container>
-    </>
+    </motion.div>
   );
 };
