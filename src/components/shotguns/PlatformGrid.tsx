@@ -256,7 +256,7 @@ const MobilePlatformCarousel = ({
     <div className="md:hidden">
       <motion.div
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none px-6 -mx-6 pt-6 pb-6 sm:mx-0 sm:px-6"
+        className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none px-6 -mx-10 pt-6 pb-6 sm:-mx-12"
         aria-label="Swipe to explore platforms"
         variants={motionEnabled ? railVariants : undefined}
       >
@@ -690,9 +690,7 @@ const PlatformGridRevealSection = ({
           className={cn(
             "relative flex flex-col space-y-8 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
             focusSurfaceTransition,
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
+            "border-transparent bg-transparent shadow-none backdrop-blur-none",
             platformMinHeight,
           )}
         >

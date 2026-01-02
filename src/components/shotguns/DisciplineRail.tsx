@@ -372,6 +372,7 @@ const DisciplineRailRevealSection = ({
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
   const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const railShellRef = useRef<HTMLDivElement | null>(null);
+  const railContentRef = useRef<HTMLDivElement | null>(null);
   const headerThemeFrame = useRef<number | null>(null);
 
   const revealRail = !enableTitleReveal || railExpanded;
@@ -425,14 +426,132 @@ const DisciplineRailRevealSection = ({
     setRailExpanded(false);
   };
 
-  const headingContainer = {
+  const atmosphereStagger = motionEnabled ? 0.12 : 0;
+  const contentStagger = motionEnabled ? 0.12 : 0;
+  const listStagger = motionEnabled ? 0.1 : 0;
+  const nestedStagger = motionEnabled ? 0.08 : 0;
+  const atmosphereDelay = motionEnabled ? 0.05 : 0;
+  const headerDelay = motionEnabled ? 0.28 : 0;
+  const bodyDelay = motionEnabled ? 0.44 : 0;
+
+  const atmosphereContainer = {
     hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
+    show: {
+      transition: {
+        delayChildren: atmosphereDelay,
+        staggerChildren: atmosphereStagger,
+      },
+    },
   } as const;
 
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: railReveal },
+  const atmosphereLayer = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { duration: 1.2, ease: homeMotion.cinematicEase },
+    },
+  } as const;
+
+  const atmosphereBackground = {
+    hidden: { opacity: 0, scale: backgroundScale * 1.04 },
+    show: {
+      opacity: 1,
+      scale: backgroundScale,
+      transition: {
+        opacity: { duration: 1.2, ease: homeMotion.cinematicEase },
+        scale: backgroundScaleTransition,
+      },
+    },
+  } as const;
+
+  const headerContainer = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        delay: headerDelay,
+        delayChildren: motionEnabled ? 0.08 : 0,
+        staggerChildren: contentStagger,
+      },
+    },
+    exit: { opacity: 0, transition: railRevealFast },
+  } as const;
+
+  const headerGroup = {
+    hidden: {},
+    show: { transition: { staggerChildren: contentStagger } },
+  } as const;
+
+  const headerItem = {
+    hidden: { opacity: 0, y: 12, filter: "blur(8px)" },
+    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: railRevealFast },
+  } as const;
+
+  const bodyContainer = {
+    hidden: { opacity: 0, filter: "blur(12px)" },
+    show: {
+      opacity: 1,
+      filter: "blur(0px)",
+      transition: { ...railBodyReveal, delay: bodyDelay },
+    },
+    exit: { opacity: 0, filter: "blur(10px)", transition: railCollapse },
+  } as const;
+
+  const bodyGrid = {
+    hidden: {},
+    show: {
+      transition: {
+        delayChildren: motionEnabled ? 0.12 : 0,
+        staggerChildren: contentStagger,
+      },
+    },
+  } as const;
+
+  const bodyColumn = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        ...railRevealFast,
+        delayChildren: motionEnabled ? 0.08 : 0,
+        staggerChildren: contentStagger,
+      },
+    },
+  } as const;
+
+  const bodyItem = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
+  } as const;
+
+  const listContainer = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: listStagger,
+        delayChildren: motionEnabled ? 0.06 : 0,
+      },
+    },
+  } as const;
+
+  const listItem = {
+    hidden: { opacity: 0, y: 8 },
+    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
+  } as const;
+
+  const nestedList = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: nestedStagger,
+        delayChildren: motionEnabled ? 0.04 : 0,
+      },
+    },
+  } as const;
+
+  const nestedItem = {
+    hidden: { opacity: 0, y: 8 },
+    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
   } as const;
 
   useEffect(() => {
@@ -445,7 +564,14 @@ const DisciplineRailRevealSection = ({
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
+        const contentNode = railContentRef.current;
+        const contentHeight = contentNode?.getBoundingClientRect().height ?? node.getBoundingClientRect().height;
+        const styles = window.getComputedStyle(node);
+        const paddingTop = Number.parseFloat(styles.paddingTop) || 0;
+        const paddingBottom = Number.parseFloat(styles.paddingBottom) || 0;
+        const borderTop = Number.parseFloat(styles.borderTopWidth) || 0;
+        const borderBottom = Number.parseFloat(styles.borderBottomWidth) || 0;
+        const nextHeight = Math.ceil(contentHeight + paddingTop + paddingBottom + borderTop + borderBottom);
         setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
       });
     };
@@ -473,13 +599,16 @@ const DisciplineRailRevealSection = ({
 
   return (
     <>
-      <div className="absolute inset-0 -z-10 overflow-hidden">
+      <motion.div
+        className="absolute inset-0 -z-10 overflow-hidden"
+        variants={atmosphereContainer}
+        initial={motionEnabled ? "hidden" : false}
+        animate={motionEnabled ? "show" : undefined}
+      >
         <motion.div
           className="absolute inset-0 will-change-transform"
           style={parallaxStyle}
-          initial={false}
-          animate={motionEnabled ? { scale: backgroundScale } : undefined}
-          transition={motionEnabled ? backgroundScaleTransition : undefined}
+          variants={atmosphereBackground}
         >
           <Image
             src={background.url}
@@ -490,46 +619,54 @@ const DisciplineRailRevealSection = ({
             priority={false}
           />
         </motion.div>
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealRail ? "opacity-0" : "opacity-100",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 film-grain",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-20" : "opacity-0",
-          )}
-          aria-hidden="true"
-        />
-        <div
-          className={cn(
-            "absolute inset-0 overlay-gradient-canvas",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-      </div>
+        <motion.div className="absolute inset-0" variants={atmosphereLayer}>
+          <div
+            className={cn(
+              "absolute inset-0 bg-(--scrim-strong)",
+              focusFadeTransition,
+              revealRail ? "opacity-0" : "opacity-100",
+            )}
+            aria-hidden
+          />
+        </motion.div>
+        <motion.div className="absolute inset-0" variants={atmosphereLayer}>
+          <div
+            className={cn(
+              "absolute inset-0 bg-(--scrim-strong)",
+              focusFadeTransition,
+              revealPhotoFocus ? "opacity-100" : "opacity-0",
+            )}
+            aria-hidden
+          />
+        </motion.div>
+        <motion.div className="absolute inset-0" variants={atmosphereLayer}>
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-0 film-grain",
+              focusFadeTransition,
+              revealPhotoFocus ? "opacity-20" : "opacity-0",
+            )}
+            aria-hidden="true"
+          />
+        </motion.div>
+        <motion.div className="absolute inset-0" variants={atmosphereLayer}>
+          <div
+            className={cn(
+              "absolute inset-0 overlay-gradient-canvas",
+              focusFadeTransition,
+              revealPhotoFocus ? "opacity-100" : "opacity-0",
+            )}
+            aria-hidden
+          />
+        </motion.div>
+      </motion.div>
 
       <Container size="xl" className="relative z-10">
         <motion.div
           ref={railShellRef}
           style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
           className={cn(
-            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
+            "relative rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
             focusSurfaceTransition,
             revealPhotoFocus
               ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
@@ -537,278 +674,289 @@ const DisciplineRailRevealSection = ({
             railMinHeight,
           )}
         >
-          <LayoutGroup id="shotguns-discipline-rail-title">
-            <AnimatePresence initial={false}>
-              {revealRail ? (
-                <motion.div
-                  key="discipline-rail-header"
-                  className="relative z-10 space-y-4 md:flex md:items-start md:justify-between md:gap-8"
-                  initial={motionEnabled ? { opacity: 0 } : false}
-                  animate={motionEnabled ? { opacity: 1, transition: railReveal } : undefined}
-                  exit={motionEnabled ? { opacity: 0, transition: railRevealFast } : undefined}
-                >
+          <div ref={railContentRef} className="flex flex-col space-y-6">
+            <LayoutGroup id="shotguns-discipline-rail-title">
+              <AnimatePresence initial={false}>
+                {revealRail ? (
                   <motion.div
-                    className="space-y-3"
-                    variants={headingContainer}
+                    key="discipline-rail-header"
+                    className="relative z-10 space-y-4 md:flex md:items-start md:justify-between md:gap-8"
+                    variants={headerContainer}
                     initial={motionEnabled ? "hidden" : false}
                     animate={motionEnabled ? "show" : undefined}
+                    exit={motionEnabled ? "exit" : undefined}
+                  >
+                    <motion.div
+                      className="space-y-3"
+                      variants={headerGroup}
+                    >
+                      <motion.div
+                        layoutId="discipline-rail-title"
+                        layoutCrossfade={false}
+                        transition={railLayoutTransition}
+                        className="relative"
+                      >
+                        <motion.div variants={headerItem}>
+                          <Heading
+                            id="discipline-rail-heading"
+                            level={2}
+                            size="xl"
+                            className={cn(
+                              titleColorTransition,
+                              headerThemeReady ? "text-ink" : "text-white",
+                            )}
+                          >
+                            {heading}
+                          </Heading>
+                        </motion.div>
+                      </motion.div>
+                      <motion.div
+                        layoutId="discipline-rail-subtitle"
+                        layoutCrossfade={false}
+                        transition={railLayoutTransition}
+                        className="relative"
+                      >
+                        <motion.div variants={headerItem}>
+                          <Text
+                            size="lg"
+                            className={cn(
+                              "type-section-subtitle",
+                              titleColorTransition,
+                              headerThemeReady ? "text-ink-muted" : "text-white",
+                            )}
+                          >
+                            {subheading}
+                          </Text>
+                        </motion.div>
+                      </motion.div>
+                    </motion.div>
+                    {enableTitleReveal ? (
+                      <motion.button
+                        type="button"
+                        className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
+                        onClick={handleCollapse}
+                        variants={headerItem}
+                      >
+                        Collapse
+                      </motion.button>
+                    ) : null}
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="discipline-rail-collapsed"
+                    className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
+                    initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
+                    animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
+                    exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
+                    transition={motionEnabled ? railRevealFast : undefined}
                   >
                     <motion.div
                       layoutId="discipline-rail-title"
                       layoutCrossfade={false}
                       transition={railLayoutTransition}
-                      className="relative"
+                      className="relative inline-flex text-white"
                     >
                       <Heading
                         id="discipline-rail-heading"
                         level={2}
                         size="xl"
-                        className={cn(
-                          titleColorTransition,
-                          headerThemeReady ? "text-ink" : "text-white",
-                        )}
+                        className="type-section-collapsed"
                       >
                         {heading}
                       </Heading>
+                      <button
+                        type="button"
+                        className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                        onPointerEnter={handleExpand}
+                        onFocus={handleExpand}
+                        onClick={handleExpand}
+                        aria-expanded={revealRail}
+                        aria-controls="discipline-rail-body"
+                        aria-labelledby="discipline-rail-heading"
+                      >
+                        <span className="sr-only">Expand {heading}</span>
+                      </button>
                     </motion.div>
                     <motion.div
                       layoutId="discipline-rail-subtitle"
                       layoutCrossfade={false}
                       transition={railLayoutTransition}
-                      className="relative"
+                      className="relative text-white"
                     >
-                      <motion.div variants={headingItem}>
-                        <Text
-                          size="lg"
-                          className={cn(
-                            "type-section-subtitle",
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink-muted" : "text-white",
-                          )}
-                        >
-                          {subheading}
-                        </Text>
-                      </motion.div>
+                      <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+                        {subheading}
+                      </Text>
+                    </motion.div>
+                    <motion.div
+                      initial={motionEnabled ? { opacity: 0, y: 6 } : false}
+                      animate={motionEnabled ? { opacity: 1, y: 0, transition: readMoreReveal } : undefined}
+                      exit={motionEnabled ? { opacity: 0, y: 6, transition: railRevealFast } : undefined}
+                      className="mt-3"
+                    >
+                      <Text
+                        size="button"
+                        className="text-white/80 cursor-pointer focus-ring"
+                        asChild
+                      >
+                        <button type="button" onClick={handleExpand}>
+                          Read more
+                        </button>
+                      </Text>
                     </motion.div>
                   </motion.div>
-                  {enableTitleReveal ? (
-                    <button
-                      type="button"
-                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                      onClick={handleCollapse}
-                    >
-                      Collapse
-                    </button>
-                  ) : null}
-                </motion.div>
-              ) : (
+                )}
+              </AnimatePresence>
+            </LayoutGroup>
+
+            <AnimatePresence initial={false}>
+              {revealRail ? (
                 <motion.div
-                  key="discipline-rail-collapsed"
-                  className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
-                  animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
-                  exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
-                  transition={motionEnabled ? railRevealFast : undefined}
+                  key="discipline-rail-body"
+                  id="discipline-rail-body"
+                  className="space-y-6"
+                  variants={bodyContainer}
+                  initial={motionEnabled ? "hidden" : false}
+                  animate={motionEnabled ? "show" : undefined}
+                  exit={motionEnabled ? "exit" : undefined}
                 >
                   <motion.div
-                    layoutId="discipline-rail-title"
-                    layoutCrossfade={false}
-                    transition={railLayoutTransition}
-                    className="relative inline-flex text-white"
+                    className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start"
+                    variants={bodyGrid}
                   >
-                    <Heading
-                      id="discipline-rail-heading"
-                      level={2}
-                      size="xl"
-                      className="type-section-collapsed"
+                    <motion.div
+                      className="space-y-3 rounded-2xl bg-card/0 p-4 sm:rounded-3xl sm:p-5"
+                      variants={bodyColumn}
                     >
-                      {heading}
-                    </Heading>
-                    <button
-                      type="button"
-                      className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                      onPointerEnter={handleExpand}
-                      onFocus={handleExpand}
-                      onClick={handleExpand}
-                      aria-expanded={revealRail}
-                      aria-controls="discipline-rail-body"
-                      aria-labelledby="discipline-rail-heading"
-                    >
-                      <span className="sr-only">Expand {heading}</span>
-                    </button>
-                  </motion.div>
-                  <motion.div
-                    layoutId="discipline-rail-subtitle"
-                    layoutCrossfade={false}
-                    transition={railLayoutTransition}
-                    className="relative text-white"
-                  >
-                    <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                      {subheading}
-                    </Text>
-                  </motion.div>
-                  <motion.div
-                    initial={motionEnabled ? { opacity: 0, y: 6 } : false}
-                    animate={motionEnabled ? { opacity: 1, y: 0, transition: readMoreReveal } : undefined}
-                    exit={motionEnabled ? { opacity: 0, y: 6, transition: railRevealFast } : undefined}
-                    className="mt-3"
-                  >
-                    <Text
-                      size="button"
-                      className="text-white/80 cursor-pointer focus-ring"
-                      asChild
-                    >
-                      <button type="button" onClick={handleExpand}>
-                        Read more
-                      </button>
-                    </Text>
+                      <motion.div variants={bodyItem}>
+                        <Text size="label-tight" className="type-label-tight text-ink-muted">
+                          Discipline categories
+                        </Text>
+                      </motion.div>
+                      <LayoutGroup id="shotguns-discipline-tabs">
+                        <motion.div className="space-y-3" variants={listContainer}>
+                          {categories.map((category) => {
+                            const isOpen = openCategory === category.label;
+                            return (
+                              <motion.div
+                                key={category.label}
+                                className="rounded-2xl border border-border/70 bg-card/75"
+                                variants={listItem}
+                              >
+                                <button
+                                  type="button"
+                                  className="flex w-full items-center justify-between px-4 py-3 text-left type-label-tight text-ink focus-ring"
+                                  aria-expanded={isOpen}
+                                  onClick={() =>
+                                    setOpenCategory((prev) =>
+                                      prev === category.label ? null : category.label,
+                                    )
+                                  }
+                                >
+                                  {category.label}
+                                  <span
+                                    className={cn(
+                                      "text-lg transition-transform",
+                                      isOpen ? "rotate-45" : "rotate-0",
+                                    )}
+                                    aria-hidden="true"
+                                  >
+                                    +
+                                  </span>
+                                </button>
+                                {isOpen ? (
+                                  <div className="border-t border-border/70">
+                                    <motion.ul
+                                      className="space-y-1 p-3"
+                                      variants={nestedList}
+                                      initial={motionEnabled ? "hidden" : false}
+                                      animate={motionEnabled ? "show" : undefined}
+                                    >
+                                      {category.disciplines.map((discipline) => {
+                                        const isActive = discipline.id === activeDisciplineId;
+                                        return (
+                                          <motion.li key={discipline.id} variants={nestedItem}>
+                                            <motion.button
+                                              type="button"
+                                              onClick={() => { setActiveDisciplineId(discipline.id); }}
+                                              className={cn(
+                                                "group relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left transition-colors focus-ring",
+                                                isActive
+                                                  ? "text-white"
+                                                  : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
+                                              )}
+                                              aria-pressed={isActive}
+                                              initial={false}
+                                              whileHover={motionEnabled ? { x: 2, transition: homeMotion.micro } : undefined}
+                                              whileTap={motionEnabled ? { x: 0, transition: homeMotion.micro } : undefined}
+                                            >
+                                              {isActive ? (
+                                                motionEnabled ? (
+                                                  <motion.span
+                                                    layoutId="discipline-active-highlight"
+                                                    className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
+                                                    transition={homeMotion.springHighlight}
+                                                    aria-hidden="true"
+                                                  />
+                                                ) : (
+                                                  <span
+                                                    className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
+                                                    aria-hidden="true"
+                                                  />
+                                                )
+                                              ) : null}
+                                              <span
+                                                className={cn(
+                                                  "relative z-10 mt-0.5 block type-label-tight group-hover:text-ink-muted/90",
+                                                  isActive ? "text-white" : "text-ink-muted",
+                                                )}
+                                              >
+                                                {discipline.name || discipline.id.replaceAll("-", " ")}
+                                              </span>
+                                            </motion.button>
+                                          </motion.li>
+                                        );
+                                      })}
+                                    </motion.ul>
+                                  </div>
+                                ) : null}
+                              </motion.div>
+                            );
+                          })}
+                        </motion.div>
+                      </LayoutGroup>
+                    </motion.div>
+
+                    <motion.div className="min-h-104" variants={bodyColumn}>
+                      <AnimatePresence initial={false} mode="popLayout">
+                        {selectedDiscipline ? (
+                          <motion.div
+                            key={selectedDiscipline.id}
+                            initial={motionEnabled ? { opacity: 0, y: 14 } : false}
+                            animate={motionEnabled ? { opacity: 1, y: 0 } : undefined}
+                            exit={motionEnabled ? { opacity: 0, y: -14 } : undefined}
+                            transition={motionEnabled ? homeMotion.revealFast : undefined}
+                          >
+                            <DisciplineCard
+                              discipline={selectedDiscipline}
+                              index={0}
+                              total={1}
+                              platformName={platformName}
+                              onSelectModel={handleModelSelect}
+                              loadingModelId={modelLoadingId}
+                            />
+                          </motion.div>
+                        ) : (
+                          <Text className="text-ink-muted" leading="normal">
+                            Select a discipline to view its details.
+                          </Text>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
                   </motion.div>
                 </motion.div>
-              )}
+              ) : null}
             </AnimatePresence>
-          </LayoutGroup>
-
-          <AnimatePresence initial={false}>
-            {revealRail ? (
-              <motion.div
-                key="discipline-rail-body"
-                id="discipline-rail-body"
-                className="space-y-6"
-                initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
-                animate={
-                  motionEnabled
-                    ? { opacity: 1, y: 0, filter: "blur(0px)", transition: railBodyReveal }
-                    : undefined
-                }
-                exit={
-                  motionEnabled
-                    ? { opacity: 0, y: -16, filter: "blur(10px)", transition: railCollapse }
-                    : undefined
-                }
-              >
-                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
-                  <div className="space-y-3 rounded-2xl bg-card/0 p-4 sm:rounded-3xl sm:p-5">
-                    <Text size="label-tight" className="type-label-tight text-ink-muted">
-                      Discipline categories
-                    </Text>
-                    <LayoutGroup id="shotguns-discipline-tabs">
-                      <div className="space-y-3">
-                        {categories.map((category) => {
-                          const isOpen = openCategory === category.label;
-                          return (
-                            <div
-                              key={category.label}
-                              className="rounded-2xl border border-border/70 bg-card/75"
-                            >
-                              <button
-                                type="button"
-                                className="flex w-full items-center justify-between px-4 py-3 text-left type-label-tight text-ink focus-ring"
-                                aria-expanded={isOpen}
-                                onClick={() =>
-                                  setOpenCategory((prev) =>
-                                    prev === category.label ? null : category.label,
-                                  )
-                                }
-                              >
-                                {category.label}
-                                <span
-                                  className={cn(
-                                    "text-lg transition-transform",
-                                    isOpen ? "rotate-45" : "rotate-0",
-                                  )}
-                                  aria-hidden="true"
-                                >
-                                  +
-                                </span>
-                              </button>
-                              {isOpen ? (
-                                <div className="border-t border-border/70">
-                                  <ul className="space-y-1 p-3">
-                                    {category.disciplines.map((discipline) => {
-                                      const isActive = discipline.id === activeDisciplineId;
-                                      return (
-                                        <li key={discipline.id}>
-                                          <motion.button
-                                            type="button"
-                                            onClick={() => { setActiveDisciplineId(discipline.id); }}
-                                            className={cn(
-                                              "group relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left transition-colors focus-ring",
-                                              isActive
-                                                ? "text-white"
-                                                : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
-                                            )}
-                                            aria-pressed={isActive}
-                                            initial={false}
-                                            whileHover={motionEnabled ? { x: 2, transition: homeMotion.micro } : undefined}
-                                            whileTap={motionEnabled ? { x: 0, transition: homeMotion.micro } : undefined}
-                                          >
-                                            {isActive ? (
-                                              motionEnabled ? (
-                                                <motion.span
-                                                  layoutId="discipline-active-highlight"
-                                                  className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
-                                                  transition={homeMotion.springHighlight}
-                                                  aria-hidden="true"
-                                                />
-                                              ) : (
-                                                <span
-                                                  className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
-                                                  aria-hidden="true"
-                                                />
-                                              )
-                                            ) : null}
-                                            <span
-                                              className={cn(
-                                                "relative z-10 mt-0.5 block type-label-tight group-hover:text-ink-muted/90",
-                                                isActive ? "text-white" : "text-ink-muted",
-                                              )}
-                                            >
-                                              {discipline.name || discipline.id.replaceAll("-", " ")}
-                                            </span>
-                                          </motion.button>
-                                        </li>
-                                      );
-                                    })}
-                                  </ul>
-                                </div>
-                              ) : null}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </LayoutGroup>
-                  </div>
-
-                  <div className="min-h-104">
-                    <AnimatePresence initial={false} mode="popLayout">
-                      {selectedDiscipline ? (
-                        <motion.div
-                          key={selectedDiscipline.id}
-                          initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
-                          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                          exit={motionEnabled ? { opacity: 0, y: -14, filter: "blur(10px)" } : undefined}
-                          transition={motionEnabled ? homeMotion.revealFast : undefined}
-                        >
-                          <DisciplineCard
-                            discipline={selectedDiscipline}
-                            index={0}
-                            total={1}
-                            platformName={platformName}
-                            onSelectModel={handleModelSelect}
-                            loadingModelId={modelLoadingId}
-                          />
-                        </motion.div>
-                      ) : (
-                        <Text className="text-ink-muted" leading="normal">
-                          Select a discipline to view its details.
-                        </Text>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                </div>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
+          </div>
         </motion.div>
       </Container>
     </>
@@ -836,15 +984,72 @@ function DisciplineCard({
     `shotguns_discipline_card_impression:${discipline.id}`,
     { threshold: 0.4 },
   );
+  const prefersReducedMotion = useReducedMotion();
+  const motionEnabled = !prefersReducedMotion;
+
+  const cardContainer = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: motionEnabled ? 0.12 : 0,
+      },
+    },
+  } as const;
+
+  const cardMedia = {
+    hidden: { opacity: 0, scale: 1.02 },
+    show: { opacity: 1, scale: 1, transition: homeMotion.revealFast },
+  } as const;
+
+  const cardContent = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: motionEnabled ? 0.1 : 0,
+        delayChildren: motionEnabled ? 0.08 : 0,
+      },
+    },
+  } as const;
+
+  const cardTextItem = {
+    hidden: { opacity: 0, y: 12, filter: "blur(8px)" },
+    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
+  } as const;
+
+  const cardBlock = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
+  } as const;
+
+  const cardList = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: motionEnabled ? 0.08 : 0,
+        delayChildren: motionEnabled ? 0.05 : 0,
+      },
+    },
+  } as const;
+
+  const cardListItem = {
+    hidden: { opacity: 0, y: 8 },
+    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
+  } as const;
 
   return (
-    <article
+    <motion.article
       ref={cardRef}
       data-analytics-id={`DisciplineChip:${discipline.id}`}
       className="group flex flex-col rounded-2xl border border-border/70 bg-card/60 text-left shadow-soft backdrop-blur-sm focus-ring sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated"
       aria-label={`Slide ${index + 1} of ${total}: ${discipline.name}`}
+      variants={cardContainer}
+      initial={motionEnabled ? "hidden" : false}
+      animate={motionEnabled ? "show" : undefined}
     >
-      <div className="card-media relative aspect-30/11 w-full rounded-t-3xl bg-(--color-canvas)">
+      <motion.div
+        className="card-media relative aspect-30/11 w-full rounded-t-3xl bg-(--color-canvas)"
+        variants={cardMedia}
+      >
         {discipline.hero ? (
           <Image
             src={discipline.hero.url}
@@ -855,54 +1060,62 @@ function DisciplineCard({
           />
         ) : null}
         <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
-      </div>
-      <div className="flex flex-1 flex-col gap-6 p-6">
-        <Heading
-          level={3}
-          className="type-card-title text-ink border-b border-perazzi-red/40 pb-2"
-        >
-          {discipline.name}
-        </Heading>
+      </motion.div>
+      <motion.div className="flex flex-1 flex-col gap-6 p-6" variants={cardContent}>
+        <motion.div variants={cardTextItem}>
+          <Heading
+            level={3}
+            className="type-card-title text-ink border-b border-perazzi-red/40 pb-2"
+          >
+            {discipline.name}
+          </Heading>
+        </motion.div>
         {discipline.overviewPortableText?.length ? (
-          <PortableText
-            className="max-w-none type-body text-ink-muted mb-7"
-            blocks={discipline.overviewPortableText}
-          />
+          <motion.div variants={cardTextItem}>
+            <PortableText
+              className="max-w-none type-body text-ink-muted mb-7"
+              blocks={discipline.overviewPortableText}
+            />
+          </motion.div>
         ) : discipline.overviewHtml ? (
-          <SafeHtml
-            className="max-w-none type-body text-ink-muted mb-7"
-            html={discipline.overviewHtml}
-          />
+          <motion.div variants={cardTextItem}>
+            <SafeHtml
+              className="max-w-none type-body text-ink-muted mb-7"
+              html={discipline.overviewHtml}
+            />
+          </motion.div>
         ) : null}
         {discipline.recommendedPlatforms?.length ? (
-          <div className="space-y-2 mb-7">
+          <motion.div className="space-y-2 mb-7" variants={cardBlock}>
             <Text size="label-tight" className="type-card-title text-ink-muted">
               Recommended platforms
             </Text>
-            <ul className="flex flex-wrap gap-2">
+            <motion.ul className="flex flex-wrap gap-2" variants={cardList}>
               {discipline.recommendedPlatforms.map((platformId) => (
-                <li
+                <motion.li
                   key={platformId}
                   className="pill border border-border type-label-tight text-ink-muted"
+                  variants={cardListItem}
                 >
                   {platformName(platformId)}
-                </li>
+                </motion.li>
               ))}
-            </ul>
-          </div>
+            </motion.ul>
+          </motion.div>
         ) : null}
         {discipline.popularModels?.length ? (
-          <div className="mt-auto flex flex-col gap-3">
+          <motion.div className="mt-auto flex flex-col gap-3" variants={cardBlock}>
             <Text size="label-tight" className="type-card-title text-ink-muted">
               Most Popular Models
             </Text>
-            <div className="flex flex-col gap-3">
+            <motion.div className="flex flex-col gap-3" variants={cardList}>
               {discipline.popularModels.map((model) => (
-                <button
+                <motion.button
                   type="button"
                   key={model.idLegacy ?? model.id}
                   onClick={() => { onSelectModel(model.idLegacy ?? model.id); }}
                   className="group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card/60 shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
+                  variants={cardListItem}
                 >
                   {model.hero ? (
                     <Image
@@ -923,13 +1136,13 @@ function DisciplineCard({
                   >
                     {loadingModelId === (model.idLegacy ?? model.id) ? "Loading…" : model.name || "Untitled"}
                   </span>
-                </button>
+                </motion.button>
               ))}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         ) : null}
-      </div>
-    </article>
+      </motion.div>
+    </motion.article>
   );
 }
 
