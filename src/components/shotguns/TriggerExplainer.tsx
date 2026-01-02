@@ -4,10 +4,21 @@ import Image from "next/image";
 import SafeHtml from "@/components/SafeHtml";
 import { PortableText } from "@/components/PortableText";
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import type { ShotgunsLandingData } from "@/types/catalog";
 import { logAnalytics } from "@/lib/analytics";
-import { homeMotion } from "@/lib/motionConfig";
+import {
+  CONTAINER_EXPAND_MS,
+  EASE_CINEMATIC,
+  EXPANDED_HEADER_REVEAL_MS,
+  EXPAND_TIME_SCALE,
+  GLASS_REVEAL_MS,
+  STAGGER_BODY_ITEMS_MS,
+  STAGGER_HEADER_ITEMS_MS,
+  STAGGER_LIST_ITEMS_MS,
+} from "@/motion/expandableSectionMotion";
+import { createExpandableSectionVariants } from "@/motion/createExpandableSectionVariants";
+import { useExpandableSectionTimeline } from "@/motion/useExpandableSectionTimeline";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -64,11 +75,20 @@ const TriggerExplainerRevealSection = ({
   motionEnabled,
   sectionRef,
 }: TriggerExplainerRevealSectionProps) => {
-  const [explainerExpanded, setExplainerExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
   const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const explainerShellRef = useRef<HTMLDivElement | null>(null);
   const headerThemeFrame = useRef<number | null>(null);
+  const {
+    expanded,
+    phase,
+    open,
+    close,
+    onTriggerKeyDown,
+    onEscapeKeyDown,
+    showExpanded,
+    showCollapsed,
+  } = useExpandableSectionTimeline({ defaultExpanded: !enableTitleReveal });
 
   const ratio = explainer.diagram.aspectRatio ?? 16 / 9;
   const subheading = explainer.subheading ?? "Removable or fixed—choose by confidence and feel.";
@@ -79,18 +99,28 @@ const TriggerExplainerRevealSection = ({
     alt: "Perazzi trigger workshop background",
   };
 
-  const revealExplainer = !enableTitleReveal || explainerExpanded;
+  const revealExplainer = showExpanded;
   const revealPhotoFocus = revealExplainer;
   const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealExplainer;
-  const focusSurfaceTransition = "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const focusFadeTransition = "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const titleColorTransition = "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const explainerReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const explainerRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const explainerCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const explainerBodyReveal = explainerReveal;
-  const explainerLayoutTransition = motionEnabled ? { layout: explainerReveal } : undefined;
+  const parallaxEnabled = enableTitleReveal && !revealExplainer && motionEnabled;
+  const focusSurfaceTransition =
+    "transition-[background-color,box-shadow,border-color,backdrop-filter]";
+  const titleColorTransition = "transition-colors";
+  const cinematicBezier = `cubic-bezier(${EASE_CINEMATIC.join(",")})`;
+  const transitionStyle = (durationMs: number) => ({
+    transitionDuration: `${motionEnabled ? Math.round(durationMs * EXPAND_TIME_SCALE) : 0}ms`,
+    transitionTimingFunction: motionEnabled ? cinematicBezier : "linear",
+  });
+  const focusSurfaceStyle = transitionStyle(GLASS_REVEAL_MS);
+  const titleColorStyle = transitionStyle(EXPANDED_HEADER_REVEAL_MS);
+  const explainerLayoutTransition = motionEnabled
+    ? {
+      layout: {
+        duration: (CONTAINER_EXPAND_MS / 1000) * EXPAND_TIME_SCALE,
+        ease: EASE_CINEMATIC,
+      },
+    }
+    : undefined;
   const explainerMinHeight = enableTitleReveal ? "min-h-[calc(520px+18rem)]" : null;
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -102,125 +132,72 @@ const TriggerExplainerRevealSection = ({
     ["0%", parallaxEnabled ? parallaxStrength : "0%"],
   );
   const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
-  const backgroundScale = parallaxEnabled ? 1.32 : 1;
-  const backgroundScaleTransition = revealExplainer ? explainerReveal : explainerCollapse;
+  const toSeconds = (ms: number) => ms / 1000;
+  const staggerTransition = (staggerMs: number, direction?: 1 | -1) => ({
+    transition: {
+      staggerChildren: motionEnabled ? toSeconds(staggerMs) : 0,
+      staggerDirection: direction,
+    },
+  });
+  const headerGroup = {
+    collapsed: staggerTransition(STAGGER_HEADER_ITEMS_MS, -1),
+    prezoom: staggerTransition(STAGGER_HEADER_ITEMS_MS),
+    expanded: staggerTransition(STAGGER_HEADER_ITEMS_MS),
+    closingHold: staggerTransition(STAGGER_HEADER_ITEMS_MS, -1),
+  } as const;
+  const bodyGroup = {
+    collapsed: staggerTransition(STAGGER_BODY_ITEMS_MS, -1),
+    prezoom: staggerTransition(STAGGER_BODY_ITEMS_MS),
+    expanded: staggerTransition(STAGGER_BODY_ITEMS_MS),
+    closingHold: staggerTransition(STAGGER_BODY_ITEMS_MS, -1),
+  } as const;
+  const itemsGroup = {
+    collapsed: staggerTransition(STAGGER_LIST_ITEMS_MS, -1),
+    prezoom: staggerTransition(STAGGER_LIST_ITEMS_MS),
+    expanded: staggerTransition(STAGGER_LIST_ITEMS_MS),
+    closingHold: staggerTransition(STAGGER_LIST_ITEMS_MS, -1),
+  } as const;
+  const slotVariants = createExpandableSectionVariants({
+    motionMode: motionEnabled ? "full" : "reduced",
+    backgroundScale: { collapsed: 1.32, prezoom: 1.12, expanded: 1 },
+    itemOffsetY: 12,
+    blurPx: 8,
+    glassScale: 0.985,
+  });
+  const surfaceVariants = createExpandableSectionVariants({
+    motionMode: motionEnabled ? "full" : "reduced",
+    itemOffsetY: 12,
+    blurPx: 0,
+    glassScale: 0.985,
+  });
+  const scrimInverted = {
+    collapsed: slotVariants.scrimTop.expanded,
+    prezoom: slotVariants.scrimTop.expanded,
+    expanded: slotVariants.scrimTop.collapsed,
+    closingHold: slotVariants.scrimTop.collapsed,
+  } as const;
+  const slotContext = {
+    collapsed: {},
+    prezoom: {},
+    expanded: {},
+    closingHold: {},
+  } as const;
+  const headerItem = slotVariants.expandedHeader;
+  const collapsedHeaderItem = slotVariants.collapsedHeader;
+  const bodyItem = slotVariants.content;
+  const ctaItem = slotVariants.ctaRow;
+  const surfaceItem = surfaceVariants.content;
+  const cardItem = surfaceItem;
+  const glassStyle = {
+    ...(enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : {}),
+    ...focusSurfaceStyle,
+  };
 
   const copyClasses =
     "max-w-none type-body text-ink [&_p]:mb-4 [&_p:last-child]:mb-0 prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4";
 
   const contentClassName =
     "gap-6 overflow-hidden px-2 py-3 transition-all duration-300 data-[state=closed]:opacity-0 data-[state=open]:opacity-100 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start";
-
-  const sectionSequence = {
-    hidden: {},
-    show: {
-      transition: {
-        staggerChildren: motionEnabled ? 0.12 : 0,
-        delayChildren: motionEnabled ? 0.1 : 0,
-      },
-    },
-  } as const;
-
-  const sequenceSlot = {
-    hidden: {},
-    show: {},
-  } as const;
-
-  const atmosphereGroup = {
-    hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.12 : 0 } },
-  } as const;
-
-  const atmosphereMedia = {
-    hidden: { opacity: 0, scale: 1.04 },
-    show: {
-      opacity: 1,
-      scale: 1,
-      transition: { duration: 1.1, ease: homeMotion.cinematicEase },
-    },
-  } as const;
-
-  const atmosphereOverlay = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { duration: 0.9, ease: homeMotion.cinematicEase },
-    },
-  } as const;
-
-  const explainerSequence = {
-    hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.12 : 0 } },
-  } as const;
-
-  const headerItems = {
-    hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.12 : 0 } },
-  } as const;
-
-  const headerBlock = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        ...explainerReveal,
-        delay: motionEnabled ? 0.2 : 0,
-        staggerChildren: motionEnabled ? 0.12 : 0,
-        delayChildren: motionEnabled ? 0.08 : 0,
-      },
-    },
-    exit: { opacity: 0, transition: explainerRevealFast },
-  } as const;
-
-  const bodyBlock = {
-    hidden: { opacity: 0, y: 14 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        ...explainerBodyReveal,
-        delay: motionEnabled ? 0.36 : 0,
-        staggerChildren: motionEnabled ? 0.1 : 0,
-        delayChildren: motionEnabled ? 0.08 : 0,
-      },
-    },
-    exit: { opacity: 0, y: -12, transition: explainerCollapse },
-  } as const;
-
-  const bodyGroup = {
-    hidden: {},
-    show: {
-      transition: {
-        staggerChildren: motionEnabled ? 0.1 : 0,
-        delayChildren: motionEnabled ? 0.06 : 0,
-      },
-    },
-  } as const;
-
-  const itemsGroup = {
-    hidden: {},
-    show: {
-      transition: {
-        staggerChildren: motionEnabled ? 0.1 : 0,
-        delayChildren: motionEnabled ? 0.12 : 0,
-      },
-    },
-  } as const;
-
-  const textItem = {
-    hidden: { opacity: 0, y: 12, filter: "blur(8px)" },
-    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.reveal },
-  } as const;
-
-  const surfaceItem = {
-    hidden: { opacity: 0, y: 12 },
-    show: { opacity: 1, y: 0, transition: homeMotion.reveal },
-  } as const;
-
-  const cardItem = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1, transition: homeMotion.reveal },
-  } as const;
 
   const explainerContent = (
     <>
@@ -229,11 +206,11 @@ const TriggerExplainerRevealSection = ({
         variants={cardItem}
       >
         {explainer.copyPortableText?.length ? (
-          <motion.div variants={textItem}>
+          <motion.div variants={bodyItem}>
             <PortableText className={copyClasses} blocks={explainer.copyPortableText} />
           </motion.div>
         ) : explainer.copyHtml ? (
-          <motion.div variants={textItem}>
+          <motion.div variants={bodyItem}>
             <SafeHtml className={copyClasses} html={explainer.copyHtml} />
           </motion.div>
         ) : null}
@@ -296,7 +273,7 @@ const TriggerExplainerRevealSection = ({
     if (headerThemeFrame.current !== null) {
       cancelAnimationFrame(headerThemeFrame.current);
     }
-    setExplainerExpanded(true);
+    open();
     headerThemeFrame.current = requestAnimationFrame(() => {
       setHeaderThemeReady(true);
       headerThemeFrame.current = null;
@@ -310,7 +287,7 @@ const TriggerExplainerRevealSection = ({
       headerThemeFrame.current = null;
     }
     setHeaderThemeReady(false);
-    setExplainerExpanded(false);
+    close();
   };
 
   useEffect(() => {
@@ -351,23 +328,13 @@ const TriggerExplainerRevealSection = ({
 
   return (
     <motion.div
-      variants={sectionSequence}
-      initial={motionEnabled ? "hidden" : false}
-      whileInView={motionEnabled ? "show" : undefined}
-      viewport={motionEnabled ? { once: true, amount: 0.25 } : undefined}
+      variants={slotContext}
+      initial={motionEnabled ? "collapsed" : false}
+      animate={phase}
     >
-      <motion.div
-        className="absolute inset-0 -z-10 overflow-hidden"
-        variants={atmosphereGroup}
-      >
-        <motion.div className="absolute inset-0" variants={atmosphereMedia}>
-          <motion.div
-            className="absolute inset-0 will-change-transform"
-            style={parallaxStyle}
-            initial={false}
-            animate={motionEnabled ? { scale: backgroundScale } : undefined}
-            transition={motionEnabled ? backgroundScaleTransition : undefined}
-          >
+      <motion.div className="absolute inset-0 -z-10 overflow-hidden">
+        <motion.div className="absolute inset-0" variants={slotVariants.background}>
+          <motion.div className="absolute inset-0 will-change-transform" style={parallaxStyle}>
             <Image
               src={background.url}
               alt={background.alt}
@@ -378,53 +345,36 @@ const TriggerExplainerRevealSection = ({
             />
           </motion.div>
         </motion.div>
-        <motion.div className="absolute inset-0" variants={atmosphereOverlay}>
+        <motion.div className="absolute inset-0" variants={scrimInverted}>
           <div
-            className={cn(
-              "absolute inset-0 bg-(--scrim-strong)",
-              focusFadeTransition,
-              revealExplainer ? "opacity-0" : "opacity-100",
-            )}
+            className="absolute inset-0 bg-(--scrim-strong)"
             aria-hidden
           />
         </motion.div>
-        <motion.div className="absolute inset-0" variants={atmosphereOverlay}>
+        <motion.div className="absolute inset-0" variants={slotVariants.scrimBottom}>
           <div
-            className={cn(
-              "absolute inset-0 bg-(--scrim-strong)",
-              focusFadeTransition,
-              revealPhotoFocus ? "opacity-100" : "opacity-0",
-            )}
+            className="absolute inset-0 bg-(--scrim-strong)"
             aria-hidden
           />
         </motion.div>
-        <motion.div className="absolute inset-0" variants={atmosphereOverlay}>
+        <motion.div className="absolute inset-0" variants={slotVariants.scrimBottom}>
           <div
-            className={cn(
-              "pointer-events-none absolute inset-0 film-grain",
-              focusFadeTransition,
-              revealPhotoFocus ? "opacity-20" : "opacity-0",
-            )}
+            className="pointer-events-none absolute inset-0 opacity-20 film-grain"
             aria-hidden="true"
           />
         </motion.div>
-        <motion.div className="absolute inset-0" variants={atmosphereOverlay}>
+        <motion.div className="absolute inset-0" variants={slotVariants.scrimBottom}>
           <div
-            className={cn(
-              "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-              focusFadeTransition,
-              revealPhotoFocus ? "opacity-100" : "opacity-0",
-            )}
+            className="pointer-events-none absolute inset-0 overlay-gradient-canvas"
             aria-hidden
           />
         </motion.div>
       </motion.div>
 
-      <motion.div variants={sequenceSlot}>
+      <motion.div>
         <Container size="xl" className="relative z-10">
           <motion.div
             ref={explainerShellRef}
-            style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
             className={cn(
               "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
               focusSurfaceTransition,
@@ -433,189 +383,197 @@ const TriggerExplainerRevealSection = ({
                 : "border-transparent bg-transparent shadow-none backdrop-blur-none",
               explainerMinHeight,
             )}
-            variants={explainerSequence}
+            variants={slotVariants.glass}
+            style={glassStyle}
+            onKeyDown={onEscapeKeyDown}
           >
-            <motion.div variants={sequenceSlot}>
+            <motion.div
+              variants={slotContext}
+              initial={motionEnabled ? "collapsed" : false}
+              animate={phase}
+            >
               <LayoutGroup id="shotguns-trigger-explainer-title">
-                <AnimatePresence initial={false}>
-                  {revealExplainer ? (
-                    <motion.div
-                      key="trigger-explainer-header"
-                      className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
-                      variants={headerBlock}
-                      initial={motionEnabled ? "hidden" : false}
-                      animate={motionEnabled ? "show" : undefined}
-                      exit={motionEnabled ? "exit" : undefined}
-                    >
-                      <motion.div variants={sequenceSlot} className="flex-1">
-                        <Collapsible
-                          open={manualOpen}
-                          onOpenChange={(next) => {
-                            setManualOpen(next);
-                            logAnalytics(`TriggerExplainerToggle:${next ? "open" : "closed"}`);
-                          }}
-                          className="space-y-4 flex-1"
-                        >
-                          <motion.div className="space-y-3" variants={headerItems}>
-                            <motion.div
-                              layoutId="trigger-explainer-title"
-                              layoutCrossfade={false}
-                              transition={explainerLayoutTransition}
-                              className="relative"
-                            >
-                              <motion.div variants={textItem}>
-                                <Heading
-                                  id="trigger-explainer-heading"
-                                  level={2}
-                                  size="xl"
-                                  className={cn(
-                                    titleColorTransition,
-                                    headerThemeReady ? "text-ink" : "text-white",
-                                  )}
-                                >
-                                  {explainer.title}
-                                </Heading>
-                              </motion.div>
-                            </motion.div>
-                            <motion.div
-                              layoutId="trigger-explainer-subtitle"
-                              layoutCrossfade={false}
-                              transition={explainerLayoutTransition}
-                              className="relative"
-                            >
-                              <motion.div variants={textItem}>
-                                <Text
-                                  className={cn(
-                                    "type-section-subtitle",
-                                    titleColorTransition,
-                                    headerThemeReady ? "text-ink-muted" : "text-white",
-                                  )}
-                                  leading="normal"
-                                >
-                                  {subheading}
-                                </Text>
-                              </motion.div>
-                            </motion.div>
-                            <motion.div variants={surfaceItem}>
-                              <CollapsibleTrigger
-                                className="type-button mt-1 inline-flex w-fit items-center gap-2 rounded-sm border border-border/70 bg-card/60 px-4 py-2 text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring lg:hidden"
-                                aria-controls="trigger-explainer-content"
-                                data-analytics-id="TriggerExplainerToggle"
+                {showExpanded ? (
+                  <motion.div
+                    key="trigger-explainer-header"
+                    className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
+                    variants={slotContext}
+                    initial={motionEnabled ? "collapsed" : false}
+                    animate={phase}
+                    onKeyDown={onEscapeKeyDown}
+                  >
+                    <motion.div variants={slotContext} className="flex-1">
+                      <Collapsible
+                        open={manualOpen}
+                        onOpenChange={(next) => {
+                          setManualOpen(next);
+                          logAnalytics(`TriggerExplainerToggle:${next ? "open" : "closed"}`);
+                        }}
+                        className="space-y-4 flex-1"
+                      >
+                        <motion.div className="space-y-3" variants={headerGroup}>
+                          <motion.div
+                            layoutId="trigger-explainer-title"
+                            layoutCrossfade={false}
+                            transition={explainerLayoutTransition}
+                            className="relative"
+                          >
+                            <motion.div variants={headerItem}>
+                              <Heading
+                                id="trigger-explainer-heading"
+                                level={2}
+                                size="xl"
+                                className={cn(
+                                  titleColorTransition,
+                                  headerThemeReady ? "text-ink" : "text-white",
+                                )}
+                                style={titleColorStyle}
                               >
-                                {manualOpen ? "Hide details" : "Show details"}
-                              </CollapsibleTrigger>
+                                {explainer.title}
+                              </Heading>
                             </motion.div>
                           </motion.div>
-                          <CollapsibleContent
-                            id="trigger-explainer-content"
-                            className={`grid ${contentClassName} lg:hidden`}
+                          <motion.div
+                            layoutId="trigger-explainer-subtitle"
+                            layoutCrossfade={false}
+                            transition={explainerLayoutTransition}
+                            className="relative"
                           >
-                            <motion.div className="contents" variants={bodyGroup}>
-                              {explainerContent}
+                            <motion.div variants={headerItem}>
+                              <Text
+                                className={cn(
+                                  "type-section-subtitle",
+                                  titleColorTransition,
+                                  headerThemeReady ? "text-ink-muted" : "text-white",
+                                )}
+                                style={titleColorStyle}
+                                leading="normal"
+                              >
+                                {subheading}
+                              </Text>
                             </motion.div>
-                          </CollapsibleContent>
-                        </Collapsible>
-                      </motion.div>
-                      {enableTitleReveal ? (
-                        <motion.button
-                          type="button"
-                          className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                          onClick={handleCollapse}
-                          variants={surfaceItem}
-                        >
-                          Collapse
-                        </motion.button>
-                      ) : null}
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="trigger-explainer-collapsed"
-                      className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                      variants={headerBlock}
-                      initial={motionEnabled ? "hidden" : false}
-                      animate={motionEnabled ? "show" : undefined}
-                      exit={motionEnabled ? "exit" : undefined}
-                    >
-                      <motion.div variants={headerItems} className="flex flex-col items-center gap-3">
-                        <motion.div
-                          layoutId="trigger-explainer-title"
-                          layoutCrossfade={false}
-                          transition={explainerLayoutTransition}
-                          className="relative inline-flex text-white"
-                        >
-                          <motion.div variants={textItem}>
-                            <Heading
-                              id="trigger-explainer-heading"
-                              level={2}
-                              size="xl"
-                              className="type-section-collapsed"
+                          </motion.div>
+                          <motion.div variants={surfaceItem}>
+                            <CollapsibleTrigger
+                              className="type-button mt-1 inline-flex w-fit items-center gap-2 rounded-sm border border-border/70 bg-card/60 px-4 py-2 text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring lg:hidden"
+                              aria-controls="trigger-explainer-content"
+                              data-analytics-id="TriggerExplainerToggle"
                             >
-                              {explainer.title}
-                            </Heading>
+                              {manualOpen ? "Hide details" : "Show details"}
+                            </CollapsibleTrigger>
                           </motion.div>
-                          <button
-                            type="button"
-                            className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                            onPointerEnter={handleExpand}
-                            onFocus={handleExpand}
-                            onClick={handleExpand}
-                            aria-expanded={revealExplainer}
-                            aria-controls="trigger-explainer-body"
-                            aria-labelledby="trigger-explainer-heading"
-                          >
-                            <span className="sr-only">Expand {explainer.title}</span>
-                          </button>
                         </motion.div>
-                        <motion.div
-                          layoutId="trigger-explainer-subtitle"
-                          layoutCrossfade={false}
-                          transition={explainerLayoutTransition}
-                          className="relative text-white"
+                        <CollapsibleContent
+                          id="trigger-explainer-content"
+                          className={`grid ${contentClassName} lg:hidden`}
                         >
-                          <motion.div variants={textItem}>
-                            <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                              {subheading}
-                            </Text>
+                          <motion.div className="contents" variants={bodyGroup}>
+                            {explainerContent}
                           </motion.div>
-                        </motion.div>
-                      </motion.div>
-                      <motion.div variants={itemsGroup} className="mt-3">
-                        <motion.div variants={textItem}>
-                          <Text
-                            size="button"
-                            className="text-white/80 cursor-pointer focus-ring"
-                            asChild
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </motion.div>
+                    {enableTitleReveal ? (
+                      <motion.button
+                        type="button"
+                        className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
+                        onClick={handleCollapse}
+                        variants={surfaceItem}
+                      >
+                        Collapse
+                      </motion.button>
+                    ) : null}
+                  </motion.div>
+                ) : null}
+                {showCollapsed ? (
+                  <motion.div
+                    key="trigger-explainer-collapsed"
+                    className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
+                    variants={slotContext}
+                    initial={motionEnabled ? "collapsed" : false}
+                    animate={phase}
+                  >
+                    <motion.div variants={headerGroup} className="flex flex-col items-center gap-3">
+                      <motion.div
+                        layoutId="trigger-explainer-title"
+                        layoutCrossfade={false}
+                        transition={explainerLayoutTransition}
+                        className="relative inline-flex text-white"
+                      >
+                        <motion.div variants={collapsedHeaderItem}>
+                          <Heading
+                            id="trigger-explainer-heading"
+                            level={2}
+                            size="xl"
+                            className="type-section-collapsed"
                           >
-                            <button type="button" onClick={handleExpand}>
-                              Read more
-                            </button>
+                            {explainer.title}
+                          </Heading>
+                        </motion.div>
+                        <button
+                          type="button"
+                          className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                          onPointerEnter={handleExpand}
+                          onFocus={handleExpand}
+                          onClick={handleExpand}
+                          onKeyDown={onTriggerKeyDown}
+                          aria-expanded={expanded}
+                          aria-controls="trigger-explainer-body"
+                          aria-labelledby="trigger-explainer-heading"
+                        >
+                          <span className="sr-only">Expand {explainer.title}</span>
+                        </button>
+                      </motion.div>
+                      <motion.div
+                        layoutId="trigger-explainer-subtitle"
+                        layoutCrossfade={false}
+                        transition={explainerLayoutTransition}
+                        className="relative text-white"
+                      >
+                        <motion.div variants={collapsedHeaderItem}>
+                          <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+                            {subheading}
                           </Text>
                         </motion.div>
                       </motion.div>
                     </motion.div>
-                  )}
-                </AnimatePresence>
-              </LayoutGroup>
-            </motion.div>
-
-            <motion.div variants={sequenceSlot}>
-              <AnimatePresence initial={false}>
-                {revealExplainer ? (
-                  <motion.div
-                    key="trigger-explainer-body"
-                    id="trigger-explainer-body"
-                    className="space-y-6"
-                    variants={bodyBlock}
-                    initial={motionEnabled ? "hidden" : false}
-                    animate={motionEnabled ? "show" : undefined}
-                    exit={motionEnabled ? "exit" : undefined}
-                  >
-                    <motion.div className={`hidden lg:grid ${contentClassName}`} variants={bodyGroup}>
-                      {explainerContent}
+                    <motion.div variants={itemsGroup} className="mt-3">
+                      <motion.div variants={ctaItem}>
+                        <Text
+                          size="button"
+                          className="text-white/80 cursor-pointer focus-ring"
+                          asChild
+                        >
+                          <button type="button" onClick={handleExpand} onKeyDown={onTriggerKeyDown}>
+                            Read more
+                          </button>
+                        </Text>
+                      </motion.div>
                     </motion.div>
                   </motion.div>
                 ) : null}
-              </AnimatePresence>
+              </LayoutGroup>
+            </motion.div>
+
+            <motion.div
+              variants={slotContext}
+              initial={motionEnabled ? "collapsed" : false}
+              animate={phase}
+            >
+              {showExpanded ? (
+                <motion.div
+                  key="trigger-explainer-body"
+                  id="trigger-explainer-body"
+                  className="space-y-6"
+                  variants={slotContext}
+                  initial={motionEnabled ? "collapsed" : false}
+                  animate={phase}
+                >
+                  <motion.div className={`hidden lg:grid ${contentClassName}`} variants={bodyGroup}>
+                    {explainerContent}
+                  </motion.div>
+                </motion.div>
+              ) : null}
             </motion.div>
           </motion.div>
         </Container>
