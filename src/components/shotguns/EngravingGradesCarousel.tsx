@@ -9,11 +9,13 @@ import type { GradeSeries, ShotgunsLandingData } from "@/types/catalog";
 import { getGradeAnchorId } from "@/lib/grade-anchors";
 import { homeMotion } from "@/lib/motionConfig";
 import {
+  COLLAPSE_TIME_SCALE,
   CONTAINER_EXPAND_MS,
   EASE_CINEMATIC,
   EXPANDED_HEADER_REVEAL_MS,
   EXPAND_TIME_SCALE,
   GLASS_REVEAL_MS,
+  LIST_REVEAL_MS,
   STAGGER_BODY_ITEMS_MS,
   STAGGER_HEADER_ITEMS_MS,
   STAGGER_LIST_ITEMS_MS,
@@ -337,6 +339,11 @@ const EngravingGradesRevealSection = ({
 
   const listStagger = motionEnabled ? 0.25 : 0;
   const nestedStagger = motionEnabled ? 0.08 : 0;
+  const listExitDuration = (LIST_REVEAL_MS / 1000) * COLLAPSE_TIME_SCALE;
+  const exitTransition = {
+    duration: motionEnabled ? listExitDuration : 0,
+    ease: EASE_CINEMATIC,
+  };
 
   const listContainer = {
     hidden: {},
@@ -361,12 +368,25 @@ const EngravingGradesRevealSection = ({
         delayChildren: motionEnabled ? 0.04 : 0,
       },
     },
+    exit: {
+      transition: {
+        staggerChildren: motionEnabled ? toSeconds(STAGGER_LIST_ITEMS_MS) * COLLAPSE_TIME_SCALE : 0,
+        staggerDirection: -1,
+      },
+    },
   } as const;
 
-  const nestedItem = {
-    hidden: { opacity: 0, y: 8 },
-    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
-  } as const;
+  const nestedItem = motionEnabled
+    ? {
+        hidden: { opacity: 0, y: 8 },
+        show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
+        exit: { opacity: 0, y: -6, transition: exitTransition },
+      }
+    : {
+        hidden: { opacity: 0 },
+        show: { opacity: 1 },
+        exit: { opacity: 0, transition: exitTransition },
+      };
 
   useEffect(() => {
     if (!enableTitleReveal || !revealCarousel) return;
@@ -642,13 +662,14 @@ const EngravingGradesRevealSection = ({
                                   +
                                 </span>
                               </button>
-                              {isOpen ? (
-                                <div className="border-t border-border/70">
+                              <AnimatePresence initial={false}>
+                                {isOpen ? (
                                   <motion.ul
-                                    className="space-y-1 p-3"
+                                    className="space-y-1 border-t border-border/70 p-3"
                                     variants={nestedList}
                                     initial={motionEnabled ? "hidden" : false}
                                     animate={motionEnabled ? "show" : undefined}
+                                    exit="exit"
                                   >
                                     {category.grades.map((grade) => {
                                       const isActive = grade.id === activeGradeId;
@@ -696,8 +717,8 @@ const EngravingGradesRevealSection = ({
                                       );
                                     })}
                                   </motion.ul>
-                                </div>
-                              ) : null}
+                                ) : null}
+                              </AnimatePresence>
                             </motion.div>
                           );
                         })}
