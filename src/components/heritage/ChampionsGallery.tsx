@@ -609,7 +609,7 @@ const ChampionsGalleryRevealSection = ({
                           {activeDiscipline === null ? (
                             <motion.span
                               layoutId="heritage-champions-discipline-highlight"
-                              className="absolute inset-0 rounded-[0.125rem] bg-perazzi-red/10"
+                              className="absolute inset-0 rounded-xs bg-perazzi-red/10"
                               transition={homeMotion.springHighlight}
                               aria-hidden="true"
                             />
@@ -639,7 +639,7 @@ const ChampionsGalleryRevealSection = ({
                               {active ? (
                                 <motion.span
                                   layoutId="heritage-champions-discipline-highlight"
-                                  className="absolute inset-0 rounded-[0.125rem] bg-perazzi-red/10"
+                                  className="absolute inset-0 rounded-xs bg-perazzi-red/10"
                                   transition={homeMotion.springHighlight}
                                   aria-hidden="true"
                                 />
@@ -786,7 +786,7 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
   return (
     <>
       <div
-        className="group relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-[3/2]"
+        className="group relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-3/2"
       >
         <Image
           src={champion.image.url}
