@@ -7,6 +7,18 @@ import type { Champion, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { homeMotion } from "@/lib/motionConfig";
+import {
+  CONTAINER_EXPAND_MS,
+  EASE_CINEMATIC,
+  EXPANDED_HEADER_REVEAL_MS,
+  EXPAND_TIME_SCALE,
+  GLASS_REVEAL_MS,
+  STAGGER_BODY_ITEMS_MS,
+  STAGGER_HEADER_ITEMS_MS,
+  STAGGER_LIST_ITEMS_MS,
+} from "@/motion/expandableSectionMotion";
+import { createExpandableSectionVariants } from "@/motion/createExpandableSectionVariants";
+import { useExpandableSectionTimeline } from "@/motion/useExpandableSectionTimeline";
 import { cn } from "@/lib/utils";
 import { Container, Heading, Text } from "@/components/ui";
 
@@ -57,11 +69,12 @@ function MarqueeFeatureRevealSection({
   motionEnabled,
   scrollRef,
 }: MarqueeFeatureRevealSectionProps) {
-  const [marqueeExpanded, setMarqueeExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
   const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const marqueeShellRef = useRef<HTMLDivElement | null>(null);
   const headerThemeFrame = useRef<number | null>(null);
+  const { expanded, phase, open, close, onTriggerKeyDown, onEscapeKeyDown } =
+    useExpandableSectionTimeline({ defaultExpanded: !enableTitleReveal });
 
   const ratio = champion.image.aspectRatio ?? 3 / 4;
   const background = ui.background ?? {
@@ -74,17 +87,28 @@ function MarqueeFeatureRevealSection({
   const headingTitle = champion.name;
   const headingSubtitle = champion.title;
 
-  const revealMarquee = !enableTitleReveal || marqueeExpanded;
+  const revealMarquee = phase === "expanded" || phase === "closingHold";
   const revealPhotoFocus = revealMarquee;
   const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealMarquee;
-  const focusSurfaceTransition = "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const focusFadeTransition = "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const titleColorTransition = "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const marqueeReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const marqueeRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const marqueeCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const marqueeLayoutTransition = motionEnabled ? { layout: marqueeReveal } : undefined;
+  const parallaxEnabled = enableTitleReveal && !revealMarquee && motionEnabled;
+  const focusSurfaceTransition =
+    "transition-[background-color,box-shadow,border-color,backdrop-filter]";
+  const titleColorTransition = "transition-colors";
+  const cinematicBezier = `cubic-bezier(${EASE_CINEMATIC.join(",")})`;
+  const transitionStyle = (durationMs: number) => ({
+    transitionDuration: `${motionEnabled ? Math.round(durationMs * EXPAND_TIME_SCALE) : 0}ms`,
+    transitionTimingFunction: motionEnabled ? cinematicBezier : "linear",
+  });
+  const focusSurfaceStyle = transitionStyle(GLASS_REVEAL_MS);
+  const titleColorStyle = transitionStyle(EXPANDED_HEADER_REVEAL_MS);
+  const marqueeLayoutTransition = motionEnabled
+    ? {
+      layout: {
+        duration: (CONTAINER_EXPAND_MS / 1000) * EXPAND_TIME_SCALE,
+        ease: EASE_CINEMATIC,
+      },
+    }
+    : undefined;
   const marqueeMinHeight = enableTitleReveal ? "min-h-[calc(640px+12rem)]" : null;
   const { scrollYProgress } = useScroll({
     target: scrollRef,
@@ -96,15 +120,72 @@ function MarqueeFeatureRevealSection({
     ["0%", parallaxEnabled ? parallaxStrength : "0%"],
   );
   const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
-  const backgroundScale = parallaxEnabled ? 1.32 : 1;
-  const backgroundScaleTransition = revealMarquee ? marqueeReveal : marqueeCollapse;
+  const toSeconds = (ms: number) => ms / 1000;
+  const staggerTransition = (staggerMs: number, direction?: 1 | -1) => ({
+    transition: {
+      staggerChildren: motionEnabled ? toSeconds(staggerMs) : 0,
+      staggerDirection: direction,
+    },
+  });
+  const headerGroup = {
+    collapsed: staggerTransition(STAGGER_HEADER_ITEMS_MS, -1),
+    prezoom: staggerTransition(STAGGER_HEADER_ITEMS_MS),
+    expanded: staggerTransition(STAGGER_HEADER_ITEMS_MS),
+    closingHold: staggerTransition(STAGGER_HEADER_ITEMS_MS, -1),
+  } as const;
+  const bodyGroup = {
+    collapsed: staggerTransition(STAGGER_BODY_ITEMS_MS, -1),
+    prezoom: staggerTransition(STAGGER_BODY_ITEMS_MS),
+    expanded: staggerTransition(STAGGER_BODY_ITEMS_MS),
+    closingHold: staggerTransition(STAGGER_BODY_ITEMS_MS, -1),
+  } as const;
+  const itemsGroup = {
+    collapsed: staggerTransition(STAGGER_LIST_ITEMS_MS, -1),
+    prezoom: staggerTransition(STAGGER_LIST_ITEMS_MS),
+    expanded: staggerTransition(STAGGER_LIST_ITEMS_MS),
+    closingHold: staggerTransition(STAGGER_LIST_ITEMS_MS, -1),
+  } as const;
+  const slotVariants = createExpandableSectionVariants({
+    motionMode: motionEnabled ? "full" : "reduced",
+    backgroundScale: { collapsed: 1.32, prezoom: 1.12, expanded: 1 },
+    itemOffsetY: 12,
+    blurPx: 8,
+    glassScale: 0.985,
+  });
+  const surfaceVariants = createExpandableSectionVariants({
+    motionMode: motionEnabled ? "full" : "reduced",
+    itemOffsetY: 12,
+    blurPx: 0,
+    glassScale: 0.985,
+  });
+  const scrimInverted = {
+    collapsed: slotVariants.scrimTop.expanded,
+    prezoom: slotVariants.scrimTop.expanded,
+    expanded: slotVariants.scrimTop.collapsed,
+    closingHold: slotVariants.scrimTop.collapsed,
+  } as const;
+  const slotContext = {
+    collapsed: {},
+    prezoom: {},
+    expanded: {},
+    closingHold: {},
+  } as const;
+  const headerItem = slotVariants.expandedHeader;
+  const collapsedHeaderItem = slotVariants.collapsedHeader;
+  const bodyItem = slotVariants.content;
+  const ctaItem = slotVariants.ctaRow;
+  const surfaceItem = surfaceVariants.content;
+  const glassStyle = {
+    ...(enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : {}),
+    ...focusSurfaceStyle,
+  };
 
   const handleMarqueeExpand = () => {
     if (!enableTitleReveal) return;
     if (headerThemeFrame.current !== null) {
       cancelAnimationFrame(headerThemeFrame.current);
     }
-    setMarqueeExpanded(true);
+    open();
     headerThemeFrame.current = requestAnimationFrame(() => {
       setHeaderThemeReady(true);
       headerThemeFrame.current = null;
@@ -118,97 +199,8 @@ function MarqueeFeatureRevealSection({
       headerThemeFrame.current = null;
     }
     setHeaderThemeReady(false);
-    setMarqueeExpanded(false);
+    close();
   };
-
-  const sectionSequence = {
-    hidden: {},
-    show: {
-      transition: {
-        staggerChildren: motionEnabled ? 0.12 : 0,
-        delayChildren: motionEnabled ? 0.1 : 0,
-      },
-    },
-  } as const;
-
-  const sequenceSlot = {
-    hidden: {},
-    show: {},
-  } as const;
-
-  const atmosphereGroup = {
-    hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.12 : 0 } },
-  } as const;
-
-  const atmosphereMedia = {
-    hidden: { opacity: 0, scale: 1.04 },
-    show: {
-      opacity: 1,
-      scale: 1,
-      transition: { duration: 1.1, ease: homeMotion.cinematicEase },
-    },
-  } as const;
-
-  const atmosphereOverlay = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { duration: 0.9, ease: homeMotion.cinematicEase },
-    },
-  } as const;
-
-  const headerGroup = {
-    hidden: {},
-    show: {
-      transition: {
-        staggerChildren: motionEnabled ? 0.12 : 0,
-        delayChildren: motionEnabled ? 0.12 : 0,
-      },
-    },
-  } as const;
-
-  const bodyGroup = {
-    hidden: {},
-    show: {
-      transition: {
-        staggerChildren: motionEnabled ? 0.1 : 0,
-        delayChildren: motionEnabled ? 0.24 : 0,
-      },
-    },
-  } as const;
-
-  const itemsGroup = {
-    hidden: {},
-    show: {
-      transition: {
-        staggerChildren: motionEnabled ? 0.1 : 0,
-        delayChildren: motionEnabled ? 0.36 : 0,
-      },
-    },
-  } as const;
-
-  const textItem = {
-    hidden: { opacity: 0, y: 12, filter: "blur(8px)" },
-    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.reveal },
-  } as const;
-
-  const surfaceItem = {
-    hidden: { opacity: 0, y: 12 },
-    show: { opacity: 1, y: 0, transition: homeMotion.reveal },
-  } as const;
-
-  const expandedContainer = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1, transition: homeMotion.revealFast },
-    exit: { opacity: 0, transition: marqueeCollapse },
-  } as const;
-
-  const collapsedContainer = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1, transition: marqueeRevealFast },
-    exit: { opacity: 0, transition: marqueeRevealFast },
-  } as const;
 
   useEffect(() => {
     if (!enableTitleReveal || !revealMarquee) return;
@@ -247,23 +239,10 @@ function MarqueeFeatureRevealSection({
   }, []);
 
   return (
-    <motion.div
-      variants={sectionSequence}
-      initial={motionEnabled ? "hidden" : false}
-      animate={motionEnabled ? "show" : undefined}
-    >
-      <motion.div
-        className="absolute inset-0 -z-10 overflow-hidden"
-        variants={atmosphereGroup}
-      >
-        <motion.div className="absolute inset-0" variants={atmosphereMedia}>
-          <motion.div
-            className="absolute inset-0 will-change-transform"
-            style={parallaxStyle}
-            initial={false}
-            animate={motionEnabled ? { scale: backgroundScale } : undefined}
-            transition={motionEnabled ? backgroundScaleTransition : undefined}
-          >
+    <motion.div initial={motionEnabled ? "collapsed" : false} animate={phase}>
+      <motion.div className="absolute inset-0 -z-10 overflow-hidden">
+        <motion.div className="absolute inset-0" variants={slotVariants.background}>
+          <motion.div className="absolute inset-0 will-change-transform" style={parallaxStyle}>
             <Image
               src={background.url}
               alt={background.alt}
@@ -274,53 +253,36 @@ function MarqueeFeatureRevealSection({
             />
           </motion.div>
         </motion.div>
-        <motion.div className="absolute inset-0" variants={atmosphereOverlay}>
+        <motion.div className="absolute inset-0" variants={scrimInverted}>
           <div
-            className={cn(
-              "absolute inset-0 bg-(--scrim-strong)",
-              focusFadeTransition,
-              revealMarquee ? "opacity-0" : "opacity-100",
-            )}
+            className="absolute inset-0 bg-(--scrim-strong)"
             aria-hidden
           />
         </motion.div>
-        <motion.div className="absolute inset-0" variants={atmosphereOverlay}>
+        <motion.div className="absolute inset-0" variants={slotVariants.scrimBottom}>
           <div
-            className={cn(
-              "absolute inset-0 bg-(--scrim-strong)",
-              focusFadeTransition,
-              revealPhotoFocus ? "opacity-100" : "opacity-0",
-            )}
+            className="absolute inset-0 bg-(--scrim-strong)"
             aria-hidden
           />
         </motion.div>
-        <motion.div className="absolute inset-0" variants={atmosphereOverlay}>
+        <motion.div className="absolute inset-0" variants={slotVariants.scrimBottom}>
           <div
-            className={cn(
-              "pointer-events-none absolute inset-0 film-grain",
-              focusFadeTransition,
-              revealPhotoFocus ? "opacity-20" : "opacity-0",
-            )}
+            className="pointer-events-none absolute inset-0 film-grain"
             aria-hidden="true"
           />
         </motion.div>
-        <motion.div className="absolute inset-0" variants={atmosphereOverlay}>
+        <motion.div className="absolute inset-0" variants={slotVariants.scrimBottom}>
           <div
-            className={cn(
-              "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-              focusFadeTransition,
-              revealPhotoFocus ? "opacity-100" : "opacity-0",
-            )}
+            className="pointer-events-none absolute inset-0 overlay-gradient-canvas"
             aria-hidden
           />
         </motion.div>
       </motion.div>
 
-      <motion.div variants={sequenceSlot}>
+      <motion.div>
         <Container size="xl" className="relative z-10">
           <motion.div
             ref={marqueeShellRef}
-            style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
             className={cn(
               "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
               focusSurfaceTransition,
@@ -329,6 +291,8 @@ function MarqueeFeatureRevealSection({
                 : "border-transparent bg-transparent shadow-none backdrop-blur-none",
               marqueeMinHeight,
             )}
+            variants={slotVariants.glass}
+            style={glassStyle}
           >
             <LayoutGroup id="marquee-feature-title">
               <AnimatePresence initial={false}>
@@ -337,10 +301,10 @@ function MarqueeFeatureRevealSection({
                     key="marquee-feature-body"
                     id="marquee-feature-body"
                     className="relative z-10"
-                    variants={expandedContainer}
-                    initial={motionEnabled ? "hidden" : false}
-                    animate={motionEnabled ? "show" : undefined}
-                    exit={motionEnabled ? "exit" : undefined}
+                    variants={slotContext}
+                    initial={motionEnabled ? "collapsed" : false}
+                    animate={phase}
+                    onKeyDown={onEscapeKeyDown}
                   >
                     <div className="md:grid md:grid-cols-[minmax(260px,1fr)_minmax(0,1.4fr)] md:items-center md:gap-10">
                       <motion.div variants={bodyGroup}>
@@ -364,7 +328,7 @@ function MarqueeFeatureRevealSection({
                       <div className="mt-8 md:mt-0 md:flex md:items-start md:justify-between md:gap-8">
                         <motion.div className="space-y-4">
                           <motion.div variants={headerGroup} className="space-y-4">
-                            <motion.div variants={textItem}>
+                            <motion.div variants={headerItem}>
                               <Text size="label-tight" className="text-ink-muted">
                                 {eyebrow}
                               </Text>
@@ -375,7 +339,7 @@ function MarqueeFeatureRevealSection({
                               transition={marqueeLayoutTransition}
                               className="relative"
                             >
-                              <motion.div variants={textItem}>
+                              <motion.div variants={headerItem}>
                                 <Heading
                                   id="champion-heading"
                                   level={2}
@@ -384,6 +348,7 @@ function MarqueeFeatureRevealSection({
                                     titleColorTransition,
                                     headerThemeReady ? "text-ink" : "text-white",
                                   )}
+                                  style={titleColorStyle}
                                 >
                                   {headingTitle}
                                 </Heading>
@@ -395,7 +360,7 @@ function MarqueeFeatureRevealSection({
                               transition={marqueeLayoutTransition}
                               className="relative"
                             >
-                              <motion.div variants={textItem}>
+                              <motion.div variants={headerItem}>
                                 <Text
                                   size="lg"
                                   className={cn(
@@ -403,6 +368,7 @@ function MarqueeFeatureRevealSection({
                                     titleColorTransition,
                                     headerThemeReady ? "text-ink-muted" : "text-white",
                                   )}
+                                  style={titleColorStyle}
                                 >
                                   {headingSubtitle}
                                 </Text>
@@ -410,7 +376,7 @@ function MarqueeFeatureRevealSection({
                             </motion.div>
                           </motion.div>
                           <motion.div variants={bodyGroup} className="space-y-4">
-                            <motion.div variants={textItem}>
+                            <motion.div variants={bodyItem}>
                               <Text
                                 asChild
                                 size="lg"
@@ -454,10 +420,9 @@ function MarqueeFeatureRevealSection({
                   <motion.div
                     key="marquee-feature-collapsed"
                     className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                    variants={collapsedContainer}
-                    initial={motionEnabled ? "hidden" : false}
-                    animate={motionEnabled ? "show" : undefined}
-                    exit={motionEnabled ? "exit" : undefined}
+                    variants={slotContext}
+                    initial={motionEnabled ? "collapsed" : false}
+                    animate={phase}
                   >
                     <motion.div variants={headerGroup} className="flex flex-col items-center gap-3">
                       <motion.div
@@ -466,7 +431,7 @@ function MarqueeFeatureRevealSection({
                         transition={marqueeLayoutTransition}
                         className="relative inline-flex text-white"
                       >
-                        <motion.div variants={textItem}>
+                        <motion.div variants={collapsedHeaderItem}>
                           <Heading
                             id="champion-heading"
                             level={2}
@@ -482,7 +447,8 @@ function MarqueeFeatureRevealSection({
                           onPointerEnter={handleMarqueeExpand}
                           onFocus={handleMarqueeExpand}
                           onClick={handleMarqueeExpand}
-                          aria-expanded={revealMarquee}
+                          onKeyDown={onTriggerKeyDown}
+                          aria-expanded={expanded}
                           aria-controls="marquee-feature-body"
                           aria-labelledby="champion-heading"
                         >
@@ -495,7 +461,7 @@ function MarqueeFeatureRevealSection({
                         transition={marqueeLayoutTransition}
                         className="relative text-white"
                       >
-                        <motion.div variants={textItem}>
+                        <motion.div variants={collapsedHeaderItem}>
                           <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
                             {headingSubtitle}
                           </Text>
@@ -503,13 +469,13 @@ function MarqueeFeatureRevealSection({
                       </motion.div>
                     </motion.div>
                     <motion.div variants={itemsGroup} className="mt-3">
-                      <motion.div variants={textItem}>
+                      <motion.div variants={ctaItem}>
                         <Text
                           size="button"
                           className="text-white/80 cursor-pointer focus-ring"
                           asChild
                         >
-                          <button type="button" onClick={handleMarqueeExpand}>
+                          <button type="button" onClick={handleMarqueeExpand} onKeyDown={onTriggerKeyDown}>
                             Read more
                           </button>
                         </Text>
