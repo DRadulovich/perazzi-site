@@ -14,6 +14,8 @@ import {
   META_REVEAL_MS,
   PREZOOM_MS,
   SCRIM_CONVERGE_MS,
+  SCRIM_FADE_OFFSET_MS,
+  SCRIM_FOCUS_OFFSET_MS,
   STAGGER_BODY_ITEMS_MS,
   STAGGER_HEADER_ITEMS_MS,
   STAGGER_LIST_ITEMS_MS,
@@ -26,6 +28,7 @@ export type ExpandableSectionPhase =
   | "closingHold";
 
 export type ExpandableSectionMotionMode = "full" | "reduced";
+export type ExpandableSectionScrimMode = "atmosphere" | "dualFocusFade";
 
 export type ExpandableSectionVariants = {
   background: Variants;
@@ -42,6 +45,7 @@ export type ExpandableSectionVariants = {
 
 export type ExpandableSectionVariantOptions = {
   motionMode?: ExpandableSectionMotionMode;
+  scrimMode?: ExpandableSectionScrimMode;
   backgroundScale?: {
     collapsed?: number;
     prezoom?: number;
@@ -80,15 +84,29 @@ const applyStagger = (
   };
 };
 
+const applyDelay = (
+  transition: Transition,
+  delayMs: number | undefined,
+  reducedMotion: boolean
+): Transition => {
+  if (reducedMotion || !delayMs) return transition;
+  return {
+    ...transition,
+    delay: toSeconds(delayMs),
+  };
+};
+
 export function createExpandableSectionVariants(
   options: ExpandableSectionVariantOptions = {}
 ): ExpandableSectionVariants {
   const motionMode = options.motionMode ?? "full";
+  const scrimMode = options.scrimMode ?? "atmosphere";
   const reducedMotion = motionMode === "reduced";
 
   const itemOffsetY = reducedMotion ? 0 : (options.itemOffsetY ?? 14);
   const blurPx = reducedMotion ? 0 : (options.blurPx ?? 10);
-  const scrimOffsetY = reducedMotion ? 0 : (options.scrimOffsetY ?? 24);
+  const scrimOffsetY =
+    reducedMotion ? 0 : (options.scrimOffsetY ?? (scrimMode === "dualFocusFade" ? 0 : 24));
   const glassScale = reducedMotion ? 1 : (options.glassScale ?? 0.985);
   const parallaxY = reducedMotion ? 0 : (options.parallaxY ?? 0);
 
@@ -123,6 +141,86 @@ export function createExpandableSectionVariants(
 
   const backgroundTransition = expandTransition(CONTAINER_EXPAND_MS);
   const backgroundCollapse = collapseTransition(CONTAINER_EXPAND_MS);
+  const scrimExpand = expandTransition(SCRIM_CONVERGE_MS, EASE_SOFT);
+  const scrimCollapse = collapseTransition(SCRIM_CONVERGE_MS, EASE_SOFT);
+  const scrimFadeExpand = applyDelay(scrimExpand, SCRIM_FADE_OFFSET_MS, reducedMotion);
+  const scrimFocusExpand = applyDelay(scrimExpand, SCRIM_FOCUS_OFFSET_MS, reducedMotion);
+  const scrimTopVariants =
+    scrimMode === "dualFocusFade"
+      ? {
+          collapsed: {
+            ...scrimVisible,
+            transition: scrimCollapse,
+          },
+          prezoom: {
+            ...scrimVisible,
+            transition: scrimExpand,
+          },
+          expanded: {
+            ...scrimHiddenTop,
+            transition: scrimFadeExpand,
+          },
+          closingHold: {
+            ...scrimVisible,
+            transition: scrimCollapse,
+          },
+        }
+      : {
+          collapsed: {
+            ...scrimHiddenTop,
+            transition: scrimCollapse,
+          },
+          prezoom: {
+            ...scrimHiddenTop,
+            transition: scrimExpand,
+          },
+          expanded: {
+            ...scrimVisible,
+            transition: scrimExpand,
+          },
+          closingHold: {
+            ...scrimHiddenTop,
+            transition: scrimCollapse,
+          },
+        };
+  const scrimBottomVariants =
+    scrimMode === "dualFocusFade"
+      ? {
+          collapsed: {
+            ...scrimHiddenBottom,
+            transition: scrimCollapse,
+          },
+          prezoom: {
+            ...scrimHiddenBottom,
+            transition: scrimExpand,
+          },
+          expanded: {
+            ...scrimVisible,
+            transition: scrimFocusExpand,
+          },
+          closingHold: {
+            ...scrimHiddenBottom,
+            transition: scrimCollapse,
+          },
+        }
+      : {
+          collapsed: {
+            ...scrimHiddenBottom,
+            transition: scrimCollapse,
+          },
+          prezoom: {
+            ...scrimHiddenBottom,
+            transition: scrimExpand,
+          },
+          expanded: {
+            ...scrimVisible,
+            transition: scrimExpand,
+          },
+          closingHold: {
+            ...scrimHiddenBottom,
+            transition: scrimCollapse,
+          },
+        };
 
   return {
     background: {
@@ -147,42 +245,8 @@ export function createExpandableSectionVariants(
         transition: backgroundCollapse,
       },
     },
-    scrimTop: {
-      collapsed: {
-        ...scrimHiddenTop,
-        transition: collapseTransition(SCRIM_CONVERGE_MS, EASE_SOFT),
-      },
-      prezoom: {
-        ...scrimHiddenTop,
-        transition: expandTransition(SCRIM_CONVERGE_MS, EASE_SOFT),
-      },
-      expanded: {
-        ...scrimVisible,
-        transition: expandTransition(SCRIM_CONVERGE_MS, EASE_SOFT),
-      },
-      closingHold: {
-        ...scrimHiddenTop,
-        transition: collapseTransition(SCRIM_CONVERGE_MS, EASE_SOFT),
-      },
-    },
-    scrimBottom: {
-      collapsed: {
-        ...scrimHiddenBottom,
-        transition: collapseTransition(SCRIM_CONVERGE_MS, EASE_SOFT),
-      },
-      prezoom: {
-        ...scrimHiddenBottom,
-        transition: expandTransition(SCRIM_CONVERGE_MS, EASE_SOFT),
-      },
-      expanded: {
-        ...scrimVisible,
-        transition: expandTransition(SCRIM_CONVERGE_MS, EASE_SOFT),
-      },
-      closingHold: {
-        ...scrimHiddenBottom,
-        transition: collapseTransition(SCRIM_CONVERGE_MS, EASE_SOFT),
-      },
-    },
+    scrimTop: scrimTopVariants,
+    scrimBottom: scrimBottomVariants,
     collapsedHeader: {
       collapsed: {
         ...visibleItem,
