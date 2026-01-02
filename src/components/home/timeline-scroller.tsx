@@ -130,9 +130,6 @@ function TimelineRevealSection({
   const timelineRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
   const timelineCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
   const timelineBodyReveal = timelineReveal;
-  const readMoreReveal = motionEnabled
-    ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: timelineReveal.duration }
-    : undefined;
   const timelineLayoutTransition = motionEnabled ? { layout: timelineReveal } : undefined;
   const timelineMinHeight = enableTitleReveal ? "min-h-[calc(640px+18rem)]" : null;
   const { scrollYProgress } = useScroll({
@@ -169,14 +166,114 @@ function TimelineRevealSection({
     setTimelineExpanded(false);
   };
 
-  const headingContainer = {
+  const sectionSequence = {
     hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
+    show: {
+      transition: {
+        staggerChildren: motionEnabled ? 0.12 : 0,
+        delayChildren: motionEnabled ? 0.1 : 0,
+      },
+    },
   } as const;
 
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: timelineReveal },
+  const sequenceSlot = {
+    hidden: {},
+    show: {},
+  } as const;
+
+  const atmosphereGroup = {
+    hidden: {},
+    show: { transition: { staggerChildren: motionEnabled ? 0.12 : 0 } },
+  } as const;
+
+  const atmosphereMedia = {
+    hidden: { opacity: 0, scale: 1.04 },
+    show: {
+      opacity: 1,
+      scale: 1,
+      transition: { duration: 1.1, ease: homeMotion.cinematicEase },
+    },
+  } as const;
+
+  const atmosphereOverlay = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { duration: 0.9, ease: homeMotion.cinematicEase },
+    },
+  } as const;
+
+  const timelineSequence = {
+    hidden: {},
+    show: {
+      transition: { staggerChildren: motionEnabled ? 0.12 : 0 },
+    },
+  } as const;
+
+  const headerItems = {
+    hidden: {},
+    show: {
+      transition: { staggerChildren: motionEnabled ? 0.12 : 0 },
+    },
+  } as const;
+
+  const headerBlock = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        ...timelineReveal,
+        delay: motionEnabled ? 0.2 : 0,
+        staggerChildren: motionEnabled ? 0.12 : 0,
+        delayChildren: motionEnabled ? 0.08 : 0,
+      },
+    },
+    exit: { opacity: 0, transition: timelineRevealFast },
+  } as const;
+
+  const bodyBlock = {
+    hidden: { opacity: 0, y: 14 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        ...timelineBodyReveal,
+        delay: motionEnabled ? 0.36 : 0,
+        staggerChildren: motionEnabled ? 0.1 : 0,
+        delayChildren: motionEnabled ? 0.08 : 0,
+      },
+    },
+    exit: { opacity: 0, y: -12, transition: timelineCollapse },
+  } as const;
+
+  const textItem = {
+    hidden: { opacity: 0, y: 12, filter: "blur(8px)" },
+    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
+  } as const;
+
+  const surfaceItem = {
+    hidden: { opacity: 0, y: 12 },
+    show: { opacity: 1, y: 0, transition: homeMotion.revealFast },
+  } as const;
+
+  const listGroup = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: motionEnabled ? 0.1 : 0,
+        delayChildren: motionEnabled ? 0.05 : 0,
+      },
+    },
+  } as const;
+
+  const columnGroup = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: motionEnabled ? 0.1 : 0,
+        delayChildren: motionEnabled ? 0.04 : 0,
+      },
+    },
   } as const;
 
   useEffect(() => {
@@ -216,62 +313,81 @@ function TimelineRevealSection({
   }, []);
 
   return (
-    <>
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <motion.div
-          className="absolute inset-0 will-change-transform"
-          style={parallaxStyle}
-          initial={false}
-          animate={motionEnabled ? { scale: backgroundScale } : undefined}
-          transition={motionEnabled ? backgroundScaleTransition : undefined}
-        >
-          <Image
-            src={backgroundUrl}
-            alt={backgroundAlt}
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority
+    <motion.div
+      variants={sectionSequence}
+      initial={motionEnabled ? "hidden" : false}
+      whileInView={motionEnabled ? "show" : undefined}
+      viewport={motionEnabled ? { once: true, amount: 0.25 } : undefined}
+    >
+      <motion.div
+        className="absolute inset-0 -z-10 overflow-hidden"
+        variants={atmosphereGroup}
+      >
+        <motion.div className="absolute inset-0" variants={atmosphereMedia}>
+          <motion.div
+            className="absolute inset-0 will-change-transform"
+            style={parallaxStyle}
+            initial={false}
+            animate={motionEnabled ? { scale: backgroundScale } : undefined}
+            transition={motionEnabled ? backgroundScaleTransition : undefined}
+          >
+            <Image
+              src={backgroundUrl}
+              alt={backgroundAlt}
+              fill
+              sizes="100vw"
+              className="object-cover"
+              priority
+            />
+          </motion.div>
+        </motion.div>
+        <motion.div className="absolute inset-0" variants={atmosphereOverlay}>
+          <div
+            className={cn(
+              "absolute inset-0 bg-(--scrim-strong)",
+              focusFadeTransition,
+              revealTimeline ? "opacity-0" : "opacity-100",
+            )}
+            aria-hidden
           />
         </motion.div>
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealTimeline ? "opacity-0" : "opacity-100",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 film-grain",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-20" : "opacity-0",
-          )}
-          aria-hidden="true"
-        />
-        <div
-          className={cn(
-            "absolute inset-0 overlay-gradient-canvas",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-      </div>
+        <motion.div className="absolute inset-0" variants={atmosphereOverlay}>
+          <div
+            className={cn(
+              "absolute inset-0 bg-(--scrim-strong)",
+              focusFadeTransition,
+              revealPhotoFocus ? "opacity-100" : "opacity-0",
+            )}
+            aria-hidden
+          />
+        </motion.div>
+        <motion.div className="absolute inset-0" variants={atmosphereOverlay}>
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-0 film-grain",
+              focusFadeTransition,
+              revealPhotoFocus ? "opacity-20" : "opacity-0",
+            )}
+            aria-hidden="true"
+          />
+        </motion.div>
+        <motion.div className="absolute inset-0" variants={atmosphereOverlay}>
+          <div
+            className={cn(
+              "absolute inset-0 overlay-gradient-canvas",
+              focusFadeTransition,
+              revealPhotoFocus ? "opacity-100" : "opacity-0",
+            )}
+            aria-hidden
+          />
+        </motion.div>
+      </motion.div>
 
-      <div
+      <motion.div
         id="craft-timeline-content"
         tabIndex={-1}
         className="focus:outline-none focus-ring"
+        variants={sequenceSlot}
       >
         <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
           <motion.div
@@ -285,289 +401,292 @@ function TimelineRevealSection({
                 : "border-transparent bg-transparent shadow-none backdrop-blur-none",
               timelineMinHeight,
             )}
+            variants={timelineSequence}
           >
-            <LayoutGroup id="craft-timeline-title">
-              <AnimatePresence initial={false}>
-                {revealTimeline ? (
-                  <motion.div
-                    key="craft-timeline-header"
-                    className="relative z-10 space-y-4 md:flex md:items-center md:justify-between md:gap-8"
-                    initial={motionEnabled ? { opacity: 0 } : false}
-                    animate={motionEnabled ? { opacity: 1, transition: timelineReveal } : undefined}
-                    exit={motionEnabled ? { opacity: 0, transition: timelineRevealFast } : undefined}
-                  >
+            <motion.div variants={sequenceSlot}>
+              <LayoutGroup id="craft-timeline-title">
+                <AnimatePresence initial={false}>
+                  {revealTimeline ? (
                     <motion.div
-                      className="space-y-3"
-                      variants={headingContainer}
-                      initial="hidden"
-                      animate="show"
+                      key="craft-timeline-header"
+                      className="relative z-10 space-y-4 md:flex md:items-center md:justify-between md:gap-8"
+                      variants={headerBlock}
+                      initial={motionEnabled ? "hidden" : false}
+                      animate={motionEnabled ? "show" : undefined}
+                      exit={motionEnabled ? "exit" : undefined}
+                    >
+                      <motion.div className="space-y-3" variants={headerItems}>
+                        <motion.div
+                          layoutId="craft-timeline-title"
+                          layoutCrossfade={false}
+                          transition={timelineLayoutTransition}
+                          className="relative"
+                        >
+                          <motion.div variants={textItem}>
+                            <Heading
+                              id="craft-timeline-heading"
+                              level={2}
+                              size="xl"
+                              className={cn(
+                                titleColorTransition,
+                                headerThemeReady ? "text-ink" : "text-white",
+                              )}
+                            >
+                              {headingTitle}
+                            </Heading>
+                          </motion.div>
+                        </motion.div>
+                        <motion.div
+                          layoutId="craft-timeline-subtitle"
+                          layoutCrossfade={false}
+                          transition={timelineLayoutTransition}
+                          className="relative"
+                        >
+                          <motion.div variants={textItem}>
+                            <Text
+                              size="lg"
+                              className={cn(
+                                "type-section-subtitle",
+                                titleColorTransition,
+                                headerThemeReady ? "text-ink-muted" : "text-white",
+                              )}
+                            >
+                              {headingEyebrow}
+                            </Text>
+                          </motion.div>
+                        </motion.div>
+                        <span className="sr-only">{headingInstructions}</span>
+                      </motion.div>
+                      {enableTitleReveal ? (
+                        <motion.button
+                          type="button"
+                          className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
+                          onClick={handleTimelineCollapse}
+                          variants={surfaceItem}
+                        >
+                          Collapse
+                        </motion.button>
+                      ) : null}
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="craft-timeline-title-collapsed"
+                      className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
+                      variants={headerBlock}
+                      initial={motionEnabled ? "hidden" : false}
+                      animate={motionEnabled ? "show" : undefined}
+                      exit={motionEnabled ? "exit" : undefined}
                     >
                       <motion.div
                         layoutId="craft-timeline-title"
                         layoutCrossfade={false}
                         transition={timelineLayoutTransition}
-                        className="relative"
+                        className="relative inline-flex text-white"
                       >
-                        <Heading
-                          id="craft-timeline-heading"
-                          level={2}
-                          size="xl"
-                          className={cn(
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink" : "text-white",
-                          )}
+                        <motion.div variants={textItem}>
+                          <Heading
+                            id="craft-timeline-heading"
+                            level={2}
+                            size="xl"
+                            className="type-section-collapsed"
+                          >
+                            {headingTitle}
+                          </Heading>
+                        </motion.div>
+                        <button
+                          type="button"
+                          className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                          onPointerEnter={handleTimelineExpand}
+                          onFocus={handleTimelineExpand}
+                          onClick={handleTimelineExpand}
+                          aria-expanded={revealTimeline}
+                          aria-controls="craft-timeline-body"
+                          aria-labelledby="craft-timeline-heading"
                         >
-                          {headingTitle}
-                        </Heading>
+                          <span className="sr-only">Expand {headingTitle}</span>
+                        </button>
                       </motion.div>
                       <motion.div
                         layoutId="craft-timeline-subtitle"
                         layoutCrossfade={false}
                         transition={timelineLayoutTransition}
-                        className="relative"
+                        className="relative text-white"
                       >
-                        <motion.div variants={headingItem}>
-                          <Text
-                            size="lg"
-                            className={cn(
-                              "type-section-subtitle",
-                              titleColorTransition,
-                              headerThemeReady ? "text-ink-muted" : "text-white",
-                            )}
-                          >
+                        <motion.div variants={textItem}>
+                          <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
                             {headingEyebrow}
                           </Text>
                         </motion.div>
                       </motion.div>
-                      <span className="sr-only">{headingInstructions}</span>
-                    </motion.div>
-                    {enableTitleReveal ? (
-                      <button
-                        type="button"
-                        className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                        onClick={handleTimelineCollapse}
-                      >
-                        Collapse
-                      </button>
-                    ) : null}
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="craft-timeline-title-collapsed"
-                    className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                    initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
-                    animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
-                    exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
-                    transition={motionEnabled ? timelineRevealFast : undefined}
-                  >
-                    <motion.div
-                      layoutId="craft-timeline-title"
-                      layoutCrossfade={false}
-                      transition={timelineLayoutTransition}
-                      className="relative inline-flex text-white"
-                    >
-                      <Heading
-                        id="craft-timeline-heading"
-                        level={2}
-                        size="xl"
-                        className="type-section-collapsed"
-                      >
-                        {headingTitle}
-                      </Heading>
-                      <button
-                        type="button"
-                        className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                        onPointerEnter={handleTimelineExpand}
-                        onFocus={handleTimelineExpand}
-                        onClick={handleTimelineExpand}
-                        aria-expanded={revealTimeline}
-                        aria-controls="craft-timeline-body"
-                        aria-labelledby="craft-timeline-heading"
-                      >
-                        <span className="sr-only">Expand {headingTitle}</span>
-                      </button>
-                    </motion.div>
-                    <motion.div
-                      layoutId="craft-timeline-subtitle"
-                      layoutCrossfade={false}
-                      transition={timelineLayoutTransition}
-                      className="relative text-white"
-                    >
-                      <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                        {headingEyebrow}
-                      </Text>
-                    </motion.div>
-                    <motion.div
-                      initial={motionEnabled ? { opacity: 0, y: 6 } : false}
-                      animate={motionEnabled ? { opacity: 1, y: 0, transition: readMoreReveal } : undefined}
-                      exit={motionEnabled ? { opacity: 0, y: 6, transition: timelineRevealFast } : undefined}
-                      className="mt-3"
-                    >
-                      <Text
-                        size="button"
-                        className="text-white/80 cursor-pointer focus-ring"
-                        asChild
-                      >
-                        <button type="button" onClick={handleTimelineExpand}>
-                        Read more
-                        </button>
-                      </Text>
-                    </motion.div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </LayoutGroup>
-
-            <AnimatePresence initial={false}>
-              {revealTimeline ? (
-                <motion.div
-                  key="craft-timeline-body"
-                  id="craft-timeline-body"
-                  className="space-y-6"
-                  initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
-                  animate={
-                    motionEnabled
-                      ? { opacity: 1, y: 0, filter: "blur(0px)", transition: timelineBodyReveal }
-                      : undefined
-                  }
-                  exit={
-                    motionEnabled
-                      ? { opacity: 0, y: -16, filter: "blur(10px)", transition: timelineCollapse }
-                      : undefined
-                  }
-                >
-                  {enablePinned ? (
-                    <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
-                      <div className="space-y-4 border-none bg-card/0 p-4 shadow-none sm:border-none sm:bg-card/0 sm:p-4 sm:shadow-none">
-                        <Text size="label-tight" className="mb-3 text-ink">
-                          {alternateTitle}
-                        </Text>
-                        <LayoutGroup id="home-timeline-controls">
-                          <div className="space-y-1">
-                            {stages.map((stage, index) => (
-                              <TimelineControlButton
-                                key={`control-${stage.id}`}
-                                label={stage.title}
-                                order={stage.order}
-                                active={resolvedActiveStage === index}
-                                onSelect={() => { setActiveStage(index); }}
-                                animationsEnabled={animationsEnabled}
-                              />
-                            ))}
-                          </div>
-                        </LayoutGroup>
-                      </div>
-
-                      <div className="space-y-5">
-                        <div
-                          className={cn(
-                            "relative min-h-[640px] overflow-hidden rounded-3xl border",
-                            focusSurfaceTransition,
-                            revealPhotoFocus
-                              ? "border-border/70 bg-card/70 shadow-elevated ring-1 ring-border/70 backdrop-blur-sm"
-                              : "border-transparent bg-transparent shadow-none ring-0 backdrop-blur-none",
-                          )}
+                      <motion.div variants={textItem} className="mt-3">
+                        <Text
+                          size="button"
+                          className="text-white/80 cursor-pointer focus-ring"
+                          asChild
                         >
-                          <AnimatePresence initial={false} mode="popLayout">
-                            {stages[resolvedActiveStage] ? (
-                              <PinnedStagePanel
-                                key={`panel-${stages[resolvedActiveStage].id}`}
-                                stage={stages[resolvedActiveStage]}
-                                animationsEnabled={animationsEnabled}
-                                revealPhotoFocus={revealPhotoFocus}
-                              />
-                            ) : null}
-                          </AnimatePresence>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-8">
-                      <div className="space-y-3">
-                        <Text size="label-tight" className="text-ink-muted">
-                          {alternateTitle}
+                          <button type="button" onClick={handleTimelineExpand}>
+                            Read more
+                          </button>
                         </Text>
-                      </div>
-
-                      <div className="space-y-3">
-                        {stages.map((stage, index) => {
-                          const expanded = activeStage === index;
-                          const panelId = `craft-stage-panel-${stage.id}`;
-                          const buttonId = `craft-stage-trigger-${stage.id}`;
-
-                          return (
-                            <motion.div
-                              key={`stacked-${stage.id}`}
-                              className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:p-4"
-                              initial={motionEnabled ? { opacity: 0, y: 18, filter: "blur(10px)" } : false}
-                              whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-                              viewport={motionEnabled ? { once: true, amount: 0.25 } : undefined}
-                              transition={motionEnabled ? homeMotion.revealFast : undefined}
-                            >
-                              <button
-                                type="button"
-                                id={buttonId}
-                                aria-expanded={expanded}
-                                aria-controls={panelId}
-                                onClick={() =>
-                                  { setActiveStage(expanded ? -1 : index); }
-                                }
-                                className="flex w-full items-center justify-between gap-3 text-left focus-ring"
-                              >
-                                <div>
-                                  <Text size="button" className="text-ink-muted mb-2">
-                                    Stage {stage.order}
-                                  </Text>
-                                  <Text className="text-lg type-body-title text-ink">
-                                    {stage.title}
-                                  </Text>
-                                </div>
-                                <span className="type-button text-perazzi-red/70">
-                                  {expanded ? "Collapse" : "Show more"}
-                                </span>
-                              </button>
-
-                              <div
-                                id={panelId}
-                                aria-labelledby={buttonId}
-                                className={cn(
-                                  "mt-3 overflow-hidden transition-all duration-300",
-                                  expanded
-                                    ? "max-h-[999px] opacity-100"
-                                    : "max-h-0 opacity-0",
-                                )}
-                              >
-                                {expanded && (
-                                  <div className="mt-2">
-                                    <TimelineItem stage={stage} />
-                                  </div>
-                                )}
-                              </div>
-                            </motion.div>
-                          );
-                        })}
-                      </div>
-                    </div>
+                      </motion.div>
+                    </motion.div>
                   )}
-                  <div className="pt-2 sm:pt-4">
-                    <Button
-                      asChild
-                      variant="secondary"
-                      size="lg"
-                      className="w-full type-button-eaves text-ink"
-                    >
-                      <Link href="/the-build/why-a-perazzi-has-a-soul">
-                        See the full build story
-                      </Link>
-                    </Button>
-                  </div>
+                </AnimatePresence>
+              </LayoutGroup>
+            </motion.div>
+
+            <motion.div variants={sequenceSlot}>
+              <AnimatePresence initial={false}>
+                {revealTimeline ? (
+                  <motion.div
+                    key="craft-timeline-body"
+                    id="craft-timeline-body"
+                    className="space-y-6"
+                    variants={bodyBlock}
+                    initial={motionEnabled ? "hidden" : false}
+                    animate={motionEnabled ? "show" : undefined}
+                    exit={motionEnabled ? "exit" : undefined}
+                  >
+                    {enablePinned ? (
+                      <motion.div
+                        className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start"
+                        variants={surfaceItem}
+                      >
+                        <motion.div
+                          className="space-y-4 border-none bg-card/0 p-4 shadow-none sm:border-none sm:bg-card/0 sm:p-4 sm:shadow-none"
+                          variants={columnGroup}
+                        >
+                          <motion.div variants={textItem}>
+                            <Text size="label-tight" className="mb-3 text-ink">
+                              {alternateTitle}
+                            </Text>
+                          </motion.div>
+                          <LayoutGroup id="home-timeline-controls">
+                            <motion.div className="space-y-1" variants={listGroup}>
+                              {stages.map((stage, index) => (
+                                <motion.div key={`control-${stage.id}`} variants={surfaceItem}>
+                                  <TimelineControlButton
+                                    label={stage.title}
+                                    order={stage.order}
+                                    active={resolvedActiveStage === index}
+                                    onSelect={() => { setActiveStage(index); }}
+                                    animationsEnabled={animationsEnabled}
+                                  />
+                                </motion.div>
+                              ))}
+                            </motion.div>
+                          </LayoutGroup>
+                        </motion.div>
+
+                        <div className="space-y-5">
+                          <motion.div
+                            className={cn(
+                              "relative min-h-[640px] overflow-hidden rounded-3xl border",
+                              focusSurfaceTransition,
+                              revealPhotoFocus
+                                ? "border-border/70 bg-card/70 shadow-elevated ring-1 ring-border/70 backdrop-blur-sm"
+                                : "border-transparent bg-transparent shadow-none ring-0 backdrop-blur-none",
+                            )}
+                            variants={surfaceItem}
+                          >
+                            <AnimatePresence initial={false} mode="popLayout">
+                              {stages[resolvedActiveStage] ? (
+                                <PinnedStagePanel
+                                  key={`panel-${stages[resolvedActiveStage].id}`}
+                                  stage={stages[resolvedActiveStage]}
+                                  animationsEnabled={animationsEnabled}
+                                  revealPhotoFocus={revealPhotoFocus}
+                                />
+                              ) : null}
+                            </AnimatePresence>
+                          </motion.div>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.div className="space-y-8" variants={columnGroup}>
+                        <motion.div className="space-y-3" variants={textItem}>
+                          <Text size="label-tight" className="text-ink-muted">
+                            {alternateTitle}
+                          </Text>
+                        </motion.div>
+
+                        <motion.div className="space-y-3" variants={listGroup}>
+                          {stages.map((stage, index) => {
+                            const expanded = activeStage === index;
+                            const panelId = `craft-stage-panel-${stage.id}`;
+                            const buttonId = `craft-stage-trigger-${stage.id}`;
+
+                            return (
+                              <motion.div
+                                key={`stacked-${stage.id}`}
+                                className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:p-4"
+                                variants={surfaceItem}
+                              >
+                                <button
+                                  type="button"
+                                  id={buttonId}
+                                  aria-expanded={expanded}
+                                  aria-controls={panelId}
+                                  onClick={() =>
+                                    { setActiveStage(expanded ? -1 : index); }
+                                  }
+                                  className="flex w-full items-center justify-between gap-3 text-left focus-ring"
+                                >
+                                  <div>
+                                    <Text size="button" className="text-ink-muted mb-2">
+                                      Stage {stage.order}
+                                    </Text>
+                                    <Text className="text-lg type-body-title text-ink">
+                                      {stage.title}
+                                    </Text>
+                                  </div>
+                                  <span className="type-button text-perazzi-red/70">
+                                    {expanded ? "Collapse" : "Show more"}
+                                  </span>
+                                </button>
+
+                                <div
+                                  id={panelId}
+                                  aria-labelledby={buttonId}
+                                  className={cn(
+                                    "mt-3 overflow-hidden transition-all duration-300",
+                                    expanded
+                                      ? "max-h-[999px] opacity-100"
+                                      : "max-h-0 opacity-0",
+                                  )}
+                                >
+                                  {expanded && (
+                                    <div className="mt-2">
+                                      <TimelineItem stage={stage} />
+                                    </div>
+                                  )}
+                                </div>
+                              </motion.div>
+                            );
+                          })}
+                        </motion.div>
+                      </motion.div>
+                    )}
+                    <motion.div className="pt-2 sm:pt-4" variants={surfaceItem}>
+                      <Button
+                        asChild
+                        variant="secondary"
+                        size="lg"
+                        className="w-full type-button-eaves text-ink"
+                      >
+                        <Link href="/the-build/why-a-perazzi-has-a-soul">
+                          See the full build story
+                        </Link>
+                      </Button>
+                    </motion.div>
                 </motion.div>
               ) : null}
             </AnimatePresence>
           </motion.div>
+        </motion.div>
         </div>
-      </div>
-    </>
+      </motion.div>
+    </motion.div>
   );
 }
 

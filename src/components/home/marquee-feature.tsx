@@ -84,10 +84,6 @@ function MarqueeFeatureRevealSection({
   const marqueeReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
   const marqueeRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
   const marqueeCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const marqueeBodyReveal = marqueeReveal;
-  const readMoreReveal = motionEnabled
-    ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: marqueeReveal.duration }
-    : undefined;
   const marqueeLayoutTransition = motionEnabled ? { layout: marqueeReveal } : undefined;
   const marqueeMinHeight = enableTitleReveal ? "min-h-[calc(640px+12rem)]" : null;
   const { scrollYProgress } = useScroll({
@@ -125,19 +121,93 @@ function MarqueeFeatureRevealSection({
     setMarqueeExpanded(false);
   };
 
-  const copyContainer = {
+  const sectionSequence = {
     hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
+    show: {
+      transition: {
+        staggerChildren: motionEnabled ? 0.12 : 0,
+        delayChildren: motionEnabled ? 0.1 : 0,
+      },
+    },
   } as const;
 
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: marqueeReveal },
+  const sequenceSlot = {
+    hidden: {},
+    show: {},
   } as const;
 
-  const copyItem = {
-    hidden: { opacity: 0, y: 14, filter: "blur(10px)" },
-    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: marqueeReveal },
+  const atmosphereGroup = {
+    hidden: {},
+    show: { transition: { staggerChildren: motionEnabled ? 0.12 : 0 } },
+  } as const;
+
+  const atmosphereMedia = {
+    hidden: { opacity: 0, scale: 1.04 },
+    show: {
+      opacity: 1,
+      scale: 1,
+      transition: { duration: 1.1, ease: homeMotion.cinematicEase },
+    },
+  } as const;
+
+  const atmosphereOverlay = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { duration: 0.9, ease: homeMotion.cinematicEase },
+    },
+  } as const;
+
+  const headerGroup = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: motionEnabled ? 0.12 : 0,
+        delayChildren: motionEnabled ? 0.12 : 0,
+      },
+    },
+  } as const;
+
+  const bodyGroup = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: motionEnabled ? 0.1 : 0,
+        delayChildren: motionEnabled ? 0.24 : 0,
+      },
+    },
+  } as const;
+
+  const itemsGroup = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: motionEnabled ? 0.1 : 0,
+        delayChildren: motionEnabled ? 0.36 : 0,
+      },
+    },
+  } as const;
+
+  const textItem = {
+    hidden: { opacity: 0, y: 12, filter: "blur(8px)" },
+    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.reveal },
+  } as const;
+
+  const surfaceItem = {
+    hidden: { opacity: 0, y: 12 },
+    show: { opacity: 1, y: 0, transition: homeMotion.reveal },
+  } as const;
+
+  const expandedContainer = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: homeMotion.revealFast },
+    exit: { opacity: 0, transition: marqueeCollapse },
+  } as const;
+
+  const collapsedContainer = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: marqueeRevealFast },
+    exit: { opacity: 0, transition: marqueeRevealFast },
   } as const;
 
   useEffect(() => {
@@ -177,266 +247,281 @@ function MarqueeFeatureRevealSection({
   }, []);
 
   return (
-    <>
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <motion.div
-          className="absolute inset-0 will-change-transform"
-          style={parallaxStyle}
-          initial={false}
-          animate={motionEnabled ? { scale: backgroundScale } : undefined}
-          transition={motionEnabled ? backgroundScaleTransition : undefined}
-        >
-          <Image
-            src={background.url}
-            alt={background.alt}
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority={false}
+    <motion.div
+      variants={sectionSequence}
+      initial={motionEnabled ? "hidden" : false}
+      animate={motionEnabled ? "show" : undefined}
+    >
+      <motion.div
+        className="absolute inset-0 -z-10 overflow-hidden"
+        variants={atmosphereGroup}
+      >
+        <motion.div className="absolute inset-0" variants={atmosphereMedia}>
+          <motion.div
+            className="absolute inset-0 will-change-transform"
+            style={parallaxStyle}
+            initial={false}
+            animate={motionEnabled ? { scale: backgroundScale } : undefined}
+            transition={motionEnabled ? backgroundScaleTransition : undefined}
+          >
+            <Image
+              src={background.url}
+              alt={background.alt}
+              fill
+              sizes="100vw"
+              className="object-cover"
+              priority={false}
+            />
+          </motion.div>
+        </motion.div>
+        <motion.div className="absolute inset-0" variants={atmosphereOverlay}>
+          <div
+            className={cn(
+              "absolute inset-0 bg-(--scrim-strong)",
+              focusFadeTransition,
+              revealMarquee ? "opacity-0" : "opacity-100",
+            )}
+            aria-hidden
           />
         </motion.div>
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealMarquee ? "opacity-0" : "opacity-100",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 film-grain",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-20" : "opacity-0",
-          )}
-          aria-hidden="true"
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-      </div>
+        <motion.div className="absolute inset-0" variants={atmosphereOverlay}>
+          <div
+            className={cn(
+              "absolute inset-0 bg-(--scrim-strong)",
+              focusFadeTransition,
+              revealPhotoFocus ? "opacity-100" : "opacity-0",
+            )}
+            aria-hidden
+          />
+        </motion.div>
+        <motion.div className="absolute inset-0" variants={atmosphereOverlay}>
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-0 film-grain",
+              focusFadeTransition,
+              revealPhotoFocus ? "opacity-20" : "opacity-0",
+            )}
+            aria-hidden="true"
+          />
+        </motion.div>
+        <motion.div className="absolute inset-0" variants={atmosphereOverlay}>
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-0 overlay-gradient-canvas",
+              focusFadeTransition,
+              revealPhotoFocus ? "opacity-100" : "opacity-0",
+            )}
+            aria-hidden
+          />
+        </motion.div>
+      </motion.div>
 
-      <Container size="xl" className="relative z-10">
-        <motion.div
-          ref={marqueeShellRef}
-          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
-          className={cn(
-            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            focusSurfaceTransition,
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            marqueeMinHeight,
-          )}
-        >
-          <LayoutGroup id="marquee-feature-title">
-            <AnimatePresence initial={false}>
-              {revealMarquee ? (
-                <motion.div
-                  key="marquee-feature-body"
-                  id="marquee-feature-body"
-                  className="relative z-10"
-                  initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
-                  animate={
-                    motionEnabled
-                      ? { opacity: 1, y: 0, filter: "blur(0px)", transition: marqueeBodyReveal }
-                      : undefined
-                  }
-                  exit={
-                    motionEnabled
-                      ? { opacity: 0, y: -16, filter: "blur(10px)", transition: marqueeCollapse }
-                      : undefined
-                  }
-                >
-                  <div className="md:grid md:grid-cols-[minmax(260px,1fr)_minmax(0,1.4fr)] md:items-center md:gap-10">
-                    <motion.div
-                      initial={motionEnabled ? { opacity: 0, x: -18, y: 12, filter: "blur(8px)" } : false}
-                      animate={
-                        motionEnabled
-                          ? { opacity: 1, x: 0, y: 0, filter: "blur(0px)", transition: marqueeReveal }
-                          : undefined
-                      }
-                    >
-                      <div
-                        className="group relative min-h-[280px] overflow-hidden rounded-2xl bg-elevated ring-1 ring-border/70 aspect-dynamic sm:min-h-[340px]"
-                        style={{ "--aspect-ratio": String(ratio) }}
-                      >
-                        <Image
-                          src={champion.image.url}
-                          alt={champion.image.alt}
-                          fill
-                          sizes="(min-width: 1280px) 384px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                          className="object-cover transition-transform duration-1400 ease-out will-change-transform group-hover:scale-[1.04]"
-                          loading="lazy"
-                        />
-                        <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
-                      </div>
-                    </motion.div>
-
-                    <div className="mt-8 md:mt-0 md:flex md:items-start md:justify-between md:gap-8">
-                      <motion.div
-                        className="space-y-4"
-                        variants={copyContainer}
-                        initial={motionEnabled ? "hidden" : false}
-                        animate={motionEnabled ? "show" : undefined}
-                      >
-                        <motion.div variants={headingItem}>
-                          <Text size="label-tight" className="text-ink-muted">
-                            {eyebrow}
-                          </Text>
-                        </motion.div>
+      <motion.div variants={sequenceSlot}>
+        <Container size="xl" className="relative z-10">
+          <motion.div
+            ref={marqueeShellRef}
+            style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
+            className={cn(
+              "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
+              focusSurfaceTransition,
+              revealPhotoFocus
+                ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
+                : "border-transparent bg-transparent shadow-none backdrop-blur-none",
+              marqueeMinHeight,
+            )}
+          >
+            <LayoutGroup id="marquee-feature-title">
+              <AnimatePresence initial={false}>
+                {revealMarquee ? (
+                  <motion.div
+                    key="marquee-feature-body"
+                    id="marquee-feature-body"
+                    className="relative z-10"
+                    variants={expandedContainer}
+                    initial={motionEnabled ? "hidden" : false}
+                    animate={motionEnabled ? "show" : undefined}
+                    exit={motionEnabled ? "exit" : undefined}
+                  >
+                    <div className="md:grid md:grid-cols-[minmax(260px,1fr)_minmax(0,1.4fr)] md:items-center md:gap-10">
+                      <motion.div variants={bodyGroup}>
                         <motion.div
-                          layoutId="marquee-feature-title"
-                          layoutCrossfade={false}
-                          transition={marqueeLayoutTransition}
-                          className="relative"
+                          variants={surfaceItem}
+                          className="group relative min-h-[280px] overflow-hidden rounded-2xl bg-elevated ring-1 ring-border/70 aspect-dynamic sm:min-h-[340px]"
+                          style={{ "--aspect-ratio": String(ratio) }}
                         >
+                          <Image
+                            src={champion.image.url}
+                            alt={champion.image.alt}
+                            fill
+                            sizes="(min-width: 1280px) 384px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                            className="object-cover transition-transform duration-1400 ease-out will-change-transform group-hover:scale-[1.04]"
+                            loading="lazy"
+                          />
+                          <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
+                        </motion.div>
+                      </motion.div>
+
+                      <div className="mt-8 md:mt-0 md:flex md:items-start md:justify-between md:gap-8">
+                        <motion.div className="space-y-4">
+                          <motion.div variants={headerGroup} className="space-y-4">
+                            <motion.div variants={textItem}>
+                              <Text size="label-tight" className="text-ink-muted">
+                                {eyebrow}
+                              </Text>
+                            </motion.div>
+                            <motion.div
+                              layoutId="marquee-feature-title"
+                              layoutCrossfade={false}
+                              transition={marqueeLayoutTransition}
+                              className="relative"
+                            >
+                              <motion.div variants={textItem}>
+                                <Heading
+                                  id="champion-heading"
+                                  level={2}
+                                  size="xl"
+                                  className={cn(
+                                    titleColorTransition,
+                                    headerThemeReady ? "text-ink" : "text-white",
+                                  )}
+                                >
+                                  {headingTitle}
+                                </Heading>
+                              </motion.div>
+                            </motion.div>
+                            <motion.div
+                              layoutId="marquee-feature-subtitle"
+                              layoutCrossfade={false}
+                              transition={marqueeLayoutTransition}
+                              className="relative"
+                            >
+                              <motion.div variants={textItem}>
+                                <Text
+                                  size="lg"
+                                  className={cn(
+                                    "type-section-subtitle",
+                                    titleColorTransition,
+                                    headerThemeReady ? "text-ink-muted" : "text-white",
+                                  )}
+                                >
+                                  {headingSubtitle}
+                                </Text>
+                              </motion.div>
+                            </motion.div>
+                          </motion.div>
+                          <motion.div variants={bodyGroup} className="space-y-4">
+                            <motion.div variants={textItem}>
+                              <Text
+                                asChild
+                                size="lg"
+                                className="border-l-2 border-perazzi-red/50 pl-4 type-quote font-artisan text-ink"
+                              >
+                                <blockquote>“{champion.quote}”</blockquote>
+                              </Text>
+                            </motion.div>
+                          </motion.div>
+                          {champion.article ? (
+                            <motion.div variants={itemsGroup}>
+                              <motion.a
+                                href={`/journal/${champion.article.slug}`}
+                                className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                                variants={surfaceItem}
+                                whileHover={motionEnabled ? { y: -1, transition: homeMotion.micro } : undefined}
+                                whileTap={motionEnabled ? { y: 0, transition: homeMotion.micro } : undefined}
+                              >
+                                {champion.article.title}
+                                <span aria-hidden="true">→</span>
+                              </motion.a>
+                            </motion.div>
+                          ) : null}
+                        </motion.div>
+                        {enableTitleReveal ? (
+                          <motion.div variants={bodyGroup} className="mt-4 md:mt-0">
+                            <motion.button
+                              type="button"
+                              className="inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring"
+                              onClick={handleMarqueeCollapse}
+                              variants={surfaceItem}
+                            >
+                              Collapse
+                            </motion.button>
+                          </motion.div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="marquee-feature-collapsed"
+                    className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
+                    variants={collapsedContainer}
+                    initial={motionEnabled ? "hidden" : false}
+                    animate={motionEnabled ? "show" : undefined}
+                    exit={motionEnabled ? "exit" : undefined}
+                  >
+                    <motion.div variants={headerGroup} className="flex flex-col items-center gap-3">
+                      <motion.div
+                        layoutId="marquee-feature-title"
+                        layoutCrossfade={false}
+                        transition={marqueeLayoutTransition}
+                        className="relative inline-flex text-white"
+                      >
+                        <motion.div variants={textItem}>
                           <Heading
                             id="champion-heading"
                             level={2}
                             size="xl"
-                            className={cn(
-                              titleColorTransition,
-                              headerThemeReady ? "text-ink" : "text-white",
-                            )}
+                            className="type-section-collapsed"
                           >
                             {headingTitle}
                           </Heading>
                         </motion.div>
-                        <motion.div
-                          layoutId="marquee-feature-subtitle"
-                          layoutCrossfade={false}
-                          transition={marqueeLayoutTransition}
-                          className="relative"
-                        >
-                          <motion.div variants={headingItem}>
-                            <Text
-                              size="lg"
-                              className={cn(
-                                "type-section-subtitle",
-                                titleColorTransition,
-                                headerThemeReady ? "text-ink-muted" : "text-white",
-                              )}
-                            >
-                              {headingSubtitle}
-                            </Text>
-                          </motion.div>
-                        </motion.div>
-                        <motion.div variants={copyItem}>
-                          <Text
-                            asChild
-                            size="lg"
-                            className="border-l-2 border-perazzi-red/50 pl-4 type-quote font-artisan text-ink"
-                          >
-                            <blockquote>“{champion.quote}”</blockquote>
-                          </Text>
-                        </motion.div>
-                        {champion.article ? (
-                          <motion.a
-                            href={`/journal/${champion.article.slug}`}
-                            className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
-                            variants={copyItem}
-                            whileHover={motionEnabled ? { y: -1, transition: homeMotion.micro } : undefined}
-                            whileTap={motionEnabled ? { y: 0, transition: homeMotion.micro } : undefined}
-                          >
-                            {champion.article.title}
-                            <span aria-hidden="true">→</span>
-                          </motion.a>
-                        ) : null}
-                      </motion.div>
-                      {enableTitleReveal ? (
                         <button
                           type="button"
-                          className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                          onClick={handleMarqueeCollapse}
+                          className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                          onPointerEnter={handleMarqueeExpand}
+                          onFocus={handleMarqueeExpand}
+                          onClick={handleMarqueeExpand}
+                          aria-expanded={revealMarquee}
+                          aria-controls="marquee-feature-body"
+                          aria-labelledby="champion-heading"
                         >
-                          Collapse
+                          <span className="sr-only">Expand {headingTitle}</span>
                         </button>
-                      ) : null}
-                    </div>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="marquee-feature-collapsed"
-                  className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
-                  animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
-                  exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
-                  transition={motionEnabled ? marqueeRevealFast : undefined}
-                >
-                  <motion.div
-                    layoutId="marquee-feature-title"
-                    layoutCrossfade={false}
-                    transition={marqueeLayoutTransition}
-                    className="relative inline-flex text-white"
-                  >
-                    <Heading
-                      id="champion-heading"
-                      level={2}
-                      size="xl"
-                      className="type-section-collapsed"
-                    >
-                      {headingTitle}
-                    </Heading>
-                    <button
-                      type="button"
-                      className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                      onPointerEnter={handleMarqueeExpand}
-                      onFocus={handleMarqueeExpand}
-                      onClick={handleMarqueeExpand}
-                      aria-expanded={revealMarquee}
-                      aria-controls="marquee-feature-body"
-                      aria-labelledby="champion-heading"
-                    >
-                      <span className="sr-only">Expand {headingTitle}</span>
-                    </button>
+                      </motion.div>
+                      <motion.div
+                        layoutId="marquee-feature-subtitle"
+                        layoutCrossfade={false}
+                        transition={marqueeLayoutTransition}
+                        className="relative text-white"
+                      >
+                        <motion.div variants={textItem}>
+                          <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+                            {headingSubtitle}
+                          </Text>
+                        </motion.div>
+                      </motion.div>
+                    </motion.div>
+                    <motion.div variants={itemsGroup} className="mt-3">
+                      <motion.div variants={textItem}>
+                        <Text
+                          size="button"
+                          className="text-white/80 cursor-pointer focus-ring"
+                          asChild
+                        >
+                          <button type="button" onClick={handleMarqueeExpand}>
+                            Read more
+                          </button>
+                        </Text>
+                      </motion.div>
+                    </motion.div>
                   </motion.div>
-                  <motion.div
-                    layoutId="marquee-feature-subtitle"
-                    layoutCrossfade={false}
-                    transition={marqueeLayoutTransition}
-                    className="relative text-white"
-                  >
-                    <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                      {headingSubtitle}
-                    </Text>
-                  </motion.div>
-                  <motion.div
-                    initial={motionEnabled ? { opacity: 0, y: 6 } : false}
-                    animate={motionEnabled ? { opacity: 1, y: 0, transition: readMoreReveal } : undefined}
-                    exit={motionEnabled ? { opacity: 0, y: 6, transition: marqueeRevealFast } : undefined}
-                    className="mt-3"
-                  >
-                    <Text
-                      size="button"
-                      className="text-white/80 cursor-pointer focus-ring"
-                      asChild
-                    >
-                      <button type="button" onClick={handleMarqueeExpand}>
-                        Read more
-                      </button>
-                    </Text>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </LayoutGroup>
-        </motion.div>
-      </Container>
-    </>
+                )}
+              </AnimatePresence>
+            </LayoutGroup>
+          </motion.div>
+        </Container>
+      </motion.div>
+    </motion.div>
   );
 }
