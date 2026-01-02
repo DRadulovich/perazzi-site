@@ -145,3 +145,38 @@ Okay, I need your help (screenshot attached to this message in the chat for cont
     - Ask the Workshop
     - Champions Past and Present
     - Inside the Botticino Atelier
+
+---
+
+[-----------------------------------------------------------]
+
+---
+
+# ANIMATED COMPONENT NAMES:
+
+# HOMEPAGE
+
+* `timeline-scroller`
+* `MarqueeFeature`
+
+# SHOTGUNS PAGE -> `/shotguns`
+
+* `PlatformGrid`
+* `DisciplineRail`
+* `TriggerExplainer`
+* `EngravingGradesCarousel`
+
+# BESPOKE JOURNEY PAGE -> `/bespoke`
+
+* `BuildStepScroller`
+
+# EXPERIENCE PAGE -> `/experience`
+
+* `ExperiencePicker`
+* `VisitFactory`
+* `BookingOptions`
+* `TravelNetwork`
+
+# HERITAGE PAGE -> `/heritage`
+
+* `ChampionsGallery`
