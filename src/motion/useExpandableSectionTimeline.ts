@@ -53,7 +53,7 @@ export function useExpandableSectionTimeline(
     expanded ? "expanded" : "collapsed"
   );
   const showExpanded =
-    mountStrategy === "always" || phase === "expanded" || phase === "closingHold";
+    mountStrategy === "always" || phase === "expanded" || phase === "prezoom" || phase === "closingHold";
   const showCollapsed =
     mountStrategy === "always" || phase === "collapsed" || phase === "prezoom";
 

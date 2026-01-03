@@ -110,6 +110,7 @@ const TriggerExplainerRevealSection = ({
 
   const revealExplainer = showExpanded;
   const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
+  const isClosing = phase === "closingHold";
   const parallaxStrength = 0.16;
   const parallaxEnabled = enableTitleReveal && !revealExplainer && motionEnabled;
   const explainerLayoutTransition = motionEnabled
@@ -194,15 +195,18 @@ const TriggerExplainerRevealSection = ({
   const containerLayoutTransition = {
     layout: {
       duration: motionEnabled
-        ? (CONTAINER_EXPAND_MS / 1000) * (isCollapsedPhase ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
+        ? (CONTAINER_EXPAND_MS / 1000) * (isClosing ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
         : 0,
       ease: EASE_CINEMATIC,
     },
   };
   const glassStyle = {
     minHeight: "40vh",
-    overflow: isCollapsedPhase ? "hidden" : "visible",
+    overflow: isCollapsedPhase || isClosing ? "hidden" : "visible",
   };
+  const contentWrapperClass = isClosing
+    ? "absolute inset-0 w-full pointer-events-none flex flex-col space-y-6"
+    : "relative flex flex-1 flex-col space-y-6";
 
   const copyClasses =
     "max-w-none type-body text-ink [&_p]:mb-4 [&_p:last-child]:mb-0 prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4";
@@ -336,14 +340,15 @@ const TriggerExplainerRevealSection = ({
 
       <motion.div>
         <Container size="xl" className="relative z-10">
-          <motion.div
-            className="relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10"
-            variants={glassVariants}
-            style={glassStyle}
-            onKeyDown={onEscapeKeyDown}
-            layout
-            transition={containerLayoutTransition}
-          >
+        <motion.div
+          className="relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10"
+          variants={glassVariants}
+          style={glassStyle}
+          onKeyDown={onEscapeKeyDown}
+          layout
+          transition={containerLayoutTransition}
+        >
+          <div className={contentWrapperClass}>
             <motion.div
               variants={slotVariants.section}
               initial={motionEnabled ? "collapsed" : false}
@@ -537,7 +542,8 @@ const TriggerExplainerRevealSection = ({
                 </motion.div>
               ) : null}
             </motion.div>
-          </motion.div>
+          </div>
+        </motion.div>
         </Container>
       </motion.div>
     </motion.div>

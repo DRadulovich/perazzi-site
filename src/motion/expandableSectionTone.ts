@@ -62,7 +62,7 @@ export const buildGlassToneVariants = ({
     collapsed,
     prezoom: collapsed,
     expanded,
-    closingHold: expanded,
+    closingHold: collapsed,
   };
 };
 

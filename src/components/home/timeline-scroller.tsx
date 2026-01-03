@@ -151,6 +151,7 @@ function TimelineRevealSection({
 
   const revealTimeline = phase === "expanded" || phase === "closingHold";
   const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
+  const isClosing = phase === "closingHold";
   const revealPhotoFocus = revealTimeline;
   const parallaxStrength = 0.16;
   const parallaxEnabled = enableTitleReveal && !revealTimeline && motionEnabled;
@@ -238,15 +239,18 @@ function TimelineRevealSection({
   const containerLayoutTransition = {
     layout: {
       duration: motionEnabled
-        ? (CONTAINER_EXPAND_MS / 1000) * (isCollapsedPhase ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
+        ? (CONTAINER_EXPAND_MS / 1000) * (isClosing ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
         : 0,
       ease: EASE_CINEMATIC,
     },
   };
   const glassStyle = {
     minHeight: "40vh",
-    overflow: isCollapsedPhase ? "hidden" : "visible",
+    overflow: isCollapsedPhase || isClosing ? "hidden" : "visible",
   };
+  const contentWrapperClass = isClosing
+    ? "absolute inset-0 w-full pointer-events-none flex flex-col space-y-6"
+    : "relative flex flex-1 flex-col space-y-6";
 
   const handleTimelineExpand = () => {
     if (!enableTitleReveal) return;
@@ -307,142 +311,143 @@ function TimelineRevealSection({
             layout
             transition={containerLayoutTransition}
           >
-            <LayoutGroup id="craft-timeline-title">
-              {showExpanded ? (
-                <motion.div
-                  key="craft-timeline-header"
-                  className="relative z-10 space-y-4 md:flex md:items-center md:justify-between md:gap-8"
-                  variants={slotVariants.section}
-                  initial={motionEnabled ? "collapsed" : false}
-                  animate={phase}
-                >
-                  <motion.div className="space-y-3" variants={headerGroup}>
-                    <motion.div
-                      layoutId="craft-timeline-title"
-                      layoutCrossfade={false}
-                      transition={timelineLayoutTransition}
-                      className="relative"
-                    >
-                      <motion.div variants={headingItem}>
-                        <Heading
-                          id="craft-timeline-heading"
-                          level={2}
-                          size="xl"
-                        >
-                          <ExpandableTextReveal text={headingTitle} reduceMotion={!motionEnabled} />
-                        </Heading>
+            <div className={contentWrapperClass}>
+              <LayoutGroup id="craft-timeline-title">
+                {showExpanded ? (
+                  <motion.div
+                    key="craft-timeline-header"
+                    className="relative z-10 space-y-4 md:flex md:items-center md:justify-between md:gap-8"
+                    variants={slotVariants.section}
+                    initial={motionEnabled ? "collapsed" : false}
+                    animate={phase}
+                  >
+                    <motion.div className="space-y-3" variants={headerGroup}>
+                      <motion.div
+                        layoutId="craft-timeline-title"
+                        layoutCrossfade={false}
+                        transition={timelineLayoutTransition}
+                        className="relative"
+                      >
+                        <motion.div variants={headingItem}>
+                          <Heading
+                            id="craft-timeline-heading"
+                            level={2}
+                            size="xl"
+                          >
+                            <ExpandableTextReveal text={headingTitle} reduceMotion={!motionEnabled} />
+                          </Heading>
+                        </motion.div>
                       </motion.div>
+                      <motion.div
+                        layoutId="craft-timeline-subtitle"
+                        layoutCrossfade={false}
+                        transition={timelineLayoutTransition}
+                        className="relative"
+                      >
+                        <motion.div variants={subheadingItem}>
+                          <Text size="lg" className="type-section-subtitle">
+                            <ExpandableTextReveal text={headingEyebrow} reduceMotion={!motionEnabled} />
+                          </Text>
+                        </motion.div>
+                      </motion.div>
+                      <span className="sr-only">{headingInstructions}</span>
                     </motion.div>
-                    <motion.div
-                      layoutId="craft-timeline-subtitle"
-                      layoutCrossfade={false}
-                      transition={timelineLayoutTransition}
-                      className="relative"
-                    >
-                      <motion.div variants={subheadingItem}>
-                        <Text size="lg" className="type-section-subtitle">
-                          <ExpandableTextReveal text={headingEyebrow} reduceMotion={!motionEnabled} />
-                        </Text>
-                      </motion.div>
-                    </motion.div>
-                    <span className="sr-only">{headingInstructions}</span>
-                  </motion.div>
-                  <motion.div variants={surfaceItem}>
-                    <button
-                      type="button"
-                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                      onClick={handleTimelineCollapse}
-                    >
-                      Collapse
-                    </button>
-                  </motion.div>
-                </motion.div>
-              ) : null}
-              {showCollapsed ? (
-                <motion.div
-                  key="craft-timeline-title-collapsed"
-                  className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  variants={slotVariants.section}
-                  initial={motionEnabled ? "collapsed" : false}
-                  animate={phase}
-                >
-                  <motion.div className="flex flex-col items-center gap-3" variants={headerGroup}>
-                    <motion.div
-                      layoutId="craft-timeline-title"
-                      layoutCrossfade={false}
-                      transition={timelineLayoutTransition}
-                      className="relative inline-flex text-white"
-                    >
-                      <motion.div variants={collapsedHeaderItem}>
-                        <Heading
-                          id="craft-timeline-heading"
-                          level={2}
-                          size="xl"
-                          className="type-section-collapsed"
-                        >
-                          {headingTitle}
-                        </Heading>
-                      </motion.div>
+                    <motion.div variants={surfaceItem}>
                       <button
                         type="button"
-                        className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                        onFocus={handleTimelineExpand}
-                        onClick={handleTimelineExpand}
-                        onKeyDown={onTriggerKeyDown}
-                        aria-expanded={expanded}
-                        aria-controls="craft-timeline-body"
-                        aria-labelledby="craft-timeline-heading"
+                        className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
+                        onClick={handleTimelineCollapse}
                       >
-                        <span className="sr-only">Expand {headingTitle}</span>
+                        Collapse
                       </button>
                     </motion.div>
-                    <motion.div
-                      layoutId="craft-timeline-subtitle"
-                      layoutCrossfade={false}
-                      transition={timelineLayoutTransition}
-                      className="relative text-white"
-                    >
-                      <motion.div variants={collapsedHeaderItem}>
-                        <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                          {headingEyebrow}
+                  </motion.div>
+                ) : null}
+                {showCollapsed ? (
+                  <motion.div
+                    key="craft-timeline-title-collapsed"
+                    className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
+                    variants={slotVariants.section}
+                    initial={motionEnabled ? "collapsed" : false}
+                    animate={phase}
+                  >
+                    <motion.div className="flex flex-col items-center gap-3" variants={headerGroup}>
+                      <motion.div
+                        layoutId="craft-timeline-title"
+                        layoutCrossfade={false}
+                        transition={timelineLayoutTransition}
+                        className="relative inline-flex text-white"
+                      >
+                        <motion.div variants={collapsedHeaderItem}>
+                          <Heading
+                            id="craft-timeline-heading"
+                            level={2}
+                            size="xl"
+                            className="type-section-collapsed"
+                          >
+                            {headingTitle}
+                          </Heading>
+                        </motion.div>
+                        <button
+                          type="button"
+                          className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                          onFocus={handleTimelineExpand}
+                          onClick={handleTimelineExpand}
+                          onKeyDown={onTriggerKeyDown}
+                          aria-expanded={expanded}
+                          aria-controls="craft-timeline-body"
+                          aria-labelledby="craft-timeline-heading"
+                        >
+                          <span className="sr-only">Expand {headingTitle}</span>
+                        </button>
+                      </motion.div>
+                      <motion.div
+                        layoutId="craft-timeline-subtitle"
+                        layoutCrossfade={false}
+                        transition={timelineLayoutTransition}
+                        className="relative text-white"
+                      >
+                        <motion.div variants={collapsedHeaderItem}>
+                          <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+                            {headingEyebrow}
+                          </Text>
+                        </motion.div>
+                      </motion.div>
+                    </motion.div>
+                    <motion.div variants={itemsGroup} className="mt-3">
+                      <motion.div variants={ctaItem}>
+                        <Text
+                          size="button"
+                          className="text-white/80 cursor-pointer focus-ring"
+                          asChild
+                        >
+                          <button type="button" onClick={handleTimelineExpand} onKeyDown={onTriggerKeyDown}>
+                            Read more
+                          </button>
                         </Text>
                       </motion.div>
                     </motion.div>
                   </motion.div>
-                  <motion.div variants={itemsGroup} className="mt-3">
-                    <motion.div variants={ctaItem}>
-                      <Text
-                        size="button"
-                        className="text-white/80 cursor-pointer focus-ring"
-                        asChild
-                      >
-                        <button type="button" onClick={handleTimelineExpand} onKeyDown={onTriggerKeyDown}>
-                          Read more
-                        </button>
-                      </Text>
-                    </motion.div>
-                  </motion.div>
-                </motion.div>
-              ) : null}
-            </LayoutGroup>
+                ) : null}
+              </LayoutGroup>
 
-            <motion.div
-              variants={slotVariants.section}
-              initial={motionEnabled ? "collapsed" : false}
-              animate={phase}
-            >
-              {showExpanded ? (
-                <motion.div
-                  key="craft-timeline-body"
-                  id="craft-timeline-body"
-                  className="space-y-6"
-                  variants={slotVariants.section}
-                  initial={motionEnabled ? "collapsed" : false}
-                  animate={phase}
-                >
-                  {enablePinned ? (
-                    <motion.div
-                      className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start"
+              <motion.div
+                variants={slotVariants.section}
+                initial={motionEnabled ? "collapsed" : false}
+                animate={phase}
+              >
+                {showExpanded ? (
+                  <motion.div
+                    key="craft-timeline-body"
+                    id="craft-timeline-body"
+                    className="space-y-6"
+                    variants={slotVariants.section}
+                    initial={motionEnabled ? "collapsed" : false}
+                    animate={phase}
+                  >
+                    {enablePinned ? (
+                      <motion.div
+                        className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start"
                       variants={bodyGroup}
                     >
                       <motion.div
@@ -572,9 +577,10 @@ function TimelineRevealSection({
                       </Link>
                     </Button>
                   </motion.div>
-                </motion.div>
-              ) : null}
-            </motion.div>
+                  </motion.div>
+                ) : null}
+              </motion.div>
+            </div>
           </motion.div>
         </div>
       </motion.div>

@@ -416,6 +416,7 @@ const DisciplineRailRevealSection = ({
 
   const revealRail = phase === "expanded" || phase === "closingHold";
   const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
+  const isClosing = phase === "closingHold";
   const parallaxStrength = 0.16;
   const parallaxEnabled = enableTitleReveal && !revealRail && motionEnabled;
   const railLayoutTransition = motionEnabled
@@ -498,15 +499,18 @@ const DisciplineRailRevealSection = ({
   const containerLayoutTransition = {
     layout: {
       duration: motionEnabled
-        ? (CONTAINER_EXPAND_MS / 1000) * (isCollapsedPhase ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
+        ? (CONTAINER_EXPAND_MS / 1000) * (isClosing ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
         : 0,
       ease: EASE_CINEMATIC,
     },
   };
   const glassStyle = {
     minHeight: "40vh",
-    overflow: isCollapsedPhase ? "hidden" : "visible",
+    overflow: isCollapsedPhase || isClosing ? "hidden" : "visible",
   };
+  const contentWrapperClass = isClosing
+    ? "absolute inset-0 w-full pointer-events-none flex flex-col space-y-6"
+    : "relative flex flex-1 flex-col space-y-6";
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
@@ -611,7 +615,7 @@ const DisciplineRailRevealSection = ({
           layout
           transition={containerLayoutTransition}
         >
-          <div className="flex flex-col space-y-6">
+          <div className={contentWrapperClass}>
             <LayoutGroup id="shotguns-discipline-rail-title">
               {showExpanded ? (
                 <motion.div

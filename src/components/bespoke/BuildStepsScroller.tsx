@@ -214,6 +214,7 @@ const BuildStepsRevealSection = ({
 
   const revealBuildSteps = phase === "expanded" || phase === "closingHold";
   const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
+  const isClosing = phase === "closingHold";
   const parallaxStrength = 0.16;
   const parallaxEnabled = enableTitleReveal && !revealBuildSteps && motionEnabled;
   const buildStepsLayoutTransition = motionEnabled
@@ -298,15 +299,18 @@ const BuildStepsRevealSection = ({
   const containerLayoutTransition = {
     layout: {
       duration: motionEnabled
-        ? (CONTAINER_EXPAND_MS / 1000) * (isCollapsedPhase ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
+        ? (CONTAINER_EXPAND_MS / 1000) * (isClosing ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
         : 0,
       ease: EASE_CINEMATIC,
     },
   };
   const glassStyle = {
     minHeight: "40vh",
-    overflow: isCollapsedPhase ? "hidden" : "visible",
+    overflow: isCollapsedPhase || isClosing ? "hidden" : "visible",
   };
+  const contentWrapperClass = isClosing
+    ? "absolute inset-0 w-full pointer-events-none flex flex-col space-y-8"
+    : "relative flex flex-1 flex-col space-y-8";
 
   const instructions =
     "Swipe horizontally or use the arrows/tabs to move from moment to moment. Each step is a chapter in the ritual of building a Perazzi to your measure.";
@@ -489,7 +493,8 @@ const BuildStepsRevealSection = ({
           layout
           transition={containerLayoutTransition}
         >
-          <LayoutGroup id="bespoke-build-steps-title">
+          <div className={contentWrapperClass}>
+            <LayoutGroup id="bespoke-build-steps-title">
             {showExpanded ? (
               <motion.div
                 key="build-steps-header"
@@ -894,7 +899,8 @@ const BuildStepsRevealSection = ({
                 </motion.div>
               </motion.div>
             ) : null}
-          </motion.div>
+            </motion.div>
+          </div>
         </motion.div>
       </div>
     </motion.div>

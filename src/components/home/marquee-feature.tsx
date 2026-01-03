@@ -96,8 +96,9 @@ function MarqueeFeatureRevealSection({
   const headingTitle = champion.name;
   const headingSubtitle = champion.title;
 
-  const revealMarquee = phase === "expanded" || phase === "closingHold";
+  const revealMarquee = phase === "prezoom" || phase === "expanded" || phase === "closingHold";
   const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
+  const isClosing = phase === "closingHold";
   const parallaxStrength = 0.16;
   const parallaxEnabled = enableTitleReveal && !revealMarquee && motionEnabled;
   const marqueeLayoutTransition = motionEnabled
@@ -182,15 +183,18 @@ function MarqueeFeatureRevealSection({
   const containerLayoutTransition = {
     layout: {
       duration: motionEnabled
-        ? (CONTAINER_EXPAND_MS / 1000) * (isCollapsedPhase ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
+        ? (CONTAINER_EXPAND_MS / 1000) * (isClosing ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
         : 0,
       ease: EASE_CINEMATIC,
     },
   };
   const glassStyle = {
     minHeight: "40vh",
-    overflow: isCollapsedPhase ? "hidden" : "visible",
+    overflow: isCollapsedPhase || isClosing ? "hidden" : "visible",
   };
+  const expandedWrapperClass = isClosing
+    ? "absolute inset-0 w-full pointer-events-none"
+    : "relative";
 
   const handleMarqueeExpand = () => {
     if (!enableTitleReveal) return;
@@ -262,7 +266,7 @@ function MarqueeFeatureRevealSection({
                   <motion.div
                     key="marquee-feature-body"
                     id="marquee-feature-body"
-                    className="relative z-10"
+                    className={`${expandedWrapperClass} z-10`}
                     variants={slotVariants.section}
                     initial={motionEnabled ? "collapsed" : false}
                     animate={phase}

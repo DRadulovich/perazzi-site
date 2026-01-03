@@ -119,6 +119,7 @@ const VisitFactoryRevealSection = ({
 
   const revealVisit = phase === "expanded" || phase === "closingHold";
   const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
+  const isClosing = phase === "closingHold";
   const parallaxStrength = 0.16;
   const parallaxEnabled = enableTitleReveal && !revealVisit && motionEnabled;
   const visitLayoutTransition = motionEnabled
@@ -198,15 +199,18 @@ const VisitFactoryRevealSection = ({
   const containerLayoutTransition = {
     layout: {
       duration: motionEnabled
-        ? (CONTAINER_EXPAND_MS / 1000) * (isCollapsedPhase ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
+        ? (CONTAINER_EXPAND_MS / 1000) * (isClosing ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
         : 0,
       ease: EASE_CINEMATIC,
     },
   };
   const glassStyle = {
     minHeight: "40vh",
-    overflow: isCollapsedPhase ? "hidden" : "visible",
+    overflow: isCollapsedPhase || isClosing ? "hidden" : "visible",
   };
+  const contentWrapperClass = isClosing
+    ? "absolute inset-0 w-full pointer-events-none flex flex-col space-y-6"
+    : "relative flex flex-1 flex-col space-y-6";
 
   const handleVisitExpand = () => {
     if (!enableTitleReveal) return;
@@ -261,7 +265,8 @@ const VisitFactoryRevealSection = ({
           layout
           transition={containerLayoutTransition}
         >
-          <LayoutGroup id="visit-factory-title">
+          <div className={contentWrapperClass}>
+            <LayoutGroup id="visit-factory-title">
             {showExpanded ? (
               <motion.div
                 key="visit-factory-header"
@@ -533,7 +538,8 @@ const VisitFactoryRevealSection = ({
                 </motion.div>
               </motion.div>
             ) : null}
-          </motion.div>
+            </motion.div>
+          </div>
         </motion.div>
       </Container>
     </motion.div>

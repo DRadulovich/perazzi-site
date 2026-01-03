@@ -151,6 +151,7 @@ const TravelNetworkRevealSection = ({
 
   const revealNetwork = phase === "expanded" || phase === "closingHold";
   const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
+  const isClosing = phase === "closingHold";
   const parallaxStrength = 0.16;
   const parallaxEnabled = enableTitleReveal && !revealNetwork && motionEnabled;
   const networkLayoutTransition = motionEnabled
@@ -230,15 +231,18 @@ const TravelNetworkRevealSection = ({
   const containerLayoutTransition = {
     layout: {
       duration: motionEnabled
-        ? (CONTAINER_EXPAND_MS / 1000) * (isCollapsedPhase ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
+        ? (CONTAINER_EXPAND_MS / 1000) * (isClosing ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
         : 0,
       ease: EASE_CINEMATIC,
     },
   };
   const glassStyle = {
     minHeight: "40vh",
-    overflow: isCollapsedPhase ? "hidden" : "visible",
+    overflow: isCollapsedPhase || isClosing ? "hidden" : "visible",
   };
+  const contentWrapperClass = isClosing
+    ? "absolute inset-0 w-full pointer-events-none flex flex-col space-y-6"
+    : "relative flex flex-1 flex-col space-y-6";
   const listReveal: ListRevealConfig = {
     phase,
     motionEnabled,
@@ -299,7 +303,8 @@ const TravelNetworkRevealSection = ({
           layout
           transition={containerLayoutTransition}
         >
-          <LayoutGroup id="experience-travel-network-title">
+          <div className={contentWrapperClass}>
+            <LayoutGroup id="experience-travel-network-title">
             {showExpanded ? (
               <motion.div
                 key="travel-network-header"
@@ -517,7 +522,8 @@ const TravelNetworkRevealSection = ({
                 </motion.div>
               </motion.div>
             ) : null}
-          </motion.div>
+            </motion.div>
+          </div>
         </motion.div>
       </Container>
     </motion.div>

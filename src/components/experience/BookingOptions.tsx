@@ -108,6 +108,7 @@ const BookingOptionsRevealSection = ({
 
   const revealBooking = phase === "expanded" || phase === "closingHold";
   const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
+  const isClosing = phase === "closingHold";
   const parallaxStrength = 0.16;
   const parallaxEnabled = enableTitleReveal && !revealBooking && motionEnabled;
   const bookingLayoutTransition = motionEnabled
@@ -186,15 +187,18 @@ const BookingOptionsRevealSection = ({
   const containerLayoutTransition = {
     layout: {
       duration: motionEnabled
-        ? (CONTAINER_EXPAND_MS / 1000) * (isCollapsedPhase ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
+        ? (CONTAINER_EXPAND_MS / 1000) * (isClosing ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
         : 0,
       ease: EASE_CINEMATIC,
     },
   };
   const glassStyle = {
     minHeight: "40vh",
-    overflow: isCollapsedPhase ? "hidden" : "visible",
+    overflow: isCollapsedPhase || isClosing ? "hidden" : "visible",
   };
+  const contentWrapperClass = isClosing
+    ? "absolute inset-0 w-full pointer-events-none flex flex-col space-y-6"
+    : "relative flex flex-1 flex-col space-y-6";
   const schedulerTransition = motionEnabled
     ? { duration: toSeconds(CONTENT_REVEAL_MS), ease: EASE_CINEMATIC }
     : undefined;
@@ -264,7 +268,8 @@ const BookingOptionsRevealSection = ({
           layout
           transition={containerLayoutTransition}
         >
-          <LayoutGroup id="experience-booking-title">
+          <div className={contentWrapperClass}>
+            <LayoutGroup id="experience-booking-title">
             {showExpanded ? (
               <motion.div
                 key="experience-booking-header"
@@ -526,7 +531,8 @@ const BookingOptionsRevealSection = ({
                 </motion.div>
               </motion.div>
             ) : null}
-          </motion.div>
+            </motion.div>
+          </div>
         </motion.div>
       </Container>
     </motion.div>

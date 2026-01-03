@@ -173,6 +173,7 @@ const ExperiencePickerRevealSection = ({
 
   const revealPicker = phase === "expanded" || phase === "closingHold";
   const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
+  const isClosing = phase === "closingHold";
   const parallaxStrength = 0.16;
   const parallaxEnabled = enableTitleReveal && !revealPicker && motionEnabled;
   const pickerLayoutTransition = motionEnabled
@@ -250,15 +251,18 @@ const ExperiencePickerRevealSection = ({
   const containerLayoutTransition = {
     layout: {
       duration: motionEnabled
-        ? (CONTAINER_EXPAND_MS / 1000) * (isCollapsedPhase ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
+        ? (CONTAINER_EXPAND_MS / 1000) * (isClosing ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
         : 0,
       ease: EASE_CINEMATIC,
     },
   };
   const glassStyle = {
     minHeight: "40vh",
-    overflow: isCollapsedPhase ? "hidden" : "visible",
+    overflow: isCollapsedPhase || isClosing ? "hidden" : "visible",
   };
+  const contentWrapperClass = isClosing
+    ? "absolute inset-0 w-full pointer-events-none flex flex-col space-y-6"
+    : "relative flex flex-1 flex-col space-y-6";
 
   const handlePickerExpand = () => {
     if (!enableTitleReveal) return;
@@ -312,7 +316,8 @@ const ExperiencePickerRevealSection = ({
           layout
           transition={containerLayoutTransition}
         >
-          <LayoutGroup id="experience-picker-title">
+          <div className={contentWrapperClass}>
+            <LayoutGroup id="experience-picker-title">
             {showExpanded ? (
               <motion.div
                 key="experience-picker-header"
@@ -483,7 +488,8 @@ const ExperiencePickerRevealSection = ({
                 ) : null}
               </motion.div>
             ) : null}
-          </motion.div>
+            </motion.div>
+          </div>
         </motion.div>
       </Container>
     </motion.div>

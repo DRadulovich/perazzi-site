@@ -458,6 +458,7 @@ const PlatformGridRevealSection = ({
   const headingSubtitle = templates.subheading;
   const revealGrid = phase === "expanded" || phase === "closingHold";
   const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
+  const isClosing = phase === "closingHold";
   const activePlatform = platforms[activeIndex] ?? platforms[0];
   const parallaxStrength = 0.16;
   const parallaxEnabled = enableTitleReveal && !revealGrid && motionEnabled;
@@ -541,15 +542,18 @@ const PlatformGridRevealSection = ({
   const containerLayoutTransition = {
     layout: {
       duration: motionEnabled
-        ? (CONTAINER_EXPAND_MS / 1000) * (isCollapsedPhase ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
+        ? (CONTAINER_EXPAND_MS / 1000) * (isClosing ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
         : 0,
       ease: EASE_CINEMATIC,
     },
   };
   const glassStyle = {
     minHeight: "40vh",
-    overflow: isCollapsedPhase ? "hidden" : "visible",
+    overflow: isCollapsedPhase || isClosing ? "hidden" : "visible",
   };
+  const contentWrapperClass = isClosing
+    ? "absolute inset-0 w-full pointer-events-none flex flex-col space-y-8"
+    : "relative flex flex-1 flex-col space-y-8";
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
@@ -631,141 +635,142 @@ const PlatformGridRevealSection = ({
           layout
           transition={containerLayoutTransition}
         >
-          <LayoutGroup id="shotguns-platform-grid-title">
-            {showExpanded ? (
-              <motion.div
-                key="platform-grid-header"
-                className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
-                variants={slotVariants.section}
-                initial={motionEnabled ? "collapsed" : false}
-                animate={phase}
-              >
-                <motion.div className="space-y-3" variants={headerGroup}>
-                  <motion.div
-                    layoutId="platform-grid-title"
-                    layoutCrossfade={false}
-                    transition={platformLayoutTransition}
-                    className="relative"
-                  >
-                    <motion.div variants={headingItem}>
-                      <Heading
-                        id="platforms-heading"
-                        level={2}
-                        size="xl"
-                      >
-                        <ExpandableTextReveal text={headingTitle} reduceMotion={!motionEnabled} />
-                      </Heading>
+          <div className={contentWrapperClass}>
+            <LayoutGroup id="shotguns-platform-grid-title">
+              {showExpanded ? (
+                <motion.div
+                  key="platform-grid-header"
+                  className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
+                  variants={slotVariants.section}
+                  initial={motionEnabled ? "collapsed" : false}
+                  animate={phase}
+                >
+                  <motion.div className="space-y-3" variants={headerGroup}>
+                    <motion.div
+                      layoutId="platform-grid-title"
+                      layoutCrossfade={false}
+                      transition={platformLayoutTransition}
+                      className="relative"
+                    >
+                      <motion.div variants={headingItem}>
+                        <Heading
+                          id="platforms-heading"
+                          level={2}
+                          size="xl"
+                        >
+                          <ExpandableTextReveal text={headingTitle} reduceMotion={!motionEnabled} />
+                        </Heading>
+                      </motion.div>
+                    </motion.div>
+                    <motion.div
+                      layoutId="platform-grid-subtitle"
+                      layoutCrossfade={false}
+                      transition={platformLayoutTransition}
+                      className="relative"
+                    >
+                      <motion.div variants={subheadingItem}>
+                        <Text
+                          className="type-section-subtitle max-w-4xl"
+                          leading="normal"
+                        >
+                          <ExpandableTextReveal text={headingSubtitle} reduceMotion={!motionEnabled} />
+                        </Text>
+                      </motion.div>
                     </motion.div>
                   </motion.div>
-                  <motion.div
-                    layoutId="platform-grid-subtitle"
-                    layoutCrossfade={false}
-                    transition={platformLayoutTransition}
-                    className="relative"
-                  >
-                    <motion.div variants={subheadingItem}>
-                      <Text
-                        className="type-section-subtitle max-w-4xl"
-                        leading="normal"
-                      >
-                        <ExpandableTextReveal text={headingSubtitle} reduceMotion={!motionEnabled} />
-                      </Text>
-                    </motion.div>
-                  </motion.div>
-                </motion.div>
-                <motion.div variants={surfaceItem}>
-                  <button
-                    type="button"
-                    className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                    onClick={handleCollapse}
-                  >
-                    Collapse
-                  </button>
-                </motion.div>
-              </motion.div>
-            ) : null}
-            {showCollapsed ? (
-              <motion.div
-                key="platform-grid-collapsed"
-                className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                variants={slotVariants.section}
-                initial={motionEnabled ? "collapsed" : false}
-                animate={phase}
-              >
-                <motion.div variants={headerGroup} className="flex flex-col items-center gap-3">
-                  <motion.div
-                    layoutId="platform-grid-title"
-                    layoutCrossfade={false}
-                    transition={platformLayoutTransition}
-                    className="relative inline-flex text-white"
-                  >
-                    <motion.div variants={collapsedHeaderItem}>
-                      <Heading
-                        id="platforms-heading"
-                        level={2}
-                        size="xl"
-                        className="type-section-collapsed"
-                      >
-                        {headingTitle}
-                      </Heading>
-                    </motion.div>
+                  <motion.div variants={surfaceItem}>
                     <button
                       type="button"
-                      className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                      onFocus={handleExpand}
-                      onClick={handleExpand}
-                      onKeyDown={onTriggerKeyDown}
-                      aria-expanded={expanded}
-                      aria-controls="platform-grid-body"
-                      aria-labelledby="platforms-heading"
+                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
+                      onClick={handleCollapse}
                     >
-                      <span className="sr-only">Expand {headingTitle}</span>
+                      Collapse
                     </button>
                   </motion.div>
-                  <motion.div
-                    layoutId="platform-grid-subtitle"
-                    layoutCrossfade={false}
-                    transition={platformLayoutTransition}
-                    className="relative text-white"
-                  >
+                </motion.div>
+              ) : null}
+              {showCollapsed ? (
+                <motion.div
+                  key="platform-grid-collapsed"
+                  className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
+                  variants={slotVariants.section}
+                  initial={motionEnabled ? "collapsed" : false}
+                  animate={phase}
+                >
+                  <motion.div variants={headerGroup} className="flex flex-col items-center gap-3">
+                    <motion.div
+                      layoutId="platform-grid-title"
+                      layoutCrossfade={false}
+                      transition={platformLayoutTransition}
+                      className="relative inline-flex text-white"
+                    >
+                      <motion.div variants={collapsedHeaderItem}>
+                        <Heading
+                          id="platforms-heading"
+                          level={2}
+                          size="xl"
+                          className="type-section-collapsed"
+                        >
+                          {headingTitle}
+                        </Heading>
+                      </motion.div>
+                      <button
+                        type="button"
+                        className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                        onFocus={handleExpand}
+                        onClick={handleExpand}
+                        onKeyDown={onTriggerKeyDown}
+                        aria-expanded={expanded}
+                        aria-controls="platform-grid-body"
+                        aria-labelledby="platforms-heading"
+                      >
+                        <span className="sr-only">Expand {headingTitle}</span>
+                      </button>
+                    </motion.div>
+                    <motion.div
+                      layoutId="platform-grid-subtitle"
+                      layoutCrossfade={false}
+                      transition={platformLayoutTransition}
+                      className="relative text-white"
+                    >
+                      <motion.div variants={collapsedHeaderItem}>
+                        <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+                          {headingSubtitle}
+                        </Text>
+                      </motion.div>
+                    </motion.div>
+                  </motion.div>
+                  <motion.div variants={itemsGroup} className="mt-3">
                     <motion.div variants={collapsedHeaderItem}>
-                      <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                        {headingSubtitle}
+                      <Text
+                        size="button"
+                        className="text-white/80 cursor-pointer focus-ring"
+                        asChild
+                      >
+                        <button type="button" onClick={handleExpand} onKeyDown={onTriggerKeyDown}>
+                          Read more
+                        </button>
                       </Text>
                     </motion.div>
                   </motion.div>
                 </motion.div>
-                <motion.div variants={itemsGroup} className="mt-3">
-                  <motion.div variants={collapsedHeaderItem}>
-                    <Text
-                      size="button"
-                      className="text-white/80 cursor-pointer focus-ring"
-                      asChild
-                    >
-                      <button type="button" onClick={handleExpand} onKeyDown={onTriggerKeyDown}>
-                        Read more
-                      </button>
-                    </Text>
-                  </motion.div>
-                </motion.div>
-              </motion.div>
-            ) : null}
-          </LayoutGroup>
+              ) : null}
+            </LayoutGroup>
 
-          <motion.div
-            variants={slotVariants.section}
-            initial={motionEnabled ? "collapsed" : false}
-            animate={phase}
-          >
-            {showExpanded ? (
-              <motion.div
-                key="platform-grid-body"
-                id="platform-grid-body"
-                className="space-y-8"
-                variants={slotVariants.section}
-                initial={motionEnabled ? "collapsed" : false}
-                animate={phase}
-              >
+            <motion.div
+              variants={slotVariants.section}
+              initial={motionEnabled ? "collapsed" : false}
+              animate={phase}
+            >
+              {showExpanded ? (
+                <motion.div
+                  key="platform-grid-body"
+                  id="platform-grid-body"
+                  className="space-y-8"
+                  variants={slotVariants.section}
+                  initial={motionEnabled ? "collapsed" : false}
+                  animate={phase}
+                >
                 <motion.div variants={bodyGroup} className="space-y-8">
                   <motion.div variants={bodyItem}>
                     <PlatformTabs
@@ -798,9 +803,10 @@ const PlatformGridRevealSection = ({
                     />
                   </motion.div>
                 </motion.div>
-              </motion.div>
-            ) : null}
-          </motion.div>
+                </motion.div>
+              ) : null}
+            </motion.div>
+          </div>
         </motion.div>
       </div>
     </motion.div>
