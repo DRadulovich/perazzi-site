@@ -3,24 +3,29 @@
 import Image from "next/image";
 import SafeHtml from "@/components/SafeHtml";
 import { PortableText } from "@/components/PortableText";
-import { useEffect, useRef, useState, type RefObject } from "react";
-import { LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { useState, type RefObject } from "react";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll } from "framer-motion";
 import type { ShotgunsLandingData } from "@/types/catalog";
 import { logAnalytics } from "@/lib/analytics";
+import { homeMotion } from "@/lib/motionConfig";
 import {
   COLLAPSE_TIME_SCALE,
   CONTAINER_EXPAND_MS,
   EASE_CINEMATIC,
-  EXPANDED_HEADER_REVEAL_MS,
   EXPAND_TIME_SCALE,
-  GLASS_REVEAL_MS,
   STAGGER_BODY_ITEMS_MS,
   STAGGER_HEADER_ITEMS_MS,
   STAGGER_LIST_ITEMS_MS,
 } from "@/motion/expandableSectionMotion";
 import { createExpandableSectionVariants } from "@/motion/createExpandableSectionVariants";
+import {
+  buildGlassToneVariants,
+  buildTitleToneVariants,
+  mergeVariants,
+} from "@/motion/expandableSectionTone";
 import { useExpandableSectionTimeline } from "@/motion/useExpandableSectionTimeline";
-import { cn } from "@/lib/utils";
+import { useParallaxMotion } from "@/motion/useParallaxMotion";
+import { ExpandableTextReveal } from "@/components/motion/ExpandableTextReveal";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, Container, Heading, Text } from "@/components/ui";
@@ -33,6 +38,7 @@ type TriggerExplainerRevealSectionProps = {
   readonly explainer: ShotgunsLandingData["triggerExplainer"];
   readonly manualOpen: boolean;
   readonly setManualOpen: (next: boolean) => void;
+  readonly isDesktop: boolean;
   readonly enableTitleReveal: boolean;
   readonly motionEnabled: boolean;
   readonly sectionRef: RefObject<HTMLElement | null>;
@@ -60,6 +66,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
         explainer={explainer}
         manualOpen={manualOpen}
         setManualOpen={setManualOpen}
+        isDesktop={isDesktop}
         enableTitleReveal={enableTitleReveal}
         motionEnabled={motionEnabled}
         sectionRef={analyticsRef}
@@ -72,12 +79,11 @@ const TriggerExplainerRevealSection = ({
   explainer,
   manualOpen,
   setManualOpen,
+  isDesktop,
   enableTitleReveal,
   motionEnabled,
   sectionRef,
 }: TriggerExplainerRevealSectionProps) => {
-  const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const headerThemeFrame = useRef<number | null>(null);
   const {
     expanded,
     phase,
@@ -87,7 +93,11 @@ const TriggerExplainerRevealSection = ({
     onEscapeKeyDown,
     showExpanded,
     showCollapsed,
-  } = useExpandableSectionTimeline({ defaultExpanded: false });
+  } = useExpandableSectionTimeline({
+    defaultExpanded: false,
+    containerRef: sectionRef,
+    scrollOnExpand: true,
+  });
 
   const ratio = explainer.diagram.aspectRatio ?? 16 / 9;
   const subheading = explainer.subheading ?? "Removable or fixed—choose by confidence and feel.";
@@ -100,19 +110,8 @@ const TriggerExplainerRevealSection = ({
 
   const revealExplainer = showExpanded;
   const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
-  const revealPhotoFocus = revealExplainer;
-  const parallaxStrength = "16%";
+  const parallaxStrength = 0.16;
   const parallaxEnabled = enableTitleReveal && !revealExplainer && motionEnabled;
-  const focusSurfaceTransition =
-    "transition-[background-color,box-shadow,border-color,backdrop-filter]";
-  const titleColorTransition = "transition-colors";
-  const cinematicBezier = `cubic-bezier(${EASE_CINEMATIC.join(",")})`;
-  const transitionStyle = (durationMs: number) => ({
-    transitionDuration: `${motionEnabled ? Math.round(durationMs * EXPAND_TIME_SCALE) : 0}ms`,
-    transitionTimingFunction: motionEnabled ? cinematicBezier : "linear",
-  });
-  const focusSurfaceStyle = transitionStyle(GLASS_REVEAL_MS);
-  const titleColorStyle = transitionStyle(EXPANDED_HEADER_REVEAL_MS);
   const explainerLayoutTransition = motionEnabled
     ? {
         layout: {
@@ -125,12 +124,12 @@ const TriggerExplainerRevealSection = ({
     target: sectionRef,
     offset: ["start end", "end start"],
   });
-  const parallaxY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
-  );
-  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const parallaxY = useParallaxMotion(scrollYProgress, {
+    enabled: parallaxEnabled,
+    strength: parallaxStrength,
+    targetRef: sectionRef,
+  });
+  const parallaxStyle = motionEnabled ? { y: parallaxY } : undefined;
   const toSeconds = (ms: number) => ms / 1000;
   const staggerTransition = (staggerMs: number, direction?: 1 | -1) => ({
     transition: {
@@ -160,7 +159,7 @@ const TriggerExplainerRevealSection = ({
     motionMode: motionEnabled ? "full" : "reduced",
     backgroundScale: { collapsed: 1.32, prezoom: 1.12, expanded: 1 },
     itemOffsetY: 12,
-    blurPx: 8,
+    blurPx: 6,
     glassScale: 0.985,
   });
   const surfaceVariants = createExpandableSectionVariants({
@@ -175,18 +174,23 @@ const TriggerExplainerRevealSection = ({
     expanded: slotVariants.scrimTop.collapsed,
     closingHold: slotVariants.scrimTop.collapsed,
   } as const;
-  const slotContext = {
-    collapsed: {},
-    prezoom: {},
-    expanded: {},
-    closingHold: {},
-  } as const;
-  const headerItem = slotVariants.expandedHeader;
+  const headingToneVariants = buildTitleToneVariants("--color-ink");
+  const subheadingToneVariants = buildTitleToneVariants("--color-ink-muted");
+  const headingItem = mergeVariants(slotVariants.expandedHeader, headingToneVariants);
+  const subheadingItem = mergeVariants(slotVariants.expandedHeader, subheadingToneVariants);
   const collapsedHeaderItem = slotVariants.collapsedHeader;
   const bodyItem = slotVariants.content;
   const ctaItem = slotVariants.ctaRow;
   const surfaceItem = surfaceVariants.content;
   const cardItem = surfaceItem;
+  const glassSurfaceStrength = isDesktop ? 25 : 40;
+  const glassToneVariants = buildGlassToneVariants({
+    backgroundStrength: glassSurfaceStrength,
+    borderStrength: 70,
+    blurPx: 12,
+    shadow: isDesktop ? "elevated" : "soft",
+  });
+  const glassVariants = mergeVariants(slotVariants.glass, glassToneVariants);
   const containerLayoutTransition = {
     layout: {
       duration: motionEnabled
@@ -196,8 +200,7 @@ const TriggerExplainerRevealSection = ({
     },
   };
   const glassStyle = {
-    ...focusSurfaceStyle,
-    height: isCollapsedPhase ? "40vh" : "auto",
+    minHeight: "40vh",
     overflow: isCollapsedPhase ? "hidden" : "visible",
   };
 
@@ -205,7 +208,7 @@ const TriggerExplainerRevealSection = ({
     "max-w-none type-body text-ink [&_p]:mb-4 [&_p:last-child]:mb-0 prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4";
 
   const contentClassName =
-    "gap-6 overflow-hidden px-2 py-3 transition-all duration-300 data-[state=closed]:opacity-0 data-[state=open]:opacity-100 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start";
+    "gap-6 overflow-hidden px-2 py-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start";
 
   const explainerContent = (
     <>
@@ -228,7 +231,7 @@ const TriggerExplainerRevealSection = ({
               key={link.href}
               href={link.href}
               data-analytics-id={`TriggerExplainerLink:${link.href}`}
-              className="type-button inline-flex items-center gap-2 rounded-sm border border-perazzi-red/40 bg-card/60 px-4 py-2 text-perazzi-red shadow-soft backdrop-blur-sm transition hover:border-perazzi-red hover:bg-card/85 hover:translate-x-0.5 focus-ring"
+              className="type-button inline-flex items-center gap-2 rounded-sm border border-perazzi-red/40 bg-card/60 px-4 py-2 text-perazzi-red shadow-soft backdrop-blur-sm transition hover:border-perazzi-red hover:bg-card/85 hover:translate-x-0.5 focus-ring motion-reduce:transition-none motion-reduce:transform-none"
               onClick={() =>
                 logAnalytics(`TriggerExplainerLink:${link.href}`)
               }
@@ -254,7 +257,7 @@ const TriggerExplainerRevealSection = ({
             alt=""
             fill
             sizes="(min-width: 1024px) 640px, 100vw"
-            className="object-contain transition-transform duration-700 ease-out group-hover:scale-[1.01]"
+            className="object-contain transition-transform duration-700 ease-out group-hover:scale-[1.01] motion-reduce:transition-none motion-reduce:transform-none"
           />
           <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
           <div
@@ -278,35 +281,17 @@ const TriggerExplainerRevealSection = ({
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
     open();
-    headerThemeFrame.current = requestAnimationFrame(() => {
-      setHeaderThemeReady(true);
-      headerThemeFrame.current = null;
-    });
   };
 
   const handleCollapse = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-      headerThemeFrame.current = null;
-    }
-    setHeaderThemeReady(false);
     close();
   };
 
-  useEffect(() => () => {
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
-  }, []);
-
   return (
     <motion.div
-      variants={slotContext}
+      variants={slotVariants.section}
       initial={motionEnabled ? "collapsed" : false}
       animate={phase}
     >
@@ -352,21 +337,15 @@ const TriggerExplainerRevealSection = ({
       <motion.div>
         <Container size="xl" className="relative z-10">
           <motion.div
-            className={cn(
-              "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-              focusSurfaceTransition,
-              revealPhotoFocus
-                ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-                : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            )}
-            variants={slotVariants.glass}
+            className="relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10"
+            variants={glassVariants}
             style={glassStyle}
             onKeyDown={onEscapeKeyDown}
             layout
             transition={containerLayoutTransition}
           >
             <motion.div
-              variants={slotContext}
+              variants={slotVariants.section}
               initial={motionEnabled ? "collapsed" : false}
               animate={phase}
             >
@@ -375,12 +354,12 @@ const TriggerExplainerRevealSection = ({
                   <motion.div
                     key="trigger-explainer-header"
                     className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
-                    variants={slotContext}
+                    variants={slotVariants.section}
                     initial={motionEnabled ? "collapsed" : false}
                     animate={phase}
                     onKeyDown={onEscapeKeyDown}
                   >
-                    <motion.div variants={slotContext} className="flex-1">
+                    <motion.div variants={slotVariants.section} className="flex-1">
                       <Collapsible
                         open={manualOpen}
                         onOpenChange={(next) => {
@@ -396,18 +375,16 @@ const TriggerExplainerRevealSection = ({
                             transition={explainerLayoutTransition}
                             className="relative"
                           >
-                            <motion.div variants={headerItem}>
+                            <motion.div variants={headingItem}>
                               <Heading
                                 id="trigger-explainer-heading"
                                 level={2}
                                 size="xl"
-                                className={cn(
-                                  titleColorTransition,
-                                  headerThemeReady ? "text-ink" : "text-white",
-                                )}
-                                style={titleColorStyle}
                               >
-                                {explainer.title}
+                                <ExpandableTextReveal
+                                  text={explainer.title ?? ""}
+                                  reduceMotion={!motionEnabled}
+                                />
                               </Heading>
                             </motion.div>
                           </motion.div>
@@ -417,17 +394,12 @@ const TriggerExplainerRevealSection = ({
                             transition={explainerLayoutTransition}
                             className="relative"
                           >
-                            <motion.div variants={headerItem}>
+                            <motion.div variants={subheadingItem}>
                               <Text
-                                className={cn(
-                                  "type-section-subtitle",
-                                  titleColorTransition,
-                                  headerThemeReady ? "text-ink-muted" : "text-white",
-                                )}
-                                style={titleColorStyle}
+                                className="type-section-subtitle"
                                 leading="normal"
                               >
-                                {subheading}
+                                <ExpandableTextReveal text={subheading} reduceMotion={!motionEnabled} />
                               </Text>
                             </motion.div>
                           </motion.div>
@@ -443,11 +415,26 @@ const TriggerExplainerRevealSection = ({
                         </motion.div>
                         <CollapsibleContent
                           id="trigger-explainer-content"
-                          className={`grid ${contentClassName} lg:hidden`}
+                          forceMount
+                          className="lg:hidden data-[state=closed]:animate-none data-[state=open]:animate-none"
                         >
-                        <motion.div className="contents" variants={bodyGroup}>
-                            {explainerContent}
-                        </motion.div>
+                          <AnimatePresence initial={false}>
+                            {manualOpen ? (
+                              <motion.div
+                                key="trigger-explainer-mobile"
+                                className={`grid ${contentClassName}`}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={motionEnabled ? homeMotion.revealFast : undefined}
+                                layout
+                              >
+                                <motion.div className="contents" variants={bodyGroup}>
+                                  {explainerContent}
+                                </motion.div>
+                              </motion.div>
+                            ) : null}
+                          </AnimatePresence>
                         </CollapsibleContent>
                       </Collapsible>
                     </motion.div>
@@ -465,7 +452,7 @@ const TriggerExplainerRevealSection = ({
                   <motion.div
                     key="trigger-explainer-collapsed"
                     className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                    variants={slotContext}
+                    variants={slotVariants.section}
                     initial={motionEnabled ? "collapsed" : false}
                     animate={phase}
                   >
@@ -531,7 +518,7 @@ const TriggerExplainerRevealSection = ({
             </motion.div>
 
             <motion.div
-              variants={slotContext}
+              variants={slotVariants.section}
               initial={motionEnabled ? "collapsed" : false}
               animate={phase}
             >
@@ -540,7 +527,7 @@ const TriggerExplainerRevealSection = ({
                   key="trigger-explainer-body"
                   id="trigger-explainer-body"
                   className="space-y-6"
-                  variants={slotContext}
+                  variants={slotVariants.section}
                   initial={motionEnabled ? "collapsed" : false}
                   animate={phase}
                 >

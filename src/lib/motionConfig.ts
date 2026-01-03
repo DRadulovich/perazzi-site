@@ -22,15 +22,15 @@ const cinematicEase = [0.16, 1, 0.3, 1] as const;
 export const homeMotion = {
   cinematicEase,
   reveal: {
-    duration: 0.8,
+    duration: 0.7,
     ease: cinematicEase,
   },
   revealFast: {
-    duration: 0.55,
+    duration: 0.45,
     ease: cinematicEase,
   },
   micro: {
-    duration: 0.22,
+    duration: 0.2,
     ease: "easeOut" as const,
   },
   springHighlight: {

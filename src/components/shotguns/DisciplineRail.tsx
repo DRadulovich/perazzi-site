@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState, type Dispatch, type RefObject, type SetStateAction } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll } from "framer-motion";
 
 import type { Platform, ShotgunsLandingData } from "@/types/catalog";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -13,17 +13,23 @@ import {
   COLLAPSE_TIME_SCALE,
   CONTAINER_EXPAND_MS,
   EASE_CINEMATIC,
-  EXPANDED_HEADER_REVEAL_MS,
   EXPAND_TIME_SCALE,
-  GLASS_REVEAL_MS,
   LIST_REVEAL_MS,
   STAGGER_BODY_ITEMS_MS,
   STAGGER_HEADER_ITEMS_MS,
   STAGGER_LIST_ITEMS_MS,
 } from "@/motion/expandableSectionMotion";
 import { createExpandableSectionVariants } from "@/motion/createExpandableSectionVariants";
+import {
+  buildGlassToneVariants,
+  buildTitleToneVariants,
+  mergeVariants,
+} from "@/motion/expandableSectionTone";
 import { useExpandableSectionTimeline } from "@/motion/useExpandableSectionTimeline";
+import { DEFAULT_CLOSING_HOLD_MS, getExitHoldExtraMs } from "@/motion/expandableSectionTiming";
+import { useParallaxMotion } from "@/motion/useParallaxMotion";
 import { cn } from "@/lib/utils";
+import { ExpandableTextReveal } from "@/components/motion/ExpandableTextReveal";
 import SafeHtml from "@/components/SafeHtml";
 import { PortableText } from "@/components/PortableText";
 import { Container, Heading, Text } from "@/components/ui";
@@ -92,6 +98,7 @@ type DisciplineRailRevealSectionProps = {
   readonly heading: string;
   readonly subheading: string;
   readonly background: DisciplineRailBackground;
+  readonly isDesktop: boolean;
   readonly openCategory: string | null;
   readonly setOpenCategory: Dispatch<SetStateAction<string | null>>;
   readonly activeDisciplineId: string | null;
@@ -246,6 +253,7 @@ export function DisciplineRail({
         heading={heading}
         subheading={subheading}
         background={background}
+        isDesktop={isDesktop}
         openCategory={openCategory}
         setOpenCategory={setOpenCategory}
         activeDisciplineId={activeDisciplineId}
@@ -287,11 +295,11 @@ export function DisciplineRail({
                     className="relative z-10 flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-perazzi-black/90 text-white shadow-elevated ring-1 ring-white/15 backdrop-blur-xl"
                     initial={
                       motionEnabled
-                        ? { opacity: 0, y: 18, scale: 0.985, filter: "blur(14px)" }
+                        ? { opacity: 0, y: 18, scale: 0.985, filter: "blur(8px)" }
                         : false
                     }
                     animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-                    exit={motionEnabled ? { opacity: 0, y: 18, scale: 0.985, filter: "blur(14px)" } : undefined}
+                    exit={motionEnabled ? { opacity: 0, y: 18, scale: 0.985, filter: "blur(8px)" } : undefined}
                     transition={motionEnabled ? homeMotion.revealFast : undefined}
                   >
                     <div className="pointer-events-none absolute inset-0 film-grain opacity-10" aria-hidden="true" />
@@ -310,7 +318,7 @@ export function DisciplineRail({
                             src={selectedModel.imageUrl}
                             alt={selectedModel.imageAlt || selectedModel.name}
                             fill
-                            className="object-contain bg-white transition-transform duration-700 ease-out group-hover:scale-[1.01]"
+                            className="object-contain bg-white transition-transform duration-700 ease-out group-hover:scale-[1.01] motion-reduce:transition-none motion-reduce:transform-none"
                             sizes="(min-width: 1024px) 70vw, 100vw"
                           />
                         ) : (
@@ -371,6 +379,7 @@ const DisciplineRailRevealSection = ({
   heading,
   subheading,
   background,
+  isDesktop,
   openCategory,
   setOpenCategory,
   activeDisciplineId,
@@ -382,8 +391,13 @@ const DisciplineRailRevealSection = ({
   motionEnabled,
   sectionRef,
 }: DisciplineRailRevealSectionProps) => {
-  const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const headerThemeFrame = useRef<number | null>(null);
+  const openCategoryData = categories.find((category) => category.label === openCategory);
+  const nestedItemCount = openCategoryData?.disciplines.length ?? 0;
+  const extraExitHoldMs = getExitHoldExtraMs({
+    itemCount: nestedItemCount,
+    staggerMs: STAGGER_LIST_ITEMS_MS,
+    itemDurationMs: LIST_REVEAL_MS,
+  });
   const {
     expanded,
     phase,
@@ -393,23 +407,17 @@ const DisciplineRailRevealSection = ({
     onEscapeKeyDown,
     showExpanded,
     showCollapsed,
-  } = useExpandableSectionTimeline({ defaultExpanded: false });
+  } = useExpandableSectionTimeline({
+    defaultExpanded: false,
+    closingHoldMs: DEFAULT_CLOSING_HOLD_MS + extraExitHoldMs,
+    containerRef: sectionRef,
+    scrollOnExpand: true,
+  });
 
   const revealRail = phase === "expanded" || phase === "closingHold";
   const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
-  const revealPhotoFocus = revealRail;
-  const parallaxStrength = "16%";
+  const parallaxStrength = 0.16;
   const parallaxEnabled = enableTitleReveal && !revealRail && motionEnabled;
-  const focusSurfaceTransition =
-    "transition-[background-color,box-shadow,border-color,backdrop-filter]";
-  const titleColorTransition = "transition-colors";
-  const cinematicBezier = `cubic-bezier(${EASE_CINEMATIC.join(",")})`;
-  const transitionStyle = (durationMs: number) => ({
-    transitionDuration: `${motionEnabled ? Math.round(durationMs * EXPAND_TIME_SCALE) : 0}ms`,
-    transitionTimingFunction: motionEnabled ? cinematicBezier : "linear",
-  });
-  const focusSurfaceStyle = transitionStyle(GLASS_REVEAL_MS);
-  const titleColorStyle = transitionStyle(EXPANDED_HEADER_REVEAL_MS);
   const railLayoutTransition = motionEnabled
     ? {
         layout: {
@@ -422,12 +430,12 @@ const DisciplineRailRevealSection = ({
     target: sectionRef,
     offset: ["start end", "end start"],
   });
-  const parallaxY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
-  );
-  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const parallaxY = useParallaxMotion(scrollYProgress, {
+    enabled: parallaxEnabled,
+    strength: parallaxStrength,
+    targetRef: sectionRef,
+  });
+  const parallaxStyle = motionEnabled ? { y: parallaxY } : undefined;
   const toSeconds = (ms: number) => ms / 1000;
   const staggerTransition = (staggerMs: number, direction?: 1 | -1) => ({
     transition: {
@@ -457,7 +465,7 @@ const DisciplineRailRevealSection = ({
     motionMode: motionEnabled ? "full" : "reduced",
     backgroundScale: { collapsed: 1.32, prezoom: 1.12, expanded: 1 },
     itemOffsetY: 12,
-    blurPx: 8,
+    blurPx: 6,
     glassScale: 0.985,
   });
   const surfaceVariants = createExpandableSectionVariants({
@@ -472,16 +480,21 @@ const DisciplineRailRevealSection = ({
     expanded: slotVariants.scrimTop.collapsed,
     closingHold: slotVariants.scrimTop.collapsed,
   } as const;
-  const slotContext = {
-    collapsed: {},
-    prezoom: {},
-    expanded: {},
-    closingHold: {},
-  } as const;
-  const headerItem = slotVariants.expandedHeader;
+  const headingToneVariants = buildTitleToneVariants("--color-ink");
+  const subheadingToneVariants = buildTitleToneVariants("--color-ink-muted");
+  const headingItem = mergeVariants(slotVariants.expandedHeader, headingToneVariants);
+  const subheadingItem = mergeVariants(slotVariants.expandedHeader, subheadingToneVariants);
   const collapsedHeaderItem = slotVariants.collapsedHeader;
   const bodyItem = slotVariants.content;
   const surfaceItem = surfaceVariants.content;
+  const glassSurfaceStrength = isDesktop ? 25 : 40;
+  const glassToneVariants = buildGlassToneVariants({
+    backgroundStrength: glassSurfaceStrength,
+    borderStrength: 70,
+    blurPx: 12,
+    shadow: isDesktop ? "elevated" : "soft",
+  });
+  const glassVariants = mergeVariants(slotVariants.glass, glassToneVariants);
   const containerLayoutTransition = {
     layout: {
       duration: motionEnabled
@@ -491,30 +504,17 @@ const DisciplineRailRevealSection = ({
     },
   };
   const glassStyle = {
-    ...focusSurfaceStyle,
-    height: isCollapsedPhase ? "40vh" : "auto",
+    minHeight: "40vh",
     overflow: isCollapsedPhase ? "hidden" : "visible",
   };
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
     open();
-    headerThemeFrame.current = requestAnimationFrame(() => {
-      setHeaderThemeReady(true);
-      headerThemeFrame.current = null;
-    });
   };
 
   const handleCollapse = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-      headerThemeFrame.current = null;
-    }
-    setHeaderThemeReady(false);
     close();
   };
 
@@ -569,15 +569,9 @@ const DisciplineRailRevealSection = ({
         exit: { opacity: 0, transition: exitTransition },
       };
 
-  useEffect(() => () => {
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
-  }, []);
-
   return (
     <motion.div
-      variants={slotContext}
+      variants={slotVariants.section}
       initial={motionEnabled ? "collapsed" : false}
       animate={phase}
     >
@@ -611,14 +605,8 @@ const DisciplineRailRevealSection = ({
       <Container size="xl" className="relative z-10">
         <motion.div
           style={glassStyle}
-          className={cn(
-            "relative rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            focusSurfaceTransition,
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-          )}
-          variants={slotVariants.glass}
+          className="relative rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10"
+          variants={glassVariants}
           onKeyDown={onEscapeKeyDown}
           layout
           transition={containerLayoutTransition}
@@ -629,7 +617,7 @@ const DisciplineRailRevealSection = ({
                 <motion.div
                   key="discipline-rail-header"
                   className="relative z-10 space-y-4 md:flex md:items-start md:justify-between md:gap-8"
-                  variants={slotContext}
+                  variants={slotVariants.section}
                   initial={motionEnabled ? "collapsed" : false}
                   animate={phase}
                 >
@@ -640,18 +628,13 @@ const DisciplineRailRevealSection = ({
                       transition={railLayoutTransition}
                       className="relative"
                     >
-                      <motion.div variants={headerItem}>
+                      <motion.div variants={headingItem}>
                         <Heading
                           id="discipline-rail-heading"
                           level={2}
                           size="xl"
-                          className={cn(
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink" : "text-white",
-                          )}
-                          style={titleColorStyle}
                         >
-                          {heading}
+                          <ExpandableTextReveal text={heading} reduceMotion={!motionEnabled} />
                         </Heading>
                       </motion.div>
                     </motion.div>
@@ -661,17 +644,9 @@ const DisciplineRailRevealSection = ({
                       transition={railLayoutTransition}
                       className="relative"
                     >
-                      <motion.div variants={headerItem}>
-                        <Text
-                          size="lg"
-                          className={cn(
-                            "type-section-subtitle",
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink-muted" : "text-white",
-                          )}
-                          style={titleColorStyle}
-                        >
-                          {subheading}
+                      <motion.div variants={subheadingItem}>
+                        <Text size="lg" className="type-section-subtitle">
+                          <ExpandableTextReveal text={subheading} reduceMotion={!motionEnabled} />
                         </Text>
                       </motion.div>
                     </motion.div>
@@ -690,7 +665,7 @@ const DisciplineRailRevealSection = ({
                 <motion.div
                   key="discipline-rail-collapsed"
                   className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  variants={slotContext}
+                  variants={slotVariants.section}
                   initial={motionEnabled ? "collapsed" : false}
                   animate={phase}
                 >
@@ -755,7 +730,7 @@ const DisciplineRailRevealSection = ({
             </LayoutGroup>
 
             <motion.div
-              variants={slotContext}
+              variants={slotVariants.section}
               initial={motionEnabled ? "collapsed" : false}
               animate={phase}
             >
@@ -764,7 +739,7 @@ const DisciplineRailRevealSection = ({
                   key="discipline-rail-body"
                   id="discipline-rail-body"
                   className="space-y-6"
-                  variants={slotContext}
+                  variants={slotVariants.section}
                   initial={motionEnabled ? "collapsed" : false}
                   animate={phase}
                 >
@@ -883,7 +858,7 @@ const DisciplineRailRevealSection = ({
                     </motion.div>
 
                     <motion.div className="min-h-104" variants={bodyItem}>
-                      <AnimatePresence initial={false} mode="popLayout">
+                      <AnimatePresence initial={false} mode="wait">
                         {selectedDiscipline ? (
                           <motion.div
                             key={selectedDiscipline.id}
@@ -968,7 +943,7 @@ function DisciplineCard({
   } as const;
 
   const cardTextItem = {
-    hidden: { opacity: 0, y: 12, filter: "blur(8px)" },
+    hidden: { opacity: 0, y: 12, filter: "blur(6px)" },
     show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
   } as const;
 
@@ -1011,7 +986,7 @@ function DisciplineCard({
             src={discipline.hero.url}
             alt={discipline.hero.alt}
             fill
-            className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+            className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:transform-none"
             sizes="(min-width: 1024px) 33vw, 100vw"
           />
         ) : null}
@@ -1079,7 +1054,7 @@ function DisciplineCard({
                       alt={model.hero.alt}
                       width={800}
                       height={600}
-                      className="w-full object-contain transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+                      className="w-full object-contain transition-transform duration-700 ease-out group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:transform-none"
                       sizes="(min-width: 1024px) 320px, 100vw"
                     />
                   ) : null}
@@ -1087,7 +1062,7 @@ function DisciplineCard({
                   <div className="pointer-events-none absolute inset-0 bg-perazzi-black/75 transition duration-500 group-hover:bg-perazzi-black/60" />
                   <span
                     className={cn(
-                      "absolute inset-0 flex items-center justify-center p-2 text-center type-card-title text-white text-xl sm:text-2xl lg:text-3xl transition-opacity duration-500 group-hover:opacity-0",
+                      "absolute inset-0 flex items-center justify-center p-2 text-center type-card-title text-white text-xl sm:text-2xl lg:text-3xl transition-opacity duration-500 group-hover:opacity-0 motion-reduce:transition-none",
                     )}
                   >
                     {loadingModelId === (model.idLegacy ?? model.id) ? "Loading…" : model.name || "Untitled"}

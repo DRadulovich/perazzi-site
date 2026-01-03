@@ -1,8 +1,8 @@
 "use client";
 
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll } from "framer-motion";
 import Image from "next/image";
-import { useEffect, useRef, useState, type RefObject } from "react";
+import type { RefObject } from "react";
 import type { Champion, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -11,16 +11,20 @@ import {
   CONTAINER_EXPAND_MS,
   COLLAPSE_TIME_SCALE,
   EASE_CINEMATIC,
-  EXPANDED_HEADER_REVEAL_MS,
   EXPAND_TIME_SCALE,
-  GLASS_REVEAL_MS,
   STAGGER_BODY_ITEMS_MS,
   STAGGER_HEADER_ITEMS_MS,
   STAGGER_LIST_ITEMS_MS,
 } from "@/motion/expandableSectionMotion";
 import { createExpandableSectionVariants } from "@/motion/createExpandableSectionVariants";
+import {
+  buildGlassToneVariants,
+  buildTitleToneVariants,
+  mergeVariants,
+} from "@/motion/expandableSectionTone";
 import { useExpandableSectionTimeline } from "@/motion/useExpandableSectionTimeline";
-import { cn } from "@/lib/utils";
+import { useParallaxMotion } from "@/motion/useParallaxMotion";
+import { ExpandableTextReveal } from "@/components/motion/ExpandableTextReveal";
 import { Container, Heading, Text } from "@/components/ui";
 
 type MarqueeFeatureProps = Readonly<{
@@ -47,6 +51,7 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
         key={marqueeKey}
         champion={champion}
         ui={ui}
+        isDesktop={isDesktop}
         enableTitleReveal={enableTitleReveal}
         motionEnabled={motionEnabled}
         scrollRef={analyticsRef}
@@ -58,6 +63,7 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
 type MarqueeFeatureRevealSectionProps = Readonly<{
   champion: Champion;
   ui: HomeData["marqueeUi"];
+  isDesktop: boolean;
   enableTitleReveal: boolean;
   motionEnabled: boolean;
   scrollRef: RefObject<HTMLElement | null>;
@@ -66,12 +72,11 @@ type MarqueeFeatureRevealSectionProps = Readonly<{
 function MarqueeFeatureRevealSection({
   champion,
   ui,
+  isDesktop,
   enableTitleReveal,
   motionEnabled,
   scrollRef,
 }: MarqueeFeatureRevealSectionProps) {
-  const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const headerThemeFrame = useRef<number | null>(null);
   const { expanded, phase, open, close, onTriggerKeyDown, onEscapeKeyDown } =
     useExpandableSectionTimeline({
       defaultExpanded: false,
@@ -93,19 +98,8 @@ function MarqueeFeatureRevealSection({
 
   const revealMarquee = phase === "expanded" || phase === "closingHold";
   const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
-  const revealPhotoFocus = revealMarquee;
-  const parallaxStrength = "16%";
+  const parallaxStrength = 0.16;
   const parallaxEnabled = enableTitleReveal && !revealMarquee && motionEnabled;
-  const focusSurfaceTransition =
-    "transition-[background-color,box-shadow,border-color,backdrop-filter]";
-  const titleColorTransition = "transition-colors";
-  const cinematicBezier = `cubic-bezier(${EASE_CINEMATIC.join(",")})`;
-  const transitionStyle = (durationMs: number) => ({
-    transitionDuration: `${motionEnabled ? Math.round(durationMs * EXPAND_TIME_SCALE) : 0}ms`,
-    transitionTimingFunction: motionEnabled ? cinematicBezier : "linear",
-  });
-  const focusSurfaceStyle = transitionStyle(GLASS_REVEAL_MS);
-  const titleColorStyle = transitionStyle(EXPANDED_HEADER_REVEAL_MS);
   const marqueeLayoutTransition = motionEnabled
     ? {
       layout: {
@@ -118,12 +112,12 @@ function MarqueeFeatureRevealSection({
     target: scrollRef,
     offset: ["start end", "end start"],
   });
-  const parallaxY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
-  );
-  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const parallaxY = useParallaxMotion(scrollYProgress, {
+    enabled: parallaxEnabled,
+    strength: parallaxStrength,
+    targetRef: scrollRef,
+  });
+  const parallaxStyle = motionEnabled ? { y: parallaxY } : undefined;
   const toSeconds = (ms: number) => ms / 1000;
   const staggerTransition = (staggerMs: number, direction?: 1 | -1) => ({
     transition: {
@@ -153,7 +147,7 @@ function MarqueeFeatureRevealSection({
     motionMode: motionEnabled ? "full" : "reduced",
     backgroundScale: { collapsed: 1.32, prezoom: 1.12, expanded: 1 },
     itemOffsetY: 12,
-    blurPx: 8,
+    blurPx: 6,
     glassScale: 0.985,
   });
   const surfaceVariants = createExpandableSectionVariants({
@@ -168,17 +162,23 @@ function MarqueeFeatureRevealSection({
     expanded: slotVariants.scrimTop.collapsed,
     closingHold: slotVariants.scrimTop.collapsed,
   } as const;
-  const slotContext = {
-    collapsed: {},
-    prezoom: {},
-    expanded: {},
-    closingHold: {},
-  } as const;
   const headerItem = slotVariants.expandedHeader;
+  const headingToneVariants = buildTitleToneVariants("--color-ink");
+  const subheadingToneVariants = buildTitleToneVariants("--color-ink-muted");
+  const headingItem = mergeVariants(slotVariants.expandedHeader, headingToneVariants);
+  const subheadingItem = mergeVariants(slotVariants.expandedHeader, subheadingToneVariants);
   const collapsedHeaderItem = slotVariants.collapsedHeader;
   const bodyItem = slotVariants.content;
   const ctaItem = slotVariants.ctaRow;
   const surfaceItem = surfaceVariants.content;
+  const glassSurfaceStrength = isDesktop ? 25 : 40;
+  const glassToneVariants = buildGlassToneVariants({
+    backgroundStrength: glassSurfaceStrength,
+    borderStrength: 70,
+    blurPx: 12,
+    shadow: isDesktop ? "elevated" : "soft",
+  });
+  const glassVariants = mergeVariants(slotVariants.glass, glassToneVariants);
   const containerLayoutTransition = {
     layout: {
       duration: motionEnabled
@@ -188,41 +188,26 @@ function MarqueeFeatureRevealSection({
     },
   };
   const glassStyle = {
-    ...focusSurfaceStyle,
-    height: isCollapsedPhase ? "40vh" : "auto",
+    minHeight: "40vh",
     overflow: isCollapsedPhase ? "hidden" : "visible",
   };
 
   const handleMarqueeExpand = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
     open();
-    headerThemeFrame.current = requestAnimationFrame(() => {
-      setHeaderThemeReady(true);
-      headerThemeFrame.current = null;
-    });
   };
 
   const handleMarqueeCollapse = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-      headerThemeFrame.current = null;
-    }
-    setHeaderThemeReady(false);
     close();
   };
 
-  useEffect(() => () => {
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
-  }, []);
-
   return (
-    <motion.div initial={motionEnabled ? "collapsed" : false} animate={phase}>
+    <motion.div
+      variants={slotVariants.section}
+      initial={motionEnabled ? "collapsed" : false}
+      animate={phase}
+    >
       <motion.div className="absolute inset-0 -z-10 overflow-hidden">
         <motion.div className="absolute inset-0" variants={slotVariants.background}>
           <motion.div className="absolute inset-0 will-change-transform" style={parallaxStyle}>
@@ -265,14 +250,8 @@ function MarqueeFeatureRevealSection({
       <motion.div>
         <Container size="xl" className="relative z-10">
           <motion.div
-            className={cn(
-              "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-              focusSurfaceTransition,
-              revealPhotoFocus
-                ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-                : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            )}
-            variants={slotVariants.glass}
+            className="relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10"
+            variants={glassVariants}
             style={glassStyle}
             layout
             transition={containerLayoutTransition}
@@ -284,7 +263,7 @@ function MarqueeFeatureRevealSection({
                     key="marquee-feature-body"
                     id="marquee-feature-body"
                     className="relative z-10"
-                    variants={slotContext}
+                    variants={slotVariants.section}
                     initial={motionEnabled ? "collapsed" : false}
                     animate={phase}
                     onKeyDown={onEscapeKeyDown}
@@ -301,7 +280,7 @@ function MarqueeFeatureRevealSection({
                             alt={champion.image.alt}
                             fill
                             sizes="(min-width: 1280px) 384px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                            className="object-cover transition-transform duration-1400 ease-out will-change-transform group-hover:scale-[1.04]"
+                            className="object-cover transition-transform duration-1400 ease-out will-change-transform group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:transform-none"
                             loading="lazy"
                           />
                           <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
@@ -322,18 +301,13 @@ function MarqueeFeatureRevealSection({
                               transition={marqueeLayoutTransition}
                               className="relative"
                             >
-                              <motion.div variants={headerItem}>
+                              <motion.div variants={headingItem}>
                                 <Heading
                                   id="champion-heading"
                                   level={2}
                                   size="xl"
-                                  className={cn(
-                                    titleColorTransition,
-                                    headerThemeReady ? "text-ink" : "text-white",
-                                  )}
-                                  style={titleColorStyle}
                                 >
-                                  {headingTitle}
+                                  <ExpandableTextReveal text={headingTitle} reduceMotion={!motionEnabled} />
                                 </Heading>
                               </motion.div>
                             </motion.div>
@@ -343,17 +317,9 @@ function MarqueeFeatureRevealSection({
                               transition={marqueeLayoutTransition}
                               className="relative"
                             >
-                              <motion.div variants={headerItem}>
-                                <Text
-                                  size="lg"
-                                  className={cn(
-                                    "type-section-subtitle",
-                                    titleColorTransition,
-                                    headerThemeReady ? "text-ink-muted" : "text-white",
-                                  )}
-                                  style={titleColorStyle}
-                                >
-                                  {headingSubtitle}
+                              <motion.div variants={subheadingItem}>
+                                <Text size="lg" className="type-section-subtitle">
+                                  <ExpandableTextReveal text={headingSubtitle} reduceMotion={!motionEnabled} />
                                 </Text>
                               </motion.div>
                             </motion.div>
@@ -401,7 +367,7 @@ function MarqueeFeatureRevealSection({
                   <motion.div
                     key="marquee-feature-collapsed"
                     className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                    variants={slotContext}
+                    variants={slotVariants.section}
                     initial={motionEnabled ? "collapsed" : false}
                     animate={phase}
                   >

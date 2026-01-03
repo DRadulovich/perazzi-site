@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState, useRef, useEffect, type Dispatch, type RefObject, type SetStateAction } from "react";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { useMemo, useState, type Dispatch, type RefObject, type SetStateAction } from "react";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll } from "framer-motion";
 
 import type { GradeSeries, ShotgunsLandingData } from "@/types/catalog";
 import { getGradeAnchorId } from "@/lib/grade-anchors";
@@ -12,17 +12,23 @@ import {
   COLLAPSE_TIME_SCALE,
   CONTAINER_EXPAND_MS,
   EASE_CINEMATIC,
-  EXPANDED_HEADER_REVEAL_MS,
   EXPAND_TIME_SCALE,
-  GLASS_REVEAL_MS,
   LIST_REVEAL_MS,
   STAGGER_BODY_ITEMS_MS,
   STAGGER_HEADER_ITEMS_MS,
   STAGGER_LIST_ITEMS_MS,
 } from "@/motion/expandableSectionMotion";
 import { createExpandableSectionVariants } from "@/motion/createExpandableSectionVariants";
+import {
+  buildGlassToneVariants,
+  buildTitleToneVariants,
+  mergeVariants,
+} from "@/motion/expandableSectionTone";
 import { useExpandableSectionTimeline } from "@/motion/useExpandableSectionTimeline";
+import { DEFAULT_CLOSING_HOLD_MS, getExitHoldExtraMs } from "@/motion/expandableSectionTiming";
+import { useParallaxMotion } from "@/motion/useParallaxMotion";
 import { cn } from "@/lib/utils";
+import { ExpandableTextReveal } from "@/components/motion/ExpandableTextReveal";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Container, Heading, Text } from "@/components/ui";
@@ -48,6 +54,7 @@ type EngravingRevealSectionProps = {
   readonly subheading: string;
   readonly background: EngravingCarouselBackground;
   readonly ctaLabel: string;
+  readonly isDesktop: boolean;
   readonly setOpenCategory: Dispatch<SetStateAction<string | null>>;
   readonly resolvedOpenCategory: string | null;
   readonly activeGradeId: string | null;
@@ -178,6 +185,7 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
         subheading={subheading}
         background={background}
         ctaLabel={ctaLabel}
+        isDesktop={isDesktop}
         setOpenCategory={setOpenCategory}
         resolvedOpenCategory={resolvedOpenCategory}
         activeGradeId={resolvedActiveGradeId}
@@ -197,6 +205,7 @@ const EngravingGradesRevealSection = ({
   subheading,
   background,
   ctaLabel,
+  isDesktop,
   setOpenCategory,
   resolvedOpenCategory,
   activeGradeId,
@@ -205,8 +214,13 @@ const EngravingGradesRevealSection = ({
   motionEnabled,
   sectionRef,
 }: EngravingRevealSectionProps) => {
-  const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const headerThemeFrame = useRef<number | null>(null);
+  const openCategoryData = categories.find((category) => category.label === resolvedOpenCategory);
+  const nestedItemCount = openCategoryData?.grades.length ?? 0;
+  const extraExitHoldMs = getExitHoldExtraMs({
+    itemCount: nestedItemCount,
+    staggerMs: STAGGER_LIST_ITEMS_MS,
+    itemDurationMs: LIST_REVEAL_MS,
+  });
   const {
     expanded,
     phase,
@@ -216,23 +230,17 @@ const EngravingGradesRevealSection = ({
     onEscapeKeyDown,
     showExpanded,
     showCollapsed,
-  } = useExpandableSectionTimeline({ defaultExpanded: false });
+  } = useExpandableSectionTimeline({
+    defaultExpanded: false,
+    closingHoldMs: DEFAULT_CLOSING_HOLD_MS + extraExitHoldMs,
+    containerRef: sectionRef,
+    scrollOnExpand: true,
+  });
 
   const revealCarousel = phase === "expanded" || phase === "closingHold";
   const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
-  const revealPhotoFocus = revealCarousel;
-  const parallaxStrength = "16%";
+  const parallaxStrength = 0.16;
   const parallaxEnabled = enableTitleReveal && !revealCarousel && motionEnabled;
-  const focusSurfaceTransition =
-    "transition-[background-color,box-shadow,border-color,backdrop-filter]";
-  const titleColorTransition = "transition-colors";
-  const cinematicBezier = `cubic-bezier(${EASE_CINEMATIC.join(",")})`;
-  const transitionStyle = (durationMs: number) => ({
-    transitionDuration: `${motionEnabled ? Math.round(durationMs * EXPAND_TIME_SCALE) : 0}ms`,
-    transitionTimingFunction: motionEnabled ? cinematicBezier : "linear",
-  });
-  const focusSurfaceStyle = transitionStyle(GLASS_REVEAL_MS);
-  const titleColorStyle = transitionStyle(EXPANDED_HEADER_REVEAL_MS);
   const carouselLayoutTransition = motionEnabled
     ? {
         layout: {
@@ -245,12 +253,12 @@ const EngravingGradesRevealSection = ({
     target: sectionRef,
     offset: ["start end", "end start"],
   });
-  const parallaxY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
-  );
-  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const parallaxY = useParallaxMotion(scrollYProgress, {
+    enabled: parallaxEnabled,
+    strength: parallaxStrength,
+    targetRef: sectionRef,
+  });
+  const parallaxStyle = motionEnabled ? { y: parallaxY } : undefined;
   const toSeconds = (ms: number) => ms / 1000;
   const staggerTransition = (staggerMs: number, direction?: 1 | -1) => ({
     transition: {
@@ -280,7 +288,7 @@ const EngravingGradesRevealSection = ({
     motionMode: motionEnabled ? "full" : "reduced",
     backgroundScale: { collapsed: 1.32, prezoom: 1.12, expanded: 1 },
     itemOffsetY: 12,
-    blurPx: 8,
+    blurPx: 6,
     glassScale: 0.985,
   });
   const surfaceVariants = createExpandableSectionVariants({
@@ -295,16 +303,21 @@ const EngravingGradesRevealSection = ({
     expanded: slotVariants.scrimTop.collapsed,
     closingHold: slotVariants.scrimTop.collapsed,
   } as const;
-  const slotContext = {
-    collapsed: {},
-    prezoom: {},
-    expanded: {},
-    closingHold: {},
-  } as const;
-  const headerItem = slotVariants.expandedHeader;
+  const headingToneVariants = buildTitleToneVariants("--color-ink");
+  const subheadingToneVariants = buildTitleToneVariants("--color-ink-muted");
+  const headingItem = mergeVariants(slotVariants.expandedHeader, headingToneVariants);
+  const subheadingItem = mergeVariants(slotVariants.expandedHeader, subheadingToneVariants);
   const collapsedHeaderItem = slotVariants.collapsedHeader;
   const bodyItem = slotVariants.content;
   const surfaceItem = surfaceVariants.content;
+  const glassSurfaceStrength = isDesktop ? 25 : 40;
+  const glassToneVariants = buildGlassToneVariants({
+    backgroundStrength: glassSurfaceStrength,
+    borderStrength: 70,
+    blurPx: 12,
+    shadow: isDesktop ? "elevated" : "soft",
+  });
+  const glassVariants = mergeVariants(slotVariants.glass, glassToneVariants);
   const containerLayoutTransition = {
     layout: {
       duration: motionEnabled
@@ -314,30 +327,17 @@ const EngravingGradesRevealSection = ({
     },
   };
   const glassStyle = {
-    ...focusSurfaceStyle,
-    height: isCollapsedPhase ? "40vh" : "auto",
+    minHeight: "40vh",
     overflow: isCollapsedPhase ? "hidden" : "visible",
   };
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
     open();
-    headerThemeFrame.current = requestAnimationFrame(() => {
-      setHeaderThemeReady(true);
-      headerThemeFrame.current = null;
-    });
   };
 
   const handleCollapse = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-      headerThemeFrame.current = null;
-    }
-    setHeaderThemeReady(false);
     close();
   };
 
@@ -392,15 +392,9 @@ const EngravingGradesRevealSection = ({
         exit: { opacity: 0, transition: exitTransition },
       };
 
-  useEffect(() => () => {
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
-  }, []);
-
   return (
     <motion.div
-      variants={slotContext}
+      variants={slotVariants.section}
       initial={motionEnabled ? "collapsed" : false}
       animate={phase}
     >
@@ -434,14 +428,8 @@ const EngravingGradesRevealSection = ({
       <Container size="xl" className="relative z-10">
         <motion.div
           style={glassStyle}
-          className={cn(
-            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            focusSurfaceTransition,
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-          )}
-          variants={slotVariants.glass}
+          className="relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10"
+          variants={glassVariants}
           onKeyDown={onEscapeKeyDown}
           layout
           transition={containerLayoutTransition}
@@ -451,7 +439,7 @@ const EngravingGradesRevealSection = ({
               <motion.div
                 key="engraving-grades-header"
                 className="relative z-10 space-y-4 md:flex md:items-start md:justify-between md:gap-8"
-                variants={slotContext}
+                variants={slotVariants.section}
                 initial={motionEnabled ? "collapsed" : false}
                 animate={phase}
               >
@@ -462,18 +450,13 @@ const EngravingGradesRevealSection = ({
                     transition={carouselLayoutTransition}
                     className="relative"
                   >
-                    <motion.div variants={headerItem}>
+                    <motion.div variants={headingItem}>
                       <Heading
                         id="engraving-grades-heading"
                         level={2}
                         size="xl"
-                        className={cn(
-                          titleColorTransition,
-                          headerThemeReady ? "text-ink" : "text-white",
-                        )}
-                        style={titleColorStyle}
                       >
-                        {heading}
+                        <ExpandableTextReveal text={heading} reduceMotion={!motionEnabled} />
                       </Heading>
                     </motion.div>
                   </motion.div>
@@ -483,17 +466,12 @@ const EngravingGradesRevealSection = ({
                     transition={carouselLayoutTransition}
                     className="relative"
                   >
-                    <motion.div variants={headerItem}>
+                    <motion.div variants={subheadingItem}>
                       <Text
-                        className={cn(
-                          "max-w-4xl type-section-subtitle",
-                          titleColorTransition,
-                          headerThemeReady ? "text-ink-muted" : "text-white",
-                        )}
-                        style={titleColorStyle}
+                        className="max-w-4xl type-section-subtitle"
                         leading="normal"
                       >
-                        {subheading}
+                        <ExpandableTextReveal text={subheading} reduceMotion={!motionEnabled} />
                       </Text>
                     </motion.div>
                   </motion.div>
@@ -513,7 +491,7 @@ const EngravingGradesRevealSection = ({
               <motion.div
                 key="engraving-grades-collapsed"
                 className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                variants={slotContext}
+                variants={slotVariants.section}
                 initial={motionEnabled ? "collapsed" : false}
                 animate={phase}
               >
@@ -578,7 +556,7 @@ const EngravingGradesRevealSection = ({
           </LayoutGroup>
 
           <motion.div
-            variants={slotContext}
+            variants={slotVariants.section}
             initial={motionEnabled ? "collapsed" : false}
             animate={phase}
           >
@@ -587,7 +565,7 @@ const EngravingGradesRevealSection = ({
                 key="engraving-grades-body"
                 id="engraving-grades-body"
                 className="space-y-6"
-                variants={slotContext}
+                variants={slotVariants.section}
                 initial={motionEnabled ? "collapsed" : false}
                 animate={phase}
               >
@@ -698,7 +676,7 @@ const EngravingGradesRevealSection = ({
                   </motion.div>
 
                   <motion.div className="min-h-104" variants={bodyItem}>
-                    <AnimatePresence initial={false} mode="popLayout">
+                    <AnimatePresence initial={false} mode="wait">
                       {selectedGrade ? (
                         <motion.div
                           key={selectedGrade.id}
@@ -763,7 +741,7 @@ function GradeCard({ grade, ctaLabel }: GradeCardProps) {
   } as const;
 
   const cardTextItem = {
-    hidden: { opacity: 0, y: 10, filter: "blur(8px)" },
+    hidden: { opacity: 0, y: 10, filter: "blur(6px)" },
     show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
   } as const;
 
@@ -790,7 +768,7 @@ function GradeCard({ grade, ctaLabel }: GradeCardProps) {
             alt={heroAsset.alt}
             fill
             sizes="(min-width: 1024px) 380px, 100vw"
-            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:transform-none"
             loading="lazy"
           />
         ) : (

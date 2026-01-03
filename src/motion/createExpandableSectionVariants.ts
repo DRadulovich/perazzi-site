@@ -27,6 +27,7 @@ import {
   STAGGER_BODY_ITEMS_MS,
   STAGGER_HEADER_ITEMS_MS,
   STAGGER_LIST_ITEMS_MS,
+  STAGGER_LETTERS_MS,
 } from "@/motion/expandableSectionMotion";
 
 export type ExpandableSectionPhase =
@@ -39,6 +40,7 @@ export type ExpandableSectionMotionMode = "full" | "reduced";
 export type ExpandableSectionScrimMode = "atmosphere" | "dualFocusFade";
 
 export type ExpandableSectionVariants = {
+  section: Variants;
   background: Variants;
   scrimTop: Variants;
   scrimBottom: Variants;
@@ -231,8 +233,15 @@ export function createExpandableSectionVariants(
             transition: scrimCollapse,
           },
         };
+  const sectionVariants = {
+    collapsed: {},
+    prezoom: {},
+    expanded: {},
+    closingHold: {},
+  } as const;
 
   return {
+    section: sectionVariants,
     background: {
       collapsed: {
         scale: backgroundScale.collapsed,
@@ -322,7 +331,7 @@ export function createExpandableSectionVariants(
         transition: applyDelay(
           applyStagger(
             expandTransition(EXPANDED_HEADER_REVEAL_MS),
-            STAGGER_HEADER_ITEMS_MS,
+            STAGGER_LETTERS_MS,
             reducedMotion,
             EXPAND_TIME_SCALE
           ),
@@ -336,7 +345,7 @@ export function createExpandableSectionVariants(
         transition: applyDelay(
           applyStagger(
             collapseTransition(EXPANDED_HEADER_REVEAL_MS),
-            STAGGER_HEADER_ITEMS_MS,
+            STAGGER_LETTERS_MS,
             reducedMotion,
             COLLAPSE_TIME_SCALE,
             -1

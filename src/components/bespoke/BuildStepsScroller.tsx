@@ -1,7 +1,7 @@
 "use client";
 
 import NextImage from "next/image";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll } from "framer-motion";
 import SafeHtml from "@/components/SafeHtml";
 import useMeasure from "react-use-measure";
 import {
@@ -23,16 +23,21 @@ import {
   COLLAPSE_TIME_SCALE,
   CONTAINER_EXPAND_MS,
   EASE_CINEMATIC,
-  EXPANDED_HEADER_REVEAL_MS,
   EXPAND_TIME_SCALE,
-  GLASS_REVEAL_MS,
   STAGGER_BODY_ITEMS_MS,
   STAGGER_HEADER_ITEMS_MS,
   STAGGER_LIST_ITEMS_MS,
 } from "@/motion/expandableSectionMotion";
 import { createExpandableSectionVariants } from "@/motion/createExpandableSectionVariants";
+import {
+  buildGlassToneVariants,
+  buildTitleToneVariants,
+  mergeVariants,
+} from "@/motion/expandableSectionTone";
 import { useExpandableSectionTimeline } from "@/motion/useExpandableSectionTimeline";
+import { useParallaxMotion } from "@/motion/useParallaxMotion";
 import { cn } from "@/lib/utils";
+import { ExpandableTextReveal } from "@/components/motion/ExpandableTextReveal";
 import { Heading, Text } from "@/components/ui";
 
 type BuildStepsScrollerProps = Readonly<{
@@ -57,6 +62,7 @@ type BuildStepsRevealSectionProps = {
   readonly subheading: string;
   readonly ctaLabel: string;
   readonly background: { url: string; alt?: string; aspectRatio?: number };
+  readonly isDesktop: boolean;
   readonly initialStepId?: string;
   readonly onStepView?: (id: string) => void;
   readonly onStepCta?: (id: string) => void;
@@ -142,6 +148,7 @@ export function BuildStepsScroller({
         subheading={subheading}
         ctaLabel={ctaLabel}
         background={background}
+        isDesktop={isDesktop}
         initialStepId={initialStepId}
         onStepView={onStepView}
         onStepCta={onStepCta}
@@ -166,6 +173,7 @@ const BuildStepsRevealSection = ({
   subheading,
   ctaLabel,
   background,
+  isDesktop,
   initialStepId,
   onStepView,
   onStepCta,
@@ -174,13 +182,11 @@ const BuildStepsRevealSection = ({
   motionEnabled,
   sectionRef,
 }: BuildStepsRevealSectionProps) => {
-  const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
   const [activeStepId, setActiveStepId] = useState<string | undefined>(
     () => initialStepId ?? steps[0]?.id,
   );
   const [openStepId, setOpenStepId] = useState<string | undefined>(undefined);
 
-  const headerThemeFrame = useRef<number | null>(null);
   const seenStepsRef = useRef(new Set<string>());
   const stepRefs = useRef<(HTMLElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
@@ -193,7 +199,11 @@ const BuildStepsRevealSection = ({
     onEscapeKeyDown,
     showExpanded,
     showCollapsed,
-  } = useExpandableSectionTimeline({ defaultExpanded: false });
+  } = useExpandableSectionTimeline({
+    defaultExpanded: false,
+    containerRef: sectionRef,
+    scrollOnExpand: true,
+  });
 
   const resolvedActiveStepId = steps.some((step) => step.id === activeStepId)
     ? activeStepId
@@ -204,19 +214,8 @@ const BuildStepsRevealSection = ({
 
   const revealBuildSteps = phase === "expanded" || phase === "closingHold";
   const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
-  const revealPhotoFocus = revealBuildSteps;
-  const parallaxStrength = "16%";
+  const parallaxStrength = 0.16;
   const parallaxEnabled = enableTitleReveal && !revealBuildSteps && motionEnabled;
-  const focusSurfaceTransition =
-    "transition-[background-color,box-shadow,border-color,backdrop-filter]";
-  const titleColorTransition = "transition-colors";
-  const cinematicBezier = `cubic-bezier(${EASE_CINEMATIC.join(",")})`;
-  const transitionStyle = (durationMs: number) => ({
-    transitionDuration: `${motionEnabled ? Math.round(durationMs * EXPAND_TIME_SCALE) : 0}ms`,
-    transitionTimingFunction: motionEnabled ? cinematicBezier : "linear",
-  });
-  const focusSurfaceStyle = transitionStyle(GLASS_REVEAL_MS);
-  const titleColorStyle = transitionStyle(EXPANDED_HEADER_REVEAL_MS);
   const buildStepsLayoutTransition = motionEnabled
     ? {
         layout: {
@@ -229,12 +228,12 @@ const BuildStepsRevealSection = ({
     target: sectionRef,
     offset: ["start end", "end start"],
   });
-  const parallaxY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
-  );
-  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const parallaxY = useParallaxMotion(scrollYProgress, {
+    enabled: parallaxEnabled,
+    strength: parallaxStrength,
+    targetRef: sectionRef,
+  });
+  const parallaxStyle = motionEnabled ? { y: parallaxY } : undefined;
   const toSeconds = (ms: number) => ms / 1000;
   const staggerTransition = (staggerMs: number, direction?: 1 | -1) => ({
     transition: {
@@ -264,7 +263,7 @@ const BuildStepsRevealSection = ({
     motionMode: motionEnabled ? "full" : "reduced",
     backgroundScale: { collapsed: 1.32, prezoom: 1.12, expanded: 1 },
     itemOffsetY: 12,
-    blurPx: 8,
+    blurPx: 6,
     glassScale: 0.985,
   });
   const surfaceVariants = createExpandableSectionVariants({
@@ -279,17 +278,23 @@ const BuildStepsRevealSection = ({
     expanded: slotVariants.scrimTop.collapsed,
     closingHold: slotVariants.scrimTop.collapsed,
   } as const;
-  const slotContext = {
-    collapsed: {},
-    prezoom: {},
-    expanded: {},
-    closingHold: {},
-  } as const;
   const headerItem = slotVariants.expandedHeader;
+  const headingToneVariants = buildTitleToneVariants("--color-ink");
+  const subheadingToneVariants = buildTitleToneVariants("--color-ink-muted");
+  const headingItem = mergeVariants(slotVariants.expandedHeader, headingToneVariants);
+  const subheadingItem = mergeVariants(slotVariants.expandedHeader, subheadingToneVariants);
   const collapsedHeaderItem = slotVariants.collapsedHeader;
   const bodyItem = slotVariants.content;
   const ctaItem = slotVariants.ctaRow;
   const surfaceItem = surfaceVariants.content;
+  const glassSurfaceStrength = isDesktop ? 25 : 40;
+  const glassToneVariants = buildGlassToneVariants({
+    backgroundStrength: glassSurfaceStrength,
+    borderStrength: 70,
+    blurPx: 12,
+    shadow: isDesktop ? "elevated" : "soft",
+  });
+  const glassVariants = mergeVariants(slotVariants.glass, glassToneVariants);
   const containerLayoutTransition = {
     layout: {
       duration: motionEnabled
@@ -299,8 +304,7 @@ const BuildStepsRevealSection = ({
     },
   };
   const glassStyle = {
-    ...focusSurfaceStyle,
-    height: isCollapsedPhase ? "40vh" : "auto",
+    minHeight: "40vh",
     overflow: isCollapsedPhase ? "hidden" : "visible",
   };
 
@@ -309,23 +313,11 @@ const BuildStepsRevealSection = ({
 
   const handleBuildStepsExpand = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
     open();
-    headerThemeFrame.current = requestAnimationFrame(() => {
-      setHeaderThemeReady(true);
-      headerThemeFrame.current = null;
-    });
   };
 
   const handleBuildStepsCollapse = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-      headerThemeFrame.current = null;
-    }
-    setHeaderThemeReady(false);
     close();
   };
 
@@ -347,17 +339,16 @@ const BuildStepsRevealSection = ({
       const el = stepRefs.current[index];
       const container = scrollContainerRef.current;
       if (!step || !el) return;
+      const behavior: ScrollBehavior = motionEnabled ? "smooth" : "auto";
 
       if (container) {
-        const elRect = el.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
-        const offset = elRect.left - containerRect.left + container.scrollLeft;
-        container.scrollTo({ left: offset, behavior: "smooth" });
+        const offset = el.offsetLeft;
+        container.scrollTo({ left: offset, behavior });
       } else {
-        el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
+        el.scrollIntoView({ behavior, block: "nearest", inline: "start" });
       }
     },
-    [steps],
+    [motionEnabled, steps],
   );
 
   const handleRailClick = (index: number) => {
@@ -402,16 +393,14 @@ const BuildStepsRevealSection = ({
     const container = scrollContainerRef.current;
     if (!container || steps.length === 0) return;
 
-    const containerRect = container.getBoundingClientRect();
-    const containerCenter = containerRect.left + containerRect.width / 2;
+    const containerCenter = container.scrollLeft + container.clientWidth / 2;
     let closestIndex = -1;
     let closestDistance = Number.POSITIVE_INFINITY;
 
     steps.forEach((_, index) => {
       const el = stepRefs.current[index];
       if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const elCenter = rect.left + rect.width / 2;
+      const elCenter = el.offsetLeft + el.clientWidth / 2;
       const distance = Math.abs(containerCenter - elCenter);
       if (distance < closestDistance) {
         closestDistance = distance;
@@ -451,15 +440,9 @@ const BuildStepsRevealSection = ({
     };
   }, [revealBuildSteps, updateActiveStepFromScroll]);
 
-  useEffect(() => () => {
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
-  }, []);
-
   return (
     <motion.div
-      variants={slotContext}
+      variants={slotVariants.section}
       initial={motionEnabled ? "collapsed" : false}
       animate={phase}
     >
@@ -500,14 +483,8 @@ const BuildStepsRevealSection = ({
       <div className="relative z-10 mx-auto flex w-full max-w-7xl px-6 lg:px-10">
         <motion.div
           style={glassStyle}
-          className={cn(
-            "relative flex w-full flex-col space-y-8 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            focusSurfaceTransition,
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-          )}
-          variants={slotVariants.glass}
+          className="relative flex w-full flex-col space-y-8 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10"
+          variants={glassVariants}
           onKeyDown={onEscapeKeyDown}
           layout
           transition={containerLayoutTransition}
@@ -517,12 +494,12 @@ const BuildStepsRevealSection = ({
               <motion.div
                 key="build-steps-header"
                 className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
-                variants={slotContext}
+                variants={slotVariants.section}
                 initial={motionEnabled ? "collapsed" : false}
                 animate={phase}
               >
                 <motion.div className="space-y-3" variants={headerGroup}>
-                  <motion.div variants={headerItem}>
+                  <motion.div variants={headingItem}>
                     <motion.div
                       layoutId="bespoke-build-steps-title"
                       layoutCrossfade={false}
@@ -533,17 +510,12 @@ const BuildStepsRevealSection = ({
                         id="build-steps-heading"
                         level={2}
                         size="xl"
-                        className={cn(
-                          titleColorTransition,
-                          headerThemeReady ? "text-ink" : "text-white",
-                        )}
-                        style={titleColorStyle}
                       >
-                        {heading}
+                        <ExpandableTextReveal text={heading} reduceMotion={!motionEnabled} />
                       </Heading>
                     </motion.div>
                   </motion.div>
-                  <motion.div variants={headerItem}>
+                  <motion.div variants={subheadingItem}>
                     <motion.div
                       layoutId="bespoke-build-steps-subtitle"
                       layoutCrossfade={false}
@@ -552,15 +524,10 @@ const BuildStepsRevealSection = ({
                     >
                       <Text
                         size="lg"
-                        className={cn(
-                          "type-section-subtitle",
-                          titleColorTransition,
-                          headerThemeReady ? "text-ink-muted" : "text-white",
-                        )}
-                        style={titleColorStyle}
+                        className="type-section-subtitle"
                         leading="relaxed"
                       >
-                        {subheading}
+                        <ExpandableTextReveal text={subheading} reduceMotion={!motionEnabled} />
                       </Text>
                     </motion.div>
                   </motion.div>
@@ -572,7 +539,7 @@ const BuildStepsRevealSection = ({
                   <motion.div variants={headerItem} className="flex flex-wrap items-center gap-4">
                     <a
                       href="#build-steps-sequence"
-                      className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-ink/60 text-ink transition hover:border-ink hover:translate-x-0.5 focus-ring"
+                      className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-ink/60 text-ink transition hover:border-ink hover:translate-x-0.5 focus-ring motion-reduce:transition-none motion-reduce:transform-none"
                     >
                       <span>{ctaLabel}</span>
                       <span aria-hidden="true">↓</span>
@@ -580,7 +547,7 @@ const BuildStepsRevealSection = ({
                     {skipTargetId ? (
                       <a
                         href={`#${skipTargetId}`}
-                        className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-perazzi-red/60 text-perazzi-red transition hover:border-perazzi-red hover:text-perazzi-red hover:translate-x-0.5 focus-ring"
+                        className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-perazzi-red/60 text-perazzi-red transition hover:border-perazzi-red hover:text-perazzi-red hover:translate-x-0.5 focus-ring motion-reduce:transition-none motion-reduce:transform-none"
                       >
                         <span>Skip step-by-step</span>
                         <span aria-hidden="true">→</span>
@@ -602,7 +569,7 @@ const BuildStepsRevealSection = ({
               <motion.div
                 key="build-steps-collapsed"
                 className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                variants={slotContext}
+                variants={slotVariants.section}
                 initial={motionEnabled ? "collapsed" : false}
                 animate={phase}
               >
@@ -667,7 +634,7 @@ const BuildStepsRevealSection = ({
           </LayoutGroup>
 
           <motion.div
-            variants={slotContext}
+            variants={slotVariants.section}
             initial={motionEnabled ? "collapsed" : false}
             animate={phase}
           >
@@ -676,7 +643,7 @@ const BuildStepsRevealSection = ({
                 key="build-steps-body"
                 id="build-steps-body"
                 className="space-y-6"
-                variants={slotContext}
+                variants={slotVariants.section}
                 initial={motionEnabled ? "collapsed" : false}
                 animate={phase}
               >
@@ -806,7 +773,7 @@ const BuildStepsRevealSection = ({
                                       alt={step.media.alt ?? step.title}
                                       fill
                                       sizes="100vw"
-                                      className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+                                      className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:transform-none"
                                       loading="lazy"
                                     />
                                   ) : null}

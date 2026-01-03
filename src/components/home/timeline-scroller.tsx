@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll } from "framer-motion";
 import { useEffect, useRef, useState, type Dispatch, type RefObject, type SetStateAction } from "react";
 import type { FittingStage, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -13,16 +13,21 @@ import {
   COLLAPSE_TIME_SCALE,
   CONTAINER_EXPAND_MS,
   EASE_CINEMATIC,
-  EXPANDED_HEADER_REVEAL_MS,
   EXPAND_TIME_SCALE,
-  GLASS_REVEAL_MS,
   STAGGER_BODY_ITEMS_MS,
   STAGGER_HEADER_ITEMS_MS,
   STAGGER_LIST_ITEMS_MS,
 } from "@/motion/expandableSectionMotion";
 import { createExpandableSectionVariants } from "@/motion/createExpandableSectionVariants";
+import {
+  buildGlassToneVariants,
+  buildTitleToneVariants,
+  mergeVariants,
+} from "@/motion/expandableSectionTone";
 import { useExpandableSectionTimeline } from "@/motion/useExpandableSectionTimeline";
+import { useParallaxMotion } from "@/motion/useParallaxMotion";
 import { cn } from "@/lib/utils";
+import { ExpandableTextReveal } from "@/components/motion/ExpandableTextReveal";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
@@ -78,6 +83,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
           key={timelineKey}
           stages={stages}
           framing={framing}
+          isDesktop={isDesktop}
           enableTitleReveal={enableTitleReveal}
           enablePinned={enablePinned}
           animationsEnabled={animationsEnabled}
@@ -95,6 +101,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
 type TimelineRevealSectionProps = {
   readonly stages: readonly FittingStage[];
   readonly framing: HomeData["timelineFraming"];
+  readonly isDesktop: boolean;
   readonly enableTitleReveal: boolean;
   readonly enablePinned: boolean;
   readonly animationsEnabled: boolean;
@@ -108,6 +115,7 @@ type TimelineRevealSectionProps = {
 function TimelineRevealSection({
   stages,
   framing,
+  isDesktop,
   enableTitleReveal,
   enablePinned,
   animationsEnabled,
@@ -117,8 +125,6 @@ function TimelineRevealSection({
   setActiveStage,
   resolvedActiveStage,
 }: TimelineRevealSectionProps) {
-  const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const headerThemeFrame = useRef<number | null>(null);
   const {
     expanded,
     phase,
@@ -128,7 +134,11 @@ function TimelineRevealSection({
     onEscapeKeyDown,
     showExpanded,
     showCollapsed,
-  } = useExpandableSectionTimeline({ defaultExpanded: false });
+  } = useExpandableSectionTimeline({
+    defaultExpanded: false,
+    containerRef: scrollRef,
+    scrollOnExpand: true,
+  });
 
   const headingTitle = framing.title ?? "Craftsmanship Journey";
   const headingEyebrow = framing.eyebrow ?? "Three rituals that define a bespoke Perazzi build";
@@ -142,17 +152,8 @@ function TimelineRevealSection({
   const revealTimeline = phase === "expanded" || phase === "closingHold";
   const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
   const revealPhotoFocus = revealTimeline;
-  const parallaxStrength = "16%";
+  const parallaxStrength = 0.16;
   const parallaxEnabled = enableTitleReveal && !revealTimeline && motionEnabled;
-  const focusSurfaceTransition = "transition-[background-color,box-shadow,border-color,backdrop-filter]";
-  const titleColorTransition = "transition-colors";
-  const cinematicBezier = `cubic-bezier(${EASE_CINEMATIC.join(",")})`;
-  const transitionStyle = (durationMs: number) => ({
-    transitionDuration: `${motionEnabled ? Math.round(durationMs * EXPAND_TIME_SCALE) : 0}ms`,
-    transitionTimingFunction: motionEnabled ? cinematicBezier : "linear",
-  });
-  const focusSurfaceStyle = transitionStyle(GLASS_REVEAL_MS);
-  const titleColorStyle = transitionStyle(EXPANDED_HEADER_REVEAL_MS);
   const timelineLayoutTransition = motionEnabled
     ? {
         layout: {
@@ -165,12 +166,12 @@ function TimelineRevealSection({
     target: scrollRef,
     offset: ["start end", "end start"],
   });
-  const parallaxY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
-  );
-  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const parallaxY = useParallaxMotion(scrollYProgress, {
+    enabled: parallaxEnabled,
+    strength: parallaxStrength,
+    targetRef: scrollRef,
+  });
+  const parallaxStyle = motionEnabled ? { y: parallaxY } : undefined;
   const toSeconds = (ms: number) => ms / 1000;
   const staggerTransition = (staggerMs: number, direction?: 1 | -1) => ({
     transition: {
@@ -201,7 +202,7 @@ function TimelineRevealSection({
     scrimMode: "dualFocusFade",
     backgroundScale: { collapsed: 1.32, prezoom: 1.12, expanded: 1 },
     itemOffsetY: 12,
-    blurPx: 8,
+    blurPx: 6,
     glassScale: 0.985,
   });
   const surfaceVariants = createExpandableSectionVariants({
@@ -211,17 +212,29 @@ function TimelineRevealSection({
     blurPx: 0,
     glassScale: 0.985,
   });
-  const slotContext = {
-    collapsed: {},
-    prezoom: {},
-    expanded: {},
-    closingHold: {},
-  } as const;
-  const headerItem = slotVariants.expandedHeader;
+  const headingToneVariants = buildTitleToneVariants("--color-ink");
+  const subheadingToneVariants = buildTitleToneVariants("--color-ink-muted");
+  const headingItem = mergeVariants(slotVariants.expandedHeader, headingToneVariants);
+  const subheadingItem = mergeVariants(slotVariants.expandedHeader, subheadingToneVariants);
   const collapsedHeaderItem = slotVariants.collapsedHeader;
   const bodyItem = slotVariants.content;
   const ctaItem = slotVariants.ctaRow;
   const surfaceItem = surfaceVariants.content;
+  const glassSurfaceStrength = isDesktop ? 25 : 40;
+  const glassToneVariants = buildGlassToneVariants({
+    backgroundStrength: glassSurfaceStrength,
+    borderStrength: 70,
+    blurPx: 12,
+    shadow: isDesktop ? "elevated" : "soft",
+  });
+  const glassVariants = mergeVariants(slotVariants.glass, glassToneVariants);
+  const pinnedToneVariants = buildGlassToneVariants({
+    backgroundStrength: 70,
+    borderStrength: 70,
+    blurPx: 4,
+    shadow: "elevated",
+  });
+  const pinnedSurfaceVariants = mergeVariants(surfaceItem, pinnedToneVariants);
   const containerLayoutTransition = {
     layout: {
       duration: motionEnabled
@@ -231,41 +244,22 @@ function TimelineRevealSection({
     },
   };
   const glassStyle = {
-    ...focusSurfaceStyle,
-    height: isCollapsedPhase ? "40vh" : "auto",
+    minHeight: "40vh",
     overflow: isCollapsedPhase ? "hidden" : "visible",
   };
 
   const handleTimelineExpand = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
     open();
-    headerThemeFrame.current = requestAnimationFrame(() => {
-      setHeaderThemeReady(true);
-      headerThemeFrame.current = null;
-    });
   };
   const handleTimelineCollapse = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-      headerThemeFrame.current = null;
-    }
-    setHeaderThemeReady(false);
     close();
   };
 
-  useEffect(() => () => {
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
-  }, []);
-
   return (
     <motion.div
-      variants={slotContext}
+      variants={slotVariants.section}
       initial={motionEnabled ? "collapsed" : false}
       animate={phase}
     >
@@ -300,21 +294,15 @@ function TimelineRevealSection({
         id="craft-timeline-content"
         tabIndex={-1}
         className="focus:outline-none focus-ring"
-        variants={slotContext}
+        variants={slotVariants.section}
         initial={motionEnabled ? "collapsed" : false}
         animate={phase}
       >
         <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
           <motion.div
             style={glassStyle}
-            className={cn(
-              "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-              focusSurfaceTransition,
-              revealPhotoFocus
-                ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-                : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            )}
-            variants={slotVariants.glass}
+            className="relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10"
+            variants={glassVariants}
             onKeyDown={onEscapeKeyDown}
             layout
             transition={containerLayoutTransition}
@@ -324,7 +312,7 @@ function TimelineRevealSection({
                 <motion.div
                   key="craft-timeline-header"
                   className="relative z-10 space-y-4 md:flex md:items-center md:justify-between md:gap-8"
-                  variants={slotContext}
+                  variants={slotVariants.section}
                   initial={motionEnabled ? "collapsed" : false}
                   animate={phase}
                 >
@@ -335,18 +323,13 @@ function TimelineRevealSection({
                       transition={timelineLayoutTransition}
                       className="relative"
                     >
-                      <motion.div variants={headerItem}>
+                      <motion.div variants={headingItem}>
                         <Heading
                           id="craft-timeline-heading"
                           level={2}
                           size="xl"
-                          className={cn(
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink" : "text-white",
-                          )}
-                          style={titleColorStyle}
                         >
-                          {headingTitle}
+                          <ExpandableTextReveal text={headingTitle} reduceMotion={!motionEnabled} />
                         </Heading>
                       </motion.div>
                     </motion.div>
@@ -356,17 +339,9 @@ function TimelineRevealSection({
                       transition={timelineLayoutTransition}
                       className="relative"
                     >
-                      <motion.div variants={headerItem}>
-                        <Text
-                          size="lg"
-                          className={cn(
-                            "type-section-subtitle",
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink-muted" : "text-white",
-                          )}
-                          style={titleColorStyle}
-                        >
-                          {headingEyebrow}
+                      <motion.div variants={subheadingItem}>
+                        <Text size="lg" className="type-section-subtitle">
+                          <ExpandableTextReveal text={headingEyebrow} reduceMotion={!motionEnabled} />
                         </Text>
                       </motion.div>
                     </motion.div>
@@ -387,7 +362,7 @@ function TimelineRevealSection({
                 <motion.div
                   key="craft-timeline-title-collapsed"
                   className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  variants={slotContext}
+                  variants={slotVariants.section}
                   initial={motionEnabled ? "collapsed" : false}
                   animate={phase}
                 >
@@ -452,7 +427,7 @@ function TimelineRevealSection({
             </LayoutGroup>
 
             <motion.div
-              variants={slotContext}
+              variants={slotVariants.section}
               initial={motionEnabled ? "collapsed" : false}
               animate={phase}
             >
@@ -461,7 +436,7 @@ function TimelineRevealSection({
                   key="craft-timeline-body"
                   id="craft-timeline-body"
                   className="space-y-6"
-                  variants={slotContext}
+                  variants={slotVariants.section}
                   initial={motionEnabled ? "collapsed" : false}
                   animate={phase}
                 >
@@ -500,16 +475,10 @@ function TimelineRevealSection({
 
                       <motion.div className="space-y-5" variants={bodyItem}>
                         <motion.div
-                          className={cn(
-                            "relative min-h-[640px] overflow-hidden rounded-3xl border",
-                            focusSurfaceTransition,
-                            revealPhotoFocus
-                              ? "border-border/70 bg-card/70 shadow-elevated ring-1 ring-border/70 backdrop-blur-sm"
-                              : "border-transparent bg-transparent shadow-none ring-0 backdrop-blur-none",
-                          )}
-                          variants={surfaceItem}
+                          className="relative min-h-[640px] overflow-hidden rounded-3xl border"
+                          variants={pinnedSurfaceVariants}
                         >
-                          <AnimatePresence initial={false} mode="popLayout">
+                          <AnimatePresence initial={false} mode="wait">
                             {stages[resolvedActiveStage] ? (
                               <PinnedStagePanel
                                 key={`panel-${stages[resolvedActiveStage].id}`}
@@ -541,6 +510,7 @@ function TimelineRevealSection({
                               key={`stacked-${stage.id}`}
                               className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:p-4"
                               variants={surfaceItem}
+                              layout="size"
                             >
                               <button
                                 type="button"
@@ -565,22 +535,25 @@ function TimelineRevealSection({
                                 </span>
                               </button>
 
-                              <div
-                                id={panelId}
-                                aria-labelledby={buttonId}
-                                className={cn(
-                                  "mt-3 overflow-hidden transition-all duration-300",
-                                  expanded
-                                    ? "max-h-[999px] opacity-100"
-                                    : "max-h-0 opacity-0",
-                                )}
-                              >
-                                {expanded && (
-                                  <div className="mt-2">
-                                    <TimelineItem stage={stage} />
-                                  </div>
-                                )}
-                              </div>
+                              <AnimatePresence initial={false}>
+                                {expanded ? (
+                                  <motion.div
+                                    key={`panel-${stage.id}`}
+                                    id={panelId}
+                                    aria-labelledby={buttonId}
+                                    className="mt-3 overflow-hidden"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={homeMotion.revealFast}
+                                    layout
+                                  >
+                                    <div className="mt-2">
+                                      <TimelineItem stage={stage} />
+                                    </div>
+                                  </motion.div>
+                                ) : null}
+                              </AnimatePresence>
                             </motion.div>
                           );
                         })}
@@ -700,7 +673,7 @@ function PinnedStagePanel({
   } as const;
 
   const item = {
-    hidden: { opacity: 0, y: 12, filter: "blur(10px)" },
+    hidden: { opacity: 0, y: 12, filter: "blur(6px)" },
     show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
   } as const;
 
@@ -713,8 +686,8 @@ function PinnedStagePanel({
     >
       <motion.div
         className="group relative aspect-3/2 sm:aspect-4/3 w-full overflow-hidden rounded-2xl bg-(--color-canvas)"
-        initial={motionEnabled ? { clipPath: "inset(0 0 100% 0)" } : undefined}
-        animate={motionEnabled ? { clipPath: "inset(0 0 0% 0)" } : undefined}
+        initial={motionEnabled ? { opacity: 0, y: 6, scale: 0.985 } : undefined}
+        animate={motionEnabled ? { opacity: 1, y: 0, scale: 1 } : undefined}
         transition={motionEnabled ? homeMotion.reveal : undefined}
       >
         <Image
@@ -722,12 +695,12 @@ function PinnedStagePanel({
           alt={stage.media.alt}
           fill
           sizes={sizes}
-          className="object-cover transition-transform duration-1400 ease-out will-change-transform group-hover:scale-[1.04]"
+          className="object-cover transition-transform duration-1400 ease-out will-change-transform group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:transform-none"
           priority={stage.order === 1}
         />
         <div
           className={cn(
-            "pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/80 via-(--scrim-strong)/50 to-transparent transition-opacity duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]",
+            "pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/80 via-(--scrim-strong)/50 to-transparent transition-opacity duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none",
             revealPhotoFocus ? "opacity-100" : "opacity-0",
           )}
           aria-hidden
@@ -761,9 +734,9 @@ function PinnedStagePanel({
   return (
     <Wrapper
       className="absolute inset-0"
-      initial={{ opacity: 0, y: 10, filter: "blur(10px)" }}
+      initial={{ opacity: 0, y: 10, filter: "blur(6px)" }}
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      exit={{ opacity: 0, y: -10, filter: "blur(10px)" }}
+      exit={{ opacity: 0, y: -10, filter: "blur(6px)" }}
       transition={homeMotion.revealFast}
     >
       {media}

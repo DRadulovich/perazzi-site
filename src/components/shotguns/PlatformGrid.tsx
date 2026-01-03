@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll } from "framer-motion";
 import { useMemo, useState, useRef, useEffect, useCallback, type Dispatch, type RefObject, type SetStateAction } from "react";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -15,16 +15,20 @@ import {
   COLLAPSE_TIME_SCALE,
   CONTAINER_EXPAND_MS,
   EASE_CINEMATIC,
-  EXPANDED_HEADER_REVEAL_MS,
   EXPAND_TIME_SCALE,
-  GLASS_REVEAL_MS,
   STAGGER_BODY_ITEMS_MS,
   STAGGER_HEADER_ITEMS_MS,
   STAGGER_LIST_ITEMS_MS,
 } from "@/motion/expandableSectionMotion";
 import { createExpandableSectionVariants } from "@/motion/createExpandableSectionVariants";
+import {
+  buildGlassToneVariants,
+  buildTitleToneVariants,
+  mergeVariants,
+} from "@/motion/expandableSectionTone";
 import { useExpandableSectionTimeline } from "@/motion/useExpandableSectionTimeline";
-import { cn } from "@/lib/utils";
+import { useParallaxMotion } from "@/motion/useParallaxMotion";
+import { ExpandableTextReveal } from "@/components/motion/ExpandableTextReveal";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 
@@ -86,15 +90,13 @@ const orderPlatforms = (platforms: readonly Platform[]): Platform[] => {
 };
 
 const getClosestCardIndex = (container: HTMLDivElement) => {
-  const containerRect = container.getBoundingClientRect();
-  const containerCenter = containerRect.left + containerRect.width / 2;
+  const containerCenter = container.scrollLeft + container.clientWidth / 2;
 
   let closestIndex = 0;
   let closestDistance = Infinity;
 
   container.querySelectorAll<HTMLDivElement>("[data-index]").forEach((card) => {
-    const rect = card.getBoundingClientRect();
-    const cardCenter = rect.left + rect.width / 2;
+    const cardCenter = card.offsetLeft + card.clientWidth / 2;
     const distance = Math.abs(cardCenter - containerCenter);
     const indexAttr = card.dataset.index;
     const index = indexAttr ? Number(indexAttr) : Number.NaN;
@@ -108,15 +110,17 @@ const getClosestCardIndex = (container: HTMLDivElement) => {
   return closestIndex;
 };
 
-const scrollToIndex = (container: HTMLDivElement | null, index: number) => {
+const scrollToIndex = (
+  container: HTMLDivElement | null,
+  index: number,
+  behavior: ScrollBehavior,
+) => {
   if (!container) return;
 
   const target = container.querySelector<HTMLDivElement>(`[data-index="${index}"]`);
-  target?.scrollIntoView({
-    behavior: "smooth",
-    inline: "center",
-    block: "nearest",
-  });
+  if (!target) return;
+  const offset = target.offsetLeft - (container.clientWidth - target.clientWidth) / 2;
+  container.scrollTo({ left: offset, behavior });
 };
 
 const createPayloadBuilder =
@@ -380,14 +384,14 @@ const DesktopPlatformGrid = ({
   prefersReducedMotion,
 }: DesktopPlatformGridProps) => (
   <div className="hidden md:grid gap-6 md:grid-cols-2 min-h-[720px] sm:min-h-[820px] md:min-h-[750px] items-stretch">
-    <AnimatePresence initial={false} mode="popLayout">
+    <AnimatePresence initial={false} mode="wait">
       {platform ? (
         <motion.div
           key={platform.id}
           className="h-full"
-          initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 12, filter: "blur(10px)" }}
+          initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 12, filter: "blur(6px)" }}
           animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, filter: "blur(0px)" }}
-          exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: -12, filter: "blur(10px)" }}
+          exit={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: -12, filter: "blur(6px)" }}
           transition={prefersReducedMotion ? undefined : homeMotion.revealFast}
         >
           <PlatformCardWithChat
@@ -434,8 +438,6 @@ const PlatformGridRevealSection = ({
   prefersReducedMotion,
   sectionRef,
 }: PlatformGridRevealSectionProps) => {
-  const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const headerThemeFrame = useRef<number | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const {
     expanded,
@@ -446,26 +448,20 @@ const PlatformGridRevealSection = ({
     onEscapeKeyDown,
     showExpanded,
     showCollapsed,
-  } = useExpandableSectionTimeline({ defaultExpanded: false });
+  } = useExpandableSectionTimeline({
+    defaultExpanded: false,
+    containerRef: sectionRef,
+    scrollOnExpand: true,
+  });
 
   const headingTitle = templates.heading;
   const headingSubtitle = templates.subheading;
   const revealGrid = phase === "expanded" || phase === "closingHold";
   const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
   const activePlatform = platforms[activeIndex] ?? platforms[0];
-  const parallaxStrength = "16%";
+  const parallaxStrength = 0.16;
   const parallaxEnabled = enableTitleReveal && !revealGrid && motionEnabled;
 
-  const focusSurfaceTransition =
-    "transition-[background-color,box-shadow,border-color,backdrop-filter]";
-  const titleColorTransition = "transition-colors";
-  const cinematicBezier = `cubic-bezier(${EASE_CINEMATIC.join(",")})`;
-  const transitionStyle = (durationMs: number) => ({
-    transitionDuration: `${motionEnabled ? Math.round(durationMs * EXPAND_TIME_SCALE) : 0}ms`,
-    transitionTimingFunction: motionEnabled ? cinematicBezier : "linear",
-  });
-  const focusSurfaceStyle = transitionStyle(GLASS_REVEAL_MS);
-  const titleColorStyle = transitionStyle(EXPANDED_HEADER_REVEAL_MS);
   const platformLayoutTransition = motionEnabled
     ? {
         layout: {
@@ -478,12 +474,12 @@ const PlatformGridRevealSection = ({
     target: sectionRef,
     offset: ["start end", "end start"],
   });
-  const parallaxY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
-  );
-  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const parallaxY = useParallaxMotion(scrollYProgress, {
+    enabled: parallaxEnabled,
+    strength: parallaxStrength,
+    targetRef: sectionRef,
+  });
+  const parallaxStyle = motionEnabled ? { y: parallaxY } : undefined;
   const toSeconds = (ms: number) => ms / 1000;
   const staggerTransition = (staggerMs: number, direction?: 1 | -1) => ({
     transition: {
@@ -513,7 +509,7 @@ const PlatformGridRevealSection = ({
     motionMode: motionEnabled ? "full" : "reduced",
     backgroundScale: { collapsed: 1.32, prezoom: 1.12, expanded: 1 },
     itemOffsetY: 12,
-    blurPx: 8,
+    blurPx: 6,
     glassScale: 0.985,
   });
   const surfaceVariants = createExpandableSectionVariants({
@@ -528,16 +524,20 @@ const PlatformGridRevealSection = ({
     expanded: slotVariants.scrimTop.collapsed,
     closingHold: slotVariants.scrimTop.collapsed,
   } as const;
-  const slotContext = {
-    collapsed: {},
-    prezoom: {},
-    expanded: {},
-    closingHold: {},
-  } as const;
-  const headerItem = slotVariants.expandedHeader;
+  const headingToneVariants = buildTitleToneVariants("--color-ink");
+  const subheadingToneVariants = buildTitleToneVariants("--color-ink-muted");
+  const headingItem = mergeVariants(slotVariants.expandedHeader, headingToneVariants);
+  const subheadingItem = mergeVariants(slotVariants.expandedHeader, subheadingToneVariants);
   const collapsedHeaderItem = slotVariants.collapsedHeader;
   const bodyItem = slotVariants.content;
   const surfaceItem = surfaceVariants.content;
+  const glassToneVariants = buildGlassToneVariants({
+    backgroundStrength: 0,
+    borderStrength: 0,
+    blurPx: 0,
+    shadow: "none",
+  });
+  const glassVariants = mergeVariants(slotVariants.glass, glassToneVariants);
   const containerLayoutTransition = {
     layout: {
       duration: motionEnabled
@@ -547,63 +547,51 @@ const PlatformGridRevealSection = ({
     },
   };
   const glassStyle = {
-    ...focusSurfaceStyle,
-    height: isCollapsedPhase ? "40vh" : "auto",
+    minHeight: "40vh",
     overflow: isCollapsedPhase ? "hidden" : "visible",
   };
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
     open();
-    headerThemeFrame.current = requestAnimationFrame(() => {
-      setHeaderThemeReady(true);
-      headerThemeFrame.current = null;
-    });
   };
 
   const handleCollapse = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-      headerThemeFrame.current = null;
-    }
-    setHeaderThemeReady(false);
     close();
   };
 
   const handleTabSelect = useCallback((index: number) => {
     setActiveIndex(index);
-    scrollToIndex(scrollRef.current, index);
-  }, [setActiveIndex]);
+    scrollToIndex(scrollRef.current, index, motionEnabled ? "smooth" : "auto");
+  }, [motionEnabled, setActiveIndex]);
 
   useEffect(() => {
     if (!revealGrid) return;
     const container = scrollRef.current;
     if (!container) return undefined;
 
+    let frame = 0;
     const handleScroll = () => {
-      const closestIndex = getClosestCardIndex(container);
-      setActiveIndex((current) => (current === closestIndex ? current : closestIndex));
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const closestIndex = getClosestCardIndex(container);
+        setActiveIndex((current) => (current === closestIndex ? current : closestIndex));
+      });
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
+      if (frame) cancelAnimationFrame(frame);
       container.removeEventListener("scroll", handleScroll);
     };
   }, [revealGrid, setActiveIndex]);
 
-  useEffect(() => () => {
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
-  }, []);
 
   return (
     <motion.div
-      variants={slotContext}
+      variants={slotVariants.section}
       initial={motionEnabled ? "collapsed" : false}
       animate={phase}
     >
@@ -637,12 +625,8 @@ const PlatformGridRevealSection = ({
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
         <motion.div
           style={glassStyle}
-          className={cn(
-            "relative flex flex-col space-y-8 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            focusSurfaceTransition,
-            "border-transparent bg-transparent shadow-none backdrop-blur-none",
-          )}
-          variants={slotVariants.glass}
+          className="relative flex flex-col space-y-8 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10"
+          variants={glassVariants}
           onKeyDown={onEscapeKeyDown}
           layout
           transition={containerLayoutTransition}
@@ -652,7 +636,7 @@ const PlatformGridRevealSection = ({
               <motion.div
                 key="platform-grid-header"
                 className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
-                variants={slotContext}
+                variants={slotVariants.section}
                 initial={motionEnabled ? "collapsed" : false}
                 animate={phase}
               >
@@ -663,18 +647,13 @@ const PlatformGridRevealSection = ({
                     transition={platformLayoutTransition}
                     className="relative"
                   >
-                    <motion.div variants={headerItem}>
+                    <motion.div variants={headingItem}>
                       <Heading
                         id="platforms-heading"
                         level={2}
                         size="xl"
-                        className={cn(
-                          titleColorTransition,
-                          headerThemeReady ? "text-ink" : "text-white",
-                        )}
-                        style={titleColorStyle}
                       >
-                        {headingTitle}
+                        <ExpandableTextReveal text={headingTitle} reduceMotion={!motionEnabled} />
                       </Heading>
                     </motion.div>
                   </motion.div>
@@ -684,17 +663,12 @@ const PlatformGridRevealSection = ({
                     transition={platformLayoutTransition}
                     className="relative"
                   >
-                    <motion.div variants={headerItem}>
+                    <motion.div variants={subheadingItem}>
                       <Text
-                        className={cn(
-                          "type-section-subtitle max-w-4xl",
-                          titleColorTransition,
-                          headerThemeReady ? "text-ink-muted" : "text-white",
-                        )}
-                        style={titleColorStyle}
+                        className="type-section-subtitle max-w-4xl"
                         leading="normal"
                       >
-                        {headingSubtitle}
+                        <ExpandableTextReveal text={headingSubtitle} reduceMotion={!motionEnabled} />
                       </Text>
                     </motion.div>
                   </motion.div>
@@ -714,7 +688,7 @@ const PlatformGridRevealSection = ({
               <motion.div
                 key="platform-grid-collapsed"
                 className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                variants={slotContext}
+                variants={slotVariants.section}
                 initial={motionEnabled ? "collapsed" : false}
                 animate={phase}
               >
@@ -779,7 +753,7 @@ const PlatformGridRevealSection = ({
           </LayoutGroup>
 
           <motion.div
-            variants={slotContext}
+            variants={slotVariants.section}
             initial={motionEnabled ? "collapsed" : false}
             animate={phase}
           >
@@ -788,7 +762,7 @@ const PlatformGridRevealSection = ({
                 key="platform-grid-body"
                 id="platform-grid-body"
                 className="space-y-8"
-                variants={slotContext}
+                variants={slotVariants.section}
                 initial={motionEnabled ? "collapsed" : false}
                 animate={phase}
               >

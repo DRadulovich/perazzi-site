@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useMemo, useState, type RefObject } from "react";
 import Image from "next/image";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform, type Variants } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, type Variants } from "framer-motion";
 
 import type {
   AuthorizedDealerEntry,
@@ -11,6 +11,7 @@ import type {
   TravelNetworkUi,
 } from "@/types/experience";
 import { cn } from "@/lib/utils";
+import { ExpandableTextReveal } from "@/components/motion/ExpandableTextReveal";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Container, Heading, Text } from "@/components/ui";
@@ -19,15 +20,19 @@ import {
   COLLAPSE_TIME_SCALE,
   CONTAINER_EXPAND_MS,
   EASE_CINEMATIC,
-  EXPANDED_HEADER_REVEAL_MS,
   EXPAND_TIME_SCALE,
-  GLASS_REVEAL_MS,
   STAGGER_BODY_ITEMS_MS,
   STAGGER_HEADER_ITEMS_MS,
   STAGGER_LIST_ITEMS_MS,
 } from "@/motion/expandableSectionMotion";
 import { createExpandableSectionVariants } from "@/motion/createExpandableSectionVariants";
+import {
+  buildGlassToneVariants,
+  buildTitleToneVariants,
+  mergeVariants,
+} from "@/motion/expandableSectionTone";
 import { useExpandableSectionTimeline } from "@/motion/useExpandableSectionTimeline";
+import { useParallaxMotion } from "@/motion/useParallaxMotion";
 
 type TabKey = "schedule" | "dealers";
 
@@ -39,6 +44,7 @@ type TravelNetworkProps = Readonly<{
 type TravelNetworkRevealSectionProps = Readonly<{
   data: ExperienceNetworkData;
   ui: TravelNetworkUi;
+  isDesktop: boolean;
   enableTitleReveal: boolean;
   motionEnabled: boolean;
   sectionRef: RefObject<HTMLElement | null>;
@@ -82,6 +88,7 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
         key={travelKey}
         data={data}
         ui={ui}
+        isDesktop={isDesktop}
         enableTitleReveal={enableTitleReveal}
         motionEnabled={motionEnabled}
         sectionRef={analyticsRef}
@@ -93,13 +100,12 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
 const TravelNetworkRevealSection = ({
   data,
   ui,
+  isDesktop,
   enableTitleReveal,
   motionEnabled,
   sectionRef,
 }: TravelNetworkRevealSectionProps) => {
-  const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
   const [activeTab, setActiveTab] = useState<TabKey>("schedule");
-  const headerThemeFrame = useRef<number | null>(null);
   const {
     expanded,
     phase,
@@ -109,7 +115,11 @@ const TravelNetworkRevealSection = ({
     onEscapeKeyDown,
     showExpanded,
     showCollapsed,
-  } = useExpandableSectionTimeline({ defaultExpanded: false });
+  } = useExpandableSectionTimeline({
+    defaultExpanded: false,
+    containerRef: sectionRef,
+    scrollOnExpand: true,
+  });
 
   const tabs = useMemo(
     () => [
@@ -141,19 +151,8 @@ const TravelNetworkRevealSection = ({
 
   const revealNetwork = phase === "expanded" || phase === "closingHold";
   const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
-  const revealPhotoFocus = revealNetwork;
-  const parallaxStrength = "16%";
+  const parallaxStrength = 0.16;
   const parallaxEnabled = enableTitleReveal && !revealNetwork && motionEnabled;
-  const focusSurfaceTransition =
-    "transition-[background-color,box-shadow,border-color,backdrop-filter]";
-  const titleColorTransition = "transition-colors";
-  const cinematicBezier = `cubic-bezier(${EASE_CINEMATIC.join(",")})`;
-  const transitionStyle = (durationMs: number) => ({
-    transitionDuration: `${motionEnabled ? Math.round(durationMs * EXPAND_TIME_SCALE) : 0}ms`,
-    transitionTimingFunction: motionEnabled ? cinematicBezier : "linear",
-  });
-  const focusSurfaceStyle = transitionStyle(GLASS_REVEAL_MS);
-  const titleColorStyle = transitionStyle(EXPANDED_HEADER_REVEAL_MS);
   const networkLayoutTransition = motionEnabled
     ? {
         layout: {
@@ -166,12 +165,12 @@ const TravelNetworkRevealSection = ({
     target: sectionRef,
     offset: ["start end", "end start"],
   });
-  const parallaxY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
-  );
-  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const parallaxY = useParallaxMotion(scrollYProgress, {
+    enabled: parallaxEnabled,
+    strength: parallaxStrength,
+    targetRef: sectionRef,
+  });
+  const parallaxStyle = motionEnabled ? { y: parallaxY } : undefined;
   const toSeconds = (ms: number) => ms / 1000;
   const staggerTransition = (staggerMs: number, direction?: 1 | -1) => ({
     transition: {
@@ -202,7 +201,7 @@ const TravelNetworkRevealSection = ({
     scrimMode: "dualFocusFade",
     backgroundScale: { collapsed: 1.32, prezoom: 1.12, expanded: 1 },
     itemOffsetY: 12,
-    blurPx: 8,
+    blurPx: 6,
     glassScale: 0.985,
   });
   const surfaceVariants = createExpandableSectionVariants({
@@ -212,16 +211,22 @@ const TravelNetworkRevealSection = ({
     blurPx: 0,
     glassScale: 0.985,
   });
-  const slotContext = {
-    collapsed: {},
-    prezoom: {},
-    expanded: {},
-    closingHold: {},
-  } as const;
   const headerItem = slotVariants.expandedHeader;
+  const headingToneVariants = buildTitleToneVariants("--color-ink");
+  const subheadingToneVariants = buildTitleToneVariants("--color-ink-muted");
+  const headingItem = mergeVariants(slotVariants.expandedHeader, headingToneVariants);
+  const subheadingItem = mergeVariants(slotVariants.expandedHeader, subheadingToneVariants);
   const collapsedHeaderItem = slotVariants.collapsedHeader;
   const bodyItem = slotVariants.content;
   const surfaceItem = surfaceVariants.content;
+  const glassSurfaceStrength = isDesktop ? 25 : 40;
+  const glassToneVariants = buildGlassToneVariants({
+    backgroundStrength: glassSurfaceStrength,
+    borderStrength: 70,
+    blurPx: 12,
+    shadow: isDesktop ? "elevated" : "soft",
+  });
+  const glassVariants = mergeVariants(slotVariants.glass, glassToneVariants);
   const containerLayoutTransition = {
     layout: {
       duration: motionEnabled
@@ -231,8 +236,7 @@ const TravelNetworkRevealSection = ({
     },
   };
   const glassStyle = {
-    ...focusSurfaceStyle,
-    height: isCollapsedPhase ? "40vh" : "auto",
+    minHeight: "40vh",
     overflow: isCollapsedPhase ? "hidden" : "visible",
   };
   const listReveal: ListRevealConfig = {
@@ -244,35 +248,17 @@ const TravelNetworkRevealSection = ({
 
   const handleNetworkExpand = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
     open();
-    headerThemeFrame.current = requestAnimationFrame(() => {
-      setHeaderThemeReady(true);
-      headerThemeFrame.current = null;
-    });
   };
 
   const handleNetworkCollapse = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-      headerThemeFrame.current = null;
-    }
-    setHeaderThemeReady(false);
     close();
   };
 
-  useEffect(() => () => {
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
-  }, []);
-
   return (
     <motion.div
-      variants={slotContext}
+      variants={slotVariants.section}
       initial={motionEnabled ? "collapsed" : false}
       animate={phase}
     >
@@ -307,14 +293,8 @@ const TravelNetworkRevealSection = ({
       <Container size="xl" className="relative z-10">
         <motion.div
           style={glassStyle}
-          className={cn(
-            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            focusSurfaceTransition,
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-          )}
-          variants={slotVariants.glass}
+          className="relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10"
+          variants={glassVariants}
           onKeyDown={onEscapeKeyDown}
           layout
           transition={containerLayoutTransition}
@@ -324,7 +304,7 @@ const TravelNetworkRevealSection = ({
               <motion.div
                 key="travel-network-header"
                 className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
-                variants={slotContext}
+                variants={slotVariants.section}
                 initial={motionEnabled ? "collapsed" : false}
                 animate={phase}
               >
@@ -335,18 +315,13 @@ const TravelNetworkRevealSection = ({
                     transition={networkLayoutTransition}
                     className="relative"
                   >
-                    <motion.div variants={headerItem}>
+                    <motion.div variants={headingItem}>
                       <Heading
                         id="travel-network-heading"
                         level={2}
                         size="xl"
-                        className={cn(
-                          titleColorTransition,
-                          headerThemeReady ? "text-ink" : "text-white",
-                        )}
-                        style={titleColorStyle}
                       >
-                        {heading}
+                        <ExpandableTextReveal text={heading} reduceMotion={!motionEnabled} />
                       </Heading>
                     </motion.div>
                   </motion.div>
@@ -356,17 +331,9 @@ const TravelNetworkRevealSection = ({
                     transition={networkLayoutTransition}
                     className="relative"
                   >
-                    <motion.div variants={headerItem}>
-                      <Text
-                        className={cn(
-                          "type-section-subtitle",
-                          titleColorTransition,
-                          headerThemeReady ? "text-ink-muted" : "text-white",
-                        )}
-                        style={titleColorStyle}
-                        leading="relaxed"
-                      >
-                        {lead}
+                    <motion.div variants={subheadingItem}>
+                      <Text className="type-section-subtitle" leading="relaxed">
+                        <ExpandableTextReveal text={lead} reduceMotion={!motionEnabled} />
                       </Text>
                     </motion.div>
                   </motion.div>
@@ -391,7 +358,7 @@ const TravelNetworkRevealSection = ({
               <motion.div
                 key="travel-network-collapsed"
                 className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                variants={slotContext}
+                variants={slotVariants.section}
                 initial={motionEnabled ? "collapsed" : false}
                 animate={phase}
               >
@@ -456,7 +423,7 @@ const TravelNetworkRevealSection = ({
           </LayoutGroup>
 
           <motion.div
-            variants={slotContext}
+            variants={slotVariants.section}
             initial={motionEnabled ? "collapsed" : false}
             animate={phase}
           >
@@ -465,7 +432,7 @@ const TravelNetworkRevealSection = ({
                 key="travel-network-body"
                 id="travel-network-body"
                 className="space-y-6"
-                variants={slotContext}
+                variants={slotVariants.section}
                 initial={motionEnabled ? "collapsed" : false}
                 animate={phase}
               >
@@ -523,7 +490,7 @@ const TravelNetworkRevealSection = ({
                   </motion.div>
 
                   <motion.div variants={bodyItem}>
-                    <AnimatePresence initial={false} mode="popLayout">
+                    <AnimatePresence initial={false} mode="wait">
                       <motion.div
                         key={activeTab}
                         initial={motionEnabled ? { opacity: 0, y: 10 } : false}
@@ -577,7 +544,7 @@ function ScheduleList({ events, emptyText, listReveal }: ScheduleListProps) {
       {events.map((event) => (
         <motion.article
           key={event._id}
-          className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 transition hover:-translate-y-0.5 hover:border-ink/20 hover:bg-card/80 hover:shadow-elevated sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated md:p-6 lg:p-7"
+          className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 transition hover:-translate-y-0.5 hover:border-ink/20 hover:bg-card/80 hover:shadow-elevated sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated md:p-6 lg:p-7 motion-reduce:transition-none motion-reduce:transform-none"
           variants={listItem}
         >
           <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
@@ -621,7 +588,7 @@ function DealerList({ dealers, emptyText, listReveal }: DealerListProps) {
       {dealers.map((dealer) => (
         <motion.article
           key={dealer._id}
-          className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm ring-1 ring-border/70 transition hover:-translate-y-0.5 hover:border-ink/20 hover:bg-card/80 hover:shadow-elevated sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated"
+          className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm ring-1 ring-border/70 transition hover:-translate-y-0.5 hover:border-ink/20 hover:bg-card/80 hover:shadow-elevated sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated motion-reduce:transition-none motion-reduce:transform-none"
           variants={listItem}
         >
           <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />

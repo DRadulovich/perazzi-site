@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useMemo, useRef, useState, type RefObject } from "react";
 import Image from "next/image";
 import type { ChampionEvergreen, ChampionsGalleryUi } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform, type Variants } from "framer-motion";
+import { ExpandableTextReveal } from "@/components/motion/ExpandableTextReveal";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, type Variants } from "framer-motion";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Container, Heading, Section, Text } from "@/components/ui";
 import { homeMotion } from "@/lib/motionConfig";
@@ -14,15 +15,19 @@ import {
   COLLAPSE_TIME_SCALE,
   CONTAINER_EXPAND_MS,
   EASE_CINEMATIC,
-  EXPANDED_HEADER_REVEAL_MS,
   EXPAND_TIME_SCALE,
-  GLASS_REVEAL_MS,
   STAGGER_BODY_ITEMS_MS,
   STAGGER_HEADER_ITEMS_MS,
   STAGGER_LIST_ITEMS_MS,
 } from "@/motion/expandableSectionMotion";
 import { createExpandableSectionVariants } from "@/motion/createExpandableSectionVariants";
+import {
+  buildGlassToneVariants,
+  buildTitleToneVariants,
+  mergeVariants,
+} from "@/motion/expandableSectionTone";
 import { useExpandableSectionTimeline } from "@/motion/useExpandableSectionTimeline";
+import { useParallaxMotion } from "@/motion/useParallaxMotion";
 
 type ChampionsGalleryProps = Readonly<{
   champions: ChampionEvergreen[];
@@ -32,6 +37,7 @@ type ChampionsGalleryProps = Readonly<{
 type ChampionsGalleryRevealSectionProps = Readonly<{
   champions: ChampionEvergreen[];
   ui: ChampionsGalleryUi;
+  isDesktop: boolean;
   enableTitleReveal: boolean;
   motionEnabled: boolean;
   sectionRef: RefObject<HTMLElement | null>;
@@ -69,6 +75,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
         key={galleryKey}
         champions={verified}
         ui={ui}
+        isDesktop={isDesktop}
         enableTitleReveal={enableTitleReveal}
         motionEnabled={motionEnabled}
         sectionRef={sectionRef}
@@ -80,17 +87,16 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
 const ChampionsGalleryRevealSection = ({
   champions,
   ui,
+  isDesktop,
   enableTitleReveal,
   motionEnabled,
   sectionRef,
 }: ChampionsGalleryRevealSectionProps) => {
-  const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
   const [activeDiscipline, setActiveDiscipline] = useState<string | null>(null);
   const [selectedChampionId, setSelectedChampionId] = useState<string | null>(() => {
     return champions[0]?.id ?? null;
   });
 
-  const headerThemeFrame = useRef<number | null>(null);
   const {
     expanded,
     phase,
@@ -100,7 +106,11 @@ const ChampionsGalleryRevealSection = ({
     onEscapeKeyDown,
     showExpanded,
     showCollapsed,
-  } = useExpandableSectionTimeline({ defaultExpanded: false });
+  } = useExpandableSectionTimeline({
+    defaultExpanded: false,
+    containerRef: sectionRef,
+    scrollOnExpand: true,
+  });
 
   const disciplines = useMemo(() => {
     const set = new Set<string>();
@@ -140,19 +150,8 @@ const ChampionsGalleryRevealSection = ({
 
   const revealGallery = phase === "expanded" || phase === "closingHold";
   const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
-  const revealPhotoFocus = revealGallery;
-  const parallaxStrength = "16%";
+  const parallaxStrength = 0.16;
   const parallaxEnabled = enableTitleReveal && !revealGallery && motionEnabled;
-  const focusSurfaceTransition =
-    "transition-[background-color,box-shadow,border-color,backdrop-filter]";
-  const titleColorTransition = "transition-colors";
-  const cinematicBezier = `cubic-bezier(${EASE_CINEMATIC.join(",")})`;
-  const transitionStyle = (durationMs: number) => ({
-    transitionDuration: `${motionEnabled ? Math.round(durationMs * EXPAND_TIME_SCALE) : 0}ms`,
-    transitionTimingFunction: motionEnabled ? cinematicBezier : "linear",
-  });
-  const focusSurfaceStyle = transitionStyle(GLASS_REVEAL_MS);
-  const titleColorStyle = transitionStyle(EXPANDED_HEADER_REVEAL_MS);
   const galleryLayoutTransition = motionEnabled
     ? {
         layout: {
@@ -165,12 +164,12 @@ const ChampionsGalleryRevealSection = ({
     target: sectionRef,
     offset: ["start end", "end start"],
   });
-  const parallaxY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
-  );
-  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const parallaxY = useParallaxMotion(scrollYProgress, {
+    enabled: parallaxEnabled,
+    strength: parallaxStrength,
+    targetRef: sectionRef,
+  });
+  const parallaxStyle = motionEnabled ? { y: parallaxY } : undefined;
   const toSeconds = (ms: number) => ms / 1000;
   const staggerTransition = (staggerMs: number, direction?: 1 | -1) => ({
     transition: {
@@ -201,7 +200,7 @@ const ChampionsGalleryRevealSection = ({
     scrimMode: "dualFocusFade",
     backgroundScale: { collapsed: 1.32, prezoom: 1.12, expanded: 1 },
     itemOffsetY: 12,
-    blurPx: 8,
+    blurPx: 6,
     glassScale: 0.985,
   });
   const surfaceVariants = createExpandableSectionVariants({
@@ -211,17 +210,22 @@ const ChampionsGalleryRevealSection = ({
     blurPx: 0,
     glassScale: 0.985,
   });
-  const slotContext = {
-    collapsed: {},
-    prezoom: {},
-    expanded: {},
-    closingHold: {},
-  } as const;
-  const headerItem = slotVariants.expandedHeader;
+  const headingToneVariants = buildTitleToneVariants("--color-ink");
+  const subheadingToneVariants = buildTitleToneVariants("--color-ink-muted");
+  const headingItem = mergeVariants(slotVariants.expandedHeader, headingToneVariants);
+  const subheadingItem = mergeVariants(slotVariants.expandedHeader, subheadingToneVariants);
   const collapsedHeaderItem = slotVariants.collapsedHeader;
   const bodyItem = slotVariants.content;
   const surfaceItem = surfaceVariants.content;
   const listItem = surfaceVariants.content;
+  const glassSurfaceStrength = isDesktop ? 25 : 40;
+  const glassToneVariants = buildGlassToneVariants({
+    backgroundStrength: glassSurfaceStrength,
+    borderStrength: 70,
+    blurPx: 12,
+    shadow: isDesktop ? "elevated" : "soft",
+  });
+  const glassVariants = mergeVariants(slotVariants.glass, glassToneVariants);
   const containerLayoutTransition = {
     layout: {
       duration: motionEnabled
@@ -231,42 +235,23 @@ const ChampionsGalleryRevealSection = ({
     },
   };
   const glassStyle = {
-    ...focusSurfaceStyle,
-    height: isCollapsedPhase ? "40vh" : "auto",
+    minHeight: "40vh",
     overflow: isCollapsedPhase ? "hidden" : "visible",
   };
 
   const handleGalleryExpand = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
     open();
-    headerThemeFrame.current = requestAnimationFrame(() => {
-      setHeaderThemeReady(true);
-      headerThemeFrame.current = null;
-    });
   };
 
   const handleGalleryCollapse = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-      headerThemeFrame.current = null;
-    }
-    setHeaderThemeReady(false);
     close();
   };
 
-  useEffect(() => () => {
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
-  }, []);
-
   return (
     <motion.div
-      variants={slotContext}
+      variants={slotVariants.section}
       initial={motionEnabled ? "collapsed" : false}
       animate={phase}
     >
@@ -300,14 +285,8 @@ const ChampionsGalleryRevealSection = ({
       <Container size="xl" className="relative z-10">
         <motion.div
           style={glassStyle}
-          className={cn(
-            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            focusSurfaceTransition,
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-          )}
-          variants={slotVariants.glass}
+          className="relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10"
+          variants={glassVariants}
           onKeyDown={onEscapeKeyDown}
           layout
           transition={containerLayoutTransition}
@@ -317,7 +296,7 @@ const ChampionsGalleryRevealSection = ({
               <motion.div
                 key="heritage-champions-header"
                 className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
-                variants={slotContext}
+                variants={slotVariants.section}
                 initial={motionEnabled ? "collapsed" : false}
                 animate={phase}
               >
@@ -328,18 +307,13 @@ const ChampionsGalleryRevealSection = ({
                     transition={galleryLayoutTransition}
                     className="relative"
                   >
-                    <motion.div variants={headerItem}>
+                    <motion.div variants={headingItem}>
                       <Heading
                         id="heritage-champions-heading"
                         level={2}
                         size="xl"
-                        className={cn(
-                          titleColorTransition,
-                          headerThemeReady ? "text-ink" : "text-white",
-                        )}
-                        style={titleColorStyle}
                       >
-                        {heading}
+                        <ExpandableTextReveal text={heading} reduceMotion={!motionEnabled} />
                       </Heading>
                     </motion.div>
                   </motion.div>
@@ -349,16 +323,9 @@ const ChampionsGalleryRevealSection = ({
                     transition={galleryLayoutTransition}
                     className="relative"
                   >
-                    <motion.div variants={headerItem}>
-                      <Text
-                        className={cn(
-                          "type-section-subtitle",
-                          titleColorTransition,
-                          headerThemeReady ? "text-ink-muted" : "text-white",
-                        )}
-                        style={titleColorStyle}
-                      >
-                        {subheading}
+                    <motion.div variants={subheadingItem}>
+                      <Text className="type-section-subtitle">
+                        <ExpandableTextReveal text={subheading} reduceMotion={!motionEnabled} />
                       </Text>
                     </motion.div>
                   </motion.div>
@@ -378,7 +345,7 @@ const ChampionsGalleryRevealSection = ({
               <motion.div
                 key="heritage-champions-collapsed"
                 className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                variants={slotContext}
+                variants={slotVariants.section}
                 initial={motionEnabled ? "collapsed" : false}
                 animate={phase}
               >
@@ -443,7 +410,7 @@ const ChampionsGalleryRevealSection = ({
           </LayoutGroup>
 
           <motion.div
-            variants={slotContext}
+            variants={slotVariants.section}
             initial={motionEnabled ? "collapsed" : false}
             animate={phase}
           >
@@ -452,7 +419,7 @@ const ChampionsGalleryRevealSection = ({
                 key="heritage-champions-body"
                 id="heritage-champions-body"
                 className="space-y-6"
-                variants={slotContext}
+                variants={slotVariants.section}
                 initial={motionEnabled ? "collapsed" : false}
                 animate={phase}
               >
@@ -592,9 +559,9 @@ const ChampionsGalleryRevealSection = ({
                         {selectedChampion ? (
                           <motion.div
                             key={selectedChampion.id}
-                            initial={motionEnabled ? { opacity: 0, y: 12, filter: "blur(10px)" } : false}
+                            initial={motionEnabled ? { opacity: 0, y: 12, filter: "blur(6px)" } : false}
                             animate={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-                            exit={motionEnabled ? { opacity: 0, y: -10, filter: "blur(8px)" } : undefined}
+                            exit={motionEnabled ? { opacity: 0, y: -10, filter: "blur(6px)" } : undefined}
                             transition={motionEnabled ? homeMotion.micro : undefined}
                             className="flex flex-col gap-6"
                           >
@@ -690,7 +657,7 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
           alt={champion.image.alt}
           fill
           sizes="(min-width: 1024px) 320px, 100vw"
-          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02] motion-reduce:transition-none motion-reduce:transform-none"
           loading="lazy"
         />
         <div className="pointer-events-none absolute inset-0 film-grain opacity-12" aria-hidden="true" />

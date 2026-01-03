@@ -1,9 +1,9 @@
 "use client";
 
-import { LayoutGroup, motion, useReducedMotion, useScroll, useTransform, type Variants } from "framer-motion";
+import { LayoutGroup, motion, useReducedMotion, useScroll, type Variants } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState, type MouseEvent, type RefObject } from "react";
+import type { MouseEvent, RefObject } from "react";
 import type { FAQItem, PickerItem, PickerUi } from "@/types/experience";
 import { FAQList } from "./FAQList";
 import { logAnalytics } from "@/lib/analytics";
@@ -13,15 +13,19 @@ import {
   COLLAPSE_TIME_SCALE,
   CONTAINER_EXPAND_MS,
   EASE_CINEMATIC,
-  EXPANDED_HEADER_REVEAL_MS,
   EXPAND_TIME_SCALE,
-  GLASS_REVEAL_MS,
   STAGGER_HEADER_ITEMS_MS,
   STAGGER_LIST_ITEMS_MS,
 } from "@/motion/expandableSectionMotion";
 import { createExpandableSectionVariants } from "@/motion/createExpandableSectionVariants";
+import {
+  buildGlassToneVariants,
+  buildTitleToneVariants,
+  mergeVariants,
+} from "@/motion/expandableSectionTone";
 import { useExpandableSectionTimeline } from "@/motion/useExpandableSectionTimeline";
-import { cn } from "@/lib/utils";
+import { useParallaxMotion } from "@/motion/useParallaxMotion";
+import { ExpandableTextReveal } from "@/components/motion/ExpandableTextReveal";
 import { Container, Heading, Text } from "@/components/ui";
 
 type ExperiencePickerProps = {
@@ -43,6 +47,7 @@ type ExperiencePickerRevealSectionProps = {
   readonly subheading: string;
   readonly background: { url: string; alt?: string };
   readonly microLabel: string;
+  readonly isDesktop: boolean;
   readonly enableTitleReveal: boolean;
   readonly motionEnabled: boolean;
   readonly sectionRef: RefObject<HTMLElement | null>;
@@ -88,7 +93,8 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
     if (target === null) return;
 
     event.preventDefault();
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    const behavior: ScrollBehavior = motionEnabled ? "smooth" : "auto";
+    target.scrollIntoView({ behavior, block: "start" });
 
     const history = globalThis.history;
     if (history !== undefined) {
@@ -125,6 +131,7 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
         subheading={subheading}
         background={background}
         microLabel={microLabel}
+        isDesktop={isDesktop}
         enableTitleReveal={enableTitleReveal}
         motionEnabled={motionEnabled}
         sectionRef={analyticsRef}
@@ -143,13 +150,12 @@ const ExperiencePickerRevealSection = ({
   subheading,
   background,
   microLabel,
+  isDesktop,
   enableTitleReveal,
   motionEnabled,
   sectionRef,
   onAnchorClick,
 }: ExperiencePickerRevealSectionProps) => {
-  const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const headerThemeFrame = useRef<number | null>(null);
   const {
     expanded,
     phase,
@@ -159,23 +165,16 @@ const ExperiencePickerRevealSection = ({
     onEscapeKeyDown,
     showExpanded,
     showCollapsed,
-  } = useExpandableSectionTimeline({ defaultExpanded: false });
+  } = useExpandableSectionTimeline({
+    defaultExpanded: false,
+    containerRef: sectionRef,
+    scrollOnExpand: true,
+  });
 
   const revealPicker = phase === "expanded" || phase === "closingHold";
   const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
-  const revealPhotoFocus = revealPicker;
-  const parallaxStrength = "16%";
+  const parallaxStrength = 0.16;
   const parallaxEnabled = enableTitleReveal && !revealPicker && motionEnabled;
-  const focusSurfaceTransition =
-    "transition-[background-color,box-shadow,border-color,backdrop-filter]";
-  const titleColorTransition = "transition-colors";
-  const cinematicBezier = `cubic-bezier(${EASE_CINEMATIC.join(",")})`;
-  const transitionStyle = (durationMs: number) => ({
-    transitionDuration: `${motionEnabled ? Math.round(durationMs * EXPAND_TIME_SCALE) : 0}ms`,
-    transitionTimingFunction: motionEnabled ? cinematicBezier : "linear",
-  });
-  const focusSurfaceStyle = transitionStyle(GLASS_REVEAL_MS);
-  const titleColorStyle = transitionStyle(EXPANDED_HEADER_REVEAL_MS);
   const pickerLayoutTransition = motionEnabled
     ? {
         layout: {
@@ -188,12 +187,12 @@ const ExperiencePickerRevealSection = ({
     target: sectionRef,
     offset: ["start end", "end start"],
   });
-  const parallaxY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
-  );
-  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
+  const parallaxY = useParallaxMotion(scrollYProgress, {
+    enabled: parallaxEnabled,
+    strength: parallaxStrength,
+    targetRef: sectionRef,
+  });
+  const parallaxStyle = motionEnabled ? { y: parallaxY } : undefined;
   const toSeconds = (ms: number) => ms / 1000;
   const staggerTransition = (staggerMs: number, direction?: 1 | -1) => ({
     transition: {
@@ -217,7 +216,7 @@ const ExperiencePickerRevealSection = ({
     motionMode: motionEnabled ? "full" : "reduced",
     backgroundScale: { collapsed: 1.32, prezoom: 1.12, expanded: 1 },
     itemOffsetY: 12,
-    blurPx: 8,
+    blurPx: 6,
     glassScale: 0.985,
   });
   const surfaceVariants = createExpandableSectionVariants({
@@ -232,17 +231,22 @@ const ExperiencePickerRevealSection = ({
     expanded: slotVariants.scrimTop.collapsed,
     closingHold: slotVariants.scrimTop.collapsed,
   } as const;
-  const slotContext = {
-    collapsed: {},
-    prezoom: {},
-    expanded: {},
-    closingHold: {},
-  } as const;
-  const headerItem = slotVariants.expandedHeader;
+  const headingToneVariants = buildTitleToneVariants("--color-ink");
+  const subheadingToneVariants = buildTitleToneVariants("--color-ink-muted");
+  const headingItem = mergeVariants(slotVariants.expandedHeader, headingToneVariants);
+  const subheadingItem = mergeVariants(slotVariants.expandedHeader, subheadingToneVariants);
   const collapsedHeaderItem = slotVariants.collapsedHeader;
   const bodyItem = slotVariants.content;
   const ctaItem = slotVariants.ctaRow;
   const surfaceItem = surfaceVariants.content;
+  const glassSurfaceStrength = isDesktop ? 25 : 40;
+  const glassToneVariants = buildGlassToneVariants({
+    backgroundStrength: glassSurfaceStrength,
+    borderStrength: 70,
+    blurPx: 12,
+    shadow: isDesktop ? "elevated" : "soft",
+  });
+  const glassVariants = mergeVariants(slotVariants.glass, glassToneVariants);
   const containerLayoutTransition = {
     layout: {
       duration: motionEnabled
@@ -252,42 +256,23 @@ const ExperiencePickerRevealSection = ({
     },
   };
   const glassStyle = {
-    ...focusSurfaceStyle,
-    height: isCollapsedPhase ? "40vh" : "auto",
+    minHeight: "40vh",
     overflow: isCollapsedPhase ? "hidden" : "visible",
   };
 
   const handlePickerExpand = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
     open();
-    headerThemeFrame.current = requestAnimationFrame(() => {
-      setHeaderThemeReady(true);
-      headerThemeFrame.current = null;
-    });
   };
 
   const handlePickerCollapse = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-      headerThemeFrame.current = null;
-    }
-    setHeaderThemeReady(false);
     close();
   };
 
-  useEffect(() => () => {
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
-  }, []);
-
   return (
     <motion.div
-      variants={slotContext}
+      variants={slotVariants.section}
       initial={motionEnabled ? "collapsed" : false}
       animate={phase}
     >
@@ -321,14 +306,8 @@ const ExperiencePickerRevealSection = ({
       <Container size="xl" className="relative z-10">
         <motion.div
           style={glassStyle}
-          className={cn(
-            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            focusSurfaceTransition,
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-          )}
-          variants={slotVariants.glass}
+          className="relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10"
+          variants={glassVariants}
           onKeyDown={onEscapeKeyDown}
           layout
           transition={containerLayoutTransition}
@@ -338,12 +317,12 @@ const ExperiencePickerRevealSection = ({
               <motion.div
                 key="experience-picker-header"
                 className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
-                variants={slotContext}
+                variants={slotVariants.section}
                 initial={motionEnabled ? "collapsed" : false}
                 animate={phase}
               >
                 <motion.div className="space-y-3" variants={headerGroup}>
-                  <motion.div variants={headerItem}>
+                  <motion.div variants={headingItem}>
                     <motion.div
                       layoutId="experience-picker-title"
                       layoutCrossfade={false}
@@ -354,17 +333,12 @@ const ExperiencePickerRevealSection = ({
                         id="experience-picker-heading"
                         level={2}
                         size="xl"
-                        className={cn(
-                          titleColorTransition,
-                          headerThemeReady ? "text-ink" : "text-white",
-                        )}
-                        style={titleColorStyle}
                       >
-                        {heading}
+                        <ExpandableTextReveal text={heading} reduceMotion={!motionEnabled} />
                       </Heading>
                     </motion.div>
                   </motion.div>
-                  <motion.div variants={headerItem}>
+                  <motion.div variants={subheadingItem}>
                     <motion.div
                       layoutId="experience-picker-subtitle"
                       layoutCrossfade={false}
@@ -373,14 +347,9 @@ const ExperiencePickerRevealSection = ({
                     >
                       <Text
                         size="lg"
-                        className={cn(
-                          "type-section-subtitle",
-                          titleColorTransition,
-                          headerThemeReady ? "text-ink-muted" : "text-white",
-                        )}
-                        style={titleColorStyle}
+                        className="type-section-subtitle"
                       >
-                        {subheading}
+                        <ExpandableTextReveal text={subheading} reduceMotion={!motionEnabled} />
                       </Text>
                     </motion.div>
                   </motion.div>
@@ -399,7 +368,7 @@ const ExperiencePickerRevealSection = ({
               <motion.div
                 key="experience-picker-collapsed"
                 className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                variants={slotContext}
+                variants={slotVariants.section}
                 initial={motionEnabled ? "collapsed" : false}
                 animate={phase}
               >
@@ -464,7 +433,7 @@ const ExperiencePickerRevealSection = ({
           </LayoutGroup>
 
           <motion.div
-            variants={slotContext}
+            variants={slotVariants.section}
             initial={motionEnabled ? "collapsed" : false}
             animate={phase}
           >
@@ -473,7 +442,7 @@ const ExperiencePickerRevealSection = ({
                 key="experience-picker-body"
                 id="experience-picker-body"
                 className="space-y-6"
-                variants={slotContext}
+                variants={slotVariants.section}
                 initial={motionEnabled ? "collapsed" : false}
                 animate={phase}
               >
@@ -563,13 +532,13 @@ function ExperiencePickerCard({
             alt={item.media.alt}
             fill
             sizes="(min-width: 1280px) 384px, (min-width: 1024px) 50vw, (min-width: 640px) 50vw, 100vw"
-            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:transform-none"
             loading="lazy"
           />
           <div className="pointer-events-none absolute inset-0 film-grain opacity-15" aria-hidden="true" />
           <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
           <div
-            className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/70 via-(--scrim-strong)/45 to-transparent transition-transform duration-300 group-hover:scale-105"
+            className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/70 via-(--scrim-strong)/45 to-transparent transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none motion-reduce:transform-none"
             aria-hidden
           />
         </div>
@@ -583,7 +552,7 @@ function ExperiencePickerCard({
           <Text className="type-body text-ink-muted" leading="relaxed">
             {item.summary}
           </Text>
-          <span className="mt-auto inline-flex items-center gap-2 type-button text-perazzi-red transition group-hover:translate-x-0.5">
+          <span className="mt-auto inline-flex items-center gap-2 type-button text-perazzi-red transition group-hover:translate-x-0.5 motion-reduce:transition-none motion-reduce:transform-none">
             {item.ctaLabel}
             <span aria-hidden="true">→</span>
           </span>
