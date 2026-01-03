@@ -99,7 +99,7 @@ const VisitFactoryRevealSection = ({
     onEscapeKeyDown,
     showExpanded,
     showCollapsed,
-  } = useExpandableSectionTimeline({ defaultExpanded: !enableTitleReveal });
+  } = useExpandableSectionTimeline({ defaultExpanded: false });
 
   const mapPanelId = "visit-map-panel";
   const mapNoteId = "visit-map-note";
@@ -362,17 +362,15 @@ const VisitFactoryRevealSection = ({
                     </motion.div>
                   ) : null}
                 </motion.div>
-                {enableTitleReveal ? (
-                  <motion.div variants={surfaceItem}>
-                    <button
-                      type="button"
-                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                      onClick={handleVisitCollapse}
-                    >
-                      Collapse
-                    </button>
-                  </motion.div>
-                ) : null}
+                <motion.div variants={surfaceItem}>
+                  <button
+                    type="button"
+                    className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
+                    onClick={handleVisitCollapse}
+                  >
+                    Collapse
+                  </button>
+                </motion.div>
               </motion.div>
             ) : null}
             {showCollapsed ? (
@@ -403,7 +401,6 @@ const VisitFactoryRevealSection = ({
                     <button
                       type="button"
                       className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                      onPointerEnter={handleVisitExpand}
                       onFocus={handleVisitExpand}
                       onClick={handleVisitExpand}
                       onKeyDown={onTriggerKeyDown}

@@ -88,7 +88,7 @@ const TriggerExplainerRevealSection = ({
     onEscapeKeyDown,
     showExpanded,
     showCollapsed,
-  } = useExpandableSectionTimeline({ defaultExpanded: !enableTitleReveal });
+  } = useExpandableSectionTimeline({ defaultExpanded: false });
 
   const ratio = explainer.diagram.aspectRatio ?? 16 / 9;
   const subheading = explainer.subheading ?? "Removable or fixed—choose by confidence and feel.";
@@ -467,22 +467,20 @@ const TriggerExplainerRevealSection = ({
                           id="trigger-explainer-content"
                           className={`grid ${contentClassName} lg:hidden`}
                         >
-                          <motion.div className="contents" variants={bodyGroup}>
+                        <motion.div className="contents" variants={bodyGroup}>
                             {explainerContent}
-                          </motion.div>
+                        </motion.div>
                         </CollapsibleContent>
                       </Collapsible>
                     </motion.div>
-                    {enableTitleReveal ? (
-                      <motion.button
-                        type="button"
-                        className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                        onClick={handleCollapse}
-                        variants={surfaceItem}
-                      >
-                        Collapse
-                      </motion.button>
-                    ) : null}
+                    <motion.button
+                      type="button"
+                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
+                      onClick={handleCollapse}
+                      variants={surfaceItem}
+                    >
+                      Collapse
+                    </motion.button>
                   </motion.div>
                 ) : null}
                 {showCollapsed ? (
@@ -513,7 +511,6 @@ const TriggerExplainerRevealSection = ({
                         <button
                           type="button"
                           className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                          onPointerEnter={handleExpand}
                           onFocus={handleExpand}
                           onClick={handleExpand}
                           onKeyDown={onTriggerKeyDown}

@@ -221,7 +221,7 @@ const EngravingGradesRevealSection = ({
     onEscapeKeyDown,
     showExpanded,
     showCollapsed,
-  } = useExpandableSectionTimeline({ defaultExpanded: !enableTitleReveal });
+  } = useExpandableSectionTimeline({ defaultExpanded: false });
 
   const revealCarousel = phase === "expanded" || phase === "closingHold";
   const revealPhotoFocus = revealCarousel;
@@ -524,17 +524,15 @@ const EngravingGradesRevealSection = ({
                     </motion.div>
                   </motion.div>
                 </motion.div>
-                {enableTitleReveal ? (
-                  <motion.div variants={surfaceItem}>
-                    <button
-                      type="button"
-                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                      onClick={handleCollapse}
-                    >
-                      Collapse
-                    </button>
-                  </motion.div>
-                ) : null}
+                <motion.div variants={surfaceItem}>
+                  <button
+                    type="button"
+                    className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
+                    onClick={handleCollapse}
+                  >
+                    Collapse
+                  </button>
+                </motion.div>
               </motion.div>
             ) : null}
             {showCollapsed ? (
@@ -565,7 +563,6 @@ const EngravingGradesRevealSection = ({
                     <button
                       type="button"
                       className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                      onPointerEnter={handleExpand}
                       onFocus={handleExpand}
                       onClick={handleExpand}
                       onKeyDown={onTriggerKeyDown}

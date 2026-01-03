@@ -160,7 +160,7 @@ const ExperiencePickerRevealSection = ({
     onEscapeKeyDown,
     showExpanded,
     showCollapsed,
-  } = useExpandableSectionTimeline({ defaultExpanded: !enableTitleReveal });
+  } = useExpandableSectionTimeline({ defaultExpanded: false });
 
   const revealPicker = phase === "expanded" || phase === "closingHold";
   const revealPhotoFocus = revealPicker;
@@ -407,16 +407,14 @@ const ExperiencePickerRevealSection = ({
                     </motion.div>
                   </motion.div>
                 </motion.div>
-                {enableTitleReveal ? (
-                  <motion.button
-                    type="button"
-                    className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                    onClick={handlePickerCollapse}
-                    variants={surfaceItem}
-                  >
-                    Collapse
-                  </motion.button>
-                ) : null}
+                <motion.button
+                  type="button"
+                  className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
+                  onClick={handlePickerCollapse}
+                  variants={surfaceItem}
+                >
+                  Collapse
+                </motion.button>
               </motion.div>
             ) : null}
             {showCollapsed ? (
@@ -447,7 +445,6 @@ const ExperiencePickerRevealSection = ({
                     <button
                       type="button"
                       className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                      onPointerEnter={handlePickerExpand}
                       onFocus={handlePickerExpand}
                       onClick={handlePickerExpand}
                       onKeyDown={onTriggerKeyDown}

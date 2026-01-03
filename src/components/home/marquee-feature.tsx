@@ -9,6 +9,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { homeMotion } from "@/lib/motionConfig";
 import {
   CONTAINER_EXPAND_MS,
+  COLLAPSE_TIME_SCALE,
   EASE_CINEMATIC,
   EXPANDED_HEADER_REVEAL_MS,
   EXPAND_TIME_SCALE,
@@ -70,11 +71,9 @@ function MarqueeFeatureRevealSection({
   scrollRef,
 }: MarqueeFeatureRevealSectionProps) {
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
-  const marqueeShellRef = useRef<HTMLDivElement | null>(null);
   const headerThemeFrame = useRef<number | null>(null);
   const { expanded, phase, open, close, onTriggerKeyDown, onEscapeKeyDown } =
-    useExpandableSectionTimeline({ defaultExpanded: !enableTitleReveal });
+    useExpandableSectionTimeline({ defaultExpanded: false });
 
   const ratio = champion.image.aspectRatio ?? 3 / 4;
   const background = ui.background ?? {
@@ -88,6 +87,7 @@ function MarqueeFeatureRevealSection({
   const headingSubtitle = champion.title;
 
   const revealMarquee = phase === "expanded" || phase === "closingHold";
+  const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
   const revealPhotoFocus = revealMarquee;
   const parallaxStrength = "16%";
   const parallaxEnabled = enableTitleReveal && !revealMarquee && motionEnabled;
@@ -109,7 +109,6 @@ function MarqueeFeatureRevealSection({
       },
     }
     : undefined;
-  const marqueeMinHeight = enableTitleReveal ? "min-h-[calc(640px+12rem)]" : null;
   const { scrollYProgress } = useScroll({
     target: scrollRef,
     offset: ["start end", "end start"],
@@ -175,9 +174,18 @@ function MarqueeFeatureRevealSection({
   const bodyItem = slotVariants.content;
   const ctaItem = slotVariants.ctaRow;
   const surfaceItem = surfaceVariants.content;
+  const containerLayoutTransition = {
+    layout: {
+      duration: motionEnabled
+        ? (CONTAINER_EXPAND_MS / 1000) * (isCollapsedPhase ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
+        : 0,
+      ease: EASE_CINEMATIC,
+    },
+  };
   const glassStyle = {
-    ...(enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : {}),
     ...focusSurfaceStyle,
+    height: isCollapsedPhase ? "60vh" : "auto",
+    overflow: isCollapsedPhase ? "hidden" : "visible",
   };
 
   const handleMarqueeExpand = () => {
@@ -201,36 +209,6 @@ function MarqueeFeatureRevealSection({
     setHeaderThemeReady(false);
     close();
   };
-
-  useEffect(() => {
-    if (!enableTitleReveal || !revealMarquee) return;
-    const node = marqueeShellRef.current;
-    if (!node) return;
-
-    let frame = 0;
-    const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
-    }
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealMarquee]);
 
   useEffect(() => () => {
     if (headerThemeFrame.current !== null) {
@@ -282,17 +260,17 @@ function MarqueeFeatureRevealSection({
       <motion.div>
         <Container size="xl" className="relative z-10">
           <motion.div
-            ref={marqueeShellRef}
             className={cn(
               "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
               focusSurfaceTransition,
               revealPhotoFocus
                 ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
                 : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-              marqueeMinHeight,
             )}
             variants={slotVariants.glass}
             style={glassStyle}
+            layout
+            transition={containerLayoutTransition}
           >
             <LayoutGroup id="marquee-feature-title">
               <AnimatePresence initial={false}>
@@ -401,18 +379,16 @@ function MarqueeFeatureRevealSection({
                             </motion.div>
                           ) : null}
                         </motion.div>
-                        {enableTitleReveal ? (
-                          <motion.div variants={bodyGroup} className="mt-4 md:mt-0">
-                            <motion.button
-                              type="button"
-                              className="inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring"
-                              onClick={handleMarqueeCollapse}
-                              variants={surfaceItem}
-                            >
-                              Collapse
-                            </motion.button>
-                          </motion.div>
-                        ) : null}
+                        <motion.div variants={bodyGroup} className="mt-4 md:mt-0">
+                          <motion.button
+                            type="button"
+                            className="inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring"
+                            onClick={handleMarqueeCollapse}
+                            variants={surfaceItem}
+                          >
+                            Collapse
+                          </motion.button>
+                        </motion.div>
                       </div>
                     </div>
                   </motion.div>
@@ -444,7 +420,6 @@ function MarqueeFeatureRevealSection({
                         <button
                           type="button"
                           className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                          onPointerEnter={handleMarqueeExpand}
                           onFocus={handleMarqueeExpand}
                           onClick={handleMarqueeExpand}
                           onKeyDown={onTriggerKeyDown}

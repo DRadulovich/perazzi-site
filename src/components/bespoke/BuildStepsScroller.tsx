@@ -194,7 +194,7 @@ const BuildStepsRevealSection = ({
     onEscapeKeyDown,
     showExpanded,
     showCollapsed,
-  } = useExpandableSectionTimeline({ defaultExpanded: !enableTitleReveal });
+  } = useExpandableSectionTimeline({ defaultExpanded: false });
 
   const resolvedActiveStepId = steps.some((step) => step.id === activeStepId)
     ? activeStepId
@@ -610,16 +610,14 @@ const BuildStepsRevealSection = ({
                     ) : null}
                   </motion.div>
                 </motion.div>
-                {enableTitleReveal ? (
-                  <motion.button
-                    type="button"
-                    className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                    onClick={handleBuildStepsCollapse}
-                    variants={surfaceItem}
-                  >
-                    Collapse
-                  </motion.button>
-                ) : null}
+                <motion.button
+                  type="button"
+                  className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
+                  onClick={handleBuildStepsCollapse}
+                  variants={surfaceItem}
+                >
+                  Collapse
+                </motion.button>
               </motion.div>
             ) : null}
             {showCollapsed ? (
@@ -650,7 +648,6 @@ const BuildStepsRevealSection = ({
                     <button
                       type="button"
                       className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                      onPointerEnter={handleBuildStepsExpand}
                       onFocus={handleBuildStepsExpand}
                       onClick={handleBuildStepsExpand}
                       onKeyDown={onTriggerKeyDown}

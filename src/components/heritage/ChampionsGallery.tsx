@@ -101,7 +101,7 @@ const ChampionsGalleryRevealSection = ({
     onEscapeKeyDown,
     showExpanded,
     showCollapsed,
-  } = useExpandableSectionTimeline({ defaultExpanded: !enableTitleReveal });
+  } = useExpandableSectionTimeline({ defaultExpanded: false });
 
   const disciplines = useMemo(() => {
     const set = new Set<string>();
@@ -391,17 +391,15 @@ const ChampionsGalleryRevealSection = ({
                     </motion.div>
                   </motion.div>
                 </motion.div>
-                {enableTitleReveal ? (
-                  <motion.div variants={surfaceItem}>
-                    <button
-                      type="button"
-                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                      onClick={handleGalleryCollapse}
-                    >
-                      Collapse
-                    </button>
-                  </motion.div>
-                ) : null}
+                <motion.div variants={surfaceItem}>
+                  <button
+                    type="button"
+                    className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
+                    onClick={handleGalleryCollapse}
+                  >
+                    Collapse
+                  </button>
+                </motion.div>
               </motion.div>
             ) : null}
             {showCollapsed ? (
@@ -432,7 +430,6 @@ const ChampionsGalleryRevealSection = ({
                     <button
                       type="button"
                       className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                      onPointerEnter={handleGalleryExpand}
                       onFocus={handleGalleryExpand}
                       onClick={handleGalleryExpand}
                       onKeyDown={onTriggerKeyDown}

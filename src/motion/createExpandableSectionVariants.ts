@@ -74,12 +74,13 @@ const applyStagger = (
   transition: Transition,
   staggerMs: number | undefined,
   reducedMotion: boolean,
+  scale: number,
   staggerDirection?: 1 | -1
 ): Transition => {
   if (reducedMotion || !staggerMs) return transition;
   return {
     ...transition,
-    staggerChildren: toSeconds(staggerMs),
+    staggerChildren: toSeconds(staggerMs) * scale,
     staggerDirection,
   };
 };
@@ -253,7 +254,8 @@ export function createExpandableSectionVariants(
         transition: applyStagger(
           collapseTransition(EXPANDED_HEADER_REVEAL_MS),
           STAGGER_HEADER_ITEMS_MS,
-          reducedMotion
+          reducedMotion,
+          COLLAPSE_TIME_SCALE
         ),
       },
       prezoom: {
@@ -301,7 +303,8 @@ export function createExpandableSectionVariants(
         transition: applyStagger(
           expandTransition(EXPANDED_HEADER_REVEAL_MS),
           STAGGER_HEADER_ITEMS_MS,
-          reducedMotion
+          reducedMotion,
+          EXPAND_TIME_SCALE
         ),
       },
       closingHold: {
@@ -310,6 +313,7 @@ export function createExpandableSectionVariants(
           collapseTransition(EXPANDED_HEADER_REVEAL_MS),
           STAGGER_HEADER_ITEMS_MS,
           reducedMotion,
+          COLLAPSE_TIME_SCALE,
           -1
         ),
       },
@@ -346,7 +350,8 @@ export function createExpandableSectionVariants(
         transition: applyStagger(
           expandTransition(META_REVEAL_MS),
           STAGGER_BODY_ITEMS_MS,
-          reducedMotion
+          reducedMotion,
+          EXPAND_TIME_SCALE
         ),
       },
       closingHold: {
@@ -355,6 +360,7 @@ export function createExpandableSectionVariants(
           collapseTransition(META_REVEAL_MS),
           STAGGER_BODY_ITEMS_MS,
           reducedMotion,
+          COLLAPSE_TIME_SCALE,
           -1
         ),
       },
@@ -373,7 +379,8 @@ export function createExpandableSectionVariants(
         transition: applyStagger(
           expandTransition(CONTENT_REVEAL_MS),
           STAGGER_BODY_ITEMS_MS,
-          reducedMotion
+          reducedMotion,
+          EXPAND_TIME_SCALE
         ),
       },
       closingHold: {
@@ -382,6 +389,7 @@ export function createExpandableSectionVariants(
           collapseTransition(CONTENT_REVEAL_MS),
           STAGGER_BODY_ITEMS_MS,
           reducedMotion,
+          COLLAPSE_TIME_SCALE,
           -1
         ),
       },
@@ -400,7 +408,8 @@ export function createExpandableSectionVariants(
         transition: applyStagger(
           expandTransition(CTA_REVEAL_MS),
           STAGGER_LIST_ITEMS_MS,
-          reducedMotion
+          reducedMotion,
+          EXPAND_TIME_SCALE
         ),
       },
       closingHold: {
@@ -409,6 +418,7 @@ export function createExpandableSectionVariants(
           collapseTransition(CTA_REVEAL_MS),
           STAGGER_LIST_ITEMS_MS,
           reducedMotion,
+          COLLAPSE_TIME_SCALE,
           -1
         ),
       },

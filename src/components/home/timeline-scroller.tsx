@@ -129,7 +129,7 @@ function TimelineRevealSection({
     onEscapeKeyDown,
     showExpanded,
     showCollapsed,
-  } = useExpandableSectionTimeline({ defaultExpanded: !enableTitleReveal });
+  } = useExpandableSectionTimeline({ defaultExpanded: false });
 
   const headingTitle = framing.title ?? "Craftsmanship Journey";
   const headingEyebrow = framing.eyebrow ?? "Three rituals that define a bespoke Perazzi build";
@@ -394,17 +394,15 @@ function TimelineRevealSection({
                     </motion.div>
                     <span className="sr-only">{headingInstructions}</span>
                   </motion.div>
-                  {enableTitleReveal ? (
-                    <motion.div variants={surfaceItem}>
-                      <button
-                        type="button"
-                        className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                        onClick={handleTimelineCollapse}
-                      >
-                        Collapse
-                      </button>
-                    </motion.div>
-                  ) : null}
+                  <motion.div variants={surfaceItem}>
+                    <button
+                      type="button"
+                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
+                      onClick={handleTimelineCollapse}
+                    >
+                      Collapse
+                    </button>
+                  </motion.div>
                 </motion.div>
               ) : null}
               {showCollapsed ? (
@@ -435,7 +433,6 @@ function TimelineRevealSection({
                       <button
                         type="button"
                         className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                        onPointerEnter={handleTimelineExpand}
                         onFocus={handleTimelineExpand}
                         onClick={handleTimelineExpand}
                         onKeyDown={onTriggerKeyDown}
