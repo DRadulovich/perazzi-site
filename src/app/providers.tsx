@@ -2,7 +2,8 @@
 
 import { NextIntlClientProvider } from "next-intl";
 import type { AbstractIntlMessages } from "next-intl";
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import {
   ThemeProvider,
   type ThemeMode,
@@ -22,9 +23,25 @@ export default function Providers({
   messages,
   initialTheme,
 }: Readonly<ProvidersProps>) {
+  const pathname = usePathname();
+  const routeSpecOverride = useMemo(() => {
+    if (pathname?.startsWith("/experience")) {
+      return {
+        hover: { enabled: false },
+        text: { enableCharReveal: false },
+      };
+    }
+    if (pathname?.startsWith("/bespoke")) {
+      return {
+        text: { enableCharReveal: false },
+      };
+    }
+    return undefined;
+  }, [pathname]);
+
   return (
     <ThemeProvider initialTheme={initialTheme}>
-      <ExpandableSectionControllerProvider>
+      <ExpandableSectionControllerProvider routeSpecOverride={routeSpecOverride}>
         <NextIntlClientProvider
           locale={locale}
           messages={messages}

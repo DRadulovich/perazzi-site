@@ -11,14 +11,20 @@ import { cn } from "@/lib/utils";
 export const Collapsible = CollapsiblePrimitive.Root;
 export const CollapsibleTrigger = CollapsiblePrimitive.Trigger;
 
+type CollapsibleContentProps = ComponentPropsWithoutRef<typeof CollapsiblePrimitive.Content> & {
+  disableAnimation?: boolean;
+};
+
 export const CollapsibleContent = forwardRef<
   ComponentRef<typeof CollapsiblePrimitive.Content>,
-  ComponentPropsWithoutRef<typeof CollapsiblePrimitive.Content>
->(({ className, ...props }, ref) => (
+  CollapsibleContentProps
+>(({ className, disableAnimation, ...props }, ref) => (
   <CollapsiblePrimitive.Content
     ref={ref}
     className={cn(
-      "overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
+      "overflow-hidden",
+      !disableAnimation
+        && "data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
       className,
     )}
     {...props}

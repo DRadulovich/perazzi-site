@@ -75,6 +75,7 @@ const VisitFactoryRevealSection = ({
     getTriggerProps,
     getCloseProps,
     layoutProps,
+    phase,
     contentVisible,
     bodyId,
   } = es;
@@ -89,9 +90,14 @@ const VisitFactoryRevealSection = ({
 
   const visitMinHeight = contentVisible ? null : "min-h-[calc(640px+16rem)]";
   const headerThemeReady = contentVisible;
+  const headingId = "visit-factory-heading";
+  const showMapEmbed = Boolean(visit.location.mapEmbedSrc) && phase === "expanded";
 
   return (
     <>
+      <span id={headingId} className="sr-only">
+        {heading}
+      </span>
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div data-es="bg" className="absolute inset-0">
           <Image
@@ -133,7 +139,6 @@ const VisitFactoryRevealSection = ({
                   <div className="space-y-3">
                     <div className="relative">
                       <Heading
-                        id="visit-factory-heading"
                         level={2}
                         size="xl"
                         className={headerThemeReady ? "text-ink" : "text-white"}
@@ -210,7 +215,7 @@ const VisitFactoryRevealSection = ({
                         style={{ "--aspect-ratio": visit.location.staticMap.aspectRatio ?? 3 / 2 }}
                         aria-live="polite"
                       >
-                        {visit.location.mapEmbedSrc ? (
+                        {showMapEmbed ? (
                           <iframe
                             src={visit.location.mapEmbedSrc}
                             title={`Map to ${visit.location.name}`}
@@ -264,6 +269,7 @@ const VisitFactoryRevealSection = ({
                           </span>
                         </CollapsibleTrigger>
                         <CollapsibleContent
+                          disableAnimation
                           id="visit-expect-content"
                           className="mt-3 rounded-2xl border border-border/70 bg-card/60 p-4 type-card-body text-ink-muted shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80"
                         >
@@ -295,13 +301,12 @@ const VisitFactoryRevealSection = ({
             data-es="header-collapsed"
             className={cn(
               "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
-              contentVisible && "pointer-events-none",
+              phase === "expanded" && "pointer-events-none",
             )}
             aria-hidden={contentVisible}
           >
             <div className="relative inline-flex text-white">
               <Heading
-                id="visit-factory-heading"
                 level={2}
                 size="xl"
                 className="type-section-collapsed"
@@ -311,8 +316,8 @@ const VisitFactoryRevealSection = ({
               <button
                 type="button"
                 className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                aria-labelledby="visit-factory-heading"
-                {...getTriggerProps({ kind: "header", withHover: true })}
+                aria-labelledby={headingId}
+                {...getTriggerProps({ kind: "header", withHover: true, action: "toggle" })}
               >
                 <span className="sr-only">Expand {heading}</span>
               </button>
@@ -328,7 +333,7 @@ const VisitFactoryRevealSection = ({
                 className="text-white/80 cursor-pointer focus-ring"
                 asChild
               >
-                <button type="button" {...getTriggerProps({ kind: "cta" })}>
+                <button type="button" {...getTriggerProps({ kind: "cta", action: "toggle" })}>
                   Read more
                 </button>
               </Text>

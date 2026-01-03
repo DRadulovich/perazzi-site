@@ -104,6 +104,7 @@ function TimelineRevealSection({
     getTriggerProps,
     getCloseProps,
     layoutProps,
+    phase,
     contentVisible,
     bodyId,
   } = es;
@@ -290,18 +291,14 @@ function TimelineRevealSection({
                             <div
                               id={panelId}
                               aria-labelledby={buttonId}
-                              className={cn(
-                                "mt-3 overflow-hidden",
-                                expanded
-                                  ? "max-h-[999px] opacity-100"
-                                  : "max-h-0 opacity-0",
-                              )}
+                              aria-hidden={!expanded}
+                              className={cn("mt-3", !expanded && "hidden")}
                             >
-                              {expanded && (
+                              {expanded ? (
                                 <div className="mt-2">
                                   <TimelineItem stage={stage} />
                                 </div>
-                              )}
+                              ) : null}
                             </div>
                           </div>
                         );
@@ -330,7 +327,7 @@ function TimelineRevealSection({
               data-es="header-collapsed"
               className={cn(
                 "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
-                contentVisible && "pointer-events-none",
+                phase === "expanded" && "pointer-events-none",
               )}
               aria-hidden={contentVisible}
             >
@@ -345,7 +342,7 @@ function TimelineRevealSection({
                 <button
                   type="button"
                   className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                  {...getTriggerProps({ kind: "header", withHover: true })}
+                  {...getTriggerProps({ kind: "header", withHover: true, action: "toggle" })}
                 >
                   <span className="sr-only">Expand {headingTitle}</span>
                 </button>
@@ -361,7 +358,7 @@ function TimelineRevealSection({
                   className="text-white/80 cursor-pointer focus-ring"
                   asChild
                 >
-                  <button type="button" {...getTriggerProps({ kind: "cta" })}>
+                  <button type="button" {...getTriggerProps({ kind: "cta", action: "toggle" })}>
                     Read more
                   </button>
                 </Text>

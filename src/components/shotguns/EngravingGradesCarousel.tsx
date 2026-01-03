@@ -194,14 +194,19 @@ const EngravingGradesRevealSection = ({
     getTriggerProps,
     getCloseProps,
     layoutProps,
+    phase,
     contentVisible,
     bodyId,
   } = es;
   const carouselMinHeight = contentVisible ? null : "min-h-[calc(720px+18rem)]";
   const headerThemeReady = contentVisible;
+  const headingId = "engraving-grades-heading";
 
   return (
     <>
+      <span id={headingId} className="sr-only">
+        {heading}
+      </span>
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div data-es="bg" className="absolute inset-0">
           <Image
@@ -242,7 +247,6 @@ const EngravingGradesRevealSection = ({
                   <div className="space-y-3">
                     <div className="relative">
                       <Heading
-                        id="engraving-grades-heading"
                         level={2}
                         size="xl"
                         className={headerThemeReady ? "text-ink" : "text-white"}
@@ -381,13 +385,12 @@ const EngravingGradesRevealSection = ({
             data-es="header-collapsed"
             className={cn(
               "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
-              contentVisible && "pointer-events-none",
+              phase === "expanded" && "pointer-events-none",
             )}
             aria-hidden={contentVisible}
           >
             <div className="relative inline-flex text-white">
               <Heading
-                id="engraving-grades-heading"
                 level={2}
                 size="xl"
                 className="type-section-collapsed"
@@ -397,8 +400,8 @@ const EngravingGradesRevealSection = ({
               <button
                 type="button"
                 className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                aria-labelledby="engraving-grades-heading"
-                {...getTriggerProps({ kind: "header", withHover: true })}
+                aria-labelledby={headingId}
+                {...getTriggerProps({ kind: "header", withHover: true, action: "toggle" })}
               >
                 <span className="sr-only">Expand {heading}</span>
               </button>
@@ -414,7 +417,7 @@ const EngravingGradesRevealSection = ({
                 className="text-white/80 cursor-pointer focus-ring"
                 asChild
               >
-                <button type="button" {...getTriggerProps({ kind: "cta" })}>
+                <button type="button" {...getTriggerProps({ kind: "cta", action: "toggle" })}>
                   Read more
                 </button>
               </Text>

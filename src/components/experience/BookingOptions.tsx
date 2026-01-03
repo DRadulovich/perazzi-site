@@ -59,6 +59,7 @@ const BookingOptionsRevealSection = ({
     getTriggerProps,
     getCloseProps,
     layoutProps,
+    phase,
     contentVisible,
     bodyId,
   } = es;
@@ -73,12 +74,17 @@ const BookingOptionsRevealSection = ({
   const heading = bookingSection.heading ?? "Book a fitting";
   const subheading = bookingSection.subheading ?? "Choose the session that fits your journey";
   const optionCtaLabel = bookingSection.optionCtaLabel ?? "Reserve this session";
+  const headingId = "experience-booking-heading";
 
   const bookingMinHeight = contentVisible ? null : "min-h-[calc(720px+16rem)]";
   const headerThemeReady = contentVisible;
+  const showSchedulerEmbed = schedulerLoaded && schedulerOpen && phase === "expanded";
 
   return (
     <>
+      <span id={headingId} className="sr-only">
+        {heading}
+      </span>
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div data-es="bg" className="absolute inset-0">
           <Image
@@ -119,7 +125,6 @@ const BookingOptionsRevealSection = ({
                   <div className="space-y-3">
                     <div className="relative">
                       <Heading
-                        id="experience-booking-heading"
                         level={2}
                         size="xl"
                         className={headerThemeReady ? "text-ink" : "text-white"}
@@ -234,12 +239,18 @@ const BookingOptionsRevealSection = ({
                             className={cn("overflow-hidden", !schedulerOpen && "hidden")}
                             aria-hidden={!schedulerOpen}
                           >
-                            <iframe
-                              src={scheduler.src}
-                              title={scheduler.iframeTitle ?? `Booking — ${scheduler.title}`}
-                              className="h-[480px] w-full rounded-2xl border border-border/70 bg-card/0"
-                              loading="lazy"
-                            />
+                            {showSchedulerEmbed ? (
+                              <iframe
+                                src={scheduler.src}
+                                title={scheduler.iframeTitle ?? `Booking — ${scheduler.title}`}
+                                className="h-[480px] w-full rounded-2xl border border-border/70 bg-card/0"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="flex h-80 w-full items-center justify-center rounded-2xl border border-dashed border-border/70 type-body-sm text-ink-muted">
+                                The booking form appears here once you choose Begin Your Fitting.
+                              </div>
+                            )}
                           </div>
                         ) : (
                           <div className="flex h-80 w-full items-center justify-center rounded-2xl border border-dashed border-border/70 type-body-sm text-ink-muted">
@@ -274,13 +285,12 @@ const BookingOptionsRevealSection = ({
             data-es="header-collapsed"
             className={cn(
               "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
-              contentVisible && "pointer-events-none",
+              phase === "expanded" && "pointer-events-none",
             )}
             aria-hidden={contentVisible}
           >
             <div className="relative inline-flex text-white">
               <Heading
-                id="experience-booking-heading"
                 level={2}
                 size="xl"
                 className="type-section-collapsed"
@@ -290,8 +300,8 @@ const BookingOptionsRevealSection = ({
               <button
                 type="button"
                 className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                aria-labelledby="experience-booking-heading"
-                {...getTriggerProps({ kind: "header", withHover: true })}
+                aria-labelledby={headingId}
+                {...getTriggerProps({ kind: "header", withHover: true, action: "toggle" })}
               >
                 <span className="sr-only">Expand {heading}</span>
               </button>
@@ -307,7 +317,7 @@ const BookingOptionsRevealSection = ({
                 className="text-white/80 cursor-pointer focus-ring"
                 asChild
               >
-                <button type="button" {...getTriggerProps({ kind: "cta" })}>
+                <button type="button" {...getTriggerProps({ kind: "cta", action: "toggle" })}>
                   Read more
                 </button>
               </Text>

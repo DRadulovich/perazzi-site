@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type AnimationPlaybackControlsWithThen,
   stagger,
   useAnimate,
   useReducedMotion,
@@ -37,6 +38,8 @@ export const DEFAULT_INTERACTION_POLICY: ExpandableInteractionPolicy = {
   allowHeaderClick: true,
   allowCtaClick: true,
 };
+
+const getScopeRoot = <T extends Element>(scope: RefObject<T>): T | null => scope.current;
 
 export type ExpandableMotionSpec = {
   timeScale: {
@@ -161,8 +164,8 @@ export const ES_SELECTORS = {
 
 export const DEFAULT_ESMS_SPEC: ExpandableMotionSpec = {
   timeScale: {
-    expand: 1.2,
-    collapse: 0.65,
+    expand: 0.75,
+    collapse: 0.6,
   },
   ease: {
     container: [0.16, 1, 0.3, 1],
@@ -172,46 +175,46 @@ export const DEFAULT_ESMS_SPEC: ExpandableMotionSpec = {
   },
   timing: {
     expand: {
-      preZoom: 0.55,
-      scrim: 0.75,
-      headerCollapsedExit: 0.5,
-      glassIn: 0.85,
-      headerExpandedIn: 0.8,
-      mainIn: 0.9,
-      metaIn: 0.65,
-      bodyIn: 0.8,
-      listIn: 0.9,
-      ctaIn: 0.6,
-      bgSettle: 1,
+      preZoom: 0.35,
+      scrim: 0.45,
+      headerCollapsedExit: 0.35,
+      glassIn: 0.45,
+      headerExpandedIn: 0.45,
+      mainIn: 0.55,
+      metaIn: 0.35,
+      bodyIn: 0.45,
+      listIn: 0.55,
+      ctaIn: 0.35,
+      bgSettle: 0.6,
     },
     collapse: {
-      preZoom: 0.32,
-      scrim: 0.45,
-      headerCollapsedIn: 0.4,
-      glassOut: 0.35,
-      headerExpandedOut: 0.35,
-      mainOut: 0.35,
-      metaOut: 0.3,
-      bodyOut: 0.35,
-      listOut: 0.4,
-      ctaOut: 0.3,
-      bgReset: 0.55,
+      preZoom: 0.25,
+      scrim: 0.35,
+      headerCollapsedIn: 0.3,
+      glassOut: 0.3,
+      headerExpandedOut: 0.3,
+      mainOut: 0.3,
+      metaOut: 0.25,
+      bodyOut: 0.3,
+      listOut: 0.35,
+      ctaOut: 0.25,
+      bgReset: 0.4,
     },
     layout: {
-      expand: 1.05,
-      collapse: 0.6,
+      expand: 0.5,
+      collapse: 0.4,
     },
   },
   stagger: {
     expand: {
-      items: 0.1,
-      lines: 0.06,
-      chars: 0.035,
-      maxTotal: 0.7,
+      items: 0.08,
+      lines: 0.05,
+      chars: 0.03,
+      maxTotal: 0.45,
     },
     collapse: {
-      items: 0.05,
-      maxTotal: 0.4,
+      items: 0.04,
+      maxTotal: 0.3,
     },
   },
   distance: {
@@ -293,10 +296,14 @@ export function getNextPhase(
   phase: ExpandablePhase,
   action: ExpandableAction,
 ): ExpandablePhase | null {
-  if (action === "open") return phase === "collapsed" ? "expanding" : null;
-  if (action === "close") return phase === "expanded" ? "collapsing" : null;
-  if (phase === "collapsed") return "expanding";
-  if (phase === "expanded") return "collapsing";
+  if (action === "open") {
+    return phase === "collapsed" || phase === "collapsing" ? "expanding" : null;
+  }
+  if (action === "close") {
+    return phase === "expanded" || phase === "expanding" ? "collapsing" : null;
+  }
+  if (phase === "collapsed" || phase === "collapsing") return "expanding";
+  if (phase === "expanded" || phase === "expanding") return "collapsing";
   return null;
 }
 
@@ -471,6 +478,8 @@ export function useExpandableSectionMotion({
   const lastTriggerRef = useRef<HTMLElement | null>(null);
   const anchorRef = useRef<number | null>(null);
   const busyRef = useRef(false);
+  const animationRef = useRef<AnimationPlaybackControlsWithThen | null>(null);
+  const runIdRef = useRef(0);
   const expandPrepRef = useRef(false);
 
   useEffect(() => {
@@ -483,23 +492,48 @@ export function useExpandableSectionMotion({
 
   const bodyId = useMemo(() => `${sectionId}-body`, [sectionId]);
 
-  const scopeElement = scope.current as HTMLElement | null;
+  const startRun = useCallback(() => {
+    runIdRef.current += 1;
+    return runIdRef.current;
+  }, []);
+
+  const isRunActive = useCallback((runId: number) => runIdRef.current === runId, []);
+
+  const stopCurrentAnimation = useCallback(() => {
+    animationRef.current?.stop();
+    animationRef.current = null;
+  }, []);
 
   const getElements = useCallback(
     (selector: string): Element[] => {
-      if (!scopeElement) return [];
-      return Array.from(scopeElement.querySelectorAll(selector));
+      const root = getScopeRoot(scope);
+      if (!root) return [];
+      return Array.from(root.querySelectorAll(selector));
     },
-    [scopeElement],
+    [scope],
   );
 
   const setImmediate = useCallback(
     (selector: string, keyframes: Record<string, unknown>) => {
       const elements = getElements(selector);
       if (!elements.length) return;
-      animate(elements, keyframes, { duration: 0 });
+      const opacity = keyframes.opacity;
+      const y = typeof keyframes.y === "number" ? keyframes.y : undefined;
+      const scale = typeof keyframes.scale === "number" ? keyframes.scale : undefined;
+
+      elements.forEach((element) => {
+        const style = (element as HTMLElement).style;
+        if (opacity !== undefined) {
+          style.opacity = String(opacity);
+        }
+        if (y !== undefined || scale !== undefined) {
+          const translate = `translate3d(0, ${y ?? 0}px, 0)`;
+          const scalePart = scale === undefined ? "" : ` scale(${scale})`;
+          style.transform = `${translate}${scalePart}`;
+        }
+      });
     },
-    [animate, getElements],
+    [getElements],
   );
 
   const shouldUseCharReveal = useCallback(() => {
@@ -631,9 +665,10 @@ export function useExpandableSectionMotion({
 
   const captureAnchor = useCallback(() => {
     if (!resolvedSpec.scroll.preserveAnchor) return;
-    if (!scopeElement) return;
-    anchorRef.current = scopeElement.getBoundingClientRect().top;
-  }, [resolvedSpec.scroll.preserveAnchor, scopeElement]);
+    const root = getScopeRoot(scope);
+    if (!root) return;
+    anchorRef.current = root.getBoundingClientRect().top;
+  }, [resolvedSpec.scroll.preserveAnchor, scope]);
 
   useLayoutEffect(() => {
     if (anchorRef.current === null) return;
@@ -650,7 +685,15 @@ export function useExpandableSectionMotion({
   const animateSequence = useCallback(
     async (sequence: Array<[Element[], Record<string, unknown>, Record<string, unknown>]>) => {
       if (!sequence.length) return;
-      await animate(sequence);
+      const controls = animate(sequence);
+      animationRef.current = controls;
+      try {
+        await controls;
+      } finally {
+        if (animationRef.current === controls) {
+          animationRef.current = null;
+        }
+      }
     },
     [animate],
   );
@@ -663,17 +706,21 @@ export function useExpandableSectionMotion({
       options: Record<string, unknown>,
     ) => {
       const elements = getElements(selector);
-      if (!elements.length) return;
+      if (!elements.length) return false;
       sequence.push([elements, keyframes, options]);
+      return true;
     },
     [getElements],
   );
 
   const runExpand = useCallback(async () => {
-    if (busyRef.current) return;
     const next = getNextPhase(phaseRef.current, "open");
     if (!next) return;
     onOpenStart?.();
+    if (busyRef.current) {
+      stopCurrentAnimation();
+    }
+    const runId = startRun();
     busyRef.current = true;
     setPhase(next);
 
@@ -683,7 +730,9 @@ export function useExpandableSectionMotion({
         captureAnchor();
         setContentVisible(true);
         await nextFrame();
+        if (!isRunActive(runId)) return;
       }
+      if (!isRunActive(runId)) return;
       setPhase("expanded");
       busyRef.current = false;
       if (resolvedSpec.a11y.focusOnExpand === "close") {
@@ -694,24 +743,36 @@ export function useExpandableSectionMotion({
 
     const bg = getElements(ES_SELECTORS.bg);
     if (bg.length) {
-      await animate(bg, {
+      const controls = animate(bg, {
         scale: resolvedSpec.scale.bgPreZoom,
         y: resolvedSpec.distance.bgPreZoomY,
       }, {
         duration: resolvedSpec.timing.expand.preZoom * expandScale,
         ease: resolvedSpec.ease.container,
       });
+      animationRef.current = controls;
+      try {
+        await controls;
+      } finally {
+        if (animationRef.current === controls) {
+          animationRef.current = null;
+        }
+      }
+      if (!isRunActive(runId)) return;
     }
 
     if (!visibleRef.current) {
       captureAnchor();
       setContentVisible(true);
       await nextFrame();
+      applyPhaseStyles("collapsed");
+      await nextFrame();
+      if (!isRunActive(runId)) return;
     }
 
     const sequence: Array<[Element[], Record<string, unknown>, Record<string, unknown>]> = [];
     const layoutDuration = resolvedSpec.timing.layout.expand * expandScale;
-    let time = layoutDuration;
+    let time = layoutDuration * 0.2;
     const scrimDuration = resolvedSpec.timing.expand.scrim * expandScale;
     const headerExitDuration = resolvedSpec.timing.expand.headerCollapsedExit * expandScale;
     const glassDuration = resolvedSpec.timing.expand.glassIn * expandScale;
@@ -723,33 +784,39 @@ export function useExpandableSectionMotion({
     const ctaDuration = resolvedSpec.timing.expand.ctaIn * expandScale;
     const bgSettleDuration = resolvedSpec.timing.expand.bgSettle * expandScale;
 
-    pushSequence(sequence, ES_SELECTORS.scrimTop, {
+    const hasScrimTop = pushSequence(sequence, ES_SELECTORS.scrimTop, {
       opacity: resolvedSpec.opacity.scrimExpanded,
       y: resolvedSpec.distance.scrimY,
     }, { duration: scrimDuration, ease: resolvedSpec.ease.container, at: time });
-    pushSequence(sequence, ES_SELECTORS.scrimBottom, {
+    const hasScrimBottom = pushSequence(sequence, ES_SELECTORS.scrimBottom, {
       opacity: resolvedSpec.opacity.scrimExpanded,
       y: -resolvedSpec.distance.scrimY,
     }, { duration: scrimDuration, ease: resolvedSpec.ease.container, at: time });
-    pushSequence(sequence, ES_SELECTORS.headerCollapsed, {
+    const hasHeaderCollapsed = pushSequence(sequence, ES_SELECTORS.headerCollapsed, {
       opacity: 0,
       y: -resolvedSpec.distance.headerY,
     }, { duration: headerExitDuration, ease: resolvedSpec.ease.exit, at: time });
-    time += Math.max(scrimDuration, headerExitDuration);
+    time += Math.max(
+      hasScrimTop || hasScrimBottom ? scrimDuration : 0,
+      hasHeaderCollapsed ? headerExitDuration : 0,
+    );
 
-    pushSequence(sequence, ES_SELECTORS.glass, {
+    const hasGlass = pushSequence(sequence, ES_SELECTORS.glass, {
       opacity: 1,
       scale: 1,
       y: 0,
     }, { duration: glassDuration, ease: resolvedSpec.ease.surface, at: time });
-    time += glassDuration;
+    if (hasGlass) {
+      time += glassDuration;
+    }
 
-    pushSequence(sequence, ES_SELECTORS.headerExpanded, {
+    const hasHeaderExpanded = pushSequence(sequence, ES_SELECTORS.headerExpanded, {
       opacity: 1,
       y: 0,
     }, { duration: headerDuration, ease: resolvedSpec.ease.reveal, at: time });
 
     const useCharReveal = shouldUseCharReveal();
+    let hasCharReveal = false;
     if (useCharReveal) {
       const chars = getElements(ES_SELECTORS.char);
       const capped = capStagger(
@@ -758,6 +825,7 @@ export function useExpandableSectionMotion({
         resolvedSpec.stagger.expand.maxTotal,
       );
       if (chars.length) {
+        hasCharReveal = true;
         sequence.push([
           chars,
           { opacity: 1, y: 0 },
@@ -770,28 +838,38 @@ export function useExpandableSectionMotion({
         ]);
       }
     }
-    time += headerDuration;
+    if (hasHeaderExpanded || hasCharReveal) {
+      time += headerDuration;
+    }
 
-    pushSequence(sequence, ES_SELECTORS.main, {
+    const hasMain = pushSequence(sequence, ES_SELECTORS.main, {
       opacity: 1,
       y: 0,
     }, { duration: mainDuration, ease: resolvedSpec.ease.reveal, at: time });
-    time += mainDuration;
+    if (hasMain) {
+      time += mainDuration;
+    }
 
-    pushSequence(sequence, ES_SELECTORS.meta, {
+    const hasMeta = pushSequence(sequence, ES_SELECTORS.meta, {
       opacity: 1,
       y: 0,
     }, { duration: metaDuration, ease: resolvedSpec.ease.reveal, at: time });
-    time += metaDuration;
+    if (hasMeta) {
+      time += metaDuration;
+    }
 
-    pushSequence(sequence, ES_SELECTORS.body, {
+    const hasBody = pushSequence(sequence, ES_SELECTORS.body, {
       opacity: 1,
       y: 0,
     }, { duration: bodyDuration, ease: resolvedSpec.ease.reveal, at: time });
-    time += bodyDuration;
+    if (hasBody) {
+      time += bodyDuration;
+    }
 
     const items = getElements(ES_SELECTORS.item);
+    let hasItems = false;
     if (items.length) {
+      hasItems = true;
       const capped = capStagger(
         resolvedSpec.stagger.expand.items,
         items.length,
@@ -808,13 +886,17 @@ export function useExpandableSectionMotion({
         },
       ]);
     }
-    time += listDuration;
+    if (hasItems) {
+      time += listDuration;
+    }
 
-    pushSequence(sequence, ES_SELECTORS.cta, {
+    const hasCta = pushSequence(sequence, ES_SELECTORS.cta, {
       opacity: 1,
       y: 0,
     }, { duration: ctaDuration, ease: resolvedSpec.ease.reveal, at: time });
-    time += ctaDuration;
+    if (hasCta) {
+      time += ctaDuration;
+    }
 
     pushSequence(sequence, ES_SELECTORS.bg, {
       scale: resolvedSpec.scale.bgExpanded,
@@ -822,6 +904,7 @@ export function useExpandableSectionMotion({
     }, { duration: bgSettleDuration, ease: resolvedSpec.ease.container, at: time });
 
     await animateSequence(sequence);
+    if (!isRunActive(runId)) return;
     setPhase("expanded");
     busyRef.current = false;
     if (resolvedSpec.a11y.focusOnExpand === "close") {
@@ -830,20 +913,27 @@ export function useExpandableSectionMotion({
   }, [
     animate,
     animateSequence,
+    applyPhaseStyles,
     captureAnchor,
     getElements,
+    isRunActive,
     onOpenStart,
     pushSequence,
     reducedMotion,
     resolvedSpec,
     shouldUseCharReveal,
+    startRun,
+    stopCurrentAnimation,
   ]);
 
   const runCollapse = useCallback(async () => {
-    if (busyRef.current) return;
     const next = getNextPhase(phaseRef.current, "close");
     if (!next) return;
     onCloseStart?.();
+    if (busyRef.current) {
+      stopCurrentAnimation();
+    }
+    const runId = startRun();
     busyRef.current = true;
     setPhase(next);
 
@@ -852,6 +942,7 @@ export function useExpandableSectionMotion({
       captureAnchor();
       setContentVisible(false);
       await nextFrame();
+      if (!isRunActive(runId)) return;
       setPhase("collapsed");
       busyRef.current = false;
       if (resolvedSpec.a11y.focusOnCollapse === "trigger") {
@@ -876,23 +967,36 @@ export function useExpandableSectionMotion({
 
     const bg = getElements(ES_SELECTORS.bg);
     if (bg.length) {
-      await animate(bg, {
+      const controls = animate(bg, {
         scale: resolvedSpec.scale.bgPreZoom,
         y: resolvedSpec.distance.bgPreZoomY,
       }, {
         duration: resolvedSpec.timing.collapse.preZoom * collapseScale,
         ease: resolvedSpec.ease.container,
       });
+      animationRef.current = controls;
+      try {
+        await controls;
+      } finally {
+        if (animationRef.current === controls) {
+          animationRef.current = null;
+        }
+      }
+      if (!isRunActive(runId)) return;
     }
 
-    pushSequence(sequence, ES_SELECTORS.cta, {
+    const hasCta = pushSequence(sequence, ES_SELECTORS.cta, {
       opacity: 0,
       y: resolvedSpec.distance.ctaY,
     }, { duration: ctaDuration, ease: resolvedSpec.ease.exit, at: time });
-    time += ctaDuration;
+    if (hasCta) {
+      time += ctaDuration;
+    }
 
     const items = getElements(ES_SELECTORS.item);
+    let hasItems = false;
     if (items.length) {
+      hasItems = true;
       const capped = capStagger(
         resolvedSpec.stagger.collapse.items,
         items.length,
@@ -909,32 +1013,41 @@ export function useExpandableSectionMotion({
         },
       ]);
     }
-    time += listDuration;
+    if (hasItems) {
+      time += listDuration;
+    }
 
-    pushSequence(sequence, ES_SELECTORS.body, {
+    const hasBody = pushSequence(sequence, ES_SELECTORS.body, {
       opacity: 0,
       y: resolvedSpec.distance.contentY,
     }, { duration: bodyDuration, ease: resolvedSpec.ease.exit, at: time });
-    time += bodyDuration;
+    if (hasBody) {
+      time += bodyDuration;
+    }
 
-    pushSequence(sequence, ES_SELECTORS.meta, {
+    const hasMeta = pushSequence(sequence, ES_SELECTORS.meta, {
       opacity: 0,
       y: resolvedSpec.distance.contentY,
     }, { duration: metaDuration, ease: resolvedSpec.ease.exit, at: time });
-    time += metaDuration;
+    if (hasMeta) {
+      time += metaDuration;
+    }
 
-    pushSequence(sequence, ES_SELECTORS.main, {
+    const hasMain = pushSequence(sequence, ES_SELECTORS.main, {
       opacity: 0,
       y: resolvedSpec.distance.contentY,
     }, { duration: mainDuration, ease: resolvedSpec.ease.exit, at: time });
-    time += mainDuration;
+    if (hasMain) {
+      time += mainDuration;
+    }
 
-    pushSequence(sequence, ES_SELECTORS.headerExpanded, {
+    const hasHeaderExpanded = pushSequence(sequence, ES_SELECTORS.headerExpanded, {
       opacity: 0,
       y: -resolvedSpec.distance.headerY,
     }, { duration: headerDuration, ease: resolvedSpec.ease.exit, at: time });
 
     const useCharReveal = shouldUseCharReveal();
+    let hasCharReveal = false;
     if (useCharReveal) {
       const chars = getElements(ES_SELECTORS.char);
       const capped = capStagger(
@@ -943,6 +1056,7 @@ export function useExpandableSectionMotion({
         resolvedSpec.stagger.expand.maxTotal,
       );
       if (chars.length) {
+        hasCharReveal = true;
         sequence.push([
           chars,
           { opacity: 0, y: -resolvedSpec.distance.headerY },
@@ -955,14 +1069,18 @@ export function useExpandableSectionMotion({
         ]);
       }
     }
-    time += headerDuration;
+    if (hasHeaderExpanded || hasCharReveal) {
+      time += headerDuration;
+    }
 
-    pushSequence(sequence, ES_SELECTORS.glass, {
+    const hasGlass = pushSequence(sequence, ES_SELECTORS.glass, {
       opacity: 0,
       scale: resolvedSpec.scale.glassFrom,
       y: resolvedSpec.distance.glassY,
     }, { duration: glassDuration, ease: resolvedSpec.ease.surface, at: time });
-    time += glassDuration;
+    if (hasGlass) {
+      time += glassDuration;
+    }
 
     pushSequence(sequence, ES_SELECTORS.bg, {
       scale: resolvedSpec.scale.bgCollapsed,
@@ -970,15 +1088,18 @@ export function useExpandableSectionMotion({
     }, { duration: bgResetDuration, ease: resolvedSpec.ease.container, at: time });
 
     await animateSequence(sequence);
+    if (!isRunActive(runId)) return;
 
     captureAnchor();
     setContentVisible(false);
     await nextFrame();
+    if (!isRunActive(runId)) return;
 
     if (layoutDuration > 0) {
       await new Promise<void>((resolve) => {
         setTimeout(resolve, layoutDuration * 1000);
       });
+      if (!isRunActive(runId)) return;
     }
 
     const postSequence: Array<[Element[], Record<string, unknown>, Record<string, unknown>]> = [];
@@ -996,6 +1117,7 @@ export function useExpandableSectionMotion({
     }, { duration: headerInDuration, ease: resolvedSpec.ease.reveal, at: 0 });
 
     await animateSequence(postSequence);
+    if (!isRunActive(runId)) return;
 
     setPhase("collapsed");
     busyRef.current = false;
@@ -1007,11 +1129,14 @@ export function useExpandableSectionMotion({
     animateSequence,
     captureAnchor,
     getElements,
+    isRunActive,
     onCloseStart,
     pushSequence,
     reducedMotion,
     resolvedSpec,
     shouldUseCharReveal,
+    startRun,
+    stopCurrentAnimation,
   ]);
 
   const open = useCallback(() => {
@@ -1024,9 +1149,9 @@ export function useExpandableSectionMotion({
 
   const toggle = useCallback(() => {
     const current = phaseRef.current;
-    if (current === "collapsed") {
+    if (current === "collapsed" || current === "collapsing") {
       open();
-    } else if (current === "expanded") {
+    } else if (current === "expanded" || current === "expanding") {
       close();
     }
   }, [close, open]);
@@ -1152,7 +1277,7 @@ export function useExpandableSectionMotion({
   const isCollapsed = phase === "collapsed" || phase === "collapsing";
 
   useEffect(() => {
-    if (phase !== "expanded") return;
+    if (phase !== "expanded" && phase !== "expanding") return;
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") close();
     };

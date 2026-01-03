@@ -3,12 +3,15 @@
 import { useEffect, useState } from "react";
 
 export function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(false);
+  const [matches, setMatches] = useState(() => {
+    if (globalThis.window === undefined) return false;
+    return globalThis.window.matchMedia(query).matches;
+  });
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (globalThis.window === undefined) return;
 
-    const mediaQuery = window.matchMedia(query);
+    const mediaQuery = globalThis.window.matchMedia(query);
     const updateMatch = () => { setMatches(mediaQuery.matches); };
 
     updateMatch();

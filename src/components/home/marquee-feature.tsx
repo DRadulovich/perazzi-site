@@ -30,6 +30,7 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
   const eyebrow = ui.eyebrow ?? "Champion spotlight";
   const headingTitle = champion.name;
   const headingSubtitle = champion.title;
+  const headingId = "champion-heading";
 
   return (
     <ExpandableSection
@@ -39,12 +40,13 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
       rootRef={analyticsRef}
       data-analytics-id="ChampionStorySeen"
       className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed mt-[15px]"
-      aria-labelledby="champion-heading"
+      aria-labelledby={headingId}
     >
       {({
         getTriggerProps,
         getCloseProps,
         layoutProps,
+        phase,
         contentVisible,
         bodyId,
       }) => {
@@ -52,6 +54,9 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
         const marqueeMinHeight = contentVisible ? null : "min-h-[calc(640px+12rem)]";
         return (
           <>
+            <span id={headingId} className="sr-only">
+              {headingTitle}
+            </span>
             <div className="absolute inset-0 -z-10 overflow-hidden">
               <div data-es="bg" className="absolute inset-0">
                 <Image
@@ -115,7 +120,6 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
                             </Text>
                             <div className="relative">
                               <Heading
-                                id="champion-heading"
                                 level={2}
                                 size="xl"
                                 className={headerThemeReady ? "text-ink" : "text-white"}
@@ -175,13 +179,12 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
                   data-es="header-collapsed"
                   className={cn(
                     "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
-                    contentVisible && "pointer-events-none",
+                    phase === "expanded" && "pointer-events-none",
                   )}
                   aria-hidden={contentVisible}
                 >
                   <div className="relative inline-flex text-white">
                     <Heading
-                      id="champion-heading"
                       level={2}
                       size="xl"
                       className="type-section-collapsed"
@@ -191,8 +194,8 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
                     <button
                       type="button"
                       className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                      aria-labelledby="champion-heading"
-                      {...getTriggerProps({ kind: "header", withHover: true })}
+                      aria-labelledby={headingId}
+                      {...getTriggerProps({ kind: "header", withHover: true, action: "toggle" })}
                     >
                       <span className="sr-only">Expand {headingTitle}</span>
                     </button>
@@ -208,7 +211,7 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
                       className="text-white/80 cursor-pointer focus-ring"
                       asChild
                     >
-                      <button type="button" {...getTriggerProps({ kind: "cta" })}>
+                      <button type="button" {...getTriggerProps({ kind: "cta", action: "toggle" })}>
                         Read more
                       </button>
                     </Text>

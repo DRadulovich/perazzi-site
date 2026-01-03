@@ -76,7 +76,7 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
       >
         {faqItems.map((item, index) => (
           <motion.div key={item.q} variants={itemVariant}>
-            <FAQItemCard item={item} index={index} />
+            <FAQItemCard item={item} index={index} disableAnimation={embedded} />
           </motion.div>
         ))}
       </motion.div>
@@ -145,9 +145,10 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
 type FAQItemCardProps = Readonly<{
   item: FAQItem;
   index: number;
+  disableAnimation?: boolean;
 }>;
 
-function FAQItemCard({ item, index }: FAQItemCardProps) {
+function FAQItemCard({ item, index, disableAnimation }: FAQItemCardProps) {
   const [open, setOpen] = useState(false);
   useEffect(() => {
     if (open) {
@@ -172,7 +173,10 @@ function FAQItemCard({ item, index }: FAQItemCardProps) {
           +
         </span>
       </CollapsibleTrigger>
-      <CollapsibleContent className="mt-2 overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 type-card-body text-ink-muted shadow-soft backdrop-blur-sm sm:bg-card/80">
+      <CollapsibleContent
+        disableAnimation={disableAnimation}
+        className="mt-2 overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 type-card-body text-ink-muted shadow-soft backdrop-blur-sm sm:bg-card/80"
+      >
         <SafeHtml
           className="max-w-none type-card-body text-ink-muted"
           html={item.aHtml}

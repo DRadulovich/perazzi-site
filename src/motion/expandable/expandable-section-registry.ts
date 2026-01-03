@@ -29,8 +29,96 @@ type InteractionOverrideMap = Partial<
   Record<ExpandableSectionId, Partial<ExpandableInteractionPolicy>>
 >;
 
-const SECTION_OVERRIDES: SpecOverrideMap = {};
-const SECTION_INTERACTIONS: InteractionOverrideMap = {};
+const SECTION_OVERRIDES: SpecOverrideMap = {
+  "home.marqueeFeature": {
+    timeScale: {
+      expand: 0.85,
+      collapse: 0.6,
+    },
+    stagger: {
+      expand: {
+        items: 0.06,
+        maxTotal: 0.35,
+      },
+    },
+  },
+  "home.timelineScroller": {
+    timeScale: {
+      expand: 0.8,
+      collapse: 0.6,
+    },
+    text: {
+      enableCharReveal: false,
+    },
+    stagger: {
+      expand: {
+        items: 0.05,
+        maxTotal: 0.3,
+      },
+    },
+  },
+  "shotguns.platformGrid": {
+    timeScale: {
+      expand: 0.85,
+      collapse: 0.6,
+    },
+  },
+  "shotguns.triggerExplainer": {
+    timeScale: {
+      expand: 0.85,
+      collapse: 0.6,
+    },
+    text: {
+      enableCharReveal: false,
+    },
+  },
+  "bespoke.buildStepsScroller": {
+    text: {
+      enableCharReveal: false,
+    },
+    stagger: {
+      expand: {
+        items: 0.04,
+        maxTotal: 0.2,
+      },
+    },
+  },
+  "experience.visitFactory": {
+    timeScale: {
+      expand: 0.85,
+      collapse: 0.6,
+    },
+    hover: {
+      enabled: false,
+    },
+  },
+  "experience.bookingOptions": {
+    timeScale: {
+      expand: 0.85,
+      collapse: 0.6,
+    },
+    stagger: {
+      expand: {
+        items: 0.05,
+        maxTotal: 0.3,
+      },
+    },
+  },
+};
+const SECTION_INTERACTIONS: InteractionOverrideMap = {
+  "shotguns.triggerExplainer": {
+    hoverTease: false,
+  },
+  "bespoke.buildStepsScroller": {
+    hoverTease: false,
+  },
+  "experience.visitFactory": {
+    hoverTease: false,
+  },
+  "experience.bookingOptions": {
+    hoverTease: false,
+  },
+};
 
 export function getSectionSpec(
   sectionId: string,

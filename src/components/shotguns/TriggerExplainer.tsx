@@ -70,6 +70,7 @@ const TriggerExplainerRevealSection = ({
     getTriggerProps,
     getCloseProps,
     layoutProps,
+    phase,
     contentVisible,
     bodyId,
   } = es;
@@ -85,6 +86,7 @@ const TriggerExplainerRevealSection = ({
 
   const explainerMinHeight = contentVisible ? null : "min-h-[calc(520px+18rem)]";
   const headerThemeReady = contentVisible;
+  const headingId = "trigger-explainer-heading";
 
   const copyClasses =
     "max-w-none type-body text-ink [&_p]:mb-4 [&_p:last-child]:mb-0 prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4";
@@ -172,6 +174,9 @@ const TriggerExplainerRevealSection = ({
 
   return (
     <>
+      <span id={headingId} className="sr-only">
+        {explainer.title}
+      </span>
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div data-es="bg" className="absolute inset-0">
           <Image
@@ -212,7 +217,6 @@ const TriggerExplainerRevealSection = ({
                   <div className="space-y-3">
                     <div className="relative">
                       <Heading
-                        id="trigger-explainer-heading"
                         level={2}
                         size="xl"
                         className={headerThemeReady ? "text-ink" : "text-white"}
@@ -267,6 +271,7 @@ const TriggerExplainerRevealSection = ({
                       {manualOpen ? "Hide details" : "Show details"}
                     </CollapsibleTrigger>
                     <CollapsibleContent
+                      disableAnimation
                       id="trigger-explainer-content"
                       className={collapsibleContentClassName}
                     >
@@ -286,13 +291,12 @@ const TriggerExplainerRevealSection = ({
             data-es="header-collapsed"
             className={cn(
               "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
-              contentVisible && "pointer-events-none",
+              phase === "expanded" && "pointer-events-none",
             )}
             aria-hidden={contentVisible}
           >
             <div className="relative inline-flex text-white">
               <Heading
-                id="trigger-explainer-heading"
                 level={2}
                 size="xl"
                 className="type-section-collapsed"
@@ -302,8 +306,8 @@ const TriggerExplainerRevealSection = ({
               <button
                 type="button"
                 className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                aria-labelledby="trigger-explainer-heading"
-                {...getTriggerProps({ kind: "header", withHover: true })}
+                aria-labelledby={headingId}
+                {...getTriggerProps({ kind: "header", withHover: true, action: "toggle" })}
               >
                 <span className="sr-only">Expand {explainer.title}</span>
               </button>
@@ -319,7 +323,7 @@ const TriggerExplainerRevealSection = ({
                 className="text-white/80 cursor-pointer focus-ring"
                 asChild
               >
-                <button type="button" {...getTriggerProps({ kind: "cta" })}>
+                <button type="button" {...getTriggerProps({ kind: "cta", action: "toggle" })}>
                   Read more
                 </button>
               </Text>
