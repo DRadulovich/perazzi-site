@@ -1,15 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import type { ChampionEvergreen, ChampionsGalleryUi } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Container, Heading, Section, Text } from "@/components/ui";
-import { homeMotion } from "@/lib/motionConfig";
 
 type ChampionsGalleryProps = Readonly<{
   champions: ChampionEvergreen[];
@@ -20,17 +18,12 @@ type ChampionsGalleryRevealSectionProps = Readonly<{
   champions: ChampionEvergreen[];
   ui: ChampionsGalleryUi;
   enableTitleReveal: boolean;
-  motionEnabled: boolean;
-  sectionRef: RefObject<HTMLElement | null>;
 }>;
 
 export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
-  const prefersReducedMotion = useReducedMotion();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const enableTitleReveal = isDesktop && !prefersReducedMotion;
-  const motionEnabled = !prefersReducedMotion;
+  const enableTitleReveal = isDesktop;
   const galleryKey = enableTitleReveal ? "title-reveal" : "always-reveal";
-  const sectionRef = useRef<HTMLElement | null>(null);
 
   const verified = champions.filter((champion) => Boolean(champion?.name));
 
@@ -48,7 +41,6 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
 
   return (
     <section
-      ref={sectionRef}
       className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
       aria-labelledby="heritage-champions-heading"
     >
@@ -57,8 +49,6 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
         champions={verified}
         ui={ui}
         enableTitleReveal={enableTitleReveal}
-        motionEnabled={motionEnabled}
-        sectionRef={sectionRef}
       />
     </section>
   );
@@ -68,8 +58,6 @@ const ChampionsGalleryRevealSection = ({
   champions,
   ui,
   enableTitleReveal,
-  motionEnabled,
-  sectionRef,
 }: ChampionsGalleryRevealSectionProps) => {
   const [galleryExpanded, setGalleryExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
@@ -80,7 +68,6 @@ const ChampionsGalleryRevealSection = ({
   });
 
   const galleryShellRef = useRef<HTMLDivElement | null>(null);
-  const headerThemeFrame = useRef<number | null>(null);
 
   const disciplines = useMemo(() => {
     const set = new Set<string>();
@@ -120,64 +107,16 @@ const ChampionsGalleryRevealSection = ({
 
   const revealGallery = !enableTitleReveal || galleryExpanded;
   const revealPhotoFocus = revealGallery;
-  const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealGallery;
-  const focusSurfaceTransition =
-    "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const focusFadeTransition =
-    "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const titleColorTransition =
-    "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const galleryReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const galleryRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const galleryCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const galleryBodyReveal = galleryReveal;
-  const readMoreReveal = motionEnabled
-    ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: galleryReveal.duration }
-    : undefined;
-  const galleryLayoutTransition = motionEnabled ? { layout: galleryReveal } : undefined;
   const galleryMinHeight = enableTitleReveal ? "min-h-[calc(700px+16rem)]" : null;
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"],
-  });
-  const parallaxY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
-  );
-  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
-  const backgroundScale = parallaxEnabled ? 1.32 : 1;
-  const backgroundScaleTransition = revealGallery ? galleryReveal : galleryCollapse;
-
-  const headingContainer = {
-    hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
-  } as const;
-
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: galleryReveal },
-  } as const;
 
   const handleGalleryExpand = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
     setGalleryExpanded(true);
-    headerThemeFrame.current = requestAnimationFrame(() => {
-      setHeaderThemeReady(true);
-      headerThemeFrame.current = null;
-    });
+    setHeaderThemeReady(true);
   };
 
   const handleGalleryCollapse = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-      headerThemeFrame.current = null;
-    }
     setHeaderThemeReady(false);
     setGalleryExpanded(false);
   };
@@ -187,27 +126,19 @@ const ChampionsGalleryRevealSection = ({
     const node = galleryShellRef.current;
     if (!node) return;
 
-    let frame = 0;
     const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
+      const nextHeight = Math.ceil(node.getBoundingClientRect().height);
+      setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
     };
 
     updateHeight();
 
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
-    }
+    if (typeof ResizeObserver === "undefined") return;
 
     const observer = new ResizeObserver(updateHeight);
     observer.observe(node);
 
     return () => {
-      cancelAnimationFrame(frame);
       observer.disconnect();
     };
   }, [
@@ -218,22 +149,10 @@ const ChampionsGalleryRevealSection = ({
     champions.length,
   ]);
 
-  useEffect(() => () => {
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
-  }, []);
-
   return (
     <>
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <motion.div
-          className="absolute inset-0 will-change-transform"
-          style={parallaxStyle}
-          initial={false}
-          animate={motionEnabled ? { scale: backgroundScale } : undefined}
-          transition={motionEnabled ? backgroundScaleTransition : undefined}
-        >
+        <div className="absolute inset-0">
           <Image
             src={background.url}
             alt={background.alt}
@@ -242,11 +161,10 @@ const ChampionsGalleryRevealSection = ({
             className="object-cover"
             loading="lazy"
           />
-        </motion.div>
+        </div>
         <div
           className={cn(
             "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
             revealGallery ? "opacity-0" : "opacity-100",
           )}
           aria-hidden
@@ -254,23 +172,13 @@ const ChampionsGalleryRevealSection = ({
         <div
           className={cn(
             "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
             revealPhotoFocus ? "opacity-100" : "opacity-0",
           )}
           aria-hidden
         />
         <div
           className={cn(
-            "pointer-events-none absolute inset-0 film-grain",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-20" : "opacity-0",
-          )}
-          aria-hidden="true"
-        />
-        <div
-          className={cn(
             "pointer-events-none absolute inset-0 overlay-gradient-ink",
-            focusFadeTransition,
             revealPhotoFocus ? "opacity-100" : "opacity-0",
           )}
           aria-hidden
@@ -278,306 +186,197 @@ const ChampionsGalleryRevealSection = ({
       </div>
 
       <Container size="xl" className="relative z-10">
-        <motion.div
+        <div
           ref={galleryShellRef}
           style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
           className={cn(
             "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            focusSurfaceTransition,
             revealPhotoFocus
               ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
               : "border-transparent bg-transparent shadow-none backdrop-blur-none",
             galleryMinHeight,
           )}
         >
-          <LayoutGroup id="heritage-champions-title">
-            <AnimatePresence initial={false}>
-              {revealGallery ? (
-                <motion.div
-                  key="heritage-champions-header"
-                  className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
-                  initial={motionEnabled ? { opacity: 0 } : false}
-                  animate={motionEnabled ? { opacity: 1, transition: galleryReveal } : undefined}
-                  exit={motionEnabled ? { opacity: 0, transition: galleryRevealFast } : undefined}
+          {revealGallery ? (
+            <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8">
+              <div className="space-y-3">
+                <div className="relative">
+                  <Heading
+                    id="heritage-champions-heading"
+                    level={2}
+                    size="xl"
+                    className={headerThemeReady ? "text-ink" : "text-white"}
+                  >
+                    {heading}
+                  </Heading>
+                </div>
+                <div className="relative">
+                  <Text
+                    className={cn(
+                      "type-section-subtitle",
+                      headerThemeReady ? "text-ink-muted" : "text-white",
+                    )}
+                  >
+                    {subheading}
+                  </Text>
+                </div>
+              </div>
+              {enableTitleReveal ? (
+                <button
+                  type="button"
+                  className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+                  onClick={handleGalleryCollapse}
                 >
-                  <motion.div
-                    className="space-y-3"
-                    variants={headingContainer}
-                    initial={motionEnabled ? "hidden" : false}
-                    animate={motionEnabled ? "show" : undefined}
-                  >
-                    <motion.div
-                      layoutId="heritage-champions-title"
-                      layoutCrossfade={false}
-                      transition={galleryLayoutTransition}
-                      className="relative"
-                    >
-                      <Heading
-                        id="heritage-champions-heading"
-                        level={2}
-                        size="xl"
-                        className={cn(
-                          titleColorTransition,
-                          headerThemeReady ? "text-ink" : "text-white",
-                        )}
-                      >
-                        {heading}
-                      </Heading>
-                    </motion.div>
-                    <motion.div
-                      layoutId="heritage-champions-subtitle"
-                      layoutCrossfade={false}
-                      transition={galleryLayoutTransition}
-                      className="relative"
-                    >
-                      <motion.div variants={headingItem}>
-                        <Text
-                          className={cn(
-                            "type-section-subtitle",
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink-muted" : "text-white",
-                          )}
-                        >
-                          {subheading}
-                        </Text>
-                      </motion.div>
-                    </motion.div>
-                  </motion.div>
-                  {enableTitleReveal ? (
-                    <button
-                      type="button"
-                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                      onClick={handleGalleryCollapse}
-                    >
-                      Collapse
-                    </button>
-                  ) : null}
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="heritage-champions-collapsed"
-                  className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
-                  animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
-                  exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
-                  transition={motionEnabled ? galleryRevealFast : undefined}
+                  Collapse
+                </button>
+              ) : null}
+            </div>
+          ) : (
+            <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
+              <div className="relative inline-flex text-white">
+                <Heading
+                  id="heritage-champions-heading"
+                  level={2}
+                  size="xl"
+                  className="type-section-collapsed"
                 >
-                  <motion.div
-                    layoutId="heritage-champions-title"
-                    layoutCrossfade={false}
-                    transition={galleryLayoutTransition}
-                    className="relative inline-flex text-white"
-                  >
-                    <Heading
-                      id="heritage-champions-heading"
-                      level={2}
-                      size="xl"
-                      className="type-section-collapsed"
-                    >
-                      {heading}
-                    </Heading>
-                    <button
-                      type="button"
-                      className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                      onPointerEnter={handleGalleryExpand}
-                      onFocus={handleGalleryExpand}
-                      onClick={handleGalleryExpand}
-                      aria-expanded={revealGallery}
-                      aria-controls="heritage-champions-body"
-                      aria-labelledby="heritage-champions-heading"
-                    >
-                      <span className="sr-only">Expand {heading}</span>
-                    </button>
-                  </motion.div>
-                  <motion.div
-                    layoutId="heritage-champions-subtitle"
-                    layoutCrossfade={false}
-                    transition={galleryLayoutTransition}
-                    className="relative text-white"
-                  >
-                    <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                      {subheading}
-                    </Text>
-                  </motion.div>
-                  <motion.div
-                    initial={motionEnabled ? { opacity: 0, y: 6 } : false}
-                    animate={motionEnabled ? { opacity: 1, y: 0, transition: readMoreReveal } : undefined}
-                    exit={motionEnabled ? { opacity: 0, y: 6, transition: galleryRevealFast } : undefined}
-                    className="mt-3"
-                  >
-                    <Text
-                      size="button"
-                      className="text-white/80 cursor-pointer focus-ring"
-                      asChild
-                    >
-                      <button type="button" onClick={handleGalleryExpand}>
-                        Read more
-                      </button>
-                    </Text>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </LayoutGroup>
+                  {heading}
+                </Heading>
+                <button
+                  type="button"
+                  className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                  onPointerEnter={handleGalleryExpand}
+                  onFocus={handleGalleryExpand}
+                  onClick={handleGalleryExpand}
+                  aria-expanded={revealGallery}
+                  aria-controls="heritage-champions-body"
+                  aria-labelledby="heritage-champions-heading"
+                >
+                  <span className="sr-only">Expand {heading}</span>
+                </button>
+              </div>
+              <div className="relative text-white">
+                <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+                  {subheading}
+                </Text>
+              </div>
+              <div className="mt-3">
+                <Text
+                  size="button"
+                  className="text-white/80 cursor-pointer focus-ring"
+                  asChild
+                >
+                  <button type="button" onClick={handleGalleryExpand}>
+                    Read more
+                  </button>
+                </Text>
+              </div>
+            </div>
+          )}
 
-          <AnimatePresence initial={false}>
-            {revealGallery ? (
-              <motion.div
-                key="heritage-champions-body"
-                id="heritage-champions-body"
-                className="space-y-6"
-                initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
-                animate={
-                  motionEnabled
-                    ? { opacity: 1, y: 0, filter: "blur(0px)", transition: galleryBodyReveal }
-                    : undefined
-                }
-                exit={
-                  motionEnabled
-                    ? { opacity: 0, y: -16, filter: "blur(10px)", transition: galleryCollapse }
-                    : undefined
-                }
-              >
-                {disciplines.length ? (
-                  <motion.div
-                    initial={motionEnabled ? { opacity: 0, y: 12, filter: "blur(10px)" } : false}
-                    animate={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-                    transition={motionEnabled ? homeMotion.revealFast : undefined}
+          {revealGallery ? (
+            <div id="heritage-champions-body" className="space-y-6">
+              {disciplines.length ? (
+                <div>
+                  <fieldset
+                    className="flex flex-wrap gap-2 border-0 p-0"
+                    aria-label="Filter champions by discipline"
                   >
-                    <LayoutGroup id="heritage-champions-discipline-filter">
-                      <fieldset
-                        className="flex flex-wrap gap-2 border-0 p-0"
-                        aria-label="Filter champions by discipline"
-                      >
-                        <legend className="sr-only">Filter champions by discipline</legend>
-                        <motion.button
+                    <legend className="sr-only">Filter champions by discipline</legend>
+                    <button
+                      type="button"
+                      aria-pressed={activeDiscipline === null}
+                      className={cn(
+                        "relative overflow-hidden pill border type-button focus-ring",
+                        activeDiscipline === null
+                          ? "border-perazzi-red text-perazzi-red"
+                          : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
+                      )}
+                      onClick={() => { setActiveDiscipline(null); }}
+                    >
+                      {activeDiscipline === null ? (
+                        <span
+                          className="absolute inset-0 rounded-[0.125rem] bg-perazzi-red/10"
+                          aria-hidden="true"
+                        />
+                      ) : null}
+                      <span className="relative z-10">All</span>
+                    </button>
+                    {disciplines.map((discipline) => {
+                      const active = activeDiscipline === discipline;
+                      return (
+                        <button
+                          key={discipline}
                           type="button"
-                          aria-pressed={activeDiscipline === null}
+                          aria-pressed={active}
                           className={cn(
-                            "relative overflow-hidden pill border type-button focus-ring transition",
-                            activeDiscipline === null
+                            "relative overflow-hidden pill border type-button focus-ring",
+                            active
                               ? "border-perazzi-red text-perazzi-red"
                               : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
                           )}
-                          onClick={() => { setActiveDiscipline(null); }}
-                          whileTap={motionEnabled ? { scale: 0.98 } : undefined}
-                          transition={motionEnabled ? homeMotion.micro : undefined}
+                          onClick={() => setActiveDiscipline(active ? null : discipline)}
                         >
-                          {activeDiscipline === null ? (
-                            <motion.span
-                              layoutId="heritage-champions-discipline-highlight"
+                          {active ? (
+                            <span
                               className="absolute inset-0 rounded-[0.125rem] bg-perazzi-red/10"
-                              transition={homeMotion.springHighlight}
                               aria-hidden="true"
                             />
                           ) : null}
-                          <span className="relative z-10">All</span>
-                        </motion.button>
-                        {disciplines.map((discipline) => {
-                          const active = activeDiscipline === discipline;
-                          return (
-                            <motion.button
-                              key={discipline}
-                              type="button"
-                              aria-pressed={active}
-                              className={cn(
-                                "relative overflow-hidden pill border type-button focus-ring transition",
-                                active
-                                  ? "border-perazzi-red text-perazzi-red"
-                                  : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
-                              )}
-                              onClick={() =>
-                                setActiveDiscipline(active ? null : discipline)
-                              }
-                              whileTap={motionEnabled ? { scale: 0.98 } : undefined}
-                              transition={motionEnabled ? homeMotion.micro : undefined}
-                            >
-                              {active ? (
-                                <motion.span
-                                  layoutId="heritage-champions-discipline-highlight"
-                                  className="absolute inset-0 rounded-[0.125rem] bg-perazzi-red/10"
-                                  transition={homeMotion.springHighlight}
-                                  aria-hidden="true"
-                                />
-                              ) : null}
-                              <span className="relative z-10">{discipline}</span>
-                            </motion.button>
-                          );
-                        })}
-                      </fieldset>
-                    </LayoutGroup>
-                  </motion.div>
-                ) : null}
+                          <span className="relative z-10">{discipline}</span>
+                        </button>
+                      );
+                    })}
+                  </fieldset>
+                </div>
+              ) : null}
 
-                <motion.div
-                  className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)] lg:items-start"
-                  initial={motionEnabled ? { opacity: 0, y: 18, filter: "blur(10px)" } : false}
-                  animate={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-                  transition={motionEnabled ? homeMotion.reveal : undefined}
-                >
-                  <div className="rounded-2xl bg-card/0 p-4 sm:rounded-3xl">
-                    <Text
-                      size="label-tight"
-                      className="mb-3 text-ink-muted"
-                      leading="normal"
-                    >
-                      {championsLabel}
+              <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)] lg:items-start">
+                <div className="rounded-2xl bg-card/0 p-4 sm:rounded-3xl">
+                  <Text
+                    size="label-tight"
+                    className="mb-3 text-ink-muted"
+                    leading="normal"
+                  >
+                    {championsLabel}
+                  </Text>
+
+                  {filteredChampions.length ? (
+                    <ul className="space-y-1" aria-label="Select a champion to view their profile">
+                      {filteredChampions.map((champion) => (
+                        <ChampionNameItem
+                          key={champion.id}
+                          champion={champion}
+                          isActive={champion.id === activeChampionId}
+                          onSelect={() => {
+                            setSelectedChampionId(champion.id);
+                            logAnalytics(`ChampionProfileSelected:${champion.id}`);
+                          }}
+                        />
+                      ))}
+                    </ul>
+                  ) : (
+                    <Text size="sm" className="text-ink-muted">
+                      No champions in this discipline yet—select another to continue exploring the lineage.
                     </Text>
+                  )}
+                </div>
 
-                    {filteredChampions.length ? (
-                      <ul className="space-y-1" aria-label="Select a champion to view their profile">
-                        {filteredChampions.map((champion) => (
-                          <ChampionNameItem
-                            key={champion.id}
-                            champion={champion}
-                            isActive={champion.id === activeChampionId}
-                            reduceMotion={!motionEnabled}
-                            onSelect={() => {
-                              setSelectedChampionId(champion.id);
-                              logAnalytics(`ChampionProfileSelected:${champion.id}`);
-                            }}
-                          />
-                        ))}
-                      </ul>
-                    ) : (
-                      <Text size="sm" className="text-ink-muted">
-                        No champions in this discipline yet—select another to continue exploring the lineage.
-                      </Text>
-                    )}
-                  </div>
-
-                  <div className="min-h-72 rounded-2xl border border-border/75 bg-card/75 p-5 shadow-soft sm:rounded-3xl">
-                    <AnimatePresence mode="wait">
-                      {selectedChampion ? (
-                        <motion.div
-                          key={selectedChampion.id}
-                          initial={motionEnabled ? { opacity: 0, y: 12, filter: "blur(10px)" } : false}
-                          animate={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-                          exit={motionEnabled ? { opacity: 0, y: -10, filter: "blur(8px)" } : undefined}
-                          transition={motionEnabled ? homeMotion.micro : undefined}
-                          className="flex flex-col gap-6"
-                        >
-                          <ChampionDetail champion={selectedChampion} cardCtaLabel={cardCtaLabel} />
-                        </motion.div>
-                      ) : (
-                        <motion.p
-                          key="no-champion"
-                          initial={motionEnabled ? { opacity: 0 } : false}
-                          animate={motionEnabled ? { opacity: 1 } : undefined}
-                          exit={motionEnabled ? { opacity: 0 } : undefined}
-                          transition={motionEnabled ? homeMotion.micro : undefined}
-                          className="type-body-sm text-ink-muted"
-                        >
-                          Select a champion on the left to view their story.
-                        </motion.p>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                </motion.div>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-        </motion.div>
+                <div className="min-h-72 rounded-2xl border border-border/75 bg-card/75 p-5 shadow-soft sm:rounded-3xl">
+                  {selectedChampion ? (
+                    <div className="flex flex-col gap-6">
+                      <ChampionDetail champion={selectedChampion} cardCtaLabel={cardCtaLabel} />
+                    </div>
+                  ) : (
+                    <p className="type-body-sm text-ink-muted">
+                      Select a champion on the left to view their story.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </div>
       </Container>
     </>
   );
@@ -586,11 +385,10 @@ const ChampionsGalleryRevealSection = ({
 type ChampionNameItemProps = Readonly<{
   champion: ChampionEvergreen;
   isActive: boolean;
-  reduceMotion: boolean;
   onSelect: () => void;
 }>;
 
-function ChampionNameItem({ champion, isActive, reduceMotion, onSelect }: ChampionNameItemProps) {
+function ChampionNameItem({ champion, isActive, onSelect }: ChampionNameItemProps) {
   const analyticsRef = useAnalyticsObserver<HTMLLIElement>(
     `ChampionListItemViewed:${champion.id}`,
     { threshold: 0.3 },
@@ -601,25 +399,23 @@ function ChampionNameItem({ champion, isActive, reduceMotion, onSelect }: Champi
       ref={analyticsRef}
       data-analytics-id={`ChampionListItemViewed:${champion.id}`}
     >
-      <motion.button
+      <button
         type="button"
         onClick={onSelect}
         className={cn(
-          "group relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left transition-colors focus-ring",
+          "relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left focus-ring",
           isActive
             ? "bg-perazzi-red text-card"
             : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
         )}
         aria-pressed={isActive}
-        whileHover={reduceMotion ? undefined : { x: 4, transition: homeMotion.micro }}
-        whileTap={reduceMotion ? undefined : { scale: 0.99 }}
       >
         {champion.title ? (
           <span className={cn("block type-card-title text-xl text-ink", isActive && "text-white")}>
             {champion.title}
           </span>
         ) : null}
-      </motion.button>
+      </button>
     </li>
   );
 }
@@ -633,18 +429,16 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
   return (
     <>
       <div
-        className="group relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-[3/2]"
+        className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-[3/2]"
       >
         <Image
           src={champion.image.url}
           alt={champion.image.alt}
           fill
           sizes="(min-width: 1024px) 320px, 100vw"
-          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+          className="object-cover"
           loading="lazy"
         />
-        <div className="pointer-events-none absolute inset-0 film-grain opacity-12" aria-hidden="true" />
-        <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
         <div
           className={cn(
             "pointer-events-none absolute inset-0 bg-linear-to-t",
