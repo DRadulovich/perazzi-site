@@ -20,6 +20,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { logAnalytics } from "@/lib/analytics";
 import { homeMotion } from "@/lib/motionConfig";
 import {
+  COLLAPSE_TIME_SCALE,
   CONTAINER_EXPAND_MS,
   EASE_CINEMATIC,
   EXPANDED_HEADER_REVEAL_MS,
@@ -174,13 +175,11 @@ const BuildStepsRevealSection = ({
   sectionRef,
 }: BuildStepsRevealSectionProps) => {
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const [activeStepId, setActiveStepId] = useState<string | undefined>(
     () => initialStepId ?? steps[0]?.id,
   );
   const [openStepId, setOpenStepId] = useState<string | undefined>(undefined);
 
-  const buildStepsShellRef = useRef<HTMLDivElement | null>(null);
   const headerThemeFrame = useRef<number | null>(null);
   const seenStepsRef = useRef(new Set<string>());
   const stepRefs = useRef<(HTMLElement | null)[]>([]);
@@ -204,6 +203,7 @@ const BuildStepsRevealSection = ({
     : undefined;
 
   const revealBuildSteps = phase === "expanded" || phase === "closingHold";
+  const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
   const revealPhotoFocus = revealBuildSteps;
   const parallaxStrength = "16%";
   const parallaxEnabled = enableTitleReveal && !revealBuildSteps && motionEnabled;
@@ -225,7 +225,6 @@ const BuildStepsRevealSection = ({
         },
       }
     : undefined;
-  const buildStepsMinHeight = enableTitleReveal ? "min-h-[calc(80vh+16rem)]" : null;
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
@@ -291,9 +290,18 @@ const BuildStepsRevealSection = ({
   const bodyItem = slotVariants.content;
   const ctaItem = slotVariants.ctaRow;
   const surfaceItem = surfaceVariants.content;
+  const containerLayoutTransition = {
+    layout: {
+      duration: motionEnabled
+        ? (CONTAINER_EXPAND_MS / 1000) * (isCollapsedPhase ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
+        : 0,
+      ease: EASE_CINEMATIC,
+    },
+  };
   const glassStyle = {
-    ...(enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : {}),
     ...focusSurfaceStyle,
+    height: isCollapsedPhase ? "40vh" : "auto",
+    overflow: isCollapsedPhase ? "hidden" : "visible",
   };
 
   const instructions =
@@ -443,36 +451,6 @@ const BuildStepsRevealSection = ({
     };
   }, [revealBuildSteps, updateActiveStepFromScroll]);
 
-  useEffect(() => {
-    if (!enableTitleReveal || !revealBuildSteps) return;
-    const node = buildStepsShellRef.current;
-    if (!node) return;
-
-    let frame = 0;
-    const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
-    }
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealBuildSteps, resolvedActiveStepId, resolvedOpenStepId, steps.length]);
-
   useEffect(() => () => {
     if (headerThemeFrame.current !== null) {
       cancelAnimationFrame(headerThemeFrame.current);
@@ -521,7 +499,6 @@ const BuildStepsRevealSection = ({
 
       <div className="relative z-10 mx-auto flex w-full max-w-7xl px-6 lg:px-10">
         <motion.div
-          ref={buildStepsShellRef}
           style={glassStyle}
           className={cn(
             "relative flex w-full flex-col space-y-8 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
@@ -529,10 +506,11 @@ const BuildStepsRevealSection = ({
             revealPhotoFocus
               ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
               : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            buildStepsMinHeight,
           )}
           variants={slotVariants.glass}
           onKeyDown={onEscapeKeyDown}
+          layout
+          transition={containerLayoutTransition}
         >
           <LayoutGroup id="bespoke-build-steps-title">
             {showExpanded ? (

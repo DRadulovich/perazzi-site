@@ -10,6 +10,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { logAnalytics } from "@/lib/analytics";
 import { homeMotion } from "@/lib/motionConfig";
 import {
+  COLLAPSE_TIME_SCALE,
   CONTAINER_EXPAND_MS,
   EASE_CINEMATIC,
   EXPANDED_HEADER_REVEAL_MS,
@@ -117,8 +118,6 @@ function TimelineRevealSection({
   resolvedActiveStage,
 }: TimelineRevealSectionProps) {
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
-  const timelineShellRef = useRef<HTMLDivElement | null>(null);
   const headerThemeFrame = useRef<number | null>(null);
   const {
     expanded,
@@ -141,6 +140,7 @@ function TimelineRevealSection({
   const backgroundAlt = framing.background?.alt ?? "Perazzi workshop background";
 
   const revealTimeline = phase === "expanded" || phase === "closingHold";
+  const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
   const revealPhotoFocus = revealTimeline;
   const parallaxStrength = "16%";
   const parallaxEnabled = enableTitleReveal && !revealTimeline && motionEnabled;
@@ -161,7 +161,6 @@ function TimelineRevealSection({
         },
       }
     : undefined;
-  const timelineMinHeight = enableTitleReveal ? "min-h-[calc(640px+18rem)]" : null;
   const { scrollYProgress } = useScroll({
     target: scrollRef,
     offset: ["start end", "end start"],
@@ -223,9 +222,18 @@ function TimelineRevealSection({
   const bodyItem = slotVariants.content;
   const ctaItem = slotVariants.ctaRow;
   const surfaceItem = surfaceVariants.content;
+  const containerLayoutTransition = {
+    layout: {
+      duration: motionEnabled
+        ? (CONTAINER_EXPAND_MS / 1000) * (isCollapsedPhase ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
+        : 0,
+      ease: EASE_CINEMATIC,
+    },
+  };
   const glassStyle = {
-    ...(enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : {}),
     ...focusSurfaceStyle,
+    height: isCollapsedPhase ? "40vh" : "auto",
+    overflow: isCollapsedPhase ? "hidden" : "visible",
   };
 
   const handleTimelineExpand = () => {
@@ -248,36 +256,6 @@ function TimelineRevealSection({
     setHeaderThemeReady(false);
     close();
   };
-
-  useEffect(() => {
-    if (!enableTitleReveal || !revealTimeline) return;
-    const node = timelineShellRef.current;
-    if (!node) return;
-
-    let frame = 0;
-    const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
-    }
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealTimeline, resolvedActiveStage]);
 
   useEffect(() => () => {
     if (headerThemeFrame.current !== null) {
@@ -328,7 +306,6 @@ function TimelineRevealSection({
       >
         <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
           <motion.div
-            ref={timelineShellRef}
             style={glassStyle}
             className={cn(
               "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
@@ -336,10 +313,11 @@ function TimelineRevealSection({
               revealPhotoFocus
                 ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
                 : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-              timelineMinHeight,
             )}
             variants={slotVariants.glass}
             onKeyDown={onEscapeKeyDown}
+            layout
+            transition={containerLayoutTransition}
           >
             <LayoutGroup id="craft-timeline-title">
               {showExpanded ? (

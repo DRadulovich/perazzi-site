@@ -17,6 +17,16 @@ export const CONTENT_REVEAL_MS = 550;
 export const LIST_REVEAL_MS = 550;
 export const CTA_REVEAL_MS = 550;
 
+export const EXPAND_GLASS_DELAY_MS = 60;
+export const EXPAND_HEADER_DELAY_MS = 120;
+export const EXPAND_CONTENT_DELAY_MS = 180;
+export const EXPAND_CTA_DELAY_MS = 240;
+
+export const COLLAPSE_GLASS_DELAY_MS = 90;
+export const COLLAPSE_HEADER_DELAY_MS = 60;
+export const COLLAPSE_CONTENT_DELAY_MS = 30;
+export const COLLAPSE_CTA_DELAY_MS = 0;
+
 export const STAGGER_HEADER_ITEMS_MS = 120;
 export const STAGGER_BODY_ITEMS_MS = 100;
 export const STAGGER_LIST_ITEMS_MS = 120;

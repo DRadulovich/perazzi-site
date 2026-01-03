@@ -383,9 +383,6 @@ const DisciplineRailRevealSection = ({
   sectionRef,
 }: DisciplineRailRevealSectionProps) => {
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
-  const railShellRef = useRef<HTMLDivElement | null>(null);
-  const railContentRef = useRef<HTMLDivElement | null>(null);
   const headerThemeFrame = useRef<number | null>(null);
   const {
     expanded,
@@ -399,6 +396,7 @@ const DisciplineRailRevealSection = ({
   } = useExpandableSectionTimeline({ defaultExpanded: false });
 
   const revealRail = phase === "expanded" || phase === "closingHold";
+  const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
   const revealPhotoFocus = revealRail;
   const parallaxStrength = "16%";
   const parallaxEnabled = enableTitleReveal && !revealRail && motionEnabled;
@@ -420,7 +418,6 @@ const DisciplineRailRevealSection = ({
         },
       }
     : undefined;
-  const railMinHeight = enableTitleReveal ? "min-h-[calc(600px+12rem)]" : null;
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
@@ -485,9 +482,18 @@ const DisciplineRailRevealSection = ({
   const collapsedHeaderItem = slotVariants.collapsedHeader;
   const bodyItem = slotVariants.content;
   const surfaceItem = surfaceVariants.content;
+  const containerLayoutTransition = {
+    layout: {
+      duration: motionEnabled
+        ? (CONTAINER_EXPAND_MS / 1000) * (isCollapsedPhase ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
+        : 0,
+      ease: EASE_CINEMATIC,
+    },
+  };
   const glassStyle = {
-    ...(enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : {}),
     ...focusSurfaceStyle,
+    height: isCollapsedPhase ? "40vh" : "auto",
+    overflow: isCollapsedPhase ? "hidden" : "visible",
   };
 
   const handleExpand = () => {
@@ -563,43 +569,6 @@ const DisciplineRailRevealSection = ({
         exit: { opacity: 0, transition: exitTransition },
       };
 
-  useEffect(() => {
-    if (!enableTitleReveal || !revealRail) return;
-    const node = railShellRef.current;
-    if (!node) return;
-
-    let frame = 0;
-    const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const contentNode = railContentRef.current;
-        const contentHeight = contentNode?.getBoundingClientRect().height ?? node.getBoundingClientRect().height;
-        const styles = window.getComputedStyle(node);
-        const paddingTop = Number.parseFloat(styles.paddingTop) || 0;
-        const paddingBottom = Number.parseFloat(styles.paddingBottom) || 0;
-        const borderTop = Number.parseFloat(styles.borderTopWidth) || 0;
-        const borderBottom = Number.parseFloat(styles.borderBottomWidth) || 0;
-        const nextHeight = Math.ceil(contentHeight + paddingTop + paddingBottom + borderTop + borderBottom);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
-    }
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealRail, openCategory, activeDisciplineId]);
-
   useEffect(() => () => {
     if (headerThemeFrame.current !== null) {
       cancelAnimationFrame(headerThemeFrame.current);
@@ -641,7 +610,6 @@ const DisciplineRailRevealSection = ({
 
       <Container size="xl" className="relative z-10">
         <motion.div
-          ref={railShellRef}
           style={glassStyle}
           className={cn(
             "relative rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
@@ -649,12 +617,13 @@ const DisciplineRailRevealSection = ({
             revealPhotoFocus
               ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
               : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            railMinHeight,
           )}
           variants={slotVariants.glass}
           onKeyDown={onEscapeKeyDown}
+          layout
+          transition={containerLayoutTransition}
         >
-          <div ref={railContentRef} className="flex flex-col space-y-6">
+          <div className="flex flex-col space-y-6">
             <LayoutGroup id="shotguns-discipline-rail-title">
               {showExpanded ? (
                 <motion.div

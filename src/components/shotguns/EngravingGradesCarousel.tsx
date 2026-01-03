@@ -48,7 +48,6 @@ type EngravingRevealSectionProps = {
   readonly subheading: string;
   readonly background: EngravingCarouselBackground;
   readonly ctaLabel: string;
-  readonly openCategory: string | null;
   readonly setOpenCategory: Dispatch<SetStateAction<string | null>>;
   readonly resolvedOpenCategory: string | null;
   readonly activeGradeId: string | null;
@@ -179,7 +178,6 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
         subheading={subheading}
         background={background}
         ctaLabel={ctaLabel}
-        openCategory={openCategory}
         setOpenCategory={setOpenCategory}
         resolvedOpenCategory={resolvedOpenCategory}
         activeGradeId={resolvedActiveGradeId}
@@ -199,7 +197,6 @@ const EngravingGradesRevealSection = ({
   subheading,
   background,
   ctaLabel,
-  openCategory,
   setOpenCategory,
   resolvedOpenCategory,
   activeGradeId,
@@ -209,8 +206,6 @@ const EngravingGradesRevealSection = ({
   sectionRef,
 }: EngravingRevealSectionProps) => {
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
-  const carouselShellRef = useRef<HTMLDivElement | null>(null);
   const headerThemeFrame = useRef<number | null>(null);
   const {
     expanded,
@@ -224,6 +219,7 @@ const EngravingGradesRevealSection = ({
   } = useExpandableSectionTimeline({ defaultExpanded: false });
 
   const revealCarousel = phase === "expanded" || phase === "closingHold";
+  const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
   const revealPhotoFocus = revealCarousel;
   const parallaxStrength = "16%";
   const parallaxEnabled = enableTitleReveal && !revealCarousel && motionEnabled;
@@ -245,7 +241,6 @@ const EngravingGradesRevealSection = ({
         },
       }
     : undefined;
-  const carouselMinHeight = enableTitleReveal ? "min-h-[calc(720px+18rem)]" : null;
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
@@ -310,9 +305,18 @@ const EngravingGradesRevealSection = ({
   const collapsedHeaderItem = slotVariants.collapsedHeader;
   const bodyItem = slotVariants.content;
   const surfaceItem = surfaceVariants.content;
+  const containerLayoutTransition = {
+    layout: {
+      duration: motionEnabled
+        ? (CONTAINER_EXPAND_MS / 1000) * (isCollapsedPhase ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
+        : 0,
+      ease: EASE_CINEMATIC,
+    },
+  };
   const glassStyle = {
-    ...(enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : {}),
     ...focusSurfaceStyle,
+    height: isCollapsedPhase ? "40vh" : "auto",
+    overflow: isCollapsedPhase ? "hidden" : "visible",
   };
 
   const handleExpand = () => {
@@ -388,36 +392,6 @@ const EngravingGradesRevealSection = ({
         exit: { opacity: 0, transition: exitTransition },
       };
 
-  useEffect(() => {
-    if (!enableTitleReveal || !revealCarousel) return;
-    const node = carouselShellRef.current;
-    if (!node) return;
-
-    let frame = 0;
-    const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
-    }
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealCarousel, openCategory, activeGradeId]);
-
   useEffect(() => () => {
     if (headerThemeFrame.current !== null) {
       cancelAnimationFrame(headerThemeFrame.current);
@@ -459,7 +433,6 @@ const EngravingGradesRevealSection = ({
 
       <Container size="xl" className="relative z-10">
         <motion.div
-          ref={carouselShellRef}
           style={glassStyle}
           className={cn(
             "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
@@ -467,10 +440,11 @@ const EngravingGradesRevealSection = ({
             revealPhotoFocus
               ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
               : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            carouselMinHeight,
           )}
           variants={slotVariants.glass}
           onKeyDown={onEscapeKeyDown}
+          layout
+          transition={containerLayoutTransition}
         >
           <LayoutGroup id="shotguns-engraving-title">
             {showExpanded ? (

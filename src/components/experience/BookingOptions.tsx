@@ -10,6 +10,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { logAnalytics } from "@/lib/analytics";
 import {
   CONTENT_REVEAL_MS,
+  COLLAPSE_TIME_SCALE,
   CONTAINER_EXPAND_MS,
   EASE_CINEMATIC,
   EXPANDED_HEADER_REVEAL_MS,
@@ -71,12 +72,10 @@ const BookingOptionsRevealSection = ({
   sectionRef,
 }: BookingOptionsRevealSectionProps) => {
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const [schedulerOpen, setSchedulerOpen] = useState(false);
   const [schedulerLoaded, setSchedulerLoaded] = useState(false);
   const [schedulerHeight, setSchedulerHeight] = useState<number | null>(null);
 
-  const bookingShellRef = useRef<HTMLDivElement | null>(null);
   const schedulerContentRef = useRef<HTMLDivElement | null>(null);
   const headerThemeFrame = useRef<number | null>(null);
   const {
@@ -99,6 +98,7 @@ const BookingOptionsRevealSection = ({
   const optionCtaLabel = bookingSection.optionCtaLabel ?? "Reserve this session";
 
   const revealBooking = phase === "expanded" || phase === "closingHold";
+  const isCollapsedPhase = phase === "collapsed" || phase === "prezoom";
   const revealPhotoFocus = revealBooking;
   const parallaxStrength = "16%";
   const parallaxEnabled = enableTitleReveal && !revealBooking && motionEnabled;
@@ -120,7 +120,6 @@ const BookingOptionsRevealSection = ({
         },
       }
     : undefined;
-  const bookingMinHeight = enableTitleReveal ? "min-h-[calc(720px+16rem)]" : null;
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
@@ -181,9 +180,18 @@ const BookingOptionsRevealSection = ({
   const collapsedHeaderItem = slotVariants.collapsedHeader;
   const bodyItem = slotVariants.content;
   const surfaceItem = surfaceVariants.content;
+  const containerLayoutTransition = {
+    layout: {
+      duration: motionEnabled
+        ? (CONTAINER_EXPAND_MS / 1000) * (isCollapsedPhase ? COLLAPSE_TIME_SCALE : EXPAND_TIME_SCALE)
+        : 0,
+      ease: EASE_CINEMATIC,
+    },
+  };
   const glassStyle = {
-    ...(enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : {}),
     ...focusSurfaceStyle,
+    height: isCollapsedPhase ? "40vh" : "auto",
+    overflow: isCollapsedPhase ? "hidden" : "visible",
   };
   const schedulerTransition = motionEnabled
     ? { duration: toSeconds(CONTENT_REVEAL_MS), ease: EASE_CINEMATIC }
@@ -210,36 +218,6 @@ const BookingOptionsRevealSection = ({
     setHeaderThemeReady(false);
     close();
   };
-
-  useEffect(() => {
-    if (!enableTitleReveal || !revealBooking) return;
-    const node = bookingShellRef.current;
-    if (!node) return;
-
-    let frame = 0;
-    const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
-    }
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealBooking, schedulerOpen, schedulerLoaded, options.length]);
 
   useEffect(() => {
     if (!schedulerLoaded) return;
@@ -312,7 +290,6 @@ const BookingOptionsRevealSection = ({
 
       <Container size="xl" className="relative z-10">
         <motion.div
-          ref={bookingShellRef}
           style={glassStyle}
           className={cn(
             "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
@@ -320,10 +297,11 @@ const BookingOptionsRevealSection = ({
             revealPhotoFocus
               ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
               : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            bookingMinHeight,
           )}
           variants={slotVariants.glass}
           onKeyDown={onEscapeKeyDown}
+          layout
+          transition={containerLayoutTransition}
         >
           <LayoutGroup id="experience-booking-title">
             {showExpanded ? (

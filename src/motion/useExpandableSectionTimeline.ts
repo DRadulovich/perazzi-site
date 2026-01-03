@@ -1,9 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type RefObject } from "react";
 
 import {
   COLLAPSE_TIME_SCALE,
+  COLLAPSE_CONTENT_DELAY_MS,
+  COLLAPSE_CTA_DELAY_MS,
+  COLLAPSE_GLASS_DELAY_MS,
+  COLLAPSE_HEADER_DELAY_MS,
   CONTAINER_EXPAND_MS,
   CONTENT_REVEAL_MS,
   CTA_REVEAL_MS,
@@ -33,9 +37,19 @@ export type UseExpandableSectionTimelineOptions = {
   prezoomMs?: number;
   closingHoldMs?: number;
   mountStrategy?: ExpandableSectionMountStrategy;
+  containerRef?: RefObject<HTMLElement | null>;
+  scrollOnExpand?: boolean;
+  scrollOffset?: number;
+  closeOnOutsideClick?: boolean;
 };
 
 const DEFAULT_PREZOOM_MS = PREZOOM_MS * EXPAND_TIME_SCALE;
+const MAX_EXIT_DELAY_MS = Math.max(
+  COLLAPSE_GLASS_DELAY_MS,
+  COLLAPSE_HEADER_DELAY_MS,
+  COLLAPSE_CONTENT_DELAY_MS,
+  COLLAPSE_CTA_DELAY_MS
+);
 const DEFAULT_CLOSING_HOLD_MS =
   (Math.max(
     CONTAINER_EXPAND_MS,
@@ -47,7 +61,7 @@ const DEFAULT_CLOSING_HOLD_MS =
     CONTENT_REVEAL_MS,
     LIST_REVEAL_MS,
     CTA_REVEAL_MS
-  ) + DEFAULT_EXIT_STAGGER_BUFFER_MS) * COLLAPSE_TIME_SCALE;
+  ) + DEFAULT_EXIT_STAGGER_BUFFER_MS + MAX_EXIT_DELAY_MS) * COLLAPSE_TIME_SCALE;
 
 export function useExpandableSectionTimeline(
   options: UseExpandableSectionTimelineOptions = {}
@@ -59,6 +73,10 @@ export function useExpandableSectionTimeline(
     prezoomMs = DEFAULT_PREZOOM_MS,
     closingHoldMs = DEFAULT_CLOSING_HOLD_MS,
     mountStrategy = "presence",
+    containerRef,
+    scrollOnExpand = false,
+    scrollOffset = 16,
+    closeOnOutsideClick = false,
   } = options;
 
   const isControlled = controlledExpanded !== undefined;
@@ -167,6 +185,38 @@ export function useExpandableSectionTimeline(
   const toggle = useCallback(() => {
     setExpanded(!expanded);
   }, [expanded, setExpanded]);
+
+  useEffect(() => {
+    if (!scrollOnExpand || !expanded) return;
+    if (typeof window === "undefined") return;
+    const node = containerRef?.current;
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+    if (rect.top >= scrollOffset) return;
+    const nextTop = Math.max(window.scrollY + rect.top - scrollOffset, 0);
+    window.scrollTo({ top: nextTop, behavior: "smooth" });
+  }, [containerRef, expanded, scrollOffset, scrollOnExpand]);
+
+  useEffect(() => {
+    if (!closeOnOutsideClick || !expanded) return;
+    if (typeof document === "undefined") return;
+    const node = containerRef?.current;
+    if (!node) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!target || !(target instanceof Node)) return;
+      if (node.contains(target)) return;
+      const path = typeof event.composedPath === "function" ? event.composedPath() : [];
+      if (path.includes(node)) return;
+      close();
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [close, closeOnOutsideClick, containerRef, expanded]);
 
   const onTriggerKeyDown = useCallback(
     (event: KeyboardEvent<HTMLElement>) => {

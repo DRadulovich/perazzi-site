@@ -73,7 +73,12 @@ function MarqueeFeatureRevealSection({
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
   const headerThemeFrame = useRef<number | null>(null);
   const { expanded, phase, open, close, onTriggerKeyDown, onEscapeKeyDown } =
-    useExpandableSectionTimeline({ defaultExpanded: false });
+    useExpandableSectionTimeline({
+      defaultExpanded: false,
+      containerRef: scrollRef,
+      scrollOnExpand: true,
+      closeOnOutsideClick: true,
+    });
 
   const ratio = champion.image.aspectRatio ?? 3 / 4;
   const background = ui.background ?? {
@@ -184,7 +189,7 @@ function MarqueeFeatureRevealSection({
   };
   const glassStyle = {
     ...focusSurfaceStyle,
-    height: isCollapsedPhase ? "60vh" : "auto",
+    height: isCollapsedPhase ? "40vh" : "auto",
     overflow: isCollapsedPhase ? "hidden" : "visible",
   };
 
