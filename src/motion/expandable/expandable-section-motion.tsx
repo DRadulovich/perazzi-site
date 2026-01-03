@@ -23,7 +23,20 @@ import {
 
 export type ExpandablePhase = "collapsed" | "expanding" | "expanded" | "collapsing";
 export type ExpandableAction = "open" | "close" | "toggle";
+export type ExpandableTriggerKind = "header" | "cta" | "custom";
 export type EaseToken = Easing;
+
+export type ExpandableInteractionPolicy = {
+  hoverTease: boolean;
+  allowHeaderClick: boolean;
+  allowCtaClick: boolean;
+};
+
+export const DEFAULT_INTERACTION_POLICY: ExpandableInteractionPolicy = {
+  hoverTease: true,
+  allowHeaderClick: true,
+  allowCtaClick: true,
+};
 
 export type ExpandableMotionSpec = {
   timeScale: {
@@ -39,7 +52,6 @@ export type ExpandableMotionSpec = {
   timing: {
     expand: {
       preZoom: number;
-      container: number;
       scrim: number;
       headerCollapsedExit: number;
       glassIn: number;
@@ -53,7 +65,6 @@ export type ExpandableMotionSpec = {
     };
     collapse: {
       preZoom: number;
-      container: number;
       scrim: number;
       headerCollapsedIn: number;
       glassOut: number;
@@ -129,6 +140,8 @@ export type DeepPartial<T> = {
       : T[K];
 };
 
+export type SectionOverride = DeepPartial<ExpandableMotionSpec>;
+
 export const ES_SELECTORS = {
   bg: '[data-es="bg"]',
   scrimTop: '[data-es="scrim-top"]',
@@ -146,10 +159,10 @@ export const ES_SELECTORS = {
   char: '[data-es="char"]',
 } as const;
 
-export const DEFAULT_SPEC: ExpandableMotionSpec = {
+export const DEFAULT_ESMS_SPEC: ExpandableMotionSpec = {
   timeScale: {
-    expand: 1,
-    collapse: 0.5,
+    expand: 1.2,
+    collapse: 0.65,
   },
   ease: {
     container: [0.16, 1, 0.3, 1],
@@ -159,48 +172,46 @@ export const DEFAULT_SPEC: ExpandableMotionSpec = {
   },
   timing: {
     expand: {
-      preZoom: 0.22,
-      container: 0.18,
-      scrim: 0.25,
-      headerCollapsedExit: 0.2,
-      glassIn: 0.32,
-      headerExpandedIn: 0.28,
-      mainIn: 0.3,
-      metaIn: 0.24,
-      bodyIn: 0.28,
-      listIn: 0.32,
-      ctaIn: 0.24,
-      bgSettle: 0.35,
+      preZoom: 0.55,
+      scrim: 0.75,
+      headerCollapsedExit: 0.5,
+      glassIn: 0.85,
+      headerExpandedIn: 0.8,
+      mainIn: 0.9,
+      metaIn: 0.65,
+      bodyIn: 0.8,
+      listIn: 0.9,
+      ctaIn: 0.6,
+      bgSettle: 1,
     },
     collapse: {
-      preZoom: 0.14,
-      container: 0.12,
-      scrim: 0.2,
-      headerCollapsedIn: 0.2,
-      glassOut: 0.18,
-      headerExpandedOut: 0.18,
-      mainOut: 0.18,
-      metaOut: 0.16,
-      bodyOut: 0.18,
-      listOut: 0.2,
-      ctaOut: 0.16,
-      bgReset: 0.25,
+      preZoom: 0.32,
+      scrim: 0.45,
+      headerCollapsedIn: 0.4,
+      glassOut: 0.35,
+      headerExpandedOut: 0.35,
+      mainOut: 0.35,
+      metaOut: 0.3,
+      bodyOut: 0.35,
+      listOut: 0.4,
+      ctaOut: 0.3,
+      bgReset: 0.55,
     },
     layout: {
-      expand: 0.5,
-      collapse: 0.32,
+      expand: 1.05,
+      collapse: 0.6,
     },
   },
   stagger: {
     expand: {
-      items: 0.06,
-      lines: 0.04,
-      chars: 0.02,
-      maxTotal: 0.4,
+      items: 0.1,
+      lines: 0.06,
+      chars: 0.035,
+      maxTotal: 0.7,
     },
     collapse: {
-      items: 0.03,
-      maxTotal: 0.25,
+      items: 0.05,
+      maxTotal: 0.4,
     },
   },
   distance: {
@@ -241,6 +252,8 @@ export const DEFAULT_SPEC: ExpandableMotionSpec = {
     preserveAnchor: true,
   },
 };
+
+export const DEFAULT_SPEC = DEFAULT_ESMS_SPEC;
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -293,7 +306,6 @@ const reducedMotionSpec = (spec: ExpandableMotionSpec): ExpandableMotionSpec => 
     timing: {
       expand: {
         preZoom: nearInstant,
-        container: nearInstant,
         scrim: nearInstant,
         headerCollapsedExit: nearInstant,
         glassIn: nearInstant,
@@ -307,7 +319,6 @@ const reducedMotionSpec = (spec: ExpandableMotionSpec): ExpandableMotionSpec => 
       },
       collapse: {
         preZoom: nearInstant,
-        container: nearInstant,
         scrim: nearInstant,
         headerCollapsedIn: nearInstant,
         glassOut: nearInstant,
@@ -400,6 +411,7 @@ export function SplitChars({
 type TriggerOptions = ButtonHTMLAttributes<HTMLButtonElement> & {
   action?: "open" | "toggle";
   withHover?: boolean;
+  kind?: ExpandableTriggerKind;
 };
 
 type CloseOptions = ButtonHTMLAttributes<HTMLButtonElement>;
@@ -410,6 +422,7 @@ export type UseExpandableSectionMotionOptions = {
   defaultExpanded?: boolean;
   onOpenStart?: () => void;
   onCloseStart?: () => void;
+  interactionPolicy?: ExpandableInteractionPolicy;
 };
 
 export type ExpandableSectionMotionApi = {
@@ -435,6 +448,7 @@ export function useExpandableSectionMotion({
   defaultExpanded = false,
   onOpenStart,
   onCloseStart,
+  interactionPolicy,
 }: UseExpandableSectionMotionOptions): ExpandableSectionMotionApi {
   const [phase, setPhase] = useState<ExpandablePhase>(
     defaultExpanded ? "expanded" : "collapsed",
@@ -446,6 +460,10 @@ export function useExpandableSectionMotion({
     () => (reducedMotion ? reducedMotionSpec(spec) : spec),
     [spec, reducedMotion],
   );
+  const resolvedInteraction = useMemo(
+    () => ({ ...DEFAULT_INTERACTION_POLICY, ...interactionPolicy }),
+    [interactionPolicy],
+  );
 
   const phaseRef = useRef(phase);
   const visibleRef = useRef(contentVisible);
@@ -453,6 +471,7 @@ export function useExpandableSectionMotion({
   const lastTriggerRef = useRef<HTMLElement | null>(null);
   const anchorRef = useRef<number | null>(null);
   const busyRef = useRef(false);
+  const expandPrepRef = useRef(false);
 
   useEffect(() => {
     phaseRef.current = phase;
@@ -491,7 +510,6 @@ export function useExpandableSectionMotion({
 
   const applyPhaseStyles = useCallback(
     (next: ExpandablePhase) => {
-      const useCharReveal = shouldUseCharReveal();
       if (next === "collapsed") {
         setImmediate(ES_SELECTORS.bg, {
           scale: resolvedSpec.scale.bgCollapsed,
@@ -512,8 +530,8 @@ export function useExpandableSectionMotion({
           y: resolvedSpec.distance.glassY,
         });
         setImmediate(ES_SELECTORS.headerExpanded, {
-          opacity: useCharReveal ? 1 : 0,
-          y: useCharReveal ? 0 : resolvedSpec.distance.headerY,
+          opacity: 0,
+          y: resolvedSpec.distance.headerY,
         });
         setImmediate(ES_SELECTORS.char, {
           opacity: 0,
@@ -594,15 +612,22 @@ export function useExpandableSectionMotion({
         });
       }
     },
-    [resolvedSpec, setImmediate, shouldUseCharReveal],
+    [resolvedSpec, setImmediate],
   );
 
   useLayoutEffect(() => {
     if (!scope.current) return;
     if (phase === "collapsed" || phase === "expanded") {
+      expandPrepRef.current = false;
       applyPhaseStyles(phase);
+      return;
     }
-  }, [applyPhaseStyles, phase, scope]);
+    if (reducedMotion) return;
+    if (phase === "expanding" && contentVisible && !expandPrepRef.current) {
+      expandPrepRef.current = true;
+      applyPhaseStyles("collapsed");
+    }
+  }, [applyPhaseStyles, contentVisible, phase, reducedMotion, scope]);
 
   const captureAnchor = useCallback(() => {
     if (!resolvedSpec.scroll.preserveAnchor) return;
@@ -685,7 +710,8 @@ export function useExpandableSectionMotion({
     }
 
     const sequence: Array<[Element[], Record<string, unknown>, Record<string, unknown>]> = [];
-    let time = resolvedSpec.timing.expand.container * expandScale;
+    const layoutDuration = resolvedSpec.timing.layout.expand * expandScale;
+    let time = layoutDuration;
     const scrimDuration = resolvedSpec.timing.expand.scrim * expandScale;
     const headerExitDuration = resolvedSpec.timing.expand.headerCollapsedExit * expandScale;
     const glassDuration = resolvedSpec.timing.expand.glassIn * expandScale;
@@ -718,6 +744,11 @@ export function useExpandableSectionMotion({
     }, { duration: glassDuration, ease: resolvedSpec.ease.surface, at: time });
     time += glassDuration;
 
+    pushSequence(sequence, ES_SELECTORS.headerExpanded, {
+      opacity: 1,
+      y: 0,
+    }, { duration: headerDuration, ease: resolvedSpec.ease.reveal, at: time });
+
     const useCharReveal = shouldUseCharReveal();
     if (useCharReveal) {
       const chars = getElements(ES_SELECTORS.char);
@@ -738,11 +769,6 @@ export function useExpandableSectionMotion({
           },
         ]);
       }
-    } else {
-      pushSequence(sequence, ES_SELECTORS.headerExpanded, {
-        opacity: 1,
-        y: 0,
-      }, { duration: headerDuration, ease: resolvedSpec.ease.reveal, at: time });
     }
     time += headerDuration;
 
@@ -846,6 +872,7 @@ export function useExpandableSectionMotion({
     const scrimDuration = resolvedSpec.timing.collapse.scrim * collapseScale;
     const headerInDuration = resolvedSpec.timing.collapse.headerCollapsedIn * collapseScale;
     const bgResetDuration = resolvedSpec.timing.collapse.bgReset * collapseScale;
+    const layoutDuration = resolvedSpec.timing.layout.collapse * collapseScale;
 
     const bg = getElements(ES_SELECTORS.bg);
     if (bg.length) {
@@ -902,6 +929,11 @@ export function useExpandableSectionMotion({
     }, { duration: mainDuration, ease: resolvedSpec.ease.exit, at: time });
     time += mainDuration;
 
+    pushSequence(sequence, ES_SELECTORS.headerExpanded, {
+      opacity: 0,
+      y: -resolvedSpec.distance.headerY,
+    }, { duration: headerDuration, ease: resolvedSpec.ease.exit, at: time });
+
     const useCharReveal = shouldUseCharReveal();
     if (useCharReveal) {
       const chars = getElements(ES_SELECTORS.char);
@@ -922,11 +954,6 @@ export function useExpandableSectionMotion({
           },
         ]);
       }
-    } else {
-      pushSequence(sequence, ES_SELECTORS.headerExpanded, {
-        opacity: 0,
-        y: -resolvedSpec.distance.headerY,
-      }, { duration: headerDuration, ease: resolvedSpec.ease.exit, at: time });
     }
     time += headerDuration;
 
@@ -936,22 +963,6 @@ export function useExpandableSectionMotion({
       y: resolvedSpec.distance.glassY,
     }, { duration: glassDuration, ease: resolvedSpec.ease.surface, at: time });
     time += glassDuration;
-
-    time += resolvedSpec.timing.collapse.container * collapseScale;
-
-    pushSequence(sequence, ES_SELECTORS.scrimTop, {
-      opacity: resolvedSpec.opacity.scrimCollapsed,
-      y: 0,
-    }, { duration: scrimDuration, ease: resolvedSpec.ease.container, at: time });
-    pushSequence(sequence, ES_SELECTORS.scrimBottom, {
-      opacity: resolvedSpec.opacity.scrimCollapsed,
-      y: 0,
-    }, { duration: scrimDuration, ease: resolvedSpec.ease.container, at: time });
-    pushSequence(sequence, ES_SELECTORS.headerCollapsed, {
-      opacity: 1,
-      y: 0,
-    }, { duration: headerInDuration, ease: resolvedSpec.ease.reveal, at: time });
-    time += Math.max(scrimDuration, headerInDuration);
 
     pushSequence(sequence, ES_SELECTORS.bg, {
       scale: resolvedSpec.scale.bgCollapsed,
@@ -963,6 +974,29 @@ export function useExpandableSectionMotion({
     captureAnchor();
     setContentVisible(false);
     await nextFrame();
+
+    if (layoutDuration > 0) {
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, layoutDuration * 1000);
+      });
+    }
+
+    const postSequence: Array<[Element[], Record<string, unknown>, Record<string, unknown>]> = [];
+    pushSequence(postSequence, ES_SELECTORS.scrimTop, {
+      opacity: resolvedSpec.opacity.scrimCollapsed,
+      y: 0,
+    }, { duration: scrimDuration, ease: resolvedSpec.ease.container, at: 0 });
+    pushSequence(postSequence, ES_SELECTORS.scrimBottom, {
+      opacity: resolvedSpec.opacity.scrimCollapsed,
+      y: 0,
+    }, { duration: scrimDuration, ease: resolvedSpec.ease.container, at: 0 });
+    pushSequence(postSequence, ES_SELECTORS.headerCollapsed, {
+      opacity: 1,
+      y: 0,
+    }, { duration: headerInDuration, ease: resolvedSpec.ease.reveal, at: 0 });
+
+    await animateSequence(postSequence);
+
     setPhase("collapsed");
     busyRef.current = false;
     if (resolvedSpec.a11y.focusOnCollapse === "trigger") {
@@ -1037,31 +1071,43 @@ export function useExpandableSectionMotion({
         onClick,
         onPointerEnter,
         onPointerLeave,
-        withHover = true,
+        withHover,
+        kind = "cta",
         ...rest
       } = options;
+      let allowClick = true;
+      if (kind === "header") {
+        allowClick = resolvedInteraction.allowHeaderClick;
+      } else if (kind === "cta") {
+        allowClick = resolvedInteraction.allowCtaClick;
+      }
+      const hoverEnabled = (withHover ?? true) && resolvedInteraction.hoverTease;
+      const ariaDisabled = rest["aria-disabled"] ?? (allowClick ? undefined : true);
 
       return {
         ...rest,
         "aria-expanded": phaseRef.current === "expanded" || phaseRef.current === "expanding",
         "aria-controls": bodyId,
+        "aria-disabled": ariaDisabled,
         onClick: (event: ReactMouseEvent<HTMLButtonElement>) => {
-          lastTriggerRef.current = event.currentTarget as HTMLElement;
-          if (action === "toggle") toggle();
-          else open();
+          if (allowClick) {
+            lastTriggerRef.current = event.currentTarget as HTMLElement;
+            if (action === "toggle") toggle();
+            else open();
+          }
           onClick?.(event);
         },
         onPointerEnter: (event: ReactPointerEvent<HTMLButtonElement>) => {
-          if (withHover) handleHoverIn();
+          if (hoverEnabled) handleHoverIn();
           onPointerEnter?.(event);
         },
         onPointerLeave: (event: ReactPointerEvent<HTMLButtonElement>) => {
-          if (withHover) handleHoverOut();
+          if (hoverEnabled) handleHoverOut();
           onPointerLeave?.(event);
         },
       };
     },
-    [bodyId, handleHoverIn, handleHoverOut, open, toggle],
+    [bodyId, handleHoverIn, handleHoverOut, open, resolvedInteraction, toggle],
   );
 
   const getCloseProps = useCallback(

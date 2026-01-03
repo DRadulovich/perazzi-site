@@ -33,7 +33,6 @@ type ExperiencePickerRevealSectionProps = {
   readonly subheading: string;
   readonly background: { url: string; alt?: string };
   readonly microLabel: string;
-  readonly enableTitleReveal: boolean;
   readonly onAnchorClick?: (
     event: MouseEvent<HTMLAnchorElement>,
     href: string,
@@ -115,7 +114,6 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
           subheading={subheading}
           background={background}
           microLabel={microLabel}
-          enableTitleReveal={enableTitleReveal}
           onAnchorClick={handleCardClick}
           es={es}
         />
@@ -133,7 +131,6 @@ const ExperiencePickerRevealSection = ({
   subheading,
   background,
   microLabel,
-  enableTitleReveal,
   onAnchorClick,
   es,
 }: ExperiencePickerRevealSectionProps) => {
@@ -145,7 +142,7 @@ const ExperiencePickerRevealSection = ({
     bodyId,
   } = es;
 
-  const pickerMinHeight = enableTitleReveal ? "min-h-[calc(720px+16rem)]" : null;
+  const pickerMinHeight = contentVisible ? null : "min-h-[calc(720px+16rem)]";
   const headerThemeReady = contentVisible;
 
   return (
@@ -210,16 +207,14 @@ const ExperiencePickerRevealSection = ({
                       </Text>
                     </div>
                   </div>
-                  {enableTitleReveal ? (
-                    <button
-                      type="button"
-                      data-es="close"
-                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-                      {...getCloseProps()}
-                    >
-                      Collapse
-                    </button>
-                  ) : null}
+                  <button
+                    type="button"
+                    data-es="close"
+                    className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+                    {...getCloseProps()}
+                  >
+                    Collapse
+                  </button>
                 </div>
 
                 <div data-es="main">
@@ -252,51 +247,49 @@ const ExperiencePickerRevealSection = ({
             ) : null}
           </div>
 
-          {enableTitleReveal ? (
-            <div
-              data-es="header-collapsed"
-              className={cn(
-                "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
-                contentVisible && "pointer-events-none",
-              )}
-              aria-hidden={contentVisible}
-            >
-              <div className="relative inline-flex text-white">
-                <Heading
-                  id="experience-picker-heading"
-                  level={2}
-                  size="xl"
-                  className="type-section-collapsed"
-                >
-                  {heading}
-                </Heading>
-                <button
-                  type="button"
-                  className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                  aria-labelledby="experience-picker-heading"
-                  {...getTriggerProps({ withHover: true })}
-                >
-                  <span className="sr-only">Expand {heading}</span>
-                </button>
-              </div>
-              <div className="relative text-white">
-                <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                  {subheading}
-                </Text>
-              </div>
-              <div className="mt-3">
-                <Text
-                  size="button"
-                  className="text-white/80 cursor-pointer focus-ring"
-                  asChild
-                >
-                  <button type="button" {...getTriggerProps()}>
-                    Read more
-                  </button>
-                </Text>
-              </div>
+          <div
+            data-es="header-collapsed"
+            className={cn(
+              "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
+              contentVisible && "pointer-events-none",
+            )}
+            aria-hidden={contentVisible}
+          >
+            <div className="relative inline-flex text-white">
+              <Heading
+                id="experience-picker-heading"
+                level={2}
+                size="xl"
+                className="type-section-collapsed"
+              >
+                {heading}
+              </Heading>
+              <button
+                type="button"
+                className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                aria-labelledby="experience-picker-heading"
+                {...getTriggerProps({ kind: "header", withHover: true })}
+              >
+                <span className="sr-only">Expand {heading}</span>
+              </button>
             </div>
-          ) : null}
+            <div className="relative text-white">
+              <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+                {subheading}
+              </Text>
+            </div>
+            <div className="mt-3">
+              <Text
+                size="button"
+                className="text-white/80 cursor-pointer focus-ring"
+                asChild
+              >
+                <button type="button" {...getTriggerProps({ kind: "cta" })}>
+                  Read more
+                </button>
+              </Text>
+            </div>
+          </div>
         </motion.div>
       </Container>
     </>

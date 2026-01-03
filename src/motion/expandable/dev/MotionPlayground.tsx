@@ -332,7 +332,7 @@ export default function MotionPlayground() {
                         </Text>
                         <div className="flex items-center gap-3">
                           <Button
-                            {...getTriggerProps()}
+                            {...getTriggerProps({ kind: "cta" })}
                             type="button"
                             variant="primary"
                             size="sm"
@@ -342,7 +342,7 @@ export default function MotionPlayground() {
                           </Button>
                         </div>
                         <button
-                          {...getTriggerProps({ withHover: true })}
+                          {...getTriggerProps({ kind: "header", withHover: true })}
                           type="button"
                           className="absolute inset-0"
                           aria-label="Expand motion preview"

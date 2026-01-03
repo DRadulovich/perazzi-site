@@ -27,7 +27,6 @@ type TravelNetworkProps = Readonly<{
 type TravelNetworkRevealSectionProps = Readonly<{
   data: ExperienceNetworkData;
   ui: TravelNetworkUi;
-  enableTitleReveal: boolean;
   es: ExpandableSectionMotionApi;
 }>;
 
@@ -61,7 +60,6 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
         <TravelNetworkRevealSection
           data={data}
           ui={ui}
-          enableTitleReveal={enableTitleReveal}
           es={es}
         />
       )}
@@ -72,7 +70,6 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
 const TravelNetworkRevealSection = ({
   data,
   ui,
-  enableTitleReveal,
   es,
 }: TravelNetworkRevealSectionProps) => {
   const {
@@ -113,7 +110,7 @@ const TravelNetworkRevealSection = ({
     ui.emptyScheduleText ?? "New travel stops are being confirmed. Check back shortly.";
   const emptyDealersText = ui.emptyDealersText ?? "Dealer roster is being configured in Sanity.";
 
-  const networkMinHeight = enableTitleReveal ? "min-h-[calc(720px+16rem)]" : null;
+  const networkMinHeight = contentVisible ? null : "min-h-[calc(720px+16rem)]";
   const headerThemeReady = contentVisible;
 
   return (
@@ -179,16 +176,14 @@ const TravelNetworkRevealSection = ({
                       </Text>
                     </div>
                   </div>
-                  {enableTitleReveal ? (
-                    <button
-                      type="button"
-                      data-es="close"
-                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-                      {...getCloseProps()}
-                    >
-                      Collapse
-                    </button>
-                  ) : null}
+                  <button
+                    type="button"
+                    data-es="close"
+                    className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+                    {...getCloseProps()}
+                  >
+                    Collapse
+                  </button>
                 </div>
 
                 <div data-es="body" id={bodyId}>
@@ -258,51 +253,49 @@ const TravelNetworkRevealSection = ({
             ) : null}
           </div>
 
-          {enableTitleReveal ? (
-            <div
-              data-es="header-collapsed"
-              className={cn(
-                "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
-                contentVisible && "pointer-events-none",
-              )}
-              aria-hidden={contentVisible}
-            >
-              <div className="relative inline-flex text-white">
-                <Heading
-                  id="travel-network-heading"
-                  level={2}
-                  size="xl"
-                  className="type-section-collapsed"
-                >
-                  {heading}
-                </Heading>
-                <button
-                  type="button"
-                  className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                  aria-labelledby="travel-network-heading"
-                  {...getTriggerProps({ withHover: true })}
-                >
-                  <span className="sr-only">Expand {heading}</span>
-                </button>
-              </div>
-              <div className="relative text-white">
-                <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                  {lead}
-                </Text>
-              </div>
-              <div className="mt-3">
-                <Text
-                  size="button"
-                  className="text-white/80 cursor-pointer focus-ring"
-                  asChild
-                >
-                  <button type="button" {...getTriggerProps()}>
-                    Read more
-                  </button>
-                </Text>
-              </div>
+          <div
+            data-es="header-collapsed"
+            className={cn(
+              "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
+              contentVisible && "pointer-events-none",
+            )}
+            aria-hidden={contentVisible}
+          >
+            <div className="relative inline-flex text-white">
+              <Heading
+                id="travel-network-heading"
+                level={2}
+                size="xl"
+                className="type-section-collapsed"
+              >
+                {heading}
+              </Heading>
+              <button
+                type="button"
+                className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                aria-labelledby="travel-network-heading"
+                {...getTriggerProps({ kind: "header", withHover: true })}
+              >
+                <span className="sr-only">Expand {heading}</span>
+              </button>
             </div>
-          ) : null}
+            <div className="relative text-white">
+              <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+                {lead}
+              </Text>
+            </div>
+            <div className="mt-3">
+              <Text
+                size="button"
+                className="text-white/80 cursor-pointer focus-ring"
+                asChild
+              >
+                <button type="button" {...getTriggerProps({ kind: "cta" })}>
+                  Read more
+                </button>
+              </Text>
+            </div>
+          </div>
         </motion.div>
       </Container>
     </>

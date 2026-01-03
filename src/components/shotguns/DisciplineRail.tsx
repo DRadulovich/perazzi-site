@@ -86,7 +86,6 @@ type DisciplineRailRevealSectionProps = {
   readonly platformName: (id: string) => string;
   readonly handleModelSelect: (id: string) => void;
   readonly modelLoadingId: string | null;
-  readonly enableTitleReveal: boolean;
   readonly es: ExpandableSectionMotionApi;
 };
 
@@ -241,7 +240,6 @@ export function DisciplineRail({
         platformName={platformName}
         handleModelSelect={handleModelSelect}
         modelLoadingId={modelLoadingId}
-        enableTitleReveal={enableTitleReveal}
         es={es}
           />
         )}
@@ -342,7 +340,6 @@ const DisciplineRailRevealSection = ({
   platformName,
   handleModelSelect,
   modelLoadingId,
-  enableTitleReveal,
   es,
 }: DisciplineRailRevealSectionProps) => {
   const {
@@ -353,7 +350,7 @@ const DisciplineRailRevealSection = ({
     bodyId,
   } = es;
 
-  const railMinHeight = enableTitleReveal ? "min-h-[calc(600px+12rem)]" : null;
+  const railMinHeight = contentVisible ? null : "min-h-[calc(600px+12rem)]";
   const headerThemeReady = contentVisible;
 
   return (
@@ -421,16 +418,14 @@ const DisciplineRailRevealSection = ({
                       {subheading}
                     </span>
                   </div>
-                  {enableTitleReveal ? (
-                    <button
-                      type="button"
-                      data-es="close"
-                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-                      {...getCloseProps()}
-                    >
-                      Collapse
-                    </button>
-                  ) : null}
+                  <button
+                    type="button"
+                    data-es="close"
+                    className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+                    {...getCloseProps()}
+                  >
+                    Collapse
+                  </button>
                 </div>
 
                 <div data-es="main" className="space-y-6">
@@ -542,51 +537,49 @@ const DisciplineRailRevealSection = ({
             ) : null}
           </div>
 
-          {enableTitleReveal ? (
-            <div
-              data-es="header-collapsed"
-              className={cn(
-                "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
-                contentVisible && "pointer-events-none",
-              )}
-              aria-hidden={contentVisible}
-            >
-              <div className="relative inline-flex text-white">
-                <Heading
-                  id="discipline-rail-heading"
-                  level={2}
-                  size="xl"
-                  className="type-section-collapsed"
-                >
-                  {heading}
-                </Heading>
-                <button
-                  type="button"
-                  className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                  aria-labelledby="discipline-rail-heading"
-                  {...getTriggerProps({ withHover: true })}
-                >
-                  <span className="sr-only">Expand {heading}</span>
-                </button>
-              </div>
-              <div className="relative text-white">
-                <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                  {subheading}
-                </Text>
-              </div>
-              <div className="mt-3">
-                <Text
-                  size="button"
-                  className="text-white/80 cursor-pointer focus-ring"
-                  asChild
-                >
-                  <button type="button" {...getTriggerProps()}>
-                    Read more
-                  </button>
-                </Text>
-              </div>
+          <div
+            data-es="header-collapsed"
+            className={cn(
+              "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
+              contentVisible && "pointer-events-none",
+            )}
+            aria-hidden={contentVisible}
+          >
+            <div className="relative inline-flex text-white">
+              <Heading
+                id="discipline-rail-heading"
+                level={2}
+                size="xl"
+                className="type-section-collapsed"
+              >
+                {heading}
+              </Heading>
+              <button
+                type="button"
+                className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                aria-labelledby="discipline-rail-heading"
+                {...getTriggerProps({ kind: "header", withHover: true })}
+              >
+                <span className="sr-only">Expand {heading}</span>
+              </button>
             </div>
-          ) : null}
+            <div className="relative text-white">
+              <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+                {subheading}
+              </Text>
+            </div>
+            <div className="mt-3">
+              <Text
+                size="button"
+                className="text-white/80 cursor-pointer focus-ring"
+                asChild
+              >
+                <button type="button" {...getTriggerProps({ kind: "cta" })}>
+                  Read more
+                </button>
+              </Text>
+            </div>
+          </div>
         </motion.div>
       </Container>
     </>
@@ -614,6 +607,25 @@ function DisciplineCard({
     `shotguns_discipline_card_impression:${discipline.id}`,
     { threshold: 0.4 },
   );
+  const overviewContent = (() => {
+    if (discipline.overviewPortableText?.length) {
+      return (
+        <PortableText
+          className="max-w-none type-body text-ink-muted mb-7"
+          blocks={discipline.overviewPortableText}
+        />
+      );
+    }
+    if (discipline.overviewHtml) {
+      return (
+        <SafeHtml
+          className="max-w-none type-body text-ink-muted mb-7"
+          html={discipline.overviewHtml}
+        />
+      );
+    }
+    return null;
+  })();
 
   return (
     <article
@@ -640,17 +652,7 @@ function DisciplineCard({
         >
           {discipline.name}
         </Heading>
-        {discipline.overviewPortableText?.length ? (
-          <PortableText
-            className="max-w-none type-body text-ink-muted mb-7"
-            blocks={discipline.overviewPortableText}
-          />
-        ) : discipline.overviewHtml ? (
-          <SafeHtml
-            className="max-w-none type-body text-ink-muted mb-7"
-            html={discipline.overviewHtml}
-          />
-        ) : null}
+        {overviewContent}
         {discipline.recommendedPlatforms?.length ? (
           <div className="space-y-2 mb-7">
             <Text size="label-tight" className="type-card-title text-ink-muted">

@@ -39,7 +39,6 @@ type BuildStepsRevealSectionProps = {
   readonly onStepView?: (id: string) => void;
   readonly onStepCta?: (id: string) => void;
   readonly skipTargetId?: string;
-  readonly enableTitleReveal: boolean;
   readonly es: ExpandableSectionMotionApi;
 };
 
@@ -90,7 +89,6 @@ export function BuildStepsScroller({
             onStepView={onStepView}
             onStepCta={onStepCta}
             skipTargetId={skipTargetId}
-            enableTitleReveal={enableTitleReveal}
             es={es}
           />
         )}
@@ -115,7 +113,6 @@ const BuildStepsRevealSection = ({
   onStepView,
   onStepCta,
   skipTargetId,
-  enableTitleReveal,
   es,
 }: BuildStepsRevealSectionProps) => {
   const {
@@ -142,7 +139,7 @@ const BuildStepsRevealSection = ({
     ? openStepId
     : undefined;
 
-  const buildStepsMinHeight = enableTitleReveal ? "min-h-[calc(80vh+16rem)]" : null;
+  const buildStepsMinHeight = contentVisible ? null : "min-h-[calc(80vh+16rem)]";
 
   const instructions =
     "Scroll to move from moment to moment. Each step is a chapter in the ritual of building a Perazzi to your measure.";
@@ -276,16 +273,14 @@ const BuildStepsRevealSection = ({
                       </Text>
                     </div>
                   </div>
-                  {enableTitleReveal ? (
-                    <button
-                      type="button"
-                      data-es="close"
-                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-                      {...getCloseProps()}
-                    >
-                      Collapse
-                    </button>
-                  ) : null}
+                  <button
+                    type="button"
+                    data-es="close"
+                    className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+                    {...getCloseProps()}
+                  >
+                    Collapse
+                  </button>
                 </div>
 
                 <div data-es="body" id={bodyId} className="space-y-2">
@@ -486,51 +481,49 @@ const BuildStepsRevealSection = ({
             ) : null}
           </div>
 
-          {enableTitleReveal ? (
-            <div
-              data-es="header-collapsed"
-              className={cn(
-                "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
-                contentVisible && "pointer-events-none",
-              )}
-              aria-hidden={contentVisible}
-            >
-              <div className="relative inline-flex text-white">
-                <Heading
-                  id="build-steps-heading"
-                  level={2}
-                  size="xl"
-                  className="type-section-collapsed"
-                >
-                  {heading}
-                </Heading>
-                <button
-                  type="button"
-                  className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                  aria-labelledby="build-steps-heading"
-                  {...getTriggerProps({ withHover: true })}
-                >
-                  <span className="sr-only">Expand {heading}</span>
-                </button>
-              </div>
-              <div className="relative text-white">
-                <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                  {subheading}
-                </Text>
-              </div>
-              <div className="mt-3">
-                <Text
-                  size="button"
-                  className="text-white/80 cursor-pointer focus-ring"
-                  asChild
-                >
-                  <button type="button" {...getTriggerProps()}>
-                    Read more
-                  </button>
-                </Text>
-              </div>
+          <div
+            data-es="header-collapsed"
+            className={cn(
+              "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
+              contentVisible && "pointer-events-none",
+            )}
+            aria-hidden={contentVisible}
+          >
+            <div className="relative inline-flex text-white">
+              <Heading
+                id="build-steps-heading"
+                level={2}
+                size="xl"
+                className="type-section-collapsed"
+              >
+                {heading}
+              </Heading>
+              <button
+                type="button"
+                className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                aria-labelledby="build-steps-heading"
+                {...getTriggerProps({ kind: "header", withHover: true })}
+              >
+                <span className="sr-only">Expand {heading}</span>
+              </button>
             </div>
-          ) : null}
+            <div className="relative text-white">
+              <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+                {subheading}
+              </Text>
+            </div>
+            <div className="mt-3">
+              <Text
+                size="button"
+                className="text-white/80 cursor-pointer focus-ring"
+                asChild
+              >
+                <button type="button" {...getTriggerProps({ kind: "cta" })}>
+                  Read more
+                </button>
+              </Text>
+            </div>
+          </div>
         </motion.div>
       </div>
     </>

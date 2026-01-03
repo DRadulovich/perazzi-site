@@ -21,6 +21,8 @@ type TimelineScrollerProps = {
   readonly framing: HomeData["timelineFraming"];
 };
 
+const TIMELINE_TITLE_ID = "craft-timeline-title";
+
 export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const analyticsRef = useAnalyticsObserver("CraftTimelineSeen");
@@ -61,13 +63,12 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
         id="craft-timeline"
         data-analytics-id="CraftTimelineSeen"
         className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
-        aria-labelledby="craft-timeline-heading"
+        aria-labelledby={TIMELINE_TITLE_ID}
       >
         {(es) => (
           <TimelineRevealSection
             stages={stages}
             framing={framing}
-            enableTitleReveal={enableTitleReveal}
             enablePinned={enablePinned}
             activeStage={activeStage}
             setActiveStage={setActiveStage}
@@ -83,7 +84,6 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
 type TimelineRevealSectionProps = {
   readonly stages: readonly FittingStage[];
   readonly framing: HomeData["timelineFraming"];
-  readonly enableTitleReveal: boolean;
   readonly enablePinned: boolean;
   readonly activeStage: number;
   readonly setActiveStage: Dispatch<SetStateAction<number>>;
@@ -94,7 +94,6 @@ type TimelineRevealSectionProps = {
 function TimelineRevealSection({
   stages,
   framing,
-  enableTitleReveal,
   enablePinned,
   activeStage,
   setActiveStage,
@@ -118,11 +117,14 @@ function TimelineRevealSection({
     ?? "/redesign-photos/homepage/timeline-scroller/pweb-home-timelinescroller-bg.jpg";
   const backgroundAlt = framing.background?.alt ?? "Perazzi workshop background";
 
-  const timelineMinHeight = enableTitleReveal ? "min-h-[calc(640px+18rem)]" : null;
+  const timelineMinHeight = contentVisible ? null : "min-h-[calc(640px+18rem)]";
   const headerThemeReady = contentVisible;
 
   return (
     <>
+      <span id={TIMELINE_TITLE_ID} className="sr-only">
+        {headingTitle}
+      </span>
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <div data-es="bg" className="absolute inset-0">
           <Image
@@ -147,7 +149,6 @@ function TimelineRevealSection({
       </div>
 
       <div
-        id="craft-timeline-content"
         tabIndex={-1}
         className="focus:outline-none focus-ring"
       >
@@ -171,7 +172,6 @@ function TimelineRevealSection({
                     <div className="space-y-3">
                       <div className="relative">
                         <Heading
-                          id="craft-timeline-heading"
                           level={2}
                           size="xl"
                           className={headerThemeReady ? "text-ink" : "text-white"}
@@ -190,20 +190,21 @@ function TimelineRevealSection({
                           {headingEyebrow}
                         </Text>
                       </div>
-                      <span data-es="body" id={bodyId} className="sr-only">
-                        {headingInstructions}
-                      </span>
                     </div>
-                    {enableTitleReveal ? (
-                      <button
-                        type="button"
-                        data-es="close"
-                        className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-                        {...getCloseProps()}
-                      >
-                        Collapse
-                      </button>
-                    ) : null}
+                    <button
+                      type="button"
+                      data-es="close"
+                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+                      {...getCloseProps()}
+                    >
+                      Collapse
+                    </button>
+                  </div>
+
+                  <div data-es="body" id={bodyId}>
+                    <Text muted leading="relaxed">
+                      {headingInstructions}
+                    </Text>
                   </div>
 
                   <div data-es="main" className="space-y-6">
@@ -325,51 +326,47 @@ function TimelineRevealSection({
               ) : null}
             </div>
 
-            {enableTitleReveal ? (
-              <div
-                data-es="header-collapsed"
-                className={cn(
-                  "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
-                  contentVisible && "pointer-events-none",
-                )}
-                aria-hidden={contentVisible}
-              >
-                <div className="relative inline-flex text-white">
-                  <Heading
-                    id="craft-timeline-heading"
-                    level={2}
-                    size="xl"
-                    className="type-section-collapsed"
-                  >
-                    {headingTitle}
-                  </Heading>
-                  <button
-                    type="button"
-                    className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                    aria-labelledby="craft-timeline-heading"
-                    {...getTriggerProps({ withHover: true })}
-                  >
-                    <span className="sr-only">Expand {headingTitle}</span>
-                  </button>
-                </div>
-                <div className="relative text-white">
-                  <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                    {headingEyebrow}
-                  </Text>
-                </div>
-                <div className="mt-3">
-                  <Text
-                    size="button"
-                    className="text-white/80 cursor-pointer focus-ring"
-                    asChild
-                  >
-                    <button type="button" {...getTriggerProps()}>
-                      Read more
-                    </button>
-                  </Text>
-                </div>
+            <div
+              data-es="header-collapsed"
+              className={cn(
+                "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
+                contentVisible && "pointer-events-none",
+              )}
+              aria-hidden={contentVisible}
+            >
+              <div className="relative inline-flex text-white">
+                <Heading
+                  level={2}
+                  size="xl"
+                  className="type-section-collapsed"
+                >
+                  {headingTitle}
+                </Heading>
+                <button
+                  type="button"
+                  className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                  {...getTriggerProps({ kind: "header", withHover: true })}
+                >
+                  <span className="sr-only">Expand {headingTitle}</span>
+                </button>
               </div>
-            ) : null}
+              <div className="relative text-white">
+                <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+                  {headingEyebrow}
+                </Text>
+              </div>
+              <div className="mt-3">
+                <Text
+                  size="button"
+                  className="text-white/80 cursor-pointer focus-ring"
+                  asChild
+                >
+                  <button type="button" {...getTriggerProps({ kind: "cta" })}>
+                    Read more
+                  </button>
+                </Text>
+              </div>
+            </div>
           </motion.div>
         </div>
       </div>

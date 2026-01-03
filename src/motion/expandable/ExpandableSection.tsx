@@ -16,7 +16,7 @@ import {
   type ExpandableMotionSpec,
   type ExpandableSectionMotionApi,
 } from "./expandable-section-motion";
-import { getSectionSpec } from "./expandable-section-registry";
+import { getSectionInteraction, getSectionSpec } from "./expandable-section-registry";
 import {
   useExpandableSectionController,
   type ExpandableSectionControllerValue,
@@ -87,6 +87,10 @@ export function ExpandableSection<T extends ElementType = "section">({
     () => getSectionSpec(sectionId, routeOverride),
     [routeOverride, sectionId],
   );
+  const interaction = useMemo(
+    () => getSectionInteraction(sectionId),
+    [sectionId],
+  );
 
   const resolvedSpec = useMemo(
     () => mergeSpec(baseSpec, specOverride, runtimeSpecOverride),
@@ -97,6 +101,7 @@ export function ExpandableSection<T extends ElementType = "section">({
     sectionId,
     spec: resolvedSpec,
     defaultExpanded,
+    interactionPolicy: interaction,
     onOpenStart: () => {
       controller?.requestOpen(sectionId);
     },

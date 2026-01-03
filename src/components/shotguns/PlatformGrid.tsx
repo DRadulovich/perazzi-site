@@ -325,7 +325,6 @@ type PlatformGridRevealSectionProps = {
   readonly activeIndex: number;
   readonly setActiveIndex: Dispatch<SetStateAction<number>>;
   readonly buildPayload: (platform: Platform) => ChatTriggerPayload;
-  readonly enableTitleReveal: boolean;
   readonly es: ExpandableSectionMotionApi;
 };
 
@@ -335,7 +334,6 @@ const PlatformGridRevealSection = ({
   activeIndex,
   setActiveIndex,
   buildPayload,
-  enableTitleReveal,
   es,
 }: PlatformGridRevealSectionProps) => {
   const {
@@ -350,7 +348,7 @@ const PlatformGridRevealSection = ({
   const headingTitle = templates.heading;
   const headingSubtitle = templates.subheading;
   const activePlatform = platforms[activeIndex] ?? platforms[0];
-  const platformMinHeight = enableTitleReveal ? "min-h-[calc(750px+18rem)]" : null;
+  const platformMinHeight = contentVisible ? null : "min-h-[calc(750px+18rem)]";
   const headerThemeReady = contentVisible;
 
   const handleTabSelect = useCallback((index: number) => {
@@ -442,16 +440,14 @@ const PlatformGridRevealSection = ({
                       {headingSubtitle}
                     </span>
                   </div>
-                  {enableTitleReveal ? (
-                    <button
-                      type="button"
-                      data-es="close"
-                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-                      {...getCloseProps()}
-                    >
-                      Collapse
-                    </button>
-                  ) : null}
+                  <button
+                    type="button"
+                    data-es="close"
+                    className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+                    {...getCloseProps()}
+                  >
+                    Collapse
+                  </button>
                 </div>
 
                 <div data-es="main" className="space-y-8">
@@ -485,51 +481,49 @@ const PlatformGridRevealSection = ({
             ) : null}
           </div>
 
-          {enableTitleReveal ? (
-            <div
-              data-es="header-collapsed"
-              className={cn(
-                "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
-                contentVisible && "pointer-events-none",
-              )}
-              aria-hidden={contentVisible}
-            >
-              <div className="relative inline-flex text-white">
-                <Heading
-                  id="platforms-heading"
-                  level={2}
-                  size="xl"
-                  className="type-section-collapsed"
-                >
-                  {headingTitle}
-                </Heading>
-                <button
-                  type="button"
-                  className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                  aria-labelledby="platforms-heading"
-                  {...getTriggerProps({ withHover: true })}
-                >
-                  <span className="sr-only">Expand {headingTitle}</span>
-                </button>
-              </div>
-              <div className="relative text-white">
-                <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                  {headingSubtitle}
-                </Text>
-              </div>
-              <div className="mt-3">
-                <Text
-                  size="button"
-                  className="text-white/80 cursor-pointer focus-ring"
-                  asChild
-                >
-                  <button type="button" {...getTriggerProps()}>
-                    Read more
-                  </button>
-                </Text>
-              </div>
+          <div
+            data-es="header-collapsed"
+            className={cn(
+              "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
+              contentVisible && "pointer-events-none",
+            )}
+            aria-hidden={contentVisible}
+          >
+            <div className="relative inline-flex text-white">
+              <Heading
+                id="platforms-heading"
+                level={2}
+                size="xl"
+                className="type-section-collapsed"
+              >
+                {headingTitle}
+              </Heading>
+              <button
+                type="button"
+                className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                aria-labelledby="platforms-heading"
+                {...getTriggerProps({ kind: "header", withHover: true })}
+              >
+                <span className="sr-only">Expand {headingTitle}</span>
+              </button>
             </div>
-          ) : null}
+            <div className="relative text-white">
+              <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+                {headingSubtitle}
+              </Text>
+            </div>
+            <div className="mt-3">
+              <Text
+                size="button"
+                className="text-white/80 cursor-pointer focus-ring"
+                asChild
+              >
+                <button type="button" {...getTriggerProps({ kind: "cta" })}>
+                  Read more
+                </button>
+              </Text>
+            </div>
+          </div>
         </motion.div>
       </div>
     </>
@@ -571,7 +565,6 @@ export function PlatformGrid({ platforms, ui }: PlatformGridProps) {
           activeIndex={activeIndex}
           setActiveIndex={setActiveIndex}
           buildPayload={buildPayload}
-          enableTitleReveal={enableTitleReveal}
           es={es}
         />
       )}

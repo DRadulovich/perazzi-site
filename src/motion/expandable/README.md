@@ -10,16 +10,16 @@ Required `data-es` slots:
 - `scrim-top` — top gradient overlay
 - `scrim-bottom` — bottom gradient overlay
 - `header-collapsed` — collapsed title/subtitle/CTA group
-- `glass` — glass surface container
-- `main` — primary visual/card/carousel
 - `header-expanded` — expanded title/subtitle/eyebrow group
-- `body` — paragraphs / rich text block
 - `cta` — expanded CTA row
 - `close` — close button
 
 Optional `data-es` slots:
 
+- `glass` — glass surface container
+- `main` — primary visual/card/carousel
 - `meta` — metadata cluster
+- `body` — paragraphs / rich text block
 - `list` — list container
 - `item` — list items
 - `char` — char spans for short-title reveal
@@ -67,7 +67,7 @@ Each section is in one of:
         </div>
 
         <div data-es="header-collapsed" aria-hidden={isExpanded}>
-          <button {...getTriggerProps()}>Read more</button>
+          <button {...getTriggerProps({ kind: "header" })}>Read more</button>
         </div>
       </motion.div>
     </>
@@ -75,18 +75,21 @@ Each section is in one of:
 </ExpandableSection>
 ```
 
+Use `kind: "header"` for header group triggers and `kind: "cta"` for explicit Read More CTAs so registry interaction policies are respected.
+
 ## Adding a New Section
 
 1. Add a stable `sectionId` in `src/motion/expandable/expandable-section-registry.ts`.
 2. Wrap the component in `ExpandableSection` and add the slot attributes.
 3. Ensure the Close button and triggers use the ESMS helpers.
-4. Only add a spec override if required to preserve the section's feel.
+4. Set any interaction overrides (hover, header click) in the registry.
+5. Only add a spec override if required to preserve the section's feel.
 
 ## Spec Overrides
 
 Overrides are merged in this order:
 
-1. `DEFAULT_SPEC`
+1. `DEFAULT_ESMS_SPEC`
 2. Route theme override (via provider)
 3. Registry override (by `sectionId`)
 4. Runtime override (playground)
@@ -108,4 +111,4 @@ const SECTION_OVERRIDES = {
 - Keep expanded content mounted only when `contentVisible` is true to allow clean layout collapse.
 - Use `data-es="item"` on list items for staggered reveals.
 - Reduced motion disables pre-zoom and char splitting; avoid relying on those effects.
-
+- Ensure Close and collapsed header triggers exist so collapse is always reversible.
