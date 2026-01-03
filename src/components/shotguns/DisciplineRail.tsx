@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { createPortal } from "react-dom";
 
@@ -8,6 +9,8 @@ import type { Platform, ShotgunsLandingData } from "@/types/catalog";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
+import { ExpandableSection } from "@/motion/expandable/ExpandableSection";
+import type { ExpandableSectionMotionApi } from "@/motion/expandable/expandable-section-motion";
 import SafeHtml from "@/components/SafeHtml";
 import { PortableText } from "@/components/PortableText";
 import { Container, Heading, Text } from "@/components/ui";
@@ -84,6 +87,7 @@ type DisciplineRailRevealSectionProps = {
   readonly handleModelSelect: (id: string) => void;
   readonly modelLoadingId: string | null;
   readonly enableTitleReveal: boolean;
+  readonly es: ExpandableSectionMotionApi;
 };
 
 export function DisciplineRail({
@@ -211,14 +215,20 @@ export function DisciplineRail({
   };
 
   return (
-    <section
-      ref={railAnalyticsRef}
-      data-analytics-id="DisciplineRailSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
-      aria-labelledby="discipline-rail-heading"
-    >
-      <DisciplineRailRevealSection
+    <>
+      <ExpandableSection
         key={railKey}
+        sectionId="shotguns.disciplineRail"
+        defaultExpanded={!enableTitleReveal}
+        rootRef={(node) => {
+          railAnalyticsRef.current = node;
+        }}
+        data-analytics-id="DisciplineRailSeen"
+        className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
+        aria-labelledby="discipline-rail-heading"
+      >
+        {(es) => (
+          <DisciplineRailRevealSection
         categories={categories}
         selectedDiscipline={selectedDiscipline}
         heading={heading}
@@ -232,7 +242,10 @@ export function DisciplineRail({
         handleModelSelect={handleModelSelect}
         modelLoadingId={modelLoadingId}
         enableTitleReveal={enableTitleReveal}
-      />
+        es={es}
+          />
+        )}
+      </ExpandableSection>
 
       {modalRoot && modelModalOpen && selectedModel
         ? createPortal(
@@ -312,7 +325,7 @@ export function DisciplineRail({
           </output>
         </Text>
       ) : null}
-    </section>
+    </>
   );
 }
 
@@ -330,54 +343,23 @@ const DisciplineRailRevealSection = ({
   handleModelSelect,
   modelLoadingId,
   enableTitleReveal,
+  es,
 }: DisciplineRailRevealSectionProps) => {
-  const [railExpanded, setRailExpanded] = useState(!enableTitleReveal);
-  const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
-  const railShellRef = useRef<HTMLDivElement | null>(null);
+  const {
+    getTriggerProps,
+    getCloseProps,
+    layoutProps,
+    contentVisible,
+    bodyId,
+  } = es;
 
-  const revealRail = !enableTitleReveal || railExpanded;
-  const revealPhotoFocus = revealRail;
   const railMinHeight = enableTitleReveal ? "min-h-[calc(600px+12rem)]" : null;
-
-  const handleExpand = () => {
-    if (!enableTitleReveal) return;
-    setRailExpanded(true);
-    setHeaderThemeReady(true);
-  };
-
-  const handleCollapse = () => {
-    if (!enableTitleReveal) return;
-    setHeaderThemeReady(false);
-    setRailExpanded(false);
-  };
-
-  useEffect(() => {
-    if (!enableTitleReveal || !revealRail) return;
-    const node = railShellRef.current;
-    if (!node) return;
-
-    const updateHeight = () => {
-      const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-      setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") return;
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealRail, openCategory, activeDisciplineId]);
+  const headerThemeReady = contentVisible;
 
   return (
     <>
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0">
+        <div data-es="bg" className="absolute inset-0">
           <Image
             src={background.url}
             alt={background.alt}
@@ -388,77 +370,187 @@ const DisciplineRailRevealSection = ({
           />
         </div>
         <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            revealRail ? "opacity-0" : "opacity-100",
-          )}
+          data-es="scrim-bottom"
+          className="absolute inset-0 bg-(--scrim-strong)"
           aria-hidden
         />
         <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "absolute inset-0 overlay-gradient-canvas",
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
+          data-es="scrim-top"
+          className="absolute inset-0 overlay-gradient-canvas"
           aria-hidden
         />
       </div>
 
       <Container size="xl" className="relative z-10">
-        <div
-          ref={railShellRef}
-          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
-          className={cn(
-            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            railMinHeight,
-          )}
-        >
-          {revealRail ? (
-            <div className="relative z-10 space-y-4 md:flex md:items-start md:justify-between md:gap-8">
-              <div className="space-y-3">
-                <div className="relative">
-                  <Heading
-                    id="discipline-rail-heading"
-                    level={2}
-                    size="xl"
-                    className={headerThemeReady ? "text-ink" : "text-white"}
-                  >
-                    {heading}
-                  </Heading>
+        <motion.div {...layoutProps} className={cn("relative", railMinHeight)}>
+          <div
+            data-es="glass"
+            className={cn(
+              "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
+              contentVisible
+                ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
+                : "border-transparent bg-transparent shadow-none backdrop-blur-none",
+            )}
+          >
+            {contentVisible ? (
+              <>
+                <div data-es="header-expanded" className="relative z-10 space-y-4 md:flex md:items-start md:justify-between md:gap-8">
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <Heading
+                        id="discipline-rail-heading"
+                        level={2}
+                        size="xl"
+                        className={headerThemeReady ? "text-ink" : "text-white"}
+                      >
+                        {heading}
+                      </Heading>
+                    </div>
+                    <div className="relative">
+                      <Text
+                        size="lg"
+                        className={cn(
+                          "type-section-subtitle",
+                          headerThemeReady ? "text-ink-muted" : "text-white",
+                        )}
+                      >
+                        {subheading}
+                      </Text>
+                    </div>
+                    <span data-es="body" id={bodyId} className="sr-only">
+                      {subheading}
+                    </span>
+                  </div>
+                  {enableTitleReveal ? (
+                    <button
+                      type="button"
+                      data-es="close"
+                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+                      {...getCloseProps()}
+                    >
+                      Collapse
+                    </button>
+                  ) : null}
                 </div>
-                <div className="relative">
-                  <Text
-                    size="lg"
-                    className={cn(
-                      "type-section-subtitle",
-                      headerThemeReady ? "text-ink-muted" : "text-white",
-                    )}
-                  >
-                    {subheading}
-                  </Text>
+
+                <div data-es="main" className="space-y-6">
+                  <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
+                    <div className="space-y-3 rounded-2xl bg-card/0 p-4 sm:rounded-3xl sm:p-5">
+                      <Text size="label-tight" className="type-label-tight text-ink-muted">
+                        Discipline categories
+                      </Text>
+                      <div data-es="list" className="space-y-3">
+                        {categories.map((category) => {
+                          const isOpen = openCategory === category.label;
+                          return (
+                            <div
+                              key={category.label}
+                              data-es="item"
+                              className="rounded-2xl border border-border/70 bg-card/75"
+                            >
+                              <button
+                                type="button"
+                                className="flex w-full items-center justify-between px-4 py-3 text-left type-label-tight text-ink focus-ring"
+                                aria-expanded={isOpen}
+                                onClick={() =>
+                                  setOpenCategory((prev) =>
+                                    prev === category.label ? null : category.label,
+                                  )
+                                }
+                              >
+                                {category.label}
+                                <span
+                                  className={cn(
+                                    "text-lg",
+                                    isOpen ? "rotate-45" : "rotate-0",
+                                  )}
+                                  aria-hidden="true"
+                                >
+                                  +
+                                </span>
+                              </button>
+                              {isOpen ? (
+                                <div className="border-t border-border/70">
+                                  <ul className="space-y-1 p-3">
+                                    {category.disciplines.map((discipline) => {
+                                      const isActive = discipline.id === activeDisciplineId;
+                                      return (
+                                        <li key={discipline.id}>
+                                          <button
+                                            type="button"
+                                            onClick={() => { setActiveDisciplineId(discipline.id); }}
+                                            className={cn(
+                                              "group relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left focus-ring",
+                                              isActive
+                                                ? "text-white"
+                                                : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
+                                            )}
+                                            aria-pressed={isActive}
+                                          >
+                                            {isActive ? (
+                                              <span
+                                                className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
+                                                aria-hidden="true"
+                                              />
+                                            ) : null}
+                                            <span
+                                              className={cn(
+                                                "relative z-10 mt-0.5 block type-label-tight group-hover:text-ink-muted/90",
+                                                isActive ? "text-white" : "text-ink-muted",
+                                              )}
+                                            >
+                                              {discipline.name || discipline.id.replaceAll("-", " ")}
+                                            </span>
+                                          </button>
+                                        </li>
+                                      );
+                                    })}
+                                  </ul>
+                                </div>
+                              ) : null}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="min-h-104">
+                      {selectedDiscipline ? (
+                        <div key={selectedDiscipline.id}>
+                          <DisciplineCard
+                            discipline={selectedDiscipline}
+                            index={0}
+                            total={1}
+                            platformName={platformName}
+                            onSelectModel={handleModelSelect}
+                            loadingModelId={modelLoadingId}
+                          />
+                        </div>
+                      ) : (
+                        <Text className="text-ink-muted" leading="normal">
+                          Select a discipline to view its details.
+                        </Text>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              {enableTitleReveal ? (
-                <button
-                  type="button"
-                  className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-                  onClick={handleCollapse}
-                >
-                  Collapse
-                </button>
-              ) : null}
-            </div>
-          ) : (
-            <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
+
+                <div data-es="cta" className="sr-only">
+                  Explore discipline highlights.
+                </div>
+              </>
+            ) : null}
+          </div>
+
+          {enableTitleReveal ? (
+            <div
+              data-es="header-collapsed"
+              className={cn(
+                "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
+                contentVisible && "pointer-events-none",
+              )}
+              aria-hidden={contentVisible}
+            >
               <div className="relative inline-flex text-white">
                 <Heading
                   id="discipline-rail-heading"
@@ -471,12 +563,8 @@ const DisciplineRailRevealSection = ({
                 <button
                   type="button"
                   className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                  onPointerEnter={handleExpand}
-                  onFocus={handleExpand}
-                  onClick={handleExpand}
-                  aria-expanded={revealRail}
-                  aria-controls="discipline-rail-body"
                   aria-labelledby="discipline-rail-heading"
+                  {...getTriggerProps({ withHover: true })}
                 >
                   <span className="sr-only">Expand {heading}</span>
                 </button>
@@ -492,117 +580,14 @@ const DisciplineRailRevealSection = ({
                   className="text-white/80 cursor-pointer focus-ring"
                   asChild
                 >
-                  <button type="button" onClick={handleExpand}>
+                  <button type="button" {...getTriggerProps()}>
                     Read more
                   </button>
                 </Text>
               </div>
             </div>
-          )}
-
-          {revealRail ? (
-            <div id="discipline-rail-body" className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
-                <div className="space-y-3 rounded-2xl bg-card/0 p-4 sm:rounded-3xl sm:p-5">
-                  <Text size="label-tight" className="type-label-tight text-ink-muted">
-                    Discipline categories
-                  </Text>
-                  <div className="space-y-3">
-                    {categories.map((category) => {
-                      const isOpen = openCategory === category.label;
-                      return (
-                        <div
-                          key={category.label}
-                          className="rounded-2xl border border-border/70 bg-card/75"
-                        >
-                          <button
-                            type="button"
-                            className="flex w-full items-center justify-between px-4 py-3 text-left type-label-tight text-ink focus-ring"
-                            aria-expanded={isOpen}
-                            onClick={() =>
-                              setOpenCategory((prev) =>
-                                prev === category.label ? null : category.label,
-                              )
-                            }
-                          >
-                            {category.label}
-                            <span
-                              className={cn(
-                                "text-lg",
-                                isOpen ? "rotate-45" : "rotate-0",
-                              )}
-                              aria-hidden="true"
-                            >
-                              +
-                            </span>
-                          </button>
-                          {isOpen ? (
-                            <div className="border-t border-border/70">
-                              <ul className="space-y-1 p-3">
-                                {category.disciplines.map((discipline) => {
-                                  const isActive = discipline.id === activeDisciplineId;
-                                  return (
-                                    <li key={discipline.id}>
-                                      <button
-                                        type="button"
-                                        onClick={() => { setActiveDisciplineId(discipline.id); }}
-                                        className={cn(
-                                          "group relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left focus-ring",
-                                          isActive
-                                            ? "text-white"
-                                            : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
-                                        )}
-                                        aria-pressed={isActive}
-                                      >
-                                        {isActive ? (
-                                          <span
-                                            className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
-                                            aria-hidden="true"
-                                          />
-                                        ) : null}
-                                        <span
-                                          className={cn(
-                                            "relative z-10 mt-0.5 block type-label-tight group-hover:text-ink-muted/90",
-                                            isActive ? "text-white" : "text-ink-muted",
-                                          )}
-                                        >
-                                          {discipline.name || discipline.id.replaceAll("-", " ")}
-                                        </span>
-                                      </button>
-                                    </li>
-                                  );
-                                })}
-                              </ul>
-                            </div>
-                          ) : null}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="min-h-104">
-                  {selectedDiscipline ? (
-                    <div key={selectedDiscipline.id}>
-                      <DisciplineCard
-                        discipline={selectedDiscipline}
-                        index={0}
-                        total={1}
-                        platformName={platformName}
-                        onSelectModel={handleModelSelect}
-                        loadingModelId={modelLoadingId}
-                      />
-                    </div>
-                  ) : (
-                    <Text className="text-ink-muted" leading="normal">
-                      Select a discipline to view its details.
-                    </Text>
-                  )}
-                </div>
-              </div>
-            </div>
           ) : null}
-        </div>
+        </motion.div>
       </Container>
     </>
   );

@@ -2,12 +2,15 @@
 
 import NextImage from "next/image";
 import SafeHtml from "@/components/SafeHtml";
+import { motion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import type { FittingStage } from "@/types/build";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
+import { ExpandableSection } from "@/motion/expandable/ExpandableSection";
+import type { ExpandableSectionMotionApi } from "@/motion/expandable/expandable-section-motion";
 import { Heading, Text } from "@/components/ui";
 
 type BuildStepsScrollerProps = Readonly<{
@@ -37,6 +40,7 @@ type BuildStepsRevealSectionProps = {
   readonly onStepCta?: (id: string) => void;
   readonly skipTargetId?: string;
   readonly enableTitleReveal: boolean;
+  readonly es: ExpandableSectionMotionApi;
 };
 
 export function BuildStepsScroller({
@@ -65,32 +69,39 @@ export function BuildStepsScroller({
   const ctaLabel = intro?.ctaLabel ?? "Begin the ritual";
 
   return (
-    <section
-      ref={trackerRef}
-      aria-labelledby="build-steps-heading"
-      data-analytics-id="BuildStepsSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
-    >
-      <BuildStepsRevealSection
+    <>
+      <ExpandableSection
         key={buildStepsKey}
-        steps={mappedSteps}
-        heading={heading}
-        subheading={subheading}
-        ctaLabel={ctaLabel}
-        background={background}
-        initialStepId={initialStepId}
-        onStepView={onStepView}
-        onStepCta={onStepCta}
-        skipTargetId={skipTargetId}
-        enableTitleReveal={enableTitleReveal}
-      />
+        sectionId="bespoke.buildStepsScroller"
+        defaultExpanded={!enableTitleReveal}
+        rootRef={trackerRef}
+        aria-labelledby="build-steps-heading"
+        data-analytics-id="BuildStepsSeen"
+        className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
+      >
+        {(es) => (
+          <BuildStepsRevealSection
+            steps={mappedSteps}
+            heading={heading}
+            subheading={subheading}
+            ctaLabel={ctaLabel}
+            background={background}
+            initialStepId={initialStepId}
+            onStepView={onStepView}
+            onStepCta={onStepCta}
+            skipTargetId={skipTargetId}
+            enableTitleReveal={enableTitleReveal}
+            es={es}
+          />
+        )}
+      </ExpandableSection>
 
       {skipTargetId ? (
         <div id={skipTargetId} className="sr-only" tabIndex={-1}>
           Step-by-step overview complete.
         </div>
       ) : null}
-    </section>
+    </>
   );
 }
 
@@ -105,16 +116,21 @@ const BuildStepsRevealSection = ({
   onStepCta,
   skipTargetId,
   enableTitleReveal,
+  es,
 }: BuildStepsRevealSectionProps) => {
-  const [buildStepsExpanded, setBuildStepsExpanded] = useState(!enableTitleReveal);
-  const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
+  const {
+    getTriggerProps,
+    getCloseProps,
+    layoutProps,
+    contentVisible,
+    bodyId,
+  } = es;
+
   const [activeStepId, setActiveStepId] = useState<string | undefined>(
     () => initialStepId ?? steps[0]?.id,
   );
   const [openStepId, setOpenStepId] = useState<string | undefined>(undefined);
 
-  const buildStepsShellRef = useRef<HTMLDivElement | null>(null);
   const seenStepsRef = useRef(new Set<string>());
   const stepRefs = useRef<(HTMLElement | null)[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
@@ -126,24 +142,10 @@ const BuildStepsRevealSection = ({
     ? openStepId
     : undefined;
 
-  const revealBuildSteps = !enableTitleReveal || buildStepsExpanded;
-  const revealPhotoFocus = revealBuildSteps;
   const buildStepsMinHeight = enableTitleReveal ? "min-h-[calc(80vh+16rem)]" : null;
 
   const instructions =
     "Scroll to move from moment to moment. Each step is a chapter in the ritual of building a Perazzi to your measure.";
-
-  const handleBuildStepsExpand = () => {
-    if (!enableTitleReveal) return;
-    setBuildStepsExpanded(true);
-    setHeaderThemeReady(true);
-  };
-
-  const handleBuildStepsCollapse = () => {
-    if (!enableTitleReveal) return;
-    setHeaderThemeReady(false);
-    setBuildStepsExpanded(false);
-  };
 
   const handleStepEnter = useCallback((stepId: string) => {
     setActiveStepId((prev) => (prev === stepId ? prev : stepId));
@@ -184,29 +186,7 @@ const BuildStepsRevealSection = ({
   };
 
   useEffect(() => {
-    if (!enableTitleReveal || !revealBuildSteps) return;
-    const node = buildStepsShellRef.current;
-    if (!node) return;
-
-    const updateHeight = () => {
-      const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-      setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") return;
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealBuildSteps, resolvedActiveStepId, resolvedOpenStepId, steps.length]);
-
-  useEffect(() => {
-    if (!revealBuildSteps) return;
+    if (!contentVisible) return;
     if (typeof IntersectionObserver === "undefined") return;
 
     const root = scrollContainerRef.current ?? null;
@@ -214,7 +194,7 @@ const BuildStepsRevealSection = ({
       (entries) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
-          const stepId = entry.target.getAttribute("data-step-id");
+          const stepId = (entry.target as HTMLElement).dataset.stepId;
           if (stepId) handleStepEnter(stepId);
         });
       },
@@ -228,12 +208,14 @@ const BuildStepsRevealSection = ({
     return () => {
       observer.disconnect();
     };
-  }, [handleStepEnter, revealBuildSteps, steps.length]);
+  }, [contentVisible, handleStepEnter, steps.length]);
+
+  const headerThemeReady = contentVisible;
 
   return (
     <>
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0">
+        <div data-es="bg" className="absolute inset-0">
           <NextImage
             src={background.url}
             alt={background.alt ?? "Perazzi bespoke build steps background"}
@@ -245,71 +227,74 @@ const BuildStepsRevealSection = ({
           />
         </div>
         <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            revealBuildSteps ? "opacity-0" : "opacity-100",
-          )}
+          data-es="scrim-bottom"
+          className="absolute inset-0 bg-(--scrim-strong)"
           aria-hidden
         />
         <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
+          data-es="scrim-top"
+          className="pointer-events-none absolute inset-0 overlay-gradient-canvas"
           aria-hidden
         />
       </div>
 
       <div className="relative z-10 mx-auto flex w-full max-w-7xl px-6 lg:px-10">
-        <div
-          ref={buildStepsShellRef}
-          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
-          className={cn(
-            "relative flex w-full flex-col space-y-8 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            buildStepsMinHeight,
-          )}
-        >
-          {revealBuildSteps ? (
-            <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8">
-              <div className="space-y-3">
-                <div className="relative">
-                  <Heading
-                    id="build-steps-heading"
-                    level={2}
-                    size="xl"
-                    className={headerThemeReady ? "text-ink" : "text-white"}
-                  >
-                    {heading}
-                  </Heading>
+        <motion.div {...layoutProps} className={cn("relative w-full", buildStepsMinHeight)}>
+          <div
+            data-es="glass"
+            className={cn(
+              "relative flex w-full flex-col space-y-8 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
+              contentVisible
+                ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
+                : "border-transparent bg-transparent shadow-none backdrop-blur-none",
+            )}
+          >
+            {contentVisible ? (
+              <>
+                <div data-es="header-expanded" className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8">
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <Heading
+                        id="build-steps-heading"
+                        level={2}
+                        size="xl"
+                        className={headerThemeReady ? "text-ink" : "text-white"}
+                      >
+                        {heading}
+                      </Heading>
+                    </div>
+                    <div className="relative">
+                      <Text
+                        size="lg"
+                        className={cn(
+                          "type-section-subtitle",
+                          headerThemeReady ? "text-ink-muted" : "text-white",
+                        )}
+                        leading="relaxed"
+                      >
+                        {subheading}
+                      </Text>
+                    </div>
+                  </div>
+                  {enableTitleReveal ? (
+                    <button
+                      type="button"
+                      data-es="close"
+                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+                      {...getCloseProps()}
+                    >
+                      Collapse
+                    </button>
+                  ) : null}
                 </div>
-                <div className="relative">
-                  <Text
-                    size="lg"
-                    className={cn(
-                      "type-section-subtitle",
-                      headerThemeReady ? "text-ink-muted" : "text-white",
-                    )}
-                    leading="relaxed"
-                  >
-                    {subheading}
-                  </Text>
-                </div>
-                <div>
+
+                <div data-es="body" id={bodyId} className="space-y-2">
                   <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
                     {instructions}
                   </Text>
                 </div>
-                <div className="flex flex-wrap items-center gap-4">
+
+                <div data-es="cta" className="flex flex-wrap items-center gap-4">
                   <a
                     href="#build-steps-sequence"
                     className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-ink/60 text-ink hover:border-ink focus-ring"
@@ -327,19 +312,189 @@ const BuildStepsRevealSection = ({
                     </a>
                   ) : null}
                 </div>
-              </div>
-              {enableTitleReveal ? (
-                <button
-                  type="button"
-                  className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-                  onClick={handleBuildStepsCollapse}
-                >
-                  Collapse
-                </button>
-              ) : null}
-            </div>
-          ) : (
-            <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
+
+                <div data-es="main" id="build-steps-sequence" className="relative">
+                  <div className="flex">
+                    <div className="relative flex-1">
+                      <nav className="absolute inset-x-3 top-3 z-20 hidden lg:block sm:inset-x-4 lg:inset-x-6 lg:top-4">
+                        <div className="grid grid-flow-col auto-cols-fr items-center gap-2 rounded-2xl border border-border/75 bg-card/75 px-4 py-3 type-label-tight text-ink-muted shadow-soft backdrop-blur-md">
+                          {steps.map((step, index) => {
+                            const isActive = step.id === resolvedActiveStepId;
+                            const stepNumber = index + 1;
+
+                            return (
+                              <button
+                                key={step.id}
+                                type="button"
+                                onClick={() => { handleRailClick(index); }}
+                                aria-label={`Go to step ${stepNumber}: ${step.title}`}
+                                aria-current={isActive ? "step" : undefined}
+                                className={`group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-full border border-transparent px-3 py-1.5 focus-ring ${
+                                  isActive
+                                    ? "text-white"
+                                    : "text-ink-muted hover:text-ink"
+                                }`}
+                              >
+                                {isActive ? (
+                                  <span
+                                    className="absolute inset-0 rounded-full bg-perazzi-red shadow-elevated ring-1 ring-white/10"
+                                    aria-hidden="true"
+                                  />
+                                ) : null}
+                                <span
+                                  className="relative z-10 flex items-center justify-center gap-2"
+                                >
+                                  <span
+                                    className={`h-2 w-2 rounded-full border ${
+                                      isActive ? "border-white/40 bg-white/85" : "border-border bg-card"
+                                    }`}
+                                    aria-hidden="true"
+                                  />
+                                  <span>{`Step ${stepNumber}`}</span>
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </nav>
+
+                      <div
+                        data-es="list"
+                        className="overflow-y-auto rounded-2xl border border-border/70 bg-card/30 shadow-soft backdrop-blur-sm snap-y snap-mandatory lg:pt-24 sm:rounded-3xl h-[80vh]"
+                        ref={scrollContainerRef}
+                      >
+                        {steps.map((step, index) => {
+                          const isImage =
+                            step.media?.kind === "image" && step.media.url;
+                          const isOpen = resolvedOpenStepId === step.id;
+
+                          return (
+                            <article
+                              key={step.id}
+                              ref={(el) => {
+                                stepRefs.current[index] = el;
+                              }}
+                              data-step-id={step.id}
+                              data-es="item"
+                              aria-labelledby={`build-step-heading-${step.id}`}
+                              className="group relative snap-start"
+                            >
+                              <div className="relative flex min-h-[80vh]">
+                                <div className="absolute inset-0 overflow-hidden rounded-3xl">
+                                  {isImage ? (
+                                    <NextImage
+                                      src={step.media.url}
+                                      alt={step.media.alt ?? step.title}
+                                      fill
+                                      sizes="100vw"
+                                      className="object-cover object-center"
+                                      loading="lazy"
+                                    />
+                                  ) : null}
+                                  <div className="pointer-events-none absolute inset-0 overlay-gradient-ink-50" aria-hidden />
+                                </div>
+
+                                <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-10 sm:px-8 lg:px-12 lg:py-16">
+                                  <div className="mx-auto max-w-3xl rounded-2xl border border-border/75 bg-card/80 p-5 shadow-elevated ring-1 ring-border/70 backdrop-blur-md sm:rounded-3xl sm:p-6">
+                                    <button
+                                      type="button"
+                                      className="flex w-full flex-col items-start gap-3 text-left"
+                                      aria-expanded={isOpen}
+                                      onClick={() => { toggleStepOpen(step.id); }}
+                                    >
+                                      <div className="w-full space-y-1">
+                                        <Heading
+                                          id={`build-step-heading-${step.id}`}
+                                          level={3}
+                                          size="lg"
+                                          className="type-card-title text-ink text-2xl sm:text-3xl"
+                                        >
+                                          {step.title}
+                                        </Heading>
+                                      </div>
+                                      <span className="type-label-tight text-perazzi-red/70">
+                                        {isOpen ? "Collapse" : "Read More"}
+                                      </span>
+                                    </button>
+
+                                    {isOpen ? (
+                                      <div className="overflow-hidden">
+                                        <div className="space-y-4 pt-4">
+                                          {step.bodyHtml ? (
+                                            <SafeHtml
+                                              className="max-w-none type-body text-ink-muted"
+                                              html={step.bodyHtml}
+                                            />
+                                          ) : null}
+                                          <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+                                            {step.ctaHref && step.ctaLabel ? (
+                                              <a
+                                                href={step.ctaHref}
+                                                onClick={(event) => {
+                                                  event.stopPropagation();
+                                                  onStepCta?.(step.id);
+                                                }}
+                                                className="inline-flex min-h-10 items-center justify-center gap-2 pill border border-perazzi-red/60 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                                              >
+                                                {step.ctaLabel}
+                                                <span aria-hidden="true">→</span>
+                                              </a>
+                                            ) : (
+                                              <span className="type-label-tight text-ink-muted">
+                                                Bespoke moment {index + 1}
+                                              </span>
+                                            )}
+
+                                            <div className="flex items-center gap-2 lg:hidden">
+                                              {steps.map((mappedStep) => {
+                                                const dotActive = mappedStep.id === resolvedActiveStepId;
+                                                return (
+                                                  <button
+                                                    key={mappedStep.id}
+                                                    type="button"
+                                                    onClick={(event) =>
+                                                      { handleMobileDotClick(event, mappedStep.id); }
+                                                    }
+                                                    aria-label={`Go to step ${
+                                                      steps.findIndex((stepItem) => stepItem.id === mappedStep.id) + 1
+                                                    }`}
+                                                    aria-current={
+                                                      dotActive ? "step" : undefined
+                                                    }
+                                                    className={`h-2.5 w-2.5 rounded-full border border-border ${
+                                                      dotActive ? "bg-perazzi-red" : "bg-card"
+                                                    }`}
+                                                  />
+                                                );
+                                              })}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              </div>
+                            </article>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : null}
+          </div>
+
+          {enableTitleReveal ? (
+            <div
+              data-es="header-collapsed"
+              className={cn(
+                "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
+                contentVisible && "pointer-events-none",
+              )}
+              aria-hidden={contentVisible}
+            >
               <div className="relative inline-flex text-white">
                 <Heading
                   id="build-steps-heading"
@@ -352,12 +507,8 @@ const BuildStepsRevealSection = ({
                 <button
                   type="button"
                   className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                  onPointerEnter={handleBuildStepsExpand}
-                  onFocus={handleBuildStepsExpand}
-                  onClick={handleBuildStepsExpand}
-                  aria-expanded={revealBuildSteps}
-                  aria-controls="build-steps-body"
                   aria-labelledby="build-steps-heading"
+                  {...getTriggerProps({ withHover: true })}
                 >
                   <span className="sr-only">Expand {heading}</span>
                 </button>
@@ -373,186 +524,14 @@ const BuildStepsRevealSection = ({
                   className="text-white/80 cursor-pointer focus-ring"
                   asChild
                 >
-                  <button type="button" onClick={handleBuildStepsExpand}>
+                  <button type="button" {...getTriggerProps()}>
                     Read more
                   </button>
                 </Text>
               </div>
             </div>
-          )}
-
-          {revealBuildSteps ? (
-            <div id="build-steps-body" className="space-y-6">
-              <div id="build-steps-sequence" className="relative">
-                <div className="flex">
-                  <div className="relative flex-1">
-                    <nav className="absolute inset-x-3 top-3 z-20 hidden lg:block sm:inset-x-4 lg:inset-x-6 lg:top-4">
-                      <div className="grid grid-flow-col auto-cols-fr items-center gap-2 rounded-2xl border border-border/75 bg-card/75 px-4 py-3 type-label-tight text-ink-muted shadow-soft backdrop-blur-md">
-                        {steps.map((step, index) => {
-                          const isActive = step.id === resolvedActiveStepId;
-                          const stepNumber = index + 1;
-
-                          return (
-                            <button
-                              key={step.id}
-                              type="button"
-                              onClick={() => { handleRailClick(index); }}
-                              aria-label={`Go to step ${stepNumber}: ${step.title}`}
-                              aria-current={isActive ? "step" : undefined}
-                              className={`group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-full border border-transparent px-3 py-1.5 focus-ring ${
-                                isActive
-                                  ? "text-white"
-                                  : "text-ink-muted hover:text-ink"
-                              }`}
-                            >
-                              {isActive ? (
-                                <span
-                                  className="absolute inset-0 rounded-full bg-perazzi-red shadow-elevated ring-1 ring-white/10"
-                                  aria-hidden="true"
-                                />
-                              ) : null}
-                              <span
-                                className="relative z-10 flex items-center justify-center gap-2"
-                              >
-                                <span
-                                  className={`h-2 w-2 rounded-full border ${
-                                    isActive ? "border-white/40 bg-white/85" : "border-border bg-card"
-                                  }`}
-                                  aria-hidden="true"
-                                />
-                                <span>{`Step ${stepNumber}`}</span>
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </nav>
-
-                    <div
-                      className="overflow-y-auto rounded-2xl border border-border/70 bg-card/30 shadow-soft backdrop-blur-sm snap-y snap-mandatory lg:pt-24 sm:rounded-3xl h-[80vh]"
-                      ref={scrollContainerRef}
-                    >
-                      {steps.map((step, index) => {
-                        const isImage =
-                          step.media?.kind === "image" && step.media.url;
-                        const isOpen = resolvedOpenStepId === step.id;
-
-                        return (
-                          <article
-                            key={step.id}
-                            ref={(el) => {
-                              stepRefs.current[index] = el;
-                            }}
-                            data-step-id={step.id}
-                            aria-labelledby={`build-step-heading-${step.id}`}
-                            className="group relative snap-start"
-                          >
-                            <div className="relative flex min-h-[80vh]">
-                              <div className="absolute inset-0 overflow-hidden rounded-3xl">
-                                {isImage ? (
-                                  <NextImage
-                                    src={step.media.url}
-                                    alt={step.media.alt ?? step.title}
-                                    fill
-                                    sizes="100vw"
-                                    className="object-cover object-center"
-                                    loading="lazy"
-                                  />
-                                ) : null}
-                                <div className="pointer-events-none absolute inset-0 overlay-gradient-ink-50" aria-hidden />
-                              </div>
-
-                              <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-10 sm:px-8 lg:px-12 lg:py-16">
-                                <div className="mx-auto max-w-3xl rounded-2xl border border-border/75 bg-card/80 p-5 shadow-elevated ring-1 ring-border/70 backdrop-blur-md sm:rounded-3xl sm:p-6">
-                                  <button
-                                    type="button"
-                                    className="flex w-full flex-col items-start gap-3 text-left"
-                                    aria-expanded={isOpen}
-                                    onClick={() => { toggleStepOpen(step.id); }}
-                                  >
-                                    <div className="w-full space-y-1">
-                                      <Heading
-                                        id={`build-step-heading-${step.id}`}
-                                        level={3}
-                                        size="lg"
-                                        className="type-card-title text-ink text-2xl sm:text-3xl"
-                                      >
-                                        {step.title}
-                                      </Heading>
-                                    </div>
-                                    <span className="type-label-tight text-perazzi-red/70">
-                                      {isOpen ? "Collapse" : "Read More"}
-                                    </span>
-                                  </button>
-
-                                  {isOpen ? (
-                                    <div className="overflow-hidden">
-                                      <div className="space-y-4 pt-4">
-                                        {step.bodyHtml ? (
-                                          <SafeHtml
-                                            className="max-w-none type-body text-ink-muted"
-                                            html={step.bodyHtml}
-                                          />
-                                        ) : null}
-                                        <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
-                                          {step.ctaHref && step.ctaLabel ? (
-                                            <a
-                                              href={step.ctaHref}
-                                              onClick={(event) => {
-                                                event.stopPropagation();
-                                                onStepCta?.(step.id);
-                                              }}
-                                              className="inline-flex min-h-10 items-center justify-center gap-2 pill border border-perazzi-red/60 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
-                                            >
-                                              {step.ctaLabel}
-                                              <span aria-hidden="true">→</span>
-                                            </a>
-                                          ) : (
-                                            <span className="type-label-tight text-ink-muted">
-                                              Bespoke moment {index + 1}
-                                            </span>
-                                          )}
-
-                                          <div className="flex items-center gap-2 lg:hidden">
-                                            {steps.map((mappedStep) => {
-                                              const dotActive = mappedStep.id === resolvedActiveStepId;
-                                              return (
-                                                <button
-                                                  key={mappedStep.id}
-                                                  type="button"
-                                                  onClick={(event) =>
-                                                    { handleMobileDotClick(event, mappedStep.id); }
-                                                  }
-                                                  aria-label={`Go to step ${
-                                                    steps.findIndex((stepItem) => stepItem.id === mappedStep.id) + 1
-                                                  }`}
-                                                  aria-current={
-                                                    dotActive ? "step" : undefined
-                                                  }
-                                                  className={`h-2.5 w-2.5 rounded-full border border-border ${
-                                                    dotActive ? "bg-perazzi-red" : "bg-card"
-                                                  }`}
-                                                />
-                                              );
-                                            })}
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ) : null}
-                                </div>
-                              </div>
-                            </div>
-                          </article>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           ) : null}
-        </div>
+        </motion.div>
       </div>
     </>
   );

@@ -2,13 +2,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { motion } from "framer-motion";
+import type { MouseEvent } from "react";
 import type { FAQItem, PickerItem, PickerUi } from "@/types/experience";
 import { FAQList } from "./FAQList";
 import { logAnalytics } from "@/lib/analytics";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
+import { ExpandableSection } from "@/motion/expandable/ExpandableSection";
+import type { ExpandableSectionMotionApi } from "@/motion/expandable/expandable-section-motion";
 import { Container, Heading, Text } from "@/components/ui";
 
 type ExperiencePickerProps = {
@@ -36,6 +39,7 @@ type ExperiencePickerRevealSectionProps = {
     href: string,
     itemId: string,
   ) => void;
+  readonly es: ExpandableSectionMotionApi;
 };
 
 export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<ExperiencePickerProps>) {
@@ -92,26 +96,31 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
   const microLabel = pickerUi.microLabel ?? "Perazzi Experience";
 
   return (
-    <section
-      ref={analyticsRef}
+    <ExpandableSection
+      key={pickerKey}
+      sectionId="experience.experiencePicker"
+      defaultExpanded={!enableTitleReveal}
+      rootRef={analyticsRef}
       data-analytics-id="ExperiencePickerSeen"
       className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
       aria-labelledby="experience-picker-heading"
     >
-      <ExperiencePickerRevealSection
-        key={pickerKey}
-        items={items}
-        faqItems={faqItems}
-        faqHeading={faqHeading}
-        faqLead={faqLead}
-        heading={heading}
-        subheading={subheading}
-        background={background}
-        microLabel={microLabel}
-        enableTitleReveal={enableTitleReveal}
-        onAnchorClick={handleCardClick}
-      />
-    </section>
+      {(es) => (
+        <ExperiencePickerRevealSection
+          items={items}
+          faqItems={faqItems}
+          faqHeading={faqHeading}
+          faqLead={faqLead}
+          heading={heading}
+          subheading={subheading}
+          background={background}
+          microLabel={microLabel}
+          enableTitleReveal={enableTitleReveal}
+          onAnchorClick={handleCardClick}
+          es={es}
+        />
+      )}
+    </ExpandableSection>
   );
 }
 
@@ -126,54 +135,23 @@ const ExperiencePickerRevealSection = ({
   microLabel,
   enableTitleReveal,
   onAnchorClick,
+  es,
 }: ExperiencePickerRevealSectionProps) => {
-  const [pickerExpanded, setPickerExpanded] = useState(!enableTitleReveal);
-  const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
-  const pickerShellRef = useRef<HTMLDivElement | null>(null);
+  const {
+    getTriggerProps,
+    getCloseProps,
+    layoutProps,
+    contentVisible,
+    bodyId,
+  } = es;
 
-  const revealPicker = !enableTitleReveal || pickerExpanded;
-  const revealPhotoFocus = revealPicker;
   const pickerMinHeight = enableTitleReveal ? "min-h-[calc(720px+16rem)]" : null;
-
-  const handlePickerExpand = () => {
-    if (!enableTitleReveal) return;
-    setPickerExpanded(true);
-    setHeaderThemeReady(true);
-  };
-
-  const handlePickerCollapse = () => {
-    if (!enableTitleReveal) return;
-    setHeaderThemeReady(false);
-    setPickerExpanded(false);
-  };
-
-  useEffect(() => {
-    if (!enableTitleReveal || !revealPicker) return;
-    const node = pickerShellRef.current;
-    if (!node) return;
-
-    const updateHeight = () => {
-      const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-      setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") return;
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealPicker, items.length, faqItems.length]);
+  const headerThemeReady = contentVisible;
 
   return (
     <>
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0">
+        <div data-es="bg" className="absolute inset-0">
           <Image
             src={background.url}
             alt={background.alt ?? "Perazzi experience background"}
@@ -184,77 +162,105 @@ const ExperiencePickerRevealSection = ({
           />
         </div>
         <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            revealPicker ? "opacity-0" : "opacity-100",
-          )}
+          data-es="scrim-bottom"
+          className="absolute inset-0 bg-(--scrim-strong)"
           aria-hidden
         />
         <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
+          data-es="scrim-top"
+          className="pointer-events-none absolute inset-0 overlay-gradient-canvas"
           aria-hidden
         />
       </div>
 
       <Container size="xl" className="relative z-10">
-        <div
-          ref={pickerShellRef}
-          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
-          className={cn(
-            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            pickerMinHeight,
-          )}
-        >
-          {revealPicker ? (
-            <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8">
-              <div className="space-y-3">
-                <div className="relative">
-                  <Heading
-                    id="experience-picker-heading"
-                    level={2}
-                    size="xl"
-                    className={headerThemeReady ? "text-ink" : "text-white"}
-                  >
-                    {heading}
-                  </Heading>
+        <motion.div {...layoutProps} className={cn("relative", pickerMinHeight)}>
+          <div
+            data-es="glass"
+            className={cn(
+              "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
+              contentVisible
+                ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
+                : "border-transparent bg-transparent shadow-none backdrop-blur-none",
+            )}
+          >
+            {contentVisible ? (
+              <>
+                <div data-es="header-expanded" className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8">
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <Heading
+                        id="experience-picker-heading"
+                        level={2}
+                        size="xl"
+                        className={headerThemeReady ? "text-ink" : "text-white"}
+                      >
+                        {heading}
+                      </Heading>
+                    </div>
+                    <div className="relative">
+                      <Text
+                        size="lg"
+                        className={cn(
+                          "type-section-subtitle",
+                          headerThemeReady ? "text-ink-muted" : "text-white",
+                        )}
+                      >
+                        {subheading}
+                      </Text>
+                    </div>
+                  </div>
+                  {enableTitleReveal ? (
+                    <button
+                      type="button"
+                      data-es="close"
+                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+                      {...getCloseProps()}
+                    >
+                      Collapse
+                    </button>
+                  ) : null}
                 </div>
-                <div className="relative">
-                  <Text
-                    size="lg"
-                    className={cn(
-                      "type-section-subtitle",
-                      headerThemeReady ? "text-ink-muted" : "text-white",
-                    )}
-                  >
+
+                <div data-es="main">
+                  <div data-es="list" className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:items-start">
+                    {items.map((item) => (
+                      <ExperiencePickerCard
+                        key={item.id}
+                        item={item}
+                        onAnchorClick={onAnchorClick}
+                        microLabel={microLabel}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {faqItems.length ? (
+                  <div data-es="body" id={bodyId} className="pt-4">
+                    <FAQList items={faqItems} embedded heading={faqHeading} lead={faqLead} />
+                  </div>
+                ) : (
+                  <span data-es="body" id={bodyId} className="sr-only">
                     {subheading}
-                  </Text>
+                  </span>
+                )}
+
+                <div data-es="cta" className="sr-only">
+                  Explore Perazzi experience options.
                 </div>
-              </div>
-              {enableTitleReveal ? (
-                <button
-                  type="button"
-                  className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-                  onClick={handlePickerCollapse}
-                >
-                  Collapse
-                </button>
-              ) : null}
-            </div>
-          ) : (
-            <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
+              </>
+            ) : null}
+          </div>
+
+          {enableTitleReveal ? (
+            <div
+              data-es="header-collapsed"
+              className={cn(
+                "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
+                contentVisible && "pointer-events-none",
+              )}
+              aria-hidden={contentVisible}
+            >
               <div className="relative inline-flex text-white">
                 <Heading
                   id="experience-picker-heading"
@@ -267,12 +273,8 @@ const ExperiencePickerRevealSection = ({
                 <button
                   type="button"
                   className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                  onPointerEnter={handlePickerExpand}
-                  onFocus={handlePickerExpand}
-                  onClick={handlePickerExpand}
-                  aria-expanded={revealPicker}
-                  aria-controls="experience-picker-body"
                   aria-labelledby="experience-picker-heading"
+                  {...getTriggerProps({ withHover: true })}
                 >
                   <span className="sr-only">Expand {heading}</span>
                 </button>
@@ -288,34 +290,14 @@ const ExperiencePickerRevealSection = ({
                   className="text-white/80 cursor-pointer focus-ring"
                   asChild
                 >
-                  <button type="button" onClick={handlePickerExpand}>
+                  <button type="button" {...getTriggerProps()}>
                     Read more
                   </button>
                 </Text>
               </div>
             </div>
-          )}
-
-          {revealPicker ? (
-            <div id="experience-picker-body" className="space-y-6">
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:items-start">
-                {items.map((item) => (
-                  <ExperiencePickerCard
-                    key={item.id}
-                    item={item}
-                    onAnchorClick={onAnchorClick}
-                    microLabel={microLabel}
-                  />
-                ))}
-              </div>
-              {faqItems.length ? (
-                <div className="pt-4">
-                  <FAQList items={faqItems} embedded heading={faqHeading} lead={faqLead} />
-                </div>
-              ) : null}
-            </div>
           ) : null}
-        </div>
+        </motion.div>
       </Container>
     </>
   );
@@ -337,7 +319,7 @@ function ExperiencePickerCard({
   onAnchorClick,
 }: ExperiencePickerCardProps) {
   return (
-    <article className="h-full">
+    <article data-es="item" className="h-full">
       <Link
         href={item.href}
         className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border/70 bg-card/60 text-left shadow-soft backdrop-blur-sm ring-1 ring-border/70 hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated"
@@ -350,7 +332,7 @@ function ExperiencePickerCard({
           }
         }}
       >
-        <div className="relative aspect-[3/2]">
+        <div className="relative aspect-3/2">
           <Image
             src={item.media.url}
             alt={item.media.alt}
@@ -360,7 +342,7 @@ function ExperiencePickerCard({
             loading="lazy"
           />
           <div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[color:var(--scrim-strong)]/70 via-[color:var(--scrim-strong)]/45 to-transparent"
+            className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/70 via-(--scrim-strong)/45 to-transparent"
             aria-hidden
           />
         </div>

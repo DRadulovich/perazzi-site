@@ -2,12 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { motion } from "framer-motion";
 import type { FittingStage, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
+import { ExpandableSection } from "@/motion/expandable/ExpandableSection";
+import type { ExpandableSectionMotionApi } from "@/motion/expandable/expandable-section-motion";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
@@ -24,11 +27,15 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const enablePinned = isDesktop;
   const enableTitleReveal = enablePinned;
+  const timelineKey = enableTitleReveal ? "title-reveal" : "always-reveal";
   const [activeStage, setActiveStage] = useState(0);
   const resolvedActiveStage = enablePinned ? Math.max(activeStage, 0) : activeStage;
   const seenStagesRef = useRef(new Set<string>());
   const skipTargetId = "home-timeline-anchor";
-  const timelineKey = enableTitleReveal ? "title-reveal" : "always-reveal";
+  const rootRef = useCallback((node: HTMLElement | null) => {
+    sectionRef.current = node;
+    analyticsRef.current = node;
+  }, [analyticsRef]);
 
   useEffect(() => {
     const currentStage = stages[resolvedActiveStage];
@@ -46,27 +53,29 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
         tabIndex={-1}
         className="sr-only"
       />
-      <section
+      <ExpandableSection
+        key={timelineKey}
+        sectionId="home.timelineScroller"
+        defaultExpanded={!enableTitleReveal}
+        rootRef={rootRef}
         id="craft-timeline"
-        ref={(node) => {
-          sectionRef.current = node;
-          analyticsRef.current = node;
-        }}
         data-analytics-id="CraftTimelineSeen"
         className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
         aria-labelledby="craft-timeline-heading"
       >
-        <TimelineRevealSection
-          key={timelineKey}
-          stages={stages}
-          framing={framing}
-          enableTitleReveal={enableTitleReveal}
-          enablePinned={enablePinned}
-          activeStage={activeStage}
-          setActiveStage={setActiveStage}
-          resolvedActiveStage={resolvedActiveStage}
-        />
-      </section>
+        {(es) => (
+          <TimelineRevealSection
+            stages={stages}
+            framing={framing}
+            enableTitleReveal={enableTitleReveal}
+            enablePinned={enablePinned}
+            activeStage={activeStage}
+            setActiveStage={setActiveStage}
+            resolvedActiveStage={resolvedActiveStage}
+            es={es}
+          />
+        )}
+      </ExpandableSection>
     </>
   );
 }
@@ -79,6 +88,7 @@ type TimelineRevealSectionProps = {
   readonly activeStage: number;
   readonly setActiveStage: Dispatch<SetStateAction<number>>;
   readonly resolvedActiveStage: number;
+  readonly es: ExpandableSectionMotionApi;
 };
 
 function TimelineRevealSection({
@@ -89,11 +99,15 @@ function TimelineRevealSection({
   activeStage,
   setActiveStage,
   resolvedActiveStage,
+  es,
 }: TimelineRevealSectionProps) {
-  const [timelineExpanded, setTimelineExpanded] = useState(!enableTitleReveal);
-  const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
-  const timelineShellRef = useRef<HTMLDivElement | null>(null);
+  const {
+    getTriggerProps,
+    getCloseProps,
+    layoutProps,
+    contentVisible,
+    bodyId,
+  } = es;
 
   const headingTitle = framing.title ?? "Craftsmanship Journey";
   const headingEyebrow = framing.eyebrow ?? "Three rituals that define a bespoke Perazzi build";
@@ -104,47 +118,13 @@ function TimelineRevealSection({
     ?? "/redesign-photos/homepage/timeline-scroller/pweb-home-timelinescroller-bg.jpg";
   const backgroundAlt = framing.background?.alt ?? "Perazzi workshop background";
 
-  const revealTimeline = !enableTitleReveal || timelineExpanded;
-  const revealPhotoFocus = revealTimeline;
   const timelineMinHeight = enableTitleReveal ? "min-h-[calc(640px+18rem)]" : null;
-
-  const handleTimelineExpand = () => {
-    if (!enableTitleReveal) return;
-    setTimelineExpanded(true);
-    setHeaderThemeReady(true);
-  };
-  const handleTimelineCollapse = () => {
-    if (!enableTitleReveal) return;
-    setHeaderThemeReady(false);
-    setTimelineExpanded(false);
-  };
-
-  useEffect(() => {
-    if (!enableTitleReveal || !revealTimeline) return;
-    const node = timelineShellRef.current;
-    if (!node) return;
-
-    const updateHeight = () => {
-      const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-      setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") return;
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealTimeline, resolvedActiveStage]);
+  const headerThemeReady = contentVisible;
 
   return (
     <>
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0">
+        <div data-es="bg" className="absolute inset-0">
           <Image
             src={backgroundUrl}
             alt={backgroundAlt}
@@ -155,24 +135,13 @@ function TimelineRevealSection({
           />
         </div>
         <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            revealTimeline ? "opacity-0" : "opacity-100",
-          )}
+          data-es="scrim-bottom"
+          className="absolute inset-0 bg-(--scrim-strong)"
           aria-hidden
         />
         <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "absolute inset-0 overlay-gradient-canvas",
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
+          data-es="scrim-top"
+          className="absolute inset-0 overlay-gradient-canvas"
           aria-hidden
         />
       </div>
@@ -183,105 +152,68 @@ function TimelineRevealSection({
         className="focus:outline-none focus-ring"
       >
         <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-          <div
-            ref={timelineShellRef}
-            style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
-            className={cn(
-              "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-              revealPhotoFocus
-                ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-                : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-              timelineMinHeight,
-            )}
+          <motion.div
+            {...layoutProps}
+            className={cn("relative", timelineMinHeight)}
           >
-            {revealTimeline ? (
-              <div className="relative z-10 space-y-4 md:flex md:items-center md:justify-between md:gap-8">
-                <div className="space-y-3">
-                  <div className="relative">
-                    <Heading
-                      id="craft-timeline-heading"
-                      level={2}
-                      size="xl"
-                      className={headerThemeReady ? "text-ink" : "text-white"}
-                    >
-                      {headingTitle}
-                    </Heading>
+            <div
+              data-es="glass"
+              className={cn(
+                "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
+                contentVisible
+                  ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
+                  : "border-transparent bg-transparent shadow-none backdrop-blur-none",
+              )}
+            >
+              {contentVisible ? (
+                <>
+                  <div data-es="header-expanded" className="relative z-10 space-y-4 md:flex md:items-center md:justify-between md:gap-8">
+                    <div className="space-y-3">
+                      <div className="relative">
+                        <Heading
+                          id="craft-timeline-heading"
+                          level={2}
+                          size="xl"
+                          className={headerThemeReady ? "text-ink" : "text-white"}
+                        >
+                          {headingTitle}
+                        </Heading>
+                      </div>
+                      <div className="relative">
+                        <Text
+                          size="lg"
+                          className={cn(
+                            "type-section-subtitle",
+                            headerThemeReady ? "text-ink-muted" : "text-white",
+                          )}
+                        >
+                          {headingEyebrow}
+                        </Text>
+                      </div>
+                      <span data-es="body" id={bodyId} className="sr-only">
+                        {headingInstructions}
+                      </span>
+                    </div>
+                    {enableTitleReveal ? (
+                      <button
+                        type="button"
+                        data-es="close"
+                        className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+                        {...getCloseProps()}
+                      >
+                        Collapse
+                      </button>
+                    ) : null}
                   </div>
-                  <div className="relative">
-                    <Text
-                      size="lg"
-                      className={cn(
-                        "type-section-subtitle",
-                        headerThemeReady ? "text-ink-muted" : "text-white",
-                      )}
-                    >
-                      {headingEyebrow}
-                    </Text>
-                  </div>
-                  <span className="sr-only">{headingInstructions}</span>
-                </div>
-                {enableTitleReveal ? (
-                  <button
-                    type="button"
-                    className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-                    onClick={handleTimelineCollapse}
-                  >
-                    Collapse
-                  </button>
-                ) : null}
-              </div>
-            ) : (
-              <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
-                <div className="relative inline-flex text-white">
-                  <Heading
-                    id="craft-timeline-heading"
-                    level={2}
-                    size="xl"
-                    className="type-section-collapsed"
-                  >
-                    {headingTitle}
-                  </Heading>
-                  <button
-                    type="button"
-                    className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                    onPointerEnter={handleTimelineExpand}
-                    onFocus={handleTimelineExpand}
-                    onClick={handleTimelineExpand}
-                    aria-expanded={revealTimeline}
-                    aria-controls="craft-timeline-body"
-                    aria-labelledby="craft-timeline-heading"
-                  >
-                    <span className="sr-only">Expand {headingTitle}</span>
-                  </button>
-                </div>
-                <div className="relative text-white">
-                  <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                    {headingEyebrow}
-                  </Text>
-                </div>
-                <div className="mt-3">
-                  <Text
-                    size="button"
-                    className="text-white/80 cursor-pointer focus-ring"
-                    asChild
-                  >
-                    <button type="button" onClick={handleTimelineExpand}>
-                      Read more
-                    </button>
-                  </Text>
-                </div>
-              </div>
-            )}
 
-            {revealTimeline ? (
-              <div id="craft-timeline-body" className="space-y-6">
-                {enablePinned ? (
+                  <div data-es="main" className="space-y-6">
+                    {enablePinned ? (
                   <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
                     <div className="space-y-4 border-none bg-card/0 p-4 shadow-none sm:border-none sm:bg-card/0 sm:p-4 sm:shadow-none">
                       <Text size="label-tight" className="mb-3 text-ink">
                         {alternateTitle}
                       </Text>
-                      <div className="space-y-1">
+                      <div data-es="list" className="space-y-1">
                         {stages.map((stage, index) => (
                           <TimelineControlButton
                             key={`control-${stage.id}`}
@@ -298,7 +230,7 @@ function TimelineRevealSection({
                       <div
                         className={cn(
                           "relative min-h-[640px] overflow-hidden rounded-3xl border",
-                          revealPhotoFocus
+                          contentVisible
                             ? "border-border/70 bg-card/70 shadow-elevated ring-1 ring-border/70 backdrop-blur-sm"
                             : "border-transparent bg-transparent shadow-none ring-0 backdrop-blur-none",
                         )}
@@ -306,13 +238,13 @@ function TimelineRevealSection({
                         {stages[resolvedActiveStage] ? (
                           <PinnedStagePanel
                             stage={stages[resolvedActiveStage]}
-                            revealPhotoFocus={revealPhotoFocus}
+                            revealPhotoFocus={contentVisible}
                           />
                         ) : null}
                       </div>
                     </div>
                   </div>
-                ) : (
+                    ) : (
                   <div className="space-y-8">
                     <div className="space-y-3">
                       <Text size="label-tight" className="text-ink-muted">
@@ -375,8 +307,9 @@ function TimelineRevealSection({
                       })}
                     </div>
                   </div>
-                )}
-                <div className="pt-2 sm:pt-4">
+                    )}
+                  </div>
+                  <div data-es="cta" className="pt-2 sm:pt-4">
                   <Button
                     asChild
                     variant="secondary"
@@ -388,9 +321,56 @@ function TimelineRevealSection({
                     </Link>
                   </Button>
                 </div>
+                </>
+              ) : null}
+            </div>
+
+            {enableTitleReveal ? (
+              <div
+                data-es="header-collapsed"
+                className={cn(
+                  "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-center",
+                  contentVisible && "pointer-events-none",
+                )}
+                aria-hidden={contentVisible}
+              >
+                <div className="relative inline-flex text-white">
+                  <Heading
+                    id="craft-timeline-heading"
+                    level={2}
+                    size="xl"
+                    className="type-section-collapsed"
+                  >
+                    {headingTitle}
+                  </Heading>
+                  <button
+                    type="button"
+                    className="absolute inset-0 z-10 cursor-pointer focus-ring"
+                    aria-labelledby="craft-timeline-heading"
+                    {...getTriggerProps({ withHover: true })}
+                  >
+                    <span className="sr-only">Expand {headingTitle}</span>
+                  </button>
+                </div>
+                <div className="relative text-white">
+                  <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+                    {headingEyebrow}
+                  </Text>
+                </div>
+                <div className="mt-3">
+                  <Text
+                    size="button"
+                    className="text-white/80 cursor-pointer focus-ring"
+                    asChild
+                  >
+                    <button type="button" {...getTriggerProps()}>
+                      Read more
+                    </button>
+                  </Text>
+                </div>
               </div>
             ) : null}
-          </div>
+          </motion.div>
         </div>
       </div>
     </>
@@ -423,6 +403,7 @@ function TimelineControlButton({
       className={baseClass}
       onClick={onSelect}
       aria-pressed={active}
+      data-es="item"
     >
       {active ? (
         <span

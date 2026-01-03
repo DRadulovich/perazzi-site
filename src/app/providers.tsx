@@ -7,6 +7,7 @@ import {
   ThemeProvider,
   type ThemeMode,
 } from "@/components/theme/ThemeProvider";
+import { ExpandableSectionControllerProvider } from "@/motion/expandable/context/ExpandableSectionController";
 
 type ProvidersProps = {
   children: ReactNode;
@@ -20,16 +21,18 @@ export default function Providers({
   locale,
   messages,
   initialTheme,
-}: ProvidersProps) {
+}: Readonly<ProvidersProps>) {
   return (
     <ThemeProvider initialTheme={initialTheme}>
-      <NextIntlClientProvider
-        locale={locale}
-        messages={messages}
-        timeZone="Europe/Rome"
-      >
-        {children}
-      </NextIntlClientProvider>
+      <ExpandableSectionControllerProvider>
+        <NextIntlClientProvider
+          locale={locale}
+          messages={messages}
+          timeZone="Europe/Rome"
+        >
+          {children}
+        </NextIntlClientProvider>
+      </ExpandableSectionControllerProvider>
     </ThemeProvider>
   );
 }
