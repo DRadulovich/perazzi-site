@@ -637,3 +637,431 @@ For every task below, Codex should:
    * Require Codex to run the repo’s verification scripts (from `package.json`). Codex performs better when it can verify its work. ([OpenAI Developers][1])
 
 ---
+
+
+
+
+
+
+---
+
+
+
+
+
+
+Your Codex audit is pointing at the *right* dragons, and the symptoms you’re describing (“everything feels like it starts at once”, “collapsed stays tall”, “reduced‑motion loses the interaction model”) match those gaps almost perfectly.
+
+## What I think about the Codex audit (agree + add one extra root cause)
+
+### ✅ Agree with the audit’s main gaps
+
+1. **Collapse isn’t faster than expand**
+
+* You currently have `COLLAPSE_TIME_SCALE` set equal to expand. That violates the contract and will make close feel “floaty” instead of snappy. (Codex cited `src/motion/expandableSectionMotion.ts:4–5`.)
+
+2. **Hover expands (not just teases)**
+
+* Multiple components still call expand on `onPointerEnter`. That directly contradicts “hover may highlight/tease but must not expand unless explicitly enabled.” (Codex gave a long list of `onPointerEnter` callsites.)
+
+3. **Reduced motion breaks the interaction model**
+
+* Because `enableTitleReveal` is gated off under reduced motion and many sections do `defaultExpanded: !enableTitleReveal`, reduced‑motion users effectively get “always expanded” (and often lose expand/collapse affordances). That’s the opposite of “same interaction model, reduced motion just simplifies motion.” (Codex cited the `defaultExpanded: !enableTitleReveal` pattern across all sections.)
+
+4. **Container expansion/collapse isn’t happening correctly**
+
+* If `minHeight` is pinned to a measured `expandedHeight`, the section can’t visually collapse back to ~60vh. That’s why your collapses feel like “fade outs” rather than “collapse sequences.” (Codex cited several `minHeight` / `expandedHeight` lines.)
+
+5. **Hook doesn’t implement scroll anchoring/outside click**
+
+* Not fatal, but it’s one of the “polish requirements” and affects perceived smoothness when expansion changes layout. (Codex cited `src/motion/useExpandableSectionTimeline.ts:29`.)
+
+### 🧠 One extra culprit that explains your “everything happens at once” feeling
+
+Even with `EXPAND_TIME_SCALE = 4`, your **stagger timing currently does *not* scale** with that value.
+
+In your `createExpandableSectionVariants.ts`, you scale durations via:
+
+* `duration: (ms/1000) * EXPAND_TIME_SCALE`
+
+…but your `staggerChildren` is currently:
+
+* `staggerChildren: (staggerMs/1000)` *(no multiply)*
+
+So when you slow things down 4×:
+
+* each item’s animation becomes **2.2s** long (550ms × 4),
+* but the stagger stays **0.10–0.12s**.
+
+That makes lots of items begin nearly together, just with long overlapping tweens — which reads as “simultaneous.”
+
+That’s why you’re not seeing the timeline “separate into steps” when you slow it down.
+
+## Why you shouldn’t expect “one step at a time” right now
+
+With your current shared variants, almost every slot (`scrimTop`, `scrimBottom`, `collapsedHeader`, `glass`, `expandedHeader`, `content`, `ctaRow`) switches behavior on the same phase transition (`prezoom → expanded`). If there are no *slot-level delays* and staggers aren’t scaled, most things will look like they start together.
+
+The target spec allows *overlap*, but it does **not** allow:
+
+* hover-triggered expansion,
+* collapse same speed as expand,
+* reduced-motion = no interaction model,
+* container never actually collapsing.
+
+Those are the big blockers.
+
+---
+
+# Plan to reach your desired end state
+
+This is the sane order (minimizes thrash + lets you “feel” progress after each step):
+
+1. **Fix the global timing semantics**
+
+* Collapse scale and stagger scaling.
+* This alone should immediately make the system feel more readable at `EXPAND_TIME_SCALE = 4`.
+
+2. **Fix the interaction contract**
+
+* Remove hover-to-expand everywhere (replace with tease-only or nothing).
+* Restore reduced-motion interactivity (reduced motion changes *how* it animates, not *whether* it works).
+
+3. **Fix the container height model**
+
+* Reintroduce a real collapsed height (~60vh).
+* Make expansion/collapse happen via `layout` (preferred) or controlled numeric height.
+* Stop pinning `minHeight` to the expanded measurement in the collapsed state.
+
+4. **Only then: tune sequencing offsets**
+
+* If you still want stronger “step separation,” add small standardized slot delays (glass/header/content/cta) in the shared variants.
+* Doing that before container collapse works is… like tuning a violin while it’s on fire.
+
+5. **Polish**
+
+* Optional scroll anchoring and outside click close.
+
+---
+
+# Optional: a Codex research mission (so I can be extremely precise)
+
+Since I can’t reliably browse your GitHub tree from here (GitHub keeps throwing a signed-out session error in this environment), the fastest way to eliminate any remaining UNKNOWNs is to have Codex extract the exact current patterns.
+
+### Task Card R1 — Motion System Gap Report (No code changes)
+
+**Objective:** Produce a precise, per-component report of how expand/collapse is currently wired (triggers, container sizing, reduced motion behavior, variant propagation).
+**Scope:**
+
+* `src/motion/expandableSectionMotion.ts`
+* `src/motion/createExpandableSectionVariants.ts`
+* `src/motion/useExpandableSectionTimeline.ts`
+* These components (12):
+
+  * `src/components/home/timeline-scroller.tsx`
+  * `src/components/home/marquee-feature.tsx`
+  * `src/components/shotguns/PlatformGrid.tsx`
+  * `src/components/shotguns/DisciplineRail.tsx`
+  * `src/components/shotguns/TriggerExplainer.tsx`
+  * `src/components/shotguns/EngravingGradesCarousel.tsx`
+  * `src/components/bespoke/BuildStepsScroller.tsx`
+  * `src/components/experience/ExperiencePicker.tsx`
+  * `src/components/experience/VisitFactory.tsx`
+  * `src/components/experience/BookingOptions.tsx`
+  * `src/components/experience/TravelNetwork.tsx`
+  * `src/components/heritage/ChampionsGallery.tsx`
+    **Plan:**
+
+1. For each component, list:
+
+   * Expand triggers (click target(s), any `onPointerEnter`, key handlers)
+   * How `useExpandableSectionTimeline` is invoked (options object)
+   * How container height is controlled (style/class, `minHeight`, measured height usage)
+   * Whether the section container has `layout` enabled (and its transition)
+   * Whether children rely on variant propagation *or* set `animate={phase}` individually (this affects `staggerChildren`)
+2. Output a markdown table + file:line references + 1–3 relevant code snippets per component.
+3. Do **not** modify code.
+   **Acceptance Criteria:**
+
+* [ ] Report covers all 12 components + 3 shared motion files.
+* [ ] Every claim includes file:line.
+* [ ] Explicitly flags any “stagger broken because children set animate directly.”
+  **Risks / Notes:**
+* This is purely diagnostic; it makes the next fixes faster and safer.
+  **Verification Steps:**
+* N/A (report only)
+
+If you paste that report here, I can give you an even tighter, near-zero-guesswork fix sequence.
+
+---
+
+# Implementation plan as new Codex task cards
+
+These are the “get to desired end state” cards. I’m numbering them after your existing 20.
+
+## Shared primitives first
+
+### Task Card 21 — Restore snappy collapse speed globally
+
+**Objective:** Make collapse feel ~2× faster than expand by default, per the spec contract.
+**Scope:**
+
+* `src/motion/expandableSectionMotion.ts` (Codex cited lines ~4–5)
+  **Plan:**
+
+1. Change `COLLAPSE_TIME_SCALE` default to `EXPAND_TIME_SCALE * 0.5`.
+2. Ensure any derived timings (like closing hold calculations in the hook) still compile and behave correctly.
+3. Keep `EXPAND_TIME_SCALE` user-tunable for debugging.
+   **Acceptance Criteria:**
+
+* [ ] Collapsing is visibly faster than expanding across sections.
+* [ ] No TypeScript errors.
+  **Risks / Notes:**
+* If any components were implicitly “timed” assuming equal scales, they’ll feel different (this is intended).
+  **Verification Steps:**
+* Run dev server; expand then collapse any section; confirm close is ~2× faster.
+
+---
+
+### Task Card 22 — Make all staggers honor the time scales
+
+**Objective:** When you set `EXPAND_TIME_SCALE = 4`, staggers should also slow down 4× (per spec: scale applies to all expand durations/delays).
+**Scope:**
+
+* `src/motion/createExpandableSectionVariants.ts`
+  **Plan:**
+
+1. Update the stagger helper so `staggerChildren` is multiplied by the correct scale:
+
+   * Expand staggers × `EXPAND_TIME_SCALE`
+   * Collapse staggers × `COLLAPSE_TIME_SCALE`
+2. Ensure both “enter” and “exit” staggers are scaled (including `staggerDirection: -1` cases).
+3. Keep reduced-motion behavior: stagger disabled when reduced motion is active.
+   **Acceptance Criteria:**
+
+* [ ] With `EXPAND_TIME_SCALE = 4`, header/body/list items clearly start farther apart.
+* [ ] With `EXPAND_TIME_SCALE = 1`, behavior matches expected baseline.
+  **Risks / Notes:**
+* This will make debug mode dramatically clearer (which is exactly what you want right now).
+  **Verification Steps:**
+* Set `EXPAND_TIME_SCALE = 4` temporarily and visually confirm stagger separation.
+
+---
+
+### Task Card 23 — Fix reduced-motion interaction model globally
+
+**Objective:** Reduced-motion users must still be able to expand/collapse; only the *motion style* should simplify.
+**Scope:**
+
+* All 12 components where Codex observed `defaultExpanded: !enableTitleReveal`:
+
+  * (Examples cited) `src/components/home/marquee-feature.tsx:32, :77`, plus the rest in the Codex audit list.
+    **Plan:**
+
+1. In each component:
+
+   * Stop using `defaultExpanded: !enableTitleReveal`.
+   * Default should be collapsed unless you have an explicit product decision otherwise.
+2. Ensure reduced motion changes the **variants mode** (e.g., `motionMode: "reduced"`) rather than skipping the entire interaction model.
+3. Ensure “Read More” + “Close” controls remain rendered/usable in reduced motion.
+   **Acceptance Criteria:**
+
+* [ ] With `prefers-reduced-motion: reduce`, every section can still expand/collapse via click and Escape.
+* [ ] Reduced motion disables heavy effects (parallax/blur/letter reveal), but keeps basic fades/layout.
+  **Risks / Notes:**
+* Some components may have previously “forced expanded” on mobile/reduced motion for layout reasons; this is where you decide whether that was a requirement or a workaround.
+  **Verification Steps:**
+* Enable reduced motion at OS level and test at least 3 sections (home + shotguns + experience).
+
+> If you want to keep tasks smaller: do this as 6 cards, 2 components per card (same mechanical change), instead of one giant sweep.
+
+---
+
+### Task Card 24 — Remove hover-to-expand everywhere (hover can tease only)
+
+**Objective:** Hover must not trigger expansion unless explicitly enabled (and right now, it isn’t).
+**Scope:**
+Remove/replace the `onPointerEnter` expand calls cited by Codex, including:
+
+* `src/components/home/timeline-scroller.tsx:438`
+* `src/components/home/marquee-feature.tsx:447`
+* `src/components/experience/BookingOptions.tsx:421`
+* `src/components/heritage/ChampionsGallery.tsx:435`
+* …and the rest of the audit list
+  **Plan:**
+
+1. Delete `onPointerEnter` handlers that call `open()` / set expanded.
+2. If you want hover tease, implement it as:
+
+   * CSS hover states (preferred), or
+   * local `isHovered` state that only changes scrim/brightness/scale slightly, **never** toggling expand.
+3. Confirm click/tap is still the only expand trigger.
+   **Acceptance Criteria:**
+
+* [ ] Hover never expands.
+* [ ] Click/tap still expands.
+* [ ] No regressions to keyboard open/escape close.
+  **Risks / Notes:**
+* If hover-open was masking container height bugs, removing it will make those bugs more visible (good).
+  **Verification Steps:**
+* Desktop: hover each section; confirm no expand.
+* Click “Read More”; confirm expand.
+
+---
+
+## Container expansion (the big visual missing piece)
+
+### Task Card 25 — Reintroduce real container collapse/expand using layout
+
+**Objective:** Make the section container actually move between collapsed (~60vh) and expanded (content height) with Framer Motion layout animation.
+**Scope:**
+
+* Start with one pilot component (recommend `src/components/home/marquee-feature.tsx` since it’s already a visual reference point). Codex cited container sizing lines like `:178`, `:216`, `:284`.
+  **Plan:**
+
+1. Ensure the section container is a `motion.*` element with `layout` enabled.
+2. In `collapsed` and `prezoom` phases:
+
+   * enforce a visible height of ~`60vh` (via `height` or `maxHeight`, not `minHeight`)
+   * set `overflow: hidden`
+3. In `expanded` and `closingHold` phases:
+
+   * remove the fixed height constraint (let content define height)
+   * allow overflow per design (often visible or auto)
+4. Remove the pattern where `minHeight` is locked to measured `expandedHeight` in collapsed state.
+5. Ensure layout transition duration uses:
+
+   * expand duration scaled by `EXPAND_TIME_SCALE`
+   * collapse duration scaled by `COLLAPSE_TIME_SCALE`
+     **Acceptance Criteria:**
+
+* [ ] Collapsed state is visibly ~60vh.
+* [ ] Expand animates container height (not just fades).
+* [ ] Collapse animates back down after exits (no “stuck tall”).
+  **Risks / Notes:**
+* Some sections may have internal scroll containers; if layout feels janky, fallback is measured numeric height, but try layout first.
+  **Verification Steps:**
+* Expand → collapse repeatedly; confirm no stuck heights and no big scroll jumps.
+
+---
+
+### Task Card 26 — Roll out container layout fix to the remaining sections (small batches)
+
+**Objective:** Apply the proven container-height approach everywhere.
+**Scope:**
+Do in 6 cards of 2 components each (≤2 files touched per card), for example:
+
+* Card 26a: `PlatformGrid.tsx` + `TriggerExplainer.tsx`
+* Card 26b: `DisciplineRail.tsx` + `EngravingGradesCarousel.tsx`
+* Card 26c: `BuildStepsScroller.tsx` + `ChampionsGallery.tsx`
+* Card 26d: `ExperiencePicker.tsx` + `VisitFactory.tsx`
+* Card 26e: `BookingOptions.tsx` + `TravelNetwork.tsx`
+* Card 26f: `timeline-scroller.tsx` (alone; it’s the “don’t touch with muddy boots” file)
+  **Plan:**
+
+1. Apply the same collapsed height + layout rules.
+2. Remove expandedHeight-minHeight locking if present.
+3. Verify close actually collapses visually.
+   **Acceptance Criteria:**
+
+* [ ] Each converted section collapses to ~60vh.
+* [ ] Expand/collapse feels consistent across the site.
+  **Risks / Notes:**
+* `timeline-scroller` likely has the most custom internal layout behavior; do it last and keep it surgical.
+  **Verification Steps:**
+* Manual expand/collapse check after each batch.
+
+---
+
+## (Only if needed) Stronger step sequencing / offsets
+
+After Task Cards 21–26, you’ll already be much closer to the target.
+
+If you *still* want more “chaptered” sequencing (scrims → glass → header → content → CTA), then:
+
+### Task Card 27 — Add standardized slot delays for clearer step sequencing
+
+**Objective:** Make the shared timeline read as steps (without making total duration explode).
+**Scope:**
+
+* `src/motion/expandableSectionMotion.ts`
+* `src/motion/createExpandableSectionVariants.ts`
+  **Plan:**
+
+1. Add a small set of **base slot delays** (ms) for expand and collapse groups (glass/header/content/cta).
+2. Apply those delays inside the variants transitions (and scale them by EXPAND/COLLAPSE scale).
+3. Ensure `closingHold` duration in the hook remains long enough to cover the delayed exits.
+   **Acceptance Criteria:**
+
+* [ ] At `EXPAND_TIME_SCALE=4`, you can clearly see step separation.
+* [ ] At `EXPAND_TIME_SCALE=1`, it still feels snappy (not 5–6 seconds long).
+  **Risks / Notes:**
+* Do this only once container height and stagger scaling are correct, or you’ll be tuning illusions.
+  **Verification Steps:**
+* Visual test at scale 4 then scale 1.
+
+---
+
+## Optional polish (not blockers, but nice)
+
+### Task Card 28 — Add optional scroll anchoring + outside click close to the shared hook
+
+**Objective:** Prevent scroll-jump on expand and optionally collapse when clicking outside.
+**Scope:**
+
+* `src/motion/useExpandableSectionTimeline.ts` (Codex cited missing options)
+* A pilot component to wire the ref (1 file)
+  **Plan:**
+
+1. Update the hook to optionally manage:
+
+   * `containerRef`
+   * on expand: if top of section is above viewport, scroll it into view smoothly (guarded)
+   * outside click to close (optional, safe default off)
+2. Wire into one pilot component first.
+3. Roll out later if the pattern works.
+   **Acceptance Criteria:**
+
+* [ ] No scroll jump surprises on expand.
+* [ ] Outside click close works only when enabled.
+  **Risks / Notes:**
+* Outside-click close can be annoying if the section has lots of interactive children; keep default off.
+  **Verification Steps:**
+* Expand mid-page; confirm it doesn’t shove content weirdly.
+
+---
+
+# After you fix these, can you “change how it animates” or add steps later?
+
+Yes — *and this is the whole point of centralizing it*.
+
+Once:
+
+* container layout is correct,
+* collapse scale is correct,
+* staggers scale correctly,
+* interaction model works under reduced motion,
+
+…then changes like:
+
+* “make glass pop later”
+* “make CTA reveal last”
+* “increase header stagger”
+* “add a new step between meta and content”
+  become **one-file** (or two-file) edits in:
+* `src/motion/expandableSectionMotion.ts` (knobs, delays, scales)
+* `src/motion/createExpandableSectionVariants.ts` (what each slot does, and when)
+
+And if you want to change sequencing timing, you’ll add/adjust:
+
+* slot delays (recommended), or
+* an additional phase (more invasive), if you truly need hard barriers.
+
+---
+
+If you run **Task Card 21 + 22 + 25 (pilot on marquee-feature)**, you should immediately stop seeing “everything at once” when `EXPAND_TIME_SCALE = 4`, because:
+
+* collapses will actually be faster,
+* staggers will actually slow down,
+* the container will actually animate height again.
+
+Then the rest becomes a fairly mechanical rollout.

@@ -1,10 +1,10 @@
 // Shared timing/easing/stagger knobs for the expandable section motion system.
 // Keep this file constants-only so all consumers stay side-effect free.
 
-export const EXPAND_TIME_SCALE = 2;
-export const COLLAPSE_TIME_SCALE = EXPAND_TIME_SCALE * 0.5;
+export const EXPAND_TIME_SCALE = 4;
+export const COLLAPSE_TIME_SCALE = EXPAND_TIME_SCALE * 1;
 
-export const PREZOOM_MS = 180;
+export const PREZOOM_MS = 500;
 export const CONTAINER_EXPAND_MS = 820;
 export const SCRIM_CONVERGE_MS = 820;
 export const SCRIM_FOCUS_OFFSET_MS = 240;
@@ -17,15 +17,24 @@ export const CONTENT_REVEAL_MS = 550;
 export const LIST_REVEAL_MS = 550;
 export const CTA_REVEAL_MS = 550;
 
-export const EXPAND_GLASS_DELAY_MS = 60;
-export const EXPAND_HEADER_DELAY_MS = 120;
-export const EXPAND_CONTENT_DELAY_MS = 180;
-export const EXPAND_CTA_DELAY_MS = 240;
+export const EXPAND_STAGE_GAP_MS = 0;
+export const COLLAPSE_STAGE_GAP_MS = 0;
 
-export const COLLAPSE_GLASS_DELAY_MS = 90;
-export const COLLAPSE_HEADER_DELAY_MS = 60;
-export const COLLAPSE_CONTENT_DELAY_MS = 30;
+export const EXPAND_GLASS_DELAY_MS = 0;
+export const EXPAND_HEADER_DELAY_MS =
+  EXPAND_GLASS_DELAY_MS + GLASS_REVEAL_MS + EXPAND_STAGE_GAP_MS;
+export const EXPAND_CONTENT_DELAY_MS =
+  EXPAND_HEADER_DELAY_MS + EXPANDED_HEADER_REVEAL_MS + EXPAND_STAGE_GAP_MS;
+export const EXPAND_CTA_DELAY_MS =
+  EXPAND_CONTENT_DELAY_MS + CONTENT_REVEAL_MS + EXPAND_STAGE_GAP_MS;
+
 export const COLLAPSE_CTA_DELAY_MS = 0;
+export const COLLAPSE_CONTENT_DELAY_MS =
+  COLLAPSE_CTA_DELAY_MS + CTA_REVEAL_MS + COLLAPSE_STAGE_GAP_MS;
+export const COLLAPSE_HEADER_DELAY_MS =
+  COLLAPSE_CONTENT_DELAY_MS + CONTENT_REVEAL_MS + COLLAPSE_STAGE_GAP_MS;
+export const COLLAPSE_GLASS_DELAY_MS =
+  COLLAPSE_HEADER_DELAY_MS + EXPANDED_HEADER_REVEAL_MS + COLLAPSE_STAGE_GAP_MS;
 
 export const STAGGER_HEADER_ITEMS_MS = 120;
 export const STAGGER_BODY_ITEMS_MS = 100;
