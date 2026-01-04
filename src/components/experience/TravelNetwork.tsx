@@ -112,7 +112,7 @@ const TravelNetworkRevealSection = ({
 
   const revealNetwork = !enableTitleReveal || networkExpanded;
   const revealPhotoFocus = revealNetwork;
-  const networkMinHeight = enableTitleReveal ? "min-h-[calc(720px+16rem)]" : null;
+  const networkMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
 
   const handleNetworkExpand = () => {
     if (!enableTitleReveal) return;
@@ -159,7 +159,11 @@ const TravelNetworkRevealSection = ({
       <Container size="xl" className="relative z-10">
         <div
           ref={networkShellRef}
-          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
+          style={
+            enableTitleReveal && revealNetwork && expandedHeight
+              ? { minHeight: expandedHeight }
+              : undefined
+          }
           className={cn(
             "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
             revealPhotoFocus

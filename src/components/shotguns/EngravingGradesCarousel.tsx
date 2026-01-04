@@ -211,7 +211,7 @@ const EngravingGradesRevealSection = ({
 
   const revealCarousel = !enableTitleReveal || carouselExpanded;
   const revealPhotoFocus = revealCarousel;
-  const carouselMinHeight = enableTitleReveal ? "min-h-[calc(720px+18rem)]" : null;
+  const carouselMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
@@ -286,7 +286,11 @@ const EngravingGradesRevealSection = ({
       <Container size="xl" className="relative z-10">
         <div
           ref={carouselShellRef}
-          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
+          style={
+            enableTitleReveal && revealCarousel && expandedHeight
+              ? { minHeight: expandedHeight }
+              : undefined
+          }
           className={cn(
             "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
             revealPhotoFocus

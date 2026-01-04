@@ -136,7 +136,7 @@ const TriggerExplainerRevealSection = ({
   }, [enableTitleReveal, revealExplainer, manualOpen]);
 
   const minHeightStyle =
-    enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined;
+    enableTitleReveal && revealExplainer && expandedHeight ? { minHeight: expandedHeight } : undefined;
 
   return (
     <>
@@ -181,7 +181,7 @@ const getExplainerShellClassName = (revealPhotoFocus: boolean, enableTitleReveal
     revealPhotoFocus
       ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
       : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-    enableTitleReveal && "min-h-[calc(520px+18rem)]",
+    enableTitleReveal && "min-h-[50vh]",
   );
 
 const TriggerExplainerBackground = ({

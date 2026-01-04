@@ -106,7 +106,7 @@ const ChampionsGalleryRevealSection = ({
 
   const revealGallery = !enableTitleReveal || galleryExpanded;
   const revealPhotoFocus = revealGallery;
-  const galleryMinHeight = enableTitleReveal ? "min-h-[calc(700px+16rem)]" : null;
+  const galleryMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
 
   const expandedHeight = useExpandedHeightObserver({
     enableTitleReveal,
@@ -143,7 +143,11 @@ const ChampionsGalleryRevealSection = ({
       <Container size="xl" className="relative z-10">
         <div
           ref={galleryShellRef}
-          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
+          style={
+            enableTitleReveal && revealGallery && expandedHeight
+              ? { minHeight: expandedHeight }
+              : undefined
+          }
           className={cn(
             "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
             revealPhotoFocus

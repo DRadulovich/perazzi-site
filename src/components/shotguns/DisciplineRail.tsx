@@ -373,7 +373,7 @@ const DisciplineRailRevealSection = ({
   const revealRail = !enableTitleReveal || railExpanded;
   const revealPhotoFocus = revealRail;
   const railMinHeight =
-    enableTitleReveal && !revealRail ? "min-h-[clamp(320px,45vh,480px)]" : null;
+    enableTitleReveal && !revealRail ? "min-h-[50vh]" : null;
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;

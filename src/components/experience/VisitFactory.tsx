@@ -105,9 +105,9 @@ const VisitFactoryRevealSection = ({
 
   const revealVisit = !enableTitleReveal || visitExpanded;
   const revealPhotoFocus = revealVisit;
-  const visitMinHeight = enableTitleReveal ? "min-h-[calc(640px+16rem)]" : null;
+  const visitMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
   const minHeightStyle =
-    enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined;
+    enableTitleReveal && revealVisit && expandedHeight ? { minHeight: expandedHeight } : undefined;
 
   const handleVisitExpand = () => {
     if (!enableTitleReveal) return;

@@ -338,7 +338,7 @@ const PlatformGridRevealSection = ({
   const revealGrid = !enableTitleReveal || platformExpanded;
   const revealPhotoFocus = revealGrid;
   const activePlatform = platforms[activeIndex] ?? platforms[0];
-  const platformMinHeight = enableTitleReveal ? "min-h-[calc(750px+18rem)]" : null;
+  const platformMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
@@ -434,7 +434,11 @@ const PlatformGridRevealSection = ({
       <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
         <div
           ref={platformShellRef}
-          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
+          style={
+            enableTitleReveal && revealGrid && expandedHeight
+              ? { minHeight: expandedHeight }
+              : undefined
+          }
           className={cn(
             "relative flex flex-col space-y-8 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
             revealPhotoFocus
@@ -571,7 +575,7 @@ export function PlatformGrid({ platforms, ui }: PlatformGridProps) {
     <section
       ref={analyticsRef}
       data-analytics-id="PlatformGridSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-visible py-10 sm:py-16 min-h-[80vh] full-bleed"
+      className="relative isolate w-screen max-w-[100vw] overflow-visible py-10 sm:py-16 full-bleed"
       aria-labelledby="platforms-heading"
     >
       <PlatformGridRevealSection

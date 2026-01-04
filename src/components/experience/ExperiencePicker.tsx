@@ -151,8 +151,10 @@ const useExpandedHeight = (
 
 const getExpandedHeightStyle = (
   enableTitleReveal: boolean,
+  revealPicker: boolean,
   expandedHeight: number | null,
-) => (enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined);
+) =>
+  (enableTitleReveal && revealPicker && expandedHeight ? { minHeight: expandedHeight } : undefined);
 
 type ExperiencePickerBackgroundProps = Readonly<{
   background: ExperiencePickerRevealSectionProps["background"];
@@ -360,14 +362,14 @@ const ExperiencePickerRevealSection = ({
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
   const revealPicker = !enableTitleReveal || pickerExpanded;
   const revealPhotoFocus = revealPicker;
-  const pickerMinHeight = enableTitleReveal && "min-h-[calc(720px+16rem)]";
+  const pickerMinHeight = enableTitleReveal && "min-h-[50vh]";
   const { expandedHeight, pickerShellRef } = useExpandedHeight(
     enableTitleReveal,
     revealPicker,
     items.length,
     faqItems.length,
   );
-  const expandedHeightStyle = getExpandedHeightStyle(enableTitleReveal, expandedHeight);
+  const expandedHeightStyle = getExpandedHeightStyle(enableTitleReveal, revealPicker, expandedHeight);
 
   const handlePickerExpand = () => {
     setPickerExpanded(true);

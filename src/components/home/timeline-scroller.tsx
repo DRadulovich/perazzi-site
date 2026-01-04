@@ -106,7 +106,7 @@ function TimelineRevealSection({
 
   const revealTimeline = !enableTitleReveal || timelineExpanded;
   const revealPhotoFocus = revealTimeline;
-  const timelineMinHeight = enableTitleReveal ? "min-h-[calc(640px+18rem)]" : null;
+  const timelineMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
 
   const handleTimelineExpand = () => {
     if (!enableTitleReveal) return;
@@ -158,7 +158,11 @@ function TimelineRevealSection({
         <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
           <div
             ref={timelineShellRef}
-            style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
+            style={
+              enableTitleReveal && revealTimeline && expandedHeight
+                ? { minHeight: expandedHeight }
+                : undefined
+            }
             className={cn(
               "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
               revealPhotoFocus

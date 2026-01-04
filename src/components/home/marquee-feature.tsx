@@ -113,7 +113,7 @@ function MarqueeFeatureRevealSection({
 
   const revealMarquee = !enableTitleReveal || marqueeExpanded;
   const revealPhotoFocus = revealMarquee;
-  const marqueeMinHeight = enableTitleReveal ? "min-h-[calc(640px+12rem)]" : null;
+  const marqueeMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
 
   const handleMarqueeExpand = () => {
     if (!enableTitleReveal) return;
@@ -160,7 +160,11 @@ function MarqueeFeatureRevealSection({
       <Container size="xl" className="relative z-10">
         <div
           ref={marqueeShellRef}
-          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
+          style={
+            enableTitleReveal && revealMarquee && expandedHeight
+              ? { minHeight: expandedHeight }
+              : undefined
+          }
           className={cn(
             "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
             revealPhotoFocus

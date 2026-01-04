@@ -185,7 +185,7 @@ const BuildStepsRevealSection = ({
 
   const revealBuildSteps = !enableTitleReveal || buildStepsExpanded;
   const revealPhotoFocus = revealBuildSteps;
-  const buildStepsMinHeight = enableTitleReveal ? "min-h-[calc(80vh+16rem)]" : null;
+  const buildStepsMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
 
   const instructions =
     "Scroll to move from moment to moment. Each step is a chapter in the ritual of building a Perazzi to your measure.";
@@ -329,7 +329,11 @@ const BuildStepsRevealSection = ({
       <div className="relative z-10 mx-auto flex w-full max-w-7xl px-6 lg:px-10">
         <div
           ref={buildStepsShellRef}
-          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
+          style={
+            enableTitleReveal && revealBuildSteps && expandedHeight
+              ? { minHeight: expandedHeight }
+              : undefined
+          }
           className={cn(
             "relative flex w-full flex-col space-y-8 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
             revealPhotoFocus
