@@ -45,6 +45,7 @@ type BuildStepsRevealSectionProps = {
   readonly onStepCta?: (id: string) => void;
   readonly skipTargetId?: string;
   readonly enableTitleReveal: boolean;
+  readonly onCollapsedChange?: (collapsed: boolean) => void;
 };
 
 type BuildStepsHeaderProps = Readonly<{
@@ -109,6 +110,7 @@ export function BuildStepsScroller({
   const shouldReduceMotion = reduceMotion ?? false;
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const enableTitleReveal = isDesktop && !shouldReduceMotion;
+  const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const buildStepsKey = enableTitleReveal ? "title-reveal" : "always-reveal";
 
   const mappedSteps = useMemo(() => steps, [steps]);
@@ -121,12 +123,21 @@ export function BuildStepsScroller({
   const subheading = intro?.subheading ?? "Six moments that shape a bespoke Perazzi";
   const ctaLabel = intro?.ctaLabel ?? "Begin the ritual";
 
+  useEffect(() => {
+    setIsCollapsed(enableTitleReveal);
+  }, [enableTitleReveal]);
+
   return (
     <section
       ref={trackerRef}
       aria-labelledby="build-steps-heading"
       data-analytics-id="BuildStepsSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
+      className={cn(
+        "relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed",
+        isCollapsed
+          ? "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:z-20 before:h-16 before:bg-linear-to-b before:from-black/55 before:to-transparent before:content-[''] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-20 after:h-16 after:bg-linear-to-t after:from-black/55 after:to-transparent after:content-['']"
+          : null,
+      )}
     >
       <BuildStepsRevealSection
         key={buildStepsKey}
@@ -140,6 +151,7 @@ export function BuildStepsScroller({
         onStepCta={onStepCta}
         skipTargetId={skipTargetId}
         enableTitleReveal={enableTitleReveal}
+        onCollapsedChange={setIsCollapsed}
       />
 
       {skipTargetId ? (
@@ -162,6 +174,7 @@ const BuildStepsRevealSection = ({
   onStepCta,
   skipTargetId,
   enableTitleReveal,
+  onCollapsedChange,
 }: BuildStepsRevealSectionProps) => {
   const [buildStepsExpanded, setBuildStepsExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
@@ -194,12 +207,14 @@ const BuildStepsRevealSection = ({
     if (!enableTitleReveal) return;
     setBuildStepsExpanded(true);
     setHeaderThemeReady(true);
+    onCollapsedChange?.(false);
   };
 
   const handleBuildStepsCollapse = () => {
     if (!enableTitleReveal) return;
     setHeaderThemeReady(false);
     setBuildStepsExpanded(false);
+    onCollapsedChange?.(true);
   };
 
   const handleStepEnter = useCallback((stepId: string) => {

@@ -24,11 +24,16 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const enablePinned = isDesktop;
   const enableTitleReveal = enablePinned;
+  const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const [activeStage, setActiveStage] = useState(0);
   const resolvedActiveStage = enablePinned ? Math.max(activeStage, 0) : activeStage;
   const seenStagesRef = useRef(new Set<string>());
   const skipTargetId = "home-timeline-anchor";
   const timelineKey = enableTitleReveal ? "title-reveal" : "always-reveal";
+
+  useEffect(() => {
+    setIsCollapsed(enableTitleReveal);
+  }, [enableTitleReveal]);
 
   useEffect(() => {
     const currentStage = stages[resolvedActiveStage];
@@ -53,7 +58,12 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
           analyticsRef.current = node;
         }}
         data-analytics-id="CraftTimelineSeen"
-        className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
+        className={cn(
+          "relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed",
+          isCollapsed
+            ? "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:z-20 before:h-16 before:bg-linear-to-b before:from-black/55 before:to-transparent before:content-[''] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-20 after:h-16 after:bg-linear-to-t after:from-black/55 after:to-transparent after:content-['']"
+            : null,
+        )}
         aria-labelledby="craft-timeline-heading"
       >
         <TimelineRevealSection
@@ -65,6 +75,7 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
           activeStage={activeStage}
           setActiveStage={setActiveStage}
           resolvedActiveStage={resolvedActiveStage}
+          onCollapsedChange={setIsCollapsed}
         />
       </section>
     </>
@@ -79,6 +90,7 @@ type TimelineRevealSectionProps = {
   readonly activeStage: number;
   readonly setActiveStage: Dispatch<SetStateAction<number>>;
   readonly resolvedActiveStage: number;
+  readonly onCollapsedChange?: (collapsed: boolean) => void;
 };
 
 function TimelineRevealSection({
@@ -89,6 +101,7 @@ function TimelineRevealSection({
   activeStage,
   setActiveStage,
   resolvedActiveStage,
+  onCollapsedChange,
 }: TimelineRevealSectionProps) {
   const [timelineExpanded, setTimelineExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
@@ -112,11 +125,13 @@ function TimelineRevealSection({
     if (!enableTitleReveal) return;
     setTimelineExpanded(true);
     setHeaderThemeReady(true);
+    onCollapsedChange?.(false);
   };
   const handleTimelineCollapse = () => {
     if (!enableTitleReveal) return;
     setHeaderThemeReady(false);
     setTimelineExpanded(false);
+    onCollapsedChange?.(true);
   };
 
   useEffect(() => {

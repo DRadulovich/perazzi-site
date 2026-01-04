@@ -17,13 +17,23 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
   const analyticsRef = useAnalyticsObserver("ChampionStorySeen");
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const enableTitleReveal = isDesktop;
+  const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const marqueeKey = enableTitleReveal ? "title-reveal" : "always-reveal";
+
+  useEffect(() => {
+    setIsCollapsed(enableTitleReveal);
+  }, [enableTitleReveal]);
 
   return (
     <section
       ref={analyticsRef}
       data-analytics-id="ChampionStorySeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed mt-[15px]"
+      className={cn(
+        "relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed mt-[15px]",
+        isCollapsed
+          ? "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:z-20 before:h-16 before:bg-linear-to-b before:from-black/55 before:to-transparent before:content-[''] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-20 after:h-16 after:bg-linear-to-t after:from-black/55 after:to-transparent after:content-['']"
+          : null,
+      )}
       aria-labelledby="champion-heading"
     >
       <MarqueeFeatureRevealSection
@@ -31,6 +41,7 @@ export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
         champion={champion}
         ui={ui}
         enableTitleReveal={enableTitleReveal}
+        onCollapsedChange={setIsCollapsed}
       />
     </section>
   );
@@ -40,6 +51,7 @@ type MarqueeFeatureRevealSectionProps = Readonly<{
   champion: Champion;
   ui: HomeData["marqueeUi"];
   enableTitleReveal: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }>;
 
 type MarqueeFeatureBackgroundProps = Readonly<{
@@ -94,6 +106,7 @@ function MarqueeFeatureRevealSection({
   champion,
   ui,
   enableTitleReveal,
+  onCollapsedChange,
 }: MarqueeFeatureRevealSectionProps) {
   const [marqueeExpanded, setMarqueeExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
@@ -119,12 +132,14 @@ function MarqueeFeatureRevealSection({
     if (!enableTitleReveal) return;
     setMarqueeExpanded(true);
     setHeaderThemeReady(true);
+    onCollapsedChange?.(false);
   };
 
   const handleMarqueeCollapse = () => {
     if (!enableTitleReveal) return;
     setHeaderThemeReady(false);
     setMarqueeExpanded(false);
+    onCollapsedChange?.(true);
   };
 
   useEffect(() => {

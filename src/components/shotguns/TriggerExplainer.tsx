@@ -20,6 +20,7 @@ type TriggerExplainerRevealSectionProps = {
   readonly manualOpen: boolean;
   readonly setManualOpen: (next: boolean) => void;
   readonly enableTitleReveal: boolean;
+  readonly onCollapsedChange?: (collapsed: boolean) => void;
 };
 
 type TriggerExplainerBackgroundProps = Readonly<{
@@ -57,15 +58,25 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
   const [manualOpen, setManualOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const enableTitleReveal = isDesktop;
+  const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const triggerKey = enableTitleReveal ? "title-reveal" : "always-reveal";
 
   const analyticsRef = useAnalyticsObserver<HTMLElement>("TriggerExplainerSeen");
+
+  useEffect(() => {
+    setIsCollapsed(enableTitleReveal);
+  }, [enableTitleReveal]);
 
   return (
     <section
       ref={analyticsRef}
       data-analytics-id="TriggerExplainerSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 mt-25 full-bleed"
+      className={cn(
+        "relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 mt-25 full-bleed",
+        isCollapsed
+          ? "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:z-20 before:h-16 before:bg-linear-to-b before:from-black/55 before:to-transparent before:content-[''] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-20 after:h-16 after:bg-linear-to-t after:from-black/55 after:to-transparent after:content-['']"
+          : null,
+      )}
       aria-labelledby="trigger-explainer-heading"
     >
       <TriggerExplainerRevealSection
@@ -74,6 +85,7 @@ export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
         manualOpen={manualOpen}
         setManualOpen={setManualOpen}
         enableTitleReveal={enableTitleReveal}
+        onCollapsedChange={setIsCollapsed}
       />
     </section>
   );
@@ -84,6 +96,7 @@ const TriggerExplainerRevealSection = ({
   manualOpen,
   setManualOpen,
   enableTitleReveal,
+  onCollapsedChange,
 }: TriggerExplainerRevealSectionProps) => {
   const [explainerExpanded, setExplainerExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
@@ -105,12 +118,14 @@ const TriggerExplainerRevealSection = ({
     if (!enableTitleReveal) return;
     setExplainerExpanded(true);
     setHeaderThemeReady(true);
+    onCollapsedChange?.(false);
   };
 
   const handleCollapse = () => {
     if (!enableTitleReveal) return;
     setHeaderThemeReady(false);
     setExplainerExpanded(false);
+    onCollapsedChange?.(true);
   };
 
   useEffect(() => {

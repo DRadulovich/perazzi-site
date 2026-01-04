@@ -92,6 +92,7 @@ type DisciplineRailRevealSectionProps = {
   readonly handleModelSelect: (id: string) => void;
   readonly modelLoadingId: string | null;
   readonly enableTitleReveal: boolean;
+  readonly onCollapsedChange?: (collapsed: boolean) => void;
 };
 
 type DisciplineRailBackgroundProps = {
@@ -131,6 +132,7 @@ export function DisciplineRail({
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const enableTitleReveal = isDesktop;
   const railAnalyticsRef = useAnalyticsObserver<HTMLElement>("DisciplineRailSeen");
+  const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
 
   const [selectedModel, setSelectedModel] = useState<ModelDetail | null>(null);
   const [modelModalOpen, setModelModalOpen] = useState(false);
@@ -141,6 +143,10 @@ export function DisciplineRail({
   const [modalRoot, setModalRoot] = useState<HTMLElement | null>(null);
   const modelRequestRef = useRef<AbortController | null>(null);
   const railKey = enableTitleReveal ? "title-reveal" : "always-reveal";
+
+  useEffect(() => {
+    setIsCollapsed(enableTitleReveal);
+  }, [enableTitleReveal]);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -251,7 +257,12 @@ export function DisciplineRail({
     <section
       ref={railAnalyticsRef}
       data-analytics-id="DisciplineRailSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
+      className={cn(
+        "relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed",
+        isCollapsed
+          ? "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:z-20 before:h-16 before:bg-linear-to-b before:from-black/55 before:to-transparent before:content-[''] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-20 after:h-16 after:bg-linear-to-t after:from-black/55 after:to-transparent after:content-['']"
+          : null,
+      )}
       aria-labelledby="discipline-rail-heading"
     >
       <DisciplineRailRevealSection
@@ -269,6 +280,7 @@ export function DisciplineRail({
         handleModelSelect={handleModelSelect}
         modelLoadingId={modelLoadingId}
         enableTitleReveal={enableTitleReveal}
+        onCollapsedChange={setIsCollapsed}
       />
 
       {modalRoot && modelModalOpen && selectedModel
@@ -367,6 +379,7 @@ const DisciplineRailRevealSection = ({
   handleModelSelect,
   modelLoadingId,
   enableTitleReveal,
+  onCollapsedChange,
 }: DisciplineRailRevealSectionProps) => {
   const [railExpanded, setRailExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
@@ -379,12 +392,14 @@ const DisciplineRailRevealSection = ({
     if (!enableTitleReveal) return;
     setRailExpanded(true);
     setHeaderThemeReady(true);
+    onCollapsedChange?.(false);
   };
 
   const handleCollapse = () => {
     if (!enableTitleReveal) return;
     setHeaderThemeReady(false);
     setRailExpanded(false);
+    onCollapsedChange?.(true);
   };
 
   return (

@@ -31,6 +31,7 @@ type ExperiencePickerRevealSectionProps = {
   readonly background: { url: string; alt?: string };
   readonly microLabel: string;
   readonly enableTitleReveal: boolean;
+  readonly onCollapsedChange?: (collapsed: boolean) => void;
   readonly onAnchorClick?: (
     event: MouseEvent<HTMLAnchorElement>,
     href: string,
@@ -41,6 +42,7 @@ type ExperiencePickerRevealSectionProps = {
 export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<ExperiencePickerProps>) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const enableTitleReveal = isDesktop;
+  const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const analyticsRef = useAnalyticsObserver<HTMLElement>("ExperiencePickerSeen");
   const pickerKey = enableTitleReveal ? "title-reveal" : "always-reveal";
   const anchorMap: Record<string, string | undefined> = {
@@ -48,8 +50,6 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
     fitting: "#experience-booking-guide",
     demo: "#experience-travel-guide",
   };
-
-  if (!items.length) return null;
 
   const handleCardClick = (
     event: MouseEvent<HTMLAnchorElement>,
@@ -91,11 +91,22 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
   const subheading = pickerUi.subheading ?? "Visit, fit, or demo with Perazzi";
   const microLabel = pickerUi.microLabel ?? "Perazzi Experience";
 
+  useEffect(() => {
+    setIsCollapsed(enableTitleReveal);
+  }, [enableTitleReveal]);
+
+  if (!items.length) return null;
+
   return (
     <section
       ref={analyticsRef}
       data-analytics-id="ExperiencePickerSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
+      className={cn(
+        "relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed",
+        isCollapsed
+          ? "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:z-20 before:h-16 before:bg-linear-to-b before:from-black/55 before:to-transparent before:content-[''] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-20 after:h-16 after:bg-linear-to-t after:from-black/55 after:to-transparent after:content-['']"
+          : null,
+      )}
       aria-labelledby="experience-picker-heading"
     >
       <ExperiencePickerRevealSection
@@ -110,6 +121,7 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
         microLabel={microLabel}
         enableTitleReveal={enableTitleReveal}
         onAnchorClick={handleCardClick}
+        onCollapsedChange={setIsCollapsed}
       />
     </section>
   );
@@ -357,6 +369,7 @@ const ExperiencePickerRevealSection = ({
   microLabel,
   enableTitleReveal,
   onAnchorClick,
+  onCollapsedChange,
 }: ExperiencePickerRevealSectionProps) => {
   const [pickerExpanded, setPickerExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
@@ -374,11 +387,13 @@ const ExperiencePickerRevealSection = ({
   const handlePickerExpand = () => {
     setPickerExpanded(true);
     setHeaderThemeReady(true);
+    onCollapsedChange?.(false);
   };
 
   const handlePickerCollapse = () => {
     setHeaderThemeReady(false);
     setPickerExpanded(false);
+    onCollapsedChange?.(true);
   };
 
   return (

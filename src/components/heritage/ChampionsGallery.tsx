@@ -18,14 +18,20 @@ type ChampionsGalleryRevealSectionProps = Readonly<{
   champions: ChampionEvergreen[];
   ui: ChampionsGalleryUi;
   enableTitleReveal: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }>;
 
 export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const enableTitleReveal = isDesktop;
+  const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const galleryKey = enableTitleReveal ? "title-reveal" : "always-reveal";
 
   const verified = champions.filter((champion) => Boolean(champion?.name));
+
+  useEffect(() => {
+    setIsCollapsed(enableTitleReveal);
+  }, [enableTitleReveal]);
 
   if (!verified.length) {
     return (
@@ -41,7 +47,12 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
 
   return (
     <section
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
+      className={cn(
+        "relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed",
+        isCollapsed
+          ? "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:z-20 before:h-16 before:bg-linear-to-b before:from-black/55 before:to-transparent before:content-[''] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-20 after:h-16 after:bg-linear-to-t after:from-black/55 after:to-transparent after:content-['']"
+          : null,
+      )}
       aria-labelledby="heritage-champions-heading"
     >
       <ChampionsGalleryRevealSection
@@ -49,6 +60,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
         champions={verified}
         ui={ui}
         enableTitleReveal={enableTitleReveal}
+        onCollapsedChange={setIsCollapsed}
       />
     </section>
   );
@@ -58,6 +70,7 @@ const ChampionsGalleryRevealSection = ({
   champions,
   ui,
   enableTitleReveal,
+  onCollapsedChange,
 }: ChampionsGalleryRevealSectionProps) => {
   const [galleryExpanded, setGalleryExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
@@ -120,11 +133,13 @@ const ChampionsGalleryRevealSection = ({
   const handleGalleryExpand = () => {
     setGalleryExpanded(true);
     setHeaderThemeReady(true);
+    onCollapsedChange?.(false);
   };
 
   const handleGalleryCollapse = () => {
     setHeaderThemeReady(false);
     setGalleryExpanded(false);
+    onCollapsedChange?.(true);
   };
 
   const handleChampionSelect = (championId: string) => {

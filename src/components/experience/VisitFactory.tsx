@@ -21,6 +21,7 @@ type VisitFactoryRevealSectionProps = {
   readonly subheading: string;
   readonly background: { url: string; alt?: string };
   readonly enableTitleReveal: boolean;
+  readonly onCollapsedChange?: (collapsed: boolean) => void;
 };
 
 type VisitFactoryBackdropProps = {
@@ -54,6 +55,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
   const analyticsRef = useAnalyticsObserver("VisitFactorySeen");
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const enableTitleReveal = isDesktop;
+  const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const visitKey = enableTitleReveal ? "title-reveal" : "always-reveal";
 
   const visit = visitFactorySection;
@@ -65,11 +67,20 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
   const heading = visit.heading ?? "Visit Botticino";
   const subheading = visit.subheading ?? "See the factory in person";
 
+  useEffect(() => {
+    setIsCollapsed(enableTitleReveal);
+  }, [enableTitleReveal]);
+
   return (
     <section
       ref={analyticsRef}
       data-analytics-id="VisitFactorySeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
+      className={cn(
+        "relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed",
+        isCollapsed
+          ? "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:z-20 before:h-16 before:bg-linear-to-b before:from-black/55 before:to-transparent before:content-[''] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-20 after:h-16 after:bg-linear-to-t after:from-black/55 after:to-transparent after:content-['']"
+          : null,
+      )}
       aria-labelledby="visit-factory-heading"
     >
       <VisitFactoryRevealSection
@@ -79,6 +90,7 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
         subheading={subheading}
         background={background}
         enableTitleReveal={enableTitleReveal}
+        onCollapsedChange={setIsCollapsed}
       />
     </section>
   );
@@ -90,6 +102,7 @@ const VisitFactoryRevealSection = ({
   subheading,
   background,
   enableTitleReveal,
+  onCollapsedChange,
 }: VisitFactoryRevealSectionProps) => {
   const [visitExpanded, setVisitExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
@@ -113,12 +126,14 @@ const VisitFactoryRevealSection = ({
     if (!enableTitleReveal) return;
     setVisitExpanded(true);
     setHeaderThemeReady(true);
+    onCollapsedChange?.(false);
   };
 
   const handleVisitCollapse = () => {
     if (!enableTitleReveal) return;
     setHeaderThemeReady(false);
     setVisitExpanded(false);
+    onCollapsedChange?.(true);
   };
 
   useEffect(() => {

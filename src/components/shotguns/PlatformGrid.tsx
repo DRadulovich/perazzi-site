@@ -317,6 +317,7 @@ type PlatformGridRevealSectionProps = {
   readonly setActiveIndex: Dispatch<SetStateAction<number>>;
   readonly buildPayload: (platform: Platform) => ChatTriggerPayload;
   readonly enableTitleReveal: boolean;
+  readonly onCollapsedChange?: (collapsed: boolean) => void;
 };
 
 const PlatformGridRevealSection = ({
@@ -326,6 +327,7 @@ const PlatformGridRevealSection = ({
   setActiveIndex,
   buildPayload,
   enableTitleReveal,
+  onCollapsedChange,
 }: PlatformGridRevealSectionProps) => {
   const [platformExpanded, setPlatformExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
@@ -344,12 +346,14 @@ const PlatformGridRevealSection = ({
     if (!enableTitleReveal) return;
     setPlatformExpanded(true);
     setHeaderThemeReady(true);
+    onCollapsedChange?.(false);
   };
 
   const handleCollapse = () => {
     if (!enableTitleReveal) return;
     setHeaderThemeReady(false);
     setPlatformExpanded(false);
+    onCollapsedChange?.(true);
   };
 
   const handleTabSelect = useCallback((index: number) => {
@@ -560,6 +564,8 @@ export function PlatformGrid({ platforms, ui }: PlatformGridProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const analyticsRef = useAnalyticsObserver("PlatformGridSeen");
+  const enableTitleReveal = isDesktop;
+  const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
 
   const orderedPlatforms = useMemo(() => orderPlatforms(platforms), [platforms]);
   const templates = useMemo(() => buildTemplates(ui), [ui]);
@@ -568,14 +574,22 @@ export function PlatformGrid({ platforms, ui }: PlatformGridProps) {
     [templates.chatPayloadTemplate],
   );
 
-  const enableTitleReveal = isDesktop;
   const gridKey = enableTitleReveal ? "title-reveal" : "always-reveal";
+
+  useEffect(() => {
+    setIsCollapsed(enableTitleReveal);
+  }, [enableTitleReveal]);
 
   return (
     <section
       ref={analyticsRef}
       data-analytics-id="PlatformGridSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-visible py-10 sm:py-16 full-bleed"
+      className={cn(
+        "relative isolate w-screen max-w-[100vw] overflow-visible py-10 sm:py-16 full-bleed",
+        isCollapsed
+          ? "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:z-20 before:h-16 before:bg-linear-to-b before:from-black/55 before:to-transparent before:content-[''] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-20 after:h-16 after:bg-linear-to-t after:from-black/55 after:to-transparent after:content-['']"
+          : null,
+      )}
       aria-labelledby="platforms-heading"
     >
       <PlatformGridRevealSection
@@ -586,6 +600,7 @@ export function PlatformGrid({ platforms, ui }: PlatformGridProps) {
         setActiveIndex={setActiveIndex}
         buildPayload={buildPayload}
         enableTitleReveal={enableTitleReveal}
+        onCollapsedChange={setIsCollapsed}
       />
     </section>
   );

@@ -17,14 +17,20 @@ type BookingOptionsProps = Readonly<{
 type BookingOptionsRevealSectionProps = Readonly<{
   bookingSection: BookingSection;
   enableTitleReveal: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }>;
 
 export function BookingOptions({ bookingSection }: BookingOptionsProps) {
   const analyticsRef = useAnalyticsObserver("ExperienceBookingSeen");
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const enableTitleReveal = isDesktop;
+  const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const bookingKey = enableTitleReveal ? "title-reveal" : "always-reveal";
   const options = bookingSection.options;
+
+  useEffect(() => {
+    setIsCollapsed(enableTitleReveal);
+  }, [enableTitleReveal]);
 
   if (!options.length) return null;
 
@@ -32,13 +38,19 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
     <section
       ref={analyticsRef}
       data-analytics-id="ExperienceBookingSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
+      className={cn(
+        "relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed",
+        isCollapsed
+          ? "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:z-20 before:h-16 before:bg-linear-to-b before:from-black/55 before:to-transparent before:content-[''] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-20 after:h-16 after:bg-linear-to-t after:from-black/55 after:to-transparent after:content-['']"
+          : null,
+      )}
       aria-labelledby="experience-booking-heading"
     >
       <BookingOptionsRevealSection
         key={bookingKey}
         bookingSection={bookingSection}
         enableTitleReveal={enableTitleReveal}
+        onCollapsedChange={setIsCollapsed}
       />
     </section>
   );
@@ -47,6 +59,7 @@ export function BookingOptions({ bookingSection }: BookingOptionsProps) {
 const BookingOptionsRevealSection = ({
   bookingSection,
   enableTitleReveal,
+  onCollapsedChange,
 }: BookingOptionsRevealSectionProps) => {
   const [bookingExpanded, setBookingExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
@@ -72,12 +85,14 @@ const BookingOptionsRevealSection = ({
     if (!enableTitleReveal) return;
     setBookingExpanded(true);
     setHeaderThemeReady(true);
+    onCollapsedChange?.(false);
   };
 
   const handleBookingCollapse = () => {
     if (!enableTitleReveal) return;
     setHeaderThemeReady(false);
     setBookingExpanded(false);
+    onCollapsedChange?.(true);
   };
 
   const handleSchedulerToggle = () => {
