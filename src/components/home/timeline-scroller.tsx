@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 
 import type { FittingStage, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useParallaxBackground } from "@/hooks/use-parallax-background";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -163,6 +164,7 @@ function TimelineRevealSection({
         backgroundAlt={backgroundAlt}
         revealTimeline={revealTimeline}
         revealPhotoFocus={revealPhotoFocus}
+        enableParallax={enableTitleReveal && !revealTimeline}
       />
 
       <div
@@ -220,6 +222,7 @@ type TimelineBackdropProps = {
   readonly backgroundAlt: string;
   readonly revealTimeline: boolean;
   readonly revealPhotoFocus: boolean;
+  readonly enableParallax: boolean;
 };
 
 function TimelineBackdrop({
@@ -227,10 +230,13 @@ function TimelineBackdrop({
   backgroundAlt,
   revealTimeline,
   revealPhotoFocus,
+  enableParallax,
 }: TimelineBackdropProps) {
+  const parallaxRef = useParallaxBackground(enableParallax);
+
   return (
     <div className="absolute inset-0 -z-10 overflow-hidden">
-      <div className="absolute inset-0">
+      <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
         <Image
           src={backgroundUrl}
           alt={backgroundAlt}
@@ -340,8 +346,8 @@ function TimelineHeader({
         <button
           type="button"
           className="absolute inset-0 z-10 cursor-pointer focus-ring"
-          onPointerEnter={onExpand}
-          onFocus={onExpand}
+
+
           onClick={onExpand}
           aria-expanded={revealTimeline}
           aria-controls="craft-timeline-body"

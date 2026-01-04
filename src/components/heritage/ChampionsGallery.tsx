@@ -7,6 +7,7 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useParallaxBackground } from "@/hooks/use-parallax-background";
 import { Container, Heading, Section, Text } from "@/components/ui";
 
 type ChampionsGalleryProps = Readonly<{
@@ -153,6 +154,7 @@ const ChampionsGalleryRevealSection = ({
         background={background}
         revealGallery={revealGallery}
         revealPhotoFocus={revealPhotoFocus}
+        enableParallax={enableTitleReveal && !revealGallery}
       />
 
       <Container size="xl" className="relative z-10">
@@ -258,16 +260,20 @@ type ChampionsGalleryBackgroundProps = Readonly<{
   }>;
   revealGallery: boolean;
   revealPhotoFocus: boolean;
+  enableParallax: boolean;
 }>;
 
 function ChampionsGalleryBackground({
   background,
   revealGallery,
   revealPhotoFocus,
+  enableParallax,
 }: ChampionsGalleryBackgroundProps) {
+  const parallaxRef = useParallaxBackground(enableParallax);
+
   return (
     <div className="absolute inset-0 -z-10 overflow-hidden">
-      <div className="absolute inset-0">
+      <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
         <Image
           src={background.url}
           alt={background.alt}
@@ -373,8 +379,8 @@ function ChampionsGalleryHeader({
         <button
           type="button"
           className="absolute inset-0 z-10 cursor-pointer focus-ring"
-          onPointerEnter={onExpand}
-          onFocus={onExpand}
+
+
           onClick={onExpand}
           aria-expanded={revealGallery}
           aria-controls="heritage-champions-body"

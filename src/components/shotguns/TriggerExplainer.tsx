@@ -9,6 +9,7 @@ import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useParallaxBackground } from "@/hooks/use-parallax-background";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, Container, Heading, Text } from "@/components/ui";
 
 type TriggerExplainerProps = Readonly<{
@@ -27,6 +28,7 @@ type TriggerExplainerBackgroundProps = Readonly<{
   background: NonNullable<ShotgunsLandingData["triggerExplainer"]["background"]>;
   revealExplainer: boolean;
   revealPhotoFocus: boolean;
+  enableParallax: boolean;
 }>;
 
 type TriggerExplainerExpandedLayoutProps = Readonly<{
@@ -159,6 +161,7 @@ const TriggerExplainerRevealSection = ({
         background={background}
         revealExplainer={revealExplainer}
         revealPhotoFocus={revealPhotoFocus}
+        enableParallax={enableTitleReveal && !revealExplainer}
       />
 
       <Container size="xl" className="relative z-10">
@@ -203,41 +206,46 @@ const TriggerExplainerBackground = ({
   background,
   revealExplainer,
   revealPhotoFocus,
-}: TriggerExplainerBackgroundProps) => (
-  <div className="absolute inset-0 -z-10 overflow-hidden">
-    <div className="absolute inset-0">
-      <Image
-        src={background.url}
-        alt={background.alt}
-        fill
-        sizes="100vw"
-        className="object-cover"
-        priority={false}
+  enableParallax,
+}: TriggerExplainerBackgroundProps) => {
+  const parallaxRef = useParallaxBackground(enableParallax);
+
+  return (
+    <div className="absolute inset-0 -z-10 overflow-hidden">
+      <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
+        <Image
+          src={background.url}
+          alt={background.alt}
+          fill
+          sizes="100vw"
+          className="object-cover"
+          priority={false}
+        />
+      </div>
+      <div
+        className={cn(
+          "absolute inset-0 bg-(--scrim-strong)",
+          revealExplainer ? "opacity-0" : "opacity-100",
+        )}
+        aria-hidden
+      />
+      <div
+        className={cn(
+          "absolute inset-0 bg-(--scrim-strong)",
+          revealPhotoFocus ? "opacity-100" : "opacity-0",
+        )}
+        aria-hidden
+      />
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-0 overlay-gradient-canvas",
+          revealPhotoFocus ? "opacity-100" : "opacity-0",
+        )}
+        aria-hidden
       />
     </div>
-    <div
-      className={cn(
-        "absolute inset-0 bg-(--scrim-strong)",
-        revealExplainer ? "opacity-0" : "opacity-100",
-      )}
-      aria-hidden
-    />
-    <div
-      className={cn(
-        "absolute inset-0 bg-(--scrim-strong)",
-        revealPhotoFocus ? "opacity-100" : "opacity-0",
-      )}
-      aria-hidden
-    />
-    <div
-      className={cn(
-        "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-        revealPhotoFocus ? "opacity-100" : "opacity-0",
-      )}
-      aria-hidden
-    />
-  </div>
-);
+  );
+};
 
 const TriggerExplainerExpandedLayout = ({
   explainer,
@@ -335,8 +343,8 @@ const TriggerExplainerCollapsedLayout = ({
       <button
         type="button"
         className="absolute inset-0 z-10 cursor-pointer focus-ring"
-        onPointerEnter={onExpand}
-        onFocus={onExpand}
+
+
         onClick={onExpand}
         aria-expanded={false}
         aria-controls="trigger-explainer-body"

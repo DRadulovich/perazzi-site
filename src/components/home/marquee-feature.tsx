@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Champion, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useParallaxBackground } from "@/hooks/use-parallax-background";
 import { cn } from "@/lib/utils";
 import { Container, Heading, Text } from "@/components/ui";
 
@@ -58,16 +59,20 @@ type MarqueeFeatureBackgroundProps = Readonly<{
   background: HomeData["marqueeUi"]["background"];
   revealMarquee: boolean;
   revealPhotoFocus: boolean;
+  enableParallax: boolean;
 }>;
 
 function MarqueeFeatureBackground({
   background,
   revealMarquee,
   revealPhotoFocus,
+  enableParallax,
 }: MarqueeFeatureBackgroundProps) {
+  const parallaxRef = useParallaxBackground(enableParallax);
+
   return (
     <div className="absolute inset-0 -z-10 overflow-hidden">
-      <div className="absolute inset-0">
+      <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
         <Image
           src={background.url}
           alt={background.alt}
@@ -170,6 +175,7 @@ function MarqueeFeatureRevealSection({
         background={background}
         revealMarquee={revealMarquee}
         revealPhotoFocus={revealPhotoFocus}
+        enableParallax={enableTitleReveal && !revealMarquee}
       />
 
       <Container size="xl" className="relative z-10">
@@ -276,8 +282,8 @@ function MarqueeFeatureRevealSection({
                 <button
                   type="button"
                   className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                  onPointerEnter={handleMarqueeExpand}
-                  onFocus={handleMarqueeExpand}
+
+
                   onClick={handleMarqueeExpand}
                   aria-expanded={revealMarquee}
                   aria-controls="marquee-feature-body"

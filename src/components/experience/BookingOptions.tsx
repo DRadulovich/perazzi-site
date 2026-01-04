@@ -6,6 +6,7 @@ import SafeHtml from "@/components/SafeHtml";
 import { Button, Container, Heading, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useParallaxBackground } from "@/hooks/use-parallax-background";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import type { BookingSection } from "@/types/experience";
@@ -130,7 +131,11 @@ const BookingOptionsRevealSection = ({
 
   return (
     <>
-      <BookingBackground revealBooking={revealBooking} revealPhotoFocus={revealPhotoFocus} />
+      <BookingBackground
+        revealBooking={revealBooking}
+        revealPhotoFocus={revealPhotoFocus}
+        enableParallax={enableTitleReveal && !revealBooking}
+      />
 
       <Container size="xl" className="relative z-10">
         <div
@@ -177,43 +182,52 @@ const BookingOptionsRevealSection = ({
 type BookingBackgroundProps = Readonly<{
   revealBooking: boolean;
   revealPhotoFocus: boolean;
+  enableParallax: boolean;
 }>;
 
-const BookingBackground = ({ revealBooking, revealPhotoFocus }: BookingBackgroundProps) => (
-  <div className="absolute inset-0 -z-10 overflow-hidden">
-    <div className="absolute inset-0">
-      <Image
-        src="/Photos/p-web-89.jpg"
-        alt="Perazzi booking options background"
-        fill
-        sizes="100vw"
-        className="object-cover"
-        priority={false}
+const BookingBackground = ({
+  revealBooking,
+  revealPhotoFocus,
+  enableParallax,
+}: BookingBackgroundProps) => {
+  const parallaxRef = useParallaxBackground(enableParallax);
+
+  return (
+    <div className="absolute inset-0 -z-10 overflow-hidden">
+      <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
+        <Image
+          src="/Photos/p-web-89.jpg"
+          alt="Perazzi booking options background"
+          fill
+          sizes="100vw"
+          className="object-cover"
+          priority={false}
+        />
+      </div>
+      <div
+        className={cn(
+          "absolute inset-0 bg-(--scrim-strong)",
+          revealBooking ? "opacity-0" : "opacity-100",
+        )}
+        aria-hidden
+      />
+      <div
+        className={cn(
+          "absolute inset-0 bg-(--scrim-strong)",
+          revealPhotoFocus ? "opacity-100" : "opacity-0",
+        )}
+        aria-hidden
+      />
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-0 overlay-gradient-canvas",
+          revealPhotoFocus ? "opacity-100" : "opacity-0",
+        )}
+        aria-hidden
       />
     </div>
-    <div
-      className={cn(
-        "absolute inset-0 bg-(--scrim-strong)",
-        revealBooking ? "opacity-0" : "opacity-100",
-      )}
-      aria-hidden
-    />
-    <div
-      className={cn(
-        "absolute inset-0 bg-(--scrim-strong)",
-        revealPhotoFocus ? "opacity-100" : "opacity-0",
-      )}
-      aria-hidden
-    />
-    <div
-      className={cn(
-        "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-        revealPhotoFocus ? "opacity-100" : "opacity-0",
-      )}
-      aria-hidden
-    />
-  </div>
-);
+  );
+};
 
 type BookingHeaderProps = Readonly<{
   heading: string;
@@ -287,8 +301,8 @@ const BookingHeader = ({
         <button
           type="button"
           className="absolute inset-0 z-10 cursor-pointer focus-ring"
-          onPointerEnter={onExpand}
-          onFocus={onExpand}
+
+
           onClick={onExpand}
           aria-expanded={revealBooking}
           aria-controls="experience-booking-body"

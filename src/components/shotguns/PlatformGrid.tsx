@@ -1,9 +1,19 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState, useRef, useEffect, useCallback, type Dispatch, type SetStateAction } from "react";
+import {
+  useMemo,
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  type Dispatch,
+  type SetStateAction,
+  type RefObject,
+} from "react";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useParallaxBackground } from "@/hooks/use-parallax-background";
 import type { Platform, ShotgunsLandingData } from "@/types/catalog";
 import { PlatformCard } from "./PlatformCard";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
@@ -320,6 +330,158 @@ type PlatformGridRevealSectionProps = {
   readonly onCollapsedChange?: (collapsed: boolean) => void;
 };
 
+type PlatformGridHeaderProps = {
+  readonly revealGrid: boolean;
+  readonly headingTitle: string;
+  readonly headingSubtitle: string;
+  readonly headerThemeReady: boolean;
+  readonly enableTitleReveal: boolean;
+  readonly onExpand: () => void;
+  readonly onCollapse: () => void;
+};
+
+const PlatformGridHeader = ({
+  revealGrid,
+  headingTitle,
+  headingSubtitle,
+  headerThemeReady,
+  enableTitleReveal,
+  onExpand,
+  onCollapse,
+}: PlatformGridHeaderProps) => {
+  if (revealGrid) {
+    return (
+      <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8">
+        <div className="space-y-3">
+          <div className="relative">
+            <Heading
+              id="platforms-heading"
+              level={2}
+              size="xl"
+              className={headerThemeReady ? "text-ink" : "text-white"}
+            >
+              {headingTitle}
+            </Heading>
+          </div>
+          <div className="relative">
+            <Text
+              className={cn(
+                "type-section-subtitle max-w-4xl",
+                headerThemeReady ? "text-ink-muted" : "text-white",
+              )}
+              leading="normal"
+            >
+              {headingSubtitle}
+            </Text>
+          </div>
+        </div>
+        {enableTitleReveal ? (
+          <button
+            type="button"
+            className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+            onClick={onCollapse}
+          >
+            Collapse
+          </button>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
+      <div className="relative inline-flex text-white">
+        <Heading
+          id="platforms-heading"
+          level={2}
+          size="xl"
+          className="type-section-collapsed"
+        >
+          {headingTitle}
+        </Heading>
+        <button
+          type="button"
+          className="absolute inset-0 z-10 cursor-pointer focus-ring"
+
+
+          onClick={onExpand}
+          aria-expanded={revealGrid}
+          aria-controls="platform-grid-body"
+          aria-labelledby="platforms-heading"
+        >
+          <span className="sr-only">Expand {headingTitle}</span>
+        </button>
+      </div>
+      <div className="relative text-white">
+        <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+          {headingSubtitle}
+        </Text>
+      </div>
+      <div className="mt-3">
+        <Text
+          size="button"
+          className="text-white/80 cursor-pointer focus-ring"
+          asChild
+        >
+          <button type="button" onClick={onExpand}>
+            Read more
+          </button>
+        </Text>
+      </div>
+    </div>
+  );
+};
+
+type PlatformGridBodyProps = {
+  readonly revealGrid: boolean;
+  readonly platforms: readonly Platform[];
+  readonly activeIndex: number;
+  readonly activePlatform?: Platform;
+  readonly templates: TemplateConfig;
+  readonly buildPayload: (platform: Platform) => ChatTriggerPayload;
+  readonly scrollRef: RefObject<HTMLDivElement | null>;
+  readonly onSelect: (index: number) => void;
+};
+
+const PlatformGridBody = ({
+  revealGrid,
+  platforms,
+  activeIndex,
+  activePlatform,
+  templates,
+  buildPayload,
+  scrollRef,
+  onSelect,
+}: PlatformGridBodyProps) => {
+  if (!revealGrid) return null;
+
+  return (
+    <div id="platform-grid-body" className="space-y-8">
+      <PlatformTabs
+        platforms={platforms}
+        activeIndex={activeIndex}
+        onSelect={onSelect}
+      />
+
+      <MobilePlatformCarousel
+        platforms={platforms}
+        cardFooterTemplate={templates.cardFooterTemplate}
+        chatLabelTemplate={templates.chatLabelTemplate}
+        buildPayload={buildPayload}
+        scrollRef={scrollRef}
+      />
+
+      <DesktopPlatformGrid
+        platform={activePlatform}
+        activeIndex={activeIndex}
+        cardFooterTemplate={templates.cardFooterTemplate}
+        chatLabelTemplate={templates.chatLabelTemplate}
+        buildPayload={buildPayload}
+      />
+    </div>
+  );
+};
+
 const PlatformGridRevealSection = ({
   platforms,
   templates,
@@ -341,6 +503,7 @@ const PlatformGridRevealSection = ({
   const revealPhotoFocus = revealGrid;
   const activePlatform = platforms[activeIndex] ?? platforms[0];
   const platformMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
+  const parallaxRef = useParallaxBackground(enableTitleReveal && !revealGrid);
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
@@ -402,7 +565,7 @@ const PlatformGridRevealSection = ({
   return (
     <>
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0">
+        <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
           <Image
             src={templates.background.url}
             alt={templates.background.alt}
@@ -451,109 +614,26 @@ const PlatformGridRevealSection = ({
             platformMinHeight,
           )}
         >
-          {revealGrid ? (
-            <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8">
-              <div className="space-y-3">
-                <div className="relative">
-                  <Heading
-                    id="platforms-heading"
-                    level={2}
-                    size="xl"
-                    className={headerThemeReady ? "text-ink" : "text-white"}
-                  >
-                    {headingTitle}
-                  </Heading>
-                </div>
-                <div className="relative">
-                  <Text
-                    className={cn(
-                      "type-section-subtitle max-w-4xl",
-                      headerThemeReady ? "text-ink-muted" : "text-white",
-                    )}
-                    leading="normal"
-                  >
-                    {headingSubtitle}
-                  </Text>
-                </div>
-              </div>
-              {enableTitleReveal ? (
-                <button
-                  type="button"
-                  className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-                  onClick={handleCollapse}
-                >
-                  Collapse
-                </button>
-              ) : null}
-            </div>
-          ) : (
-            <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
-              <div className="relative inline-flex text-white">
-                <Heading
-                  id="platforms-heading"
-                  level={2}
-                  size="xl"
-                  className="type-section-collapsed"
-                >
-                  {headingTitle}
-                </Heading>
-                <button
-                  type="button"
-                  className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                  onPointerEnter={handleExpand}
-                  onFocus={handleExpand}
-                  onClick={handleExpand}
-                  aria-expanded={revealGrid}
-                  aria-controls="platform-grid-body"
-                  aria-labelledby="platforms-heading"
-                >
-                  <span className="sr-only">Expand {headingTitle}</span>
-                </button>
-              </div>
-              <div className="relative text-white">
-                <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                  {headingSubtitle}
-                </Text>
-              </div>
-              <div className="mt-3">
-                <Text
-                  size="button"
-                  className="text-white/80 cursor-pointer focus-ring"
-                  asChild
-                >
-                  <button type="button" onClick={handleExpand}>
-                    Read more
-                  </button>
-                </Text>
-              </div>
-            </div>
-          )}
+          <PlatformGridHeader
+            revealGrid={revealGrid}
+            headingTitle={headingTitle}
+            headingSubtitle={headingSubtitle}
+            headerThemeReady={headerThemeReady}
+            enableTitleReveal={enableTitleReveal}
+            onExpand={handleExpand}
+            onCollapse={handleCollapse}
+          />
 
-          {revealGrid ? (
-            <div id="platform-grid-body" className="space-y-8">
-              <PlatformTabs
-                platforms={platforms}
-                activeIndex={activeIndex}
-                onSelect={handleTabSelect}
-              />
-
-              <MobilePlatformCarousel
-                platforms={platforms}
-                cardFooterTemplate={templates.cardFooterTemplate}
-                chatLabelTemplate={templates.chatLabelTemplate}
-                buildPayload={buildPayload}
-                scrollRef={scrollRef}
-              />
-
-              <DesktopPlatformGrid
-                platform={activePlatform}
-                activeIndex={activeIndex}
-                cardFooterTemplate={templates.cardFooterTemplate}
-                chatLabelTemplate={templates.chatLabelTemplate}
-                buildPayload={buildPayload}
-              />
-            </div>
-          ) : null}
+          <PlatformGridBody
+            revealGrid={revealGrid}
+            platforms={platforms}
+            activeIndex={activeIndex}
+            activePlatform={activePlatform}
+            templates={templates}
+            buildPayload={buildPayload}
+            scrollRef={scrollRef}
+            onSelect={handleTabSelect}
+          />
         </div>
       </div>
     </>

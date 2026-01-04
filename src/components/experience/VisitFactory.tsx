@@ -6,6 +6,7 @@ import type { VisitFactoryData } from "@/types/experience";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useParallaxBackground } from "@/hooks/use-parallax-background";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 import SafeHtml from "@/components/SafeHtml";
@@ -28,6 +29,7 @@ type VisitFactoryBackdropProps = {
   readonly background: { url: string; alt?: string };
   readonly revealVisit: boolean;
   readonly revealPhotoFocus: boolean;
+  readonly enableParallax: boolean;
 };
 
 type VisitFactoryHeaderProps = {
@@ -164,6 +166,7 @@ const VisitFactoryRevealSection = ({
         background={background}
         revealVisit={revealVisit}
         revealPhotoFocus={revealPhotoFocus}
+        enableParallax={enableTitleReveal && !revealVisit}
       />
 
       <Container size="xl" className="relative z-10">
@@ -207,42 +210,47 @@ const VisitFactoryBackdrop = ({
   background,
   revealVisit,
   revealPhotoFocus,
-}: VisitFactoryBackdropProps) => (
-  <div className="absolute inset-0 -z-10 overflow-hidden">
-    <div className="absolute inset-0">
-      <Image
-        src={background.url}
-        alt={background.alt ?? "Perazzi Botticino factory background"}
-        fill
-        sizes="100vw"
-        className="object-cover"
-        priority={false}
-        loading="lazy"
+  enableParallax,
+}: VisitFactoryBackdropProps) => {
+  const parallaxRef = useParallaxBackground(enableParallax);
+
+  return (
+    <div className="absolute inset-0 -z-10 overflow-hidden">
+      <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
+        <Image
+          src={background.url}
+          alt={background.alt ?? "Perazzi Botticino factory background"}
+          fill
+          sizes="100vw"
+          className="object-cover"
+          priority={false}
+          loading="lazy"
+        />
+      </div>
+      <div
+        className={cn(
+          "absolute inset-0 bg-(--scrim-strong)",
+          revealVisit ? "opacity-0" : "opacity-100",
+        )}
+        aria-hidden
+      />
+      <div
+        className={cn(
+          "absolute inset-0 bg-(--scrim-strong)",
+          revealPhotoFocus ? "opacity-100" : "opacity-0",
+        )}
+        aria-hidden
+      />
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-0 overlay-gradient-canvas",
+          revealPhotoFocus ? "opacity-100" : "opacity-0",
+        )}
+        aria-hidden
       />
     </div>
-    <div
-      className={cn(
-        "absolute inset-0 bg-(--scrim-strong)",
-        revealVisit ? "opacity-0" : "opacity-100",
-      )}
-      aria-hidden
-    />
-    <div
-      className={cn(
-        "absolute inset-0 bg-(--scrim-strong)",
-        revealPhotoFocus ? "opacity-100" : "opacity-0",
-      )}
-      aria-hidden
-    />
-    <div
-      className={cn(
-        "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-        revealPhotoFocus ? "opacity-100" : "opacity-0",
-      )}
-      aria-hidden
-    />
-  </div>
-);
+  );
+};
 
 const VisitFactoryHeader = ({
   revealVisit,
@@ -310,8 +318,8 @@ const VisitFactoryHeader = ({
         <button
           type="button"
           className="absolute inset-0 z-10 cursor-pointer focus-ring"
-          onPointerEnter={onExpand}
-          onFocus={onExpand}
+
+
           onClick={onExpand}
           aria-expanded={revealVisit}
           aria-controls="visit-factory-body"

@@ -15,6 +15,7 @@ import { createPortal } from "react-dom";
 import type { Platform, ShotgunsLandingData } from "@/types/catalog";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useParallaxBackground } from "@/hooks/use-parallax-background";
 import { cn } from "@/lib/utils";
 import SafeHtml from "@/components/SafeHtml";
 import { PortableText } from "@/components/PortableText";
@@ -99,6 +100,7 @@ type DisciplineRailBackgroundProps = {
   readonly background: DisciplineRailBackground;
   readonly revealRail: boolean;
   readonly revealPhotoFocus: boolean;
+  readonly enableParallax: boolean;
 };
 
 type DisciplineRailHeaderProps = {
@@ -408,6 +410,7 @@ const DisciplineRailRevealSection = ({
         background={background}
         revealRail={revealRail}
         revealPhotoFocus={revealPhotoFocus}
+        enableParallax={enableTitleReveal && !revealRail}
       />
 
       <Container size="xl" className="relative z-10">
@@ -451,10 +454,13 @@ function DisciplineRailBackground({
   background,
   revealRail,
   revealPhotoFocus,
+  enableParallax,
 }: DisciplineRailBackgroundProps) {
+  const parallaxRef = useParallaxBackground(enableParallax);
+
   return (
     <div className="absolute inset-0 -z-10 overflow-hidden">
-      <div className="absolute inset-0">
+      <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
         <Image
           src={background.url}
           alt={background.alt}
@@ -551,8 +557,8 @@ function DisciplineRailHeader({
         <button
           type="button"
           className="absolute inset-0 z-10 cursor-pointer focus-ring"
-          onPointerEnter={onExpand}
-          onFocus={onExpand}
+
+
           onClick={onExpand}
           aria-expanded={revealRail}
           aria-controls="discipline-rail-body"

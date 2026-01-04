@@ -8,6 +8,7 @@ import { FAQList } from "./FAQList";
 import { logAnalytics } from "@/lib/analytics";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useParallaxBackground } from "@/hooks/use-parallax-background";
 import { cn } from "@/lib/utils";
 import { Container, Heading, Text } from "@/components/ui";
 
@@ -172,47 +173,53 @@ type ExperiencePickerBackgroundProps = Readonly<{
   background: ExperiencePickerRevealSectionProps["background"];
   revealPicker: boolean;
   revealPhotoFocus: boolean;
+  enableParallax: boolean;
 }>;
 
 const ExperiencePickerBackground = ({
   background,
   revealPicker,
   revealPhotoFocus,
-}: ExperiencePickerBackgroundProps) => (
-  <div className="absolute inset-0 -z-10 overflow-hidden">
-    <div className="absolute inset-0">
-      <Image
-        src={background.url}
-        alt={background.alt ?? "Perazzi experience background"}
-        fill
-        sizes="100vw"
-        className="object-cover"
-        priority={false}
+  enableParallax,
+}: ExperiencePickerBackgroundProps) => {
+  const parallaxRef = useParallaxBackground(enableParallax);
+
+  return (
+    <div className="absolute inset-0 -z-10 overflow-hidden">
+      <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
+        <Image
+          src={background.url}
+          alt={background.alt ?? "Perazzi experience background"}
+          fill
+          sizes="100vw"
+          className="object-cover"
+          priority={false}
+        />
+      </div>
+      <div
+        className={cn(
+          "absolute inset-0 bg-(--scrim-strong)",
+          { "opacity-0": revealPicker, "opacity-100": !revealPicker },
+        )}
+        aria-hidden
+      />
+      <div
+        className={cn(
+          "absolute inset-0 bg-(--scrim-strong)",
+          { "opacity-100": revealPhotoFocus, "opacity-0": !revealPhotoFocus },
+        )}
+        aria-hidden
+      />
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-0 overlay-gradient-canvas",
+          { "opacity-100": revealPhotoFocus, "opacity-0": !revealPhotoFocus },
+        )}
+        aria-hidden
       />
     </div>
-    <div
-      className={cn(
-        "absolute inset-0 bg-(--scrim-strong)",
-        { "opacity-0": revealPicker, "opacity-100": !revealPicker },
-      )}
-      aria-hidden
-    />
-    <div
-      className={cn(
-        "absolute inset-0 bg-(--scrim-strong)",
-        { "opacity-100": revealPhotoFocus, "opacity-0": !revealPhotoFocus },
-      )}
-      aria-hidden
-    />
-    <div
-      className={cn(
-        "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-        { "opacity-100": revealPhotoFocus, "opacity-0": !revealPhotoFocus },
-      )}
-      aria-hidden
-    />
-  </div>
-);
+  );
+};
 
 type ExperiencePickerHeaderProps = Readonly<{
   heading: string;
@@ -289,8 +296,8 @@ const ExperiencePickerCollapsedHeader = ({
       <button
         type="button"
         className="absolute inset-0 z-10 cursor-pointer focus-ring"
-        onPointerEnter={onExpand}
-        onFocus={onExpand}
+
+
         onClick={onExpand}
         aria-expanded={false}
         aria-controls="experience-picker-body"
@@ -402,6 +409,7 @@ const ExperiencePickerRevealSection = ({
         background={background}
         revealPicker={revealPicker}
         revealPhotoFocus={revealPhotoFocus}
+        enableParallax={enableTitleReveal && !revealPicker}
       />
 
       <Container size="xl" className="relative z-10">

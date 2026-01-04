@@ -14,6 +14,7 @@ import {
 import type { FittingStage } from "@/types/build";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useParallaxBackground } from "@/hooks/use-parallax-background";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { Heading, Text } from "@/components/ui";
@@ -199,6 +200,7 @@ const BuildStepsRevealSection = ({
   const revealBuildSteps = !enableTitleReveal || buildStepsExpanded;
   const revealPhotoFocus = revealBuildSteps;
   const buildStepsMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
+  const parallaxRef = useParallaxBackground(enableTitleReveal && !revealBuildSteps);
 
   const instructions =
     "Scroll to move from moment to moment. Each step is a chapter in the ritual of building a Perazzi to your measure.";
@@ -307,7 +309,7 @@ const BuildStepsRevealSection = ({
   return (
     <>
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0">
+        <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
           <NextImage
             src={background.url}
             alt={background.alt ?? "Perazzi bespoke build steps background"}
@@ -472,8 +474,8 @@ const BuildStepsHeader = ({
         <button
           type="button"
           className="absolute inset-0 z-10 cursor-pointer focus-ring"
-          onPointerEnter={onExpand}
-          onFocus={onExpand}
+
+
           onClick={onExpand}
           aria-expanded={revealBuildSteps}
           aria-controls="build-steps-body"

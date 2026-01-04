@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState, useRef, useEffect, type Dispatch, type SetStateAction } from "react";
+import { useParallaxBackground } from "@/hooks/use-parallax-background";
 
 import type { GradeSeries, ShotgunsLandingData } from "@/types/catalog";
 import { getGradeAnchorId } from "@/lib/grade-anchors";
@@ -225,6 +226,7 @@ const EngravingGradesRevealSection = ({
   const revealCarousel = !enableTitleReveal || carouselExpanded;
   const revealPhotoFocus = revealCarousel;
   const carouselMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
+  const parallaxRef = useParallaxBackground(enableTitleReveal && !revealCarousel);
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
@@ -265,7 +267,7 @@ const EngravingGradesRevealSection = ({
   return (
     <>
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0">
+        <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
           <Image
             src={background.url}
             alt={background.alt}
@@ -403,8 +405,8 @@ const EngravingGradesHeader = ({
         <button
           type="button"
           className="absolute inset-0 z-10 cursor-pointer focus-ring"
-          onPointerEnter={onExpand}
-          onFocus={onExpand}
+
+
           onClick={onExpand}
           aria-expanded={revealCarousel}
           aria-controls="engraving-grades-body"
