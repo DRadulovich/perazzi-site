@@ -27,6 +27,17 @@ type TravelNetworkRevealSectionProps = Readonly<{
   enableTitleReveal: boolean;
 }>;
 
+type TravelNetworkBackground = Readonly<{
+  url: string;
+  alt: string;
+}>;
+
+type TravelNetworkBackdropProps = Readonly<{
+  background: TravelNetworkBackground;
+  revealNetwork: boolean;
+  revealPhotoFocus: boolean;
+}>;
+
 type ScheduleListProps = Readonly<{
   events: readonly ScheduledEventEntry[];
   emptyText: string;
@@ -90,7 +101,7 @@ const TravelNetworkRevealSection = ({
   const lead = ui.lead ?? "Meet us on the road";
   const supporting =
     ui.supporting ?? "Track our travel schedule or connect with a trusted Perazzi dealer closest to you.";
-  const background = {
+  const background: TravelNetworkBackground = {
     url: ui.backgroundImage?.url
       ?? "/redesign-photos/experience/pweb-experience-travelnetwork-bg.jpg",
     alt: ui.backgroundImage?.alt ?? "Perazzi travel network background",
@@ -139,40 +150,11 @@ const TravelNetworkRevealSection = ({
 
   return (
     <>
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0">
-          <Image
-            src={background.url}
-            alt={background.alt ?? "Perazzi travel network background"}
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority={false}
-            loading="lazy"
-          />
-        </div>
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            revealNetwork ? "opacity-0" : "opacity-100",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-      </div>
+      <TravelNetworkBackdrop
+        background={background}
+        revealNetwork={revealNetwork}
+        revealPhotoFocus={revealPhotoFocus}
+      />
 
       <Container size="xl" className="relative z-10">
         <div
@@ -329,6 +311,47 @@ const TravelNetworkRevealSection = ({
     </>
   );
 };
+
+const TravelNetworkBackdrop = ({
+  background,
+  revealNetwork,
+  revealPhotoFocus,
+}: TravelNetworkBackdropProps) => (
+  <div className="absolute inset-0 -z-10 overflow-hidden">
+    <div className="absolute inset-0">
+      <Image
+        src={background.url}
+        alt={background.alt}
+        fill
+        sizes="100vw"
+        className="object-cover"
+        priority={false}
+        loading="lazy"
+      />
+    </div>
+    <div
+      className={cn(
+        "absolute inset-0 bg-(--scrim-strong)",
+        revealNetwork ? "opacity-0" : "opacity-100",
+      )}
+      aria-hidden
+    />
+    <div
+      className={cn(
+        "absolute inset-0 bg-(--scrim-strong)",
+        revealPhotoFocus ? "opacity-100" : "opacity-0",
+      )}
+      aria-hidden
+    />
+    <div
+      className={cn(
+        "pointer-events-none absolute inset-0 overlay-gradient-canvas",
+        revealPhotoFocus ? "opacity-100" : "opacity-0",
+      )}
+      aria-hidden
+    />
+  </div>
+);
 
 function ScheduleList({ events, emptyText }: ScheduleListProps) {
   if (!events.length) {

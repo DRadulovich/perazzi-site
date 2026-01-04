@@ -143,39 +143,12 @@ function TimelineRevealSection({
 
   return (
     <>
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0">
-          <Image
-            src={backgroundUrl}
-            alt={backgroundAlt}
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority
-          />
-        </div>
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            revealTimeline ? "opacity-0" : "opacity-100",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "absolute inset-0 overlay-gradient-canvas",
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-      </div>
+      <TimelineBackdrop
+        backgroundUrl={backgroundUrl}
+        backgroundAlt={backgroundAlt}
+        revealTimeline={revealTimeline}
+        revealPhotoFocus={revealPhotoFocus}
+      />
 
       <div
         id="craft-timeline-content"
@@ -194,206 +167,372 @@ function TimelineRevealSection({
               timelineMinHeight,
             )}
           >
-            {revealTimeline ? (
-              <div className="relative z-10 space-y-4 md:flex md:items-center md:justify-between md:gap-8">
-                <div className="space-y-3">
-                  <div className="relative">
-                    <Heading
-                      id="craft-timeline-heading"
-                      level={2}
-                      size="xl"
-                      className={headerThemeReady ? "text-ink" : "text-white"}
-                    >
-                      {headingTitle}
-                    </Heading>
-                  </div>
-                  <div className="relative">
-                    <Text
-                      size="lg"
-                      className={cn(
-                        "type-section-subtitle",
-                        headerThemeReady ? "text-ink-muted" : "text-white",
-                      )}
-                    >
-                      {headingEyebrow}
-                    </Text>
-                  </div>
-                  <span className="sr-only">{headingInstructions}</span>
-                </div>
-                {enableTitleReveal ? (
-                  <button
-                    type="button"
-                    className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-                    onClick={handleTimelineCollapse}
-                  >
-                    Collapse
-                  </button>
-                ) : null}
-              </div>
-            ) : (
-              <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
-                <div className="relative inline-flex text-white">
-                  <Heading
-                    id="craft-timeline-heading"
-                    level={2}
-                    size="xl"
-                    className="type-section-collapsed"
-                  >
-                    {headingTitle}
-                  </Heading>
-                  <button
-                    type="button"
-                    className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                    onPointerEnter={handleTimelineExpand}
-                    onFocus={handleTimelineExpand}
-                    onClick={handleTimelineExpand}
-                    aria-expanded={revealTimeline}
-                    aria-controls="craft-timeline-body"
-                    aria-labelledby="craft-timeline-heading"
-                  >
-                    <span className="sr-only">Expand {headingTitle}</span>
-                  </button>
-                </div>
-                <div className="relative text-white">
-                  <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                    {headingEyebrow}
-                  </Text>
-                </div>
-                <div className="mt-3">
-                  <Text
-                    size="button"
-                    className="text-white/80 cursor-pointer focus-ring"
-                    asChild
-                  >
-                    <button type="button" onClick={handleTimelineExpand}>
-                      Read more
-                    </button>
-                  </Text>
-                </div>
-              </div>
-            )}
+            <TimelineHeader
+              revealTimeline={revealTimeline}
+              enableTitleReveal={enableTitleReveal}
+              headerThemeReady={headerThemeReady}
+              headingTitle={headingTitle}
+              headingEyebrow={headingEyebrow}
+              headingInstructions={headingInstructions}
+              onExpand={handleTimelineExpand}
+              onCollapse={handleTimelineCollapse}
+            />
 
             {revealTimeline ? (
-              <div id="craft-timeline-body" className="space-y-6">
-                {enablePinned ? (
-                  <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
-                    <div className="space-y-4 border-none bg-card/0 p-4 shadow-none sm:border-none sm:bg-card/0 sm:p-4 sm:shadow-none">
-                      <Text size="label-tight" className="mb-3 text-ink">
-                        {alternateTitle}
-                      </Text>
-                      <div className="space-y-1">
-                        {stages.map((stage, index) => (
-                          <TimelineControlButton
-                            key={`control-${stage.id}`}
-                            label={stage.title}
-                            order={stage.order}
-                            active={resolvedActiveStage === index}
-                            onSelect={() => { setActiveStage(index); }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-5">
-                      <div
-                        className={cn(
-                          "relative min-h-[640px] overflow-hidden rounded-3xl border",
-                          revealPhotoFocus
-                            ? "border-border/70 bg-card/70 shadow-elevated ring-1 ring-border/70 backdrop-blur-sm"
-                            : "border-transparent bg-transparent shadow-none ring-0 backdrop-blur-none",
-                        )}
-                      >
-                        {stages[resolvedActiveStage] ? (
-                          <PinnedStagePanel
-                            stage={stages[resolvedActiveStage]}
-                            revealPhotoFocus={revealPhotoFocus}
-                          />
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-8">
-                    <div className="space-y-3">
-                      <Text size="label-tight" className="text-ink-muted">
-                        {alternateTitle}
-                      </Text>
-                    </div>
-
-                    <div className="space-y-3">
-                      {stages.map((stage, index) => {
-                        const expanded = activeStage === index;
-                        const panelId = `craft-stage-panel-${stage.id}`;
-                        const buttonId = `craft-stage-trigger-${stage.id}`;
-
-                        return (
-                          <div
-                            key={`stacked-${stage.id}`}
-                            className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:p-4"
-                          >
-                            <button
-                              type="button"
-                              id={buttonId}
-                              aria-expanded={expanded}
-                              aria-controls={panelId}
-                              onClick={() =>
-                                { setActiveStage(expanded ? -1 : index); }
-                              }
-                              className="flex w-full items-center justify-between gap-3 text-left focus-ring"
-                            >
-                              <div>
-                                <Text size="button" className="text-ink-muted mb-2">
-                                  Stage {stage.order}
-                                </Text>
-                                <Text className="text-lg type-body-title text-ink">
-                                  {stage.title}
-                                </Text>
-                              </div>
-                              <span className="type-button text-perazzi-red/70">
-                                {expanded ? "Collapse" : "Show more"}
-                              </span>
-                            </button>
-
-                            <div
-                              id={panelId}
-                              aria-labelledby={buttonId}
-                              className={cn(
-                                "mt-3 overflow-hidden",
-                                expanded
-                                  ? "max-h-[999px] opacity-100"
-                                  : "max-h-0 opacity-0",
-                              )}
-                            >
-                              {expanded && (
-                                <div className="mt-2">
-                                  <TimelineItem stage={stage} />
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-                <div className="pt-2 sm:pt-4">
-                  <Button
-                    asChild
-                    variant="secondary"
-                    size="lg"
-                    className="w-full type-button-eaves text-ink"
-                  >
-                    <Link href="/the-build/why-a-perazzi-has-a-soul">
-                      See the full build story
-                    </Link>
-                  </Button>
-                </div>
-              </div>
+              <TimelineBody
+                enablePinned={enablePinned}
+                stages={stages}
+                resolvedActiveStage={resolvedActiveStage}
+                activeStage={activeStage}
+                setActiveStage={setActiveStage}
+                alternateTitle={alternateTitle}
+                revealPhotoFocus={revealPhotoFocus}
+              />
             ) : null}
           </div>
         </div>
       </div>
     </>
+  );
+}
+
+type TimelineBackdropProps = {
+  readonly backgroundUrl: string;
+  readonly backgroundAlt: string;
+  readonly revealTimeline: boolean;
+  readonly revealPhotoFocus: boolean;
+};
+
+function TimelineBackdrop({
+  backgroundUrl,
+  backgroundAlt,
+  revealTimeline,
+  revealPhotoFocus,
+}: TimelineBackdropProps) {
+  return (
+    <div className="absolute inset-0 -z-10 overflow-hidden">
+      <div className="absolute inset-0">
+        <Image
+          src={backgroundUrl}
+          alt={backgroundAlt}
+          fill
+          sizes="100vw"
+          className="object-cover"
+          priority
+        />
+      </div>
+      <div
+        className={cn(
+          "absolute inset-0 bg-(--scrim-strong)",
+          revealTimeline ? "opacity-0" : "opacity-100",
+        )}
+        aria-hidden
+      />
+      <div
+        className={cn(
+          "absolute inset-0 bg-(--scrim-strong)",
+          revealPhotoFocus ? "opacity-100" : "opacity-0",
+        )}
+        aria-hidden
+      />
+      <div
+        className={cn(
+          "absolute inset-0 overlay-gradient-canvas",
+          revealPhotoFocus ? "opacity-100" : "opacity-0",
+        )}
+        aria-hidden
+      />
+    </div>
+  );
+}
+
+type TimelineHeaderProps = {
+  readonly revealTimeline: boolean;
+  readonly enableTitleReveal: boolean;
+  readonly headerThemeReady: boolean;
+  readonly headingTitle: string;
+  readonly headingEyebrow: string;
+  readonly headingInstructions: string;
+  readonly onExpand: () => void;
+  readonly onCollapse: () => void;
+};
+
+function TimelineHeader({
+  revealTimeline,
+  enableTitleReveal,
+  headerThemeReady,
+  headingTitle,
+  headingEyebrow,
+  headingInstructions,
+  onExpand,
+  onCollapse,
+}: TimelineHeaderProps) {
+  if (revealTimeline) {
+    return (
+      <div className="relative z-10 space-y-4 md:flex md:items-center md:justify-between md:gap-8">
+        <div className="space-y-3">
+          <div className="relative">
+            <Heading
+              id="craft-timeline-heading"
+              level={2}
+              size="xl"
+              className={headerThemeReady ? "text-ink" : "text-white"}
+            >
+              {headingTitle}
+            </Heading>
+          </div>
+          <div className="relative">
+            <Text
+              size="lg"
+              className={cn(
+                "type-section-subtitle",
+                headerThemeReady ? "text-ink-muted" : "text-white",
+              )}
+            >
+              {headingEyebrow}
+            </Text>
+          </div>
+          <span className="sr-only">{headingInstructions}</span>
+        </div>
+        {enableTitleReveal ? (
+          <button
+            type="button"
+            className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+            onClick={onCollapse}
+          >
+            Collapse
+          </button>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
+      <div className="relative inline-flex text-white">
+        <Heading
+          id="craft-timeline-heading"
+          level={2}
+          size="xl"
+          className="type-section-collapsed"
+        >
+          {headingTitle}
+        </Heading>
+        <button
+          type="button"
+          className="absolute inset-0 z-10 cursor-pointer focus-ring"
+          onPointerEnter={onExpand}
+          onFocus={onExpand}
+          onClick={onExpand}
+          aria-expanded={revealTimeline}
+          aria-controls="craft-timeline-body"
+          aria-labelledby="craft-timeline-heading"
+        >
+          <span className="sr-only">Expand {headingTitle}</span>
+        </button>
+      </div>
+      <div className="relative text-white">
+        <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+          {headingEyebrow}
+        </Text>
+      </div>
+      <div className="mt-3">
+        <Text
+          size="button"
+          className="text-white/80 cursor-pointer focus-ring"
+          asChild
+        >
+          <button type="button" onClick={onExpand}>
+            Read more
+          </button>
+        </Text>
+      </div>
+    </div>
+  );
+}
+
+type TimelineBodyProps = {
+  readonly enablePinned: boolean;
+  readonly stages: readonly FittingStage[];
+  readonly resolvedActiveStage: number;
+  readonly activeStage: number;
+  readonly setActiveStage: Dispatch<SetStateAction<number>>;
+  readonly alternateTitle: string;
+  readonly revealPhotoFocus: boolean;
+};
+
+function TimelineBody({
+  enablePinned,
+  stages,
+  resolvedActiveStage,
+  activeStage,
+  setActiveStage,
+  alternateTitle,
+  revealPhotoFocus,
+}: TimelineBodyProps) {
+  return (
+    <div id="craft-timeline-body" className="space-y-6">
+      {enablePinned ? (
+        <TimelinePinnedLayout
+          stages={stages}
+          resolvedActiveStage={resolvedActiveStage}
+          setActiveStage={setActiveStage}
+          alternateTitle={alternateTitle}
+          revealPhotoFocus={revealPhotoFocus}
+        />
+      ) : (
+        <TimelineStackedLayout
+          stages={stages}
+          activeStage={activeStage}
+          setActiveStage={setActiveStage}
+          alternateTitle={alternateTitle}
+        />
+      )}
+      <div className="pt-2 sm:pt-4">
+        <Button
+          asChild
+          variant="secondary"
+          size="lg"
+          className="w-full type-button-eaves text-ink"
+        >
+          <Link href="/the-build/why-a-perazzi-has-a-soul">
+            See the full build story
+          </Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+type TimelinePinnedLayoutProps = {
+  readonly stages: readonly FittingStage[];
+  readonly resolvedActiveStage: number;
+  readonly setActiveStage: Dispatch<SetStateAction<number>>;
+  readonly alternateTitle: string;
+  readonly revealPhotoFocus: boolean;
+};
+
+function TimelinePinnedLayout({
+  stages,
+  resolvedActiveStage,
+  setActiveStage,
+  alternateTitle,
+  revealPhotoFocus,
+}: TimelinePinnedLayoutProps) {
+  return (
+    <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
+      <div className="space-y-4 border-none bg-card/0 p-4 shadow-none sm:border-none sm:bg-card/0 sm:p-4 sm:shadow-none">
+        <Text size="label-tight" className="mb-3 text-ink">
+          {alternateTitle}
+        </Text>
+        <div className="space-y-1">
+          {stages.map((stage, index) => (
+            <TimelineControlButton
+              key={`control-${stage.id}`}
+              label={stage.title}
+              order={stage.order}
+              active={resolvedActiveStage === index}
+              onSelect={() => { setActiveStage(index); }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-5">
+        <div
+          className={cn(
+            "relative min-h-[640px] overflow-hidden rounded-3xl border",
+            revealPhotoFocus
+              ? "border-border/70 bg-card/70 shadow-elevated ring-1 ring-border/70 backdrop-blur-sm"
+              : "border-transparent bg-transparent shadow-none ring-0 backdrop-blur-none",
+          )}
+        >
+          {stages[resolvedActiveStage] ? (
+            <PinnedStagePanel
+              stage={stages[resolvedActiveStage]}
+              revealPhotoFocus={revealPhotoFocus}
+            />
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type TimelineStackedLayoutProps = {
+  readonly stages: readonly FittingStage[];
+  readonly activeStage: number;
+  readonly setActiveStage: Dispatch<SetStateAction<number>>;
+  readonly alternateTitle: string;
+};
+
+function TimelineStackedLayout({
+  stages,
+  activeStage,
+  setActiveStage,
+  alternateTitle,
+}: TimelineStackedLayoutProps) {
+  return (
+    <div className="space-y-8">
+      <div className="space-y-3">
+        <Text size="label-tight" className="text-ink-muted">
+          {alternateTitle}
+        </Text>
+      </div>
+
+      <div className="space-y-3">
+        {stages.map((stage, index) => {
+          const expanded = activeStage === index;
+          const panelId = `craft-stage-panel-${stage.id}`;
+          const buttonId = `craft-stage-trigger-${stage.id}`;
+
+          return (
+            <div
+              key={`stacked-${stage.id}`}
+              className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:p-4"
+            >
+              <button
+                type="button"
+                id={buttonId}
+                aria-expanded={expanded}
+                aria-controls={panelId}
+                onClick={() => { setActiveStage(expanded ? -1 : index); }}
+                className="flex w-full items-center justify-between gap-3 text-left focus-ring"
+              >
+                <div>
+                  <Text size="button" className="text-ink-muted mb-2">
+                    Stage {stage.order}
+                  </Text>
+                  <Text className="text-lg type-body-title text-ink">
+                    {stage.title}
+                  </Text>
+                </div>
+                <span className="type-button text-perazzi-red/70">
+                  {expanded ? "Collapse" : "Show more"}
+                </span>
+              </button>
+
+              <div
+                id={panelId}
+                aria-labelledby={buttonId}
+                className={cn(
+                  "mt-3 overflow-hidden",
+                  expanded
+                    ? "max-h-[999px] opacity-100"
+                    : "max-h-0 opacity-0",
+                )}
+              >
+                {expanded && (
+                  <div className="mt-2">
+                    <TimelineItem stage={stage} />
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

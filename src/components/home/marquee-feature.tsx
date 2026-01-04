@@ -42,6 +42,54 @@ type MarqueeFeatureRevealSectionProps = Readonly<{
   enableTitleReveal: boolean;
 }>;
 
+type MarqueeFeatureBackgroundProps = Readonly<{
+  background: HomeData["marqueeUi"]["background"];
+  revealMarquee: boolean;
+  revealPhotoFocus: boolean;
+}>;
+
+function MarqueeFeatureBackground({
+  background,
+  revealMarquee,
+  revealPhotoFocus,
+}: MarqueeFeatureBackgroundProps) {
+  return (
+    <div className="absolute inset-0 -z-10 overflow-hidden">
+      <div className="absolute inset-0">
+        <Image
+          src={background.url}
+          alt={background.alt}
+          fill
+          sizes="100vw"
+          className="object-cover"
+          priority={false}
+        />
+      </div>
+      <div
+        className={cn(
+          "absolute inset-0 bg-(--scrim-strong)",
+          revealMarquee ? "opacity-0" : "opacity-100",
+        )}
+        aria-hidden
+      />
+      <div
+        className={cn(
+          "absolute inset-0 bg-(--scrim-strong)",
+          revealPhotoFocus ? "opacity-100" : "opacity-0",
+        )}
+        aria-hidden
+      />
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-0 overlay-gradient-canvas",
+          revealPhotoFocus ? "opacity-100" : "opacity-0",
+        )}
+        aria-hidden
+      />
+    </div>
+  );
+}
+
 function MarqueeFeatureRevealSection({
   champion,
   ui,
@@ -103,39 +151,11 @@ function MarqueeFeatureRevealSection({
 
   return (
     <>
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0">
-          <Image
-            src={background.url}
-            alt={background.alt}
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority={false}
-          />
-        </div>
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            revealMarquee ? "opacity-0" : "opacity-100",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-      </div>
+      <MarqueeFeatureBackground
+        background={background}
+        revealMarquee={revealMarquee}
+        revealPhotoFocus={revealPhotoFocus}
+      />
 
       <Container size="xl" className="relative z-10">
         <div

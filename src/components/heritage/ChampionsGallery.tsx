@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import Image from "next/image";
 import type { ChampionEvergreen, ChampionsGalleryUi } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -61,7 +61,6 @@ const ChampionsGalleryRevealSection = ({
 }: ChampionsGalleryRevealSectionProps) => {
   const [galleryExpanded, setGalleryExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const [activeDiscipline, setActiveDiscipline] = useState<string | null>(null);
   const [selectedChampionId, setSelectedChampionId] = useState<string | null>(() => {
     return champions[0]?.id ?? null;
@@ -109,20 +108,100 @@ const ChampionsGalleryRevealSection = ({
   const revealPhotoFocus = revealGallery;
   const galleryMinHeight = enableTitleReveal ? "min-h-[calc(700px+16rem)]" : null;
 
+  const expandedHeight = useExpandedHeightObserver({
+    enableTitleReveal,
+    revealGallery,
+    galleryShellRef,
+    activeDiscipline,
+    activeChampionId,
+    championsCount: champions.length,
+  });
+
   const handleGalleryExpand = () => {
-    if (!enableTitleReveal) return;
     setGalleryExpanded(true);
     setHeaderThemeReady(true);
   };
 
   const handleGalleryCollapse = () => {
-    if (!enableTitleReveal) return;
     setHeaderThemeReady(false);
     setGalleryExpanded(false);
   };
 
+  const handleChampionSelect = (championId: string) => {
+    setSelectedChampionId(championId);
+    logAnalytics(`ChampionProfileSelected:${championId}`);
+  };
+
+  return (
+    <>
+      <ChampionsGalleryBackground
+        background={background}
+        revealGallery={revealGallery}
+        revealPhotoFocus={revealPhotoFocus}
+      />
+
+      <Container size="xl" className="relative z-10">
+        <div
+          ref={galleryShellRef}
+          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
+          className={cn(
+            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
+            revealPhotoFocus
+              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
+              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
+            galleryMinHeight,
+          )}
+        >
+          <ChampionsGalleryHeader
+            heading={heading}
+            subheading={subheading}
+            enableTitleReveal={enableTitleReveal}
+            headerThemeReady={headerThemeReady}
+            revealGallery={revealGallery}
+            onCollapse={handleGalleryCollapse}
+            onExpand={handleGalleryExpand}
+          />
+
+          <ChampionsGalleryBody
+            revealGallery={revealGallery}
+            disciplines={disciplines}
+            activeDiscipline={activeDiscipline}
+            onDisciplineChange={setActiveDiscipline}
+            championsLabel={championsLabel}
+            filteredChampions={filteredChampions}
+            activeChampionId={activeChampionId}
+            onChampionSelect={handleChampionSelect}
+            selectedChampion={selectedChampion}
+            cardCtaLabel={cardCtaLabel}
+          />
+        </div>
+      </Container>
+    </>
+  );
+};
+
+type ExpandedHeightObserverOptions = Readonly<{
+  enableTitleReveal: boolean;
+  revealGallery: boolean;
+  galleryShellRef: RefObject<HTMLDivElement | null>;
+  activeDiscipline: string | null;
+  activeChampionId: string | null;
+  championsCount: number;
+}>;
+
+function useExpandedHeightObserver({
+  enableTitleReveal,
+  revealGallery,
+  galleryShellRef,
+  activeDiscipline,
+  activeChampionId,
+  championsCount,
+}: ExpandedHeightObserverOptions) {
+  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
+
   useEffect(() => {
     if (!enableTitleReveal || !revealGallery) return;
+
     const node = galleryShellRef.current;
     if (!node) return;
 
@@ -144,243 +223,314 @@ const ChampionsGalleryRevealSection = ({
   }, [
     enableTitleReveal,
     revealGallery,
+    galleryShellRef,
     activeDiscipline,
     activeChampionId,
-    champions.length,
+    championsCount,
   ]);
 
+  return expandedHeight;
+}
+
+type ChampionsGalleryBackgroundProps = Readonly<{
+  background: Readonly<{
+    url: string;
+    alt: string;
+  }>;
+  revealGallery: boolean;
+  revealPhotoFocus: boolean;
+}>;
+
+function ChampionsGalleryBackground({
+  background,
+  revealGallery,
+  revealPhotoFocus,
+}: ChampionsGalleryBackgroundProps) {
   return (
-    <>
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0">
-          <Image
-            src={background.url}
-            alt={background.alt}
-            fill
-            sizes="100vw"
-            className="object-cover"
-            loading="lazy"
-          />
-        </div>
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            revealGallery ? "opacity-0" : "opacity-100",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 overlay-gradient-ink",
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
+    <div className="absolute inset-0 -z-10 overflow-hidden">
+      <div className="absolute inset-0">
+        <Image
+          src={background.url}
+          alt={background.alt}
+          fill
+          sizes="100vw"
+          className="object-cover"
+          loading="lazy"
         />
       </div>
+      <div
+        className={cn(
+          "absolute inset-0 bg-(--scrim-strong)",
+          revealGallery ? "opacity-0" : "opacity-100",
+        )}
+        aria-hidden
+      />
+      <div
+        className={cn(
+          "absolute inset-0 bg-(--scrim-strong)",
+          revealPhotoFocus ? "opacity-100" : "opacity-0",
+        )}
+        aria-hidden
+      />
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-0 overlay-gradient-ink",
+          revealPhotoFocus ? "opacity-100" : "opacity-0",
+        )}
+        aria-hidden
+      />
+    </div>
+  );
+}
 
-      <Container size="xl" className="relative z-10">
-        <div
-          ref={galleryShellRef}
-          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
-          className={cn(
-            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            galleryMinHeight,
-          )}
+type ChampionsGalleryHeaderProps = Readonly<{
+  heading: string;
+  subheading: string;
+  enableTitleReveal: boolean;
+  headerThemeReady: boolean;
+  revealGallery: boolean;
+  onCollapse: () => void;
+  onExpand: () => void;
+}>;
+
+function ChampionsGalleryHeader({
+  heading,
+  subheading,
+  enableTitleReveal,
+  headerThemeReady,
+  revealGallery,
+  onCollapse,
+  onExpand,
+}: ChampionsGalleryHeaderProps) {
+  if (revealGallery) {
+    return (
+      <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8">
+        <div className="space-y-3">
+          <div className="relative">
+            <Heading
+              id="heritage-champions-heading"
+              level={2}
+              size="xl"
+              className={headerThemeReady ? "text-ink" : "text-white"}
+            >
+              {heading}
+            </Heading>
+          </div>
+          <div className="relative">
+            <Text
+              className={cn(
+                "type-section-subtitle",
+                headerThemeReady ? "text-ink-muted" : "text-white",
+              )}
+            >
+              {subheading}
+            </Text>
+          </div>
+        </div>
+        {enableTitleReveal ? (
+          <button
+            type="button"
+            className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+            onClick={onCollapse}
+          >
+            Collapse
+          </button>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
+      <div className="relative inline-flex text-white">
+        <Heading
+          id="heritage-champions-heading"
+          level={2}
+          size="xl"
+          className="type-section-collapsed"
         >
-          {revealGallery ? (
-            <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8">
-              <div className="space-y-3">
-                <div className="relative">
-                  <Heading
-                    id="heritage-champions-heading"
-                    level={2}
-                    size="xl"
-                    className={headerThemeReady ? "text-ink" : "text-white"}
-                  >
-                    {heading}
-                  </Heading>
-                </div>
-                <div className="relative">
-                  <Text
-                    className={cn(
-                      "type-section-subtitle",
-                      headerThemeReady ? "text-ink-muted" : "text-white",
-                    )}
-                  >
-                    {subheading}
-                  </Text>
-                </div>
-              </div>
-              {enableTitleReveal ? (
-                <button
-                  type="button"
-                  className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-                  onClick={handleGalleryCollapse}
-                >
-                  Collapse
-                </button>
-              ) : null}
+          {heading}
+        </Heading>
+        <button
+          type="button"
+          className="absolute inset-0 z-10 cursor-pointer focus-ring"
+          onPointerEnter={onExpand}
+          onFocus={onExpand}
+          onClick={onExpand}
+          aria-expanded={revealGallery}
+          aria-controls="heritage-champions-body"
+          aria-labelledby="heritage-champions-heading"
+        >
+          <span className="sr-only">Expand {heading}</span>
+        </button>
+      </div>
+      <div className="relative text-white">
+        <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
+          {subheading}
+        </Text>
+      </div>
+      <div className="mt-3">
+        <Text
+          size="button"
+          className="text-white/80 cursor-pointer focus-ring"
+          asChild
+        >
+          <button type="button" onClick={onExpand}>
+            Read more
+          </button>
+        </Text>
+      </div>
+    </div>
+  );
+}
+
+type ChampionsGalleryBodyProps = Readonly<{
+  revealGallery: boolean;
+  disciplines: string[];
+  activeDiscipline: string | null;
+  onDisciplineChange: (nextDiscipline: string | null) => void;
+  championsLabel: string;
+  filteredChampions: ChampionEvergreen[];
+  activeChampionId: string | null;
+  onChampionSelect: (championId: string) => void;
+  selectedChampion: ChampionEvergreen | null;
+  cardCtaLabel: string;
+}>;
+
+function ChampionsGalleryBody({
+  revealGallery,
+  disciplines,
+  activeDiscipline,
+  onDisciplineChange,
+  championsLabel,
+  filteredChampions,
+  activeChampionId,
+  onChampionSelect,
+  selectedChampion,
+  cardCtaLabel,
+}: ChampionsGalleryBodyProps) {
+  if (!revealGallery) return null;
+
+  return (
+    <div id="heritage-champions-body" className="space-y-6">
+      <ChampionsGalleryFilters
+        disciplines={disciplines}
+        activeDiscipline={activeDiscipline}
+        onDisciplineChange={onDisciplineChange}
+      />
+
+      <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)] lg:items-start">
+        <div className="rounded-2xl bg-card/0 p-4 sm:rounded-3xl">
+          <Text
+            size="label-tight"
+            className="mb-3 text-ink-muted"
+            leading="normal"
+          >
+            {championsLabel}
+          </Text>
+
+          {filteredChampions.length ? (
+            <ul className="space-y-1" aria-label="Select a champion to view their profile">
+              {filteredChampions.map((champion) => (
+                <ChampionNameItem
+                  key={champion.id}
+                  champion={champion}
+                  isActive={champion.id === activeChampionId}
+                  onSelect={() => onChampionSelect(champion.id)}
+                />
+              ))}
+            </ul>
+          ) : (
+            <Text size="sm" className="text-ink-muted">
+              No champions in this discipline yet—select another to continue exploring the lineage.
+            </Text>
+          )}
+        </div>
+
+        <div className="min-h-72 rounded-2xl border border-border/75 bg-card/75 p-5 shadow-soft sm:rounded-3xl">
+          {selectedChampion ? (
+            <div className="flex flex-col gap-6">
+              <ChampionDetail champion={selectedChampion} cardCtaLabel={cardCtaLabel} />
             </div>
           ) : (
-            <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
-              <div className="relative inline-flex text-white">
-                <Heading
-                  id="heritage-champions-heading"
-                  level={2}
-                  size="xl"
-                  className="type-section-collapsed"
-                >
-                  {heading}
-                </Heading>
-                <button
-                  type="button"
-                  className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                  onPointerEnter={handleGalleryExpand}
-                  onFocus={handleGalleryExpand}
-                  onClick={handleGalleryExpand}
-                  aria-expanded={revealGallery}
-                  aria-controls="heritage-champions-body"
-                  aria-labelledby="heritage-champions-heading"
-                >
-                  <span className="sr-only">Expand {heading}</span>
-                </button>
-              </div>
-              <div className="relative text-white">
-                <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                  {subheading}
-                </Text>
-              </div>
-              <div className="mt-3">
-                <Text
-                  size="button"
-                  className="text-white/80 cursor-pointer focus-ring"
-                  asChild
-                >
-                  <button type="button" onClick={handleGalleryExpand}>
-                    Read more
-                  </button>
-                </Text>
-              </div>
-            </div>
+            <p className="type-body-sm text-ink-muted">
+              Select a champion on the left to view their story.
+            </p>
           )}
-
-          {revealGallery ? (
-            <div id="heritage-champions-body" className="space-y-6">
-              {disciplines.length ? (
-                <div>
-                  <fieldset
-                    className="flex flex-wrap gap-2 border-0 p-0"
-                    aria-label="Filter champions by discipline"
-                  >
-                    <legend className="sr-only">Filter champions by discipline</legend>
-                    <button
-                      type="button"
-                      aria-pressed={activeDiscipline === null}
-                      className={cn(
-                        "relative overflow-hidden pill border type-button focus-ring",
-                        activeDiscipline === null
-                          ? "border-perazzi-red text-perazzi-red"
-                          : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
-                      )}
-                      onClick={() => { setActiveDiscipline(null); }}
-                    >
-                      {activeDiscipline === null ? (
-                        <span
-                          className="absolute inset-0 rounded-[0.125rem] bg-perazzi-red/10"
-                          aria-hidden="true"
-                        />
-                      ) : null}
-                      <span className="relative z-10">All</span>
-                    </button>
-                    {disciplines.map((discipline) => {
-                      const active = activeDiscipline === discipline;
-                      return (
-                        <button
-                          key={discipline}
-                          type="button"
-                          aria-pressed={active}
-                          className={cn(
-                            "relative overflow-hidden pill border type-button focus-ring",
-                            active
-                              ? "border-perazzi-red text-perazzi-red"
-                              : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
-                          )}
-                          onClick={() => setActiveDiscipline(active ? null : discipline)}
-                        >
-                          {active ? (
-                            <span
-                              className="absolute inset-0 rounded-[0.125rem] bg-perazzi-red/10"
-                              aria-hidden="true"
-                            />
-                          ) : null}
-                          <span className="relative z-10">{discipline}</span>
-                        </button>
-                      );
-                    })}
-                  </fieldset>
-                </div>
-              ) : null}
-
-              <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)] lg:items-start">
-                <div className="rounded-2xl bg-card/0 p-4 sm:rounded-3xl">
-                  <Text
-                    size="label-tight"
-                    className="mb-3 text-ink-muted"
-                    leading="normal"
-                  >
-                    {championsLabel}
-                  </Text>
-
-                  {filteredChampions.length ? (
-                    <ul className="space-y-1" aria-label="Select a champion to view their profile">
-                      {filteredChampions.map((champion) => (
-                        <ChampionNameItem
-                          key={champion.id}
-                          champion={champion}
-                          isActive={champion.id === activeChampionId}
-                          onSelect={() => {
-                            setSelectedChampionId(champion.id);
-                            logAnalytics(`ChampionProfileSelected:${champion.id}`);
-                          }}
-                        />
-                      ))}
-                    </ul>
-                  ) : (
-                    <Text size="sm" className="text-ink-muted">
-                      No champions in this discipline yet—select another to continue exploring the lineage.
-                    </Text>
-                  )}
-                </div>
-
-                <div className="min-h-72 rounded-2xl border border-border/75 bg-card/75 p-5 shadow-soft sm:rounded-3xl">
-                  {selectedChampion ? (
-                    <div className="flex flex-col gap-6">
-                      <ChampionDetail champion={selectedChampion} cardCtaLabel={cardCtaLabel} />
-                    </div>
-                  ) : (
-                    <p className="type-body-sm text-ink-muted">
-                      Select a champion on the left to view their story.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : null}
         </div>
-      </Container>
-    </>
+      </div>
+    </div>
   );
-};
+}
+
+type ChampionsGalleryFiltersProps = Readonly<{
+  disciplines: string[];
+  activeDiscipline: string | null;
+  onDisciplineChange: (nextDiscipline: string | null) => void;
+}>;
+
+function ChampionsGalleryFilters({
+  disciplines,
+  activeDiscipline,
+  onDisciplineChange,
+}: ChampionsGalleryFiltersProps) {
+  if (!disciplines.length) return null;
+
+  return (
+    <div>
+      <fieldset
+        className="flex flex-wrap gap-2 border-0 p-0"
+        aria-label="Filter champions by discipline"
+      >
+        <legend className="sr-only">Filter champions by discipline</legend>
+        <button
+          type="button"
+          aria-pressed={activeDiscipline === null}
+          className={cn(
+            "relative overflow-hidden pill border type-button focus-ring",
+            activeDiscipline === null
+              ? "border-perazzi-red text-perazzi-red"
+              : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
+          )}
+          onClick={() => onDisciplineChange(null)}
+        >
+          {activeDiscipline === null ? (
+            <span
+              className="absolute inset-0 rounded-xs bg-perazzi-red/10"
+              aria-hidden="true"
+            />
+          ) : null}
+          <span className="relative z-10">All</span>
+        </button>
+        {disciplines.map((discipline) => {
+          const active = activeDiscipline === discipline;
+          return (
+            <button
+              key={discipline}
+              type="button"
+              aria-pressed={active}
+              className={cn(
+                "relative overflow-hidden pill border type-button focus-ring",
+                active
+                  ? "border-perazzi-red text-perazzi-red"
+                  : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
+              )}
+              onClick={() => onDisciplineChange(active ? null : discipline)}
+            >
+              {active ? (
+                <span
+                  className="absolute inset-0 rounded-xs bg-perazzi-red/10"
+                  aria-hidden="true"
+                />
+              ) : null}
+              <span className="relative z-10">{discipline}</span>
+            </button>
+          );
+        })}
+      </fieldset>
+    </div>
+  );
+}
 
 type ChampionNameItemProps = Readonly<{
   champion: ChampionEvergreen;
@@ -429,7 +579,7 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
   return (
     <>
       <div
-        className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-[3/2]"
+        className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-3/2"
       >
         <Image
           src={champion.image.url}
