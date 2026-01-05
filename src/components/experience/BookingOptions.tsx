@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import SafeHtml from "@/components/SafeHtml";
 import {
   Button,
+  ChoreoGroup,
+  ChoreoPresence,
   Container,
   Heading,
   RevealAnimatedBody,
@@ -19,6 +21,11 @@ import {
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { logAnalytics } from "@/lib/analytics";
+import {
+  buildChoreoPresenceVars,
+  choreoDistance,
+  dreamyPace,
+} from "@/lib/choreo";
 import { cn } from "@/lib/utils";
 import type { BookingSection } from "@/types/experience";
 
@@ -190,14 +197,23 @@ const BookingOptionsRevealSection = ({
             expandedContent
           ) : (
             <>
-              <RevealCollapsedHeader
-                headingId="experience-booking-heading"
-                heading={heading}
-                subheading={subheading}
-                controlsId="experience-booking-body"
-                expanded={revealBooking}
-                onExpand={handleBookingExpand}
-              />
+              <ChoreoGroup
+                effect="fade-lift"
+                distance={choreoDistance.base}
+                durationMs={dreamyPace.textMs}
+                easing={dreamyPace.easing}
+                staggerMs={dreamyPace.staggerMs}
+                itemClassName="absolute inset-0"
+              >
+                <RevealCollapsedHeader
+                  headingId="experience-booking-heading"
+                  heading={heading}
+                  subheading={subheading}
+                  controlsId="experience-booking-body"
+                  expanded={revealBooking}
+                  onExpand={handleBookingExpand}
+                />
+              </ChoreoGroup>
               <div ref={measureRef} className="section-reveal-measure" aria-hidden>
                 {expandedContent}
               </div>
@@ -258,25 +274,40 @@ type BookingOptionsGridProps = Readonly<{
 }>;
 
 const BookingOptionsGrid = ({ options, optionCtaLabel }: BookingOptionsGridProps) => (
-  <div className="grid gap-6 md:gap-8 lg:gap-10 md:grid-cols-2 xl:grid-cols-3">
-    {options.map((option, index) => (
-      <RevealItem key={option.id} index={index}>
-        <article
-          className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 hover:border-ink/20 hover:bg-card/80 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-7 lg:p-8"
+  <ChoreoGroup
+    effect="fade-lift"
+    distance={choreoDistance.base}
+    durationMs={dreamyPace.textMs}
+    easing={dreamyPace.easing}
+    staggerMs={dreamyPace.staggerMs}
+    className="grid gap-6 md:gap-8 lg:gap-10 md:grid-cols-2 xl:grid-cols-3"
+    itemAsChild
+  >
+    {options.map((option) => (
+      <article
+        key={option.id}
+        className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 hover:border-ink/20 hover:bg-card/80 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-7 lg:p-8"
+      >
+        <ChoreoGroup
+          effect="fade-lift"
+          distance={choreoDistance.tight}
+          durationMs={dreamyPace.textMs}
+          easing={dreamyPace.easing}
+          staggerMs={dreamyPace.staggerMs}
+          className="flex h-full flex-col gap-2"
+          itemAsChild
         >
-          <div className="space-y-2">
-            <Heading level={3} className="type-card-title text-ink">
-              {option.title}
-            </Heading>
-            <Text size="caption" muted>
-              {option.durationLabel ??
-                (option.durationMins ? `${option.durationMins} minutes` : "")}
-            </Text>
-            <SafeHtml
-              className="type-body max-w-none leading-relaxed text-ink-muted"
-              html={option.descriptionHtml}
-            />
-          </div>
+          <Heading level={3} className="type-card-title text-ink">
+            {option.title}
+          </Heading>
+          <Text size="caption" muted>
+            {option.durationLabel ??
+              (option.durationMins ? `${option.durationMins} minutes` : "")}
+          </Text>
+          <SafeHtml
+            className="type-body max-w-none leading-relaxed text-ink-muted"
+            html={option.descriptionHtml}
+          />
           <div className="mt-auto pt-6">
             <Button
               asChild
@@ -288,10 +319,10 @@ const BookingOptionsGrid = ({ options, optionCtaLabel }: BookingOptionsGridProps
               <a href={option.href}>{optionCtaLabel}</a>
             </Button>
           </div>
-        </article>
-      </RevealItem>
+        </ChoreoGroup>
+      </article>
     ))}
-  </div>
+  </ChoreoGroup>
 );
 
 type SchedulerCardProps = Readonly<{
@@ -313,9 +344,26 @@ const SchedulerCard = ({
 }: SchedulerCardProps) => {
   if (!scheduler) return null;
 
+  const schedulerPresenceVars = buildChoreoPresenceVars({
+    enterDurationMs: dreamyPace.textMs,
+    exitDurationMs: dreamyPace.textMs,
+    enterEase: dreamyPace.easing,
+    exitEase: dreamyPace.easing,
+    enterY: choreoDistance.tight,
+    exitY: choreoDistance.tight,
+  });
+
   return (
     <div className="space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-8 lg:p-10">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <ChoreoGroup
+        effect="fade-lift"
+        distance={choreoDistance.tight}
+        durationMs={dreamyPace.textMs}
+        easing={dreamyPace.easing}
+        staggerMs={dreamyPace.staggerMs}
+        className="flex flex-wrap items-center justify-between gap-3"
+        itemAsChild
+      >
         <Heading level={3} className="type-card-title text-ink">
           {scheduler.title}
         </Heading>
@@ -332,30 +380,48 @@ const SchedulerCard = ({
             ? scheduler.toggleCloseLabel ?? "Hide scheduler"
             : scheduler.toggleOpenLabel ?? "Begin Your Fitting"}
         </Button>
-      </div>
+      </ChoreoGroup>
       <p id={schedulerNoteId} className="sr-only">
         {scheduler.helperText ??
           "Selecting Begin Your Fitting loads an embedded booking form below."}
       </p>
       <div
         id={schedulerPanelId}
-        className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:bg-card/80 md:p-4 lg:p-5"
+        className={cn(
+          "rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm overflow-hidden transition-[max-height] duration-700 ease-out sm:bg-card/80 md:p-4 lg:p-5",
+          schedulerOpen ? "max-h-[720px]" : "max-h-0",
+        )}
         aria-live="polite"
       >
-        {schedulerLoaded ? (
-          <div className={cn("overflow-hidden", !schedulerOpen && "hidden")} aria-hidden={!schedulerOpen}>
+        <div className="relative h-[480px] overflow-hidden rounded-2xl">
+          <ChoreoPresence
+            state={schedulerLoaded ? "exit" : "enter"}
+            style={schedulerPresenceVars}
+            className={cn(
+              "absolute inset-0 flex items-center justify-center rounded-2xl border border-dashed border-border/70 type-body-sm text-ink-muted",
+              schedulerLoaded ? "pointer-events-none" : "pointer-events-auto",
+            )}
+            aria-hidden={schedulerLoaded}
+          >
+            The booking form appears here once you choose Begin Your Fitting.
+          </ChoreoPresence>
+          <ChoreoPresence
+            state={schedulerLoaded ? "enter" : "exit"}
+            style={schedulerPresenceVars}
+            className={cn(
+              "absolute inset-0",
+              schedulerLoaded ? "pointer-events-auto" : "pointer-events-none",
+            )}
+            aria-hidden={!schedulerLoaded}
+          >
             <iframe
               src={scheduler.src}
               title={scheduler.iframeTitle ?? `Booking — ${scheduler.title}`}
-              className="h-[480px] w-full rounded-2xl border border-border/70 bg-card/0"
+              className="h-full w-full rounded-2xl border border-border/70 bg-card/0"
               loading="lazy"
             />
-          </div>
-        ) : (
-          <div className="flex h-80 w-full items-center justify-center rounded-2xl border border-dashed border-border/70 type-body-sm text-ink-muted">
-            The booking form appears here once you choose Begin Your Fitting.
-          </div>
-        )}
+          </ChoreoPresence>
+        </div>
       </div>
       <p className="type-caption text-ink-muted">
         Prefer email?{" "}

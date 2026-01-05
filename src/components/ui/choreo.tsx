@@ -34,6 +34,7 @@ type ChoreoGroupProps = {
   readonly axis?: ChoreoAxis;
   readonly direction?: ChoreoDirection;
   readonly maskDirection?: ChoreoDirection;
+  readonly maskFeather?: number;
   readonly scaleFrom?: number;
   readonly className?: string;
   readonly itemClassName?: string;
@@ -80,6 +81,7 @@ export function ChoreoGroup({
   axis = "x",
   direction,
   maskDirection,
+  maskFeather,
   scaleFrom,
   className,
   itemClassName,
@@ -111,6 +113,7 @@ export function ChoreoGroup({
           axis,
           direction,
           maskDirection,
+          maskFeather,
           scaleFrom,
         });
         const childStyle = itemAsChild && isValidElement(child)

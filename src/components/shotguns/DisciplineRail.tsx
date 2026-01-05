@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useCallback,
   type Dispatch,
   type ReactNode,
   type SetStateAction,
@@ -15,10 +16,21 @@ import { createPortal } from "react-dom";
 import type { Platform, ShotgunsLandingData } from "@/types/catalog";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import {
+  buildChoreoPresenceVars,
+  choreoDistance,
+  choreoDurations,
+  choreoStagger,
+  dreamyPace,
+  prefersReducedMotion,
+  type ChoreoPresenceState,
+} from "@/lib/choreo";
 import { cn } from "@/lib/utils";
 import SafeHtml from "@/components/SafeHtml";
 import { PortableText } from "@/components/PortableText";
 import {
+  ChoreoGroup,
+  ChoreoPresence,
   Container,
   Heading,
   RevealAnimatedBody,
@@ -129,16 +141,38 @@ export function DisciplineRail({
   const enableTitleReveal = isDesktop;
   const railAnalyticsRef = useAnalyticsObserver<HTMLElement>("DisciplineRailSeen");
   const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
+  const reduceMotion = prefersReducedMotion();
 
   const [selectedModel, setSelectedModel] = useState<ModelDetail | null>(null);
-  const [modelModalOpen, setModelModalOpen] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [modalPresence, setModalPresence] = useState<ChoreoPresenceState>("enter");
   const [modelLoadingId, setModelLoadingId] = useState<string | null>(null);
   const [modelError, setModelError] = useState<string | null>(null);
   const [openCategory, setOpenCategory] = useState<string | null>(DISCIPLINE_TABS[0]?.label ?? null);
   const [activeDisciplineId, setActiveDisciplineId] = useState<string | null>(null);
   const [modalRoot, setModalRoot] = useState<HTMLElement | null>(null);
   const modelRequestRef = useRef<AbortController | null>(null);
+  const modalTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
   const railKey = enableTitleReveal ? "title-reveal" : "always-reveal";
+  const modalExitMs = reduceMotion ? 0 : choreoDurations.short;
+  const overlayPresenceVars = buildChoreoPresenceVars({
+    enterDurationMs: dreamyPace.textMs,
+    exitDurationMs: choreoDurations.short,
+    enterEase: dreamyPace.easing,
+    enterScale: 1,
+    exitScale: 1,
+    enterY: 0,
+    exitY: 0,
+  });
+  const modalPresenceVars = buildChoreoPresenceVars({
+    enterDurationMs: dreamyPace.enterMs,
+    exitDurationMs: choreoDurations.short,
+    enterEase: dreamyPace.easing,
+    enterScale: 0.98,
+    exitScale: 0.98,
+    enterY: 0,
+    exitY: 0,
+  });
 
   useEffect(() => {
     setIsCollapsed(enableTitleReveal);
@@ -168,7 +202,12 @@ export function DisciplineRail({
       const data = (await response.json()) as ModelDetail;
       if (controller.signal.aborted) return;
       setSelectedModel(data);
-      setModelModalOpen(true);
+      setIsModalVisible(true);
+      setModalPresence("enter");
+      if (modalTimeoutRef.current) {
+        globalThis.clearTimeout(modalTimeoutRef.current);
+        modalTimeoutRef.current = null;
+      }
     } catch (error) {
       if (controller.signal.aborted) return;
       setModelError(error instanceof Error ? error.message : "Something went wrong.");
@@ -180,26 +219,52 @@ export function DisciplineRail({
     }
   };
 
+  const requestModalClose = useCallback(() => {
+    if (!isModalVisible) return;
+    if (modalTimeoutRef.current) {
+      globalThis.clearTimeout(modalTimeoutRef.current);
+      modalTimeoutRef.current = null;
+    }
+    if (modalExitMs === 0) {
+      setIsModalVisible(false);
+      return;
+    }
+    setModalPresence("exit");
+    modalTimeoutRef.current = globalThis.setTimeout(() => {
+      setIsModalVisible(false);
+      modalTimeoutRef.current = null;
+    }, modalExitMs);
+  }, [isModalVisible, modalExitMs]);
+
   useEffect(() => {
-    if (!modelModalOpen) return;
+    if (!isModalVisible) return;
     const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setModelModalOpen(false);
+      if (event.key === "Escape") requestModalClose();
     };
     if (typeof globalThis.addEventListener !== "function" || typeof globalThis.removeEventListener !== "function") {
       return;
     }
     globalThis.addEventListener("keydown", handleKey);
     return () => { globalThis.removeEventListener("keydown", handleKey); };
-  }, [modelModalOpen]);
+  }, [isModalVisible, requestModalClose]);
 
   useEffect(() => {
-    if (!modelModalOpen) return;
+    if (!isModalVisible) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [modelModalOpen]);
+  }, [isModalVisible]);
+
+  useEffect(() => (
+    () => {
+      if (modalTimeoutRef.current) {
+        globalThis.clearTimeout(modalTimeoutRef.current);
+        modalTimeoutRef.current = null;
+      }
+    }
+  ), []);
 
   const disciplineLookup = useMemo(() => {
     const map = new Map<string, DisciplineCard>();
@@ -278,68 +343,92 @@ export function DisciplineRail({
         onCollapsedChange={setIsCollapsed}
       />
 
-      {modalRoot && modelModalOpen && selectedModel
+      {modalRoot && isModalVisible && selectedModel
         ? createPortal(
             <div
               className="fixed inset-0 z-80 flex items-center justify-center p-4"
               role="dialog"
               aria-modal="true"
             >
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" aria-hidden />
+              <ChoreoPresence
+                state={modalPresence}
+                style={overlayPresenceVars}
+                asChild
+              >
+                <div
+                  className="absolute inset-0 z-0 bg-black/60 backdrop-blur-sm"
+                  aria-hidden
+                />
+              </ChoreoPresence>
               <button
                 type="button"
-                className="absolute inset-0 z-0 cursor-default border-0 bg-transparent"
+                className="absolute inset-0 z-10 cursor-default border-0 bg-transparent"
                 aria-label="Close modal"
-                onClick={() => { setModelModalOpen(false); }}
+                onClick={requestModalClose}
               />
-              <div className="relative z-10 flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-perazzi-black/90 text-white shadow-elevated ring-1 ring-white/15 backdrop-blur-xl">
-                <button
-                  type="button"
-                  className="type-button absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-white shadow-soft backdrop-blur-sm hover:border-white/30 hover:bg-black/55 focus-ring sm:right-5 sm:top-5"
-                  onClick={() => setModelModalOpen(false)}
-                >
-                  Close
-                </button>
+              <ChoreoPresence
+                state={modalPresence}
+                style={modalPresenceVars}
+                asChild
+              >
+                <div className="relative z-20 flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-white/12 bg-perazzi-black/90 text-white shadow-elevated ring-1 ring-white/15 backdrop-blur-xl">
+                  <button
+                    type="button"
+                    className="type-button absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-white shadow-soft backdrop-blur-sm hover:border-white/30 hover:bg-black/55 focus-ring sm:right-5 sm:top-5"
+                    onClick={requestModalClose}
+                  >
+                    Close
+                  </button>
 
-                <div className="grid flex-1 gap-6 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[3fr,1.6fr]">
-                  <div className="group card-media relative aspect-16/10 w-full overflow-hidden rounded-3xl bg-white">
-                    {selectedModel.imageUrl ? (
-                      <Image
-                        src={selectedModel.imageUrl}
-                        alt={selectedModel.imageAlt || selectedModel.name}
-                        fill
-                        className="object-contain bg-white"
-                        sizes="(min-width: 1024px) 70vw, 100vw"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-neutral-600">No Image Available</div>
-                    )}
-                    <div className="absolute inset-x-0 bottom-6 flex flex-col gap-2 px-6 text-black">
-                      <Text size="label-tight" className="text-perazzi-red">
-                        {selectedModel.grade}
-                      </Text>
-                      <Heading
-                        level={2}
-                        size="xl"
-                        className="text-black"
-                      >
-                        {selectedModel.name}
-                      </Heading>
-                      <Text size="sm" className="text-black/70">
-                        {selectedModel.use}
-                      </Text>
+                  <div className="grid flex-1 gap-6 overflow-y-auto p-4 sm:p-6 lg:grid-cols-[3fr,1.6fr]">
+                    <div className="group card-media relative aspect-16/10 w-full overflow-hidden rounded-3xl bg-white">
+                      {selectedModel.imageUrl ? (
+                        <Image
+                          src={selectedModel.imageUrl}
+                          alt={selectedModel.imageAlt || selectedModel.name}
+                          fill
+                          className="object-contain bg-white"
+                          sizes="(min-width: 1024px) 70vw, 100vw"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-neutral-600">No Image Available</div>
+                      )}
+                      <div className="absolute inset-x-0 bottom-6 flex flex-col gap-2 px-6 text-black">
+                        <Text size="label-tight" className="text-perazzi-red">
+                          {selectedModel.grade}
+                        </Text>
+                        <Heading
+                          level={2}
+                          size="xl"
+                          className="text-black"
+                        >
+                          {selectedModel.name}
+                        </Heading>
+                        <Text size="sm" className="text-black/70">
+                          {selectedModel.use}
+                        </Text>
+                      </div>
                     </div>
-                  </div>
-                  <div className="grid gap-4 rounded-3xl border border-white/12 bg-black/35 p-4 shadow-soft ring-1 ring-white/10 backdrop-blur-sm sm:p-6 sm:grid-cols-2 lg:grid-cols-3">
-                    <Detail label="Platform" value={selectedModel.platform} />
-                    <Detail label="Gauge" value={selectedModel.gaugeNames?.join(", ")} />
-                    <Detail label="Trigger Type" value={selectedModel.triggerTypes?.join(", ")} />
-                    <Detail label="Trigger Springs" value={selectedModel.triggerSprings?.join(", ")} />
-                    <Detail label="Rib Type" value={selectedModel.ribTypes?.join(", ")} />
-                    <Detail label="Rib Style" value={selectedModel.ribStyles?.join(", ")} />
+                    <ChoreoGroup
+                      effect="slide"
+                      axis="x"
+                      direction="right"
+                      distance={choreoDistance.tight}
+                      durationMs={dreamyPace.textMs}
+                      easing={dreamyPace.easing}
+                      staggerMs={dreamyPace.staggerMs}
+                      className="grid gap-4 rounded-3xl border border-white/12 bg-black/35 p-4 shadow-soft ring-1 ring-white/10 backdrop-blur-sm sm:p-6 sm:grid-cols-2 lg:grid-cols-3"
+                    >
+                      <Detail label="Platform" value={selectedModel.platform} />
+                      <Detail label="Gauge" value={selectedModel.gaugeNames?.join(", ")} />
+                      <Detail label="Trigger Type" value={selectedModel.triggerTypes?.join(", ")} />
+                      <Detail label="Trigger Springs" value={selectedModel.triggerSprings?.join(", ")} />
+                      <Detail label="Rib Type" value={selectedModel.ribTypes?.join(", ")} />
+                      <Detail label="Rib Style" value={selectedModel.ribStyles?.join(", ")} />
+                    </ChoreoGroup>
                   </div>
                 </div>
-              </div>
+              </ChoreoPresence>
             </div>,
             modalRoot,
           )
@@ -504,7 +593,16 @@ function DisciplineRailBody({
             <Text size="label-tight" className="type-label-tight text-ink-muted">
               Discipline categories
             </Text>
-            <div className="space-y-3">
+            <ChoreoGroup
+              effect="slide"
+              axis="y"
+              direction="down"
+              distance={choreoDistance.base}
+              durationMs={choreoDurations.base}
+              staggerMs={choreoStagger.base}
+              className="space-y-3"
+              itemAsChild
+            >
               {categories.map((category) => {
                 const isOpen = openCategory === category.label;
                 return (
@@ -525,7 +623,7 @@ function DisciplineRailBody({
                       {category.label}
                       <span
                         className={cn(
-                          "text-lg",
+                          "text-lg transition-transform duration-200",
                           isOpen ? "rotate-45" : "rotate-0",
                         )}
                         aria-hidden="true"
@@ -533,49 +631,66 @@ function DisciplineRailBody({
                         +
                       </span>
                     </button>
-                    {isOpen ? (
-                      <div className="border-t border-border/70">
-                        <ul className="space-y-1 p-3">
-                          {category.disciplines.map((discipline) => {
-                            const isActive = discipline.id === activeDisciplineId;
-                            return (
-                              <li key={discipline.id}>
-                                <button
-                                  type="button"
-                                  onClick={() => { setActiveDisciplineId(discipline.id); }}
-                                  className={cn(
-                                    "group relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left focus-ring",
-                                    isActive
-                                      ? "text-white"
-                                      : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
-                                  )}
-                                  aria-pressed={isActive}
-                                >
-                                  {isActive ? (
-                                    <span
-                                      className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
-                                      aria-hidden="true"
-                                    />
-                                  ) : null}
-                                  <span
-                                    className={cn(
-                                      "relative z-10 mt-0.5 block type-label-tight group-hover:text-ink-muted/90",
-                                      isActive ? "text-white" : "text-ink-muted",
-                                    )}
-                                  >
-                                    {discipline.name || discipline.id.replaceAll("-", " ")}
-                                  </span>
-                                </button>
-                              </li>
-                            );
-                          })}
-                        </ul>
+                    <div className="border-t border-border/70">
+                        <div
+                          className={cn(
+                            "overflow-hidden transition-[max-height] duration-300 ease-out",
+                            isOpen ? "max-h-80" : "max-h-0",
+                          )}
+                          aria-hidden={!isOpen}
+                        >
+                        <div className="p-3">
+                          {isOpen ? (
+                            <ChoreoGroup
+                              effect="fade-lift"
+                              distance={choreoDistance.tight}
+                              durationMs={choreoDurations.base}
+                              staggerMs={choreoStagger.tight}
+                              className="space-y-1"
+                              itemAsChild
+                            >
+                              {category.disciplines.map((discipline) => {
+                                const isActive = discipline.id === activeDisciplineId;
+                                return (
+                                  <div key={discipline.id}>
+                                    <button
+                                      type="button"
+                                      onClick={() => { setActiveDisciplineId(discipline.id); }}
+                                      className={cn(
+                                        "group relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left focus-ring",
+                                        isActive
+                                          ? "text-white"
+                                          : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
+                                      )}
+                                      aria-pressed={isActive}
+                                    >
+                                      {isActive ? (
+                                        <span
+                                          className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
+                                          aria-hidden="true"
+                                        />
+                                      ) : null}
+                                      <span
+                                        className={cn(
+                                          "relative z-10 mt-0.5 block type-label-tight group-hover:text-ink-muted/90",
+                                          isActive ? "text-white" : "text-ink-muted",
+                                        )}
+                                      >
+                                        {discipline.name || discipline.id.replaceAll("-", " ")}
+                                      </span>
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </ChoreoGroup>
+                          ) : null}
+                        </div>
                       </div>
-                    ) : null}
+                    </div>
                   </div>
                 );
               })}
-            </div>
+            </ChoreoGroup>
           </div>
         </RevealItem>
 
@@ -650,18 +765,35 @@ function DisciplineCard({
       className="group flex flex-col rounded-2xl border border-border/70 bg-card/60 text-left shadow-soft backdrop-blur-sm focus-ring sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated"
       aria-label={`Slide ${index + 1} of ${total}: ${discipline.name}`}
     >
-      <div className="card-media relative aspect-30/11 w-full rounded-t-3xl bg-(--color-canvas)">
-        {discipline.hero ? (
-          <Image
-            src={discipline.hero.url}
-            alt={discipline.hero.alt}
-            fill
-            className="object-cover object-center"
-            sizes="(min-width: 1024px) 33vw, 100vw"
-          />
-        ) : null}
-      </div>
-      <div className="flex flex-1 flex-col gap-6 p-6">
+      <ChoreoGroup
+        effect="scale-parallax"
+        distance={choreoDistance.base}
+        durationMs={dreamyPace.textMs}
+        easing={dreamyPace.easing}
+        scaleFrom={1.02}
+        itemAsChild
+      >
+        <div className="card-media relative aspect-30/11 w-full rounded-t-3xl bg-(--color-canvas)">
+          {discipline.hero ? (
+            <Image
+              src={discipline.hero.url}
+              alt={discipline.hero.alt}
+              fill
+              className="object-cover object-center"
+              sizes="(min-width: 1024px) 33vw, 100vw"
+            />
+          ) : null}
+        </div>
+      </ChoreoGroup>
+      <ChoreoGroup
+        effect="fade-lift"
+        distance={choreoDistance.tight}
+        durationMs={dreamyPace.textMs}
+        easing={dreamyPace.easing}
+        staggerMs={dreamyPace.staggerMs}
+        className="flex flex-1 flex-col gap-6 p-6"
+        itemAsChild
+      >
         <Heading
           level={3}
           className="type-card-title text-ink border-b border-perazzi-red/40 pb-2"
@@ -674,16 +806,24 @@ function DisciplineCard({
             <Text size="label-tight" className="type-card-title text-ink-muted">
               Recommended platforms
             </Text>
-            <ul className="flex flex-wrap gap-2">
+            <ChoreoGroup
+              effect="fade-lift"
+              distance={choreoDistance.tight}
+              durationMs={dreamyPace.textMs}
+              easing={dreamyPace.easing}
+              staggerMs={dreamyPace.staggerMs}
+              className="flex flex-wrap gap-2"
+              itemAsChild
+            >
               {discipline.recommendedPlatforms.map((platformId) => (
-                <li
+                <div
                   key={platformId}
                   className="pill border border-border type-label-tight text-ink-muted"
                 >
                   {platformName(platformId)}
-                </li>
+                </div>
               ))}
-            </ul>
+            </ChoreoGroup>
           </div>
         ) : null}
         {discipline.popularModels?.length ? (
@@ -691,7 +831,16 @@ function DisciplineCard({
             <Text size="label-tight" className="type-card-title text-ink-muted">
               Most Popular Models
             </Text>
-            <div className="flex flex-col gap-3">
+            <ChoreoGroup
+              effect="scale-parallax"
+              distance={choreoDistance.tight}
+              scaleFrom={0.98}
+              durationMs={dreamyPace.textMs}
+              easing={dreamyPace.easing}
+              staggerMs={dreamyPace.staggerMs}
+              className="flex flex-col gap-3"
+              itemAsChild
+            >
               {discipline.popularModels.map((model) => (
                 <button
                   type="button"
@@ -719,10 +868,10 @@ function DisciplineCard({
                   </span>
                 </button>
               ))}
-            </div>
+            </ChoreoGroup>
           </div>
         ) : null}
-      </div>
+      </ChoreoGroup>
     </article>
   );
 }

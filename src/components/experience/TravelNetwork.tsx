@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type {
   AuthorizedDealerEntry,
@@ -12,11 +12,19 @@ import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import {
+  buildChoreoPresenceVars,
+  choreoDistance,
+  dreamyPace,
+  prefersReducedMotion,
+  type ChoreoPresenceState,
+} from "@/lib/choreo";
+import {
+  ChoreoGroup,
+  ChoreoPresence,
   Container,
   Heading,
   RevealAnimatedBody,
   RevealCollapsedHeader,
-  RevealExpandedHeader,
   RevealGroup,
   RevealItem,
   SectionBackdrop,
@@ -96,6 +104,11 @@ const TravelNetworkRevealSection = ({
   const [networkExpanded, setNetworkExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
   const [activeTab, setActiveTab] = useState<TabKey>("schedule");
+  const reduceMotion = prefersReducedMotion();
+  const [displayTab, setDisplayTab] = useState<TabKey>("schedule");
+  const [presenceState, setPresenceState] = useState<ChoreoPresenceState>("enter");
+  const presenceTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
+  const exitTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
 
   const tabs = useMemo(
     () => [
@@ -139,6 +152,26 @@ const TravelNetworkRevealSection = ({
     enableObserver: enableTitleReveal && revealNetwork,
     deps: [activeTab, data.dealers.length, data.scheduledEvents.length],
   });
+  const listPresenceVars = buildChoreoPresenceVars({
+    enterDurationMs: dreamyPace.textMs,
+    exitDurationMs: dreamyPace.textMs,
+    enterEase: dreamyPace.easing,
+    exitEase: dreamyPace.easing,
+    enterY: 24,
+    exitY: -80,
+    enterScale: 0.98,
+    exitScale: 0.98,
+  });
+  const tabUnderlayVars = buildChoreoPresenceVars({
+    enterDurationMs: dreamyPace.textMs,
+    exitDurationMs: dreamyPace.textMs,
+    enterEase: dreamyPace.easing,
+    exitEase: dreamyPace.easing,
+    enterScale: 0.98,
+    exitScale: 0.98,
+    enterY: 0,
+    exitY: 0,
+  });
 
   const handleNetworkExpand = () => {
     if (!enableTitleReveal) return;
@@ -157,42 +190,77 @@ const TravelNetworkRevealSection = ({
     onCollapsedChange?.(true);
   };
 
+  useEffect(() => (
+    () => {
+      if (presenceTimeoutRef.current) {
+        globalThis.clearTimeout(presenceTimeoutRef.current);
+        presenceTimeoutRef.current = null;
+      }
+      if (exitTimeoutRef.current) {
+        globalThis.clearTimeout(exitTimeoutRef.current);
+        exitTimeoutRef.current = null;
+      }
+    }
+  ), []);
+
+  useEffect(() => {
+    if (activeTab === displayTab) return;
+    if (presenceTimeoutRef.current) {
+      globalThis.clearTimeout(presenceTimeoutRef.current);
+      presenceTimeoutRef.current = null;
+    }
+    if (exitTimeoutRef.current) {
+      globalThis.clearTimeout(exitTimeoutRef.current);
+      exitTimeoutRef.current = null;
+    }
+
+    if (reduceMotion) {
+      presenceTimeoutRef.current = globalThis.setTimeout(() => {
+        setDisplayTab(activeTab);
+        setPresenceState("enter");
+        presenceTimeoutRef.current = null;
+      }, 0);
+      return;
+    }
+
+    exitTimeoutRef.current = globalThis.setTimeout(() => {
+      setPresenceState("exit");
+      exitTimeoutRef.current = null;
+    }, 0);
+    presenceTimeoutRef.current = globalThis.setTimeout(() => {
+      setDisplayTab(activeTab);
+      setPresenceState("enter");
+      presenceTimeoutRef.current = null;
+    }, dreamyPace.staggerMs);
+  }, [activeTab, displayTab, reduceMotion]);
+
   const expandedContent = (
     <RevealAnimatedBody sequence>
       <RevealItem index={0}>
-        <RevealExpandedHeader
+        <TravelNetworkExpandedHeader
           headingId="travel-network-heading"
           heading={heading}
+          lead={lead}
+          supporting={supporting}
           headerThemeReady={headerThemeReady}
           enableTitleReveal={enableTitleReveal}
           onCollapse={handleNetworkCollapse}
-        >
-          <div className="relative">
-            <Text
-              className={cn(
-                "type-section-subtitle",
-                headerThemeReady ? "text-ink-muted" : "text-white",
-              )}
-              leading="relaxed"
-            >
-              {lead}
-            </Text>
-          </div>
-          <div>
-            <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
-              {supporting}
-            </Text>
-          </div>
-        </RevealExpandedHeader>
+        />
       </RevealItem>
 
       <RevealGroup delayMs={140}>
         <div id="travel-network-body" className="space-y-6">
           <RevealItem index={0}>
-            <div
-              role="tablist"
-              aria-label="Experience travel and support tabs"
+            <ChoreoGroup
+              effect="slide"
+              axis="x"
+              direction="right"
+              distance={choreoDistance.base}
+              durationMs={dreamyPace.textMs}
+              easing={dreamyPace.easing}
+              staggerMs={dreamyPace.staggerMs}
               className="flex flex-wrap gap-2 md:gap-3"
+              itemAsChild
             >
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.key;
@@ -209,10 +277,16 @@ const TravelNetworkRevealSection = ({
                     onClick={() => { setActiveTab(tab.key); }}
                   >
                     {isActive ? (
-                      <span
-                        className="absolute inset-0 rounded-sm bg-perazzi-red shadow-elevated ring-1 ring-white/10"
-                        aria-hidden="true"
-                      />
+                      <ChoreoPresence
+                        state="enter"
+                        style={tabUnderlayVars}
+                        asChild
+                      >
+                        <span
+                          className="absolute inset-0 rounded-sm bg-perazzi-red shadow-elevated ring-1 ring-white/10"
+                          aria-hidden="true"
+                        />
+                      </ChoreoPresence>
                     ) : null}
                     <span className="relative z-10">
                       {tab.label}
@@ -223,13 +297,16 @@ const TravelNetworkRevealSection = ({
                   </button>
                 );
               })}
-            </div>
+            </ChoreoGroup>
           </RevealItem>
 
           <RevealItem index={1}>
             <div>
-              <div key={activeTab}>
-                {activeTab === "schedule" ? (
+              <ChoreoPresence
+                state={presenceState}
+                style={listPresenceVars}
+              >
+                {displayTab === "schedule" ? (
                   <ScheduleList
                     events={data.scheduledEvents}
                     emptyText={emptyScheduleText}
@@ -240,7 +317,7 @@ const TravelNetworkRevealSection = ({
                     emptyText={emptyDealersText}
                   />
                 )}
-              </div>
+              </ChoreoPresence>
             </div>
           </RevealItem>
         </div>
@@ -271,14 +348,23 @@ const TravelNetworkRevealSection = ({
             expandedContent
           ) : (
             <>
-              <RevealCollapsedHeader
-                headingId="travel-network-heading"
-                heading={heading}
-                subheading={lead}
-                controlsId="travel-network-body"
-                expanded={revealNetwork}
-                onExpand={handleNetworkExpand}
-              />
+              <ChoreoGroup
+                effect="fade-lift"
+                distance={choreoDistance.base}
+                durationMs={dreamyPace.textMs}
+                easing={dreamyPace.easing}
+                staggerMs={dreamyPace.staggerMs}
+                itemClassName="absolute inset-0"
+              >
+                <RevealCollapsedHeader
+                  headingId="travel-network-heading"
+                  heading={heading}
+                  subheading={lead}
+                  controlsId="travel-network-body"
+                  expanded={revealNetwork}
+                  onExpand={handleNetworkExpand}
+                />
+              </ChoreoGroup>
               <div ref={measureRef} className="section-reveal-measure" aria-hidden>
                 {expandedContent}
               </div>
@@ -300,11 +386,27 @@ function ScheduleList({ events, emptyText }: ScheduleListProps) {
   }
 
   return (
-    <div className="space-y-4">
-      {events.map((event, index) => (
-        <RevealItem key={event._id} index={index}>
-          <article
-            className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 hover:border-ink/20 hover:bg-card/80 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated md:p-6 lg:p-7"
+    <ChoreoGroup
+      effect="fade-lift"
+      distance={choreoDistance.base}
+      durationMs={dreamyPace.textMs}
+      easing={dreamyPace.easing}
+      staggerMs={dreamyPace.staggerMs}
+      className="space-y-4"
+      itemAsChild
+    >
+      {events.map((event) => (
+        <article
+          key={event._id}
+          className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 hover:border-ink/20 hover:bg-card/80 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated md:p-6 lg:p-7"
+        >
+          <ChoreoGroup
+            effect="fade-lift"
+            distance={choreoDistance.tight}
+            durationMs={dreamyPace.textMs}
+            easing={dreamyPace.easing}
+            staggerMs={dreamyPace.staggerMs}
+            itemAsChild
           >
             <Text className="type-button text-ink-muted">
               {formatDateRange(event.startDate, event.endDate)}
@@ -320,10 +422,10 @@ function ScheduleList({ events, emptyText }: ScheduleListProps) {
                 {event.location}
               </Text>
             ) : null}
-          </article>
-        </RevealItem>
+          </ChoreoGroup>
+        </article>
       ))}
-    </div>
+    </ChoreoGroup>
   );
 }
 
@@ -337,11 +439,27 @@ function DealerList({ dealers, emptyText }: DealerListProps) {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      {dealers.map((dealer, index) => (
-        <RevealItem key={dealer._id} index={index}>
-          <article
-            className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm ring-1 ring-border/70 hover:border-ink/20 hover:bg-card/80 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated"
+    <ChoreoGroup
+      effect="fade-lift"
+      distance={choreoDistance.base}
+      durationMs={dreamyPace.textMs}
+      easing={dreamyPace.easing}
+      staggerMs={dreamyPace.staggerMs}
+      className="grid gap-4 md:grid-cols-2"
+      itemAsChild
+    >
+      {dealers.map((dealer) => (
+        <article
+          key={dealer._id}
+          className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm ring-1 ring-border/70 hover:border-ink/20 hover:bg-card/80 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated"
+        >
+          <ChoreoGroup
+            effect="fade-lift"
+            distance={choreoDistance.tight}
+            durationMs={dreamyPace.textMs}
+            easing={dreamyPace.easing}
+            staggerMs={dreamyPace.staggerMs}
+            itemAsChild
           >
             <Heading level={3} className="mb-7 type-card-title text-ink text-3xl">
               {dealer.dealerName}
@@ -356,9 +474,90 @@ function DealerList({ dealers, emptyText }: DealerListProps) {
                 {dealer.city}
               </p>
             </Text>
-          </article>
-        </RevealItem>
+          </ChoreoGroup>
+        </article>
       ))}
+    </ChoreoGroup>
+  );
+}
+
+type TravelNetworkExpandedHeaderProps = Readonly<{
+  headingId: string;
+  heading: string;
+  lead: string;
+  supporting: string;
+  headerThemeReady: boolean;
+  enableTitleReveal: boolean;
+  onCollapse: () => void;
+  collapseLabel?: string;
+}>;
+
+function TravelNetworkExpandedHeader({
+  headingId,
+  heading,
+  lead,
+  supporting,
+  headerThemeReady,
+  enableTitleReveal,
+  onCollapse,
+  collapseLabel = "Collapse",
+}: TravelNetworkExpandedHeaderProps) {
+  const headingClass = headerThemeReady ? "text-ink" : "text-white";
+  const leadClass = headerThemeReady ? "text-ink-muted" : "text-white";
+  const supportingClass = headerThemeReady ? "text-ink-muted" : "text-white/80";
+
+  return (
+    <div className="relative z-10 space-y-4 md:flex md:items-center md:justify-between md:gap-8">
+      <ChoreoGroup
+        effect="fade-lift"
+        distance={choreoDistance.base}
+        durationMs={dreamyPace.textMs}
+        easing={dreamyPace.easing}
+        staggerMs={dreamyPace.staggerMs}
+        className="space-y-3"
+      >
+        <div className="relative">
+          <Heading
+            id={headingId}
+            level={2}
+            size="xl"
+            className={headingClass}
+          >
+            {heading}
+          </Heading>
+        </div>
+        <div className="relative">
+          <Text
+            className={cn("type-section-subtitle", leadClass)}
+            leading="relaxed"
+          >
+            {lead}
+          </Text>
+        </div>
+        <div className="relative">
+          <Text className={cn("type-section-subtitle", supportingClass)} leading="relaxed">
+            {supporting}
+          </Text>
+        </div>
+      </ChoreoGroup>
+      {enableTitleReveal ? (
+        <ChoreoGroup
+          effect="fade-lift"
+          distance={choreoDistance.tight}
+          delayMs={dreamyPace.staggerMs}
+          durationMs={dreamyPace.textMs}
+          easing={dreamyPace.easing}
+          itemAsChild
+        >
+          <button
+            type="button"
+            className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+            onClick={onCollapse}
+          >
+            {collapseLabel}
+          </button>
+        </ChoreoGroup>
+      ) : null}
     </div>
   );
 }

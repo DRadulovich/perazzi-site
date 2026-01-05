@@ -8,8 +8,15 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
+import {
+  buildChoreoPresenceVars,
+  choreoDistance,
+  dreamyPace,
+} from "@/lib/choreo";
 import SafeHtml from "@/components/SafeHtml";
 import {
+  ChoreoGroup,
+  ChoreoPresence,
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
@@ -202,14 +209,23 @@ const VisitFactoryRevealSection = ({
             expandedContent
           ) : (
             <>
-              <RevealCollapsedHeader
-                headingId="visit-factory-heading"
-                heading={heading}
-                subheading={subheading}
-                controlsId="visit-factory-body"
-                expanded={revealVisit}
-                onExpand={handleVisitExpand}
-              />
+              <ChoreoGroup
+                effect="fade-lift"
+                distance={choreoDistance.base}
+                durationMs={dreamyPace.textMs}
+                easing={dreamyPace.easing}
+                staggerMs={dreamyPace.staggerMs}
+                itemClassName="absolute inset-0"
+              >
+                <RevealCollapsedHeader
+                  headingId="visit-factory-heading"
+                  heading={heading}
+                  subheading={subheading}
+                  controlsId="visit-factory-body"
+                  expanded={revealVisit}
+                  onExpand={handleVisitExpand}
+                />
+              </ChoreoGroup>
               <div ref={measureRef} className="section-reveal-measure" aria-hidden>
                 {expandedContent}
               </div>
@@ -232,79 +248,123 @@ const VisitFactoryBody = ({
 }: VisitFactoryBodyProps) => {
   if (!revealVisit) return null;
 
+  const contentPresenceVars = buildChoreoPresenceVars({
+    enterDurationMs: dreamyPace.textMs,
+    exitDurationMs: dreamyPace.textMs,
+    enterEase: dreamyPace.easing,
+    exitEase: dreamyPace.easing,
+    enterY: choreoDistance.tight,
+    exitY: choreoDistance.tight,
+  });
+
   return (
     <div id="visit-factory-body" className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
         <RevealItem index={0}>
-          <article className="space-y-5 rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated lg:p-7">
-            <Text size="label-tight" muted>
-              Botticino headquarters
-            </Text>
-            <Heading level={3} size="sm" className="type-card-title text-ink">
-              {visit.location.name}
-            </Heading>
-            <SafeHtml
-              className="type-card-body text-ink-muted"
-              html={visit.location.addressHtml}
-            />
-            {visit.location.hoursHtml ? (
-              <SafeHtml
-                className="type-label-tight text-ink-muted"
-                html={visit.location.hoursHtml}
-              />
-            ) : null}
-            {visit.location.notesHtml ? (
+          <article className="rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated lg:p-7">
+            <ChoreoGroup
+              effect="fade-lift"
+              distance={choreoDistance.base}
+              durationMs={dreamyPace.textMs}
+              easing={dreamyPace.easing}
+              staggerMs={dreamyPace.staggerMs}
+              className="space-y-5"
+            >
+              <Text size="label-tight" muted>
+                Botticino headquarters
+              </Text>
+              <Heading level={3} size="sm" className="type-card-title text-ink">
+                {visit.location.name}
+              </Heading>
               <SafeHtml
                 className="type-card-body text-ink-muted"
-                html={visit.location.notesHtml}
+                html={visit.location.addressHtml}
               />
-            ) : null}
-            <div className="space-y-3 pt-2">
-              <p id={mapNoteId} className="sr-only">
-                Selecting Open map loads an interactive map you can pan and zoom.
-              </p>
-              <div
-                id={mapPanelId}
-                className="group relative overflow-hidden rounded-2xl border border-border/70 bg-(--color-canvas) shadow-soft ring-1 ring-border/70 aspect-dynamic"
-                style={{ "--aspect-ratio": visit.location.staticMap.aspectRatio ?? 3 / 2 }}
-                aria-live="polite"
-              >
-                {visit.location.mapEmbedSrc ? (
-                  <iframe
-                    src={visit.location.mapEmbedSrc}
-                    title={`Map to ${visit.location.name}`}
-                    className="h-full w-full"
-                    loading="lazy"
-                    aria-describedby={mapNoteId}
-                  />
-                ) : (
-                  <Image
-                    src={visit.location.staticMap.url}
-                    alt={visit.location.staticMap.alt}
-                    fill
-                    sizes="(min-width: 1280px) 640px, (min-width: 1024px) 50vw, 100vw"
-                    className="object-cover"
-                  />
-                )}
-                <div
-                  className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/70 via-(--scrim-strong)/40 to-transparent"
-                  aria-hidden
+              {visit.location.hoursHtml ? (
+                <SafeHtml
+                  className="type-label-tight text-ink-muted"
+                  html={visit.location.hoursHtml}
                 />
+              ) : null}
+              {visit.location.notesHtml ? (
+                <SafeHtml
+                  className="type-card-body text-ink-muted"
+                  html={visit.location.notesHtml}
+                />
+              ) : null}
+              <div className="space-y-3 pt-2">
+                <p id={mapNoteId} className="sr-only">
+                  Selecting Open map loads an interactive map you can pan and zoom.
+                </p>
+                <ChoreoGroup
+                  effect="scale-parallax"
+                  distance={choreoDistance.base}
+                  durationMs={dreamyPace.textMs}
+                  easing={dreamyPace.easing}
+                  scaleFrom={1.02}
+                  itemAsChild
+                >
+                  <div
+                    id={mapPanelId}
+                    className="group relative overflow-hidden rounded-2xl border border-border/70 bg-(--color-canvas) shadow-soft ring-1 ring-border/70 aspect-dynamic"
+                    style={{ "--aspect-ratio": visit.location.staticMap.aspectRatio ?? 3 / 2 }}
+                    aria-live="polite"
+                  >
+                    {visit.location.mapEmbedSrc ? (
+                      <iframe
+                        src={visit.location.mapEmbedSrc}
+                        title={`Map to ${visit.location.name}`}
+                        className="h-full w-full"
+                        loading="lazy"
+                        aria-describedby={mapNoteId}
+                      />
+                    ) : (
+                      <Image
+                        src={visit.location.staticMap.url}
+                        alt={visit.location.staticMap.alt}
+                        fill
+                        sizes="(min-width: 1280px) 640px, (min-width: 1024px) 50vw, 100vw"
+                        className="object-cover"
+                      />
+                    )}
+                    <div
+                      className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/70 via-(--scrim-strong)/40 to-transparent"
+                      aria-hidden
+                    />
+                  </div>
+                </ChoreoGroup>
+                <ChoreoGroup
+                  effect="slide"
+                  axis="x"
+                  direction="right"
+                  distance={choreoDistance.base}
+                  durationMs={dreamyPace.textMs}
+                  easing={dreamyPace.easing}
+                  itemAsChild
+                >
+                  <a
+                    href={mapHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 type-button text-perazzi-red focus-ring"
+                  >
+                    Open in Maps <span className="sr-only">(opens in a new tab)</span>
+                  </a>
+                </ChoreoGroup>
               </div>
-              <a
-                href={mapHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 type-button text-perazzi-red focus-ring"
-              >
-                Open in Maps <span className="sr-only">(opens in a new tab)</span>
-              </a>
-            </div>
+            </ChoreoGroup>
           </article>
         </RevealItem>
 
         <RevealItem index={1}>
-          <div className="space-y-4">
+          <ChoreoGroup
+            effect="fade-lift"
+            distance={choreoDistance.base}
+            durationMs={dreamyPace.textMs}
+            easing={dreamyPace.easing}
+            staggerMs={dreamyPace.staggerMs}
+            className="space-y-4"
+          >
             {visit.whatToExpectHtml ? (
               <Collapsible open={expectOpen} onOpenChange={onExpectOpenChange}>
                 <CollapsibleTrigger
@@ -316,7 +376,7 @@ const VisitFactoryBody = ({
                   <span
                     aria-hidden="true"
                     className={cn(
-                      "text-lg",
+                      "text-lg transition-transform duration-200",
                       expectOpen ? "rotate-45" : "rotate-0",
                     )}
                   >
@@ -327,22 +387,36 @@ const VisitFactoryBody = ({
                   id="visit-expect-content"
                   className="mt-3 rounded-2xl border border-border/70 bg-card/60 p-4 type-card-body text-ink-muted shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80"
                 >
-                  <SafeHtml
-                    className="max-w-none type-card-body text-ink-muted"
-                    html={visit.whatToExpectHtml}
-                  />
+                  <ChoreoPresence
+                    state={expectOpen ? "enter" : "exit"}
+                    style={contentPresenceVars}
+                  >
+                    <SafeHtml
+                      className="max-w-none type-card-body text-ink-muted"
+                      html={visit.whatToExpectHtml}
+                    />
+                  </ChoreoPresence>
                 </CollapsibleContent>
               </Collapsible>
             ) : null}
-            <Button
-              asChild
-              size="lg"
-              onClick={() => logAnalytics("VisitCtaClick")}
-              className="rounded-full px-6 py-3 type-button"
+            <ChoreoGroup
+              effect="scale-parallax"
+              distance={choreoDistance.tight}
+              durationMs={dreamyPace.textMs}
+              easing={dreamyPace.easing}
+              scaleFrom={0.98}
+              itemAsChild
             >
-              <a href={visit.cta.href}>{visit.cta.label}</a>
-            </Button>
-          </div>
+              <Button
+                asChild
+                size="lg"
+                onClick={() => logAnalytics("VisitCtaClick")}
+                className="rounded-full px-6 py-3 type-button"
+              >
+                <a href={visit.cta.href}>{visit.cta.label}</a>
+              </Button>
+            </ChoreoGroup>
+          </ChoreoGroup>
         </RevealItem>
       </div>
     </div>

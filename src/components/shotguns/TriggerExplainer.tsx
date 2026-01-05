@@ -6,10 +6,17 @@ import { PortableText } from "@/components/PortableText";
 import { useEffect, useState } from "react";
 import type { ShotgunsLandingData } from "@/types/catalog";
 import { logAnalytics } from "@/lib/analytics";
+import {
+  buildChoreoPresenceVars,
+  choreoDistance,
+  dreamyPace,
+} from "@/lib/choreo";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import {
+  ChoreoGroup,
+  ChoreoPresence,
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
@@ -18,7 +25,6 @@ import {
   RevealAnimatedBody,
   RevealCollapsedHeader,
   RevealGroup,
-  RevealItem,
   SectionBackdrop,
   SectionShell,
   Text,
@@ -177,14 +183,23 @@ const TriggerExplainerRevealSection = ({
             expandedContent
           ) : (
             <>
-              <RevealCollapsedHeader
-                headingId="trigger-explainer-heading"
-                heading={explainer.title}
-                subheading={subheading}
-                controlsId="trigger-explainer-body"
-                expanded={revealExplainer}
-                onExpand={handleExpand}
-              />
+              <ChoreoGroup
+                effect="fade-lift"
+                distance={choreoDistance.base}
+                durationMs={dreamyPace.textMs}
+                easing={dreamyPace.easing}
+                staggerMs={dreamyPace.staggerMs}
+                itemClassName="absolute inset-0"
+              >
+                <RevealCollapsedHeader
+                  headingId="trigger-explainer-heading"
+                  heading={explainer.title}
+                  subheading={subheading}
+                  controlsId="trigger-explainer-body"
+                  expanded={revealExplainer}
+                  onExpand={handleExpand}
+                />
+              </ChoreoGroup>
               <div ref={measureRef} className="section-reveal-measure" aria-hidden>
                 {expandedContent}
               </div>
@@ -208,6 +223,21 @@ const TriggerExplainerExpandedLayout = ({
   const contentClassName =
     "gap-6 overflow-hidden px-2 py-3 data-[state=closed]:opacity-0 data-[state=open]:opacity-100 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start";
   const explainerContent = <TriggerExplainerContent explainer={explainer} />;
+  const contentPresenceVars = buildChoreoPresenceVars({
+    enterDurationMs: dreamyPace.textMs,
+    exitDurationMs: dreamyPace.textMs,
+    enterEase: dreamyPace.easing,
+    exitEase: dreamyPace.easing,
+    enterY: choreoDistance.tight,
+    exitY: choreoDistance.tight,
+  });
+  const {
+    ref: mobileContentRef,
+    minHeightStyle: mobileContentMinHeightStyle,
+  } = useRevealHeight({
+    enableObserver: manualOpen,
+    deps: [manualOpen],
+  });
 
   return (
     <>
@@ -220,51 +250,67 @@ const TriggerExplainerExpandedLayout = ({
           }}
           className="space-y-4 flex-1"
         >
-          <div className="space-y-3">
-            <RevealItem index={0}>
-              <div className="relative">
-                <Heading
-                  id="trigger-explainer-heading"
-                  level={2}
-                  size="xl"
-                  className={headerThemeReady ? "text-ink" : "text-white"}
-                >
-                  {explainer.title}
-                </Heading>
-              </div>
-            </RevealItem>
-            <RevealItem index={1}>
-              <div className="relative">
-                <Text
-                  className={cn(
-                    "type-section-subtitle",
-                    headerThemeReady ? "text-ink-muted" : "text-white",
-                  )}
-                  leading="normal"
-                >
-                  {subheading}
-                </Text>
-              </div>
-            </RevealItem>
-            <RevealItem index={2}>
-              <CollapsibleTrigger
-                className="type-button mt-1 inline-flex w-fit items-center gap-2 rounded-sm border border-border/70 bg-card/60 px-4 py-2 text-ink shadow-soft backdrop-blur-sm hover:border-ink/20 hover:bg-card/85 focus-ring lg:hidden"
-                aria-controls="trigger-explainer-content"
-                data-analytics-id="TriggerExplainerToggle"
+          <ChoreoGroup
+            effect="fade-lift"
+            distance={choreoDistance.base}
+            durationMs={dreamyPace.textMs}
+            easing={dreamyPace.easing}
+            staggerMs={dreamyPace.staggerMs}
+            className="space-y-3"
+          >
+            <div className="relative">
+              <Heading
+                id="trigger-explainer-heading"
+                level={2}
+                size="xl"
+                className={headerThemeReady ? "text-ink" : "text-white"}
               >
-                {manualOpen ? "Hide details" : "Show details"}
-              </CollapsibleTrigger>
-            </RevealItem>
-          </div>
+                {explainer.title}
+              </Heading>
+            </div>
+            <div className="relative">
+              <Text
+                className={cn(
+                  "type-section-subtitle",
+                  headerThemeReady ? "text-ink-muted" : "text-white",
+                )}
+                leading="normal"
+              >
+                {subheading}
+              </Text>
+            </div>
+            <CollapsibleTrigger
+              className="trigger-explainer-toggle type-button mt-1 inline-flex w-fit items-center gap-2 rounded-sm border border-border/70 bg-card/60 px-4 py-2 text-ink shadow-soft backdrop-blur-sm hover:border-ink/20 hover:bg-card/85 focus-ring lg:hidden"
+              aria-controls="trigger-explainer-content"
+              data-analytics-id="TriggerExplainerToggle"
+            >
+              {manualOpen ? "Hide details" : "Show details"}
+            </CollapsibleTrigger>
+          </ChoreoGroup>
           <CollapsibleContent
             id="trigger-explainer-content"
             className={`grid ${contentClassName} lg:hidden`}
+            style={mobileContentMinHeightStyle}
+            ref={mobileContentRef}
           >
-            {explainerContent}
+            <ChoreoPresence
+              state={manualOpen ? "enter" : "exit"}
+              style={contentPresenceVars}
+              className="h-full"
+            >
+              {explainerContent}
+            </ChoreoPresence>
           </CollapsibleContent>
         </Collapsible>
         {enableTitleReveal ? (
-          <RevealItem index={3}>
+          <ChoreoGroup
+            effect="fade-lift"
+            distance={choreoDistance.tight}
+            delayMs={dreamyPace.staggerMs}
+            durationMs={dreamyPace.textMs}
+            easing={dreamyPace.easing}
+            itemAsChild
+          >
             <button
               type="button"
               className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
@@ -272,14 +318,21 @@ const TriggerExplainerExpandedLayout = ({
             >
               Collapse
             </button>
-          </RevealItem>
+          </ChoreoGroup>
         ) : null}
       </RevealGroup>
-      <RevealGroup delayMs={140}>
+      <ChoreoGroup
+        effect="fade-lift"
+        distance={choreoDistance.base}
+        delayMs={dreamyPace.staggerMs}
+        durationMs={dreamyPace.textMs}
+        easing={dreamyPace.easing}
+        itemAsChild
+      >
         <div id="trigger-explainer-body" className="space-y-6">
           <div className={`hidden lg:grid ${contentClassName}`}>{explainerContent}</div>
         </div>
-      </RevealGroup>
+      </ChoreoGroup>
     </>
   );
 };
@@ -302,29 +355,52 @@ const TriggerExplainerContent = ({ explainer }: TriggerExplainerContentProps) =>
     "max-w-none type-body text-ink [&_p]:mb-4 [&_p:last-child]:mb-0 prose-headings:text-ink prose-strong:text-ink prose-a:text-perazzi-red prose-a:underline-offset-4";
 
   return (
-    <>
-      <RevealItem index={0}>
-        <div className="rounded-2xl border border-border/0 bg-card/0 p-4 sm:rounded-3xl sm:p-6 lg:flex lg:h-full lg:flex-col lg:justify-start">
-          <TriggerExplainerCopy explainer={explainer} className={copyClasses} />
-          <div className="mt-5 flex flex-wrap gap-3">
-            {explainer.links.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                data-analytics-id={`TriggerExplainerLink:${link.href}`}
-                className="type-button inline-flex items-center gap-2 rounded-sm border border-perazzi-red/40 bg-card/60 px-4 py-2 text-perazzi-red shadow-soft backdrop-blur-sm hover:border-perazzi-red hover:bg-card/85 focus-ring"
-                onClick={() => logAnalytics(`TriggerExplainerLink:${link.href}`)}
-              >
-                {link.label}
-                <span aria-hidden="true">→</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </RevealItem>
+    <ChoreoGroup
+      effect="fade-lift"
+      distance={choreoDistance.base}
+      durationMs={dreamyPace.textMs}
+      easing={dreamyPace.easing}
+      staggerMs={dreamyPace.staggerMs}
+      className="contents"
+      itemAsChild
+    >
+      <div className="rounded-2xl border border-border/0 bg-card/0 p-4 sm:rounded-3xl sm:p-6 lg:flex lg:h-full lg:flex-col lg:justify-start">
+        <TriggerExplainerCopy explainer={explainer} className={copyClasses} />
+        <ChoreoGroup
+          effect="slide"
+          axis="x"
+          direction="left"
+          distance={choreoDistance.base}
+          durationMs={dreamyPace.textMs}
+          easing={dreamyPace.easing}
+          staggerMs={dreamyPace.staggerMs}
+          className="mt-5 flex flex-wrap gap-3"
+          itemAsChild
+        >
+          {explainer.links.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              data-analytics-id={`TriggerExplainerLink:${link.href}`}
+              className="type-button inline-flex items-center gap-2 rounded-sm border border-perazzi-red/40 bg-card/60 px-4 py-2 text-perazzi-red shadow-soft backdrop-blur-sm hover:border-perazzi-red hover:bg-card/85 focus-ring"
+              onClick={() => logAnalytics(`TriggerExplainerLink:${link.href}`)}
+            >
+              {link.label}
+              <span aria-hidden="true">→</span>
+            </a>
+          ))}
+        </ChoreoGroup>
+      </div>
 
-      <RevealItem index={1}>
-        <figure className="group rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated">
+      <figure className="group rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated">
+        <ChoreoGroup
+          effect="scale-parallax"
+          distance={choreoDistance.base}
+          durationMs={dreamyPace.textMs}
+          easing={dreamyPace.easing}
+          scaleFrom={1.02}
+          itemAsChild
+        >
           <div
             className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-dynamic"
             style={{ "--aspect-ratio": ratio }}
@@ -341,13 +417,22 @@ const TriggerExplainerContent = ({ explainer }: TriggerExplainerContentProps) =>
               aria-hidden
             />
           </div>
-          {explainer.diagram.caption ? (
+        </ChoreoGroup>
+        {explainer.diagram.caption ? (
+          <ChoreoGroup
+            effect="fade-lift"
+            distance={choreoDistance.tight}
+            delayMs={dreamyPace.staggerMs}
+            durationMs={dreamyPace.textMs}
+            easing={dreamyPace.easing}
+            itemAsChild
+          >
             <Text asChild size="caption" className="mt-3 text-ink-muted" leading="normal">
               <figcaption>{explainer.diagram.caption}</figcaption>
             </Text>
-          ) : null}
-        </figure>
-      </RevealItem>
-    </>
+          </ChoreoGroup>
+        ) : null}
+      </figure>
+    </ChoreoGroup>
   );
 };

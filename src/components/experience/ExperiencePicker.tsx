@@ -8,8 +8,15 @@ import { FAQList } from "./FAQList";
 import { logAnalytics } from "@/lib/analytics";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import {
+  buildChoreoGroupVars,
+  buildChoreoItemVars,
+  choreoDistance,
+  dreamyPace,
+} from "@/lib/choreo";
 import { cn } from "@/lib/utils";
 import {
+  ChoreoGroup,
   Container,
   Heading,
   RevealAnimatedBody,
@@ -158,28 +165,60 @@ const ExperiencePickerBody = ({
   faqLead,
   microLabel,
   onAnchorClick,
-}: ExperiencePickerBodyProps) => (
-  <div id="experience-picker-body" className="space-y-6">
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:items-start">
-      {items.map((item, index) => (
-        <RevealItem key={item.id} index={index}>
-          <ExperiencePickerCard
-            item={item}
-            onAnchorClick={onAnchorClick}
-            microLabel={microLabel}
-          />
-        </RevealItem>
-      ))}
+}: ExperiencePickerBodyProps) => {
+  const maxStaggerIndex = 5;
+  const groupVars = buildChoreoGroupVars({
+    durationMs: dreamyPace.textMs,
+    staggerMs: dreamyPace.staggerMs,
+    easing: dreamyPace.easing,
+  });
+
+  return (
+    <div id="experience-picker-body" className="space-y-6">
+      <RevealGroup
+        className="choreo-group grid gap-6 md:grid-cols-2 lg:grid-cols-3 items-stretch"
+        style={groupVars}
+      >
+        {items.map((item, index) => {
+          const clampedIndex = Math.min(index, maxStaggerIndex);
+          const itemVars = buildChoreoItemVars("fade-lift", {
+            index: clampedIndex,
+            distance: choreoDistance.base,
+          });
+
+          return (
+            <RevealItem
+              key={item.id}
+              index={clampedIndex}
+              className="choreo-item choreo-fade-lift"
+              style={itemVars}
+            >
+              <ExperiencePickerCard
+                item={item}
+                onAnchorClick={onAnchorClick}
+                microLabel={microLabel}
+              />
+            </RevealItem>
+          );
+        })}
+      </RevealGroup>
+      {faqItems.length > 0 && (
+        <ChoreoGroup
+          effect="fade-lift"
+          distance={choreoDistance.base}
+          durationMs={dreamyPace.textMs}
+          easing={dreamyPace.easing}
+          staggerMs={dreamyPace.staggerMs}
+          itemAsChild
+        >
+          <div className="pt-4">
+            <FAQList items={faqItems} embedded heading={faqHeading} lead={faqLead} />
+          </div>
+        </ChoreoGroup>
+      )}
     </div>
-    {faqItems.length > 0 && (
-      <RevealItem index={items.length}>
-        <div className="pt-4">
-          <FAQList items={faqItems} embedded heading={faqHeading} lead={faqLead} />
-        </div>
-      </RevealItem>
-    )}
-  </div>
-);
+  );
+};
 
 const ExperiencePickerRevealSection = ({
   items,
@@ -273,14 +312,23 @@ const ExperiencePickerRevealSection = ({
             expandedContent
           ) : (
             <>
-              <RevealCollapsedHeader
-                headingId="experience-picker-heading"
-                heading={heading}
-                subheading={subheading}
-                controlsId="experience-picker-body"
-                expanded={revealPicker}
-                onExpand={handlePickerExpand}
-              />
+              <ChoreoGroup
+                effect="fade-lift"
+                distance={choreoDistance.base}
+                durationMs={dreamyPace.textMs}
+                easing={dreamyPace.easing}
+                staggerMs={dreamyPace.staggerMs}
+                itemClassName="absolute inset-0"
+              >
+                <RevealCollapsedHeader
+                  headingId="experience-picker-heading"
+                  heading={heading}
+                  subheading={subheading}
+                  controlsId="experience-picker-body"
+                  expanded={revealPicker}
+                  onExpand={handlePickerExpand}
+                />
+              </ChoreoGroup>
               <div ref={measureRef} className="section-reveal-measure" aria-hidden>
                 {expandedContent}
               </div>
@@ -321,21 +369,38 @@ function ExperiencePickerCard({
           }
         }}
       >
-        <div className="relative aspect-3/2">
-          <Image
-            src={item.media.url}
-            alt={item.media.alt}
-            fill
-            sizes="(min-width: 1280px) 384px, (min-width: 1024px) 50vw, (min-width: 640px) 50vw, 100vw"
-            className="object-cover"
-            loading="lazy"
-          />
-          <div
-            className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/70 via-(--scrim-strong)/45 to-transparent"
-            aria-hidden
-          />
-        </div>
-        <div className="flex flex-1 flex-col gap-3 px-6 py-5">
+        <ChoreoGroup
+          effect="scale-parallax"
+          distance={choreoDistance.base}
+          durationMs={dreamyPace.textMs}
+          easing={dreamyPace.easing}
+          scaleFrom={1.02}
+          itemAsChild
+        >
+          <div className="relative aspect-3/2 w-full overflow-hidden bg-(--color-canvas)">
+            <Image
+              src={item.media.url}
+              alt={item.media.alt}
+              fill
+              sizes="(min-width: 1280px) 384px, (min-width: 1024px) 50vw, (min-width: 640px) 50vw, 100vw"
+              className="object-cover"
+              loading="lazy"
+            />
+            <div
+              className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/70 via-(--scrim-strong)/45 to-transparent"
+              aria-hidden
+            />
+          </div>
+        </ChoreoGroup>
+        <ChoreoGroup
+          effect="fade-lift"
+          distance={choreoDistance.tight}
+          durationMs={dreamyPace.textMs}
+          easing={dreamyPace.easing}
+          staggerMs={dreamyPace.staggerMs}
+          className="flex flex-1 flex-col gap-3 px-6 py-5"
+          itemAsChild
+        >
           <Text size="label-tight" muted>
             {microLabel}
           </Text>
@@ -349,7 +414,7 @@ function ExperiencePickerCard({
             {item.ctaLabel}
             <span aria-hidden="true">→</span>
           </span>
-        </div>
+        </ChoreoGroup>
       </Link>
     </article>
   );
