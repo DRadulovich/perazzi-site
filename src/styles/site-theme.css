@@ -272,10 +272,16 @@
   }
 
   .section-reveal-shell {
-    transition: min-height 400ms ease-out;
+    transition: min-height 500ms ease-out;
   }
 
   .section-reveal-measure {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    box-sizing: border-box;
+    padding: inherit;
     visibility: hidden;
     pointer-events: none;
   }

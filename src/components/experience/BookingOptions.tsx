@@ -88,15 +88,14 @@ const BookingOptionsRevealSection = ({
   const bookingMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
   const {
     ref: bookingShellRef,
+    measureRef,
     minHeightStyle,
     beginExpand,
     clearPremeasure,
-    isPreparing,
   } = useRevealHeight({
     enableObserver: enableTitleReveal && revealBooking,
     deps: [schedulerOpen, schedulerLoaded, options.length],
   });
-  const showExpanded = revealBooking || isPreparing;
 
   const handleBookingExpand = () => {
     if (!enableTitleReveal) return;
@@ -126,6 +125,41 @@ const BookingOptionsRevealSection = ({
     });
   };
 
+  const expandedContent = (
+    <>
+      <RevealExpandedHeader
+        headingId="experience-booking-heading"
+        heading={heading}
+        headerThemeReady={headerThemeReady}
+        enableTitleReveal={enableTitleReveal}
+        onCollapse={handleBookingCollapse}
+      >
+        <div className="relative">
+          <Text
+            className={cn(
+              "type-section-subtitle",
+              headerThemeReady ? "text-ink-muted" : "text-white",
+            )}
+            leading="relaxed"
+          >
+            {subheading}
+          </Text>
+        </div>
+      </RevealExpandedHeader>
+      <BookingBody
+        revealBooking
+        options={options}
+        optionCtaLabel={optionCtaLabel}
+        scheduler={scheduler}
+        schedulerOpen={schedulerOpen}
+        schedulerLoaded={schedulerLoaded}
+        schedulerPanelId={schedulerPanelId}
+        schedulerNoteId={schedulerNoteId}
+        onSchedulerToggle={handleSchedulerToggle}
+      />
+    </>
+  );
+
   return (
     <>
       <SectionBackdrop
@@ -143,48 +177,22 @@ const BookingOptionsRevealSection = ({
           reveal={revealPhotoFocus}
           minHeightClass={bookingMinHeight ?? undefined}
         >
-          {showExpanded ? (
-            <div className={isPreparing ? "section-reveal-measure" : undefined}>
-              <RevealExpandedHeader
+          {revealBooking ? (
+            expandedContent
+          ) : (
+            <>
+              <RevealCollapsedHeader
                 headingId="experience-booking-heading"
                 heading={heading}
-                headerThemeReady={headerThemeReady}
-                enableTitleReveal={enableTitleReveal}
-                onCollapse={handleBookingCollapse}
-              >
-                <div className="relative">
-                  <Text
-                    className={cn(
-                      "type-section-subtitle",
-                      headerThemeReady ? "text-ink-muted" : "text-white",
-                    )}
-                    leading="relaxed"
-                  >
-                    {subheading}
-                  </Text>
-                </div>
-              </RevealExpandedHeader>
-              <BookingBody
-                revealBooking={showExpanded}
-                options={options}
-                optionCtaLabel={optionCtaLabel}
-                scheduler={scheduler}
-                schedulerOpen={schedulerOpen}
-                schedulerLoaded={schedulerLoaded}
-                schedulerPanelId={schedulerPanelId}
-                schedulerNoteId={schedulerNoteId}
-                onSchedulerToggle={handleSchedulerToggle}
+                subheading={subheading}
+                controlsId="experience-booking-body"
+                expanded={revealBooking}
+                onExpand={handleBookingExpand}
               />
-            </div>
-          ) : (
-            <RevealCollapsedHeader
-              headingId="experience-booking-heading"
-              heading={heading}
-              subheading={subheading}
-              controlsId="experience-booking-body"
-              expanded={revealBooking}
-              onExpand={handleBookingExpand}
-            />
+              <div ref={measureRef} className="section-reveal-measure" aria-hidden>
+                {expandedContent}
+              </div>
+            </>
           )}
         </SectionShell>
       </Container>

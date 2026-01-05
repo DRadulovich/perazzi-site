@@ -194,15 +194,14 @@ const BuildStepsRevealSection = ({
   const buildStepsMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
   const {
     ref: buildStepsShellRef,
+    measureRef,
     minHeightStyle,
     beginExpand,
     clearPremeasure,
-    isPreparing,
   } = useRevealHeight({
     enableObserver: enableTitleReveal && revealBuildSteps,
     deps: [resolvedActiveStepId, resolvedOpenStepId, steps.length],
   });
-  const showExpanded = revealBuildSteps || isPreparing;
 
   const instructions =
     "Scroll to move from moment to moment. Each step is a chapter in the ritual of building a Perazzi to your measure.";
@@ -289,6 +288,67 @@ const BuildStepsRevealSection = ({
     };
   }, [handleStepEnter, revealBuildSteps, steps.length]);
 
+  const expandedContent = (
+    <>
+      <RevealExpandedHeader
+        headingId="build-steps-heading"
+        heading={heading}
+        headerThemeReady={headerThemeReady}
+        enableTitleReveal={enableTitleReveal}
+        onCollapse={handleBuildStepsCollapse}
+      >
+        <div className="relative">
+          <Text
+            size="lg"
+            className={cn(
+              "type-section-subtitle",
+              headerThemeReady ? "text-ink-muted" : "text-white",
+            )}
+            leading="relaxed"
+          >
+            {subheading}
+          </Text>
+        </div>
+        <div>
+          <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
+            {instructions}
+          </Text>
+        </div>
+        <div className="flex flex-wrap items-center gap-4">
+          <a
+            href="#build-steps-sequence"
+            className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-ink/60 text-ink hover:border-ink focus-ring"
+          >
+            <span>{ctaLabel}</span>
+            <span aria-hidden="true">↓</span>
+          </a>
+          {skipTargetId ? (
+            <a
+              href={`#${skipTargetId}`}
+              className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-perazzi-red/60 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+            >
+              <span>Skip step-by-step</span>
+              <span aria-hidden="true">→</span>
+            </a>
+          ) : null}
+        </div>
+      </RevealExpandedHeader>
+
+      <BuildStepsSequence
+        steps={steps}
+        revealBuildSteps
+        resolvedActiveStepId={resolvedActiveStepId}
+        resolvedOpenStepId={resolvedOpenStepId}
+        stepRefs={stepRefs}
+        scrollContainerRef={scrollContainerRef}
+        onRailClick={handleRailClick}
+        onToggleStepOpen={toggleStepOpen}
+        onStepCta={onStepCta}
+        onMobileDotClick={handleMobileDotClick}
+      />
+    </>
+  );
+
   return (
     <>
       <SectionBackdrop
@@ -308,74 +368,22 @@ const BuildStepsRevealSection = ({
           minHeightClass={buildStepsMinHeight ?? undefined}
           className="space-y-8 w-full"
         >
-          {showExpanded ? (
-            <div className={isPreparing ? "section-reveal-measure" : undefined}>
-              <RevealExpandedHeader
+          {revealBuildSteps ? (
+            expandedContent
+          ) : (
+            <>
+              <RevealCollapsedHeader
                 headingId="build-steps-heading"
                 heading={heading}
-                headerThemeReady={headerThemeReady}
-                enableTitleReveal={enableTitleReveal}
-                onCollapse={handleBuildStepsCollapse}
-              >
-                <div className="relative">
-                  <Text
-                    size="lg"
-                    className={cn(
-                      "type-section-subtitle",
-                      headerThemeReady ? "text-ink-muted" : "text-white",
-                    )}
-                    leading="relaxed"
-                  >
-                    {subheading}
-                  </Text>
-                </div>
-                <div>
-                  <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
-                    {instructions}
-                  </Text>
-                </div>
-                <div className="flex flex-wrap items-center gap-4">
-                  <a
-                    href="#build-steps-sequence"
-                    className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-ink/60 text-ink hover:border-ink focus-ring"
-                  >
-                    <span>{ctaLabel}</span>
-                    <span aria-hidden="true">↓</span>
-                  </a>
-                  {skipTargetId ? (
-                    <a
-                      href={`#${skipTargetId}`}
-                      className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-perazzi-red/60 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
-                    >
-                      <span>Skip step-by-step</span>
-                      <span aria-hidden="true">→</span>
-                    </a>
-                  ) : null}
-                </div>
-              </RevealExpandedHeader>
-
-              <BuildStepsSequence
-                steps={steps}
-                revealBuildSteps={showExpanded}
-                resolvedActiveStepId={resolvedActiveStepId}
-                resolvedOpenStepId={resolvedOpenStepId}
-                stepRefs={stepRefs}
-                scrollContainerRef={scrollContainerRef}
-                onRailClick={handleRailClick}
-                onToggleStepOpen={toggleStepOpen}
-                onStepCta={onStepCta}
-                onMobileDotClick={handleMobileDotClick}
+                subheading={subheading}
+                controlsId="build-steps-body"
+                expanded={revealBuildSteps}
+                onExpand={handleBuildStepsExpand}
               />
-            </div>
-          ) : (
-            <RevealCollapsedHeader
-              headingId="build-steps-heading"
-              heading={heading}
-              subheading={subheading}
-              controlsId="build-steps-body"
-              expanded={revealBuildSteps}
-              onExpand={handleBuildStepsExpand}
-            />
+              <div ref={measureRef} className="section-reveal-measure" aria-hidden>
+                {expandedContent}
+              </div>
+            </>
           )}
         </SectionShell>
       </div>

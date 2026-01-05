@@ -127,15 +127,14 @@ function TimelineRevealSection({
   const timelineMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
   const {
     ref: timelineShellRef,
+    measureRef,
     minHeightStyle,
     beginExpand,
     clearPremeasure,
-    isPreparing,
   } = useRevealHeight({
     enableObserver: enableTitleReveal && revealTimeline,
     deps: [resolvedActiveStage],
   });
-  const showExpanded = revealTimeline || isPreparing;
 
   const handleTimelineExpand = () => {
     if (!enableTitleReveal) return;
@@ -152,6 +151,30 @@ function TimelineRevealSection({
     setTimelineExpanded(false);
     onCollapsedChange?.(true);
   };
+
+  const expandedContent = (
+    <>
+      <RevealExpandedHeader
+        headingId="craft-timeline-heading"
+        heading={headingTitle}
+        subheading={headingEyebrow}
+        headerThemeReady={headerThemeReady}
+        enableTitleReveal={enableTitleReveal}
+        onCollapse={handleTimelineCollapse}
+      >
+        <span className="sr-only">{headingInstructions}</span>
+      </RevealExpandedHeader>
+      <TimelineBody
+        enablePinned={enablePinned}
+        stages={stages}
+        resolvedActiveStage={resolvedActiveStage}
+        activeStage={activeStage}
+        setActiveStage={setActiveStage}
+        alternateTitle={alternateTitle}
+        revealPhotoFocus={revealPhotoFocus}
+      />
+    </>
+  );
 
   return (
     <>
@@ -176,37 +199,22 @@ function TimelineRevealSection({
             reveal={revealPhotoFocus}
             minHeightClass={timelineMinHeight ?? undefined}
           >
-            {showExpanded ? (
-              <div className={isPreparing ? "section-reveal-measure" : undefined}>
-                <RevealExpandedHeader
+            {revealTimeline ? (
+              expandedContent
+            ) : (
+              <>
+                <RevealCollapsedHeader
                   headingId="craft-timeline-heading"
                   heading={headingTitle}
                   subheading={headingEyebrow}
-                  headerThemeReady={headerThemeReady}
-                  enableTitleReveal={enableTitleReveal}
-                  onCollapse={handleTimelineCollapse}
-                >
-                  <span className="sr-only">{headingInstructions}</span>
-                </RevealExpandedHeader>
-                <TimelineBody
-                  enablePinned={enablePinned}
-                  stages={stages}
-                  resolvedActiveStage={resolvedActiveStage}
-                  activeStage={activeStage}
-                  setActiveStage={setActiveStage}
-                  alternateTitle={alternateTitle}
-                  revealPhotoFocus={revealPhotoFocus}
+                  controlsId="craft-timeline-body"
+                  expanded={revealTimeline}
+                  onExpand={handleTimelineExpand}
                 />
-              </div>
-            ) : (
-              <RevealCollapsedHeader
-                headingId="craft-timeline-heading"
-                heading={headingTitle}
-                subheading={headingEyebrow}
-                controlsId="craft-timeline-body"
-                expanded={revealTimeline}
-                onExpand={handleTimelineExpand}
-              />
+                <div ref={measureRef} className="section-reveal-measure" aria-hidden>
+                  {expandedContent}
+                </div>
+              </>
             )}
           </SectionShell>
         </div>

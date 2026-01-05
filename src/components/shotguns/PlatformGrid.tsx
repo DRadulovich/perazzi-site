@@ -406,15 +406,14 @@ const PlatformGridRevealSection = ({
   const platformMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
   const {
     ref: platformShellRef,
+    measureRef,
     minHeightStyle,
     beginExpand,
     clearPremeasure,
-    isPreparing,
   } = useRevealHeight({
     enableObserver: enableTitleReveal && revealGrid,
     deps: [activeIndex],
   });
-  const showExpanded = revealGrid || isPreparing;
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
@@ -437,6 +436,40 @@ const PlatformGridRevealSection = ({
     setActiveIndex(index);
     scrollToIndex(scrollRef.current, index);
   }, [setActiveIndex]);
+
+  const expandedContent = (
+    <>
+      <RevealExpandedHeader
+        headingId="platforms-heading"
+        heading={headingTitle}
+        headerThemeReady={headerThemeReady}
+        enableTitleReveal={enableTitleReveal}
+        onCollapse={handleCollapse}
+      >
+        <div className="relative">
+          <Text
+            className={cn(
+              "type-section-subtitle max-w-4xl",
+              headerThemeReady ? "text-ink-muted" : "text-white",
+            )}
+            leading="normal"
+          >
+            {headingSubtitle}
+          </Text>
+        </div>
+      </RevealExpandedHeader>
+      <PlatformGridBody
+        revealGrid
+        platforms={platforms}
+        activeIndex={activeIndex}
+        activePlatform={activePlatform}
+        templates={templates}
+        buildPayload={buildPayload}
+        scrollRef={scrollRef}
+        onSelect={handleTabSelect}
+      />
+    </>
+  );
 
   useEffect(() => {
     if (!revealGrid) return;
@@ -472,48 +505,22 @@ const PlatformGridRevealSection = ({
           minHeightClass={platformMinHeight ?? undefined}
           className="space-y-8"
         >
-          {showExpanded ? (
-            <div className={isPreparing ? "section-reveal-measure" : undefined}>
-              <RevealExpandedHeader
+          {revealGrid ? (
+            expandedContent
+          ) : (
+            <>
+              <RevealCollapsedHeader
                 headingId="platforms-heading"
                 heading={headingTitle}
-                headerThemeReady={headerThemeReady}
-                enableTitleReveal={enableTitleReveal}
-                onCollapse={handleCollapse}
-              >
-                <div className="relative">
-                  <Text
-                    className={cn(
-                      "type-section-subtitle max-w-4xl",
-                      headerThemeReady ? "text-ink-muted" : "text-white",
-                    )}
-                    leading="normal"
-                  >
-                    {headingSubtitle}
-                  </Text>
-                </div>
-              </RevealExpandedHeader>
-
-              <PlatformGridBody
-                revealGrid={showExpanded}
-                platforms={platforms}
-                activeIndex={activeIndex}
-                activePlatform={activePlatform}
-                templates={templates}
-                buildPayload={buildPayload}
-                scrollRef={scrollRef}
-                onSelect={handleTabSelect}
+                subheading={headingSubtitle}
+                controlsId="platform-grid-body"
+                expanded={revealGrid}
+                onExpand={handleExpand}
               />
-            </div>
-          ) : (
-            <RevealCollapsedHeader
-              headingId="platforms-heading"
-              heading={headingTitle}
-              subheading={headingSubtitle}
-              controlsId="platform-grid-body"
-              expanded={revealGrid}
-              onExpand={handleExpand}
-            />
+              <div ref={measureRef} className="section-reveal-measure" aria-hidden>
+                {expandedContent}
+              </div>
+            </>
           )}
         </SectionShell>
       </div>

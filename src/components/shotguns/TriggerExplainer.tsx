@@ -112,15 +112,14 @@ const TriggerExplainerRevealSection = ({
   const revealPhotoFocus = revealExplainer;
   const {
     ref: explainerShellRef,
+    measureRef,
     minHeightStyle,
     beginExpand,
     clearPremeasure,
-    isPreparing,
   } = useRevealHeight({
     enableObserver: enableTitleReveal && revealExplainer,
     deps: [manualOpen],
   });
-  const showExpanded = revealExplainer || isPreparing;
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
@@ -139,6 +138,18 @@ const TriggerExplainerRevealSection = ({
     onCollapsedChange?.(true);
   };
 
+  const expandedContent = (
+    <TriggerExplainerExpandedLayout
+      explainer={explainer}
+      manualOpen={manualOpen}
+      setManualOpen={setManualOpen}
+      headerThemeReady={headerThemeReady}
+      subheading={subheading}
+      enableTitleReveal={enableTitleReveal}
+      onCollapse={handleCollapse}
+    />
+  );
+
   return (
     <>
       <SectionBackdrop
@@ -156,27 +167,22 @@ const TriggerExplainerRevealSection = ({
           reveal={revealPhotoFocus}
           minHeightClass={enableTitleReveal ? "min-h-[50vh]" : undefined}
         >
-          {showExpanded ? (
-            <div className={isPreparing ? "section-reveal-measure" : undefined}>
-              <TriggerExplainerExpandedLayout
-                explainer={explainer}
-                manualOpen={manualOpen}
-                setManualOpen={setManualOpen}
-                headerThemeReady={headerThemeReady}
-                subheading={subheading}
-                enableTitleReveal={enableTitleReveal}
-                onCollapse={handleCollapse}
-              />
-            </div>
+          {revealExplainer ? (
+            expandedContent
           ) : (
-            <RevealCollapsedHeader
-              headingId="trigger-explainer-heading"
-              heading={explainer.title}
-              subheading={subheading}
-              controlsId="trigger-explainer-body"
-              expanded={revealExplainer}
-              onExpand={handleExpand}
-            />
+            <>
+              <RevealCollapsedHeader
+                headingId="trigger-explainer-heading"
+                heading={explainer.title}
+                subheading={subheading}
+                controlsId="trigger-explainer-body"
+                expanded={revealExplainer}
+                onExpand={handleExpand}
+              />
+              <div ref={measureRef} className="section-reveal-measure" aria-hidden>
+                {expandedContent}
+              </div>
+            </>
           )}
         </SectionShell>
       </Container>

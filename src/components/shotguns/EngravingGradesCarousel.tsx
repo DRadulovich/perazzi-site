@@ -224,15 +224,14 @@ const EngravingGradesRevealSection = ({
   const carouselMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
   const {
     ref: carouselShellRef,
+    measureRef,
     minHeightStyle,
     beginExpand,
     clearPremeasure,
-    isPreparing,
   } = useRevealHeight({
     enableObserver: enableTitleReveal && revealCarousel,
     deps: [openCategory, activeGradeId],
   });
-  const showExpanded = revealCarousel || isPreparing;
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
@@ -251,6 +250,39 @@ const EngravingGradesRevealSection = ({
     onCollapsedChange?.(true);
   };
 
+  const expandedContent = (
+    <>
+      <RevealExpandedHeader
+        headingId="engraving-grades-heading"
+        heading={heading}
+        headerThemeReady={headerThemeReady}
+        enableTitleReveal={enableTitleReveal}
+        onCollapse={handleCollapse}
+      >
+        <div className="relative">
+          <Text
+            className={cn(
+              "max-w-4xl type-section-subtitle",
+              headerThemeReady ? "text-ink-muted" : "text-white",
+            )}
+            leading="normal"
+          >
+            {subheading}
+          </Text>
+        </div>
+      </RevealExpandedHeader>
+      <EngravingGradesBody
+        categories={categories}
+        resolvedOpenCategory={resolvedOpenCategory}
+        activeGradeId={activeGradeId}
+        setOpenCategory={setOpenCategory}
+        setActiveGradeId={setActiveGradeId}
+        selectedGrade={selectedGrade}
+        ctaLabel={ctaLabel}
+      />
+    </>
+  );
+
   return (
     <>
       <SectionBackdrop
@@ -268,46 +300,22 @@ const EngravingGradesRevealSection = ({
           reveal={revealPhotoFocus}
           minHeightClass={carouselMinHeight ?? undefined}
         >
-          {showExpanded ? (
-            <div className={isPreparing ? "section-reveal-measure" : undefined}>
-              <RevealExpandedHeader
+          {revealCarousel ? (
+            expandedContent
+          ) : (
+            <>
+              <RevealCollapsedHeader
                 headingId="engraving-grades-heading"
                 heading={heading}
-                headerThemeReady={headerThemeReady}
-                enableTitleReveal={enableTitleReveal}
-                onCollapse={handleCollapse}
-              >
-                <div className="relative">
-                  <Text
-                    className={cn(
-                      "max-w-4xl type-section-subtitle",
-                      headerThemeReady ? "text-ink-muted" : "text-white",
-                    )}
-                    leading="normal"
-                  >
-                    {subheading}
-                  </Text>
-                </div>
-              </RevealExpandedHeader>
-              <EngravingGradesBody
-                categories={categories}
-                resolvedOpenCategory={resolvedOpenCategory}
-                activeGradeId={activeGradeId}
-                setOpenCategory={setOpenCategory}
-                setActiveGradeId={setActiveGradeId}
-                selectedGrade={selectedGrade}
-                ctaLabel={ctaLabel}
+                subheading={subheading}
+                controlsId="engraving-grades-body"
+                expanded={revealCarousel}
+                onExpand={handleExpand}
               />
-            </div>
-          ) : (
-            <RevealCollapsedHeader
-              headingId="engraving-grades-heading"
-              heading={heading}
-              subheading={subheading}
-              controlsId="engraving-grades-body"
-              expanded={revealCarousel}
-              onExpand={handleExpand}
-            />
+              <div ref={measureRef} className="section-reveal-measure" aria-hidden>
+                {expandedContent}
+              </div>
+            </>
           )}
         </SectionShell>
       </Container>

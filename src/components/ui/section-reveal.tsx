@@ -18,14 +18,21 @@ import { Text } from "./text";
 type RevealHeightOptions = {
   enableObserver: boolean;
   deps?: readonly unknown[];
+  revealDelayMs?: number;
 };
 
-export const useRevealHeight = ({ enableObserver, deps = [] }: RevealHeightOptions) => {
+export const useRevealHeight = ({
+  enableObserver,
+  deps = [],
+  revealDelayMs = 600,
+}: RevealHeightOptions) => {
   const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const [premeasureHeight, setPremeasureHeight] = useState<number | null>(null);
   const [isPreparing, setIsPreparing] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
+  const measureRef = useRef<HTMLDivElement | null>(null);
   const pendingExpandRef = useRef<(() => void) | null>(null);
+  const revealTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
 
   useEffect(() => {
     if (!enableObserver) return;
@@ -51,7 +58,7 @@ export const useRevealHeight = ({ enableObserver, deps = [] }: RevealHeightOptio
 
   useLayoutEffect(() => {
     if (!isPreparing) return;
-    const node = ref.current;
+    const node = measureRef.current ?? ref.current;
     if (!node) return;
 
     const nextHeight = Math.ceil(node.getBoundingClientRect().height);
@@ -65,10 +72,13 @@ export const useRevealHeight = ({ enableObserver, deps = [] }: RevealHeightOptio
 
     pendingExpandRef.current = null;
     globalThis.requestAnimationFrame(() => {
-      pendingExpand();
-      setIsPreparing(false);
+      revealTimeoutRef.current = globalThis.setTimeout(() => {
+        pendingExpand();
+        setIsPreparing(false);
+        revealTimeoutRef.current = null;
+      }, revealDelayMs);
     });
-  }, [isPreparing]);
+  }, [isPreparing, revealDelayMs]);
 
   const resolvedHeight =
     enableObserver && expandedHeight !== null ? expandedHeight : premeasureHeight;
@@ -84,10 +94,15 @@ export const useRevealHeight = ({ enableObserver, deps = [] }: RevealHeightOptio
   const clearPremeasure = () => {
     setPremeasureHeight(null);
     pendingExpandRef.current = null;
+    if (revealTimeoutRef.current !== null) {
+      globalThis.clearTimeout(revealTimeoutRef.current);
+      revealTimeoutRef.current = null;
+    }
   };
 
   return {
     ref,
+    measureRef,
     minHeightStyle,
     beginExpand,
     clearPremeasure,

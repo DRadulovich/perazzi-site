@@ -128,15 +128,14 @@ const TravelNetworkRevealSection = ({
   const networkMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
   const {
     ref: networkShellRef,
+    measureRef,
     minHeightStyle,
     beginExpand,
     clearPremeasure,
-    isPreparing,
   } = useRevealHeight({
     enableObserver: enableTitleReveal && revealNetwork,
     deps: [activeTab, data.dealers.length, data.scheduledEvents.length],
   });
-  const showExpanded = revealNetwork || isPreparing;
 
   const handleNetworkExpand = () => {
     if (!enableTitleReveal) return;
@@ -154,6 +153,89 @@ const TravelNetworkRevealSection = ({
     setNetworkExpanded(false);
     onCollapsedChange?.(true);
   };
+
+  const expandedContent = (
+    <>
+      <RevealExpandedHeader
+        headingId="travel-network-heading"
+        heading={heading}
+        headerThemeReady={headerThemeReady}
+        enableTitleReveal={enableTitleReveal}
+        onCollapse={handleNetworkCollapse}
+      >
+        <div className="relative">
+          <Text
+            className={cn(
+              "type-section-subtitle",
+              headerThemeReady ? "text-ink-muted" : "text-white",
+            )}
+            leading="relaxed"
+          >
+            {lead}
+          </Text>
+        </div>
+        <div>
+          <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
+            {supporting}
+          </Text>
+        </div>
+      </RevealExpandedHeader>
+
+      <div id="travel-network-body" className="space-y-6">
+        <div
+          role="tablist"
+          aria-label="Experience travel and support tabs"
+          className="flex flex-wrap gap-2 md:gap-3"
+        >
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                className={cn(
+                  "group relative overflow-hidden type-label-tight pill border border-border/70 bg-card/60 shadow-soft backdrop-blur-sm hover:border-ink/20 hover:bg-card/85 focus-ring",
+                  isActive ? "text-perazzi-white" : "text-ink",
+                )}
+                onClick={() => { setActiveTab(tab.key); }}
+              >
+                {isActive ? (
+                  <span
+                    className="absolute inset-0 rounded-sm bg-perazzi-red shadow-elevated ring-1 ring-white/10"
+                    aria-hidden="true"
+                  />
+                ) : null}
+                <span className="relative z-10">
+                  {tab.label}
+                  <span className={cn("ml-2 type-caption", isActive ? "text-white/75" : "text-ink-muted")}>
+                    ({tab.count})
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div>
+          <div key={activeTab}>
+            {activeTab === "schedule" ? (
+              <ScheduleList
+                events={data.scheduledEvents}
+                emptyText={emptyScheduleText}
+              />
+            ) : (
+              <DealerList
+                dealers={data.dealers}
+                emptyText={emptyDealersText}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
 
   return (
     <>
@@ -173,96 +255,22 @@ const TravelNetworkRevealSection = ({
           reveal={revealPhotoFocus}
           minHeightClass={networkMinHeight ?? undefined}
         >
-          {showExpanded ? (
-            <div className={isPreparing ? "section-reveal-measure" : undefined}>
-              <RevealExpandedHeader
+          {revealNetwork ? (
+            expandedContent
+          ) : (
+            <>
+              <RevealCollapsedHeader
                 headingId="travel-network-heading"
                 heading={heading}
-                headerThemeReady={headerThemeReady}
-                enableTitleReveal={enableTitleReveal}
-                onCollapse={handleNetworkCollapse}
-              >
-                <div className="relative">
-                  <Text
-                    className={cn(
-                      "type-section-subtitle",
-                      headerThemeReady ? "text-ink-muted" : "text-white",
-                    )}
-                    leading="relaxed"
-                  >
-                    {lead}
-                  </Text>
-                </div>
-                <div>
-                  <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
-                    {supporting}
-                  </Text>
-                </div>
-              </RevealExpandedHeader>
-
-              <div id="travel-network-body" className="space-y-6">
-                <div
-                  role="tablist"
-                  aria-label="Experience travel and support tabs"
-                  className="flex flex-wrap gap-2 md:gap-3"
-                >
-                  {tabs.map((tab) => {
-                    const isActive = activeTab === tab.key;
-                    return (
-                      <button
-                        key={tab.key}
-                        type="button"
-                        role="tab"
-                        aria-selected={isActive}
-                        className={cn(
-                          "group relative overflow-hidden type-label-tight pill border border-border/70 bg-card/60 shadow-soft backdrop-blur-sm hover:border-ink/20 hover:bg-card/85 focus-ring",
-                          isActive ? "text-perazzi-white" : "text-ink",
-                        )}
-                        onClick={() => { setActiveTab(tab.key); }}
-                      >
-                        {isActive ? (
-                          <span
-                            className="absolute inset-0 rounded-sm bg-perazzi-red shadow-elevated ring-1 ring-white/10"
-                            aria-hidden="true"
-                          />
-                        ) : null}
-                        <span className="relative z-10">
-                          {tab.label}
-                          <span className={cn("ml-2 type-caption", isActive ? "text-white/75" : "text-ink-muted")}>
-                            ({tab.count})
-                          </span>
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <div>
-                  <div key={activeTab}>
-                    {activeTab === "schedule" ? (
-                      <ScheduleList
-                        events={data.scheduledEvents}
-                        emptyText={emptyScheduleText}
-                      />
-                    ) : (
-                      <DealerList
-                        dealers={data.dealers}
-                        emptyText={emptyDealersText}
-                      />
-                    )}
-                  </div>
-                </div>
+                subheading={lead}
+                controlsId="travel-network-body"
+                expanded={revealNetwork}
+                onExpand={handleNetworkExpand}
+              />
+              <div ref={measureRef} className="section-reveal-measure" aria-hidden>
+                {expandedContent}
               </div>
-            </div>
-          ) : (
-            <RevealCollapsedHeader
-              headingId="travel-network-heading"
-              heading={heading}
-              subheading={lead}
-              controlsId="travel-network-body"
-              expanded={revealNetwork}
-              onExpand={handleNetworkExpand}
-            />
+            </>
           )}
         </SectionShell>
       </Container>
