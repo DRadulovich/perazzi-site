@@ -19,33 +19,142 @@ function sanitizeHref(href: string): string | null {
   return null;
 }
 
+type InlineType = "link" | "code" | "bold" | "italic";
+type InlineMatch = { type: InlineType; match: RegExpMatchArray; index: number };
+type InlineRenderResult = { nodes: ReactNode[]; consumed: number };
+
+const inlinePatterns: Array<{ type: InlineType; re: RegExp }> = [
+  { type: "link", re: /\[([^\]]+)\]\(([^)]+)\)/ },
+  { type: "code", re: /`([^`]+)`/ },
+  { type: "bold", re: /\*\*([^*]+)\*\*/ },
+  { type: "italic", re: /_([^_]+)_/ },
+];
+
+function findEarliestInlineMatch(text: string): InlineMatch | null {
+  let earliest: InlineMatch | null = null;
+
+  for (const p of inlinePatterns) {
+    const m = p.re.exec(text);
+    if (m?.index === undefined) continue;
+    if (!earliest || m.index < earliest.index) earliest = { type: p.type, match: m, index: m.index };
+  }
+
+  return earliest;
+}
+
+function renderInlineLink(match: RegExpMatchArray, nextKey: () => number): InlineRenderResult {
+  const full = match[0] ?? "";
+  const label = match[1] ?? "";
+  const href = match[2] ?? "";
+  const safeHref = sanitizeHref(href);
+  if (!safeHref) {
+    return { nodes: [label], consumed: full.length };
+  }
+
+  const isExternal = /^https?:\/\//i.test(safeHref);
+  return {
+    nodes: [
+      <a
+        key={`md-link-${nextKey()}`}
+        href={safeHref}
+        className="text-blue-600 underline underline-offset-4 hover:text-blue-700"
+        target={isExternal ? "_blank" : undefined}
+        rel={isExternal ? "noreferrer noopener" : undefined}
+      >
+        {label}
+      </a>,
+    ],
+    consumed: full.length,
+  };
+}
+
+function renderInlineCode(match: RegExpMatchArray, nextKey: () => number): InlineRenderResult {
+  const full = match[0] ?? "";
+  const code = match[1] ?? "";
+  return {
+    nodes: [
+      <code
+        key={`md-code-${nextKey()}`}
+        className="rounded border border-border bg-muted/30 px-1 py-0.5 font-mono text-[11px] text-foreground"
+      >
+        {code}
+      </code>,
+    ],
+    consumed: full.length,
+  };
+}
+
+function renderInlineBold(match: RegExpMatchArray, nextKey: () => number): InlineRenderResult {
+  const full = match[0] ?? "";
+  const content = match[1] ?? "";
+  return {
+    nodes: [
+      <strong key={`md-bold-${nextKey()}`} className="font-semibold text-foreground">
+        {content}
+      </strong>,
+    ],
+    consumed: full.length,
+  };
+}
+
+function renderInlineItalic(match: RegExpMatchArray, nextKey: () => number): InlineRenderResult {
+  const full = match[0] ?? "";
+  const content = match[1] ?? "";
+  return {
+    nodes: [
+      <em key={`md-italic-${nextKey()}`} className="italic text-foreground">
+        {content}
+      </em>,
+    ],
+    consumed: full.length,
+  };
+}
+
+function renderInlineMatch(match: InlineMatch, nextKey: () => number): InlineRenderResult {
+  switch (match.type) {
+    case "link":
+      return renderInlineLink(match.match, nextKey);
+    case "code":
+      return renderInlineCode(match.match, nextKey);
+    case "bold":
+      return renderInlineBold(match.match, nextKey);
+    case "italic":
+      return renderInlineItalic(match.match, nextKey);
+    default: {
+      const _exhaustive: never = match.type;
+      return _exhaustive;
+    }
+  }
+}
+
+function addLineBreaks(nodes: ReactNode[], nextKey: () => number): ReactNode[] {
+  const withBreaks: ReactNode[] = [];
+
+  for (const node of nodes) {
+    if (typeof node !== "string") {
+      withBreaks.push(node);
+      continue;
+    }
+
+    const parts = node.split("\n");
+    for (let i = 0; i < parts.length; i += 1) {
+      const part = parts[i];
+      if (part) withBreaks.push(part);
+      if (i < parts.length - 1) withBreaks.push(<br key={`md-br-${nextKey()}`} />);
+    }
+  }
+
+  return withBreaks;
+}
+
 function renderInlineMarkdown(text: string): ReactNode[] {
   const out: ReactNode[] = [];
   let remaining = text;
   let key = 0;
-
-  const patterns: Array<{ type: "link" | "code" | "bold" | "italic"; re: RegExp }> = [
-    { type: "link", re: /\[([^\]]+)\]\(([^)]+)\)/ },
-    { type: "code", re: /`([^`]+)`/ },
-    { type: "bold", re: /\*\*([^*]+)\*\*/ },
-    { type: "italic", re: /_([^_]+)_/ },
-  ];
+  const nextKey = () => key++;
 
   while (remaining.length > 0) {
-    let earliest:
-      | {
-          type: "link" | "code" | "bold" | "italic";
-          match: RegExpMatchArray;
-          index: number;
-        }
-      | null = null;
-
-    for (const p of patterns) {
-      const m = p.re.exec(remaining);
-      if (m?.index === undefined) continue;
-      if (!earliest || m.index < earliest.index) earliest = { type: p.type, match: m, index: m.index };
-    }
-
+    const earliest = findEarliestInlineMatch(remaining);
     if (!earliest) {
       out.push(remaining);
       break;
@@ -53,74 +162,12 @@ function renderInlineMarkdown(text: string): ReactNode[] {
 
     if (earliest.index > 0) out.push(remaining.slice(0, earliest.index));
 
-    const full = earliest.match[0] ?? "";
-
-    if (earliest.type === "link") {
-      const label = earliest.match[1] ?? "";
-      const href = earliest.match[2] ?? "";
-      const safeHref = sanitizeHref(href);
-      if (!safeHref) {
-        out.push(label);
-        remaining = remaining.slice(earliest.index + full.length);
-        continue;
-      }
-
-      const isExternal = /^https?:\/\//i.test(safeHref);
-      out.push(
-        <a
-          key={`md-link-${key++}`}
-          href={safeHref}
-          className="text-blue-600 underline underline-offset-4 hover:text-blue-700"
-          target={isExternal ? "_blank" : undefined}
-          rel={isExternal ? "noreferrer noopener" : undefined}
-        >
-          {label}
-        </a>,
-      );
-    } else if (earliest.type === "code") {
-      const code = earliest.match[1] ?? "";
-      out.push(
-        <code
-          key={`md-code-${key++}`}
-          className="rounded border border-border bg-muted/30 px-1 py-0.5 font-mono text-[11px] text-foreground"
-        >
-          {code}
-        </code>,
-      );
-    } else if (earliest.type === "bold") {
-      const content = earliest.match[1] ?? "";
-      out.push(
-        <strong key={`md-bold-${key++}`} className="font-semibold text-foreground">
-          {content}
-        </strong>,
-      );
-    } else if (earliest.type === "italic") {
-      const content = earliest.match[1] ?? "";
-      out.push(
-        <em key={`md-italic-${key++}`} className="italic text-foreground">
-          {content}
-        </em>,
-      );
-    }
-
-    remaining = remaining.slice(earliest.index + full.length);
+    const { nodes, consumed } = renderInlineMatch(earliest, nextKey);
+    out.push(...nodes);
+    remaining = remaining.slice(earliest.index + consumed);
   }
 
-  const withBreaks: ReactNode[] = [];
-  for (const node of out) {
-    if (typeof node !== "string") {
-      withBreaks.push(node);
-      continue;
-    }
-
-    const parts = node.split("\n");
-    parts.forEach((part, idx) => {
-      if (part) withBreaks.push(part);
-      if (idx < parts.length - 1) withBreaks.push(<br key={`md-br-${key++}`} />);
-    });
-  }
-
-  return withBreaks;
+  return addLineBreaks(out, nextKey);
 }
 
 type MarkdownBlock =
@@ -131,100 +178,152 @@ type MarkdownBlock =
   | { type: "ol"; items: string[] };
 type MarkdownViewProps = Readonly<{ markdown: string }>;
 
+type MarkdownParserState = {
+  blocks: MarkdownBlock[];
+  para: string[];
+  inFence: boolean;
+  fenceLang: string | null;
+  fenceLines: string[];
+};
+
+type ListConfig = { type: "ul" | "ol"; testRe: RegExp; stripRe: RegExp };
+
+function normalizeMarkdownSource(markdown: string): string {
+  return String(markdown ?? "").replaceAll("\r\n", "\n");
+}
+
+function flushParagraph(state: MarkdownParserState): void {
+  const text = state.para.join("\n").trim();
+  if (text) state.blocks.push({ type: "paragraph", text });
+  state.para = [];
+}
+
+function openFence(state: MarkdownParserState, lang: string | null): void {
+  flushParagraph(state);
+  state.inFence = true;
+  state.fenceLang = lang;
+  state.fenceLines = [];
+}
+
+function closeFence(state: MarkdownParserState): void {
+  state.blocks.push({ type: "code", lang: state.fenceLang, code: state.fenceLines.join("\n") });
+  state.inFence = false;
+  state.fenceLang = null;
+  state.fenceLines = [];
+}
+
+function handleFenceLine(
+  lines: string[],
+  i: number,
+  state: MarkdownParserState,
+  fenceRe: RegExp,
+): number | null {
+  const line = lines[i] ?? "";
+  const fenceMatch = fenceRe.exec(line);
+  if (fenceMatch) {
+    if (state.inFence) {
+      closeFence(state);
+    } else {
+      openFence(state, fenceMatch[1] ?? null);
+    }
+    return i + 1;
+  }
+
+  if (state.inFence) {
+    state.fenceLines.push(line);
+    return i + 1;
+  }
+
+  return null;
+}
+
+function handleHeadingLine(
+  lines: string[],
+  i: number,
+  state: MarkdownParserState,
+  headingRe: RegExp,
+): number | null {
+  const line = lines[i] ?? "";
+  const headingMatch = headingRe.exec(line);
+  if (!headingMatch) return null;
+
+  flushParagraph(state);
+  const level = Math.min(6, headingMatch[1]?.length ?? 1);
+  state.blocks.push({ type: "heading", level, text: headingMatch[2] ?? "" });
+  return i + 1;
+}
+
+function handleListBlock(
+  lines: string[],
+  i: number,
+  state: MarkdownParserState,
+  config: ListConfig,
+): number | null {
+  const line = lines[i] ?? "";
+  if (!config.testRe.test(line)) return null;
+
+  flushParagraph(state);
+  const items: string[] = [];
+  let idx = i;
+  while (idx < lines.length && config.testRe.test(lines[idx] ?? "")) {
+    items.push(String(lines[idx]).replace(config.stripRe, "").trim());
+    idx += 1;
+  }
+  state.blocks.push({ type: config.type, items });
+  return idx;
+}
+
+function handleBlankLine(lines: string[], i: number, state: MarkdownParserState): number | null {
+  const line = lines[i] ?? "";
+  if (line.trim() !== "") return null;
+
+  flushParagraph(state);
+  return i + 1;
+}
+
 function parseMarkdownBlocks(markdown: string): MarkdownBlock[] {
-  const src = String(markdown ?? "").replace(/\r\n/g, "\n");
+  const src = normalizeMarkdownSource(markdown);
   const lines = src.split("\n");
 
-  const blocks: MarkdownBlock[] = [];
-  let para: string[] = [];
-
-  let inFence = false;
-  let fenceLang: string | null = null;
-  let fenceLines: string[] = [];
-
-  const flushPara = () => {
-    const text = para.join("\n").trim();
-    if (text) blocks.push({ type: "paragraph", text });
-    para = [];
+  const state: MarkdownParserState = {
+    blocks: [],
+    para: [],
+    inFence: false,
+    fenceLang: null,
+    fenceLines: [],
   };
 
   const fenceRe = /^```\s*(\w+)?\s*$/;
   const headingRe = /^(#{1,6})\s+(.*)$/;
+  const listConfigs: Record<"ul" | "ol", ListConfig> = {
+    ul: { type: "ul", testRe: /^\s*[-*]\s+/, stripRe: /^\s*[-*]\s+/ },
+    ol: { type: "ol", testRe: /^\s*\d+\.\s+/, stripRe: /^\s*\d+\.\s+/ },
+  };
 
   let i = 0;
   while (i < lines.length) {
-    const line = lines[i] ?? "";
+    const nextIndex =
+      handleFenceLine(lines, i, state, fenceRe) ??
+      handleHeadingLine(lines, i, state, headingRe) ??
+      handleListBlock(lines, i, state, listConfigs.ul) ??
+      handleListBlock(lines, i, state, listConfigs.ol) ??
+      handleBlankLine(lines, i, state);
 
-    const fenceMatch = fenceRe.exec(line);
-    if (fenceMatch) {
-      if (inFence) {
-        blocks.push({ type: "code", lang: fenceLang, code: fenceLines.join("\n") });
-        inFence = false;
-        fenceLang = null;
-        fenceLines = [];
-      } else {
-        flushPara();
-        inFence = true;
-        fenceLang = fenceMatch[1] ?? null;
-        fenceLines = [];
-      }
-      i += 1;
+    if (nextIndex !== null) {
+      i = nextIndex;
       continue;
     }
 
-    if (inFence) {
-      fenceLines.push(line);
-      i += 1;
-      continue;
-    }
-
-    const headingMatch = headingRe.exec(line);
-    if (headingMatch) {
-      flushPara();
-      const level = Math.min(6, headingMatch[1]?.length ?? 1);
-      blocks.push({ type: "heading", level, text: headingMatch[2] ?? "" });
-      i += 1;
-      continue;
-    }
-
-    if (/^\s*[-*]\s+/.test(line)) {
-      flushPara();
-      const items: string[] = [];
-      while (i < lines.length && /^\s*[-*]\s+/.test(lines[i] ?? "")) {
-        items.push(String(lines[i]).replace(/^\s*[-*]\s+/, "").trim());
-        i += 1;
-      }
-      blocks.push({ type: "ul", items });
-      continue;
-    }
-
-    if (/^\s*\d+\.\s+/.test(line)) {
-      flushPara();
-      const items: string[] = [];
-      while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i] ?? "")) {
-        items.push(String(lines[i]).replace(/^\s*\d+\.\s+/, "").trim());
-        i += 1;
-      }
-      blocks.push({ type: "ol", items });
-      continue;
-    }
-
-    if (line.trim() === "") {
-      flushPara();
-      i += 1;
-      continue;
-    }
-
-    para.push(line);
+    state.para.push(lines[i] ?? "");
     i += 1;
   }
 
-  if (inFence) {
-    blocks.push({ type: "code", lang: fenceLang, code: fenceLines.join("\n") });
+  if (state.inFence) {
+    closeFence(state);
   }
 
-  flushPara();
-  return blocks;
+  flushParagraph(state);
+  return state.blocks;
 }
 
 function getBlockKeySuffix(b: MarkdownBlock): string {
