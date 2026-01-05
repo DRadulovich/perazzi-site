@@ -36,7 +36,7 @@ export {
   SectionShell,
   useRevealHeight,
 } from "./section-reveal";
-export { ChoreoGroup } from "./choreo";
+export { ChoreoGroup, ChoreoPresence } from "./choreo";
 export { Text } from "./text";
 export { Textarea } from "./textarea";
 export {

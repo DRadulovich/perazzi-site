@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 
 export const choreoDurations = {
+  micro: 120,
   short: 180,
   base: 320,
   long: 520,
@@ -12,32 +13,70 @@ export const choreoStagger = {
   wide: 110,
 } as const;
 
-export const choreoEase = "cubic-bezier(0.22, 1, 0.36, 1)" as const;
+export const choreoDistance = {
+  tight: 8,
+  base: 12,
+  wide: 18,
+} as const;
+
+export const choreoEaseOut = "cubic-bezier(0.22, 1, 0.36, 1)" as const;
+export const choreoEaseIn = "cubic-bezier(0.4, 0, 1, 1)" as const;
+export const choreoEaseHero = "cubic-bezier(0.16, 1, 0.3, 1)" as const;
+export const choreoEase = choreoEaseOut;
 
 export type ChoreoEffect = "fade-lift" | "slide" | "scale-parallax" | "mask-wipe";
 export type ChoreoDirection = "up" | "down" | "left" | "right";
 export type ChoreoAxis = "x" | "y";
+export type ChoreoPresenceState = "enter" | "exit";
 
-type ChoreoGroupVarsOptions = {
+export type ChoreoGroupVarsOptions = {
   delayMs?: number;
   durationMs?: number;
   staggerMs?: number;
   easing?: string;
 };
 
-type ChoreoItemVarsOptions = {
+export type ChoreoItemVarsOptions = {
   index?: number;
   distance?: number;
   axis?: ChoreoAxis;
   direction?: ChoreoDirection;
   scaleFrom?: number;
   maskDirection?: ChoreoDirection;
+  maskFeather?: number;
 };
+
+export type ChoreoPresenceVarsOptions = {
+  enterDurationMs?: number;
+  exitDurationMs?: number;
+  enterEase?: string;
+  exitEase?: string;
+  enterY?: number;
+  exitY?: number;
+  enterScale?: number;
+  exitScale?: number;
+  enterBlur?: number;
+  exitBlur?: number;
+};
+
+export const dreamyPace = {
+  enterMs: 3600,
+  textMs: 3000,
+  lineMs: 2800,
+  staggerMs: 420,
+  staggerSpan: 0.7,
+  easing: "cubic-bezier(0.2, 0.9, 0.2, 1)",
+} as const;
 
 export const choreoTokens = {
   durations: choreoDurations,
+  distance: choreoDistance,
   stagger: choreoStagger,
   ease: choreoEase,
+  easeIn: choreoEaseIn,
+  easeOut: choreoEaseOut,
+  easeHero: choreoEaseHero,
+  dreamyPace,
 };
 
 export const prefersReducedMotion = (): boolean => {
@@ -47,8 +86,32 @@ export const prefersReducedMotion = (): boolean => {
   return query?.matches ?? false;
 };
 
-export const choreoPresence = (state: "enter" | "exit") =>
+export const choreoPresence = (state: ChoreoPresenceState) =>
   ({ "data-choreo-presence": state }) as const;
+
+export const buildChoreoPresenceVars = ({
+  enterDurationMs = 260,
+  exitDurationMs = choreoDurations.short,
+  enterEase = choreoEaseOut,
+  exitEase = choreoEaseIn,
+  enterY = 12,
+  exitY = 8,
+  enterScale = 1,
+  exitScale = 1,
+  enterBlur = 0,
+  exitBlur = 0,
+}: ChoreoPresenceVarsOptions = {}): CSSProperties => ({
+  "--choreo-presence-enter-duration": `${enterDurationMs}ms`,
+  "--choreo-presence-exit-duration": `${exitDurationMs}ms`,
+  "--choreo-presence-enter-ease": enterEase,
+  "--choreo-presence-exit-ease": exitEase,
+  "--choreo-presence-enter-y": `${enterY}px`,
+  "--choreo-presence-exit-y": `${exitY}px`,
+  "--choreo-presence-enter-scale": enterScale,
+  "--choreo-presence-exit-scale": exitScale,
+  "--choreo-presence-enter-blur": `${enterBlur}px`,
+  "--choreo-presence-exit-blur": `${exitBlur}px`,
+});
 
 export const buildChoreoGroupVars = ({
   delayMs = 0,
@@ -88,15 +151,50 @@ const maskInsetFromDirection = (direction: ChoreoDirection) => {
   }
 };
 
+const maskGradientFromDirection = (direction: ChoreoDirection) => {
+  switch (direction) {
+    case "left":
+      return {
+        direction: "to right",
+        size: "200% 100%",
+        from: "100% 0%",
+        to: "0% 0%",
+      };
+    case "right":
+      return {
+        direction: "to left",
+        size: "200% 100%",
+        from: "100% 0%",
+        to: "0% 0%",
+      };
+    case "down":
+      return {
+        direction: "to top",
+        size: "100% 200%",
+        from: "0% 100%",
+        to: "0% 0%",
+      };
+    case "up":
+    default:
+      return {
+        direction: "to bottom",
+        size: "100% 200%",
+        from: "0% 100%",
+        to: "0% 0%",
+      };
+  }
+};
+
 export const buildChoreoItemVars = (
   effect: ChoreoEffect,
   {
     index = 0,
-    distance = 14,
+    distance = choreoDistance.base,
     axis = "x",
     direction,
     scaleFrom = 1.04,
     maskDirection = "up",
+    maskFeather,
   }: ChoreoItemVarsOptions = {},
 ): CSSProperties => {
   const vars: Record<string, string | number> = {
@@ -127,7 +225,15 @@ export const buildChoreoItemVars = (
       break;
     }
     case "mask-wipe": {
+      const gradient = maskGradientFromDirection(maskDirection);
       vars["--choreo-mask-from"] = maskInsetFromDirection(maskDirection);
+      vars["--choreo-mask-direction"] = gradient.direction;
+      vars["--choreo-mask-size"] = gradient.size;
+      vars["--choreo-mask-position-from"] = gradient.from;
+      vars["--choreo-mask-position-to"] = gradient.to;
+      if (typeof maskFeather === "number") {
+        vars["--choreo-mask-feather"] = `${maskFeather}%`;
+      }
       vars["--choreo-translate-x"] = "0px";
       vars["--choreo-translate-y"] = `${Math.max(4, distance / 2)}px`;
       break;
@@ -138,3 +244,15 @@ export const buildChoreoItemVars = (
 
   return vars as CSSProperties;
 };
+
+export const choreoFadeLift = (options?: ChoreoItemVarsOptions) =>
+  buildChoreoItemVars("fade-lift", options);
+
+export const choreoSlide = (options?: ChoreoItemVarsOptions) =>
+  buildChoreoItemVars("slide", options);
+
+export const choreoScaleParallax = (options?: ChoreoItemVarsOptions) =>
+  buildChoreoItemVars("scale-parallax", options);
+
+export const choreoMaskWipe = (options?: ChoreoItemVarsOptions) =>
+  buildChoreoItemVars("mask-wipe", options);

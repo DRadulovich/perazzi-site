@@ -1,16 +1,25 @@
 "use client";
 
-import { Children, isValidElement, type CSSProperties, type ReactNode } from "react";
+import { Slot } from "@radix-ui/react-slot";
+import {
+  Children,
+  isValidElement,
+  type CSSProperties,
+  type HTMLAttributes,
+  type ReactNode,
+} from "react";
 import { cn } from "@/lib/utils";
 import {
   buildChoreoGroupVars,
   buildChoreoItemVars,
+  choreoPresence,
   choreoDurations,
   choreoEase,
   choreoStagger,
   type ChoreoAxis,
   type ChoreoDirection,
   type ChoreoEffect,
+  type ChoreoPresenceState,
 } from "@/lib/choreo";
 import { RevealGroup, RevealItem } from "./section-reveal";
 
@@ -31,6 +40,34 @@ type ChoreoGroupProps = {
   readonly itemStyle?: CSSProperties;
   readonly itemAsChild?: boolean;
 };
+
+type ChoreoPresenceProps = HTMLAttributes<HTMLElement> & {
+  readonly children: ReactNode;
+  readonly state: ChoreoPresenceState;
+  readonly asChild?: boolean;
+};
+
+export function ChoreoPresence({
+  children,
+  state,
+  asChild = false,
+  className,
+  style,
+  ...props
+}: ChoreoPresenceProps) {
+  const Comp = asChild ? Slot : "div";
+
+  return (
+    <Comp
+      {...choreoPresence(state)}
+      className={cn("choreo-presence", className)}
+      style={style}
+      {...props}
+    >
+      {children}
+    </Comp>
+  );
+}
 
 export function ChoreoGroup({
   children,
@@ -76,6 +113,10 @@ export function ChoreoGroup({
           maskDirection,
           scaleFrom,
         });
+        const childStyle = itemAsChild && isValidElement(child)
+          ? (child.props as { style?: CSSProperties }).style
+          : undefined;
+        const mergedStyle = { ...childStyle, ...itemVars, ...itemStyle };
 
         const key = isValidElement(child) && child.key !== null ? child.key : index;
 
@@ -85,7 +126,7 @@ export function ChoreoGroup({
             index={index}
             asChild={itemAsChild}
             className={cn("choreo-item", `choreo-${effect}`, itemClassName)}
-            style={{ ...itemVars, ...itemStyle }}
+            style={mergedStyle}
           >
             {child}
           </RevealItem>

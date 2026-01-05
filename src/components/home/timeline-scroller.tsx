@@ -7,13 +7,22 @@ import type { FittingStage, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { logAnalytics } from "@/lib/analytics";
+import {
+  buildChoreoPresenceVars,
+  choreoDistance,
+  choreoDurations,
+  dreamyPace,
+  prefersReducedMotion,
+  type ChoreoPresenceState,
+} from "@/lib/choreo";
 import { cn } from "@/lib/utils";
 import {
   Button,
+  ChoreoGroup,
+  ChoreoPresence,
   Heading,
   RevealAnimatedBody,
   RevealCollapsedHeader,
-  RevealExpandedHeader,
   RevealGroup,
   RevealItem,
   SectionBackdrop,
@@ -158,16 +167,15 @@ function TimelineRevealSection({
   const expandedContent = (
     <RevealAnimatedBody sequence>
       <RevealItem index={0}>
-        <RevealExpandedHeader
+        <TimelineExpandedHeader
           headingId="craft-timeline-heading"
           heading={headingTitle}
-          subheading={headingEyebrow}
+          eyebrow={headingEyebrow}
+          instructions={headingInstructions}
           headerThemeReady={headerThemeReady}
           enableTitleReveal={enableTitleReveal}
           onCollapse={handleTimelineCollapse}
-        >
-          <span className="sr-only">{headingInstructions}</span>
-        </RevealExpandedHeader>
+        />
       </RevealItem>
       <RevealGroup delayMs={140}>
         <TimelineBody
@@ -211,14 +219,21 @@ function TimelineRevealSection({
               expandedContent
             ) : (
               <>
-                <RevealCollapsedHeader
-                  headingId="craft-timeline-heading"
-                  heading={headingTitle}
-                  subheading={headingEyebrow}
-                  controlsId="craft-timeline-body"
-                  expanded={revealTimeline}
-                  onExpand={handleTimelineExpand}
-                />
+                <ChoreoGroup
+                  effect="fade-lift"
+                  distance={choreoDistance.base}
+                  staggerMs={dreamyPace.staggerMs}
+                  itemClassName="absolute inset-0"
+                >
+                  <RevealCollapsedHeader
+                    headingId="craft-timeline-heading"
+                    heading={headingTitle}
+                    subheading={headingEyebrow}
+                    controlsId="craft-timeline-body"
+                    expanded={revealTimeline}
+                    onExpand={handleTimelineExpand}
+                  />
+                </ChoreoGroup>
                 <div ref={measureRef} className="section-reveal-measure" aria-hidden>
                   {expandedContent}
                 </div>
@@ -231,6 +246,86 @@ function TimelineRevealSection({
   );
 }
 
+type TimelineExpandedHeaderProps = {
+  readonly headingId: string;
+  readonly heading: string;
+  readonly eyebrow?: string;
+  readonly instructions?: string;
+  readonly headerThemeReady: boolean;
+  readonly enableTitleReveal: boolean;
+  readonly onCollapse: () => void;
+  readonly collapseLabel?: string;
+};
+
+function TimelineExpandedHeader({
+  headingId,
+  heading,
+  eyebrow,
+  instructions,
+  headerThemeReady,
+  enableTitleReveal,
+  onCollapse,
+  collapseLabel = "Collapse",
+}: TimelineExpandedHeaderProps) {
+  const headingClass = headerThemeReady ? "text-ink" : "text-white";
+  const eyebrowClass = headerThemeReady ? "text-ink-muted" : "text-white";
+  const instructionsClass = headerThemeReady ? "text-ink-muted" : "text-white/80";
+
+  return (
+    <div className="relative z-10 space-y-4 md:flex md:items-center md:justify-between md:gap-8">
+        <ChoreoGroup
+          effect="fade-lift"
+          distance={choreoDistance.base}
+          staggerMs={dreamyPace.staggerMs}
+          className="space-y-3"
+        >
+        <div className="relative">
+          <Heading
+            id={headingId}
+            level={2}
+            size="xl"
+            className={headingClass}
+          >
+            {heading}
+          </Heading>
+        </div>
+        {eyebrow ? (
+          <div className="relative">
+            <Text
+              size="lg"
+              className={cn("type-section-subtitle", eyebrowClass)}
+            >
+              {eyebrow}
+            </Text>
+          </div>
+        ) : null}
+        {instructions ? (
+          <div className="relative">
+            <Text size="md" className={cn("max-w-2xl", instructionsClass)}>
+              {instructions}
+            </Text>
+          </div>
+        ) : null}
+      </ChoreoGroup>
+      {enableTitleReveal ? (
+        <ChoreoGroup
+          effect="fade-lift"
+          distance={choreoDistance.tight}
+          delayMs={choreoDurations.micro}
+          itemAsChild
+        >
+          <button
+            type="button"
+            className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+            onClick={onCollapse}
+          >
+            {collapseLabel}
+          </button>
+        </ChoreoGroup>
+      ) : null}
+    </div>
+  );
+}
 
 type TimelineBodyProps = {
   readonly enablePinned: boolean;
@@ -297,6 +392,17 @@ type TimelinePinnedLayoutProps = {
   readonly revealPhotoFocus: boolean;
 };
 
+const splitBodyLines = (body: string) =>
+  body
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+const resolveStaggerForSpan = (durationMs: number, count: number, span: number) => {
+  if (count <= 1) return 0;
+  return Math.round((durationMs * span) / (count - 1));
+};
+
 function TimelinePinnedLayout({
   stages,
   resolvedActiveStage,
@@ -304,23 +410,82 @@ function TimelinePinnedLayout({
   alternateTitle,
   revealPhotoFocus,
 }: TimelinePinnedLayoutProps) {
+  const reduceMotion = prefersReducedMotion();
+  const [presenceStageIndex, setPresenceStageIndex] = useState(resolvedActiveStage);
+  const [presenceState, setPresenceState] = useState<ChoreoPresenceState>("enter");
+  const presenceTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
+  const presenceVars = buildChoreoPresenceVars({
+    enterDurationMs: dreamyPace.enterMs,
+    enterEase: dreamyPace.easing,
+    enterScale: 0.98,
+    exitScale: 0.985,
+    enterBlur: 2,
+    exitBlur: 1,
+  });
+
+  useEffect(() => (
+    () => {
+      if (presenceTimeoutRef.current) {
+        globalThis.clearTimeout(presenceTimeoutRef.current);
+        presenceTimeoutRef.current = null;
+      }
+    }
+  ), []);
+
+  const handleStageSelect = (index: number) => {
+    setActiveStage(index);
+
+    if (presenceTimeoutRef.current) {
+      globalThis.clearTimeout(presenceTimeoutRef.current);
+      presenceTimeoutRef.current = null;
+    }
+
+    if (reduceMotion || index === presenceStageIndex) {
+      setPresenceStageIndex(index);
+      setPresenceState("enter");
+      return;
+    }
+
+    setPresenceState("exit");
+    presenceTimeoutRef.current = globalThis.setTimeout(() => {
+      setPresenceStageIndex(index);
+      setPresenceState("enter");
+      presenceTimeoutRef.current = null;
+    }, choreoDurations.short);
+  };
+
+  const activeStage = stages[presenceStageIndex];
+
   return (
     <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
       <div className="space-y-4 border-none bg-card/0 p-4 shadow-none sm:border-none sm:bg-card/0 sm:p-4 sm:shadow-none">
-        <Text size="label-tight" className="mb-3 text-ink">
-          {alternateTitle}
-        </Text>
-        <div className="space-y-1">
+        <ChoreoGroup
+          effect="fade-lift"
+          distance={choreoDistance.tight}
+          staggerMs={dreamyPace.staggerMs}
+          className="space-y-3"
+        >
+          <Text size="label-tight" className="text-ink">
+            {alternateTitle}
+          </Text>
+        </ChoreoGroup>
+        <ChoreoGroup
+          effect="fade-lift"
+          distance={choreoDistance.tight}
+          staggerMs={dreamyPace.staggerMs}
+          delayMs={choreoDurations.micro}
+          className="space-y-1"
+        >
           {stages.map((stage, index) => (
             <TimelineControlButton
               key={`control-${stage.id}`}
               label={stage.title}
               order={stage.order}
               active={resolvedActiveStage === index}
-              onSelect={() => { setActiveStage(index); }}
+              onSelect={() => { handleStageSelect(index); }}
             />
           ))}
-        </div>
+        </ChoreoGroup>
       </div>
 
       <div className="space-y-5">
@@ -332,11 +497,17 @@ function TimelinePinnedLayout({
               : "border-transparent bg-transparent shadow-none ring-0 backdrop-blur-none",
           )}
         >
-          {stages[resolvedActiveStage] ? (
-            <PinnedStagePanel
-              stage={stages[resolvedActiveStage]}
-              revealPhotoFocus={revealPhotoFocus}
-            />
+          {activeStage ? (
+            <ChoreoPresence
+              state={presenceState}
+              className="relative"
+              style={presenceVars}
+            >
+              <PinnedStagePanel
+                stage={activeStage}
+                revealPhotoFocus={revealPhotoFocus}
+              />
+            </ChoreoPresence>
           ) : null}
         </div>
       </div>
@@ -357,6 +528,11 @@ function TimelineStackedLayout({
   setActiveStage,
   alternateTitle,
 }: TimelineStackedLayoutProps) {
+  const presenceVars = buildChoreoPresenceVars({
+    enterY: choreoDistance.tight,
+    exitY: choreoDistance.tight,
+  });
+
   return (
     <div className="space-y-8">
       <div className="space-y-3">
@@ -365,7 +541,13 @@ function TimelineStackedLayout({
         </Text>
       </div>
 
-      <div className="space-y-3">
+      <ChoreoGroup
+        effect="fade-lift"
+        distance={choreoDistance.base}
+        staggerMs={dreamyPace.staggerMs}
+        className="space-y-3"
+        itemAsChild
+      >
         {stages.map((stage, index) => {
           const expanded = activeStage === index;
           const panelId = `craft-stage-panel-${stage.id}`;
@@ -385,7 +567,7 @@ function TimelineStackedLayout({
                 className="flex w-full items-center justify-between gap-3 text-left focus-ring"
               >
                 <div>
-                  <Text size="button" className="text-ink-muted mb-2">
+                  <Text size="button" className="mb-2 text-ink-muted">
                     Stage {stage.order}
                   </Text>
                   <Text className="text-lg type-body-title text-ink">
@@ -401,22 +583,26 @@ function TimelineStackedLayout({
                 id={panelId}
                 aria-labelledby={buttonId}
                 className={cn(
-                  "mt-3 overflow-hidden",
-                  expanded
-                    ? "max-h-[999px] opacity-100"
-                    : "max-h-0 opacity-0",
+                  "mt-3 overflow-hidden transition-[max-height] duration-300 ease-out",
+                  expanded ? "max-h-[999px]" : "max-h-0",
                 )}
               >
-                {expanded && (
-                  <div className="mt-2">
-                    <TimelineItem stage={stage} />
-                  </div>
-                )}
+                <ChoreoPresence
+                  state={expanded ? "enter" : "exit"}
+                  style={presenceVars}
+                  className={cn(
+                    "mt-2",
+                    expanded ? "pointer-events-auto" : "pointer-events-none",
+                  )}
+                  aria-hidden={!expanded}
+                >
+                  <TimelineItem stage={stage} />
+                </ChoreoPresence>
               </div>
             </div>
           );
         })}
-      </div>
+      </ChoreoGroup>
     </div>
   );
 }
@@ -450,7 +636,7 @@ function TimelineControlButton({
     >
       {active ? (
         <span
-          className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
+          className="timeline-control-pulse absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
           aria-hidden="true"
         />
       ) : null}
@@ -484,45 +670,73 @@ function PinnedStagePanel({
   revealPhotoFocus,
 }: PinnedStageProps) {
   const sizes = "(min-width: 1600px) 860px, (min-width: 1280px) 760px, 100vw";
+  const bodyLines = splitBodyLines(stage.body);
 
-  const media = (
+  return (
     <div className="flex h-full w-full flex-col gap-4 p-4 sm:p-6">
-      <div className="group relative aspect-3/2 sm:aspect-4/3 w-full overflow-hidden rounded-2xl bg-(--color-canvas)">
-        <Image
-          src={stage.media.url}
-          alt={stage.media.alt}
-          fill
-          sizes={sizes}
-          className="object-cover"
-          priority={stage.order === 1}
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/80 via-(--scrim-strong)/50 to-transparent",
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-      </div>
+      <ChoreoGroup
+        effect="scale-parallax"
+        distance={choreoDistance.base}
+        scaleFrom={1.02}
+        itemAsChild
+      >
+        <div className="group relative aspect-3/2 sm:aspect-4/3 w-full overflow-hidden rounded-2xl bg-(--color-canvas)">
+          <Image
+            src={stage.media.url}
+            alt={stage.media.alt}
+            fill
+            sizes={sizes}
+            className="object-cover"
+            priority={stage.order === 1}
+          />
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/80 via-(--scrim-strong)/50 to-transparent",
+              revealPhotoFocus ? "opacity-100" : "opacity-0",
+            )}
+            aria-hidden
+          />
+        </div>
+      </ChoreoGroup>
 
-      <div className="space-y-3">
+      <ChoreoGroup
+        effect="fade-lift"
+        distance={choreoDistance.tight}
+        durationMs={dreamyPace.textMs}
+        easing={dreamyPace.easing}
+        staggerMs={dreamyPace.staggerMs}
+        className="space-y-3"
+      >
         <Text size="button" className="text-ink-muted">
           Stage {stage.order}
         </Text>
         <Heading level={3} size="lg" className="type-body-title text-ink not-italic">
           {stage.title}
         </Heading>
-        <Text className="type-body text-ink-muted">
-          {stage.body}
-        </Text>
-          {stage.media.caption ? (
-            <Text size="caption" className="text-ink-muted">
-              {stage.media.caption}
+        <ChoreoGroup
+          effect="fade-lift"
+          distance={choreoDistance.tight}
+          durationMs={dreamyPace.lineMs}
+          easing={dreamyPace.easing}
+          staggerMs={resolveStaggerForSpan(
+            dreamyPace.enterMs,
+            bodyLines.length,
+            dreamyPace.staggerSpan,
+          )}
+          className="space-y-2"
+        >
+          {bodyLines.map((line, index) => (
+            <Text key={`stage-body-${stage.id}-${index}`} className="type-body text-ink-muted">
+              {line}
             </Text>
-          ) : null}
-      </div>
+          ))}
+        </ChoreoGroup>
+        {stage.media.caption ? (
+          <Text size="caption" className="text-ink-muted">
+            {stage.media.caption}
+          </Text>
+        ) : null}
+      </ChoreoGroup>
     </div>
   );
-
-  return <div className="absolute inset-0">{media}</div>;
 }

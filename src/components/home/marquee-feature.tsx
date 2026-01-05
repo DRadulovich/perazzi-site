@@ -7,12 +7,16 @@ import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import {
+  choreoDistance,
+  choreoDurations,
+  dreamyPace,
+} from "@/lib/choreo";
+import {
+  ChoreoGroup,
   Container,
   Heading,
   RevealAnimatedBody,
   RevealCollapsedHeader,
-  RevealGroup,
-  RevealItem,
   SectionBackdrop,
   SectionShell,
   Text,
@@ -116,33 +120,44 @@ function MarqueeFeatureRevealSection({
   };
 
   const expandedContent = (
-    <RevealAnimatedBody sequence>
-      <div id="marquee-feature-body" className="relative z-10">
-        <div className="md:grid md:grid-cols-[minmax(260px,1fr)_minmax(0,1.4fr)] md:items-center md:gap-10">
-          <RevealItem index={0}>
-            <div
-              className="group relative min-h-[280px] overflow-hidden rounded-2xl bg-elevated ring-1 ring-border/70 aspect-dynamic sm:min-h-[340px]"
-              style={{ "--aspect-ratio": String(ratio) }}
+      <RevealAnimatedBody sequence>
+        <div id="marquee-feature-body" className="relative z-10">
+          <div className="md:grid md:grid-cols-[minmax(260px,1fr)_minmax(0,1.4fr)] md:items-center md:gap-10">
+            <ChoreoGroup
+              effect="scale-parallax"
+              distance={choreoDistance.base}
+              durationMs={dreamyPace.textMs}
+              easing={dreamyPace.easing}
+              scaleFrom={1.04}
+              itemAsChild
             >
-              <Image
-                src={champion.image.url}
-                alt={champion.image.alt}
-                fill
-                sizes="(min-width: 1280px) 384px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                className="object-cover"
-                loading="lazy"
-              />
-            </div>
-          </RevealItem>
+              <div
+                className="relative min-h-[280px] overflow-hidden rounded-2xl bg-elevated ring-1 ring-border/70 aspect-dynamic sm:min-h-[340px]"
+                style={{ "--aspect-ratio": String(ratio) }}
+              >
+                <Image
+                  src={champion.image.url}
+                  alt={champion.image.alt}
+                  fill
+                  sizes="(min-width: 1280px) 384px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                  className="object-cover"
+                  loading="lazy"
+                />
+              </div>
+            </ChoreoGroup>
 
-          <RevealGroup delayMs={140} className="mt-8 md:mt-0 md:flex md:items-start md:justify-between md:gap-8">
-            <div className="space-y-4">
-              <RevealItem index={0}>
+            <div className="mt-8 md:mt-0 md:flex md:items-start md:justify-between md:gap-8">
+              <ChoreoGroup
+                effect="fade-lift"
+                distance={choreoDistance.tight}
+                durationMs={dreamyPace.textMs}
+                easing={dreamyPace.easing}
+                staggerMs={dreamyPace.staggerMs}
+                className="space-y-4"
+              >
                 <Text size="label-tight" className="text-ink-muted">
                   {eyebrow}
                 </Text>
-              </RevealItem>
-              <RevealItem index={1}>
                 <div className="relative">
                   <Heading
                     id="champion-heading"
@@ -153,8 +168,6 @@ function MarqueeFeatureRevealSection({
                     {headingTitle}
                   </Heading>
                 </div>
-              </RevealItem>
-              <RevealItem index={2}>
                 <div className="relative">
                   <Text
                     size="lg"
@@ -166,8 +179,6 @@ function MarqueeFeatureRevealSection({
                     {headingSubtitle}
                   </Text>
                 </div>
-              </RevealItem>
-              <RevealItem index={3}>
                 <Text
                   asChild
                   size="lg"
@@ -175,34 +186,41 @@ function MarqueeFeatureRevealSection({
                 >
                   <blockquote>“{champion.quote}”</blockquote>
                 </Text>
-              </RevealItem>
-              {champion.article ? (
-                <RevealItem index={4}>
+                {champion.article ? (
                   <a
                     href={`/journal/${champion.article.slug}`}
-                    className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                    className="marquee-article-link inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 type-button text-perazzi-red focus-ring"
                   >
-                    {champion.article.title}
-                    <span aria-hidden="true">→</span>
+                    <span className="relative">
+                      {champion.article.title}
+                      <span className="marquee-article-underline" aria-hidden="true" />
+                    </span>
+                    <span className="marquee-article-arrow" aria-hidden="true">→</span>
                   </a>
-                </RevealItem>
+                ) : null}
+              </ChoreoGroup>
+              {enableTitleReveal ? (
+                <ChoreoGroup
+                  effect="fade-lift"
+                  distance={choreoDistance.tight}
+                  delayMs={choreoDurations.short}
+                  durationMs={dreamyPace.textMs}
+                  easing={dreamyPace.easing}
+                  itemAsChild
+                >
+                  <button
+                    type="button"
+                    className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+                    onClick={handleMarqueeCollapse}
+                  >
+                    Collapse
+                  </button>
+                </ChoreoGroup>
               ) : null}
             </div>
-            {enableTitleReveal ? (
-              <RevealItem index={5}>
-                <button
-                  type="button"
-                  className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-                  onClick={handleMarqueeCollapse}
-                >
-                  Collapse
-                </button>
-              </RevealItem>
-            ) : null}
-          </RevealGroup>
+          </div>
         </div>
-      </div>
-    </RevealAnimatedBody>
+      </RevealAnimatedBody>
   );
 
   return (
@@ -227,14 +245,21 @@ function MarqueeFeatureRevealSection({
             expandedContent
           ) : (
             <>
-              <RevealCollapsedHeader
-                headingId="champion-heading"
-                heading={headingTitle}
-                subheading={headingSubtitle}
-                controlsId="marquee-feature-body"
-                expanded={revealMarquee}
-                onExpand={handleMarqueeExpand}
-              />
+              <ChoreoGroup
+                effect="fade-lift"
+                distance={choreoDistance.base}
+                staggerMs={dreamyPace.staggerMs}
+                itemClassName="absolute inset-0"
+              >
+                <RevealCollapsedHeader
+                  headingId="champion-heading"
+                  heading={headingTitle}
+                  subheading={headingSubtitle}
+                  controlsId="marquee-feature-body"
+                  expanded={revealMarquee}
+                  onExpand={handleMarqueeExpand}
+                />
+              </ChoreoGroup>
               <div ref={measureRef} className="section-reveal-measure" aria-hidden>
                 {expandedContent}
               </div>

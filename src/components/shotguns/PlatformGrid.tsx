@@ -18,18 +18,98 @@ import { PlatformCard } from "./PlatformCard";
 import { ChatTriggerButton } from "@/components/chat/ChatTriggerButton";
 import { buildPlatformPrompt } from "@/lib/platform-prompts";
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
+import {
+  buildChoreoPresenceVars,
+  choreoDistance,
+  dreamyPace,
+  prefersReducedMotion,
+  type ChoreoPresenceState,
+} from "@/lib/choreo";
 import { cn } from "@/lib/utils";
 import {
+  ChoreoGroup,
+  ChoreoPresence,
   RevealCollapsedHeader,
   RevealAnimatedBody,
-  RevealExpandedHeader,
-  RevealGroup,
-  RevealItem,
   SectionBackdrop,
   SectionShell,
+  Heading,
   Text,
   useRevealHeight,
 } from "@/components/ui";
+
+type PlatformGridExpandedHeaderProps = {
+  readonly headingId: string;
+  readonly heading: string;
+  readonly subheading: string;
+  readonly headerThemeReady: boolean;
+  readonly enableTitleReveal: boolean;
+  readonly onCollapse: () => void;
+  readonly collapseLabel?: string;
+};
+
+function PlatformGridExpandedHeader({
+  headingId,
+  heading,
+  subheading,
+  headerThemeReady,
+  enableTitleReveal,
+  onCollapse,
+  collapseLabel = "Collapse",
+}: PlatformGridExpandedHeaderProps) {
+  const headingClass = headerThemeReady ? "text-ink" : "text-white";
+  const subheadingClass = headerThemeReady ? "text-ink-muted" : "text-white";
+
+  return (
+    <div className="relative z-10 space-y-4 md:flex md:items-center md:justify-between md:gap-8">
+      <ChoreoGroup
+        effect="fade-lift"
+        distance={choreoDistance.base}
+        durationMs={dreamyPace.textMs}
+        easing={dreamyPace.easing}
+        staggerMs={dreamyPace.staggerMs}
+        className="space-y-3"
+      >
+        <div className="relative">
+          <Heading
+            id={headingId}
+            level={2}
+            size="xl"
+            className={headingClass}
+          >
+            {heading}
+          </Heading>
+        </div>
+        <div className="relative">
+          <Text
+            className={cn("type-section-subtitle max-w-4xl", subheadingClass)}
+            leading="normal"
+          >
+            {subheading}
+          </Text>
+        </div>
+      </ChoreoGroup>
+      {enableTitleReveal ? (
+        <ChoreoGroup
+          effect="fade-lift"
+          distance={choreoDistance.tight}
+          delayMs={dreamyPace.staggerMs}
+          durationMs={dreamyPace.textMs}
+          easing={dreamyPace.easing}
+          itemAsChild
+        >
+          <button
+            type="button"
+            className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+            onClick={onCollapse}
+          >
+            {collapseLabel}
+          </button>
+        </ChoreoGroup>
+      ) : null}
+    </div>
+  );
+}
 
 type PlatformGridProps = {
   readonly platforms: Platform[];
@@ -144,14 +224,25 @@ const PlatformTabs = ({
   readonly activeIndex: number;
   onSelect: (index: number) => void;
 }) => (
-  <div role="tablist" aria-label="Platforms" className="flex flex-wrap gap-2">
+  <ChoreoGroup
+    effect="slide"
+    axis="x"
+    direction="right"
+    distance={choreoDistance.base}
+    durationMs={dreamyPace.textMs}
+    easing={dreamyPace.easing}
+    staggerMs={dreamyPace.staggerMs}
+    className="flex flex-wrap gap-2"
+    itemAsChild
+  >
     {platforms.map((platform, index) => {
       const isActive = index === activeIndex;
-      const buttonClass = `group relative overflow-hidden type-label-tight pill border focus-ring ${
+      const buttonClass = cn(
+        "group relative overflow-hidden type-label-tight pill border focus-ring",
         isActive
           ? "border-perazzi-red text-perazzi-red shadow-elevated"
-          : "border-border/70 bg-transparent text-ink-muted hover:border-ink/60"
-      }`;
+          : "border-border/70 bg-transparent text-ink-muted hover:border-ink/60",
+      );
 
       return (
         <button
@@ -165,11 +256,20 @@ const PlatformTabs = ({
           {isActive ? (
             <span className="absolute inset-0 bg-canvas/55 backdrop-blur-sm" aria-hidden="true" />
           ) : null}
-          <span className="relative z-10">{platform.name}</span>
+          <span className="relative z-10">
+            {platform.name}
+            <span
+              className={cn(
+                "platform-tab-underline",
+                isActive && "platform-tab-underline-active",
+              )}
+              aria-hidden="true"
+            />
+          </span>
         </button>
       );
     })}
-  </div>
+  </ChoreoGroup>
 );
 
 type PlatformCardWithChatProps = {
@@ -216,20 +316,36 @@ const MobilePlatformCarousel = ({
   <div className="md:hidden">
     <div
       ref={scrollRef}
-      className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none px-6 -mx-6 pt-6 pb-6 sm:mx-0 sm:px-6"
+      className="overflow-x-auto snap-x snap-mandatory scrollbar-none px-6 -mx-6 pt-6 pb-6 sm:mx-0 sm:px-6"
       aria-label="Swipe to explore platforms"
     >
-      {platforms.map((platform, index) => (
-        <div key={platform.id} data-index={index} className="snap-center shrink-0 w-[85vw] max-w-sm">
-          <PlatformCardWithChat
-            platform={platform}
-            priority={index === 0}
-            footerLabel={formatTemplate(cardFooterTemplate, platform.name)}
-            chatLabel={formatTemplate(chatLabelTemplate, platform.name)}
-            payload={buildPayload(platform)}
-          />
-        </div>
-      ))}
+      <ChoreoGroup
+        effect="slide"
+        axis="x"
+        direction="right"
+        distance={choreoDistance.base}
+        durationMs={dreamyPace.textMs}
+        easing={dreamyPace.easing}
+        staggerMs={dreamyPace.staggerMs}
+        className="flex gap-4"
+        itemAsChild
+      >
+        {platforms.map((platform, index) => (
+          <div
+            key={platform.id}
+            data-index={index}
+            className="snap-center shrink-0 w-[85vw] max-w-sm"
+          >
+            <PlatformCardWithChat
+              platform={platform}
+              priority={index === 0}
+              footerLabel={formatTemplate(cardFooterTemplate, platform.name)}
+              chatLabel={formatTemplate(chatLabelTemplate, platform.name)}
+              payload={buildPayload(platform)}
+            />
+          </div>
+        ))}
+      </ChoreoGroup>
     </div>
   </div>
 );
@@ -253,39 +369,66 @@ const ChampionHighlight = ({
       className="flex h-full w-full max-w-xl flex-col items-center justify-center gap-4 text-ink text-center"
     >
       {hallmark ? (
-        <p className="type-quote font-artisan text-ink">{hallmark}</p>
+        <ChoreoGroup
+          effect="fade-lift"
+          distance={choreoDistance.tight}
+          durationMs={dreamyPace.textMs}
+          easing={dreamyPace.easing}
+          staggerMs={dreamyPace.staggerMs}
+        >
+          <p className="type-quote font-artisan text-ink">{hallmark}</p>
+        </ChoreoGroup>
       ) : null}
       {champion ? (
-        <div className="flex items-center justify-center gap-5">
-          {champion.image ? (
-            <div className="relative h-16 w-16 overflow-hidden rounded-full bg-(--surface-elevated)">
-              <Image
-                src={champion.image.url}
-                alt={champion.image.alt ?? `${champion.name ?? "Perazzi champion"}`}
-                fill
-                sizes="64px"
-                className="object-cover"
-              />
+        <ChoreoGroup
+          effect="fade-lift"
+          distance={choreoDistance.tight}
+          durationMs={dreamyPace.textMs}
+          easing={dreamyPace.easing}
+          staggerMs={dreamyPace.staggerMs}
+          className="flex items-center justify-center gap-5"
+          itemAsChild
+        >
+          <div className="flex items-center justify-center gap-5">
+            {champion.image ? (
+              <ChoreoGroup
+                effect="scale-parallax"
+                distance={choreoDistance.tight}
+                durationMs={dreamyPace.textMs}
+                easing={dreamyPace.easing}
+                scaleFrom={1.04}
+                itemAsChild
+              >
+                <div className="relative h-16 w-16 overflow-hidden rounded-full bg-(--surface-elevated)">
+                  <Image
+                    src={champion.image.url}
+                    alt={champion.image.alt ?? `${champion.name ?? "Perazzi champion"}`}
+                    fill
+                    sizes="64px"
+                    className="object-cover"
+                  />
+                </div>
+              </ChoreoGroup>
+            ) : null}
+            <div className="space-y-2">
+              {champion.name ? (
+                <p className="type-body-title text-ink">
+                  {champion.name}
+                </p>
+              ) : null}
+              {champion.title ? (
+                <Text size="md" className="type-label-tight text-ink-muted" leading="normal">
+                  {champion.title}
+                </Text>
+              ) : null}
+              {champion.resume?.winOne ? (
+                <Text size="md" className="text-ink-muted" leading="normal">
+                  Win highlight: <span className="text-ink">{champion.resume.winOne}</span>
+                </Text>
+              ) : null}
             </div>
-          ) : null}
-          <div className="space-y-2">
-            {champion.name ? (
-              <p className="type-body-title text-ink">
-                {champion.name}
-              </p>
-            ) : null}
-            {champion.title ? (
-              <Text size="md" className="type-label-tight text-ink-muted" leading="normal">
-                {champion.title}
-              </Text>
-            ) : null}
-            {champion.resume?.winOne ? (
-              <Text size="md" className="text-ink-muted" leading="normal">
-                Win highlight: <span className="text-ink">{champion.resume.winOne}</span>
-              </Text>
-            ) : null}
           </div>
-        </div>
+        </ChoreoGroup>
       ) : null}
     </div>
   );
@@ -293,6 +436,8 @@ const ChampionHighlight = ({
 
 type DesktopPlatformGridProps = {
   platform?: Platform;
+  presenceState: ChoreoPresenceState;
+  presenceVars: React.CSSProperties;
   activeIndex: number;
   cardFooterTemplate: string;
   chatLabelTemplate: string;
@@ -301,6 +446,8 @@ type DesktopPlatformGridProps = {
 
 const DesktopPlatformGrid = ({
   platform,
+  presenceState,
+  presenceVars,
   activeIndex,
   cardFooterTemplate,
   chatLabelTemplate,
@@ -308,7 +455,7 @@ const DesktopPlatformGrid = ({
 }: DesktopPlatformGridProps) => (
   <div className="hidden md:grid gap-6 md:grid-cols-2 min-h-[720px] sm:min-h-[820px] md:min-h-[750px] items-stretch">
     {platform ? (
-      <div key={platform.id} className="h-full">
+      <ChoreoPresence state={presenceState} style={presenceVars} className="h-full">
         <PlatformCardWithChat
           platform={platform}
           priority={activeIndex === 0}
@@ -316,14 +463,18 @@ const DesktopPlatformGrid = ({
           chatLabel={formatTemplate(chatLabelTemplate, platform.name)}
           payload={buildPayload(platform)}
         />
-      </div>
+      </ChoreoPresence>
     ) : null}
     <div className="hidden h-full md:flex items-center justify-center">
-      <ChampionHighlight
-        hallmark={platform?.hallmark}
-        champion={platform?.champion}
-        platformId={platform?.id}
-      />
+      {platform ? (
+        <ChoreoPresence state={presenceState} style={presenceVars}>
+          <ChampionHighlight
+            hallmark={platform.hallmark}
+            champion={platform.champion}
+            platformId={platform.id}
+          />
+        </ChoreoPresence>
+      ) : null}
     </div>
   </div>
 );
@@ -358,20 +509,29 @@ const PlatformGridBody = ({
   buildPayload,
   scrollRef,
   onSelect,
-}: PlatformGridBodyProps) => {
+  presenceState,
+  presenceVars,
+}: PlatformGridBodyProps & {
+  presenceState: ChoreoPresenceState;
+  presenceVars: React.CSSProperties;
+}) => {
   if (!revealGrid) return null;
 
   return (
     <div id="platform-grid-body" className="space-y-8">
-      <RevealItem index={0}>
+      <ChoreoGroup
+        effect="fade-lift"
+        distance={choreoDistance.base}
+        durationMs={dreamyPace.textMs}
+        easing={dreamyPace.easing}
+        staggerMs={dreamyPace.staggerMs}
+        className="space-y-8"
+      >
         <PlatformTabs
           platforms={platforms}
           activeIndex={activeIndex}
           onSelect={onSelect}
         />
-      </RevealItem>
-
-      <RevealItem index={1}>
         <MobilePlatformCarousel
           platforms={platforms}
           cardFooterTemplate={templates.cardFooterTemplate}
@@ -379,17 +539,16 @@ const PlatformGridBody = ({
           buildPayload={buildPayload}
           scrollRef={scrollRef}
         />
-      </RevealItem>
-
-      <RevealItem index={2}>
         <DesktopPlatformGrid
           platform={activePlatform}
           activeIndex={activeIndex}
           cardFooterTemplate={templates.cardFooterTemplate}
           chatLabelTemplate={templates.chatLabelTemplate}
           buildPayload={buildPayload}
+          presenceState={presenceState}
+          presenceVars={presenceVars}
         />
-      </RevealItem>
+      </ChoreoGroup>
     </div>
   );
 };
@@ -405,14 +564,30 @@ const PlatformGridRevealSection = ({
 }: PlatformGridRevealSectionProps) => {
   const [platformExpanded, setPlatformExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
+  const [displayIndex, setDisplayIndex] = useState(activeIndex);
+  const [presenceState, setPresenceState] = useState<ChoreoPresenceState>("enter");
+  const presenceTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
+  const reduceMotion = prefersReducedMotion();
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   const headingTitle = templates.heading;
   const headingSubtitle = templates.subheading;
   const revealGrid = !enableTitleReveal || platformExpanded;
   const revealPhotoFocus = revealGrid;
-  const activePlatform = platforms[activeIndex] ?? platforms[0];
+  const activePlatform = platforms[displayIndex] ?? platforms[0];
   const platformMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
+  const presenceVars = buildChoreoPresenceVars({
+    enterDurationMs: dreamyPace.textMs,
+    exitDurationMs: dreamyPace.textMs,
+    enterEase: dreamyPace.easing,
+    exitEase: dreamyPace.easing,
+    enterY: choreoDistance.tight,
+    exitY: choreoDistance.tight,
+    enterScale: 0.98,
+    exitScale: 0.98,
+    enterBlur: 2,
+    exitBlur: 2,
+  });
   const {
     ref: platformShellRef,
     measureRef,
@@ -446,32 +621,43 @@ const PlatformGridRevealSection = ({
   const handleTabSelect = useCallback((index: number) => {
     setActiveIndex(index);
     scrollToIndex(scrollRef.current, index);
-  }, [setActiveIndex]);
+
+    if (presenceTimeoutRef.current) {
+      globalThis.clearTimeout(presenceTimeoutRef.current);
+      presenceTimeoutRef.current = null;
+    }
+
+    if (reduceMotion || index === displayIndex) {
+      setDisplayIndex(index);
+      setPresenceState("enter");
+      return;
+    }
+
+    setPresenceState("exit");
+    presenceTimeoutRef.current = globalThis.setTimeout(() => {
+      setDisplayIndex(index);
+      setPresenceState("enter");
+      presenceTimeoutRef.current = null;
+    }, dreamyPace.staggerMs);
+  }, [displayIndex, reduceMotion, setActiveIndex]);
 
   const expandedContent = (
     <RevealAnimatedBody sequence>
-      <RevealItem index={0}>
-        <RevealExpandedHeader
-          headingId="platforms-heading"
-          heading={headingTitle}
-          headerThemeReady={headerThemeReady}
-          enableTitleReveal={enableTitleReveal}
-          onCollapse={handleCollapse}
-        >
-          <div className="relative">
-            <Text
-              className={cn(
-                "type-section-subtitle max-w-4xl",
-                headerThemeReady ? "text-ink-muted" : "text-white",
-              )}
-              leading="normal"
-            >
-              {headingSubtitle}
-            </Text>
-          </div>
-        </RevealExpandedHeader>
-      </RevealItem>
-      <RevealGroup delayMs={140}>
+      <PlatformGridExpandedHeader
+        headingId="platforms-heading"
+        heading={headingTitle}
+        subheading={headingSubtitle}
+        headerThemeReady={headerThemeReady}
+        enableTitleReveal={enableTitleReveal}
+        onCollapse={handleCollapse}
+      />
+      <ChoreoGroup
+        effect="fade-lift"
+        distance={choreoDistance.base}
+        durationMs={dreamyPace.textMs}
+        easing={dreamyPace.easing}
+        delayMs={dreamyPace.staggerMs}
+      >
         <PlatformGridBody
           revealGrid={revealGridForMeasure}
           platforms={platforms}
@@ -481,8 +667,10 @@ const PlatformGridRevealSection = ({
           buildPayload={buildPayload}
           scrollRef={scrollRef}
           onSelect={handleTabSelect}
+          presenceState={presenceState}
+          presenceVars={presenceVars}
         />
-      </RevealGroup>
+      </ChoreoGroup>
     </RevealAnimatedBody>
   );
 
@@ -494,6 +682,7 @@ const PlatformGridRevealSection = ({
     const handleScroll = () => {
       const closestIndex = getClosestCardIndex(container);
       setActiveIndex((current) => (current === closestIndex ? current : closestIndex));
+      setDisplayIndex(closestIndex);
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
@@ -501,6 +690,15 @@ const PlatformGridRevealSection = ({
       container.removeEventListener("scroll", handleScroll);
     };
   }, [revealGrid, setActiveIndex]);
+
+  useEffect(() => (
+    () => {
+      if (presenceTimeoutRef.current) {
+        globalThis.clearTimeout(presenceTimeoutRef.current);
+        presenceTimeoutRef.current = null;
+      }
+    }
+  ), []);
 
   return (
     <>
@@ -525,14 +723,21 @@ const PlatformGridRevealSection = ({
             expandedContent
           ) : (
             <>
-              <RevealCollapsedHeader
-                headingId="platforms-heading"
-                heading={headingTitle}
-                subheading={headingSubtitle}
-                controlsId="platform-grid-body"
-                expanded={revealGrid}
-                onExpand={handleExpand}
-              />
+              <ChoreoGroup
+                effect="fade-lift"
+                distance={choreoDistance.base}
+                staggerMs={dreamyPace.staggerMs}
+                itemClassName="absolute inset-0"
+              >
+                <RevealCollapsedHeader
+                  headingId="platforms-heading"
+                  heading={headingTitle}
+                  subheading={headingSubtitle}
+                  controlsId="platform-grid-body"
+                  expanded={revealGrid}
+                  onExpand={handleExpand}
+                />
+              </ChoreoGroup>
               <div ref={measureRef} className="section-reveal-measure" aria-hidden>
                 {expandedContent}
               </div>
