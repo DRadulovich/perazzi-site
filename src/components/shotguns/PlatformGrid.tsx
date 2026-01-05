@@ -410,6 +410,7 @@ const PlatformGridRevealSection = ({
     minHeightStyle,
     beginExpand,
     clearPremeasure,
+    isPreparing,
   } = useRevealHeight({
     enableObserver: enableTitleReveal && revealGrid,
     deps: [activeIndex],
@@ -493,6 +494,7 @@ const PlatformGridRevealSection = ({
         image={{ url: templates.background.url, alt: templates.background.alt }}
         reveal={revealGrid}
         revealOverlay={revealPhotoFocus}
+        preparing={isPreparing}
         enableParallax={enableTitleReveal && !revealGrid}
         overlay="canvas"
       />

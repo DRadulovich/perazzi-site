@@ -91,6 +91,7 @@ function MarqueeFeatureRevealSection({
     minHeightStyle,
     beginExpand,
     clearPremeasure,
+    isPreparing,
   } = useRevealHeight({
     enableObserver: enableTitleReveal && revealMarquee,
   });
@@ -194,6 +195,7 @@ function MarqueeFeatureRevealSection({
         image={{ url: background.url, alt: background.alt }}
         reveal={revealMarquee}
         revealOverlay={revealPhotoFocus}
+        preparing={isPreparing}
         enableParallax={enableTitleReveal && !revealMarquee}
         overlay="canvas"
       />

@@ -228,6 +228,7 @@ const EngravingGradesRevealSection = ({
     minHeightStyle,
     beginExpand,
     clearPremeasure,
+    isPreparing,
   } = useRevealHeight({
     enableObserver: enableTitleReveal && revealCarousel,
     deps: [openCategory, activeGradeId],
@@ -289,6 +290,7 @@ const EngravingGradesRevealSection = ({
         image={{ url: background.url, alt: background.alt }}
         reveal={revealCarousel}
         revealOverlay={revealPhotoFocus}
+        preparing={isPreparing}
         enableParallax={enableTitleReveal && !revealCarousel}
         overlay="canvas-80"
       />

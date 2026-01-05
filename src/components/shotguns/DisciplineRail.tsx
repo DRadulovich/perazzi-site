@@ -386,6 +386,7 @@ const DisciplineRailRevealSection = ({
     minHeightStyle,
     beginExpand,
     clearPremeasure,
+    isPreparing,
   } = useRevealHeight({
     enableObserver: enableTitleReveal && revealRail,
     deps: [openCategory, activeDisciplineId, modelLoadingId],
@@ -439,6 +440,7 @@ const DisciplineRailRevealSection = ({
         image={{ url: background.url, alt: background.alt }}
         reveal={revealRail}
         revealOverlay={revealPhotoFocus}
+        preparing={isPreparing}
         enableParallax={enableTitleReveal && !revealRail}
         overlay="canvas"
       />

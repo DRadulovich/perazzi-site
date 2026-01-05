@@ -200,6 +200,7 @@ const ExperiencePickerRevealSection = ({
     minHeightStyle,
     beginExpand,
     clearPremeasure,
+    isPreparing,
   } = useRevealHeight({
     enableObserver: enableTitleReveal && revealPicker,
     deps: [items.length, faqItems.length],
@@ -247,6 +248,7 @@ const ExperiencePickerRevealSection = ({
         image={{ url: background.url, alt: background.alt ?? "Perazzi experience background" }}
         reveal={revealPicker}
         revealOverlay={revealPhotoFocus}
+        preparing={isPreparing}
         enableParallax={enableTitleReveal && !revealPicker}
         overlay="canvas"
       />

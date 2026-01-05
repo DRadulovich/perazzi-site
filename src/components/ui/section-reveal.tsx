@@ -24,7 +24,7 @@ type RevealHeightOptions = {
 export const useRevealHeight = ({
   enableObserver,
   deps = [],
-  revealDelayMs = 600,
+  revealDelayMs = 900,
 }: RevealHeightOptions) => {
   const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const [premeasureHeight, setPremeasureHeight] = useState<number | null>(null);
@@ -123,6 +123,7 @@ type SectionBackdropProps = Readonly<{
   image: { url: string; alt?: string };
   reveal: boolean;
   revealOverlay?: boolean;
+  preparing?: boolean;
   enableParallax: boolean;
   overlay?: OverlayVariant;
   priority?: boolean;
@@ -134,6 +135,7 @@ export function SectionBackdrop({
   image,
   reveal,
   revealOverlay,
+  preparing = false,
   enableParallax,
   overlay = "canvas",
   priority = false,
@@ -142,6 +144,7 @@ export function SectionBackdrop({
 }: SectionBackdropProps) {
   const parallaxRef = useParallaxBackground(enableParallax);
   const overlayVisible = revealOverlay ?? reveal;
+  const overlayActive = overlayVisible || preparing;
   const overlayClass = overlay === "none" ? null : overlayClasses[overlay];
 
   return (
@@ -165,7 +168,7 @@ export function SectionBackdrop({
           className={cn(
             "section-backdrop-overlay pointer-events-none absolute inset-0",
             overlayClass,
-            overlayVisible ? "opacity-100" : "opacity-0",
+            overlayActive ? "opacity-100" : "opacity-0",
           )}
           aria-hidden
         />

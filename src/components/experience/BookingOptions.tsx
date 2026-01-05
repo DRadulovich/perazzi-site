@@ -92,6 +92,7 @@ const BookingOptionsRevealSection = ({
     minHeightStyle,
     beginExpand,
     clearPremeasure,
+    isPreparing,
   } = useRevealHeight({
     enableObserver: enableTitleReveal && revealBooking,
     deps: [schedulerOpen, schedulerLoaded, options.length],
@@ -166,6 +167,7 @@ const BookingOptionsRevealSection = ({
         image={{ url: "/Photos/p-web-89.jpg", alt: "Perazzi booking options background" }}
         reveal={revealBooking}
         revealOverlay={revealPhotoFocus}
+        preparing={isPreparing}
         enableParallax={enableTitleReveal && !revealBooking}
         overlay="canvas"
       />

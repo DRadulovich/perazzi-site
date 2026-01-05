@@ -198,6 +198,7 @@ const BuildStepsRevealSection = ({
     minHeightStyle,
     beginExpand,
     clearPremeasure,
+    isPreparing,
   } = useRevealHeight({
     enableObserver: enableTitleReveal && revealBuildSteps,
     deps: [resolvedActiveStepId, resolvedOpenStepId, steps.length],
@@ -355,6 +356,7 @@ const BuildStepsRevealSection = ({
         image={{ url: background.url, alt: background.alt ?? "Perazzi bespoke build steps background" }}
         reveal={revealBuildSteps}
         revealOverlay={revealPhotoFocus}
+        preparing={isPreparing}
         enableParallax={enableTitleReveal && !revealBuildSteps}
         overlay="canvas"
         loading="lazy"

@@ -118,6 +118,7 @@ const VisitFactoryRevealSection = ({
     minHeightStyle,
     beginExpand,
     clearPremeasure,
+    isPreparing,
   } = useRevealHeight({
     enableObserver: enableTitleReveal && revealVisit,
     deps: [expectOpen],
@@ -177,6 +178,7 @@ const VisitFactoryRevealSection = ({
         image={{ url: background.url, alt: background.alt ?? "Perazzi Botticino factory background" }}
         reveal={revealVisit}
         revealOverlay={revealPhotoFocus}
+        preparing={isPreparing}
         enableParallax={enableTitleReveal && !revealVisit}
         overlay="canvas"
         loading="lazy"

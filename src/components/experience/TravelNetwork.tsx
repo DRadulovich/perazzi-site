@@ -132,6 +132,7 @@ const TravelNetworkRevealSection = ({
     minHeightStyle,
     beginExpand,
     clearPremeasure,
+    isPreparing,
   } = useRevealHeight({
     enableObserver: enableTitleReveal && revealNetwork,
     deps: [activeTab, data.dealers.length, data.scheduledEvents.length],
@@ -243,6 +244,7 @@ const TravelNetworkRevealSection = ({
         image={{ url: background.url, alt: background.alt }}
         reveal={revealNetwork}
         revealOverlay={revealPhotoFocus}
+        preparing={isPreparing}
         enableParallax={enableTitleReveal && !revealNetwork}
         overlay="canvas"
         loading="lazy"

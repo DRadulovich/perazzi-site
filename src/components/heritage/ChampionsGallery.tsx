@@ -125,6 +125,7 @@ const ChampionsGalleryRevealSection = ({
     minHeightStyle,
     beginExpand,
     clearPremeasure,
+    isPreparing,
   } = useRevealHeight({
     enableObserver: enableTitleReveal && revealGallery,
     deps: [activeDiscipline, activeChampionId, champions.length],
@@ -191,6 +192,7 @@ const ChampionsGalleryRevealSection = ({
         image={{ url: background.url, alt: background.alt }}
         reveal={revealGallery}
         revealOverlay={revealPhotoFocus}
+        preparing={isPreparing}
         enableParallax={enableTitleReveal && !revealGallery}
         overlay="ink"
         loading="lazy"

@@ -131,6 +131,7 @@ function TimelineRevealSection({
     minHeightStyle,
     beginExpand,
     clearPremeasure,
+    isPreparing,
   } = useRevealHeight({
     enableObserver: enableTitleReveal && revealTimeline,
     deps: [resolvedActiveStage],
@@ -182,6 +183,7 @@ function TimelineRevealSection({
         image={{ url: backgroundUrl, alt: backgroundAlt }}
         reveal={revealTimeline}
         revealOverlay={revealPhotoFocus}
+        preparing={isPreparing}
         enableParallax={enableTitleReveal && !revealTimeline}
         overlay="canvas"
         priority

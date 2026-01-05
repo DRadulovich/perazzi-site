@@ -288,44 +288,6 @@
     transition: opacity 500ms ease-out;
   }
 
-  .section-backdrop-overlay::before,
-  .section-backdrop-overlay::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 28%;
-    opacity: 0;
-    transition: opacity 700ms ease-out, transform 700ms ease-out;
-    will-change: opacity, transform;
-  }
-
-  .section-backdrop-overlay::before {
-    top: 0;
-    transform: translateY(-8px);
-    background: linear-gradient(
-      to bottom,
-      color-mix(in srgb, var(--overlay-edge-color) 25%, transparent),
-      transparent 55%
-    );
-  }
-
-  .section-backdrop-overlay::after {
-    bottom: 0;
-    transform: translateY(8px);
-    background: linear-gradient(
-      to top,
-      color-mix(in srgb, var(--overlay-edge-color) 25%, transparent),
-      transparent 55%
-    );
-  }
-
-  .section-backdrop-overlay.opacity-100::before,
-  .section-backdrop-overlay.opacity-100::after {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
   .section-reveal-shell {
     transition: min-height 500ms ease-out;
   }
@@ -352,12 +314,6 @@
     }
     .section-backdrop-overlay {
       transition: none;
-    }
-    .section-backdrop-overlay::before,
-    .section-backdrop-overlay::after {
-      transition: none;
-      opacity: 1;
-      transform: none;
     }
     .section-reveal-shell {
       transition: none;

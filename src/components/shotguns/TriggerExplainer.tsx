@@ -116,6 +116,7 @@ const TriggerExplainerRevealSection = ({
     minHeightStyle,
     beginExpand,
     clearPremeasure,
+    isPreparing,
   } = useRevealHeight({
     enableObserver: enableTitleReveal && revealExplainer,
     deps: [manualOpen],
@@ -156,6 +157,7 @@ const TriggerExplainerRevealSection = ({
         image={{ url: background.url, alt: background.alt }}
         reveal={revealExplainer}
         revealOverlay={revealPhotoFocus}
+        preparing={isPreparing}
         enableParallax={enableTitleReveal && !revealExplainer}
         overlay="canvas"
       />
