@@ -17,6 +17,8 @@ import {
   RevealAnimatedBody,
   RevealCollapsedHeader,
   RevealExpandedHeader,
+  RevealGroup,
+  RevealItem,
   SectionBackdrop,
   SectionShell,
   Text,
@@ -156,85 +158,93 @@ const TravelNetworkRevealSection = ({
   };
 
   const expandedContent = (
-    <RevealAnimatedBody>
-      <RevealExpandedHeader
-        headingId="travel-network-heading"
-        heading={heading}
-        headerThemeReady={headerThemeReady}
-        enableTitleReveal={enableTitleReveal}
-        onCollapse={handleNetworkCollapse}
-      >
-        <div className="relative">
-          <Text
-            className={cn(
-              "type-section-subtitle",
-              headerThemeReady ? "text-ink-muted" : "text-white",
-            )}
-            leading="relaxed"
-          >
-            {lead}
-          </Text>
-        </div>
-        <div>
-          <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
-            {supporting}
-          </Text>
-        </div>
-      </RevealExpandedHeader>
-
-      <div id="travel-network-body" className="space-y-6">
-        <div
-          role="tablist"
-          aria-label="Experience travel and support tabs"
-          className="flex flex-wrap gap-2 md:gap-3"
+    <RevealAnimatedBody sequence>
+      <RevealItem index={0}>
+        <RevealExpandedHeader
+          headingId="travel-network-heading"
+          heading={heading}
+          headerThemeReady={headerThemeReady}
+          enableTitleReveal={enableTitleReveal}
+          onCollapse={handleNetworkCollapse}
         >
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.key;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                className={cn(
-                  "group relative overflow-hidden type-label-tight pill border border-border/70 bg-card/60 shadow-soft backdrop-blur-sm hover:border-ink/20 hover:bg-card/85 focus-ring",
-                  isActive ? "text-perazzi-white" : "text-ink",
-                )}
-                onClick={() => { setActiveTab(tab.key); }}
-              >
-                {isActive ? (
-                  <span
-                    className="absolute inset-0 rounded-sm bg-perazzi-red shadow-elevated ring-1 ring-white/10"
-                    aria-hidden="true"
-                  />
-                ) : null}
-                <span className="relative z-10">
-                  {tab.label}
-                  <span className={cn("ml-2 type-caption", isActive ? "text-white/75" : "text-ink-muted")}>
-                    ({tab.count})
-                  </span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div>
-          <div key={activeTab}>
-            {activeTab === "schedule" ? (
-              <ScheduleList
-                events={data.scheduledEvents}
-                emptyText={emptyScheduleText}
-              />
-            ) : (
-              <DealerList
-                dealers={data.dealers}
-                emptyText={emptyDealersText}
-              />
-            )}
+          <div className="relative">
+            <Text
+              className={cn(
+                "type-section-subtitle",
+                headerThemeReady ? "text-ink-muted" : "text-white",
+              )}
+              leading="relaxed"
+            >
+              {lead}
+            </Text>
           </div>
+          <div>
+            <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
+              {supporting}
+            </Text>
+          </div>
+        </RevealExpandedHeader>
+      </RevealItem>
+
+      <RevealGroup delayMs={140}>
+        <div id="travel-network-body" className="space-y-6">
+          <RevealItem index={0}>
+            <div
+              role="tablist"
+              aria-label="Experience travel and support tabs"
+              className="flex flex-wrap gap-2 md:gap-3"
+            >
+              {tabs.map((tab) => {
+                const isActive = activeTab === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    className={cn(
+                      "group relative overflow-hidden type-label-tight pill border border-border/70 bg-card/60 shadow-soft backdrop-blur-sm hover:border-ink/20 hover:bg-card/85 focus-ring",
+                      isActive ? "text-perazzi-white" : "text-ink",
+                    )}
+                    onClick={() => { setActiveTab(tab.key); }}
+                  >
+                    {isActive ? (
+                      <span
+                        className="absolute inset-0 rounded-sm bg-perazzi-red shadow-elevated ring-1 ring-white/10"
+                        aria-hidden="true"
+                      />
+                    ) : null}
+                    <span className="relative z-10">
+                      {tab.label}
+                      <span className={cn("ml-2 type-caption", isActive ? "text-white/75" : "text-ink-muted")}>
+                        ({tab.count})
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </RevealItem>
+
+          <RevealItem index={1}>
+            <div>
+              <div key={activeTab}>
+                {activeTab === "schedule" ? (
+                  <ScheduleList
+                    events={data.scheduledEvents}
+                    emptyText={emptyScheduleText}
+                  />
+                ) : (
+                  <DealerList
+                    dealers={data.dealers}
+                    emptyText={emptyDealersText}
+                  />
+                )}
+              </div>
+            </div>
+          </RevealItem>
         </div>
-      </div>
+      </RevealGroup>
     </RevealAnimatedBody>
   );
 
@@ -291,26 +301,27 @@ function ScheduleList({ events, emptyText }: ScheduleListProps) {
 
   return (
     <div className="space-y-4">
-      {events.map((event) => (
-        <article
-          key={event._id}
-          className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 hover:border-ink/20 hover:bg-card/80 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated md:p-6 lg:p-7"
-        >
-          <Text className="type-button text-ink-muted">
-            {formatDateRange(event.startDate, event.endDate)}
-          </Text>
-          <Heading level={3} className="mt-2 mb-7 type-card-title text-ink text-3xl">
-            {event.eventName}
-          </Heading>
-          <Text className="type-card-title text-ink-muted">
-            {event.eventLocation}
-          </Text>
-          {event.location ? (
-            <Text size="md" muted className="mt-2">
-              {event.location}
+      {events.map((event, index) => (
+        <RevealItem key={event._id} index={index}>
+          <article
+            className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 hover:border-ink/20 hover:bg-card/80 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated md:p-6 lg:p-7"
+          >
+            <Text className="type-button text-ink-muted">
+              {formatDateRange(event.startDate, event.endDate)}
             </Text>
-          ) : null}
-        </article>
+            <Heading level={3} className="mt-2 mb-7 type-card-title text-ink text-3xl">
+              {event.eventName}
+            </Heading>
+            <Text className="type-card-title text-ink-muted">
+              {event.eventLocation}
+            </Text>
+            {event.location ? (
+              <Text size="md" muted className="mt-2">
+                {event.location}
+              </Text>
+            ) : null}
+          </article>
+        </RevealItem>
       ))}
     </div>
   );
@@ -327,25 +338,26 @@ function DealerList({ dealers, emptyText }: DealerListProps) {
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      {dealers.map((dealer) => (
-        <article
-          key={dealer._id}
-          className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm ring-1 ring-border/70 hover:border-ink/20 hover:bg-card/80 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated"
-        >
-          <Heading level={3} className="mb-7 type-card-title text-ink text-3xl">
-            {dealer.dealerName}
-          </Heading>
-          <Text className="type-button text-ink-muted">
-            {dealer.state}
-          </Text>
-          <Text asChild className="mt-2 type-body text-ink-muted">
-            <p>
-              {dealer.address}
-              <br />
-              {dealer.city}
-            </p>
-          </Text>
-        </article>
+      {dealers.map((dealer, index) => (
+        <RevealItem key={dealer._id} index={index}>
+          <article
+            className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm ring-1 ring-border/70 hover:border-ink/20 hover:bg-card/80 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated"
+          >
+            <Heading level={3} className="mb-7 type-card-title text-ink text-3xl">
+              {dealer.dealerName}
+            </Heading>
+            <Text className="type-button text-ink-muted">
+              {dealer.state}
+            </Text>
+            <Text asChild className="mt-2 type-body text-ink-muted">
+              <p>
+                {dealer.address}
+                <br />
+                {dealer.city}
+              </p>
+            </Text>
+          </article>
+        </RevealItem>
       ))}
     </div>
   );

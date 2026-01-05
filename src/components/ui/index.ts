@@ -30,6 +30,8 @@ export {
   RevealCollapsedHeader,
   RevealAnimatedBody,
   RevealExpandedHeader,
+  RevealGroup,
+  RevealItem,
   SectionBackdrop,
   SectionShell,
   useRevealHeight,

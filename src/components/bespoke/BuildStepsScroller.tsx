@@ -21,6 +21,8 @@ import {
   RevealAnimatedBody,
   RevealCollapsedHeader,
   RevealExpandedHeader,
+  RevealGroup,
+  RevealItem,
   SectionBackdrop,
   SectionShell,
   Text,
@@ -291,63 +293,69 @@ const BuildStepsRevealSection = ({
   }, [handleStepEnter, revealBuildSteps, steps.length]);
 
   const expandedContent = (
-    <RevealAnimatedBody>
-      <RevealExpandedHeader
-        headingId="build-steps-heading"
-        heading={heading}
-        headerThemeReady={headerThemeReady}
-        enableTitleReveal={enableTitleReveal}
-        onCollapse={handleBuildStepsCollapse}
-      >
-        <div className="relative">
-          <Text
-            size="lg"
-            className={cn(
-              "type-section-subtitle",
-              headerThemeReady ? "text-ink-muted" : "text-white",
-            )}
-            leading="relaxed"
-          >
-            {subheading}
-          </Text>
-        </div>
-        <div>
-          <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
-            {instructions}
-          </Text>
-        </div>
-        <div className="flex flex-wrap items-center gap-4">
-          <a
-            href="#build-steps-sequence"
-            className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-ink/60 text-ink hover:border-ink focus-ring"
-          >
-            <span>{ctaLabel}</span>
-            <span aria-hidden="true">↓</span>
-          </a>
-          {skipTargetId ? (
-            <a
-              href={`#${skipTargetId}`}
-              className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-perazzi-red/60 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+    <RevealAnimatedBody sequence>
+      <RevealItem index={0}>
+        <RevealExpandedHeader
+          headingId="build-steps-heading"
+          heading={heading}
+          headerThemeReady={headerThemeReady}
+          enableTitleReveal={enableTitleReveal}
+          onCollapse={handleBuildStepsCollapse}
+        >
+          <div className="relative">
+            <Text
+              size="lg"
+              className={cn(
+                "type-section-subtitle",
+                headerThemeReady ? "text-ink-muted" : "text-white",
+              )}
+              leading="relaxed"
             >
-              <span>Skip step-by-step</span>
-              <span aria-hidden="true">→</span>
+              {subheading}
+            </Text>
+          </div>
+          <div>
+            <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
+              {instructions}
+            </Text>
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <a
+              href="#build-steps-sequence"
+              className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-ink/60 text-ink hover:border-ink focus-ring"
+            >
+              <span>{ctaLabel}</span>
+              <span aria-hidden="true">↓</span>
             </a>
-          ) : null}
-        </div>
-      </RevealExpandedHeader>
+            {skipTargetId ? (
+              <a
+                href={`#${skipTargetId}`}
+                className="type-button inline-flex min-h-10 items-center justify-center gap-2 pill border border-perazzi-red/60 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+              >
+                <span>Skip step-by-step</span>
+                <span aria-hidden="true">→</span>
+              </a>
+            ) : null}
+          </div>
+        </RevealExpandedHeader>
+      </RevealItem>
 
-      <BuildStepsSequence
-        steps={steps}
-        revealBuildSteps={revealBuildStepsForMeasure}
-        resolvedActiveStepId={resolvedActiveStepId}
-        resolvedOpenStepId={resolvedOpenStepId}
-        stepRefs={stepRefs}
-        scrollContainerRef={scrollContainerRef}
-        onRailClick={handleRailClick}
-        onToggleStepOpen={toggleStepOpen}
-        onStepCta={onStepCta}
-        onMobileDotClick={handleMobileDotClick}
-      />
+      <RevealGroup delayMs={140}>
+        <RevealItem index={0}>
+          <BuildStepsSequence
+            steps={steps}
+            revealBuildSteps={revealBuildStepsForMeasure}
+            resolvedActiveStepId={resolvedActiveStepId}
+            resolvedOpenStepId={resolvedOpenStepId}
+            stepRefs={stepRefs}
+            scrollContainerRef={scrollContainerRef}
+            onRailClick={handleRailClick}
+            onToggleStepOpen={toggleStepOpen}
+            onStepCta={onStepCta}
+            onMobileDotClick={handleMobileDotClick}
+          />
+        </RevealItem>
+      </RevealGroup>
     </RevealAnimatedBody>
   );
 

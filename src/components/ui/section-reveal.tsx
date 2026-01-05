@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { Slot } from "@radix-ui/react-slot";
 import {
   forwardRef,
   useEffect,
@@ -219,10 +220,117 @@ type RevealExpandedHeaderProps = Readonly<{
 
 type RevealAnimatedBodyProps = Readonly<{
   children: ReactNode;
+  sequence?: boolean;
+  delayMs?: number;
+  staggerMs?: number;
+  durationMs?: number;
+  easing?: string;
+  className?: string;
 }>;
 
-export function RevealAnimatedBody({ children }: RevealAnimatedBodyProps) {
-  return <div className="section-reveal-body">{children}</div>;
+export function RevealAnimatedBody({
+  children,
+  sequence = false,
+  delayMs = 0,
+  staggerMs = 90,
+  durationMs = 520,
+  easing = "cubic-bezier(0.16, 1, 0.3, 1)",
+  className,
+}: RevealAnimatedBodyProps) {
+  const style = sequence
+    ? ({
+        "--reveal-delay": `${delayMs}ms`,
+        "--reveal-stagger": `${staggerMs}ms`,
+        "--reveal-duration": `${durationMs}ms`,
+        "--reveal-ease": easing,
+      } as CSSProperties)
+    : undefined;
+
+  return (
+    <div
+      className={cn("section-reveal-body", className)}
+      data-reveal-sequence={sequence ? "true" : undefined}
+      style={style}
+    >
+      {children}
+    </div>
+  );
+}
+
+type RevealItemProps = Readonly<{
+  children: ReactNode;
+  index?: number;
+  className?: string;
+  style?: CSSProperties;
+  asChild?: boolean;
+}>;
+
+export function RevealItem({
+  children,
+  index,
+  className,
+  style = {},
+  asChild = false,
+}: RevealItemProps) {
+  const Comp = asChild ? Slot : "div";
+  const resolvedStyle = { ...style } as CSSProperties;
+
+  if (typeof index === "number") {
+    (resolvedStyle as Record<string, string | number>)["--reveal-index"] = index;
+  }
+
+  return (
+    <Comp data-reveal-item className={className} style={resolvedStyle}>
+      {children}
+    </Comp>
+  );
+}
+
+type RevealGroupProps = Readonly<{
+  children: ReactNode;
+  delayMs?: number;
+  staggerMs?: number;
+  durationMs?: number;
+  easing?: string;
+  className?: string;
+  style?: CSSProperties;
+  asChild?: boolean;
+}>;
+
+export function RevealGroup({
+  children,
+  delayMs,
+  staggerMs,
+  durationMs,
+  easing,
+  className,
+  style = {},
+  asChild = false,
+}: RevealGroupProps) {
+  const Comp = asChild ? Slot : "div";
+  const resolvedStyle = { ...style } as CSSProperties;
+
+  if (typeof delayMs === "number") {
+    (resolvedStyle as Record<string, string>)["--reveal-delay"] = `${delayMs}ms`;
+  }
+
+  if (typeof staggerMs === "number") {
+    (resolvedStyle as Record<string, string>)["--reveal-stagger"] = `${staggerMs}ms`;
+  }
+
+  if (typeof durationMs === "number") {
+    (resolvedStyle as Record<string, string>)["--reveal-duration"] = `${durationMs}ms`;
+  }
+
+  if (typeof easing === "string" && easing.length > 0) {
+    (resolvedStyle as Record<string, string>)["--reveal-ease"] = easing;
+  }
+
+  return (
+    <Comp data-reveal-group className={className} style={resolvedStyle}>
+      {children}
+    </Comp>
+  );
 }
 
 export function RevealExpandedHeader({
@@ -295,6 +403,15 @@ export function RevealCollapsedHeader({
   onExpand,
   readMoreLabel = "Read more",
 }: RevealCollapsedHeaderProps) {
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+
+  useLayoutEffect(() => {
+    const section = buttonRef.current?.closest("section");
+    if (section) {
+      delete section.dataset.revealExpanding;
+    }
+  }, []);
+
   const activateTease = (event: React.SyntheticEvent<HTMLButtonElement>) => {
     const section = event.currentTarget.closest("section");
     if (!section) return;
@@ -319,6 +436,7 @@ export function RevealCollapsedHeader({
     const section = event.currentTarget.closest("section");
     if (section) {
       delete section.dataset.teaseActive;
+      section.dataset.revealExpanding = "true";
     }
     onExpand();
   };
@@ -335,13 +453,15 @@ export function RevealCollapsedHeader({
         aria-controls={controlsId}
         aria-labelledby={headingId}
         data-tease-trigger
+        data-reveal-collapsed
+        ref={buttonRef}
       >
         <div className="relative inline-flex text-white">
           <Heading
             id={headingId}
             level={2}
             size="xl"
-            className="type-section-collapsed"
+            className="type-section-collapsed section-reveal-collapsed-text"
           >
             {heading}
           </Heading>
@@ -350,7 +470,7 @@ export function RevealCollapsedHeader({
           <div className="relative text-white">
             <Text
               size="lg"
-              className="type-section-subtitle type-section-subtitle-collapsed"
+              className="type-section-subtitle type-section-subtitle-collapsed section-reveal-collapsed-text"
             >
               {subheading}
             </Text>
@@ -359,7 +479,7 @@ export function RevealCollapsedHeader({
         <div className="mt-3">
           <Text
             size="button"
-            className="text-white/80"
+            className="text-white/80 section-reveal-collapsed-text"
           >
             {readMoreLabel}
           </Text>

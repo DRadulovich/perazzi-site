@@ -24,6 +24,8 @@ import {
   RevealAnimatedBody,
   RevealCollapsedHeader,
   RevealExpandedHeader,
+  RevealGroup,
+  RevealItem,
   SectionBackdrop,
   SectionShell,
   Text,
@@ -411,27 +413,31 @@ const DisciplineRailRevealSection = ({
   };
 
   const expandedContent = (
-    <RevealAnimatedBody>
-      <RevealExpandedHeader
-        headingId="discipline-rail-heading"
-        heading={heading}
-        subheading={subheading}
-        headerThemeReady={headerThemeReady}
-        enableTitleReveal={enableTitleReveal}
-        onCollapse={handleCollapse}
-      />
-      <DisciplineRailBody
-        revealRail={revealRailForMeasure}
-        categories={categories}
-        openCategory={openCategory}
-        setOpenCategory={setOpenCategory}
-        activeDisciplineId={activeDisciplineId}
-        setActiveDisciplineId={setActiveDisciplineId}
-        selectedDiscipline={selectedDiscipline}
-        platformName={platformName}
-        handleModelSelect={handleModelSelect}
-        modelLoadingId={modelLoadingId}
-      />
+    <RevealAnimatedBody sequence>
+      <RevealItem index={0}>
+        <RevealExpandedHeader
+          headingId="discipline-rail-heading"
+          heading={heading}
+          subheading={subheading}
+          headerThemeReady={headerThemeReady}
+          enableTitleReveal={enableTitleReveal}
+          onCollapse={handleCollapse}
+        />
+      </RevealItem>
+      <RevealGroup delayMs={140}>
+        <DisciplineRailBody
+          revealRail={revealRailForMeasure}
+          categories={categories}
+          openCategory={openCategory}
+          setOpenCategory={setOpenCategory}
+          activeDisciplineId={activeDisciplineId}
+          setActiveDisciplineId={setActiveDisciplineId}
+          selectedDiscipline={selectedDiscipline}
+          platformName={platformName}
+          handleModelSelect={handleModelSelect}
+          modelLoadingId={modelLoadingId}
+        />
+      </RevealGroup>
     </RevealAnimatedBody>
   );
 
@@ -493,102 +499,106 @@ function DisciplineRailBody({
   return (
     <div id="discipline-rail-body" className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
-        <div className="space-y-3 rounded-2xl bg-card/0 p-4 sm:rounded-3xl sm:p-5">
-          <Text size="label-tight" className="type-label-tight text-ink-muted">
-            Discipline categories
-          </Text>
-          <div className="space-y-3">
-            {categories.map((category) => {
-              const isOpen = openCategory === category.label;
-              return (
-                <div
-                  key={category.label}
-                  className="rounded-2xl border border-border/70 bg-card/75"
-                >
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-between px-4 py-3 text-left type-label-tight text-ink focus-ring"
-                    aria-expanded={isOpen}
-                    onClick={() =>
-                      setOpenCategory((prev) =>
-                        prev === category.label ? null : category.label,
-                      )
-                    }
-                  >
-                    {category.label}
-                    <span
-                      className={cn(
-                        "text-lg",
-                        isOpen ? "rotate-45" : "rotate-0",
-                      )}
-                      aria-hidden="true"
-                    >
-                      +
-                    </span>
-                  </button>
-                  {isOpen ? (
-                    <div className="border-t border-border/70">
-                      <ul className="space-y-1 p-3">
-                        {category.disciplines.map((discipline) => {
-                          const isActive = discipline.id === activeDisciplineId;
-                          return (
-                            <li key={discipline.id}>
-                              <button
-                                type="button"
-                                onClick={() => { setActiveDisciplineId(discipline.id); }}
-                                className={cn(
-                                  "group relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left focus-ring",
-                                  isActive
-                                    ? "text-white"
-                                    : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
-                                )}
-                                aria-pressed={isActive}
-                              >
-                                {isActive ? (
-                                  <span
-                                    className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
-                                    aria-hidden="true"
-                                  />
-                                ) : null}
-                                <span
-                                  className={cn(
-                                    "relative z-10 mt-0.5 block type-label-tight group-hover:text-ink-muted/90",
-                                    isActive ? "text-white" : "text-ink-muted",
-                                  )}
-                                >
-                                  {discipline.name || discipline.id.replaceAll("-", " ")}
-                                </span>
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="min-h-104">
-          {selectedDiscipline ? (
-            <div>
-              <DisciplineCard
-                discipline={selectedDiscipline}
-                index={0}
-                total={1}
-                platformName={platformName}
-                onSelectModel={handleModelSelect}
-                loadingModelId={modelLoadingId}
-              />
-            </div>
-          ) : (
-            <Text className="text-ink-muted" leading="normal">
-              Select a discipline to view its details.
+        <RevealItem index={0}>
+          <div className="space-y-3 rounded-2xl bg-card/0 p-4 sm:rounded-3xl sm:p-5">
+            <Text size="label-tight" className="type-label-tight text-ink-muted">
+              Discipline categories
             </Text>
-          )}
-        </div>
+            <div className="space-y-3">
+              {categories.map((category) => {
+                const isOpen = openCategory === category.label;
+                return (
+                  <div
+                    key={category.label}
+                    className="rounded-2xl border border-border/70 bg-card/75"
+                  >
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-between px-4 py-3 text-left type-label-tight text-ink focus-ring"
+                      aria-expanded={isOpen}
+                      onClick={() =>
+                        setOpenCategory((prev) =>
+                          prev === category.label ? null : category.label,
+                        )
+                      }
+                    >
+                      {category.label}
+                      <span
+                        className={cn(
+                          "text-lg",
+                          isOpen ? "rotate-45" : "rotate-0",
+                        )}
+                        aria-hidden="true"
+                      >
+                        +
+                      </span>
+                    </button>
+                    {isOpen ? (
+                      <div className="border-t border-border/70">
+                        <ul className="space-y-1 p-3">
+                          {category.disciplines.map((discipline) => {
+                            const isActive = discipline.id === activeDisciplineId;
+                            return (
+                              <li key={discipline.id}>
+                                <button
+                                  type="button"
+                                  onClick={() => { setActiveDisciplineId(discipline.id); }}
+                                  className={cn(
+                                    "group relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left focus-ring",
+                                    isActive
+                                      ? "text-white"
+                                      : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
+                                  )}
+                                  aria-pressed={isActive}
+                                >
+                                  {isActive ? (
+                                    <span
+                                      className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
+                                      aria-hidden="true"
+                                    />
+                                  ) : null}
+                                  <span
+                                    className={cn(
+                                      "relative z-10 mt-0.5 block type-label-tight group-hover:text-ink-muted/90",
+                                      isActive ? "text-white" : "text-ink-muted",
+                                    )}
+                                  >
+                                    {discipline.name || discipline.id.replaceAll("-", " ")}
+                                  </span>
+                                </button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </RevealItem>
+
+        <RevealItem index={1}>
+          <div className="min-h-104">
+            {selectedDiscipline ? (
+              <div>
+                <DisciplineCard
+                  discipline={selectedDiscipline}
+                  index={0}
+                  total={1}
+                  platformName={platformName}
+                  onSelectModel={handleModelSelect}
+                  loadingModelId={modelLoadingId}
+                />
+              </div>
+            ) : (
+              <Text className="text-ink-muted" leading="normal">
+                Select a discipline to view its details.
+              </Text>
+            )}
+          </div>
+        </RevealItem>
       </div>
     </div>
   );

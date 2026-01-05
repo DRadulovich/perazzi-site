@@ -11,6 +11,8 @@ import {
   Heading,
   RevealAnimatedBody,
   RevealCollapsedHeader,
+  RevealGroup,
+  RevealItem,
   SectionBackdrop,
   SectionShell,
   Text,
@@ -114,10 +116,10 @@ function MarqueeFeatureRevealSection({
   };
 
   const expandedContent = (
-    <RevealAnimatedBody>
+    <RevealAnimatedBody sequence>
       <div id="marquee-feature-body" className="relative z-10">
         <div className="md:grid md:grid-cols-[minmax(260px,1fr)_minmax(0,1.4fr)] md:items-center md:gap-10">
-          <div>
+          <RevealItem index={0}>
             <div
               className="group relative min-h-[280px] overflow-hidden rounded-2xl bg-elevated ring-1 ring-border/70 aspect-dynamic sm:min-h-[340px]"
               style={{ "--aspect-ratio": String(ratio) }}
@@ -131,61 +133,73 @@ function MarqueeFeatureRevealSection({
                 loading="lazy"
               />
             </div>
-          </div>
+          </RevealItem>
 
-          <div className="mt-8 md:mt-0 md:flex md:items-start md:justify-between md:gap-8">
+          <RevealGroup delayMs={140} className="mt-8 md:mt-0 md:flex md:items-start md:justify-between md:gap-8">
             <div className="space-y-4">
-              <Text size="label-tight" className="text-ink-muted">
-                {eyebrow}
-              </Text>
-              <div className="relative">
-                <Heading
-                  id="champion-heading"
-                  level={2}
-                  size="xl"
-                  className={headerThemeReady ? "text-ink" : "text-white"}
-                >
-                  {headingTitle}
-                </Heading>
-              </div>
-              <div className="relative">
-                <Text
-                  size="lg"
-                  className={cn(
-                    "type-section-subtitle",
-                    headerThemeReady ? "text-ink-muted" : "text-white",
-                  )}
-                >
-                  {headingSubtitle}
+              <RevealItem index={0}>
+                <Text size="label-tight" className="text-ink-muted">
+                  {eyebrow}
                 </Text>
-              </div>
-              <Text
-                asChild
-                size="lg"
-                className="border-l-2 border-perazzi-red/50 pl-4 type-quote font-artisan text-ink"
-              >
-                <blockquote>“{champion.quote}”</blockquote>
-              </Text>
-              {champion.article ? (
-                <a
-                  href={`/journal/${champion.article.slug}`}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+              </RevealItem>
+              <RevealItem index={1}>
+                <div className="relative">
+                  <Heading
+                    id="champion-heading"
+                    level={2}
+                    size="xl"
+                    className={headerThemeReady ? "text-ink" : "text-white"}
+                  >
+                    {headingTitle}
+                  </Heading>
+                </div>
+              </RevealItem>
+              <RevealItem index={2}>
+                <div className="relative">
+                  <Text
+                    size="lg"
+                    className={cn(
+                      "type-section-subtitle",
+                      headerThemeReady ? "text-ink-muted" : "text-white",
+                    )}
+                  >
+                    {headingSubtitle}
+                  </Text>
+                </div>
+              </RevealItem>
+              <RevealItem index={3}>
+                <Text
+                  asChild
+                  size="lg"
+                  className="border-l-2 border-perazzi-red/50 pl-4 type-quote font-artisan text-ink"
                 >
-                  {champion.article.title}
-                  <span aria-hidden="true">→</span>
-                </a>
+                  <blockquote>“{champion.quote}”</blockquote>
+                </Text>
+              </RevealItem>
+              {champion.article ? (
+                <RevealItem index={4}>
+                  <a
+                    href={`/journal/${champion.article.slug}`}
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-perazzi-red/60 px-4 py-2 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+                  >
+                    {champion.article.title}
+                    <span aria-hidden="true">→</span>
+                  </a>
+                </RevealItem>
               ) : null}
             </div>
             {enableTitleReveal ? (
-              <button
-                type="button"
-                className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-                onClick={handleMarqueeCollapse}
-              >
-                Collapse
-              </button>
+              <RevealItem index={5}>
+                <button
+                  type="button"
+                  className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+                  onClick={handleMarqueeCollapse}
+                >
+                  Collapse
+                </button>
+              </RevealItem>
             ) : null}
-          </div>
+          </RevealGroup>
         </div>
       </div>
     </RevealAnimatedBody>

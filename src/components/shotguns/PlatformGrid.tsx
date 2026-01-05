@@ -23,6 +23,8 @@ import {
   RevealCollapsedHeader,
   RevealAnimatedBody,
   RevealExpandedHeader,
+  RevealGroup,
+  RevealItem,
   SectionBackdrop,
   SectionShell,
   Text,
@@ -361,27 +363,33 @@ const PlatformGridBody = ({
 
   return (
     <div id="platform-grid-body" className="space-y-8">
-      <PlatformTabs
-        platforms={platforms}
-        activeIndex={activeIndex}
-        onSelect={onSelect}
-      />
+      <RevealItem index={0}>
+        <PlatformTabs
+          platforms={platforms}
+          activeIndex={activeIndex}
+          onSelect={onSelect}
+        />
+      </RevealItem>
 
-      <MobilePlatformCarousel
-        platforms={platforms}
-        cardFooterTemplate={templates.cardFooterTemplate}
-        chatLabelTemplate={templates.chatLabelTemplate}
-        buildPayload={buildPayload}
-        scrollRef={scrollRef}
-      />
+      <RevealItem index={1}>
+        <MobilePlatformCarousel
+          platforms={platforms}
+          cardFooterTemplate={templates.cardFooterTemplate}
+          chatLabelTemplate={templates.chatLabelTemplate}
+          buildPayload={buildPayload}
+          scrollRef={scrollRef}
+        />
+      </RevealItem>
 
-      <DesktopPlatformGrid
-        platform={activePlatform}
-        activeIndex={activeIndex}
-        cardFooterTemplate={templates.cardFooterTemplate}
-        chatLabelTemplate={templates.chatLabelTemplate}
-        buildPayload={buildPayload}
-      />
+      <RevealItem index={2}>
+        <DesktopPlatformGrid
+          platform={activePlatform}
+          activeIndex={activeIndex}
+          cardFooterTemplate={templates.cardFooterTemplate}
+          chatLabelTemplate={templates.chatLabelTemplate}
+          buildPayload={buildPayload}
+        />
+      </RevealItem>
     </div>
   );
 };
@@ -441,36 +449,40 @@ const PlatformGridRevealSection = ({
   }, [setActiveIndex]);
 
   const expandedContent = (
-    <RevealAnimatedBody>
-      <RevealExpandedHeader
-        headingId="platforms-heading"
-        heading={headingTitle}
-        headerThemeReady={headerThemeReady}
-        enableTitleReveal={enableTitleReveal}
-        onCollapse={handleCollapse}
-      >
-        <div className="relative">
-          <Text
-            className={cn(
-              "type-section-subtitle max-w-4xl",
-              headerThemeReady ? "text-ink-muted" : "text-white",
-            )}
-            leading="normal"
-          >
-            {headingSubtitle}
-          </Text>
-        </div>
-      </RevealExpandedHeader>
-      <PlatformGridBody
-        revealGrid={revealGridForMeasure}
-        platforms={platforms}
-        activeIndex={activeIndex}
-        activePlatform={activePlatform}
-        templates={templates}
-        buildPayload={buildPayload}
-        scrollRef={scrollRef}
-        onSelect={handleTabSelect}
-      />
+    <RevealAnimatedBody sequence>
+      <RevealItem index={0}>
+        <RevealExpandedHeader
+          headingId="platforms-heading"
+          heading={headingTitle}
+          headerThemeReady={headerThemeReady}
+          enableTitleReveal={enableTitleReveal}
+          onCollapse={handleCollapse}
+        >
+          <div className="relative">
+            <Text
+              className={cn(
+                "type-section-subtitle max-w-4xl",
+                headerThemeReady ? "text-ink-muted" : "text-white",
+              )}
+              leading="normal"
+            >
+              {headingSubtitle}
+            </Text>
+          </div>
+        </RevealExpandedHeader>
+      </RevealItem>
+      <RevealGroup delayMs={140}>
+        <PlatformGridBody
+          revealGrid={revealGridForMeasure}
+          platforms={platforms}
+          activeIndex={activeIndex}
+          activePlatform={activePlatform}
+          templates={templates}
+          buildPayload={buildPayload}
+          scrollRef={scrollRef}
+          onSelect={handleTabSelect}
+        />
+      </RevealGroup>
     </RevealAnimatedBody>
   );
 

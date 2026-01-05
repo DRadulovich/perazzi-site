@@ -15,6 +15,8 @@ import {
   RevealAnimatedBody,
   RevealCollapsedHeader,
   RevealExpandedHeader,
+  RevealGroup,
+  RevealItem,
   SectionBackdrop,
   SectionShell,
   Text,
@@ -159,19 +161,22 @@ const ExperiencePickerBody = ({
 }: ExperiencePickerBodyProps) => (
   <div id="experience-picker-body" className="space-y-6">
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:items-start">
-      {items.map((item) => (
-        <ExperiencePickerCard
-          key={item.id}
-          item={item}
-          onAnchorClick={onAnchorClick}
-          microLabel={microLabel}
-        />
+      {items.map((item, index) => (
+        <RevealItem key={item.id} index={index}>
+          <ExperiencePickerCard
+            item={item}
+            onAnchorClick={onAnchorClick}
+            microLabel={microLabel}
+          />
+        </RevealItem>
       ))}
     </div>
     {faqItems.length > 0 && (
-      <div className="pt-4">
-        <FAQList items={faqItems} embedded heading={faqHeading} lead={faqLead} />
-      </div>
+      <RevealItem index={items.length}>
+        <div className="pt-4">
+          <FAQList items={faqItems} embedded heading={faqHeading} lead={faqLead} />
+        </div>
+      </RevealItem>
     )}
   </div>
 );
@@ -222,23 +227,27 @@ const ExperiencePickerRevealSection = ({
   };
 
   const expandedContent = (
-    <RevealAnimatedBody>
-      <RevealExpandedHeader
-        headingId="experience-picker-heading"
-        heading={heading}
-        subheading={subheading}
-        headerThemeReady={headerThemeReady}
-        enableTitleReveal={enableTitleReveal}
-        onCollapse={handlePickerCollapse}
-      />
-      <ExperiencePickerBody
-        items={items}
-        faqItems={faqItems}
-        faqHeading={faqHeading}
-        faqLead={faqLead}
-        microLabel={microLabel}
-        onAnchorClick={onAnchorClick}
-      />
+    <RevealAnimatedBody sequence>
+      <RevealItem index={0}>
+        <RevealExpandedHeader
+          headingId="experience-picker-heading"
+          heading={heading}
+          subheading={subheading}
+          headerThemeReady={headerThemeReady}
+          enableTitleReveal={enableTitleReveal}
+          onCollapse={handlePickerCollapse}
+        />
+      </RevealItem>
+      <RevealGroup delayMs={140}>
+        <ExperiencePickerBody
+          items={items}
+          faqItems={faqItems}
+          faqHeading={faqHeading}
+          faqLead={faqLead}
+          microLabel={microLabel}
+          onAnchorClick={onAnchorClick}
+        />
+      </RevealGroup>
     </RevealAnimatedBody>
   );
 

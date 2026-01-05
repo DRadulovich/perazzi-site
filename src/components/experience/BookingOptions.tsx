@@ -9,6 +9,8 @@ import {
   RevealAnimatedBody,
   RevealCollapsedHeader,
   RevealExpandedHeader,
+  RevealGroup,
+  RevealItem,
   SectionBackdrop,
   SectionShell,
   Text,
@@ -128,37 +130,41 @@ const BookingOptionsRevealSection = ({
   };
 
   const expandedContent = (
-    <RevealAnimatedBody>
-      <RevealExpandedHeader
-        headingId="experience-booking-heading"
-        heading={heading}
-        headerThemeReady={headerThemeReady}
-        enableTitleReveal={enableTitleReveal}
-        onCollapse={handleBookingCollapse}
-      >
-        <div className="relative">
-          <Text
-            className={cn(
-              "type-section-subtitle",
-              headerThemeReady ? "text-ink-muted" : "text-white",
-            )}
-            leading="relaxed"
-          >
-            {subheading}
-          </Text>
-        </div>
-      </RevealExpandedHeader>
-      <BookingBody
-        revealBooking={revealBookingForMeasure}
-        options={options}
-        optionCtaLabel={optionCtaLabel}
-        scheduler={scheduler}
-        schedulerOpen={schedulerOpen}
-        schedulerLoaded={schedulerLoaded}
-        schedulerPanelId={schedulerPanelId}
-        schedulerNoteId={schedulerNoteId}
-        onSchedulerToggle={handleSchedulerToggle}
-      />
+    <RevealAnimatedBody sequence>
+      <RevealItem index={0}>
+        <RevealExpandedHeader
+          headingId="experience-booking-heading"
+          heading={heading}
+          headerThemeReady={headerThemeReady}
+          enableTitleReveal={enableTitleReveal}
+          onCollapse={handleBookingCollapse}
+        >
+          <div className="relative">
+            <Text
+              className={cn(
+                "type-section-subtitle",
+                headerThemeReady ? "text-ink-muted" : "text-white",
+              )}
+              leading="relaxed"
+            >
+              {subheading}
+            </Text>
+          </div>
+        </RevealExpandedHeader>
+      </RevealItem>
+      <RevealGroup delayMs={140}>
+        <BookingBody
+          revealBooking={revealBookingForMeasure}
+          options={options}
+          optionCtaLabel={optionCtaLabel}
+          scheduler={scheduler}
+          schedulerOpen={schedulerOpen}
+          schedulerLoaded={schedulerLoaded}
+          schedulerPanelId={schedulerPanelId}
+          schedulerNoteId={schedulerNoteId}
+          onSchedulerToggle={handleSchedulerToggle}
+        />
+      </RevealGroup>
     </RevealAnimatedBody>
   );
 
@@ -232,14 +238,16 @@ const BookingBody = ({
   return (
     <div id="experience-booking-body" className="space-y-6">
       <BookingOptionsGrid options={options} optionCtaLabel={optionCtaLabel} />
-      <SchedulerCard
-        scheduler={scheduler}
-        schedulerOpen={schedulerOpen}
-        schedulerLoaded={schedulerLoaded}
-        schedulerPanelId={schedulerPanelId}
-        schedulerNoteId={schedulerNoteId}
-        onSchedulerToggle={onSchedulerToggle}
-      />
+      <RevealItem index={options.length}>
+        <SchedulerCard
+          scheduler={scheduler}
+          schedulerOpen={schedulerOpen}
+          schedulerLoaded={schedulerLoaded}
+          schedulerPanelId={schedulerPanelId}
+          schedulerNoteId={schedulerNoteId}
+          onSchedulerToggle={onSchedulerToggle}
+        />
+      </RevealItem>
     </div>
   );
 };
@@ -251,36 +259,37 @@ type BookingOptionsGridProps = Readonly<{
 
 const BookingOptionsGrid = ({ options, optionCtaLabel }: BookingOptionsGridProps) => (
   <div className="grid gap-6 md:gap-8 lg:gap-10 md:grid-cols-2 xl:grid-cols-3">
-    {options.map((option) => (
-      <article
-        key={option.id}
-        className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 hover:border-ink/20 hover:bg-card/80 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-7 lg:p-8"
-      >
-        <div className="space-y-2">
-          <Heading level={3} className="type-card-title text-ink">
-            {option.title}
-          </Heading>
-          <Text size="caption" muted>
-            {option.durationLabel ??
-              (option.durationMins ? `${option.durationMins} minutes` : "")}
-          </Text>
-          <SafeHtml
-            className="type-body max-w-none leading-relaxed text-ink-muted"
-            html={option.descriptionHtml}
-          />
-        </div>
-        <div className="mt-auto pt-6">
-          <Button
-            asChild
-            variant="secondary"
-            size="md"
-            className="rounded-full px-6 py-3 type-button"
-            onClick={() => logAnalytics(`FittingCtaClick:${option.id}`)}
-          >
-            <a href={option.href}>{optionCtaLabel}</a>
-          </Button>
-        </div>
-      </article>
+    {options.map((option, index) => (
+      <RevealItem key={option.id} index={index}>
+        <article
+          className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 hover:border-ink/20 hover:bg-card/80 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated md:p-7 lg:p-8"
+        >
+          <div className="space-y-2">
+            <Heading level={3} className="type-card-title text-ink">
+              {option.title}
+            </Heading>
+            <Text size="caption" muted>
+              {option.durationLabel ??
+                (option.durationMins ? `${option.durationMins} minutes` : "")}
+            </Text>
+            <SafeHtml
+              className="type-body max-w-none leading-relaxed text-ink-muted"
+              html={option.descriptionHtml}
+            />
+          </div>
+          <div className="mt-auto pt-6">
+            <Button
+              asChild
+              variant="secondary"
+              size="md"
+              className="rounded-full px-6 py-3 type-button"
+              onClick={() => logAnalytics(`FittingCtaClick:${option.id}`)}
+            >
+              <a href={option.href}>{optionCtaLabel}</a>
+            </Button>
+          </div>
+        </article>
+      </RevealItem>
     ))}
   </div>
 );

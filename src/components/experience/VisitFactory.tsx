@@ -18,6 +18,8 @@ import {
   RevealAnimatedBody,
   RevealCollapsedHeader,
   RevealExpandedHeader,
+  RevealGroup,
+  RevealItem,
   SectionBackdrop,
   SectionShell,
   Text,
@@ -143,33 +145,37 @@ const VisitFactoryRevealSection = ({
   };
 
   const expandedContent = (
-    <RevealAnimatedBody>
-      <RevealExpandedHeader
-        headingId="visit-factory-heading"
-        heading={heading}
-        subheading={subheading}
-        headerThemeReady={headerThemeReady}
-        enableTitleReveal={enableTitleReveal}
-        onCollapse={handleVisitCollapse}
-      >
-        {visit.introHtml ? (
-          <div>
-            <SafeHtml
-              className="prose-journal max-w-none text-ink-muted md:max-w-4xl lg:max-w-4xl"
-              html={visit.introHtml}
-            />
-          </div>
-        ) : null}
-      </RevealExpandedHeader>
-      <VisitFactoryBody
-        revealVisit={revealVisitForMeasure}
-        visit={visit}
-        mapHref={mapHref}
-        mapPanelId={mapPanelId}
-        mapNoteId={mapNoteId}
-        expectOpen={expectOpen}
-        onExpectOpenChange={setExpectOpen}
-      />
+    <RevealAnimatedBody sequence>
+      <RevealItem index={0}>
+        <RevealExpandedHeader
+          headingId="visit-factory-heading"
+          heading={heading}
+          subheading={subheading}
+          headerThemeReady={headerThemeReady}
+          enableTitleReveal={enableTitleReveal}
+          onCollapse={handleVisitCollapse}
+        >
+          {visit.introHtml ? (
+            <div>
+              <SafeHtml
+                className="prose-journal max-w-none text-ink-muted md:max-w-4xl lg:max-w-4xl"
+                html={visit.introHtml}
+              />
+            </div>
+          ) : null}
+        </RevealExpandedHeader>
+      </RevealItem>
+      <RevealGroup delayMs={140}>
+        <VisitFactoryBody
+          revealVisit={revealVisitForMeasure}
+          visit={visit}
+          mapHref={mapHref}
+          mapPanelId={mapPanelId}
+          mapNoteId={mapNoteId}
+          expectOpen={expectOpen}
+          onExpectOpenChange={setExpectOpen}
+        />
+      </RevealGroup>
     </RevealAnimatedBody>
   );
 
@@ -229,111 +235,115 @@ const VisitFactoryBody = ({
   return (
     <div id="visit-factory-body" className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
-        <article className="space-y-5 rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated lg:p-7">
-          <Text size="label-tight" muted>
-            Botticino headquarters
-          </Text>
-          <Heading level={3} size="sm" className="type-card-title text-ink">
-            {visit.location.name}
-          </Heading>
-          <SafeHtml
-            className="type-card-body text-ink-muted"
-            html={visit.location.addressHtml}
-          />
-          {visit.location.hoursHtml ? (
-            <SafeHtml
-              className="type-label-tight text-ink-muted"
-              html={visit.location.hoursHtml}
-            />
-          ) : null}
-          {visit.location.notesHtml ? (
+        <RevealItem index={0}>
+          <article className="space-y-5 rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 sm:rounded-3xl sm:bg-card/80 sm:p-6 sm:shadow-elevated lg:p-7">
+            <Text size="label-tight" muted>
+              Botticino headquarters
+            </Text>
+            <Heading level={3} size="sm" className="type-card-title text-ink">
+              {visit.location.name}
+            </Heading>
             <SafeHtml
               className="type-card-body text-ink-muted"
-              html={visit.location.notesHtml}
+              html={visit.location.addressHtml}
             />
-          ) : null}
-          <div className="space-y-3 pt-2">
-            <p id={mapNoteId} className="sr-only">
-              Selecting Open map loads an interactive map you can pan and zoom.
-            </p>
-            <div
-              id={mapPanelId}
-              className="group relative overflow-hidden rounded-2xl border border-border/70 bg-(--color-canvas) shadow-soft ring-1 ring-border/70 aspect-dynamic"
-              style={{ "--aspect-ratio": visit.location.staticMap.aspectRatio ?? 3 / 2 }}
-              aria-live="polite"
-            >
-              {visit.location.mapEmbedSrc ? (
-                <iframe
-                  src={visit.location.mapEmbedSrc}
-                  title={`Map to ${visit.location.name}`}
-                  className="h-full w-full"
-                  loading="lazy"
-                  aria-describedby={mapNoteId}
-                />
-              ) : (
-                <Image
-                  src={visit.location.staticMap.url}
-                  alt={visit.location.staticMap.alt}
-                  fill
-                  sizes="(min-width: 1280px) 640px, (min-width: 1024px) 50vw, 100vw"
-                  className="object-cover"
-                />
-              )}
-              <div
-                className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/70 via-(--scrim-strong)/40 to-transparent"
-                aria-hidden
+            {visit.location.hoursHtml ? (
+              <SafeHtml
+                className="type-label-tight text-ink-muted"
+                html={visit.location.hoursHtml}
               />
-            </div>
-            <a
-              href={mapHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 type-button text-perazzi-red focus-ring"
-            >
-              Open in Maps <span className="sr-only">(opens in a new tab)</span>
-            </a>
-          </div>
-        </article>
-
-        <div className="space-y-4">
-          {visit.whatToExpectHtml ? (
-            <Collapsible open={expectOpen} onOpenChange={onExpectOpenChange}>
-              <CollapsibleTrigger
-                className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left type-card-title text-ink shadow-soft backdrop-blur-sm hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
-                aria-expanded={expectOpen}
-                aria-controls="visit-expect-content"
+            ) : null}
+            {visit.location.notesHtml ? (
+              <SafeHtml
+                className="type-card-body text-ink-muted"
+                html={visit.location.notesHtml}
+              />
+            ) : null}
+            <div className="space-y-3 pt-2">
+              <p id={mapNoteId} className="sr-only">
+                Selecting Open map loads an interactive map you can pan and zoom.
+              </p>
+              <div
+                id={mapPanelId}
+                className="group relative overflow-hidden rounded-2xl border border-border/70 bg-(--color-canvas) shadow-soft ring-1 ring-border/70 aspect-dynamic"
+                style={{ "--aspect-ratio": visit.location.staticMap.aspectRatio ?? 3 / 2 }}
+                aria-live="polite"
               >
-                What to expect{" "}
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    "text-lg",
-                    expectOpen ? "rotate-45" : "rotate-0",
-                  )}
-                >
-                  +
-                </span>
-              </CollapsibleTrigger>
-              <CollapsibleContent
-                id="visit-expect-content"
-                className="mt-3 rounded-2xl border border-border/70 bg-card/60 p-4 type-card-body text-ink-muted shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80"
-              >
-                <SafeHtml
-                  className="max-w-none type-card-body text-ink-muted"
-                  html={visit.whatToExpectHtml}
+                {visit.location.mapEmbedSrc ? (
+                  <iframe
+                    src={visit.location.mapEmbedSrc}
+                    title={`Map to ${visit.location.name}`}
+                    className="h-full w-full"
+                    loading="lazy"
+                    aria-describedby={mapNoteId}
+                  />
+                ) : (
+                  <Image
+                    src={visit.location.staticMap.url}
+                    alt={visit.location.staticMap.alt}
+                    fill
+                    sizes="(min-width: 1280px) 640px, (min-width: 1024px) 50vw, 100vw"
+                    className="object-cover"
+                  />
+                )}
+                <div
+                  className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/70 via-(--scrim-strong)/40 to-transparent"
+                  aria-hidden
                 />
-              </CollapsibleContent>
-            </Collapsible>
-          ) : null}
-          <Button
-            asChild
-            size="lg"
-            onClick={() => logAnalytics("VisitCtaClick")}
-            className="rounded-full px-6 py-3 type-button"
-          >
-            <a href={visit.cta.href}>{visit.cta.label}</a>
-          </Button>
-        </div>
+              </div>
+              <a
+                href={mapHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 type-button text-perazzi-red focus-ring"
+              >
+                Open in Maps <span className="sr-only">(opens in a new tab)</span>
+              </a>
+            </div>
+          </article>
+        </RevealItem>
+
+        <RevealItem index={1}>
+          <div className="space-y-4">
+            {visit.whatToExpectHtml ? (
+              <Collapsible open={expectOpen} onOpenChange={onExpectOpenChange}>
+                <CollapsibleTrigger
+                  className="flex w-full items-center justify-between rounded-2xl border border-border/70 bg-card/60 px-4 py-3 text-left type-card-title text-ink shadow-soft backdrop-blur-sm hover:border-ink/20 hover:bg-card/85 focus-ring sm:rounded-3xl sm:bg-card/80"
+                  aria-expanded={expectOpen}
+                  aria-controls="visit-expect-content"
+                >
+                  What to expect{" "}
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "text-lg",
+                      expectOpen ? "rotate-45" : "rotate-0",
+                    )}
+                  >
+                    +
+                  </span>
+                </CollapsibleTrigger>
+                <CollapsibleContent
+                  id="visit-expect-content"
+                  className="mt-3 rounded-2xl border border-border/70 bg-card/60 p-4 type-card-body text-ink-muted shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80"
+                >
+                  <SafeHtml
+                    className="max-w-none type-card-body text-ink-muted"
+                    html={visit.whatToExpectHtml}
+                  />
+                </CollapsibleContent>
+              </Collapsible>
+            ) : null}
+            <Button
+              asChild
+              size="lg"
+              onClick={() => logAnalytics("VisitCtaClick")}
+              className="rounded-full px-6 py-3 type-button"
+            >
+              <a href={visit.cta.href}>{visit.cta.label}</a>
+            </Button>
+          </div>
+        </RevealItem>
       </div>
     </div>
   );

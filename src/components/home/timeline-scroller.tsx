@@ -14,6 +14,8 @@ import {
   RevealAnimatedBody,
   RevealCollapsedHeader,
   RevealExpandedHeader,
+  RevealGroup,
+  RevealItem,
   SectionBackdrop,
   SectionShell,
   Text,
@@ -154,26 +156,30 @@ function TimelineRevealSection({
   };
 
   const expandedContent = (
-    <RevealAnimatedBody>
-      <RevealExpandedHeader
-        headingId="craft-timeline-heading"
-        heading={headingTitle}
-        subheading={headingEyebrow}
-        headerThemeReady={headerThemeReady}
-        enableTitleReveal={enableTitleReveal}
-        onCollapse={handleTimelineCollapse}
-      >
-        <span className="sr-only">{headingInstructions}</span>
-      </RevealExpandedHeader>
-      <TimelineBody
-        enablePinned={enablePinned}
-        stages={stages}
-        resolvedActiveStage={resolvedActiveStage}
-        activeStage={activeStage}
-        setActiveStage={setActiveStage}
-        alternateTitle={alternateTitle}
-        revealPhotoFocus={revealPhotoFocus}
-      />
+    <RevealAnimatedBody sequence>
+      <RevealItem index={0}>
+        <RevealExpandedHeader
+          headingId="craft-timeline-heading"
+          heading={headingTitle}
+          subheading={headingEyebrow}
+          headerThemeReady={headerThemeReady}
+          enableTitleReveal={enableTitleReveal}
+          onCollapse={handleTimelineCollapse}
+        >
+          <span className="sr-only">{headingInstructions}</span>
+        </RevealExpandedHeader>
+      </RevealItem>
+      <RevealGroup delayMs={140}>
+        <TimelineBody
+          enablePinned={enablePinned}
+          stages={stages}
+          resolvedActiveStage={resolvedActiveStage}
+          activeStage={activeStage}
+          setActiveStage={setActiveStage}
+          alternateTitle={alternateTitle}
+          revealPhotoFocus={revealPhotoFocus}
+        />
+      </RevealGroup>
     </RevealAnimatedBody>
   );
 
@@ -247,34 +253,38 @@ function TimelineBody({
 }: TimelineBodyProps) {
   return (
     <div id="craft-timeline-body" className="space-y-6">
-      {enablePinned ? (
-        <TimelinePinnedLayout
-          stages={stages}
-          resolvedActiveStage={resolvedActiveStage}
-          setActiveStage={setActiveStage}
-          alternateTitle={alternateTitle}
-          revealPhotoFocus={revealPhotoFocus}
-        />
-      ) : (
-        <TimelineStackedLayout
-          stages={stages}
-          activeStage={activeStage}
-          setActiveStage={setActiveStage}
-          alternateTitle={alternateTitle}
-        />
-      )}
-      <div className="pt-2 sm:pt-4">
-        <Button
-          asChild
-          variant="secondary"
-          size="lg"
-          className="w-full type-button-eaves text-ink"
-        >
-          <Link href="/the-build/why-a-perazzi-has-a-soul">
-            See the full build story
-          </Link>
-        </Button>
-      </div>
+      <RevealItem index={0}>
+        {enablePinned ? (
+          <TimelinePinnedLayout
+            stages={stages}
+            resolvedActiveStage={resolvedActiveStage}
+            setActiveStage={setActiveStage}
+            alternateTitle={alternateTitle}
+            revealPhotoFocus={revealPhotoFocus}
+          />
+        ) : (
+          <TimelineStackedLayout
+            stages={stages}
+            activeStage={activeStage}
+            setActiveStage={setActiveStage}
+            alternateTitle={alternateTitle}
+          />
+        )}
+      </RevealItem>
+      <RevealItem index={1}>
+        <div className="pt-2 sm:pt-4">
+          <Button
+            asChild
+            variant="secondary"
+            size="lg"
+            className="w-full type-button-eaves text-ink"
+          >
+            <Link href="/the-build/why-a-perazzi-has-a-soul">
+              See the full build story
+            </Link>
+          </Button>
+        </div>
+      </RevealItem>
     </div>
   );
 }

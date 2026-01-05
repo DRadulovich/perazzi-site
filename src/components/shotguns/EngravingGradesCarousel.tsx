@@ -15,6 +15,8 @@ import {
   RevealAnimatedBody,
   RevealCollapsedHeader,
   RevealExpandedHeader,
+  RevealGroup,
+  RevealItem,
   SectionBackdrop,
   SectionShell,
   Text,
@@ -252,35 +254,39 @@ const EngravingGradesRevealSection = ({
   };
 
   const expandedContent = (
-    <RevealAnimatedBody>
-      <RevealExpandedHeader
-        headingId="engraving-grades-heading"
-        heading={heading}
-        headerThemeReady={headerThemeReady}
-        enableTitleReveal={enableTitleReveal}
-        onCollapse={handleCollapse}
-      >
-        <div className="relative">
-          <Text
-            className={cn(
-              "max-w-4xl type-section-subtitle",
-              headerThemeReady ? "text-ink-muted" : "text-white",
-            )}
-            leading="normal"
-          >
-            {subheading}
-          </Text>
-        </div>
-      </RevealExpandedHeader>
-      <EngravingGradesBody
-        categories={categories}
-        resolvedOpenCategory={resolvedOpenCategory}
-        activeGradeId={activeGradeId}
-        setOpenCategory={setOpenCategory}
-        setActiveGradeId={setActiveGradeId}
-        selectedGrade={selectedGrade}
-        ctaLabel={ctaLabel}
-      />
+    <RevealAnimatedBody sequence>
+      <RevealItem index={0}>
+        <RevealExpandedHeader
+          headingId="engraving-grades-heading"
+          heading={heading}
+          headerThemeReady={headerThemeReady}
+          enableTitleReveal={enableTitleReveal}
+          onCollapse={handleCollapse}
+        >
+          <div className="relative">
+            <Text
+              className={cn(
+                "max-w-4xl type-section-subtitle",
+                headerThemeReady ? "text-ink-muted" : "text-white",
+              )}
+              leading="normal"
+            >
+              {subheading}
+            </Text>
+          </div>
+        </RevealExpandedHeader>
+      </RevealItem>
+      <RevealGroup delayMs={140}>
+        <EngravingGradesBody
+          categories={categories}
+          resolvedOpenCategory={resolvedOpenCategory}
+          activeGradeId={activeGradeId}
+          setOpenCategory={setOpenCategory}
+          setActiveGradeId={setActiveGradeId}
+          selectedGrade={selectedGrade}
+          ctaLabel={ctaLabel}
+        />
+      </RevealGroup>
     </RevealAnimatedBody>
   );
 
@@ -336,95 +342,99 @@ const EngravingGradesBody = ({
 }: EngravingGradesBodyProps) => (
   <div id="engraving-grades-body" className="space-y-6">
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
-      <div className="space-y-3 rounded-2xl bg-transparent p-4 sm:rounded-3xl sm:p-5">
-        <Text size="label-tight" className="type-label-tight text-ink-muted" leading="normal">
-          Grade categories
-        </Text>
-        <div className="space-y-3">
-          {categories.map((category) => {
-            const isOpen = resolvedOpenCategory === category.label;
-            return (
-              <div
-                key={category.label}
-                className="rounded-2xl border border-border/70 bg-card/60 backdrop-blur-sm sm:bg-card/75"
-              >
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between px-4 py-3 text-left type-label-tight text-ink focus-ring"
-                  aria-expanded={isOpen}
-                  onClick={() =>
-                    setOpenCategory((prev) =>
-                      prev === category.label ? null : category.label,
-                    )
-                  }
-                >
-                  {category.label}
-                  <span
-                    className={cn(
-                      "text-lg",
-                      isOpen ? "rotate-45" : "rotate-0",
-                    )}
-                    aria-hidden="true"
-                  >
-                    +
-                  </span>
-                </button>
-                {isOpen ? (
-                  <div className="border-t border-border/70">
-                    <ul className="space-y-1 p-3">
-                      {category.grades.map((grade) => {
-                        const isActive = grade.id === activeGradeId;
-                        return (
-                          <li key={grade.id}>
-                            <button
-                              type="button"
-                              onClick={() => { setActiveGradeId(grade.id); }}
-                              className={cn(
-                                "group relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left focus-ring",
-                                isActive
-                                  ? "text-white"
-                                  : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
-                              )}
-                              aria-pressed={isActive}
-                            >
-                              {isActive ? (
-                                <span
-                                  className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
-                                  aria-hidden="true"
-                                />
-                              ) : null}
-                              <span
-                                className={cn(
-                                  "relative z-10 block type-body-title text-base uppercase",
-                                  isActive ? "text-white" : "text-ink-muted",
-                                )}
-                              >
-                                {grade.name}
-                              </span>
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                ) : null}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="min-h-104">
-        {selectedGrade ? (
-          <div key={selectedGrade.id}>
-            <GradeCard grade={selectedGrade} ctaLabel={ctaLabel} />
-          </div>
-        ) : (
-          <Text className="text-ink-muted" leading="normal">
-            Select a grade to view details.
+      <RevealItem index={0}>
+        <div className="space-y-3 rounded-2xl bg-transparent p-4 sm:rounded-3xl sm:p-5">
+          <Text size="label-tight" className="type-label-tight text-ink-muted" leading="normal">
+            Grade categories
           </Text>
-        )}
-      </div>
+          <div className="space-y-3">
+            {categories.map((category) => {
+              const isOpen = resolvedOpenCategory === category.label;
+              return (
+                <div
+                  key={category.label}
+                  className="rounded-2xl border border-border/70 bg-card/60 backdrop-blur-sm sm:bg-card/75"
+                >
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between px-4 py-3 text-left type-label-tight text-ink focus-ring"
+                    aria-expanded={isOpen}
+                    onClick={() =>
+                      setOpenCategory((prev) =>
+                        prev === category.label ? null : category.label,
+                      )
+                    }
+                  >
+                    {category.label}
+                    <span
+                      className={cn(
+                        "text-lg",
+                        isOpen ? "rotate-45" : "rotate-0",
+                      )}
+                      aria-hidden="true"
+                    >
+                      +
+                    </span>
+                  </button>
+                  {isOpen ? (
+                    <div className="border-t border-border/70">
+                      <ul className="space-y-1 p-3">
+                        {category.grades.map((grade) => {
+                          const isActive = grade.id === activeGradeId;
+                          return (
+                            <li key={grade.id}>
+                              <button
+                                type="button"
+                                onClick={() => { setActiveGradeId(grade.id); }}
+                                className={cn(
+                                  "group relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left focus-ring",
+                                  isActive
+                                    ? "text-white"
+                                    : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
+                                )}
+                                aria-pressed={isActive}
+                              >
+                                {isActive ? (
+                                  <span
+                                    className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
+                                    aria-hidden="true"
+                                  />
+                                ) : null}
+                                <span
+                                  className={cn(
+                                    "relative z-10 block type-body-title text-base uppercase",
+                                    isActive ? "text-white" : "text-ink-muted",
+                                  )}
+                                >
+                                  {grade.name}
+                                </span>
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </RevealItem>
+
+      <RevealItem index={1}>
+        <div className="min-h-104">
+          {selectedGrade ? (
+            <div key={selectedGrade.id}>
+              <GradeCard grade={selectedGrade} ctaLabel={ctaLabel} />
+            </div>
+          ) : (
+            <Text className="text-ink-muted" leading="normal">
+              Select a grade to view details.
+            </Text>
+          )}
+        </div>
+      </RevealItem>
     </div>
   </div>
 );

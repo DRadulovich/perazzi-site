@@ -17,6 +17,8 @@ import {
   Heading,
   RevealAnimatedBody,
   RevealCollapsedHeader,
+  RevealGroup,
+  RevealItem,
   SectionBackdrop,
   SectionShell,
   Text,
@@ -140,7 +142,7 @@ const TriggerExplainerRevealSection = ({
   };
 
   const expandedContent = (
-    <RevealAnimatedBody>
+    <RevealAnimatedBody sequence>
       <TriggerExplainerExpandedLayout
         explainer={explainer}
         manualOpen={manualOpen}
@@ -209,7 +211,7 @@ const TriggerExplainerExpandedLayout = ({
 
   return (
     <>
-      <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8">
+      <RevealGroup className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8">
         <Collapsible
           open={manualOpen}
           onOpenChange={(next) => {
@@ -219,34 +221,40 @@ const TriggerExplainerExpandedLayout = ({
           className="space-y-4 flex-1"
         >
           <div className="space-y-3">
-            <div className="relative">
-              <Heading
-                id="trigger-explainer-heading"
-                level={2}
-                size="xl"
-                className={headerThemeReady ? "text-ink" : "text-white"}
+            <RevealItem index={0}>
+              <div className="relative">
+                <Heading
+                  id="trigger-explainer-heading"
+                  level={2}
+                  size="xl"
+                  className={headerThemeReady ? "text-ink" : "text-white"}
+                >
+                  {explainer.title}
+                </Heading>
+              </div>
+            </RevealItem>
+            <RevealItem index={1}>
+              <div className="relative">
+                <Text
+                  className={cn(
+                    "type-section-subtitle",
+                    headerThemeReady ? "text-ink-muted" : "text-white",
+                  )}
+                  leading="normal"
+                >
+                  {subheading}
+                </Text>
+              </div>
+            </RevealItem>
+            <RevealItem index={2}>
+              <CollapsibleTrigger
+                className="type-button mt-1 inline-flex w-fit items-center gap-2 rounded-sm border border-border/70 bg-card/60 px-4 py-2 text-ink shadow-soft backdrop-blur-sm hover:border-ink/20 hover:bg-card/85 focus-ring lg:hidden"
+                aria-controls="trigger-explainer-content"
+                data-analytics-id="TriggerExplainerToggle"
               >
-                {explainer.title}
-              </Heading>
-            </div>
-            <div className="relative">
-              <Text
-                className={cn(
-                  "type-section-subtitle",
-                  headerThemeReady ? "text-ink-muted" : "text-white",
-                )}
-                leading="normal"
-              >
-                {subheading}
-              </Text>
-            </div>
-            <CollapsibleTrigger
-              className="type-button mt-1 inline-flex w-fit items-center gap-2 rounded-sm border border-border/70 bg-card/60 px-4 py-2 text-ink shadow-soft backdrop-blur-sm hover:border-ink/20 hover:bg-card/85 focus-ring lg:hidden"
-              aria-controls="trigger-explainer-content"
-              data-analytics-id="TriggerExplainerToggle"
-            >
-              {manualOpen ? "Hide details" : "Show details"}
-            </CollapsibleTrigger>
+                {manualOpen ? "Hide details" : "Show details"}
+              </CollapsibleTrigger>
+            </RevealItem>
           </div>
           <CollapsibleContent
             id="trigger-explainer-content"
@@ -256,18 +264,22 @@ const TriggerExplainerExpandedLayout = ({
           </CollapsibleContent>
         </Collapsible>
         {enableTitleReveal ? (
-          <button
-            type="button"
-            className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-            onClick={onCollapse}
-          >
-            Collapse
-          </button>
+          <RevealItem index={3}>
+            <button
+              type="button"
+              className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+              onClick={onCollapse}
+            >
+              Collapse
+            </button>
+          </RevealItem>
         ) : null}
-      </div>
-      <div id="trigger-explainer-body" className="space-y-6">
-        <div className={`hidden lg:grid ${contentClassName}`}>{explainerContent}</div>
-      </div>
+      </RevealGroup>
+      <RevealGroup delayMs={140}>
+        <div id="trigger-explainer-body" className="space-y-6">
+          <div className={`hidden lg:grid ${contentClassName}`}>{explainerContent}</div>
+        </div>
+      </RevealGroup>
     </>
   );
 };
@@ -291,47 +303,51 @@ const TriggerExplainerContent = ({ explainer }: TriggerExplainerContentProps) =>
 
   return (
     <>
-      <div className="rounded-2xl border border-border/0 bg-card/0 p-4 sm:rounded-3xl sm:p-6 lg:flex lg:h-full lg:flex-col lg:justify-start">
-        <TriggerExplainerCopy explainer={explainer} className={copyClasses} />
-        <div className="mt-5 flex flex-wrap gap-3">
-          {explainer.links.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              data-analytics-id={`TriggerExplainerLink:${link.href}`}
-              className="type-button inline-flex items-center gap-2 rounded-sm border border-perazzi-red/40 bg-card/60 px-4 py-2 text-perazzi-red shadow-soft backdrop-blur-sm hover:border-perazzi-red hover:bg-card/85 focus-ring"
-              onClick={() => logAnalytics(`TriggerExplainerLink:${link.href}`)}
-            >
-              {link.label}
-              <span aria-hidden="true">→</span>
-            </a>
-          ))}
+      <RevealItem index={0}>
+        <div className="rounded-2xl border border-border/0 bg-card/0 p-4 sm:rounded-3xl sm:p-6 lg:flex lg:h-full lg:flex-col lg:justify-start">
+          <TriggerExplainerCopy explainer={explainer} className={copyClasses} />
+          <div className="mt-5 flex flex-wrap gap-3">
+            {explainer.links.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                data-analytics-id={`TriggerExplainerLink:${link.href}`}
+                className="type-button inline-flex items-center gap-2 rounded-sm border border-perazzi-red/40 bg-card/60 px-4 py-2 text-perazzi-red shadow-soft backdrop-blur-sm hover:border-perazzi-red hover:bg-card/85 focus-ring"
+                onClick={() => logAnalytics(`TriggerExplainerLink:${link.href}`)}
+              >
+                {link.label}
+                <span aria-hidden="true">→</span>
+              </a>
+            ))}
+          </div>
         </div>
-      </div>
+      </RevealItem>
 
-      <figure className="group rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated">
-        <div
-          className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-dynamic"
-          style={{ "--aspect-ratio": ratio }}
-        >
-          <Image
-            src={explainer.diagram.url}
-            alt=""
-            fill
-            sizes="(min-width: 1024px) 640px, 100vw"
-            className="object-contain"
-          />
+      <RevealItem index={1}>
+        <figure className="group rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated">
           <div
-            className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/60 via-(--scrim-strong)/40 to-transparent"
-            aria-hidden
-          />
-        </div>
-        {explainer.diagram.caption ? (
-          <Text asChild size="caption" className="mt-3 text-ink-muted" leading="normal">
-            <figcaption>{explainer.diagram.caption}</figcaption>
-          </Text>
-        ) : null}
-      </figure>
+            className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-dynamic"
+            style={{ "--aspect-ratio": ratio }}
+          >
+            <Image
+              src={explainer.diagram.url}
+              alt=""
+              fill
+              sizes="(min-width: 1024px) 640px, 100vw"
+              className="object-contain"
+            />
+            <div
+              className="pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/60 via-(--scrim-strong)/40 to-transparent"
+              aria-hidden
+            />
+          </div>
+          {explainer.diagram.caption ? (
+            <Text asChild size="caption" className="mt-3 text-ink-muted" leading="normal">
+              <figcaption>{explainer.diagram.caption}</figcaption>
+            </Text>
+          ) : null}
+        </figure>
+      </RevealItem>
     </>
   );
 };

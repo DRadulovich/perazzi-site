@@ -13,6 +13,8 @@ import {
   RevealAnimatedBody,
   RevealCollapsedHeader,
   RevealExpandedHeader,
+  RevealGroup,
+  RevealItem,
   Section,
   SectionBackdrop,
   SectionShell,
@@ -163,27 +165,31 @@ const ChampionsGalleryRevealSection = ({
   };
 
   const expandedContent = (
-    <RevealAnimatedBody>
-      <RevealExpandedHeader
-        headingId="heritage-champions-heading"
-        heading={heading}
-        subheading={subheading}
-        headerThemeReady={headerThemeReady}
-        enableTitleReveal={enableTitleReveal}
-        onCollapse={handleGalleryCollapse}
-      />
-      <ChampionsGalleryBody
-        revealGallery={revealGalleryForMeasure}
-        disciplines={disciplines}
-        activeDiscipline={activeDiscipline}
-        onDisciplineChange={setActiveDiscipline}
-        championsLabel={championsLabel}
-        filteredChampions={filteredChampions}
-        activeChampionId={activeChampionId}
-        onChampionSelect={handleChampionSelect}
-        selectedChampion={selectedChampion}
-        cardCtaLabel={cardCtaLabel}
-      />
+    <RevealAnimatedBody sequence>
+      <RevealItem index={0}>
+        <RevealExpandedHeader
+          headingId="heritage-champions-heading"
+          heading={heading}
+          subheading={subheading}
+          headerThemeReady={headerThemeReady}
+          enableTitleReveal={enableTitleReveal}
+          onCollapse={handleGalleryCollapse}
+        />
+      </RevealItem>
+      <RevealGroup delayMs={140}>
+        <ChampionsGalleryBody
+          revealGallery={revealGalleryForMeasure}
+          disciplines={disciplines}
+          activeDiscipline={activeDiscipline}
+          onDisciplineChange={setActiveDiscipline}
+          championsLabel={championsLabel}
+          filteredChampions={filteredChampions}
+          activeChampionId={activeChampionId}
+          onChampionSelect={handleChampionSelect}
+          selectedChampion={selectedChampion}
+          cardCtaLabel={cardCtaLabel}
+        />
+      </RevealGroup>
     </RevealAnimatedBody>
   );
 
@@ -258,51 +264,57 @@ function ChampionsGalleryBody({
 
   return (
     <div id="heritage-champions-body" className="space-y-6">
-      <ChampionsGalleryFilters
-        disciplines={disciplines}
-        activeDiscipline={activeDiscipline}
-        onDisciplineChange={onDisciplineChange}
-      />
+      <RevealItem index={0}>
+        <ChampionsGalleryFilters
+          disciplines={disciplines}
+          activeDiscipline={activeDiscipline}
+          onDisciplineChange={onDisciplineChange}
+        />
+      </RevealItem>
 
       <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)] lg:items-start">
-        <div className="rounded-2xl bg-card/0 p-4 sm:rounded-3xl">
-          <Text
-            size="label-tight"
-            className="mb-3 text-ink-muted"
-            leading="normal"
-          >
-            {championsLabel}
-          </Text>
-
-          {filteredChampions.length ? (
-            <ul className="space-y-1" aria-label="Select a champion to view their profile">
-              {filteredChampions.map((champion) => (
-                <ChampionNameItem
-                  key={champion.id}
-                  champion={champion}
-                  isActive={champion.id === activeChampionId}
-                  onSelect={() => onChampionSelect(champion.id)}
-                />
-              ))}
-            </ul>
-          ) : (
-            <Text size="sm" className="text-ink-muted">
-              No champions in this discipline yet—select another to continue exploring the lineage.
+        <RevealItem index={1}>
+          <div className="rounded-2xl bg-card/0 p-4 sm:rounded-3xl">
+            <Text
+              size="label-tight"
+              className="mb-3 text-ink-muted"
+              leading="normal"
+            >
+              {championsLabel}
             </Text>
-          )}
-        </div>
 
-        <div className="min-h-72 rounded-2xl border border-border/75 bg-card/75 p-5 shadow-soft sm:rounded-3xl">
-          {selectedChampion ? (
-            <div className="flex flex-col gap-6">
-              <ChampionDetail champion={selectedChampion} cardCtaLabel={cardCtaLabel} />
-            </div>
-          ) : (
-            <p className="type-body-sm text-ink-muted">
-              Select a champion on the left to view their story.
-            </p>
-          )}
-        </div>
+            {filteredChampions.length ? (
+              <ul className="space-y-1" aria-label="Select a champion to view their profile">
+                {filteredChampions.map((champion) => (
+                  <ChampionNameItem
+                    key={champion.id}
+                    champion={champion}
+                    isActive={champion.id === activeChampionId}
+                    onSelect={() => onChampionSelect(champion.id)}
+                  />
+                ))}
+              </ul>
+            ) : (
+              <Text size="sm" className="text-ink-muted">
+                No champions in this discipline yet—select another to continue exploring the lineage.
+              </Text>
+            )}
+          </div>
+        </RevealItem>
+
+        <RevealItem index={2}>
+          <div className="min-h-72 rounded-2xl border border-border/75 bg-card/75 p-5 shadow-soft sm:rounded-3xl">
+            {selectedChampion ? (
+              <div className="flex flex-col gap-6">
+                <ChampionDetail champion={selectedChampion} cardCtaLabel={cardCtaLabel} />
+              </div>
+            ) : (
+              <p className="type-body-sm text-ink-muted">
+                Select a champion on the left to view their story.
+              </p>
+            )}
+          </div>
+        </RevealItem>
       </div>
     </div>
   );
