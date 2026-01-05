@@ -159,24 +159,11 @@ export function SectionBackdrop({
           />
         </div>
       </div>
-      <div
-        className={cn(
-          "absolute inset-0 bg-(--scrim-strong)",
-          reveal ? "opacity-0" : "opacity-100",
-        )}
-        aria-hidden
-      />
-      <div
-        className={cn(
-          "absolute inset-0 bg-(--scrim-strong)",
-          overlayVisible ? "opacity-100" : "opacity-0",
-        )}
-        aria-hidden
-      />
+      <div className="absolute inset-0 bg-black/45" aria-hidden />
       {overlayClass ? (
         <div
           className={cn(
-            "pointer-events-none absolute inset-0",
+            "section-backdrop-overlay pointer-events-none absolute inset-0",
             overlayClass,
             overlayVisible ? "opacity-100" : "opacity-0",
           )}
@@ -317,41 +304,57 @@ export function RevealCollapsedHeader({
     section.dataset.teaseBound = "true";
   };
 
+  const handleExpand = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const section = event.currentTarget.closest("section");
+    if (section) {
+      delete section.dataset.teaseActive;
+    }
+    onExpand();
+  };
+
   return (
-    <button
-      type="button"
-      className="absolute inset-0 z-0 flex cursor-pointer flex-col items-center justify-center gap-3 text-center focus-ring"
-      onClick={onExpand}
-      onPointerEnter={activateTease}
-      onFocus={activateTease}
-      aria-expanded={expanded}
-      aria-controls={controlsId}
-      aria-labelledby={headingId}
-      data-tease-trigger
-    >
-      <div className="relative inline-flex text-white">
-        <Heading
-          id={headingId}
-          level={2}
-          size="xl"
-          className="type-section-collapsed"
-        >
-          {heading}
-        </Heading>
-      </div>
-      {subheading ? (
-        <div className="relative text-white">
-          <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-            {subheading}
+    <div className="absolute inset-0 z-0 flex items-center justify-center">
+      <button
+        type="button"
+        className="group flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl px-4 py-3 text-center focus-ring"
+        onClick={handleExpand}
+        onPointerEnter={activateTease}
+        onFocus={activateTease}
+        aria-expanded={expanded}
+        aria-controls={controlsId}
+        aria-labelledby={headingId}
+        data-tease-trigger
+      >
+        <div className="relative inline-flex text-white">
+          <Heading
+            id={headingId}
+            level={2}
+            size="xl"
+            className="type-section-collapsed"
+          >
+            {heading}
+          </Heading>
+        </div>
+        {subheading ? (
+          <div className="relative text-white">
+            <Text
+              size="lg"
+              className="type-section-subtitle type-section-subtitle-collapsed"
+            >
+              {subheading}
+            </Text>
+          </div>
+        ) : null}
+        <div className="mt-3">
+          <Text
+            size="button"
+            className="text-white/80"
+          >
+            {readMoreLabel}
           </Text>
         </div>
-      ) : null}
-      <div className="mt-3">
-        <Text size="button" className="text-white/80">
-          {readMoreLabel}
-        </Text>
-      </div>
-      <span className="sr-only">Expand {heading}</span>
-    </button>
+        <span className="sr-only">Expand {heading}</span>
+      </button>
+    </div>
   );
 }

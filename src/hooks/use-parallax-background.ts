@@ -14,9 +14,6 @@ export const useParallaxBackground = (enabled: boolean) => {
     if (!node) return;
 
     if (!enabled) {
-      currentRef.current = 0;
-      targetRef.current = 0;
-      node.style.setProperty("--parallax-y", "0px");
       return;
     }
 
@@ -60,9 +57,6 @@ export const useParallaxBackground = (enabled: boolean) => {
         globalThis.cancelAnimationFrame(frameRef.current);
         frameRef.current = 0;
       }
-      currentRef.current = 0;
-      targetRef.current = 0;
-      node.style.setProperty("--parallax-y", "0px");
     };
   }, [enabled]);
 

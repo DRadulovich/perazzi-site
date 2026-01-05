@@ -167,6 +167,7 @@
   }
 
   .overlay-gradient-hero {
+    --overlay-edge-color: color-mix(in srgb, var(--color-black) 35%, transparent);
     background-image:
       linear-gradient(to right, color-mix(in srgb, var(--color-black) 16%, transparent) 0%, color-mix(in srgb, var(--color-black) 4%, transparent) 50%, color-mix(in srgb, var(--color-black) 16%, transparent) 100%),
       linear-gradient(to bottom, color-mix(in srgb, var(--color-black) 60%, transparent) 0%, transparent 75%),
@@ -174,6 +175,7 @@
   }
 
   .overlay-gradient-canvas {
+    --overlay-edge-color: color-mix(in srgb, var(--color-canvas) 70%, transparent);
     background-image:
       linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%),
       linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 75%),
@@ -181,6 +183,7 @@
   }
 
   .overlay-gradient-canvas-70 {
+    --overlay-edge-color: color-mix(in srgb, var(--color-canvas) 70%, transparent);
     background-image:
       linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%),
       linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 70%),
@@ -188,6 +191,7 @@
   }
 
   .overlay-gradient-canvas-80 {
+    --overlay-edge-color: color-mix(in srgb, var(--color-canvas) 70%, transparent);
     background-image:
       linear-gradient(to right, color-mix(in srgb, var(--color-canvas) 24%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 6%, transparent) 50%, color-mix(in srgb, var(--color-canvas) 24%, transparent) 100%),
       linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 100%, transparent) 0%, transparent 80%),
@@ -195,6 +199,7 @@
   }
 
   .overlay-gradient-ink {
+    --overlay-edge-color: color-mix(in srgb, var(--color-black) 45%, transparent);
     background-image:
       linear-gradient(to right, color-mix(in srgb, var(--color-black) 24%, transparent) 0%, color-mix(in srgb, var(--color-black) 6%, transparent) 50%, color-mix(in srgb, var(--color-black) 24%, transparent) 100%),
       linear-gradient(to bottom, color-mix(in srgb, var(--color-black) 100%, transparent) 0%, transparent 75%),
@@ -202,6 +207,7 @@
   }
 
   .overlay-gradient-ink-50 {
+    --overlay-edge-color: color-mix(in srgb, var(--color-perazzi-black) 45%, transparent);
     background-image:
       linear-gradient(to right, color-mix(in srgb, var(--color-perazzi-black) 0%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 0%, transparent) 0%, color-mix(in srgb, var(--color-canvas) 0%, transparent) 0%),
       linear-gradient(to bottom, color-mix(in srgb, var(--color-perazzi-black) 100%, transparent) 0%, transparent 50%),
@@ -209,6 +215,7 @@
   }
 
   .overlay-gradient-ink-30 {
+    --overlay-edge-color: color-mix(in srgb, var(--color-black) 45%, transparent);
     background-image:
       linear-gradient(to right, color-mix(in srgb, var(--color-black) 0%, transparent) 0%, color-mix(in srgb, var(--color-black) 0%, transparent) 0%, color-mix(in srgb, var(--color-black) 0%, transparent) 0%),
       linear-gradient(to bottom, color-mix(in srgb, var(--color-black) 100%, transparent) 0%, transparent 30%),
@@ -271,6 +278,48 @@
     will-change: transform;
   }
 
+  .section-backdrop-overlay {
+    transition: opacity 500ms ease-out;
+  }
+
+  .section-backdrop-overlay::before,
+  .section-backdrop-overlay::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 28%;
+    opacity: 0;
+    transition: opacity 700ms ease-out, transform 700ms ease-out;
+    will-change: opacity, transform;
+  }
+
+  .section-backdrop-overlay::before {
+    top: 0;
+    transform: translateY(-8px);
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--overlay-edge-color) 25%, transparent),
+      transparent 55%
+    );
+  }
+
+  .section-backdrop-overlay::after {
+    bottom: 0;
+    transform: translateY(8px);
+    background: linear-gradient(
+      to top,
+      color-mix(in srgb, var(--overlay-edge-color) 25%, transparent),
+      transparent 55%
+    );
+  }
+
+  .section-backdrop-overlay.opacity-100::before,
+  .section-backdrop-overlay.opacity-100::after {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
   .section-reveal-shell {
     transition: min-height 500ms ease-out;
   }
@@ -290,14 +339,19 @@
     transform: scale(1);
   }
 
-  section[data-tease-active="true"] .section-reveal-shell {
-    min-height: 55vh;
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .section-backdrop-media {
       transition: none;
       transform: scale(1);
+    }
+    .section-backdrop-overlay {
+      transition: none;
+    }
+    .section-backdrop-overlay::before,
+    .section-backdrop-overlay::after {
+      transition: none;
+      opacity: 1;
+      transform: none;
     }
     .section-reveal-shell {
       transition: none;
