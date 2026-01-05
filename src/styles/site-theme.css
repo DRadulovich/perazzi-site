@@ -384,6 +384,105 @@
     [data-reveal-collapsed] .section-reveal-collapsed-text {
       transition: none;
     }
+    .choreo-group .choreo-item {
+      animation: none;
+      opacity: 1;
+      transform: none;
+      clip-path: none;
+      filter: none;
+    }
+    .choreo-presence {
+      animation: none !important;
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Choreo primitives */
+  .choreo-group {
+    --choreo-delay: 0ms;
+    --choreo-stagger: 90ms;
+    --choreo-duration: 320ms;
+    --choreo-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .choreo-group .choreo-item {
+    opacity: 0;
+    transform: translate3d(var(--choreo-translate-x, 0px), var(--choreo-translate-y, 10px), 0)
+      scale(var(--choreo-scale-from, 1));
+    clip-path: var(--choreo-mask-from, inset(0 0 0 0));
+    filter: blur(var(--choreo-blur-from, 0px));
+    animation: choreo-in var(--choreo-duration, 320ms) var(--choreo-ease, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
+    animation-delay: calc(
+      var(--choreo-delay, 0ms) +
+      (var(--choreo-index, 0) * var(--choreo-stagger, 90ms))
+    );
+    will-change: transform, opacity, clip-path, filter;
+  }
+
+  .choreo-group .choreo-item.choreo-fade-lift {
+    --choreo-blur-from: 8px;
+  }
+
+  .choreo-group .choreo-item.choreo-slide {
+    --choreo-blur-from: 6px;
+  }
+
+  .choreo-group .choreo-item.choreo-scale-parallax {
+    --choreo-blur-from: 4px;
+  }
+
+  .choreo-group .choreo-item.choreo-scale-parallax,
+  .choreo-group .choreo-item.choreo-mask-wipe {
+    transform-origin: center center;
+  }
+
+  .choreo-group .choreo-item.choreo-mask-wipe {
+    overflow: hidden;
+  }
+
+  .choreo-group .choreo-item.choreo-mask-wipe > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  @keyframes choreo-in {
+    to {
+      opacity: 1;
+      transform: translate3d(0px, 0px, 0px) scale(1);
+      clip-path: inset(0 0 0 0);
+      filter: blur(0px);
+    }
+  }
+
+  .choreo-presence {
+    will-change: transform, opacity;
+  }
+
+  .choreo-presence[data-choreo-presence="exit"] {
+    animation: choreo-exit 180ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  .choreo-presence[data-choreo-presence="enter"] {
+    animation: choreo-enter 260ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  @keyframes choreo-exit {
+    to {
+      opacity: 0;
+      transform: translate3d(0px, 8px, 0px);
+    }
+  }
+
+  @keyframes choreo-enter {
+    from {
+      opacity: 0;
+      transform: translate3d(0px, 12px, 0px);
+    }
+    to {
+      opacity: 1;
+      transform: translate3d(0px, 0px, 0px);
+    }
   }
 
   .safe-area-bottom {
