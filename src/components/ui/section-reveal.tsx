@@ -86,16 +86,18 @@ export function SectionBackdrop({
 
   return (
     <div className="absolute inset-0 -z-10 overflow-hidden">
-      <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
-        <Image
-          src={image.url}
-          alt={image.alt ?? ""}
-          fill
-          sizes={sizes}
-          className="object-cover"
-          priority={priority}
-          loading={loading}
-        />
+      <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image">
+        <div className="absolute inset-0 section-backdrop-media">
+          <Image
+            src={image.url}
+            alt={image.alt ?? ""}
+            fill
+            sizes={sizes}
+            className="object-cover"
+            priority={priority}
+            loading={loading}
+          />
+        </div>
       </div>
       <div
         className={cn(
@@ -139,7 +141,7 @@ export const SectionShell = forwardRef<HTMLDivElement, SectionShellProps>(
       ref={ref}
       style={style}
       className={cn(
-        "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
+        "section-reveal-shell relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
         reveal
           ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
           : "border-transparent bg-transparent shadow-none backdrop-blur-none",
@@ -235,8 +237,38 @@ export function RevealCollapsedHeader({
   onExpand,
   readMoreLabel = "Read more",
 }: RevealCollapsedHeaderProps) {
+  const activateTease = (event: React.SyntheticEvent<HTMLButtonElement>) => {
+    const section = event.currentTarget.closest("section");
+    if (!section) return;
+
+    section.dataset.teaseActive = "true";
+    if (section.dataset.teaseBound === "true") return;
+
+    const clearTease = (leaveEvent?: Event) => {
+      if (leaveEvent?.type === "focusout") {
+        const nextTarget = (leaveEvent as FocusEvent).relatedTarget;
+        if (nextTarget && section.contains(nextTarget as Node)) return;
+      }
+      delete section.dataset.teaseActive;
+    };
+
+    section.addEventListener("mouseleave", clearTease);
+    section.addEventListener("focusout", clearTease);
+    section.dataset.teaseBound = "true";
+  };
+
   return (
-    <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
+    <button
+      type="button"
+      className="absolute inset-0 z-0 flex cursor-pointer flex-col items-center justify-center gap-3 text-center focus-ring"
+      onClick={onExpand}
+      onPointerEnter={activateTease}
+      onFocus={activateTease}
+      aria-expanded={expanded}
+      aria-controls={controlsId}
+      aria-labelledby={headingId}
+      data-tease-trigger
+    >
       <div className="relative inline-flex text-white">
         <Heading
           id={headingId}
@@ -246,16 +278,6 @@ export function RevealCollapsedHeader({
         >
           {heading}
         </Heading>
-        <button
-          type="button"
-          className="absolute inset-0 z-10 cursor-pointer focus-ring"
-          onClick={onExpand}
-          aria-expanded={expanded}
-          aria-controls={controlsId}
-          aria-labelledby={headingId}
-        >
-          <span className="sr-only">Expand {heading}</span>
-        </button>
       </div>
       {subheading ? (
         <div className="relative text-white">
@@ -265,12 +287,11 @@ export function RevealCollapsedHeader({
         </div>
       ) : null}
       <div className="mt-3">
-        <Text size="button" className="text-white/80 cursor-pointer focus-ring" asChild>
-          <button type="button" onClick={onExpand}>
-            {readMoreLabel}
-          </button>
+        <Text size="button" className="text-white/80">
+          {readMoreLabel}
         </Text>
       </div>
-    </div>
+      <span className="sr-only">Expand {heading}</span>
+    </button>
   );
 }

@@ -265,6 +265,34 @@
     transform: translate3d(var(--parallax-x, 0px), var(--parallax-y, 0px), 0);
   }
 
+  .section-backdrop-media {
+    transform: scale(1.05);
+    transition: transform 500ms ease-out;
+    will-change: transform;
+  }
+
+  .section-reveal-shell {
+    transition: min-height 400ms ease-out;
+  }
+
+  section[data-tease-active="true"] .section-backdrop-media {
+    transform: scale(1);
+  }
+
+  section[data-tease-active="true"] .section-reveal-shell {
+    min-height: 55vh;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .section-backdrop-media {
+      transition: none;
+      transform: scale(1);
+    }
+    .section-reveal-shell {
+      transition: none;
+    }
+  }
+
   .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
