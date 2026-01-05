@@ -289,7 +289,7 @@
   }
 
   .section-reveal-shell {
-    transition: min-height 500ms ease-out;
+    transition: min-height 2200ms cubic-bezier(0.06, 0.98, 0.04, 1);
   }
 
   .section-reveal-body {

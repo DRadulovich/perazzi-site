@@ -10,13 +10,13 @@
 
 ## Component choreography plan
 
-### `src/components/home/timeline-scroller.tsx`
+### [x] `src/components/home/timeline-scroller.tsx`
 - Section entrance: backdrop parallax fade (phase 1), then collapsed header lifts in (phase 2). When expanded, heading + eyebrow + instructions cascade (phase 3, stagger ~90ms).
 - Pinned layout: stage list buttons cascade (Stage 1->N), active pill pulses softly. Stage panel uses mask-wipe on image (feather ~40%), then stage meta (label, title, body, caption) staggered; CTA button slides up last with tighter distance.
 - Stacked layout: each accordion card lifts on reveal; inner `TimelineItem` content cascades (image -> title -> copy). Active/collapse transitions crossfade with 8px slide.
 - On stage change (pinned): crossfade/slide between panels with subtle zoom-out of previous, zoom-in of next; maintain scrim overlay fade synced to image. Use `ChoreoPresence` with optional 0.98->1 scale and slight blur.
 
-### `src/components/home/marquee-feature.tsx`
+### [x] `src/components/home/marquee-feature.tsx`
 - Entrance: portrait scales from 1.04->1.0 with fade; eyebrow, name, subtitle, quote, CTA cascade. Use hero easing for the portrait, base easing for text.
 - Title-reveal expand: collapsed header lifts; expand animates shell height smoothly, then content group staggers. Use soft overlap and clamp long sequences.
 - Optional article link arrow glides right on hover with trailing underline animation (micro duration).
