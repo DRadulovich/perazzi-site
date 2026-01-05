@@ -72,9 +72,8 @@ export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
       data-analytics-id="VisitFactorySeen"
       className={cn(
         "relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed",
-        isCollapsed
-          ? "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:z-20 before:h-16 before:bg-linear-to-b before:from-black/55 before:to-transparent before:content-[''] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-20 after:h-16 after:bg-linear-to-t after:from-black/55 after:to-transparent after:content-['']"
-          : null,
+        "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:z-20 before:h-16 before:bg-linear-to-b before:from-black/55 before:to-transparent before:transition-opacity before:duration-500 before:ease-out before:content-[''] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-20 after:h-16 after:bg-linear-to-t after:from-black/55 after:to-transparent after:transition-opacity after:duration-500 after:ease-out after:content-['']",
+        isCollapsed ? "before:opacity-100 after:opacity-100" : "before:opacity-0 after:opacity-0",
       )}
       aria-labelledby="visit-factory-heading"
     >
@@ -123,13 +122,14 @@ const VisitFactoryRevealSection = ({
     enableObserver: enableTitleReveal && revealVisit,
     deps: [expectOpen],
   });
+  const revealVisitForMeasure = revealVisit || isPreparing;
 
   const handleVisitExpand = () => {
     if (!enableTitleReveal) return;
+    onCollapsedChange?.(false);
     beginExpand(() => {
       setVisitExpanded(true);
       setHeaderThemeReady(true);
-      onCollapsedChange?.(false);
     });
   };
 
@@ -161,7 +161,7 @@ const VisitFactoryRevealSection = ({
         ) : null}
       </RevealExpandedHeader>
       <VisitFactoryBody
-        revealVisit
+        revealVisit={revealVisitForMeasure}
         visit={visit}
         mapHref={mapHref}
         mapPanelId={mapPanelId}

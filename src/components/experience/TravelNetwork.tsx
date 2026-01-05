@@ -68,9 +68,8 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
       data-analytics-id="TravelNetworkSeen"
       className={cn(
         "relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed",
-        isCollapsed
-          ? "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:z-20 before:h-16 before:bg-linear-to-b before:from-black/55 before:to-transparent before:content-[''] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-20 after:h-16 after:bg-linear-to-t after:from-black/55 after:to-transparent after:content-['']"
-          : null,
+        "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:z-20 before:h-16 before:bg-linear-to-b before:from-black/55 before:to-transparent before:transition-opacity before:duration-500 before:ease-out before:content-[''] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-20 after:h-16 after:bg-linear-to-t after:from-black/55 after:to-transparent after:transition-opacity after:duration-500 after:ease-out after:content-['']",
+        isCollapsed ? "before:opacity-100 after:opacity-100" : "before:opacity-0 after:opacity-0",
       )}
       aria-labelledby="travel-network-heading"
     >
@@ -140,10 +139,10 @@ const TravelNetworkRevealSection = ({
 
   const handleNetworkExpand = () => {
     if (!enableTitleReveal) return;
+    onCollapsedChange?.(false);
     beginExpand(() => {
       setNetworkExpanded(true);
       setHeaderThemeReady(true);
-      onCollapsedChange?.(false);
     });
   };
 
