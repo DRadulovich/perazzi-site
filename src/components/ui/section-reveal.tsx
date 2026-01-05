@@ -146,7 +146,7 @@ export function SectionBackdrop({
 
   return (
     <div className="absolute inset-0 -z-10 overflow-hidden">
-      <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image">
+      <div ref={parallaxRef} className="absolute inset-x-0 parallax-image">
         <div className="absolute inset-0 section-backdrop-media">
           <Image
             src={image.url}
