@@ -2,17 +2,34 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
-import { useEffect, useRef, useState, type Dispatch, type RefObject, type SetStateAction } from "react";
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import type { FittingStage, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { logAnalytics } from "@/lib/analytics";
-import { homeMotion } from "@/lib/motionConfig";
+import {
+  buildChoreoPresenceVars,
+  choreoDistance,
+  choreoDurations,
+  dreamyPace,
+  prefersReducedMotion,
+  type ChoreoPresenceState,
+} from "@/lib/choreo";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Heading } from "@/components/ui/heading";
-import { Text } from "@/components/ui/text";
+import {
+  Button,
+  ChoreoGroup,
+  ChoreoPresence,
+  Heading,
+  RevealAnimatedBody,
+  RevealCollapsedHeader,
+  RevealGroup,
+  RevealItem,
+  SectionBackdrop,
+  SectionShell,
+  Text,
+  useRevealHeight,
+} from "@/components/ui";
 import { TimelineItem } from "./timeline-item";
 
 type TimelineScrollerProps = {
@@ -23,17 +40,19 @@ type TimelineScrollerProps = {
 export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const analyticsRef = useAnalyticsObserver("CraftTimelineSeen");
-  const prefersReducedMotion = useReducedMotion();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const enablePinned = isDesktop && !prefersReducedMotion;
+  const enablePinned = isDesktop;
   const enableTitleReveal = enablePinned;
-  const animationsEnabled = enablePinned;
-  const motionEnabled = !prefersReducedMotion;
+  const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const [activeStage, setActiveStage] = useState(0);
   const resolvedActiveStage = enablePinned ? Math.max(activeStage, 0) : activeStage;
   const seenStagesRef = useRef(new Set<string>());
   const skipTargetId = "home-timeline-anchor";
   const timelineKey = enableTitleReveal ? "title-reveal" : "always-reveal";
+
+  useEffect(() => {
+    setIsCollapsed(enableTitleReveal);
+  }, [enableTitleReveal]);
 
   useEffect(() => {
     const currentStage = stages[resolvedActiveStage];
@@ -58,7 +77,11 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
           analyticsRef.current = node;
         }}
         data-analytics-id="CraftTimelineSeen"
-        className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
+        className={cn(
+          "relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed",
+          "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:z-20 before:h-16 before:bg-linear-to-b before:from-black/55 before:to-transparent before:transition-opacity before:duration-500 before:ease-out before:content-[''] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-20 after:h-16 after:bg-linear-to-t after:from-black/55 after:to-transparent after:transition-opacity after:duration-500 after:ease-out after:content-['']",
+          isCollapsed ? "before:opacity-100 after:opacity-100" : "before:opacity-0 after:opacity-0",
+        )}
         aria-labelledby="craft-timeline-heading"
       >
         <TimelineRevealSection
@@ -67,12 +90,10 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
           framing={framing}
           enableTitleReveal={enableTitleReveal}
           enablePinned={enablePinned}
-          animationsEnabled={animationsEnabled}
-          motionEnabled={motionEnabled}
-          scrollRef={sectionRef}
           activeStage={activeStage}
           setActiveStage={setActiveStage}
           resolvedActiveStage={resolvedActiveStage}
+          onCollapsedChange={setIsCollapsed}
         />
       </section>
     </>
@@ -84,12 +105,10 @@ type TimelineRevealSectionProps = {
   readonly framing: HomeData["timelineFraming"];
   readonly enableTitleReveal: boolean;
   readonly enablePinned: boolean;
-  readonly animationsEnabled: boolean;
-  readonly motionEnabled: boolean;
-  readonly scrollRef: RefObject<HTMLElement | null>;
   readonly activeStage: number;
   readonly setActiveStage: Dispatch<SetStateAction<number>>;
   readonly resolvedActiveStage: number;
+  readonly onCollapsedChange?: (collapsed: boolean) => void;
 };
 
 function TimelineRevealSection({
@@ -97,18 +116,13 @@ function TimelineRevealSection({
   framing,
   enableTitleReveal,
   enablePinned,
-  animationsEnabled,
-  motionEnabled,
-  scrollRef,
   activeStage,
   setActiveStage,
   resolvedActiveStage,
+  onCollapsedChange,
 }: TimelineRevealSectionProps) {
   const [timelineExpanded, setTimelineExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
-  const timelineShellRef = useRef<HTMLDivElement | null>(null);
-  const headerThemeFrame = useRef<number | null>(null);
 
   const headingTitle = framing.title ?? "Craftsmanship Journey";
   const headingEyebrow = framing.eyebrow ?? "Three rituals that define a bespoke Perazzi build";
@@ -121,152 +135,73 @@ function TimelineRevealSection({
 
   const revealTimeline = !enableTitleReveal || timelineExpanded;
   const revealPhotoFocus = revealTimeline;
-  const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealTimeline;
-  const focusSurfaceTransition = "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const focusFadeTransition = "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const titleColorTransition = "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const timelineReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const timelineRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const timelineCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const timelineBodyReveal = timelineReveal;
-  const readMoreReveal = motionEnabled
-    ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: timelineReveal.duration }
-    : undefined;
-  const timelineLayoutTransition = motionEnabled ? { layout: timelineReveal } : undefined;
-  const timelineMinHeight = enableTitleReveal ? "min-h-[calc(640px+18rem)]" : null;
-  const { scrollYProgress } = useScroll({
-    target: scrollRef,
-    offset: ["start end", "end start"],
+  const timelineMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
+  const {
+    ref: timelineShellRef,
+    measureRef,
+    minHeightStyle,
+    beginExpand,
+    clearPremeasure,
+    isPreparing,
+  } = useRevealHeight({
+    enableObserver: enableTitleReveal && revealTimeline,
+    deps: [resolvedActiveStage],
   });
-  const parallaxY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
-  );
-  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
-  const backgroundScale = parallaxEnabled ? 1.32 : 1;
-  const backgroundScaleTransition = revealTimeline ? timelineReveal : timelineCollapse;
 
   const handleTimelineExpand = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
-    setTimelineExpanded(true);
-    headerThemeFrame.current = requestAnimationFrame(() => {
+    onCollapsedChange?.(false);
+    beginExpand(() => {
+      setTimelineExpanded(true);
       setHeaderThemeReady(true);
-      headerThemeFrame.current = null;
     });
   };
   const handleTimelineCollapse = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-      headerThemeFrame.current = null;
-    }
+    clearPremeasure();
     setHeaderThemeReady(false);
     setTimelineExpanded(false);
+    onCollapsedChange?.(true);
   };
 
-  const headingContainer = {
-    hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
-  } as const;
-
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: timelineReveal },
-  } as const;
-
-  useEffect(() => {
-    if (!enableTitleReveal || !revealTimeline) return;
-    const node = timelineShellRef.current;
-    if (!node) return;
-
-    let frame = 0;
-    const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
-    }
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealTimeline, resolvedActiveStage]);
-
-  useEffect(() => () => {
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
-  }, []);
+  const expandedContent = (
+    <RevealAnimatedBody sequence>
+      <RevealItem index={0}>
+        <TimelineExpandedHeader
+          headingId="craft-timeline-heading"
+          heading={headingTitle}
+          eyebrow={headingEyebrow}
+          instructions={headingInstructions}
+          headerThemeReady={headerThemeReady}
+          enableTitleReveal={enableTitleReveal}
+          onCollapse={handleTimelineCollapse}
+        />
+      </RevealItem>
+      <RevealGroup delayMs={140}>
+        <TimelineBody
+          enablePinned={enablePinned}
+          stages={stages}
+          resolvedActiveStage={resolvedActiveStage}
+          activeStage={activeStage}
+          setActiveStage={setActiveStage}
+          alternateTitle={alternateTitle}
+          revealPhotoFocus={revealPhotoFocus}
+        />
+      </RevealGroup>
+    </RevealAnimatedBody>
+  );
 
   return (
     <>
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <motion.div
-          className="absolute inset-0 will-change-transform"
-          style={parallaxStyle}
-          initial={false}
-          animate={motionEnabled ? { scale: backgroundScale } : undefined}
-          transition={motionEnabled ? backgroundScaleTransition : undefined}
-        >
-          <Image
-            src={backgroundUrl}
-            alt={backgroundAlt}
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority
-          />
-        </motion.div>
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealTimeline ? "opacity-0" : "opacity-100",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 film-grain",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-20" : "opacity-0",
-          )}
-          aria-hidden="true"
-        />
-        <div
-          className={cn(
-            "absolute inset-0 overlay-gradient-canvas",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-      </div>
+      <SectionBackdrop
+        image={{ url: backgroundUrl, alt: backgroundAlt }}
+        reveal={revealTimeline}
+        revealOverlay={revealPhotoFocus}
+        preparing={isPreparing}
+        enableParallax={enableTitleReveal && !revealTimeline}
+        overlay="canvas"
+        priority
+      />
 
       <div
         id="craft-timeline-content"
@@ -274,300 +209,408 @@ function TimelineRevealSection({
         className="focus:outline-none focus-ring"
       >
         <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-          <motion.div
+          <SectionShell
             ref={timelineShellRef}
-            style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
-            className={cn(
-              "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-              focusSurfaceTransition,
-              revealPhotoFocus
-                ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-                : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-              timelineMinHeight,
-            )}
+            style={minHeightStyle}
+            reveal={revealPhotoFocus}
+            minHeightClass={timelineMinHeight ?? undefined}
           >
-            <LayoutGroup id="craft-timeline-title">
-              <AnimatePresence initial={false}>
-                {revealTimeline ? (
-                  <motion.div
-                    key="craft-timeline-header"
-                    className="relative z-10 space-y-4 md:flex md:items-center md:justify-between md:gap-8"
-                    initial={motionEnabled ? { opacity: 0 } : false}
-                    animate={motionEnabled ? { opacity: 1, transition: timelineReveal } : undefined}
-                    exit={motionEnabled ? { opacity: 0, transition: timelineRevealFast } : undefined}
-                  >
-                    <motion.div
-                      className="space-y-3"
-                      variants={headingContainer}
-                      initial="hidden"
-                      animate="show"
-                    >
-                      <motion.div
-                        layoutId="craft-timeline-title"
-                        layoutCrossfade={false}
-                        transition={timelineLayoutTransition}
-                        className="relative"
-                      >
-                        <Heading
-                          id="craft-timeline-heading"
-                          level={2}
-                          size="xl"
-                          className={cn(
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink" : "text-white",
-                          )}
-                        >
-                          {headingTitle}
-                        </Heading>
-                      </motion.div>
-                      <motion.div
-                        layoutId="craft-timeline-subtitle"
-                        layoutCrossfade={false}
-                        transition={timelineLayoutTransition}
-                        className="relative"
-                      >
-                        <motion.div variants={headingItem}>
-                          <Text
-                            size="lg"
-                            className={cn(
-                              "type-section-subtitle",
-                              titleColorTransition,
-                              headerThemeReady ? "text-ink-muted" : "text-white",
-                            )}
-                          >
-                            {headingEyebrow}
-                          </Text>
-                        </motion.div>
-                      </motion.div>
-                      <span className="sr-only">{headingInstructions}</span>
-                    </motion.div>
-                    {enableTitleReveal ? (
-                      <button
-                        type="button"
-                        className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                        onClick={handleTimelineCollapse}
-                      >
-                        Collapse
-                      </button>
-                    ) : null}
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="craft-timeline-title-collapsed"
-                    className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                    initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
-                    animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
-                    exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
-                    transition={motionEnabled ? timelineRevealFast : undefined}
-                  >
-                    <motion.div
-                      layoutId="craft-timeline-title"
-                      layoutCrossfade={false}
-                      transition={timelineLayoutTransition}
-                      className="relative inline-flex text-white"
-                    >
-                      <Heading
-                        id="craft-timeline-heading"
-                        level={2}
-                        size="xl"
-                        className="type-section-collapsed"
-                      >
-                        {headingTitle}
-                      </Heading>
-                      <button
-                        type="button"
-                        className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                        onPointerEnter={handleTimelineExpand}
-                        onFocus={handleTimelineExpand}
-                        onClick={handleTimelineExpand}
-                        aria-expanded={revealTimeline}
-                        aria-controls="craft-timeline-body"
-                        aria-labelledby="craft-timeline-heading"
-                      >
-                        <span className="sr-only">Expand {headingTitle}</span>
-                      </button>
-                    </motion.div>
-                    <motion.div
-                      layoutId="craft-timeline-subtitle"
-                      layoutCrossfade={false}
-                      transition={timelineLayoutTransition}
-                      className="relative text-white"
-                    >
-                      <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                        {headingEyebrow}
-                      </Text>
-                    </motion.div>
-                    <motion.div
-                      initial={motionEnabled ? { opacity: 0, y: 6 } : false}
-                      animate={motionEnabled ? { opacity: 1, y: 0, transition: readMoreReveal } : undefined}
-                      exit={motionEnabled ? { opacity: 0, y: 6, transition: timelineRevealFast } : undefined}
-                      className="mt-3"
-                    >
-                      <Text
-                        size="button"
-                        className="text-white/80 cursor-pointer focus-ring"
-                        asChild
-                      >
-                        <button type="button" onClick={handleTimelineExpand}>
-                        Read more
-                        </button>
-                      </Text>
-                    </motion.div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </LayoutGroup>
-
-            <AnimatePresence initial={false}>
-              {revealTimeline ? (
-                <motion.div
-                  key="craft-timeline-body"
-                  id="craft-timeline-body"
-                  className="space-y-6"
-                  initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
-                  animate={
-                    motionEnabled
-                      ? { opacity: 1, y: 0, filter: "blur(0px)", transition: timelineBodyReveal }
-                      : undefined
-                  }
-                  exit={
-                    motionEnabled
-                      ? { opacity: 0, y: -16, filter: "blur(10px)", transition: timelineCollapse }
-                      : undefined
-                  }
+            {revealTimeline ? (
+              expandedContent
+            ) : (
+              <>
+                <ChoreoGroup
+                  effect="fade-lift"
+                  distance={choreoDistance.base}
+                  staggerMs={dreamyPace.staggerMs}
+                  itemClassName="absolute inset-0"
                 >
-                  {enablePinned ? (
-                    <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
-                      <div className="space-y-4 border-none bg-card/0 p-4 shadow-none sm:border-none sm:bg-card/0 sm:p-4 sm:shadow-none">
-                        <Text size="label-tight" className="mb-3 text-ink">
-                          {alternateTitle}
-                        </Text>
-                        <LayoutGroup id="home-timeline-controls">
-                          <div className="space-y-1">
-                            {stages.map((stage, index) => (
-                              <TimelineControlButton
-                                key={`control-${stage.id}`}
-                                label={stage.title}
-                                order={stage.order}
-                                active={resolvedActiveStage === index}
-                                onSelect={() => { setActiveStage(index); }}
-                                animationsEnabled={animationsEnabled}
-                              />
-                            ))}
-                          </div>
-                        </LayoutGroup>
-                      </div>
-
-                      <div className="space-y-5">
-                        <div
-                          className={cn(
-                            "relative min-h-[640px] overflow-hidden rounded-3xl border",
-                            focusSurfaceTransition,
-                            revealPhotoFocus
-                              ? "border-border/70 bg-card/70 shadow-elevated ring-1 ring-border/70 backdrop-blur-sm"
-                              : "border-transparent bg-transparent shadow-none ring-0 backdrop-blur-none",
-                          )}
-                        >
-                          <AnimatePresence initial={false} mode="popLayout">
-                            {stages[resolvedActiveStage] ? (
-                              <PinnedStagePanel
-                                key={`panel-${stages[resolvedActiveStage].id}`}
-                                stage={stages[resolvedActiveStage]}
-                                animationsEnabled={animationsEnabled}
-                                revealPhotoFocus={revealPhotoFocus}
-                              />
-                            ) : null}
-                          </AnimatePresence>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-8">
-                      <div className="space-y-3">
-                        <Text size="label-tight" className="text-ink-muted">
-                          {alternateTitle}
-                        </Text>
-                      </div>
-
-                      <div className="space-y-3">
-                        {stages.map((stage, index) => {
-                          const expanded = activeStage === index;
-                          const panelId = `craft-stage-panel-${stage.id}`;
-                          const buttonId = `craft-stage-trigger-${stage.id}`;
-
-                          return (
-                            <motion.div
-                              key={`stacked-${stage.id}`}
-                              className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:p-4"
-                              initial={motionEnabled ? { opacity: 0, y: 18, filter: "blur(10px)" } : false}
-                              whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-                              viewport={motionEnabled ? { once: true, amount: 0.25 } : undefined}
-                              transition={motionEnabled ? homeMotion.revealFast : undefined}
-                            >
-                              <button
-                                type="button"
-                                id={buttonId}
-                                aria-expanded={expanded}
-                                aria-controls={panelId}
-                                onClick={() =>
-                                  { setActiveStage(expanded ? -1 : index); }
-                                }
-                                className="flex w-full items-center justify-between gap-3 text-left focus-ring"
-                              >
-                                <div>
-                                  <Text size="button" className="text-ink-muted mb-2">
-                                    Stage {stage.order}
-                                  </Text>
-                                  <Text className="text-lg type-body-title text-ink">
-                                    {stage.title}
-                                  </Text>
-                                </div>
-                                <span className="type-button text-perazzi-red/70">
-                                  {expanded ? "Collapse" : "Show more"}
-                                </span>
-                              </button>
-
-                              <div
-                                id={panelId}
-                                aria-labelledby={buttonId}
-                                className={cn(
-                                  "mt-3 overflow-hidden transition-all duration-300",
-                                  expanded
-                                    ? "max-h-[999px] opacity-100"
-                                    : "max-h-0 opacity-0",
-                                )}
-                              >
-                                {expanded && (
-                                  <div className="mt-2">
-                                    <TimelineItem stage={stage} />
-                                  </div>
-                                )}
-                              </div>
-                            </motion.div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                  <div className="pt-2 sm:pt-4">
-                    <Button
-                      asChild
-                      variant="secondary"
-                      size="lg"
-                      className="w-full type-button-eaves text-ink"
-                    >
-                      <Link href="/the-build/why-a-perazzi-has-a-soul">
-                        See the full build story
-                      </Link>
-                    </Button>
-                  </div>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-          </motion.div>
+                  <RevealCollapsedHeader
+                    headingId="craft-timeline-heading"
+                    heading={headingTitle}
+                    subheading={headingEyebrow}
+                    controlsId="craft-timeline-body"
+                    expanded={revealTimeline}
+                    onExpand={handleTimelineExpand}
+                  />
+                </ChoreoGroup>
+                <div ref={measureRef} className="section-reveal-measure" aria-hidden>
+                  {expandedContent}
+                </div>
+              </>
+            )}
+          </SectionShell>
         </div>
       </div>
     </>
+  );
+}
+
+type TimelineExpandedHeaderProps = {
+  readonly headingId: string;
+  readonly heading: string;
+  readonly eyebrow?: string;
+  readonly instructions?: string;
+  readonly headerThemeReady: boolean;
+  readonly enableTitleReveal: boolean;
+  readonly onCollapse: () => void;
+  readonly collapseLabel?: string;
+};
+
+function TimelineExpandedHeader({
+  headingId,
+  heading,
+  eyebrow,
+  instructions,
+  headerThemeReady,
+  enableTitleReveal,
+  onCollapse,
+  collapseLabel = "Collapse",
+}: TimelineExpandedHeaderProps) {
+  const headingClass = headerThemeReady ? "text-ink" : "text-white";
+  const eyebrowClass = headerThemeReady ? "text-ink-muted" : "text-white";
+  const instructionsClass = headerThemeReady ? "text-ink-muted" : "text-white/80";
+
+  return (
+    <div className="relative z-10 space-y-4 md:flex md:items-center md:justify-between md:gap-8">
+        <ChoreoGroup
+          effect="fade-lift"
+          distance={choreoDistance.base}
+          staggerMs={dreamyPace.staggerMs}
+          className="space-y-3"
+        >
+        <div className="relative">
+          <Heading
+            id={headingId}
+            level={2}
+            size="xl"
+            className={headingClass}
+          >
+            {heading}
+          </Heading>
+        </div>
+        {eyebrow ? (
+          <div className="relative">
+            <Text
+              size="lg"
+              className={cn("type-section-subtitle", eyebrowClass)}
+            >
+              {eyebrow}
+            </Text>
+          </div>
+        ) : null}
+        {instructions ? (
+          <div className="relative">
+            <Text size="md" className={cn("max-w-2xl", instructionsClass)}>
+              {instructions}
+            </Text>
+          </div>
+        ) : null}
+      </ChoreoGroup>
+      {enableTitleReveal ? (
+        <ChoreoGroup
+          effect="fade-lift"
+          distance={choreoDistance.tight}
+          delayMs={choreoDurations.micro}
+          itemAsChild
+        >
+          <button
+            type="button"
+            className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+            onClick={onCollapse}
+          >
+            {collapseLabel}
+          </button>
+        </ChoreoGroup>
+      ) : null}
+    </div>
+  );
+}
+
+type TimelineBodyProps = {
+  readonly enablePinned: boolean;
+  readonly stages: readonly FittingStage[];
+  readonly resolvedActiveStage: number;
+  readonly activeStage: number;
+  readonly setActiveStage: Dispatch<SetStateAction<number>>;
+  readonly alternateTitle: string;
+  readonly revealPhotoFocus: boolean;
+};
+
+function TimelineBody({
+  enablePinned,
+  stages,
+  resolvedActiveStage,
+  activeStage,
+  setActiveStage,
+  alternateTitle,
+  revealPhotoFocus,
+}: TimelineBodyProps) {
+  return (
+    <div id="craft-timeline-body" className="space-y-6">
+      <RevealItem index={0}>
+        {enablePinned ? (
+          <TimelinePinnedLayout
+            stages={stages}
+            resolvedActiveStage={resolvedActiveStage}
+            setActiveStage={setActiveStage}
+            alternateTitle={alternateTitle}
+            revealPhotoFocus={revealPhotoFocus}
+          />
+        ) : (
+          <TimelineStackedLayout
+            stages={stages}
+            activeStage={activeStage}
+            setActiveStage={setActiveStage}
+            alternateTitle={alternateTitle}
+          />
+        )}
+      </RevealItem>
+      <RevealItem index={1}>
+        <div className="pt-2 sm:pt-4">
+          <Button
+            asChild
+            variant="secondary"
+            size="lg"
+            className="w-full type-button-eaves text-ink"
+          >
+            <Link href="/the-build/why-a-perazzi-has-a-soul">
+              See the full build story
+            </Link>
+          </Button>
+        </div>
+      </RevealItem>
+    </div>
+  );
+}
+
+type TimelinePinnedLayoutProps = {
+  readonly stages: readonly FittingStage[];
+  readonly resolvedActiveStage: number;
+  readonly setActiveStage: Dispatch<SetStateAction<number>>;
+  readonly alternateTitle: string;
+  readonly revealPhotoFocus: boolean;
+};
+
+const splitBodyLines = (body: string) =>
+  body
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+const resolveStaggerForSpan = (durationMs: number, count: number, span: number) => {
+  if (count <= 1) return 0;
+  return Math.round((durationMs * span) / (count - 1));
+};
+
+function TimelinePinnedLayout({
+  stages,
+  resolvedActiveStage,
+  setActiveStage,
+  alternateTitle,
+  revealPhotoFocus,
+}: TimelinePinnedLayoutProps) {
+  const reduceMotion = prefersReducedMotion();
+  const [presenceStageIndex, setPresenceStageIndex] = useState(resolvedActiveStage);
+  const [presenceState, setPresenceState] = useState<ChoreoPresenceState>("enter");
+  const presenceTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
+  const presenceVars = buildChoreoPresenceVars({
+    enterDurationMs: dreamyPace.enterMs,
+    enterEase: dreamyPace.easing,
+    enterScale: 0.98,
+    exitScale: 0.985,
+    enterBlur: 2,
+    exitBlur: 1,
+  });
+
+  useEffect(() => (
+    () => {
+      if (presenceTimeoutRef.current) {
+        globalThis.clearTimeout(presenceTimeoutRef.current);
+        presenceTimeoutRef.current = null;
+      }
+    }
+  ), []);
+
+  const handleStageSelect = (index: number) => {
+    setActiveStage(index);
+
+    if (presenceTimeoutRef.current) {
+      globalThis.clearTimeout(presenceTimeoutRef.current);
+      presenceTimeoutRef.current = null;
+    }
+
+    if (reduceMotion || index === presenceStageIndex) {
+      setPresenceStageIndex(index);
+      setPresenceState("enter");
+      return;
+    }
+
+    setPresenceState("exit");
+    presenceTimeoutRef.current = globalThis.setTimeout(() => {
+      setPresenceStageIndex(index);
+      setPresenceState("enter");
+      presenceTimeoutRef.current = null;
+    }, choreoDurations.short);
+  };
+
+  const activeStage = stages[presenceStageIndex];
+
+  return (
+    <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
+      <div className="space-y-4 border-none bg-card/0 p-4 shadow-none sm:border-none sm:bg-card/0 sm:p-4 sm:shadow-none">
+        <ChoreoGroup
+          effect="fade-lift"
+          distance={choreoDistance.tight}
+          staggerMs={dreamyPace.staggerMs}
+          className="space-y-3"
+        >
+          <Text size="label-tight" className="text-ink">
+            {alternateTitle}
+          </Text>
+        </ChoreoGroup>
+        <ChoreoGroup
+          effect="fade-lift"
+          distance={choreoDistance.tight}
+          staggerMs={dreamyPace.staggerMs}
+          delayMs={choreoDurations.micro}
+          className="space-y-1"
+        >
+          {stages.map((stage, index) => (
+            <TimelineControlButton
+              key={`control-${stage.id}`}
+              label={stage.title}
+              order={stage.order}
+              active={resolvedActiveStage === index}
+              onSelect={() => { handleStageSelect(index); }}
+            />
+          ))}
+        </ChoreoGroup>
+      </div>
+
+      <div className="space-y-5">
+        <div
+          className={cn(
+            "relative min-h-[640px] overflow-hidden rounded-3xl border",
+            revealPhotoFocus
+              ? "border-border/70 bg-card/70 shadow-elevated ring-1 ring-border/70 backdrop-blur-sm"
+              : "border-transparent bg-transparent shadow-none ring-0 backdrop-blur-none",
+          )}
+        >
+          {activeStage ? (
+            <ChoreoPresence
+              state={presenceState}
+              className="relative"
+              style={presenceVars}
+            >
+              <PinnedStagePanel
+                stage={activeStage}
+                revealPhotoFocus={revealPhotoFocus}
+              />
+            </ChoreoPresence>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type TimelineStackedLayoutProps = {
+  readonly stages: readonly FittingStage[];
+  readonly activeStage: number;
+  readonly setActiveStage: Dispatch<SetStateAction<number>>;
+  readonly alternateTitle: string;
+};
+
+function TimelineStackedLayout({
+  stages,
+  activeStage,
+  setActiveStage,
+  alternateTitle,
+}: TimelineStackedLayoutProps) {
+  const presenceVars = buildChoreoPresenceVars({
+    enterY: choreoDistance.tight,
+    exitY: choreoDistance.tight,
+  });
+
+  return (
+    <div className="space-y-8">
+      <div className="space-y-3">
+        <Text size="label-tight" className="text-ink-muted">
+          {alternateTitle}
+        </Text>
+      </div>
+
+      <ChoreoGroup
+        effect="fade-lift"
+        distance={choreoDistance.base}
+        staggerMs={dreamyPace.staggerMs}
+        className="space-y-3"
+        itemAsChild
+      >
+        {stages.map((stage, index) => {
+          const expanded = activeStage === index;
+          const panelId = `craft-stage-panel-${stage.id}`;
+          const buttonId = `craft-stage-trigger-${stage.id}`;
+
+          return (
+            <div
+              key={`stacked-${stage.id}`}
+              className="rounded-2xl border border-border/70 bg-card/60 p-3 shadow-soft backdrop-blur-sm sm:p-4"
+            >
+              <button
+                type="button"
+                id={buttonId}
+                aria-expanded={expanded}
+                aria-controls={panelId}
+                onClick={() => { setActiveStage(expanded ? -1 : index); }}
+                className="flex w-full items-center justify-between gap-3 text-left focus-ring"
+              >
+                <div>
+                  <Text size="button" className="mb-2 text-ink-muted">
+                    Stage {stage.order}
+                  </Text>
+                  <Text className="text-lg type-body-title text-ink">
+                    {stage.title}
+                  </Text>
+                </div>
+                <span className="type-button text-center leading-tight text-perazzi-red/70">
+                  {expanded ? (
+                    "Collapse"
+                  ) : (
+                    <>
+                      <span className="block">Show</span>
+                      <span className="block">more</span>
+                    </>
+                  )}
+                </span>
+              </button>
+
+              <div
+                id={panelId}
+                aria-labelledby={buttonId}
+                className={cn(
+                  "mt-3 overflow-hidden transition-[max-height] duration-300 ease-out",
+                  expanded ? "max-h-[9999px]" : "max-h-0",
+                )}
+              >
+                <ChoreoPresence
+                  state={expanded ? "enter" : "exit"}
+                  style={presenceVars}
+                  className={cn(
+                    "mt-2",
+                    expanded ? "pointer-events-auto" : "pointer-events-none",
+                  )}
+                  aria-hidden={!expanded}
+                >
+                  <TimelineItem stage={stage} />
+                </ChoreoPresence>
+              </div>
+            </div>
+          );
+        })}
+      </ChoreoGroup>
+    </div>
   );
 }
 
@@ -576,7 +619,6 @@ type ControlButtonProps = {
   readonly order: number;
   readonly active: boolean;
   readonly onSelect: () => void;
-  readonly animationsEnabled: boolean;
 };
 
 function TimelineControlButton({
@@ -584,39 +626,26 @@ function TimelineControlButton({
   order,
   active,
   onSelect,
-  animationsEnabled,
 }: ControlButtonProps) {
   const baseClass = cn(
-    "group relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left transition-colors focus-ring",
+    "group relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left focus-ring",
     active
       ? "text-white"
       : "bg-transparent text-ink-muted hover:bg-ink/10 hover:text-ink",
   );
 
   return (
-    <motion.button
+    <button
       type="button"
       className={baseClass}
       onClick={onSelect}
-      initial={false}
-      whileHover={animationsEnabled ? { scale: active ? 1.012 : 1.006 } : undefined}
-      whileTap={animationsEnabled ? { scale: 0.994 } : undefined}
       aria-pressed={active}
     >
       {active ? (
-        animationsEnabled ? (
-          <motion.span
-            layoutId="timeline-control-highlight"
-            className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
-            transition={homeMotion.springHighlight}
-            aria-hidden="true"
-          />
-        ) : (
-          <span
-            className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
-            aria-hidden="true"
-          />
-        )
+        <span
+          className="timeline-control-pulse absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
+          aria-hidden="true"
+        />
       ) : null}
       <span
         className={cn(
@@ -634,101 +663,87 @@ function TimelineControlButton({
       >
         {label}
       </span>
-    </motion.button>
+    </button>
   );
 }
 
 type PinnedStageProps = {
   readonly stage: FittingStage;
-  readonly animationsEnabled: boolean;
   readonly revealPhotoFocus: boolean;
 };
 
 function PinnedStagePanel({
   stage,
-  animationsEnabled,
   revealPhotoFocus,
 }: PinnedStageProps) {
   const sizes = "(min-width: 1600px) 860px, (min-width: 1280px) 760px, 100vw";
-  const Wrapper = animationsEnabled ? motion.div : "div";
-  const motionEnabled = animationsEnabled;
+  const bodyLines = splitBodyLines(stage.body);
 
-  const content = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: motionEnabled ? 0.08 : 0 },
-    },
-  } as const;
-
-  const item = {
-    hidden: { opacity: 0, y: 12, filter: "blur(10px)" },
-    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
-  } as const;
-
-  const media = (
-    <motion.div
-      className="flex h-full w-full flex-col gap-4 p-4 sm:p-6"
-      variants={content}
-      initial="hidden"
-      animate="show"
-    >
-      <motion.div
-        className="group relative aspect-3/2 sm:aspect-4/3 w-full overflow-hidden rounded-2xl bg-(--color-canvas)"
-        initial={motionEnabled ? { clipPath: "inset(0 0 100% 0)" } : undefined}
-        animate={motionEnabled ? { clipPath: "inset(0 0 0% 0)" } : undefined}
-        transition={motionEnabled ? homeMotion.reveal : undefined}
+  return (
+    <div className="flex h-full w-full flex-col gap-4 p-4 sm:p-6">
+      <ChoreoGroup
+        effect="scale-parallax"
+        distance={choreoDistance.base}
+        scaleFrom={1.02}
+        itemAsChild
       >
-        <Image
-          src={stage.media.url}
-          alt={stage.media.alt}
-          fill
-          sizes={sizes}
-          className="object-cover transition-transform duration-1400 ease-out will-change-transform group-hover:scale-[1.04]"
-          priority={stage.order === 1}
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/80 via-(--scrim-strong)/50 to-transparent transition-opacity duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]",
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-        <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
-      </motion.div>
+        <div className="group relative aspect-3/2 sm:aspect-4/3 w-full overflow-hidden rounded-2xl bg-(--color-canvas)">
+          <Image
+            src={stage.media.url}
+            alt={stage.media.alt}
+            fill
+            sizes={sizes}
+            className="object-cover"
+            priority={stage.order === 1}
+          />
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-0 bg-linear-to-t from-(--scrim-strong)/80 via-(--scrim-strong)/50 to-transparent",
+              revealPhotoFocus ? "opacity-100" : "opacity-0",
+            )}
+            aria-hidden
+          />
+        </div>
+      </ChoreoGroup>
 
-      <motion.div className="space-y-3" variants={item}>
+      <ChoreoGroup
+        effect="fade-lift"
+        distance={choreoDistance.tight}
+        durationMs={dreamyPace.textMs}
+        easing={dreamyPace.easing}
+        staggerMs={dreamyPace.staggerMs}
+        className="space-y-3"
+      >
         <Text size="button" className="text-ink-muted">
           Stage {stage.order}
         </Text>
         <Heading level={3} size="lg" className="type-body-title text-ink not-italic">
           {stage.title}
         </Heading>
-        <Text className="type-body text-ink-muted">
-          {stage.body}
-        </Text>
+        <ChoreoGroup
+          effect="fade-lift"
+          distance={choreoDistance.tight}
+          durationMs={dreamyPace.lineMs}
+          easing={dreamyPace.easing}
+          staggerMs={resolveStaggerForSpan(
+            dreamyPace.enterMs,
+            bodyLines.length,
+            dreamyPace.staggerSpan,
+          )}
+          className="space-y-2"
+        >
+          {bodyLines.map((line, index) => (
+            <Text key={`stage-body-${stage.id}-${index}`} className="type-body text-ink-muted">
+              {line}
+            </Text>
+          ))}
+        </ChoreoGroup>
         {stage.media.caption ? (
           <Text size="caption" className="text-ink-muted">
             {stage.media.caption}
           </Text>
         ) : null}
-      </motion.div>
-    </motion.div>
-  );
-
-  if (!animationsEnabled) {
-    return <div className="absolute inset-0">{media}</div>;
-  }
-
-  return (
-    <Wrapper
-      className="absolute inset-0"
-      initial={{ opacity: 0, y: 10, filter: "blur(10px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      exit={{ opacity: 0, y: -10, filter: "blur(10px)" }}
-      transition={homeMotion.revealFast}
-    >
-      {media}
-    </Wrapper>
+      </ChoreoGroup>
+    </div>
   );
 }

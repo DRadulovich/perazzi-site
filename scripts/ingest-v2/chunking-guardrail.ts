@@ -162,7 +162,7 @@ function splitTextToFit(
   ];
 
   for (let i = strategyIndex; i < strategies.length; i += 1) {
-    const parts = strategies[i]!(trimmed)
+    const parts = strategies[i](trimmed)
       .map((p) => p.trim())
       .filter(Boolean);
     if (parts.length <= 1) continue;
@@ -180,12 +180,16 @@ function splitTextToFit(
 
 export function enforceChunkBounds(
   chunks: ChunkInput[],
-  limits: ChunkBounds = { maxTokens: MAX_TOKENS, maxChars: MAX_CHARS },
+  limits?: ChunkBounds,
 ): ChunkInput[] {
+  const resolvedLimits: ChunkBounds = limits ?? {
+    maxTokens: MAX_TOKENS,
+    maxChars: MAX_CHARS,
+  };
   const bounded: ChunkInput[] = [];
 
   for (const chunk of chunks) {
-    const pieces = splitTextToFit(chunk.text, limits);
+    const pieces = splitTextToFit(chunk.text, resolvedLimits);
     for (const piece of pieces) {
       bounded.push({
         ...chunk,

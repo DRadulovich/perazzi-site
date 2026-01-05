@@ -42,12 +42,12 @@ function asString(value: unknown): string | undefined {
 }
 
 function asNumber(value: unknown): number | undefined {
-  const n =
-    typeof value === "number"
-      ? value
-      : typeof value === "string"
-        ? Number(value)
-        : NaN;
+  let n = Number.NaN;
+  if (typeof value === "number") {
+    n = value;
+  } else if (typeof value === "string") {
+    n = Number(value);
+  }
   return Number.isFinite(n) ? n : undefined;
 }
 
@@ -76,7 +76,8 @@ function toCanonicalArchetype(value: unknown): CanonicalArchetype | undefined {
 }
 
 function decodeRerank(md: Record<string, unknown>): DecodedRerankMetrics | undefined {
-  const src = isRecord(md.rerankMetrics) ? (md.rerankMetrics as Record<string, unknown>) : md;
+  const rerankMetrics = md.rerankMetrics;
+  const src = isRecord(rerankMetrics) ? rerankMetrics : md;
 
   const rerankEnabled = asBoolean(src.rerankEnabled);
   const candidateLimit = asNumber(src.candidateLimit);

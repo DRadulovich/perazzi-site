@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import type { FittingStage } from "@/types/content";
+import { choreoDistance, dreamyPace } from "@/lib/choreo";
+import { ChoreoGroup } from "@/components/ui";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 
@@ -18,37 +20,79 @@ type TimelineContentProps = {
   readonly isPinned: boolean;
 };
 
+const resolveStaggerForSpan = (durationMs: number, count: number, span: number) => {
+  if (count <= 1) return 0;
+  return Math.round((durationMs * span) / (count - 1));
+};
+
 function TimelineContent({ stage, isPinned }: TimelineContentProps) {
   const ratio = stage.media.aspectRatio ?? 3 / 2;
+  const bodyLines = stage.body
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
 
   return (
-    <>
-      <div
-        className="relative w-full overflow-hidden rounded-2xl bg-[color:var(--color-canvas)] aspect-dynamic"
-        style={{ "--aspect-ratio": ratio }}
+    <div className="space-y-4">
+      <ChoreoGroup
+        effect="scale-parallax"
+        distance={choreoDistance.base}
+        scaleFrom={1.02}
+        itemAsChild
       >
-        <Image
-          src={stage.media.url}
-          alt={stage.media.alt}
-          fill
-          sizes={isPinned ? "(min-width: 1024px) 560px, 100vw" : "(min-width: 640px) 320px, 100vw"}
-          className="object-cover"
-          loading={isPinned && stage.order === 1 ? "eager" : "lazy"}
-        />
-      </div>
-      <Text size="button" className="mt-4 text-ink-muted">
-        Stage {stage.order}
-      </Text>
-      <Heading level={3} className="mt-4 type-body-title text-ink">
-        {stage.title}
-      </Heading>
-      <Text className="mt-2 type-body text-ink-muted">{stage.body}</Text>
-      {stage.media.caption ? (
-        <Text size="caption" className="mt-3 text-ink-muted" leading="normal">
-          {stage.media.caption}
+        <div
+          className="relative w-full overflow-hidden rounded-2xl bg-(--color-canvas) aspect-dynamic"
+          style={{ "--aspect-ratio": ratio }}
+        >
+          <Image
+            src={stage.media.url}
+            alt={stage.media.alt}
+            fill
+            sizes={isPinned ? "(min-width: 1024px) 560px, 100vw" : "(min-width: 640px) 320px, 100vw"}
+            className="object-cover"
+            loading={isPinned && stage.order === 1 ? "eager" : "lazy"}
+          />
+        </div>
+      </ChoreoGroup>
+      <ChoreoGroup
+        effect="fade-lift"
+        distance={choreoDistance.tight}
+        durationMs={dreamyPace.textMs}
+        easing={dreamyPace.easing}
+        staggerMs={dreamyPace.staggerMs}
+        className="space-y-3"
+      >
+        <Text size="button" className="text-ink-muted">
+          Stage {stage.order}
         </Text>
-      ) : null}
-    </>
+        <Heading level={3} className="type-body-title text-ink">
+          {stage.title}
+        </Heading>
+        <ChoreoGroup
+          effect="fade-lift"
+          distance={choreoDistance.tight}
+          durationMs={dreamyPace.lineMs}
+          easing={dreamyPace.easing}
+          staggerMs={resolveStaggerForSpan(
+            dreamyPace.enterMs,
+            bodyLines.length,
+            dreamyPace.staggerSpan,
+          )}
+          className="space-y-2"
+        >
+          {bodyLines.map((line, index) => (
+            <Text key={`stage-body-${stage.id}-${index}`} className="type-body text-ink-muted">
+              {line}
+            </Text>
+          ))}
+        </ChoreoGroup>
+        {stage.media.caption ? (
+          <Text size="caption" className="text-ink-muted" leading="normal">
+            {stage.media.caption}
+          </Text>
+        ) : null}
+      </ChoreoGroup>
+    </div>
   );
 }
 

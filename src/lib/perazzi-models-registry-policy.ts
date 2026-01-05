@@ -20,7 +20,7 @@ const MODEL_SPEC_PATTERNS: RegExp[] = [
 export function isModelsRegistryChunk(chunk: RetrievedChunk): boolean {
   const sourcePath = chunk?.sourcePath ?? "";
   if (!sourcePath) return false;
-  const normalized = sourcePath.toLowerCase().replace(/\\/g, "/");
+  const normalized = sourcePath.toLowerCase().replaceAll("\\", "/");
   return normalized.endsWith(MODELS_REGISTRY_FILENAME);
 }
 

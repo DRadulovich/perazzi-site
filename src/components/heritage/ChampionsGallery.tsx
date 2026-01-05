@@ -1,15 +1,37 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import type { ChampionEvergreen, ChampionsGalleryUi } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { Container, Heading, Section, Text } from "@/components/ui";
-import { homeMotion } from "@/lib/motionConfig";
+import {
+  buildChoreoGroupVars,
+  buildChoreoItemVars,
+  buildChoreoPresenceVars,
+  choreoDistance,
+  dreamyPace,
+  prefersReducedMotion,
+  type ChoreoPresenceState,
+} from "@/lib/choreo";
+import {
+  ChoreoGroup,
+  ChoreoPresence,
+  Container,
+  Heading,
+  RevealAnimatedBody,
+  RevealCollapsedHeader,
+  RevealExpandedHeader,
+  RevealGroup,
+  RevealItem,
+  Section,
+  SectionBackdrop,
+  SectionShell,
+  Text,
+  useRevealHeight,
+} from "@/components/ui";
 
 type ChampionsGalleryProps = Readonly<{
   champions: ChampionEvergreen[];
@@ -20,19 +42,20 @@ type ChampionsGalleryRevealSectionProps = Readonly<{
   champions: ChampionEvergreen[];
   ui: ChampionsGalleryUi;
   enableTitleReveal: boolean;
-  motionEnabled: boolean;
-  sectionRef: RefObject<HTMLElement | null>;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }>;
 
 export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
-  const prefersReducedMotion = useReducedMotion();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const enableTitleReveal = isDesktop && !prefersReducedMotion;
-  const motionEnabled = !prefersReducedMotion;
+  const enableTitleReveal = isDesktop;
+  const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const galleryKey = enableTitleReveal ? "title-reveal" : "always-reveal";
-  const sectionRef = useRef<HTMLElement | null>(null);
 
   const verified = champions.filter((champion) => Boolean(champion?.name));
+
+  useEffect(() => {
+    setIsCollapsed(enableTitleReveal);
+  }, [enableTitleReveal]);
 
   if (!verified.length) {
     return (
@@ -48,8 +71,11 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
 
   return (
     <section
-      ref={sectionRef}
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
+      className={cn(
+        "relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed",
+        "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:z-20 before:h-16 before:bg-linear-to-b before:from-black/55 before:to-transparent before:transition-opacity before:duration-500 before:ease-out before:content-[''] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-20 after:h-16 after:bg-linear-to-t after:from-black/55 after:to-transparent after:transition-opacity after:duration-500 after:ease-out after:content-['']",
+        isCollapsed ? "before:opacity-100 after:opacity-100" : "before:opacity-0 after:opacity-0",
+      )}
       aria-labelledby="heritage-champions-heading"
     >
       <ChampionsGalleryRevealSection
@@ -57,8 +83,7 @@ export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
         champions={verified}
         ui={ui}
         enableTitleReveal={enableTitleReveal}
-        motionEnabled={motionEnabled}
-        sectionRef={sectionRef}
+        onCollapsedChange={setIsCollapsed}
       />
     </section>
   );
@@ -68,19 +93,17 @@ const ChampionsGalleryRevealSection = ({
   champions,
   ui,
   enableTitleReveal,
-  motionEnabled,
-  sectionRef,
+  onCollapsedChange,
 }: ChampionsGalleryRevealSectionProps) => {
   const [galleryExpanded, setGalleryExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const [activeDiscipline, setActiveDiscipline] = useState<string | null>(null);
   const [selectedChampionId, setSelectedChampionId] = useState<string | null>(() => {
     return champions[0]?.id ?? null;
   });
-
-  const galleryShellRef = useRef<HTMLDivElement | null>(null);
-  const headerThemeFrame = useRef<number | null>(null);
+  const revealGallery = !enableTitleReveal || galleryExpanded;
+  const revealPhotoFocus = revealGallery;
+  const galleryMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
 
   const disciplines = useMemo(() => {
     const set = new Set<string>();
@@ -109,6 +132,19 @@ const ChampionsGalleryRevealSection = ({
   const selectedChampion =
     filteredChampions.find((champion) => champion.id === activeChampionId) ?? null;
 
+  const {
+    ref: galleryShellRef,
+    measureRef,
+    minHeightStyle,
+    beginExpand,
+    clearPremeasure,
+    isPreparing,
+  } = useRevealHeight({
+    enableObserver: enableTitleReveal && revealGallery,
+    deps: [activeDiscipline, activeChampionId, champions.length],
+  });
+  const revealGalleryForMeasure = revealGallery || isPreparing;
+
   const heading = ui.heading ?? "Perazzi Champions";
   const subheading = ui.subheading ?? "The athletes who shaped our lineage";
   const championsLabel = ui.championsLabel ?? "Champions";
@@ -118,508 +154,434 @@ const ChampionsGalleryRevealSection = ({
   };
   const cardCtaLabel = ui.cardCtaLabel ?? "Read full interview";
 
-  const revealGallery = !enableTitleReveal || galleryExpanded;
-  const revealPhotoFocus = revealGallery;
-  const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealGallery;
-  const focusSurfaceTransition =
-    "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const focusFadeTransition =
-    "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const titleColorTransition =
-    "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const galleryReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const galleryRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const galleryCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const galleryBodyReveal = galleryReveal;
-  const readMoreReveal = motionEnabled
-    ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: galleryReveal.duration }
-    : undefined;
-  const galleryLayoutTransition = motionEnabled ? { layout: galleryReveal } : undefined;
-  const galleryMinHeight = enableTitleReveal ? "min-h-[calc(700px+16rem)]" : null;
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"],
-  });
-  const parallaxY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
-  );
-  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
-  const backgroundScale = parallaxEnabled ? 1.32 : 1;
-  const backgroundScaleTransition = revealGallery ? galleryReveal : galleryCollapse;
-
-  const headingContainer = {
-    hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
-  } as const;
-
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: galleryReveal },
-  } as const;
 
   const handleGalleryExpand = () => {
-    if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
-    setGalleryExpanded(true);
-    headerThemeFrame.current = requestAnimationFrame(() => {
+    onCollapsedChange?.(false);
+    beginExpand(() => {
+      setGalleryExpanded(true);
       setHeaderThemeReady(true);
-      headerThemeFrame.current = null;
     });
   };
 
   const handleGalleryCollapse = () => {
-    if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-      headerThemeFrame.current = null;
-    }
+    clearPremeasure();
     setHeaderThemeReady(false);
     setGalleryExpanded(false);
+    onCollapsedChange?.(true);
   };
 
-  useEffect(() => {
-    if (!enableTitleReveal || !revealGallery) return;
-    const node = galleryShellRef.current;
-    if (!node) return;
+  const handleChampionSelect = (championId: string) => {
+    setSelectedChampionId(championId);
+    logAnalytics(`ChampionProfileSelected:${championId}`);
+  };
 
-    let frame = 0;
-    const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
-    }
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [
-    enableTitleReveal,
-    revealGallery,
-    activeDiscipline,
-    activeChampionId,
-    champions.length,
-  ]);
-
-  useEffect(() => () => {
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
-  }, []);
+  const expandedContent = (
+    <RevealAnimatedBody sequence>
+      <RevealItem index={0}>
+        <RevealExpandedHeader
+          headingId="heritage-champions-heading"
+          heading={heading}
+          subheading={subheading}
+          headerThemeReady={headerThemeReady}
+          enableTitleReveal={enableTitleReveal}
+          onCollapse={handleGalleryCollapse}
+        />
+      </RevealItem>
+      <RevealGroup delayMs={140}>
+        <ChampionsGalleryBody
+          revealGallery={revealGalleryForMeasure}
+          disciplines={disciplines}
+          activeDiscipline={activeDiscipline}
+          onDisciplineChange={setActiveDiscipline}
+          championsLabel={championsLabel}
+          filteredChampions={filteredChampions}
+          activeChampionId={activeChampionId}
+          onChampionSelect={handleChampionSelect}
+          selectedChampion={selectedChampion}
+          cardCtaLabel={cardCtaLabel}
+        />
+      </RevealGroup>
+    </RevealAnimatedBody>
+  );
 
   return (
     <>
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <motion.div
-          className="absolute inset-0 will-change-transform"
-          style={parallaxStyle}
-          initial={false}
-          animate={motionEnabled ? { scale: backgroundScale } : undefined}
-          transition={motionEnabled ? backgroundScaleTransition : undefined}
-        >
-          <Image
-            src={background.url}
-            alt={background.alt}
-            fill
-            sizes="100vw"
-            className="object-cover"
-            loading="lazy"
-          />
-        </motion.div>
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealGallery ? "opacity-0" : "opacity-100",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 film-grain",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-20" : "opacity-0",
-          )}
-          aria-hidden="true"
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 overlay-gradient-ink",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-      </div>
+      <SectionBackdrop
+        image={{ url: background.url, alt: background.alt }}
+        reveal={revealGallery}
+        revealOverlay={revealPhotoFocus}
+        preparing={isPreparing}
+        enableParallax={enableTitleReveal && !revealGallery}
+        overlay="ink"
+        loading="lazy"
+      />
 
       <Container size="xl" className="relative z-10">
-        <motion.div
+        <SectionShell
           ref={galleryShellRef}
-          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
-          className={cn(
-            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            focusSurfaceTransition,
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            galleryMinHeight,
-          )}
+          style={minHeightStyle}
+          reveal={revealPhotoFocus}
+          minHeightClass={galleryMinHeight ?? undefined}
         >
-          <LayoutGroup id="heritage-champions-title">
-            <AnimatePresence initial={false}>
-              {revealGallery ? (
-                <motion.div
-                  key="heritage-champions-header"
-                  className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
-                  initial={motionEnabled ? { opacity: 0 } : false}
-                  animate={motionEnabled ? { opacity: 1, transition: galleryReveal } : undefined}
-                  exit={motionEnabled ? { opacity: 0, transition: galleryRevealFast } : undefined}
-                >
-                  <motion.div
-                    className="space-y-3"
-                    variants={headingContainer}
-                    initial={motionEnabled ? "hidden" : false}
-                    animate={motionEnabled ? "show" : undefined}
-                  >
-                    <motion.div
-                      layoutId="heritage-champions-title"
-                      layoutCrossfade={false}
-                      transition={galleryLayoutTransition}
-                      className="relative"
-                    >
-                      <Heading
-                        id="heritage-champions-heading"
-                        level={2}
-                        size="xl"
-                        className={cn(
-                          titleColorTransition,
-                          headerThemeReady ? "text-ink" : "text-white",
-                        )}
-                      >
-                        {heading}
-                      </Heading>
-                    </motion.div>
-                    <motion.div
-                      layoutId="heritage-champions-subtitle"
-                      layoutCrossfade={false}
-                      transition={galleryLayoutTransition}
-                      className="relative"
-                    >
-                      <motion.div variants={headingItem}>
-                        <Text
-                          className={cn(
-                            "type-section-subtitle",
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink-muted" : "text-white",
-                          )}
-                        >
-                          {subheading}
-                        </Text>
-                      </motion.div>
-                    </motion.div>
-                  </motion.div>
-                  {enableTitleReveal ? (
-                    <button
-                      type="button"
-                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                      onClick={handleGalleryCollapse}
-                    >
-                      Collapse
-                    </button>
-                  ) : null}
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="heritage-champions-collapsed"
-                  className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
-                  animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
-                  exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
-                  transition={motionEnabled ? galleryRevealFast : undefined}
-                >
-                  <motion.div
-                    layoutId="heritage-champions-title"
-                    layoutCrossfade={false}
-                    transition={galleryLayoutTransition}
-                    className="relative inline-flex text-white"
-                  >
-                    <Heading
-                      id="heritage-champions-heading"
-                      level={2}
-                      size="xl"
-                      className="type-section-collapsed"
-                    >
-                      {heading}
-                    </Heading>
-                    <button
-                      type="button"
-                      className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                      onPointerEnter={handleGalleryExpand}
-                      onFocus={handleGalleryExpand}
-                      onClick={handleGalleryExpand}
-                      aria-expanded={revealGallery}
-                      aria-controls="heritage-champions-body"
-                      aria-labelledby="heritage-champions-heading"
-                    >
-                      <span className="sr-only">Expand {heading}</span>
-                    </button>
-                  </motion.div>
-                  <motion.div
-                    layoutId="heritage-champions-subtitle"
-                    layoutCrossfade={false}
-                    transition={galleryLayoutTransition}
-                    className="relative text-white"
-                  >
-                    <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                      {subheading}
-                    </Text>
-                  </motion.div>
-                  <motion.div
-                    initial={motionEnabled ? { opacity: 0, y: 6 } : false}
-                    animate={motionEnabled ? { opacity: 1, y: 0, transition: readMoreReveal } : undefined}
-                    exit={motionEnabled ? { opacity: 0, y: 6, transition: galleryRevealFast } : undefined}
-                    className="mt-3"
-                  >
-                    <Text
-                      size="button"
-                      className="text-white/80 cursor-pointer focus-ring"
-                      asChild
-                    >
-                      <button type="button" onClick={handleGalleryExpand}>
-                        Read more
-                      </button>
-                    </Text>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </LayoutGroup>
-
-          <AnimatePresence initial={false}>
-            {revealGallery ? (
-              <motion.div
-                key="heritage-champions-body"
-                id="heritage-champions-body"
-                className="space-y-6"
-                initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
-                animate={
-                  motionEnabled
-                    ? { opacity: 1, y: 0, filter: "blur(0px)", transition: galleryBodyReveal }
-                    : undefined
-                }
-                exit={
-                  motionEnabled
-                    ? { opacity: 0, y: -16, filter: "blur(10px)", transition: galleryCollapse }
-                    : undefined
-                }
+          {revealGallery ? (
+            expandedContent
+          ) : (
+            <>
+              <ChoreoGroup
+                effect="fade-lift"
+                distance={choreoDistance.base}
+                durationMs={dreamyPace.textMs}
+                easing={dreamyPace.easing}
+                staggerMs={dreamyPace.staggerMs}
+                itemClassName="absolute inset-0"
               >
-                {disciplines.length ? (
-                  <motion.div
-                    initial={motionEnabled ? { opacity: 0, y: 12, filter: "blur(10px)" } : false}
-                    animate={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-                    transition={motionEnabled ? homeMotion.revealFast : undefined}
-                  >
-                    <LayoutGroup id="heritage-champions-discipline-filter">
-                      <fieldset
-                        className="flex flex-wrap gap-2 border-0 p-0"
-                        aria-label="Filter champions by discipline"
-                      >
-                        <legend className="sr-only">Filter champions by discipline</legend>
-                        <motion.button
-                          type="button"
-                          aria-pressed={activeDiscipline === null}
-                          className={cn(
-                            "relative overflow-hidden pill border type-button focus-ring transition",
-                            activeDiscipline === null
-                              ? "border-perazzi-red text-perazzi-red"
-                              : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
-                          )}
-                          onClick={() => { setActiveDiscipline(null); }}
-                          whileTap={motionEnabled ? { scale: 0.98 } : undefined}
-                          transition={motionEnabled ? homeMotion.micro : undefined}
-                        >
-                          {activeDiscipline === null ? (
-                            <motion.span
-                              layoutId="heritage-champions-discipline-highlight"
-                              className="absolute inset-0 rounded-[0.125rem] bg-perazzi-red/10"
-                              transition={homeMotion.springHighlight}
-                              aria-hidden="true"
-                            />
-                          ) : null}
-                          <span className="relative z-10">All</span>
-                        </motion.button>
-                        {disciplines.map((discipline) => {
-                          const active = activeDiscipline === discipline;
-                          return (
-                            <motion.button
-                              key={discipline}
-                              type="button"
-                              aria-pressed={active}
-                              className={cn(
-                                "relative overflow-hidden pill border type-button focus-ring transition",
-                                active
-                                  ? "border-perazzi-red text-perazzi-red"
-                                  : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
-                              )}
-                              onClick={() =>
-                                setActiveDiscipline(active ? null : discipline)
-                              }
-                              whileTap={motionEnabled ? { scale: 0.98 } : undefined}
-                              transition={motionEnabled ? homeMotion.micro : undefined}
-                            >
-                              {active ? (
-                                <motion.span
-                                  layoutId="heritage-champions-discipline-highlight"
-                                  className="absolute inset-0 rounded-[0.125rem] bg-perazzi-red/10"
-                                  transition={homeMotion.springHighlight}
-                                  aria-hidden="true"
-                                />
-                              ) : null}
-                              <span className="relative z-10">{discipline}</span>
-                            </motion.button>
-                          );
-                        })}
-                      </fieldset>
-                    </LayoutGroup>
-                  </motion.div>
-                ) : null}
-
-                <motion.div
-                  className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)] lg:items-start"
-                  initial={motionEnabled ? { opacity: 0, y: 18, filter: "blur(10px)" } : false}
-                  animate={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-                  transition={motionEnabled ? homeMotion.reveal : undefined}
-                >
-                  <div className="rounded-2xl bg-card/0 p-4 sm:rounded-3xl">
-                    <Text
-                      size="label-tight"
-                      className="mb-3 text-ink-muted"
-                      leading="normal"
-                    >
-                      {championsLabel}
-                    </Text>
-
-                    {filteredChampions.length ? (
-                      <ul className="space-y-1" aria-label="Select a champion to view their profile">
-                        {filteredChampions.map((champion) => (
-                          <ChampionNameItem
-                            key={champion.id}
-                            champion={champion}
-                            isActive={champion.id === activeChampionId}
-                            reduceMotion={!motionEnabled}
-                            onSelect={() => {
-                              setSelectedChampionId(champion.id);
-                              logAnalytics(`ChampionProfileSelected:${champion.id}`);
-                            }}
-                          />
-                        ))}
-                      </ul>
-                    ) : (
-                      <Text size="sm" className="text-ink-muted">
-                        No champions in this discipline yet—select another to continue exploring the lineage.
-                      </Text>
-                    )}
-                  </div>
-
-                  <div className="min-h-72 rounded-2xl border border-border/75 bg-card/75 p-5 shadow-soft sm:rounded-3xl">
-                    <AnimatePresence mode="wait">
-                      {selectedChampion ? (
-                        <motion.div
-                          key={selectedChampion.id}
-                          initial={motionEnabled ? { opacity: 0, y: 12, filter: "blur(10px)" } : false}
-                          animate={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-                          exit={motionEnabled ? { opacity: 0, y: -10, filter: "blur(8px)" } : undefined}
-                          transition={motionEnabled ? homeMotion.micro : undefined}
-                          className="flex flex-col gap-6"
-                        >
-                          <ChampionDetail champion={selectedChampion} cardCtaLabel={cardCtaLabel} />
-                        </motion.div>
-                      ) : (
-                        <motion.p
-                          key="no-champion"
-                          initial={motionEnabled ? { opacity: 0 } : false}
-                          animate={motionEnabled ? { opacity: 1 } : undefined}
-                          exit={motionEnabled ? { opacity: 0 } : undefined}
-                          transition={motionEnabled ? homeMotion.micro : undefined}
-                          className="type-body-sm text-ink-muted"
-                        >
-                          Select a champion on the left to view their story.
-                        </motion.p>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                </motion.div>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-        </motion.div>
+                <RevealCollapsedHeader
+                  headingId="heritage-champions-heading"
+                  heading={heading}
+                  subheading={subheading}
+                  controlsId="heritage-champions-body"
+                  expanded={revealGallery}
+                  onExpand={handleGalleryExpand}
+                />
+              </ChoreoGroup>
+              <div ref={measureRef} className="section-reveal-measure" aria-hidden>
+                {expandedContent}
+              </div>
+            </>
+          )}
+        </SectionShell>
       </Container>
     </>
   );
 };
 
+type ChampionsGalleryBodyProps = Readonly<{
+  revealGallery: boolean;
+  disciplines: string[];
+  activeDiscipline: string | null;
+  onDisciplineChange: (nextDiscipline: string | null) => void;
+  championsLabel: string;
+  filteredChampions: ChampionEvergreen[];
+  activeChampionId: string | null;
+  onChampionSelect: (championId: string) => void;
+  selectedChampion: ChampionEvergreen | null;
+  cardCtaLabel: string;
+}>;
+
+function ChampionsGalleryBody({
+  revealGallery,
+  disciplines,
+  activeDiscipline,
+  onDisciplineChange,
+  championsLabel,
+  filteredChampions,
+  activeChampionId,
+  onChampionSelect,
+  selectedChampion,
+  cardCtaLabel,
+}: ChampionsGalleryBodyProps) {
+  const reduceMotion = prefersReducedMotion();
+  const [displayChampion, setDisplayChampion] = useState(selectedChampion);
+  const [presenceState, setPresenceState] = useState<ChoreoPresenceState>("enter");
+  const presenceTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
+  const exitTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
+  const detailPresenceVars = buildChoreoPresenceVars({
+    enterDurationMs: dreamyPace.textMs,
+    exitDurationMs: dreamyPace.textMs,
+    enterEase: dreamyPace.easing,
+    exitEase: dreamyPace.easing,
+    enterY: choreoDistance.base,
+    exitY: choreoDistance.tight,
+    enterScale: 0.98,
+    exitScale: 0.98,
+    enterBlur: 2,
+    exitBlur: 2,
+  });
+
+  useEffect(() => (
+    () => {
+      if (presenceTimeoutRef.current) {
+        globalThis.clearTimeout(presenceTimeoutRef.current);
+        presenceTimeoutRef.current = null;
+      }
+      if (exitTimeoutRef.current) {
+        globalThis.clearTimeout(exitTimeoutRef.current);
+        exitTimeoutRef.current = null;
+      }
+    }
+  ), []);
+
+  useEffect(() => {
+    if (!selectedChampion) return;
+    if (presenceTimeoutRef.current) {
+      globalThis.clearTimeout(presenceTimeoutRef.current);
+      presenceTimeoutRef.current = null;
+    }
+    if (exitTimeoutRef.current) {
+      globalThis.clearTimeout(exitTimeoutRef.current);
+      exitTimeoutRef.current = null;
+    }
+
+    if (reduceMotion || selectedChampion.id === displayChampion?.id) {
+      exitTimeoutRef.current = globalThis.setTimeout(() => {
+        setDisplayChampion(selectedChampion);
+        setPresenceState("enter");
+        exitTimeoutRef.current = null;
+      }, 0);
+      return;
+    }
+
+    exitTimeoutRef.current = globalThis.setTimeout(() => {
+      setPresenceState("exit");
+      exitTimeoutRef.current = null;
+    }, 0);
+    presenceTimeoutRef.current = globalThis.setTimeout(() => {
+      setDisplayChampion(selectedChampion);
+      setPresenceState("enter");
+      presenceTimeoutRef.current = null;
+    }, dreamyPace.staggerMs);
+  }, [displayChampion?.id, reduceMotion, selectedChampion]);
+
+  if (!revealGallery) return null;
+
+  return (
+    <div id="heritage-champions-body" className="space-y-6">
+      <RevealItem index={0}>
+        <ChampionsGalleryFilters
+          disciplines={disciplines}
+          activeDiscipline={activeDiscipline}
+          onDisciplineChange={onDisciplineChange}
+        />
+      </RevealItem>
+
+      <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.3fr)] lg:items-start">
+        <RevealItem index={1}>
+          <div className="rounded-2xl bg-card/0 p-4 sm:rounded-3xl">
+            <Text
+              size="label-tight"
+              className="mb-3 text-ink-muted"
+              leading="normal"
+            >
+              {championsLabel}
+            </Text>
+
+            {filteredChampions.length ? (
+              <ul
+                className="choreo-group space-y-1"
+                style={buildChoreoGroupVars({
+                  durationMs: dreamyPace.textMs,
+                  staggerMs: dreamyPace.staggerMs,
+                  easing: dreamyPace.easing,
+                })}
+                aria-label="Select a champion to view their profile"
+              >
+                {filteredChampions.map((champion, index) => (
+                  <ChampionNameItem
+                    key={champion.id}
+                    index={index}
+                    champion={champion}
+                    isActive={champion.id === activeChampionId}
+                    onSelect={() => onChampionSelect(champion.id)}
+                  />
+                ))}
+              </ul>
+            ) : (
+              <Text size="sm" className="text-ink-muted">
+                No champions in this discipline yet—select another to continue exploring the lineage.
+              </Text>
+            )}
+          </div>
+        </RevealItem>
+
+        <RevealItem index={2}>
+          <div className="min-h-72 rounded-2xl border border-border/75 bg-card/75 p-5 shadow-soft sm:rounded-3xl">
+            {displayChampion ? (
+              <ChoreoPresence
+                state={presenceState}
+                style={detailPresenceVars}
+                className="flex flex-col gap-6"
+              >
+                <ChampionDetail champion={displayChampion} cardCtaLabel={cardCtaLabel} />
+              </ChoreoPresence>
+            ) : (
+              <p className="type-body-sm text-ink-muted">
+                Select a champion on the left to view their story.
+              </p>
+            )}
+          </div>
+        </RevealItem>
+      </div>
+    </div>
+  );
+}
+
+type ChampionsGalleryFiltersProps = Readonly<{
+  disciplines: string[];
+  activeDiscipline: string | null;
+  onDisciplineChange: (nextDiscipline: string | null) => void;
+}>;
+
+function ChampionsGalleryFilters({
+  disciplines,
+  activeDiscipline,
+  onDisciplineChange,
+}: ChampionsGalleryFiltersProps) {
+  if (!disciplines.length) return null;
+
+  const underlayVars = buildChoreoPresenceVars({
+    enterDurationMs: dreamyPace.textMs,
+    exitDurationMs: dreamyPace.textMs,
+    enterEase: dreamyPace.easing,
+    exitEase: dreamyPace.easing,
+    enterScale: 0.96,
+    exitScale: 0.96,
+    enterY: 0,
+    exitY: 0,
+  });
+
+  return (
+    <div>
+      <fieldset
+        className="border-0 p-0"
+        aria-label="Filter champions by discipline"
+      >
+        <legend className="sr-only">Filter champions by discipline</legend>
+        <ChoreoGroup
+          effect="slide"
+          axis="x"
+          direction="right"
+          distance={choreoDistance.base}
+          durationMs={dreamyPace.textMs}
+          easing={dreamyPace.easing}
+          staggerMs={dreamyPace.staggerMs}
+          className="flex flex-wrap gap-2"
+          itemAsChild
+        >
+          <button
+            type="button"
+            aria-pressed={activeDiscipline === null}
+            className={cn(
+              "relative overflow-hidden pill border type-button focus-ring",
+              activeDiscipline === null
+                ? "border-perazzi-red text-perazzi-red"
+                : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
+            )}
+            onClick={() => onDisciplineChange(null)}
+          >
+            {activeDiscipline === null ? (
+              <ChoreoPresence
+                state="enter"
+                style={underlayVars}
+                asChild
+              >
+                <span
+                  className="absolute inset-0 rounded-xs bg-perazzi-red/10"
+                  aria-hidden="true"
+                />
+              </ChoreoPresence>
+            ) : null}
+            <span className="relative z-10">All</span>
+          </button>
+          {disciplines.map((discipline) => {
+            const active = activeDiscipline === discipline;
+            return (
+              <button
+                key={discipline}
+                type="button"
+                aria-pressed={active}
+                className={cn(
+                  "relative overflow-hidden pill border type-button focus-ring",
+                  active
+                    ? "border-perazzi-red text-perazzi-red"
+                    : "border-ink/15 bg-card/0 text-ink hover:border-ink/60",
+                )}
+                onClick={() => onDisciplineChange(active ? null : discipline)}
+              >
+                {active ? (
+                  <ChoreoPresence
+                    state="enter"
+                    style={underlayVars}
+                    asChild
+                  >
+                    <span
+                      className="absolute inset-0 rounded-xs bg-perazzi-red/10"
+                      aria-hidden="true"
+                    />
+                  </ChoreoPresence>
+                ) : null}
+              <span className="relative z-10">{discipline}</span>
+            </button>
+          );
+        })}
+        </ChoreoGroup>
+      </fieldset>
+    </div>
+  );
+}
+
 type ChampionNameItemProps = Readonly<{
+  index: number;
   champion: ChampionEvergreen;
   isActive: boolean;
-  reduceMotion: boolean;
   onSelect: () => void;
 }>;
 
-function ChampionNameItem({ champion, isActive, reduceMotion, onSelect }: ChampionNameItemProps) {
+function ChampionNameItem({ index, champion, isActive, onSelect }: ChampionNameItemProps) {
   const analyticsRef = useAnalyticsObserver<HTMLLIElement>(
     `ChampionListItemViewed:${champion.id}`,
     { threshold: 0.3 },
   );
+  const underlayVars = buildChoreoPresenceVars({
+    enterDurationMs: dreamyPace.textMs,
+    exitDurationMs: dreamyPace.textMs,
+    enterEase: dreamyPace.easing,
+    exitEase: dreamyPace.easing,
+    enterScale: 0.96,
+    exitScale: 0.96,
+    enterY: 0,
+    exitY: 0,
+  });
+  const itemVars = buildChoreoItemVars("fade-lift", {
+    index,
+    distance: choreoDistance.tight,
+  });
 
   return (
     <li
       ref={analyticsRef}
       data-analytics-id={`ChampionListItemViewed:${champion.id}`}
+      className="choreo-item choreo-fade-lift"
+      style={itemVars}
     >
-      <motion.button
+      <button
         type="button"
         onClick={onSelect}
         className={cn(
-          "group relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left transition-colors focus-ring",
+          "relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left focus-ring",
           isActive
-            ? "bg-perazzi-red text-card"
+            ? "text-white"
             : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
         )}
         aria-pressed={isActive}
-        whileHover={reduceMotion ? undefined : { x: 4, transition: homeMotion.micro }}
-        whileTap={reduceMotion ? undefined : { scale: 0.99 }}
       >
+        {isActive ? (
+          <ChoreoPresence
+            state="enter"
+            style={underlayVars}
+            asChild
+          >
+            <span
+              className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
+              aria-hidden="true"
+            />
+          </ChoreoPresence>
+        ) : null}
         {champion.title ? (
-          <span className={cn("block type-card-title text-xl text-ink", isActive && "text-white")}>
+          <span className={cn("relative z-10 block type-card-title text-xl text-ink", isActive && "text-white")}>
             {champion.title}
           </span>
         ) : null}
-      </motion.button>
+      </button>
     </li>
   );
 }
@@ -632,33 +594,46 @@ type ChampionDetailProps = Readonly<{
 function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
   return (
     <>
-      <div
-        className="group relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-[3/2]"
+      <ChoreoGroup
+        effect="scale-parallax"
+        distance={choreoDistance.base}
+        durationMs={dreamyPace.textMs}
+        easing={dreamyPace.easing}
+        scaleFrom={1.02}
+        itemAsChild
       >
-        <Image
-          src={champion.image.url}
-          alt={champion.image.alt}
-          fill
-          sizes="(min-width: 1024px) 320px, 100vw"
-          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
-          loading="lazy"
-        />
-        <div className="pointer-events-none absolute inset-0 film-grain opacity-12" aria-hidden="true" />
-        <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
         <div
-          className={cn(
-            "pointer-events-none absolute inset-0 bg-linear-to-t",
-            "from-(--scrim-strong)/80 via-(--scrim-strong)/50 to-transparent",
-          )}
-          aria-hidden
-        />
-      </div>
-      <div className="space-y-4">
-        <div className="space-y-1">
-          <Heading level={3} className="type-section text-ink border-b border-perazzi-red/40 pb-2">
-            {champion.name}
-          </Heading>
+          className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-3/2"
+        >
+          <Image
+            src={champion.image.url}
+            alt={champion.image.alt}
+            fill
+            sizes="(min-width: 1024px) 320px, 100vw"
+            className="object-cover"
+            loading="lazy"
+          />
+          <div
+            className={cn(
+              "pointer-events-none absolute inset-0 bg-linear-to-t",
+              "from-(--scrim-strong)/80 via-(--scrim-strong)/50 to-transparent",
+            )}
+            aria-hidden
+          />
         </div>
+      </ChoreoGroup>
+      <ChoreoGroup
+        effect="fade-lift"
+        distance={choreoDistance.tight}
+        durationMs={dreamyPace.textMs}
+        easing={dreamyPace.easing}
+        staggerMs={dreamyPace.staggerMs}
+        className="space-y-4"
+        itemAsChild
+      >
+        <Heading level={3} className="type-section text-ink border-b border-perazzi-red/40 pb-2">
+          {champion.name}
+        </Heading>
 
         {champion.resume &&
         (champion.resume.winOne ||
@@ -695,16 +670,24 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
             <Text size="label-tight" className="text-ink-muted">
               Disciplines
             </Text>
-            <ul className="flex flex-wrap gap-2 type-label-tight text-ink-muted">
+            <ChoreoGroup
+              effect="fade-lift"
+              distance={choreoDistance.tight}
+              durationMs={dreamyPace.textMs}
+              easing={dreamyPace.easing}
+              staggerMs={dreamyPace.staggerMs}
+              className="flex flex-wrap gap-2 type-label-tight text-ink-muted"
+              itemAsChild
+            >
               {champion.disciplines.map((discipline) => (
-                <li
+                <div
                   key={discipline}
                   className="pill border border-border"
                 >
                   {discipline}
-                </li>
+                </div>
               ))}
-            </ul>
+            </ChoreoGroup>
           </div>
         ) : null}
 
@@ -713,16 +696,24 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
             <Text size="label-tight" className="text-ink-muted">
               Platforms
             </Text>
-            <ul className="flex flex-wrap gap-2 type-label-tight text-ink-muted">
+            <ChoreoGroup
+              effect="fade-lift"
+              distance={choreoDistance.tight}
+              durationMs={dreamyPace.textMs}
+              easing={dreamyPace.easing}
+              staggerMs={dreamyPace.staggerMs}
+              className="flex flex-wrap gap-2 type-label-tight text-ink-muted"
+              itemAsChild
+            >
               {champion.platforms.map((platform) => (
-                <li
+                <div
                   key={platform}
                   className="pill border border-border"
                 >
                   {platform}
-                </li>
+                </div>
               ))}
-            </ul>
+            </ChoreoGroup>
           </div>
         ) : null}
 
@@ -735,7 +726,7 @@ function ChampionDetail({ champion, cardCtaLabel }: ChampionDetailProps) {
             <span aria-hidden="true">→</span>
           </a>
         ) : null}
-      </div>
+      </ChoreoGroup>
     </>
   );
 }

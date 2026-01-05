@@ -78,7 +78,7 @@ describe("isEnvTrue / getRerankCandidateLimit", () => {
     expect(isEnvTrue("yes")).toBe(true);
     expect(isEnvTrue("on")).toBe(true);
     expect(isEnvTrue("false")).toBe(false);
-    expect(isEnvTrue(undefined)).toBe(false);
+    expect(isEnvTrue()).toBe(false);
   });
 
   it("clamps rerank candidate limit with defaults and caps", () => {
@@ -391,7 +391,7 @@ describe("computeArchetypeBoost", () => {
     expect(computeArchetypeBoost(null, ["prestige"], 0.2)).toBe(0);
 
     const boost = computeArchetypeBoost(
-      { prestige: -1, analyst: NaN, loyalist: 0, achiever: 0, legacy: 0 },
+      { prestige: -1, analyst: Number.NaN, loyalist: 0, achiever: 0, legacy: 0 },
       ["prestige"],
       0.1,
     );

@@ -2,7 +2,8 @@ import type { PerazziMode } from "@/types/perazzi-assistant";
 
 export type ShouldRetrieveInput = {
   userText: string | null | undefined;
-  mode?: PerazziMode | string | null;
+  /** Reserved for future mode-specific refinements. */
+  mode?: PerazziMode | null;
   pageUrl?: string | null;
 };
 
@@ -49,12 +50,13 @@ const GUN_TERM_TOKENS = [
 ];
 
 function normalizeText(value: string | null | undefined): string {
-  return (value ?? "").trim().replace(/\s+/g, " ");
+  return (value ?? "").trim().replaceAll(/\s+/g, " ");
 }
 
 function isAlphaNumeric(char: string): boolean {
   if (!char) return false;
-  const code = char.charCodeAt(0);
+  const code = char.codePointAt(0);
+  if (code === undefined) return false;
   return (code >= 48 && code <= 57) || (code >= 97 && code <= 122);
 }
 
@@ -150,7 +152,7 @@ function isChatMetaRewrite(text: string): boolean {
 
 function isGenericPleasantry(text: string): boolean {
   const lower = text.toLowerCase();
-  const cleaned = lower.replace(/[.!?]/g, "").trim();
+  const cleaned = lower.replaceAll(/[.!?]/g, "").trim();
   const tokens = cleaned.split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return true;
   if (tokens.length > 5) return false;
@@ -163,7 +165,7 @@ function isGenericPleasantry(text: string): boolean {
   );
 }
 
-export function shouldRetrieve({ userText, mode, pageUrl }: ShouldRetrieveInput): ShouldRetrieveResult {
+export function shouldRetrieve({ userText, pageUrl }: ShouldRetrieveInput): ShouldRetrieveResult {
   const text = normalizeText(userText);
   if (!text) return { retrieve: false, reason: "empty_user_text" };
 
@@ -182,6 +184,5 @@ export function shouldRetrieve({ userText, mode, pageUrl }: ShouldRetrieveInput)
   if (isGenericPleasantry(text)) return { retrieve: false, reason: "pleasantry" };
 
   // Default: retrieve.
-  void mode; // reserved for future mode-specific refinements
   return { retrieve: true, reason: "default" };
 }

@@ -29,7 +29,7 @@ function sanitizeReason(value: unknown): string {
 
 function sanitizeNotes(value: unknown): string | null {
   const raw = String(value ?? "")
-    .replaceAll(/\r\n/g, "\n")
+    .replaceAll("\r\n", "\n")
     .trim();
 
   if (!raw) return null;

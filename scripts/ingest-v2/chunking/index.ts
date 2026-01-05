@@ -8,11 +8,10 @@ import { chunkMarkdownLike } from "./markdown";
 export function chunkDocument(
   doc: ActiveDoc,
   rawText: string,
-  bounds: { maxTokens: number; maxChars: number } = {
-    maxTokens: MAX_TOKENS,
-    maxChars: MAX_CHARS,
-  },
+  bounds?: { maxTokens: number; maxChars: number },
 ): ChunkInput[] {
+  const resolvedBounds = bounds
+    ?? { maxTokens: MAX_TOKENS, maxChars: MAX_CHARS };
   const lowerPath = doc.path.toLowerCase();
   const helperDocTypes = new Set([
     "model-spec-text",
@@ -43,5 +42,5 @@ export function chunkDocument(
     baseChunks = chunkMarkdownLike(doc, rawText);
   }
 
-  return enforceChunkBounds(baseChunks, bounds);
+  return enforceChunkBounds(baseChunks, resolvedBounds);
 }

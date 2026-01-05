@@ -12,9 +12,9 @@ export function truncate(text: string, length = 200) {
 
 export function oneLine(text: string): string {
   return text
-    .replace(/\r\n/g, "\n")
-    .replace(/\s*\n\s*/g, " ")
-    .replace(/\s+/g, " ")
+    .replaceAll("\r\n", "\n")
+    .replaceAll(/\s*\n\s*/g, " ")
+    .replaceAll(/\s+/g, " ")
     .trim();
 }
 
@@ -52,7 +52,7 @@ function readNestedValue(obj: unknown, path: string[]): SafeValue {
   let current: SafeValue = obj as SafeValue;
   for (const key of path) {
     const next = stepIntoOwnValue(current, key);
-    if (typeof next === "undefined") return undefined;
+    if (next === undefined) return undefined;
     current = next;
   }
   return current;

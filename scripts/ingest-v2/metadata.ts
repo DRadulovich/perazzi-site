@@ -102,7 +102,7 @@ function extractSectionWithRange(
   heading: RegExp,
 ): { section: string | null; start: number | null; end: number | null } {
   const match = heading.exec(rawText);
-  if (!match || match.index == null) {
+  if (match?.index == null) {
     return { section: null, start: null, end: null };
   }
 
@@ -124,8 +124,8 @@ function normalizeMetaKey(rawKey: string): string {
   return rawKey
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
+    .replaceAll(/[^a-z0-9]+/g, "_")
+    .replaceAll(/(?:^_+|_+$)/g, "");
 }
 
 function parseListValue(value: string | undefined): string[] | null {
@@ -148,7 +148,7 @@ function isBulletHeavyParagraph(paragraph: string): boolean {
 }
 
 function normalizeSummaryText(text: string): string {
-  const singleLine = text.replace(/\s+/g, " ").trim();
+  const singleLine = text.replaceAll(/\s+/g, " ").trim();
   if (singleLine.length <= 280) return singleLine;
   const truncated = singleLine.slice(0, 280);
   const lastSpace = truncated.lastIndexOf(" ");
@@ -162,7 +162,7 @@ function buildSummaryFallback(
   title: string | undefined,
 ): string {
   let content =
-    metaRange.end != null ? rawText.slice(metaRange.end) : rawText;
+    metaRange.end == null ? rawText : rawText.slice(metaRange.end);
   content = content.replace(/^#\s+.*\n+/, "");
   const paragraphs = content
     .split(/\n{2,}/)
@@ -268,10 +268,10 @@ export function parseDocumentMetadata(
     }
   }
 
-  if (!meta.summary) {
-    meta.summary = buildSummaryFallback(rawText, metaRange, meta.title);
-  } else {
+  if (meta.summary) {
     meta.summary = normalizeSummaryText(meta.summary);
+  } else {
+    meta.summary = buildSummaryFallback(rawText, metaRange, meta.title);
   }
 
   applyDocTypeDefaults(meta, docType, seenKeys);

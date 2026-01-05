@@ -2,16 +2,37 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState, useRef, useEffect, type Dispatch, type RefObject, type SetStateAction } from "react";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { useMemo, useState, useEffect, useRef, type Dispatch, type SetStateAction } from "react";
 
 import type { GradeSeries, ShotgunsLandingData } from "@/types/catalog";
 import { getGradeAnchorId } from "@/lib/grade-anchors";
-import { homeMotion } from "@/lib/motionConfig";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { Container, Heading, Text } from "@/components/ui";
+import {
+  buildChoreoPresenceVars,
+  choreoDistance,
+  choreoDurations,
+  choreoStagger,
+  dreamyPace,
+  prefersReducedMotion,
+  type ChoreoPresenceState,
+} from "@/lib/choreo";
+import {
+  ChoreoGroup,
+  ChoreoPresence,
+  Container,
+  Heading,
+  RevealAnimatedBody,
+  RevealCollapsedHeader,
+  RevealExpandedHeader,
+  RevealGroup,
+  RevealItem,
+  SectionBackdrop,
+  SectionShell,
+  Text,
+  useRevealHeight,
+} from "@/components/ui";
 
 type EngravingGradesCarouselProps = Readonly<{
   grades: readonly GradeSeries[];
@@ -40,9 +61,18 @@ type EngravingRevealSectionProps = {
   readonly activeGradeId: string | null;
   readonly setActiveGradeId: Dispatch<SetStateAction<string | null>>;
   readonly enableTitleReveal: boolean;
-  readonly motionEnabled: boolean;
-  readonly sectionRef: RefObject<HTMLElement | null>;
+  readonly onCollapsedChange?: (collapsed: boolean) => void;
 };
+
+type EngravingGradesBodyProps = Readonly<{
+  categories: EngravingCategory[];
+  resolvedOpenCategory: string | null;
+  activeGradeId: string | null;
+  setOpenCategory: Dispatch<SetStateAction<string | null>>;
+  setActiveGradeId: Dispatch<SetStateAction<string | null>>;
+  selectedGrade: GradeSeries | null;
+  ctaLabel: string;
+}>;
 
 const GRADE_TABS = [
   {
@@ -71,10 +101,9 @@ const normalize = (value?: string | null) =>
     .replaceAll(/(^-)|(-$)/g, "") ?? "";
 
 export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselProps) {
-  const prefersReducedMotion = useReducedMotion();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const motionEnabled = !prefersReducedMotion;
-  const enableTitleReveal = isDesktop && !prefersReducedMotion;
+  const enableTitleReveal = isDesktop;
+  const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const carouselKey = enableTitleReveal ? "title-reveal" : "always-reveal";
 
   const resolvedTabLabels =
@@ -100,6 +129,10 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
     alt: "Perazzi engraving workshop background",
   };
   const ctaLabel = ui?.ctaLabel ?? "View engraving";
+
+  useEffect(() => {
+    setIsCollapsed(enableTitleReveal);
+  }, [enableTitleReveal]);
 
   const gradeLookup = useMemo(() => {
     const map = new Map<string, GradeSeries>();
@@ -154,7 +187,11 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
     <section
       ref={analyticsRef}
       data-analytics-id="EngravingGradesCarouselSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
+      className={cn(
+        "relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed",
+        "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:z-20 before:h-16 before:bg-linear-to-b before:from-black/55 before:to-transparent before:transition-opacity before:duration-500 before:ease-out before:content-[''] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-20 after:h-16 after:bg-linear-to-t after:from-black/55 after:to-transparent after:transition-opacity after:duration-500 after:ease-out after:content-['']",
+        isCollapsed ? "before:opacity-100 after:opacity-100" : "before:opacity-0 after:opacity-0",
+      )}
       aria-labelledby="engraving-grades-heading"
     >
       <EngravingGradesRevealSection
@@ -171,8 +208,7 @@ export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselP
         activeGradeId={resolvedActiveGradeId}
         setActiveGradeId={setActiveGradeId}
         enableTitleReveal={enableTitleReveal}
-        motionEnabled={motionEnabled}
-        sectionRef={analyticsRef}
+        onCollapsedChange={setIsCollapsed}
       />
     </section>
   );
@@ -191,446 +227,349 @@ const EngravingGradesRevealSection = ({
   activeGradeId,
   setActiveGradeId,
   enableTitleReveal,
-  motionEnabled,
-  sectionRef,
+  onCollapsedChange,
 }: EngravingRevealSectionProps) => {
   const [carouselExpanded, setCarouselExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
-  const carouselShellRef = useRef<HTMLDivElement | null>(null);
-  const headerThemeFrame = useRef<number | null>(null);
 
   const revealCarousel = !enableTitleReveal || carouselExpanded;
   const revealPhotoFocus = revealCarousel;
-  const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealCarousel;
-  const focusSurfaceTransition = "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const focusFadeTransition = "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const titleColorTransition = "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const carouselReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const carouselRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const carouselCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const carouselBodyReveal = carouselReveal;
-  const readMoreReveal = motionEnabled
-    ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: carouselReveal.duration }
-    : undefined;
-  const carouselLayoutTransition = motionEnabled ? { layout: carouselReveal } : undefined;
-  const carouselMinHeight = enableTitleReveal ? "min-h-[calc(720px+18rem)]" : null;
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"],
+  const carouselMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
+  const {
+    ref: carouselShellRef,
+    measureRef,
+    minHeightStyle,
+    beginExpand,
+    clearPremeasure,
+    isPreparing,
+  } = useRevealHeight({
+    enableObserver: enableTitleReveal && revealCarousel,
+    deps: [openCategory, activeGradeId],
   });
-  const parallaxY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
-  );
-  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
-  const backgroundScale = parallaxEnabled ? 1.32 : 1;
-  const backgroundScaleTransition = revealCarousel ? carouselReveal : carouselCollapse;
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
-    setCarouselExpanded(true);
-    headerThemeFrame.current = requestAnimationFrame(() => {
+    onCollapsedChange?.(false);
+    beginExpand(() => {
+      setCarouselExpanded(true);
       setHeaderThemeReady(true);
-      headerThemeFrame.current = null;
     });
   };
 
   const handleCollapse = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-      headerThemeFrame.current = null;
-    }
+    clearPremeasure();
     setHeaderThemeReady(false);
     setCarouselExpanded(false);
+    onCollapsedChange?.(true);
   };
 
-  const headingContainer = {
-    hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
-  } as const;
-
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: carouselReveal },
-  } as const;
-
-  useEffect(() => {
-    if (!enableTitleReveal || !revealCarousel) return;
-    const node = carouselShellRef.current;
-    if (!node) return;
-
-    let frame = 0;
-    const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
-    }
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealCarousel, openCategory, activeGradeId]);
-
-  useEffect(() => () => {
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
-  }, []);
+  const expandedContent = (
+    <RevealAnimatedBody sequence>
+      <RevealItem index={0}>
+        <RevealExpandedHeader
+          headingId="engraving-grades-heading"
+          heading={heading}
+          headerThemeReady={headerThemeReady}
+          enableTitleReveal={enableTitleReveal}
+          onCollapse={handleCollapse}
+        >
+          <div className="relative">
+            <Text
+              className={cn(
+                "max-w-4xl type-section-subtitle",
+                headerThemeReady ? "text-ink-muted" : "text-white",
+              )}
+              leading="normal"
+            >
+              {subheading}
+            </Text>
+          </div>
+        </RevealExpandedHeader>
+      </RevealItem>
+      <RevealGroup delayMs={140}>
+        <EngravingGradesBody
+          categories={categories}
+          resolvedOpenCategory={resolvedOpenCategory}
+          activeGradeId={activeGradeId}
+          setOpenCategory={setOpenCategory}
+          setActiveGradeId={setActiveGradeId}
+          selectedGrade={selectedGrade}
+          ctaLabel={ctaLabel}
+        />
+      </RevealGroup>
+    </RevealAnimatedBody>
+  );
 
   return (
     <>
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <motion.div
-          className="absolute inset-0 will-change-transform"
-          style={parallaxStyle}
-          initial={false}
-          animate={motionEnabled ? { scale: backgroundScale } : undefined}
-          transition={motionEnabled ? backgroundScaleTransition : undefined}
-        >
-          <Image
-            src={background.url}
-            alt={background.alt}
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority={false}
-          />
-        </motion.div>
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealCarousel ? "opacity-0" : "opacity-100",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 film-grain",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-20" : "opacity-0",
-          )}
-          aria-hidden="true"
-        />
-        <div
-          className={cn(
-            "absolute inset-0 overlay-gradient-canvas-80",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-      </div>
+      <SectionBackdrop
+        image={{ url: background.url, alt: background.alt }}
+        reveal={revealCarousel}
+        revealOverlay={revealPhotoFocus}
+        preparing={isPreparing}
+        enableParallax={enableTitleReveal && !revealCarousel}
+        overlay="canvas-80"
+      />
 
       <Container size="xl" className="relative z-10">
-        <motion.div
+        <SectionShell
           ref={carouselShellRef}
-          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
-          className={cn(
-            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            focusSurfaceTransition,
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            carouselMinHeight,
-          )}
+          style={minHeightStyle}
+          reveal={revealPhotoFocus}
+          minHeightClass={carouselMinHeight ?? undefined}
         >
-          <LayoutGroup id="shotguns-engraving-title">
-            <AnimatePresence initial={false}>
-              {revealCarousel ? (
-                <motion.div
-                  key="engraving-grades-header"
-                  className="relative z-10 space-y-4 md:flex md:items-start md:justify-between md:gap-8"
-                  initial={motionEnabled ? { opacity: 0 } : false}
-                  animate={motionEnabled ? { opacity: 1, transition: carouselReveal } : undefined}
-                  exit={motionEnabled ? { opacity: 0, transition: carouselRevealFast } : undefined}
-                >
-                  <motion.div
-                    className="space-y-3"
-                    variants={headingContainer}
-                    initial={motionEnabled ? "hidden" : false}
-                    animate={motionEnabled ? "show" : undefined}
-                  >
-                    <motion.div
-                      layoutId="engraving-grades-title"
-                      layoutCrossfade={false}
-                      transition={carouselLayoutTransition}
-                      className="relative"
-                    >
-                      <Heading
-                        id="engraving-grades-heading"
-                        level={2}
-                        size="xl"
-                        className={cn(
-                          titleColorTransition,
-                          headerThemeReady ? "text-ink" : "text-white",
-                        )}
-                      >
-                        {heading}
-                      </Heading>
-                    </motion.div>
-                    <motion.div
-                      layoutId="engraving-grades-subtitle"
-                      layoutCrossfade={false}
-                      transition={carouselLayoutTransition}
-                      className="relative"
-                    >
-                      <motion.div variants={headingItem}>
-                        <Text
-                          className={cn(
-                            "max-w-4xl type-section-subtitle",
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink-muted" : "text-white",
-                          )}
-                          leading="normal"
-                        >
-                          {subheading}
-                        </Text>
-                      </motion.div>
-                    </motion.div>
-                  </motion.div>
-                  {enableTitleReveal ? (
-                    <button
-                      type="button"
-                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                      onClick={handleCollapse}
-                    >
-                      Collapse
-                    </button>
-                  ) : null}
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="engraving-grades-collapsed"
-                  className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
-                  animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
-                  exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
-                  transition={motionEnabled ? carouselRevealFast : undefined}
-                >
-                  <motion.div
-                    layoutId="engraving-grades-title"
-                    layoutCrossfade={false}
-                    transition={carouselLayoutTransition}
-                    className="relative inline-flex text-white"
-                  >
-                    <Heading
-                      id="engraving-grades-heading"
-                      level={2}
-                      size="xl"
-                      className="type-section-collapsed"
-                    >
-                      {heading}
-                    </Heading>
-                    <button
-                      type="button"
-                      className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                      onPointerEnter={handleExpand}
-                      onFocus={handleExpand}
-                      onClick={handleExpand}
-                      aria-expanded={revealCarousel}
-                      aria-controls="engraving-grades-body"
-                      aria-labelledby="engraving-grades-heading"
-                    >
-                      <span className="sr-only">Expand {heading}</span>
-                    </button>
-                  </motion.div>
-                  <motion.div
-                    layoutId="engraving-grades-subtitle"
-                    layoutCrossfade={false}
-                    transition={carouselLayoutTransition}
-                    className="relative text-white"
-                  >
-                    <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                      {subheading}
-                    </Text>
-                  </motion.div>
-                  <motion.div
-                    initial={motionEnabled ? { opacity: 0, y: 6 } : false}
-                    animate={motionEnabled ? { opacity: 1, y: 0, transition: readMoreReveal } : undefined}
-                    exit={motionEnabled ? { opacity: 0, y: 6, transition: carouselRevealFast } : undefined}
-                    className="mt-3"
-                  >
-                    <Text
-                      size="button"
-                      className="text-white/80 cursor-pointer focus-ring"
-                      asChild
-                    >
-                      <button type="button" onClick={handleExpand}>
-                        Read more
-                      </button>
-                    </Text>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </LayoutGroup>
-
-          <AnimatePresence initial={false}>
-            {revealCarousel ? (
-              <motion.div
-                key="engraving-grades-body"
-                id="engraving-grades-body"
-                className="space-y-6"
-                initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
-                animate={
-                  motionEnabled
-                    ? { opacity: 1, y: 0, filter: "blur(0px)", transition: carouselBodyReveal }
-                    : undefined
-                }
-                exit={
-                  motionEnabled
-                    ? { opacity: 0, y: -16, filter: "blur(10px)", transition: carouselCollapse }
-                    : undefined
-                }
+          {revealCarousel ? (
+            expandedContent
+          ) : (
+            <>
+              <ChoreoGroup
+                effect="fade-lift"
+                distance={choreoDistance.base}
+                durationMs={dreamyPace.textMs}
+                easing={dreamyPace.easing}
+                staggerMs={dreamyPace.staggerMs}
+                itemClassName="absolute inset-0"
               >
-                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
-                  <div className="space-y-3 rounded-2xl bg-transparent p-4 sm:rounded-3xl sm:p-5">
-                    <Text size="label-tight" className="type-label-tight text-ink-muted" leading="normal">
-                      Grade categories
-                    </Text>
-                    <LayoutGroup id="shotguns-engraving-grade-tabs">
-                      <div className="space-y-3">
-                        {categories.map((category) => {
-                          const isOpen = resolvedOpenCategory === category.label;
-                          return (
-                            <div
-                              key={category.label}
-                              className="rounded-2xl border border-border/70 bg-card/60 backdrop-blur-sm sm:bg-card/75"
-                            >
-                              <button
-                                type="button"
-                                className="flex w-full items-center justify-between px-4 py-3 text-left type-label-tight text-ink focus-ring"
-                                aria-expanded={isOpen}
-                                onClick={() =>
-                                  setOpenCategory((prev) =>
-                                    prev === category.label ? null : category.label,
-                                  )
-                                }
-                              >
-                                {category.label}
-                                <span
-                                  className={cn(
-                                    "text-lg transition-transform",
-                                    isOpen ? "rotate-45" : "rotate-0",
-                                  )}
-                                  aria-hidden="true"
-                                >
-                                  +
-                                </span>
-                              </button>
-                              {isOpen ? (
-                                <div className="border-t border-border/70">
-                                  <ul className="space-y-1 p-3">
-                                    {category.grades.map((grade) => {
-                                      const isActive = grade.id === activeGradeId;
-                                      return (
-                                        <li key={grade.id}>
-                                          <motion.button
-                                            type="button"
-                                            onClick={() => { setActiveGradeId(grade.id); }}
-                                            className={cn(
-                                              "group relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left transition-colors focus-ring",
-                                              isActive
-                                                ? "text-white"
-                                                : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
-                                            )}
-                                            aria-pressed={isActive}
-                                            initial={false}
-                                            whileHover={motionEnabled ? { x: 2, transition: homeMotion.micro } : undefined}
-                                            whileTap={motionEnabled ? { x: 0, transition: homeMotion.micro } : undefined}
-                                          >
-                                            {isActive ? (
-                                              motionEnabled ? (
-                                                <motion.span
-                                                  layoutId="engraving-grade-active-highlight"
-                                                  className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
-                                                  transition={homeMotion.springHighlight}
-                                                  aria-hidden="true"
-                                                />
-                                              ) : (
-                                                <span
-                                                  className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
-                                                  aria-hidden="true"
-                                                />
-                                              )
-                                            ) : null}
-                                            <span
-                                              className={cn(
-                                                "relative z-10 block type-body-title text-base uppercase",
-                                                isActive ? "text-white" : "text-ink-muted",
-                                              )}
-                                            >
-                                              {grade.name}
-                                            </span>
-                                          </motion.button>
-                                        </li>
-                                      );
-                                    })}
-                                  </ul>
-                                </div>
-                              ) : null}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </LayoutGroup>
-                  </div>
-
-                  <div className="min-h-[26rem]">
-                    <AnimatePresence initial={false} mode="popLayout">
-                      {selectedGrade ? (
-                        <motion.div
-                          key={selectedGrade.id}
-                          initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
-                          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                          exit={motionEnabled ? { opacity: 0, y: -14, filter: "blur(10px)" } : undefined}
-                          transition={motionEnabled ? homeMotion.revealFast : undefined}
-                        >
-                          <GradeCard grade={selectedGrade} ctaLabel={ctaLabel} />
-                        </motion.div>
-                      ) : (
-                        <Text className="text-ink-muted" leading="normal">
-                          Select a grade to view details.
-                        </Text>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                </div>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-        </motion.div>
+                <RevealCollapsedHeader
+                  headingId="engraving-grades-heading"
+                  heading={heading}
+                  subheading={subheading}
+                  controlsId="engraving-grades-body"
+                  expanded={revealCarousel}
+                  onExpand={handleExpand}
+                />
+              </ChoreoGroup>
+              <div ref={measureRef} className="section-reveal-measure" aria-hidden>
+                {expandedContent}
+              </div>
+            </>
+          )}
+        </SectionShell>
       </Container>
     </>
+  );
+};
+
+const EngravingGradesBody = ({
+  categories,
+  resolvedOpenCategory,
+  activeGradeId,
+  setOpenCategory,
+  setActiveGradeId,
+  selectedGrade,
+  ctaLabel,
+}: EngravingGradesBodyProps) => {
+  const reduceMotion = prefersReducedMotion();
+  const [displayGrade, setDisplayGrade] = useState<GradeSeries | null>(selectedGrade);
+  const [presenceState, setPresenceState] = useState<ChoreoPresenceState>("enter");
+  const presenceTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
+  const exitTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
+  const presenceVars = buildChoreoPresenceVars({
+    enterDurationMs: dreamyPace.textMs,
+    exitDurationMs: dreamyPace.textMs,
+    enterEase: dreamyPace.easing,
+    exitEase: dreamyPace.easing,
+    enterY: choreoDistance.tight,
+    exitY: choreoDistance.tight,
+    enterScale: 0.98,
+    exitScale: 0.98,
+    enterBlur: 2,
+    exitBlur: 2,
+  });
+  const underlayVars = buildChoreoPresenceVars({
+    enterDurationMs: dreamyPace.textMs,
+    exitDurationMs: dreamyPace.textMs,
+    enterEase: dreamyPace.easing,
+    exitEase: dreamyPace.easing,
+    enterScale: 0.96,
+    exitScale: 0.96,
+    enterY: 0,
+    exitY: 0,
+  });
+
+  useEffect(() => (
+    () => {
+      if (presenceTimeoutRef.current) {
+        globalThis.clearTimeout(presenceTimeoutRef.current);
+        presenceTimeoutRef.current = null;
+      }
+      if (exitTimeoutRef.current) {
+        globalThis.clearTimeout(exitTimeoutRef.current);
+        exitTimeoutRef.current = null;
+      }
+    }
+  ), []);
+
+  useEffect(() => {
+    if (!selectedGrade) return;
+    if (presenceTimeoutRef.current) {
+      globalThis.clearTimeout(presenceTimeoutRef.current);
+      presenceTimeoutRef.current = null;
+    }
+    if (exitTimeoutRef.current) {
+      globalThis.clearTimeout(exitTimeoutRef.current);
+      exitTimeoutRef.current = null;
+    }
+
+    if (reduceMotion || selectedGrade.id === displayGrade?.id) {
+      exitTimeoutRef.current = globalThis.setTimeout(() => {
+        setDisplayGrade(selectedGrade);
+        setPresenceState("enter");
+        exitTimeoutRef.current = null;
+      }, 0);
+      return;
+    }
+
+    exitTimeoutRef.current = globalThis.setTimeout(() => {
+      setPresenceState("exit");
+      exitTimeoutRef.current = null;
+    }, 0);
+    presenceTimeoutRef.current = globalThis.setTimeout(() => {
+      setDisplayGrade(selectedGrade);
+      setPresenceState("enter");
+      presenceTimeoutRef.current = null;
+    }, dreamyPace.staggerMs);
+  }, [displayGrade?.id, reduceMotion, selectedGrade]);
+
+  return (
+    <div id="engraving-grades-body" className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
+        <div className="space-y-3 rounded-2xl bg-transparent p-4 sm:rounded-3xl sm:p-5">
+          <ChoreoGroup
+            effect="fade-lift"
+            distance={choreoDistance.tight}
+            durationMs={choreoDurations.base}
+            staggerMs={choreoStagger.tight}
+            itemAsChild
+          >
+            <Text size="label-tight" className="type-label-tight text-ink-muted" leading="normal">
+              Grade categories
+            </Text>
+          </ChoreoGroup>
+          <ChoreoGroup
+            effect="slide"
+            axis="y"
+            direction="down"
+            distance={choreoDistance.base}
+            durationMs={choreoDurations.base}
+            staggerMs={choreoStagger.base}
+            className="space-y-3"
+            itemAsChild
+          >
+            {categories.map((category) => {
+              const isOpen = resolvedOpenCategory === category.label;
+              return (
+                <div
+                  key={category.label}
+                  className="rounded-2xl border border-border/70 bg-card/60 backdrop-blur-sm sm:bg-card/75"
+                >
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between px-4 py-3 text-left type-label-tight text-ink focus-ring"
+                    aria-expanded={isOpen}
+                    onClick={() =>
+                      setOpenCategory((prev) =>
+                        prev === category.label ? null : category.label,
+                      )
+                    }
+                  >
+                    {category.label}
+                    <span
+                      className={cn(
+                        "text-lg transition-transform duration-200",
+                        isOpen ? "rotate-45" : "rotate-0",
+                      )}
+                      aria-hidden="true"
+                    >
+                      +
+                    </span>
+                  </button>
+                  <div className="border-t border-border/70">
+                    <div
+                      className={cn(
+                        "overflow-hidden transition-[max-height] duration-300 ease-out",
+                        isOpen ? "max-h-80" : "max-h-0",
+                      )}
+                      aria-hidden={!isOpen}
+                    >
+                      <div className="p-3">
+                        {isOpen ? (
+                          <ChoreoGroup
+                            effect="fade-lift"
+                            distance={choreoDistance.tight}
+                            durationMs={choreoDurations.base}
+                            staggerMs={choreoStagger.tight}
+                            className="space-y-1"
+                            itemAsChild
+                          >
+                            {category.grades.map((grade) => {
+                              const isActive = grade.id === activeGradeId;
+                              return (
+                                <div key={grade.id}>
+                                  <button
+                                    type="button"
+                                    onClick={() => { setActiveGradeId(grade.id); }}
+                                    className={cn(
+                                      "group relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left focus-ring",
+                                      isActive
+                                        ? "text-white"
+                                        : "bg-transparent text-ink-muted hover:bg-card hover:text-ink",
+                                    )}
+                                    aria-pressed={isActive}
+                                  >
+                                    {isActive ? (
+                                      <ChoreoPresence
+                                        state="enter"
+                                        style={underlayVars}
+                                        asChild
+                                      >
+                                        <span
+                                          className="absolute inset-0 rounded-2xl bg-perazzi-red shadow-elevated ring-1 ring-white/10"
+                                          aria-hidden="true"
+                                        />
+                                      </ChoreoPresence>
+                                    ) : null}
+                                    <span
+                                      className={cn(
+                                        "relative z-10 block type-body-title text-base uppercase",
+                                        isActive ? "text-white" : "text-ink-muted",
+                                      )}
+                                    >
+                                      {grade.name}
+                                    </span>
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </ChoreoGroup>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </ChoreoGroup>
+        </div>
+
+        <div className="min-h-104">
+          {displayGrade ? (
+            <ChoreoPresence
+              state={presenceState}
+              style={presenceVars}
+              className="h-full"
+            >
+              <GradeCard grade={displayGrade} ctaLabel={ctaLabel} />
+            </ChoreoPresence>
+          ) : (
+            <Text className="text-ink-muted" leading="normal">
+              Select a grade to view details.
+            </Text>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -646,31 +585,47 @@ function GradeCard({ grade, ctaLabel }: GradeCardProps) {
 
   return (
     <article className="group flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-5 sm:shadow-elevated lg:p-6">
-      <div
-        className="relative overflow-hidden rounded-2xl bg-[color:var(--color-canvas)] aspect-dynamic"
-        style={{ "--aspect-ratio": ratio }}
+      <ChoreoGroup
+        effect="scale-parallax"
+        distance={choreoDistance.base}
+        durationMs={dreamyPace.textMs}
+        easing={dreamyPace.easing}
+        scaleFrom={1.02}
+        itemAsChild
       >
-        {heroAsset ? (
-          <Image
-            src={heroAsset.url}
-            alt={heroAsset.alt}
-            fill
-            sizes="(min-width: 1024px) 380px, 100vw"
-            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
-            loading="lazy"
-          />
-        ) : (
-          <Text
-            asChild
-            className="flex h-full items-center justify-center text-ink-muted"
-            leading="normal"
-          >
-            <div>Imagery coming soon</div>
-          </Text>
-        )}
-        <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
-      </div>
-      <div className="mt-4 flex flex-1 flex-col gap-3">
+        <div
+          className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-dynamic"
+          style={{ "--aspect-ratio": ratio }}
+        >
+          {heroAsset ? (
+            <Image
+              src={heroAsset.url}
+              alt={heroAsset.alt}
+              fill
+              sizes="(min-width: 1024px) 380px, 100vw"
+              className="object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <Text
+              asChild
+              className="flex h-full items-center justify-center text-ink-muted"
+              leading="normal"
+            >
+              <div>Imagery coming soon</div>
+            </Text>
+          )}
+        </div>
+      </ChoreoGroup>
+      <ChoreoGroup
+        effect="fade-lift"
+        distance={choreoDistance.tight}
+        durationMs={dreamyPace.textMs}
+        easing={dreamyPace.easing}
+        staggerMs={dreamyPace.staggerMs}
+        className="mt-4 flex flex-1 flex-col gap-3"
+        itemAsChild
+      >
         <Text size="label-tight" className="type-card-title text-perazzi-red" leading="normal">
           Engraving Grade
         </Text>
@@ -687,13 +642,16 @@ function GradeCard({ grade, ctaLabel }: GradeCardProps) {
         <div className="mt-auto pt-2">
           <Link
             href={`/engravings?grade=${gradeAnchor}`}
-            className="type-button inline-flex items-center justify-center gap-2 rounded-sm border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+            className="engraving-cta-link type-button inline-flex items-center justify-center gap-2 rounded-sm border border-perazzi-red/60 px-4 py-2 text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
           >
-            {ctaLabel}
+            <span className="relative">
+              {ctaLabel}
+              <span className="engraving-cta-underline" aria-hidden="true" />
+            </span>
             <span aria-hidden="true">→</span>
           </Link>
         </div>
-      </div>
+      </ChoreoGroup>
     </article>
   );
 }

@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
-import Image from "next/image";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type {
   AuthorizedDealerEntry,
@@ -13,8 +11,27 @@ import type {
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { Container, Heading, Text } from "@/components/ui";
-import { homeMotion } from "@/lib/motionConfig";
+import {
+  buildChoreoPresenceVars,
+  choreoDistance,
+  dreamyPace,
+  prefersReducedMotion,
+  type ChoreoPresenceState,
+} from "@/lib/choreo";
+import {
+  ChoreoGroup,
+  ChoreoPresence,
+  Container,
+  Heading,
+  RevealAnimatedBody,
+  RevealCollapsedHeader,
+  RevealGroup,
+  RevealItem,
+  SectionBackdrop,
+  SectionShell,
+  Text,
+  useRevealHeight,
+} from "@/components/ui";
 
 type TabKey = "schedule" | "dealers";
 
@@ -27,8 +44,12 @@ type TravelNetworkRevealSectionProps = Readonly<{
   data: ExperienceNetworkData;
   ui: TravelNetworkUi;
   enableTitleReveal: boolean;
-  motionEnabled: boolean;
-  sectionRef: RefObject<HTMLElement | null>;
+  onCollapsedChange?: (collapsed: boolean) => void;
+}>;
+
+type TravelNetworkBackground = Readonly<{
+  url: string;
+  alt: string;
 }>;
 
 type ScheduleListProps = Readonly<{
@@ -43,17 +64,24 @@ type DealerListProps = Readonly<{
 
 export function TravelNetwork({ data, ui }: TravelNetworkProps) {
   const analyticsRef = useAnalyticsObserver("TravelNetworkSeen");
-  const prefersReducedMotion = useReducedMotion();
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const enableTitleReveal = isDesktop && !prefersReducedMotion;
-  const motionEnabled = !prefersReducedMotion;
+  const enableTitleReveal = isDesktop;
+  const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const travelKey = enableTitleReveal ? "title-reveal" : "always-reveal";
+
+  useEffect(() => {
+    setIsCollapsed(enableTitleReveal);
+  }, [enableTitleReveal]);
 
   return (
     <section
       ref={analyticsRef}
       data-analytics-id="TravelNetworkSeen"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed"
+      className={cn(
+        "relative isolate w-screen max-w-[100vw] overflow-hidden py-10 sm:py-16 full-bleed",
+        "before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:z-20 before:h-16 before:bg-linear-to-b before:from-black/55 before:to-transparent before:transition-opacity before:duration-500 before:ease-out before:content-[''] after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:z-20 after:h-16 after:bg-linear-to-t after:from-black/55 after:to-transparent after:transition-opacity after:duration-500 after:ease-out after:content-['']",
+        isCollapsed ? "before:opacity-100 after:opacity-100" : "before:opacity-0 after:opacity-0",
+      )}
       aria-labelledby="travel-network-heading"
     >
       <TravelNetworkRevealSection
@@ -61,8 +89,7 @@ export function TravelNetwork({ data, ui }: TravelNetworkProps) {
         data={data}
         ui={ui}
         enableTitleReveal={enableTitleReveal}
-        motionEnabled={motionEnabled}
-        sectionRef={analyticsRef}
+        onCollapsedChange={setIsCollapsed}
       />
     </section>
   );
@@ -72,15 +99,16 @@ const TravelNetworkRevealSection = ({
   data,
   ui,
   enableTitleReveal,
-  motionEnabled,
-  sectionRef,
+  onCollapsedChange,
 }: TravelNetworkRevealSectionProps) => {
   const [networkExpanded, setNetworkExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>("schedule");
-  const networkShellRef = useRef<HTMLDivElement | null>(null);
-  const headerThemeFrame = useRef<number | null>(null);
+  const reduceMotion = prefersReducedMotion();
+  const [displayTab, setDisplayTab] = useState<TabKey>("schedule");
+  const [presenceState, setPresenceState] = useState<ChoreoPresenceState>("enter");
+  const presenceTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
+  const exitTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
 
   const tabs = useMemo(
     () => [
@@ -101,7 +129,7 @@ const TravelNetworkRevealSection = ({
   const lead = ui.lead ?? "Meet us on the road";
   const supporting =
     ui.supporting ?? "Track our travel schedule or connect with a trusted Perazzi dealer closest to you.";
-  const background = {
+  const background: TravelNetworkBackground = {
     url: ui.backgroundImage?.url
       ?? "/redesign-photos/experience/pweb-experience-travelnetwork-bg.jpg",
     alt: ui.backgroundImage?.alt ?? "Perazzi travel network background",
@@ -112,410 +140,243 @@ const TravelNetworkRevealSection = ({
 
   const revealNetwork = !enableTitleReveal || networkExpanded;
   const revealPhotoFocus = revealNetwork;
-  const parallaxStrength = "16%";
-  const parallaxEnabled = enableTitleReveal && !revealNetwork;
-  const focusSurfaceTransition =
-    "transition-[background-color,box-shadow,border-color,backdrop-filter] duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const focusFadeTransition =
-    "transition-opacity duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const titleColorTransition =
-    "transition-colors duration-2000 ease-[cubic-bezier(0.16,1,0.3,1)]";
-  const networkReveal = { duration: 2.0, ease: homeMotion.cinematicEase };
-  const networkRevealFast = { duration: 0.82, ease: homeMotion.cinematicEase };
-  const networkCollapse = { duration: 1.05, ease: homeMotion.cinematicEase };
-  const networkBodyReveal = networkReveal;
-  const readMoreReveal = motionEnabled
-    ? { duration: 0.5, ease: homeMotion.cinematicEase, delay: networkReveal.duration }
-    : undefined;
-  const networkLayoutTransition = motionEnabled ? { layout: networkReveal } : undefined;
-  const networkMinHeight = enableTitleReveal ? "min-h-[calc(720px+16rem)]" : null;
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"],
+  const networkMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
+  const {
+    ref: networkShellRef,
+    measureRef,
+    minHeightStyle,
+    beginExpand,
+    clearPremeasure,
+    isPreparing,
+  } = useRevealHeight({
+    enableObserver: enableTitleReveal && revealNetwork,
+    deps: [activeTab, data.dealers.length, data.scheduledEvents.length],
   });
-  const parallaxY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0%", parallaxEnabled ? parallaxStrength : "0%"],
-  );
-  const parallaxStyle = parallaxEnabled ? { y: parallaxY } : undefined;
-  const backgroundScale = parallaxEnabled ? 1.32 : 1;
-  const backgroundScaleTransition = revealNetwork ? networkReveal : networkCollapse;
-
-  const headingContainer = {
-    hidden: {},
-    show: { transition: { staggerChildren: motionEnabled ? 0.16 : 0 } },
-  } as const;
-
-  const headingItem = {
-    hidden: { y: 14, filter: "blur(10px)" },
-    show: { y: 0, filter: "blur(0px)", transition: networkReveal },
-  } as const;
+  const listPresenceVars = buildChoreoPresenceVars({
+    enterDurationMs: dreamyPace.textMs,
+    exitDurationMs: dreamyPace.textMs,
+    enterEase: dreamyPace.easing,
+    exitEase: dreamyPace.easing,
+    enterY: 24,
+    exitY: -80,
+    enterScale: 0.98,
+    exitScale: 0.98,
+  });
+  const tabUnderlayVars = buildChoreoPresenceVars({
+    enterDurationMs: dreamyPace.textMs,
+    exitDurationMs: dreamyPace.textMs,
+    enterEase: dreamyPace.easing,
+    exitEase: dreamyPace.easing,
+    enterScale: 0.98,
+    exitScale: 0.98,
+    enterY: 0,
+    exitY: 0,
+  });
 
   const handleNetworkExpand = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-    }
-    setNetworkExpanded(true);
-    headerThemeFrame.current = requestAnimationFrame(() => {
+    onCollapsedChange?.(false);
+    beginExpand(() => {
+      setNetworkExpanded(true);
       setHeaderThemeReady(true);
-      headerThemeFrame.current = null;
     });
   };
 
   const handleNetworkCollapse = () => {
     if (!enableTitleReveal) return;
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
-      headerThemeFrame.current = null;
-    }
+    clearPremeasure();
     setHeaderThemeReady(false);
     setNetworkExpanded(false);
+    onCollapsedChange?.(true);
   };
 
+  useEffect(() => (
+    () => {
+      if (presenceTimeoutRef.current) {
+        globalThis.clearTimeout(presenceTimeoutRef.current);
+        presenceTimeoutRef.current = null;
+      }
+      if (exitTimeoutRef.current) {
+        globalThis.clearTimeout(exitTimeoutRef.current);
+        exitTimeoutRef.current = null;
+      }
+    }
+  ), []);
+
   useEffect(() => {
-    if (!enableTitleReveal || !revealNetwork) return;
-    const node = networkShellRef.current;
-    if (!node) return;
-
-    let frame = 0;
-    const updateHeight = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (!node) return;
-        const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-        setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-      });
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") {
-      return () => { cancelAnimationFrame(frame); };
+    if (activeTab === displayTab) return;
+    if (presenceTimeoutRef.current) {
+      globalThis.clearTimeout(presenceTimeoutRef.current);
+      presenceTimeoutRef.current = null;
+    }
+    if (exitTimeoutRef.current) {
+      globalThis.clearTimeout(exitTimeoutRef.current);
+      exitTimeoutRef.current = null;
     }
 
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealNetwork, activeTab, data.dealers.length, data.scheduledEvents.length]);
-
-  useEffect(() => () => {
-    if (headerThemeFrame.current !== null) {
-      cancelAnimationFrame(headerThemeFrame.current);
+    if (reduceMotion) {
+      presenceTimeoutRef.current = globalThis.setTimeout(() => {
+        setDisplayTab(activeTab);
+        setPresenceState("enter");
+        presenceTimeoutRef.current = null;
+      }, 0);
+      return;
     }
-  }, []);
+
+    exitTimeoutRef.current = globalThis.setTimeout(() => {
+      setPresenceState("exit");
+      exitTimeoutRef.current = null;
+    }, 0);
+    presenceTimeoutRef.current = globalThis.setTimeout(() => {
+      setDisplayTab(activeTab);
+      setPresenceState("enter");
+      presenceTimeoutRef.current = null;
+    }, dreamyPace.staggerMs);
+  }, [activeTab, displayTab, reduceMotion]);
+
+  const expandedContent = (
+    <RevealAnimatedBody sequence>
+      <RevealItem index={0}>
+        <TravelNetworkExpandedHeader
+          headingId="travel-network-heading"
+          heading={heading}
+          lead={lead}
+          supporting={supporting}
+          headerThemeReady={headerThemeReady}
+          enableTitleReveal={enableTitleReveal}
+          onCollapse={handleNetworkCollapse}
+        />
+      </RevealItem>
+
+      <RevealGroup delayMs={140}>
+        <div id="travel-network-body" className="space-y-6">
+          <RevealItem index={0}>
+            <ChoreoGroup
+              effect="slide"
+              axis="x"
+              direction="right"
+              distance={choreoDistance.base}
+              durationMs={dreamyPace.textMs}
+              easing={dreamyPace.easing}
+              staggerMs={dreamyPace.staggerMs}
+              className="flex flex-wrap gap-2 md:gap-3"
+              itemAsChild
+            >
+              {tabs.map((tab) => {
+                const isActive = activeTab === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    className={cn(
+                      "group relative overflow-hidden type-label-tight pill border border-border/70 bg-card/60 shadow-soft backdrop-blur-sm hover:border-ink/20 hover:bg-card/85 focus-ring",
+                      isActive ? "text-perazzi-white" : "text-ink",
+                    )}
+                    onClick={() => { setActiveTab(tab.key); }}
+                  >
+                    {isActive ? (
+                      <ChoreoPresence
+                        state="enter"
+                        style={tabUnderlayVars}
+                        asChild
+                      >
+                        <span
+                          className="absolute inset-0 rounded-sm bg-perazzi-red shadow-elevated ring-1 ring-white/10"
+                          aria-hidden="true"
+                        />
+                      </ChoreoPresence>
+                    ) : null}
+                    <span className="relative z-10">
+                      {tab.label}
+                      <span className={cn("ml-2 type-caption", isActive ? "text-white/75" : "text-ink-muted")}>
+                        ({tab.count})
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </ChoreoGroup>
+          </RevealItem>
+
+          <RevealItem index={1}>
+            <div>
+              <ChoreoPresence
+                state={presenceState}
+                style={listPresenceVars}
+              >
+                {displayTab === "schedule" ? (
+                  <ScheduleList
+                    events={data.scheduledEvents}
+                    emptyText={emptyScheduleText}
+                  />
+                ) : (
+                  <DealerList
+                    dealers={data.dealers}
+                    emptyText={emptyDealersText}
+                  />
+                )}
+              </ChoreoPresence>
+            </div>
+          </RevealItem>
+        </div>
+      </RevealGroup>
+    </RevealAnimatedBody>
+  );
 
   return (
     <>
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <motion.div
-          className="absolute inset-0 will-change-transform"
-          style={parallaxStyle}
-          initial={false}
-          animate={motionEnabled ? { scale: backgroundScale } : undefined}
-          transition={motionEnabled ? backgroundScaleTransition : undefined}
-        >
-          <Image
-            src={background.url}
-            alt={background.alt ?? "Perazzi travel network background"}
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority={false}
-            loading="lazy"
-          />
-        </motion.div>
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealNetwork ? "opacity-0" : "opacity-100",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 film-grain",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-20" : "opacity-0",
-          )}
-          aria-hidden="true"
-        />
-        <div
-          className={cn(
-            "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-            focusFadeTransition,
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-      </div>
+      <SectionBackdrop
+        image={{ url: background.url, alt: background.alt }}
+        reveal={revealNetwork}
+        revealOverlay={revealPhotoFocus}
+        preparing={isPreparing}
+        enableParallax={enableTitleReveal && !revealNetwork}
+        overlay="canvas"
+        loading="lazy"
+      />
 
       <Container size="xl" className="relative z-10">
-        <motion.div
+        <SectionShell
           ref={networkShellRef}
-          style={enableTitleReveal && expandedHeight ? { minHeight: expandedHeight } : undefined}
-          className={cn(
-            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            focusSurfaceTransition,
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            networkMinHeight,
-          )}
+          style={minHeightStyle}
+          reveal={revealPhotoFocus}
+          minHeightClass={networkMinHeight ?? undefined}
         >
-          <LayoutGroup id="experience-travel-network-title">
-            <AnimatePresence initial={false}>
-              {revealNetwork ? (
-                <motion.div
-                  key="travel-network-header"
-                  className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8"
-                  initial={motionEnabled ? { opacity: 0 } : false}
-                  animate={motionEnabled ? { opacity: 1, transition: networkReveal } : undefined}
-                  exit={motionEnabled ? { opacity: 0, transition: networkRevealFast } : undefined}
-                >
-                  <motion.div
-                    className="space-y-3"
-                    variants={headingContainer}
-                    initial={motionEnabled ? "hidden" : false}
-                    animate={motionEnabled ? "show" : undefined}
-                  >
-                    <motion.div
-                      layoutId="travel-network-title"
-                      layoutCrossfade={false}
-                      transition={networkLayoutTransition}
-                      className="relative"
-                    >
-                      <Heading
-                        id="travel-network-heading"
-                        level={2}
-                        size="xl"
-                        className={cn(
-                          titleColorTransition,
-                          headerThemeReady ? "text-ink" : "text-white",
-                        )}
-                      >
-                        {heading}
-                      </Heading>
-                    </motion.div>
-                    <motion.div
-                      layoutId="travel-network-subtitle"
-                      layoutCrossfade={false}
-                      transition={networkLayoutTransition}
-                      className="relative"
-                    >
-                      <motion.div variants={headingItem}>
-                        <Text
-                          className={cn(
-                            "type-section-subtitle",
-                            titleColorTransition,
-                            headerThemeReady ? "text-ink-muted" : "text-white",
-                          )}
-                          leading="relaxed"
-                        >
-                          {lead}
-                        </Text>
-                      </motion.div>
-                    </motion.div>
-                    <motion.div variants={headingItem}>
-                      <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
-                        {supporting}
-                      </Text>
-                    </motion.div>
-                  </motion.div>
-                  {enableTitleReveal ? (
-                    <button
-                      type="button"
-                      className="mt-4 inline-flex items-center justify-center type-button text-ink-muted transition-colors hover:text-ink focus-ring md:mt-0"
-                      onClick={handleNetworkCollapse}
-                    >
-                      Collapse
-                    </button>
-                  ) : null}
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="travel-network-collapsed"
-                  className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center"
-                  initial={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : false}
-                  animate={motionEnabled ? { opacity: 1, filter: "blur(0px)" } : undefined}
-                  exit={motionEnabled ? { opacity: 0, filter: "blur(10px)" } : undefined}
-                  transition={motionEnabled ? networkRevealFast : undefined}
-                >
-                  <motion.div
-                    layoutId="travel-network-title"
-                    layoutCrossfade={false}
-                    transition={networkLayoutTransition}
-                    className="relative inline-flex text-white"
-                  >
-                    <Heading
-                      id="travel-network-heading"
-                      level={2}
-                      size="xl"
-                      className="type-section-collapsed"
-                    >
-                      {heading}
-                    </Heading>
-                    <button
-                      type="button"
-                      className="absolute inset-0 z-10 cursor-pointer focus-ring"
-                      onPointerEnter={handleNetworkExpand}
-                      onFocus={handleNetworkExpand}
-                      onClick={handleNetworkExpand}
-                      aria-expanded={revealNetwork}
-                      aria-controls="travel-network-body"
-                      aria-labelledby="travel-network-heading"
-                    >
-                      <span className="sr-only">Expand {heading}</span>
-                    </button>
-                  </motion.div>
-                  <motion.div
-                    layoutId="travel-network-subtitle"
-                    layoutCrossfade={false}
-                    transition={networkLayoutTransition}
-                    className="relative text-white"
-                  >
-                    <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                      {lead}
-                    </Text>
-                  </motion.div>
-                  <motion.div
-                    initial={motionEnabled ? { opacity: 0, y: 6 } : false}
-                    animate={motionEnabled ? { opacity: 1, y: 0, transition: readMoreReveal } : undefined}
-                    exit={motionEnabled ? { opacity: 0, y: 6, transition: networkRevealFast } : undefined}
-                    className="mt-3"
-                  >
-                    <Text
-                      size="button"
-                      className="text-white/80 cursor-pointer focus-ring"
-                      asChild
-                    >
-                      <button type="button" onClick={handleNetworkExpand}>
-                        Read more
-                      </button>
-                    </Text>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </LayoutGroup>
-
-          <AnimatePresence initial={false}>
-            {revealNetwork ? (
-              <motion.div
-                key="travel-network-body"
-                id="travel-network-body"
-                className="space-y-6"
-                initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(12px)" } : false}
-                animate={
-                  motionEnabled
-                    ? { opacity: 1, y: 0, filter: "blur(0px)", transition: networkBodyReveal }
-                    : undefined
-                }
-                exit={
-                  motionEnabled
-                    ? { opacity: 0, y: -16, filter: "blur(10px)", transition: networkCollapse }
-                    : undefined
-                }
+          {revealNetwork ? (
+            expandedContent
+          ) : (
+            <>
+              <ChoreoGroup
+                effect="fade-lift"
+                distance={choreoDistance.base}
+                durationMs={dreamyPace.textMs}
+                easing={dreamyPace.easing}
+                staggerMs={dreamyPace.staggerMs}
+                itemClassName="absolute inset-0"
               >
-                <LayoutGroup id="experience-travel-network-tabs">
-                  <div
-                    role="tablist"
-                    aria-label="Experience travel and support tabs"
-                    className="flex flex-wrap gap-2 md:gap-3"
-                  >
-                    {tabs.map((tab) => {
-                      const isActive = activeTab === tab.key;
-                      return (
-                        <motion.button
-                          key={tab.key}
-                          type="button"
-                          role="tab"
-                          aria-selected={isActive}
-                          className={cn(
-                            "group relative overflow-hidden type-label-tight pill border border-border/70 bg-card/60 shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring",
-                            isActive ? "text-perazzi-white" : "text-ink",
-                          )}
-                          onClick={() => { setActiveTab(tab.key); }}
-                          initial={false}
-                          whileHover={motionEnabled ? { x: 2, transition: homeMotion.micro } : undefined}
-                          whileTap={motionEnabled ? { x: 0, transition: homeMotion.micro } : undefined}
-                        >
-                          {isActive ? (
-                            motionEnabled ? (
-                              <motion.span
-                                layoutId="experience-travel-network-tab-highlight"
-                                className="absolute inset-0 rounded-sm bg-perazzi-red shadow-elevated ring-1 ring-white/10"
-                                transition={homeMotion.springHighlight}
-                                aria-hidden="true"
-                              />
-                            ) : (
-                              <span
-                                className="absolute inset-0 rounded-sm bg-perazzi-red shadow-elevated ring-1 ring-white/10"
-                                aria-hidden="true"
-                              />
-                            )
-                          ) : null}
-                          <span className="relative z-10">
-                            {tab.label}
-                            <span className={cn("ml-2 type-caption", isActive ? "text-white/75" : "text-ink-muted")}>
-                              ({tab.count})
-                            </span>
-                          </span>
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-                </LayoutGroup>
-
-                <div>
-                  <AnimatePresence initial={false} mode="popLayout">
-                    <motion.div
-                      key={activeTab}
-                      initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
-                      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                      exit={motionEnabled ? { opacity: 0, y: -14, filter: "blur(10px)" } : undefined}
-                      transition={motionEnabled ? homeMotion.revealFast : undefined}
-                    >
-                      {activeTab === "schedule" ? (
-                        <ScheduleList
-                          events={data.scheduledEvents}
-                          emptyText={emptyScheduleText}
-                          motionEnabled={motionEnabled}
-                        />
-                      ) : (
-                        <DealerList
-                          dealers={data.dealers}
-                          emptyText={emptyDealersText}
-                          motionEnabled={motionEnabled}
-                        />
-                      )}
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-        </motion.div>
+                <RevealCollapsedHeader
+                  headingId="travel-network-heading"
+                  heading={heading}
+                  subheading={lead}
+                  controlsId="travel-network-body"
+                  expanded={revealNetwork}
+                  onExpand={handleNetworkExpand}
+                />
+              </ChoreoGroup>
+              <div ref={measureRef} className="section-reveal-measure" aria-hidden>
+                {expandedContent}
+              </div>
+            </>
+          )}
+        </SectionShell>
       </Container>
     </>
   );
 };
 
-function ScheduleList({ events, emptyText, motionEnabled }: ScheduleListProps & { motionEnabled: boolean }) {
+function ScheduleList({ events, emptyText }: ScheduleListProps) {
   if (!events.length) {
     return (
       <Text size="md" muted>
@@ -525,46 +386,50 @@ function ScheduleList({ events, emptyText, motionEnabled }: ScheduleListProps & 
   }
 
   return (
-    <motion.div
+    <ChoreoGroup
+      effect="fade-lift"
+      distance={choreoDistance.base}
+      durationMs={dreamyPace.textMs}
+      easing={dreamyPace.easing}
+      staggerMs={dreamyPace.staggerMs}
       className="space-y-4"
-      initial={motionEnabled ? "hidden" : false}
-      animate={motionEnabled ? "show" : undefined}
-      variants={{
-        hidden: {},
-        show: { transition: { staggerChildren: motionEnabled ? 0.06 : 0 } },
-      }}
+      itemAsChild
     >
       {events.map((event) => (
-        <motion.article
+        <article
           key={event._id}
-          className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 transition hover:-translate-y-0.5 hover:border-ink/20 hover:bg-card/80 hover:shadow-elevated sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated md:p-6 lg:p-7"
-          variants={{
-            hidden: { opacity: 0, y: 12, filter: "blur(10px)" },
-            show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
-          }}
+          className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-5 shadow-soft backdrop-blur-sm ring-1 ring-border/70 hover:border-ink/20 hover:bg-card/80 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated md:p-6 lg:p-7"
         >
-          <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
-          <Text className="type-button text-ink-muted">
-            {formatDateRange(event.startDate, event.endDate)}
-          </Text>
-          <Heading level={3} className="mt-2 mb-7 type-card-title text-ink text-3xl">
-            {event.eventName}
-          </Heading>
-          <Text className="type-card-title text-ink-muted">
-            {event.eventLocation}
-          </Text>
-          {event.location ? (
-            <Text size="md" muted className="mt-2">
-              {event.location}
+          <ChoreoGroup
+            effect="fade-lift"
+            distance={choreoDistance.tight}
+            durationMs={dreamyPace.textMs}
+            easing={dreamyPace.easing}
+            staggerMs={dreamyPace.staggerMs}
+            itemAsChild
+          >
+            <Text className="type-button text-ink-muted">
+              {formatDateRange(event.startDate, event.endDate)}
             </Text>
-          ) : null}
-        </motion.article>
+            <Heading level={3} className="mt-2 mb-7 type-card-title text-ink text-3xl">
+              {event.eventName}
+            </Heading>
+            <Text className="type-card-title text-ink-muted">
+              {event.eventLocation}
+            </Text>
+            {event.location ? (
+              <Text size="md" muted className="mt-2">
+                {event.location}
+              </Text>
+            ) : null}
+          </ChoreoGroup>
+        </article>
       ))}
-    </motion.div>
+    </ChoreoGroup>
   );
 }
 
-function DealerList({ dealers, emptyText, motionEnabled }: DealerListProps & { motionEnabled: boolean }) {
+function DealerList({ dealers, emptyText }: DealerListProps) {
   if (!dealers.length) {
     return (
       <Text size="md" muted>
@@ -574,41 +439,126 @@ function DealerList({ dealers, emptyText, motionEnabled }: DealerListProps & { m
   }
 
   return (
-    <motion.div
+    <ChoreoGroup
+      effect="fade-lift"
+      distance={choreoDistance.base}
+      durationMs={dreamyPace.textMs}
+      easing={dreamyPace.easing}
+      staggerMs={dreamyPace.staggerMs}
       className="grid gap-4 md:grid-cols-2"
-      initial={motionEnabled ? "hidden" : false}
-      animate={motionEnabled ? "show" : undefined}
-      variants={{
-        hidden: {},
-        show: { transition: { staggerChildren: motionEnabled ? 0.06 : 0 } },
-      }}
+      itemAsChild
     >
       {dealers.map((dealer) => (
-        <motion.article
+        <article
           key={dealer._id}
-          className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm ring-1 ring-border/70 transition hover:-translate-y-0.5 hover:border-ink/20 hover:bg-card/80 hover:shadow-elevated sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated"
-          variants={{
-            hidden: { opacity: 0, y: 12, filter: "blur(10px)" },
-            show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
-          }}
+          className="group relative overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm ring-1 ring-border/70 hover:border-ink/20 hover:bg-card/80 sm:rounded-3xl sm:bg-card/80 sm:shadow-elevated"
         >
-          <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
-          <Heading level={3} className="mb-7 type-card-title text-ink text-3xl">
-            {dealer.dealerName}
-          </Heading>
-          <Text className="type-button text-ink-muted">
-            {dealer.state}
-          </Text>
-          <Text asChild className="mt-2 type-body text-ink-muted">
-            <p>
-              {dealer.address}
-              <br />
-              {dealer.city}
-            </p>
-          </Text>
-        </motion.article>
+          <ChoreoGroup
+            effect="fade-lift"
+            distance={choreoDistance.tight}
+            durationMs={dreamyPace.textMs}
+            easing={dreamyPace.easing}
+            staggerMs={dreamyPace.staggerMs}
+            itemAsChild
+          >
+            <Heading level={3} className="mb-7 type-card-title text-ink text-3xl">
+              {dealer.dealerName}
+            </Heading>
+            <Text className="type-button text-ink-muted">
+              {dealer.state}
+            </Text>
+            <Text asChild className="mt-2 type-body text-ink-muted">
+              <p>
+                {dealer.address}
+                <br />
+                {dealer.city}
+              </p>
+            </Text>
+          </ChoreoGroup>
+        </article>
       ))}
-    </motion.div>
+    </ChoreoGroup>
+  );
+}
+
+type TravelNetworkExpandedHeaderProps = Readonly<{
+  headingId: string;
+  heading: string;
+  lead: string;
+  supporting: string;
+  headerThemeReady: boolean;
+  enableTitleReveal: boolean;
+  onCollapse: () => void;
+  collapseLabel?: string;
+}>;
+
+function TravelNetworkExpandedHeader({
+  headingId,
+  heading,
+  lead,
+  supporting,
+  headerThemeReady,
+  enableTitleReveal,
+  onCollapse,
+  collapseLabel = "Collapse",
+}: TravelNetworkExpandedHeaderProps) {
+  const headingClass = headerThemeReady ? "text-ink" : "text-white";
+  const leadClass = headerThemeReady ? "text-ink-muted" : "text-white";
+  const supportingClass = headerThemeReady ? "text-ink-muted" : "text-white/80";
+
+  return (
+    <div className="relative z-10 space-y-4 md:flex md:items-center md:justify-between md:gap-8">
+      <ChoreoGroup
+        effect="fade-lift"
+        distance={choreoDistance.base}
+        durationMs={dreamyPace.textMs}
+        easing={dreamyPace.easing}
+        staggerMs={dreamyPace.staggerMs}
+        className="space-y-3"
+      >
+        <div className="relative">
+          <Heading
+            id={headingId}
+            level={2}
+            size="xl"
+            className={headingClass}
+          >
+            {heading}
+          </Heading>
+        </div>
+        <div className="relative">
+          <Text
+            className={cn("type-section-subtitle", leadClass)}
+            leading="relaxed"
+          >
+            {lead}
+          </Text>
+        </div>
+        <div className="relative">
+          <Text className={cn("type-section-subtitle", supportingClass)} leading="relaxed">
+            {supporting}
+          </Text>
+        </div>
+      </ChoreoGroup>
+      {enableTitleReveal ? (
+        <ChoreoGroup
+          effect="fade-lift"
+          distance={choreoDistance.tight}
+          delayMs={dreamyPace.staggerMs}
+          durationMs={dreamyPace.textMs}
+          easing={dreamyPace.easing}
+          itemAsChild
+        >
+          <button
+            type="button"
+            className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
+            onClick={onCollapse}
+          >
+            {collapseLabel}
+          </button>
+        </ChoreoGroup>
+      ) : null}
+    </div>
   );
 }
 

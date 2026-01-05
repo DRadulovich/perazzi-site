@@ -555,7 +555,7 @@ const MobileMenuLink = ({
       <div className="flex items-center justify-between">
         <Link
           href={item.href}
-          className={`type-title-sm transition-colors ${
+          className={`type-card-title transition-colors ${
             isActive ? "text-perazzi-red" : "text-white hover:text-perazzi-red"
           }`}
           onClick={() => setMenuOpen(false)}
