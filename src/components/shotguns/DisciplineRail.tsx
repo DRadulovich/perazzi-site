@@ -15,11 +15,18 @@ import { createPortal } from "react-dom";
 import type { Platform, ShotgunsLandingData } from "@/types/catalog";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { useParallaxBackground } from "@/hooks/use-parallax-background";
 import { cn } from "@/lib/utils";
 import SafeHtml from "@/components/SafeHtml";
 import { PortableText } from "@/components/PortableText";
-import { Container, Heading, Text } from "@/components/ui";
+import {
+  Container,
+  Heading,
+  RevealCollapsedHeader,
+  RevealExpandedHeader,
+  SectionBackdrop,
+  SectionShell,
+  Text,
+} from "@/components/ui";
 
 type DisciplineCard = ShotgunsLandingData["disciplines"][number];
 
@@ -94,23 +101,6 @@ type DisciplineRailRevealSectionProps = {
   readonly modelLoadingId: string | null;
   readonly enableTitleReveal: boolean;
   readonly onCollapsedChange?: (collapsed: boolean) => void;
-};
-
-type DisciplineRailBackgroundProps = {
-  readonly background: DisciplineRailBackground;
-  readonly revealRail: boolean;
-  readonly revealPhotoFocus: boolean;
-  readonly enableParallax: boolean;
-};
-
-type DisciplineRailHeaderProps = {
-  readonly revealRail: boolean;
-  readonly heading: string;
-  readonly subheading: string;
-  readonly headerThemeReady: boolean;
-  readonly enableTitleReveal: boolean;
-  readonly onExpand: () => void;
-  readonly onCollapse: () => void;
 };
 
 type DisciplineRailBodyProps = {
@@ -406,32 +396,38 @@ const DisciplineRailRevealSection = ({
 
   return (
     <>
-      <DisciplineRailBackground
-        background={background}
-        revealRail={revealRail}
-        revealPhotoFocus={revealPhotoFocus}
+      <SectionBackdrop
+        image={{ url: background.url, alt: background.alt }}
+        reveal={revealRail}
+        revealOverlay={revealPhotoFocus}
         enableParallax={enableTitleReveal && !revealRail}
+        overlay="canvas"
       />
 
       <Container size="xl" className="relative z-10">
-        <div
-          className={cn(
-            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            railMinHeight,
-          )}
+        <SectionShell
+          reveal={revealPhotoFocus}
+          minHeightClass={railMinHeight ?? undefined}
         >
-          <DisciplineRailHeader
-            revealRail={revealRail}
-            heading={heading}
-            subheading={subheading}
-            headerThemeReady={headerThemeReady}
-            enableTitleReveal={enableTitleReveal}
-            onExpand={handleExpand}
-            onCollapse={handleCollapse}
-          />
+          {revealRail ? (
+            <RevealExpandedHeader
+              headingId="discipline-rail-heading"
+              heading={heading}
+              subheading={subheading}
+              headerThemeReady={headerThemeReady}
+              enableTitleReveal={enableTitleReveal}
+              onCollapse={handleCollapse}
+            />
+          ) : (
+            <RevealCollapsedHeader
+              headingId="discipline-rail-heading"
+              heading={heading}
+              subheading={subheading}
+              controlsId="discipline-rail-body"
+              expanded={revealRail}
+              onExpand={handleExpand}
+            />
+          )}
           <DisciplineRailBody
             revealRail={revealRail}
             categories={categories}
@@ -444,148 +440,11 @@ const DisciplineRailRevealSection = ({
             handleModelSelect={handleModelSelect}
             modelLoadingId={modelLoadingId}
           />
-        </div>
+        </SectionShell>
       </Container>
     </>
   );
 };
-
-function DisciplineRailBackground({
-  background,
-  revealRail,
-  revealPhotoFocus,
-  enableParallax,
-}: DisciplineRailBackgroundProps) {
-  const parallaxRef = useParallaxBackground(enableParallax);
-
-  return (
-    <div className="absolute inset-0 -z-10 overflow-hidden">
-      <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
-        <Image
-          src={background.url}
-          alt={background.alt}
-          fill
-          sizes="100vw"
-          className="object-cover"
-          priority={false}
-        />
-      </div>
-      <div
-        className={cn(
-          "absolute inset-0 bg-(--scrim-strong)",
-          revealRail ? "opacity-0" : "opacity-100",
-        )}
-        aria-hidden
-      />
-      <div
-        className={cn(
-          "absolute inset-0 bg-(--scrim-strong)",
-          revealPhotoFocus ? "opacity-100" : "opacity-0",
-        )}
-        aria-hidden
-      />
-      <div
-        className={cn(
-          "absolute inset-0 overlay-gradient-canvas",
-          revealPhotoFocus ? "opacity-100" : "opacity-0",
-        )}
-        aria-hidden
-      />
-    </div>
-  );
-}
-
-function DisciplineRailHeader({
-  revealRail,
-  heading,
-  subheading,
-  headerThemeReady,
-  enableTitleReveal,
-  onExpand,
-  onCollapse,
-}: DisciplineRailHeaderProps) {
-  if (revealRail) {
-    return (
-      <div className="relative z-10 space-y-4 md:flex md:items-start md:justify-between md:gap-8">
-        <div className="space-y-3">
-          <div className="relative">
-            <Heading
-              id="discipline-rail-heading"
-              level={2}
-              size="xl"
-              className={headerThemeReady ? "text-ink" : "text-white"}
-            >
-              {heading}
-            </Heading>
-          </div>
-          <div className="relative">
-            <Text
-              size="lg"
-              className={cn(
-                "type-section-subtitle",
-                headerThemeReady ? "text-ink-muted" : "text-white",
-              )}
-            >
-              {subheading}
-            </Text>
-          </div>
-        </div>
-        {enableTitleReveal ? (
-          <button
-            type="button"
-            className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-            onClick={onCollapse}
-          >
-            Collapse
-          </button>
-        ) : null}
-      </div>
-    );
-  }
-
-  return (
-    <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
-      <div className="relative inline-flex text-white">
-        <Heading
-          id="discipline-rail-heading"
-          level={2}
-          size="xl"
-          className="type-section-collapsed"
-        >
-          {heading}
-        </Heading>
-        <button
-          type="button"
-          className="absolute inset-0 z-10 cursor-pointer focus-ring"
-
-
-          onClick={onExpand}
-          aria-expanded={revealRail}
-          aria-controls="discipline-rail-body"
-          aria-labelledby="discipline-rail-heading"
-        >
-          <span className="sr-only">Expand {heading}</span>
-        </button>
-      </div>
-      <div className="relative text-white">
-        <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-          {subheading}
-        </Text>
-      </div>
-      <div className="mt-3">
-        <Text
-          size="button"
-          className="text-white/80 cursor-pointer focus-ring"
-          asChild
-        >
-          <button type="button" onClick={onExpand}>
-            Read more
-          </button>
-        </Text>
-      </div>
-    </div>
-  );
-}
 
 function DisciplineRailBody({
   revealRail,

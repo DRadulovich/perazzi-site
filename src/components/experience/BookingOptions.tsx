@@ -1,12 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { useEffect, useState } from "react";
 import SafeHtml from "@/components/SafeHtml";
-import { Button, Container, Heading, Text } from "@/components/ui";
+import {
+  Button,
+  Container,
+  Heading,
+  RevealCollapsedHeader,
+  RevealExpandedHeader,
+  SectionBackdrop,
+  SectionShell,
+  Text,
+  useRevealHeight,
+} from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { useParallaxBackground } from "@/hooks/use-parallax-background";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import type { BookingSection } from "@/types/experience";
@@ -64,11 +72,8 @@ const BookingOptionsRevealSection = ({
 }: BookingOptionsRevealSectionProps) => {
   const [bookingExpanded, setBookingExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const [schedulerOpen, setSchedulerOpen] = useState(false);
   const [schedulerLoaded, setSchedulerLoaded] = useState(false);
-
-  const bookingShellRef = useRef<HTMLDivElement | null>(null);
 
   const schedulerPanelId = "experience-scheduler-panel";
   const schedulerNoteId = "experience-scheduler-note";
@@ -81,6 +86,10 @@ const BookingOptionsRevealSection = ({
   const revealBooking = !enableTitleReveal || bookingExpanded;
   const revealPhotoFocus = revealBooking;
   const bookingMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
+  const { ref: bookingShellRef, minHeightStyle } = useRevealHeight({
+    enabled: enableTitleReveal && revealBooking,
+    deps: [schedulerOpen, schedulerLoaded, options.length],
+  });
 
   const handleBookingExpand = () => {
     if (!enableTitleReveal) return;
@@ -107,61 +116,53 @@ const BookingOptionsRevealSection = ({
     });
   };
 
-  useEffect(() => {
-    if (!enableTitleReveal || !revealBooking) return;
-    const node = bookingShellRef.current;
-    if (!node) return;
-
-    const updateHeight = () => {
-      const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-      setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") return;
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealBooking, schedulerOpen, schedulerLoaded, options.length]);
-
   return (
     <>
-      <BookingBackground
-        revealBooking={revealBooking}
-        revealPhotoFocus={revealPhotoFocus}
+      <SectionBackdrop
+        image={{ url: "/Photos/p-web-89.jpg", alt: "Perazzi booking options background" }}
+        reveal={revealBooking}
+        revealOverlay={revealPhotoFocus}
         enableParallax={enableTitleReveal && !revealBooking}
+        overlay="canvas"
       />
 
       <Container size="xl" className="relative z-10">
-        <div
+        <SectionShell
           ref={bookingShellRef}
-          style={
-            enableTitleReveal && revealBooking && expandedHeight
-              ? { minHeight: expandedHeight }
-              : undefined
-          }
-          className={cn(
-            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            bookingMinHeight,
-          )}
+          style={minHeightStyle}
+          reveal={revealPhotoFocus}
+          minHeightClass={bookingMinHeight ?? undefined}
         >
-          <BookingHeader
-            heading={heading}
-            subheading={subheading}
-            enableTitleReveal={enableTitleReveal}
-            headerThemeReady={headerThemeReady}
-            revealBooking={revealBooking}
-            onExpand={handleBookingExpand}
-            onCollapse={handleBookingCollapse}
-          />
+          {revealBooking ? (
+            <RevealExpandedHeader
+              headingId="experience-booking-heading"
+              heading={heading}
+              headerThemeReady={headerThemeReady}
+              enableTitleReveal={enableTitleReveal}
+              onCollapse={handleBookingCollapse}
+            >
+              <div className="relative">
+                <Text
+                  className={cn(
+                    "type-section-subtitle",
+                    headerThemeReady ? "text-ink-muted" : "text-white",
+                  )}
+                  leading="relaxed"
+                >
+                  {subheading}
+                </Text>
+              </div>
+            </RevealExpandedHeader>
+          ) : (
+            <RevealCollapsedHeader
+              headingId="experience-booking-heading"
+              heading={heading}
+              subheading={subheading}
+              controlsId="experience-booking-body"
+              expanded={revealBooking}
+              onExpand={handleBookingExpand}
+            />
+          )}
           <BookingBody
             revealBooking={revealBooking}
             options={options}
@@ -173,159 +174,12 @@ const BookingOptionsRevealSection = ({
             schedulerNoteId={schedulerNoteId}
             onSchedulerToggle={handleSchedulerToggle}
           />
-        </div>
+        </SectionShell>
       </Container>
     </>
   );
 };
 
-type BookingBackgroundProps = Readonly<{
-  revealBooking: boolean;
-  revealPhotoFocus: boolean;
-  enableParallax: boolean;
-}>;
-
-const BookingBackground = ({
-  revealBooking,
-  revealPhotoFocus,
-  enableParallax,
-}: BookingBackgroundProps) => {
-  const parallaxRef = useParallaxBackground(enableParallax);
-
-  return (
-    <div className="absolute inset-0 -z-10 overflow-hidden">
-      <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
-        <Image
-          src="/Photos/p-web-89.jpg"
-          alt="Perazzi booking options background"
-          fill
-          sizes="100vw"
-          className="object-cover"
-          priority={false}
-        />
-      </div>
-      <div
-        className={cn(
-          "absolute inset-0 bg-(--scrim-strong)",
-          revealBooking ? "opacity-0" : "opacity-100",
-        )}
-        aria-hidden
-      />
-      <div
-        className={cn(
-          "absolute inset-0 bg-(--scrim-strong)",
-          revealPhotoFocus ? "opacity-100" : "opacity-0",
-        )}
-        aria-hidden
-      />
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-          revealPhotoFocus ? "opacity-100" : "opacity-0",
-        )}
-        aria-hidden
-      />
-    </div>
-  );
-};
-
-type BookingHeaderProps = Readonly<{
-  heading: string;
-  subheading: string;
-  enableTitleReveal: boolean;
-  headerThemeReady: boolean;
-  revealBooking: boolean;
-  onExpand: () => void;
-  onCollapse: () => void;
-}>;
-
-const BookingHeader = ({
-  heading,
-  subheading,
-  enableTitleReveal,
-  headerThemeReady,
-  revealBooking,
-  onExpand,
-  onCollapse,
-}: BookingHeaderProps) => {
-  if (revealBooking) {
-    return (
-      <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8">
-        <div className="space-y-3">
-          <div className="relative">
-            <Heading
-              id="experience-booking-heading"
-              level={2}
-              size="xl"
-              className={headerThemeReady ? "text-ink" : "text-white"}
-            >
-              {heading}
-            </Heading>
-          </div>
-          <div className="relative">
-            <Text
-              className={cn(
-                "type-section-subtitle",
-                headerThemeReady ? "text-ink-muted" : "text-white",
-              )}
-              leading="relaxed"
-            >
-              {subheading}
-            </Text>
-          </div>
-        </div>
-        {enableTitleReveal ? (
-          <button
-            type="button"
-            className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-            onClick={onCollapse}
-          >
-            Collapse
-          </button>
-        ) : null}
-      </div>
-    );
-  }
-
-  return (
-    <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
-      <div className="relative inline-flex text-white">
-        <Heading
-          id="experience-booking-heading"
-          level={2}
-          size="xl"
-          className="type-section-collapsed"
-        >
-          {heading}
-        </Heading>
-        <button
-          type="button"
-          className="absolute inset-0 z-10 cursor-pointer focus-ring"
-
-
-          onClick={onExpand}
-          aria-expanded={revealBooking}
-          aria-controls="experience-booking-body"
-          aria-labelledby="experience-booking-heading"
-        >
-          <span className="sr-only">Expand {heading}</span>
-        </button>
-      </div>
-      <div className="relative text-white">
-        <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-          {subheading}
-        </Text>
-      </div>
-      <div className="mt-3">
-        <Text size="button" className="text-white/80 cursor-pointer focus-ring" asChild>
-          <button type="button" onClick={onExpand}>
-            Read more
-          </button>
-        </Text>
-      </div>
-    </div>
-  );
-};
 
 type BookingBodyProps = Readonly<{
   revealBooking: boolean;

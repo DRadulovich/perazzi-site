@@ -26,6 +26,13 @@ export {
   PopoverTrigger,
 } from "./popover";
 export { Section } from "./section";
+export {
+  RevealCollapsedHeader,
+  RevealExpandedHeader,
+  SectionBackdrop,
+  SectionShell,
+  useRevealHeight,
+} from "./section-reveal";
 export { Text } from "./text";
 export { Textarea } from "./textarea";
 export {

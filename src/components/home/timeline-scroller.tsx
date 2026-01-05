@@ -6,12 +6,18 @@ import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 
 import type { FittingStage, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { useParallaxBackground } from "@/hooks/use-parallax-background";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Heading } from "@/components/ui/heading";
-import { Text } from "@/components/ui/text";
+import {
+  Button,
+  Heading,
+  RevealCollapsedHeader,
+  RevealExpandedHeader,
+  SectionBackdrop,
+  SectionShell,
+  Text,
+  useRevealHeight,
+} from "@/components/ui";
 import { TimelineItem } from "./timeline-item";
 
 type TimelineScrollerProps = {
@@ -106,8 +112,6 @@ function TimelineRevealSection({
 }: TimelineRevealSectionProps) {
   const [timelineExpanded, setTimelineExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
-  const timelineShellRef = useRef<HTMLDivElement | null>(null);
 
   const headingTitle = framing.title ?? "Craftsmanship Journey";
   const headingEyebrow = framing.eyebrow ?? "Three rituals that define a bespoke Perazzi build";
@@ -121,6 +125,10 @@ function TimelineRevealSection({
   const revealTimeline = !enableTitleReveal || timelineExpanded;
   const revealPhotoFocus = revealTimeline;
   const timelineMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
+  const { ref: timelineShellRef, minHeightStyle } = useRevealHeight({
+    enabled: enableTitleReveal && revealTimeline,
+    deps: [resolvedActiveStage],
+  });
 
   const handleTimelineExpand = () => {
     if (!enableTitleReveal) return;
@@ -135,36 +143,15 @@ function TimelineRevealSection({
     onCollapsedChange?.(true);
   };
 
-  useEffect(() => {
-    if (!enableTitleReveal || !revealTimeline) return;
-    const node = timelineShellRef.current;
-    if (!node) return;
-
-    const updateHeight = () => {
-      const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-      setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") return;
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealTimeline, resolvedActiveStage]);
-
   return (
     <>
-      <TimelineBackdrop
-        backgroundUrl={backgroundUrl}
-        backgroundAlt={backgroundAlt}
-        revealTimeline={revealTimeline}
-        revealPhotoFocus={revealPhotoFocus}
+      <SectionBackdrop
+        image={{ url: backgroundUrl, alt: backgroundAlt }}
+        reveal={revealTimeline}
+        revealOverlay={revealPhotoFocus}
         enableParallax={enableTitleReveal && !revealTimeline}
+        overlay="canvas"
+        priority
       />
 
       <div
@@ -173,31 +160,33 @@ function TimelineRevealSection({
         className="focus:outline-none focus-ring"
       >
         <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-10">
-          <div
+          <SectionShell
             ref={timelineShellRef}
-            style={
-              enableTitleReveal && revealTimeline && expandedHeight
-                ? { minHeight: expandedHeight }
-                : undefined
-            }
-            className={cn(
-              "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-              revealPhotoFocus
-                ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-                : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-              timelineMinHeight,
-            )}
+            style={minHeightStyle}
+            reveal={revealPhotoFocus}
+            minHeightClass={timelineMinHeight ?? undefined}
           >
-            <TimelineHeader
-              revealTimeline={revealTimeline}
-              enableTitleReveal={enableTitleReveal}
-              headerThemeReady={headerThemeReady}
-              headingTitle={headingTitle}
-              headingEyebrow={headingEyebrow}
-              headingInstructions={headingInstructions}
-              onExpand={handleTimelineExpand}
-              onCollapse={handleTimelineCollapse}
-            />
+            {revealTimeline ? (
+              <RevealExpandedHeader
+                headingId="craft-timeline-heading"
+                heading={headingTitle}
+                subheading={headingEyebrow}
+                headerThemeReady={headerThemeReady}
+                enableTitleReveal={enableTitleReveal}
+                onCollapse={handleTimelineCollapse}
+              >
+                <span className="sr-only">{headingInstructions}</span>
+              </RevealExpandedHeader>
+            ) : (
+              <RevealCollapsedHeader
+                headingId="craft-timeline-heading"
+                heading={headingTitle}
+                subheading={headingEyebrow}
+                controlsId="craft-timeline-body"
+                expanded={revealTimeline}
+                onExpand={handleTimelineExpand}
+              />
+            )}
 
             {revealTimeline ? (
               <TimelineBody
@@ -210,171 +199,13 @@ function TimelineRevealSection({
                 revealPhotoFocus={revealPhotoFocus}
               />
             ) : null}
-          </div>
+          </SectionShell>
         </div>
       </div>
     </>
   );
 }
 
-type TimelineBackdropProps = {
-  readonly backgroundUrl: string;
-  readonly backgroundAlt: string;
-  readonly revealTimeline: boolean;
-  readonly revealPhotoFocus: boolean;
-  readonly enableParallax: boolean;
-};
-
-function TimelineBackdrop({
-  backgroundUrl,
-  backgroundAlt,
-  revealTimeline,
-  revealPhotoFocus,
-  enableParallax,
-}: TimelineBackdropProps) {
-  const parallaxRef = useParallaxBackground(enableParallax);
-
-  return (
-    <div className="absolute inset-0 -z-10 overflow-hidden">
-      <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
-        <Image
-          src={backgroundUrl}
-          alt={backgroundAlt}
-          fill
-          sizes="100vw"
-          className="object-cover"
-          priority
-        />
-      </div>
-      <div
-        className={cn(
-          "absolute inset-0 bg-(--scrim-strong)",
-          revealTimeline ? "opacity-0" : "opacity-100",
-        )}
-        aria-hidden
-      />
-      <div
-        className={cn(
-          "absolute inset-0 bg-(--scrim-strong)",
-          revealPhotoFocus ? "opacity-100" : "opacity-0",
-        )}
-        aria-hidden
-      />
-      <div
-        className={cn(
-          "absolute inset-0 overlay-gradient-canvas",
-          revealPhotoFocus ? "opacity-100" : "opacity-0",
-        )}
-        aria-hidden
-      />
-    </div>
-  );
-}
-
-type TimelineHeaderProps = {
-  readonly revealTimeline: boolean;
-  readonly enableTitleReveal: boolean;
-  readonly headerThemeReady: boolean;
-  readonly headingTitle: string;
-  readonly headingEyebrow: string;
-  readonly headingInstructions: string;
-  readonly onExpand: () => void;
-  readonly onCollapse: () => void;
-};
-
-function TimelineHeader({
-  revealTimeline,
-  enableTitleReveal,
-  headerThemeReady,
-  headingTitle,
-  headingEyebrow,
-  headingInstructions,
-  onExpand,
-  onCollapse,
-}: TimelineHeaderProps) {
-  if (revealTimeline) {
-    return (
-      <div className="relative z-10 space-y-4 md:flex md:items-center md:justify-between md:gap-8">
-        <div className="space-y-3">
-          <div className="relative">
-            <Heading
-              id="craft-timeline-heading"
-              level={2}
-              size="xl"
-              className={headerThemeReady ? "text-ink" : "text-white"}
-            >
-              {headingTitle}
-            </Heading>
-          </div>
-          <div className="relative">
-            <Text
-              size="lg"
-              className={cn(
-                "type-section-subtitle",
-                headerThemeReady ? "text-ink-muted" : "text-white",
-              )}
-            >
-              {headingEyebrow}
-            </Text>
-          </div>
-          <span className="sr-only">{headingInstructions}</span>
-        </div>
-        {enableTitleReveal ? (
-          <button
-            type="button"
-            className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-            onClick={onCollapse}
-          >
-            Collapse
-          </button>
-        ) : null}
-      </div>
-    );
-  }
-
-  return (
-    <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
-      <div className="relative inline-flex text-white">
-        <Heading
-          id="craft-timeline-heading"
-          level={2}
-          size="xl"
-          className="type-section-collapsed"
-        >
-          {headingTitle}
-        </Heading>
-        <button
-          type="button"
-          className="absolute inset-0 z-10 cursor-pointer focus-ring"
-
-
-          onClick={onExpand}
-          aria-expanded={revealTimeline}
-          aria-controls="craft-timeline-body"
-          aria-labelledby="craft-timeline-heading"
-        >
-          <span className="sr-only">Expand {headingTitle}</span>
-        </button>
-      </div>
-      <div className="relative text-white">
-        <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-          {headingEyebrow}
-        </Text>
-      </div>
-      <div className="mt-3">
-        <Text
-          size="button"
-          className="text-white/80 cursor-pointer focus-ring"
-          asChild
-        >
-          <button type="button" onClick={onExpand}>
-            Read more
-          </button>
-        </Text>
-      </div>
-    </div>
-  );
-}
 
 type TimelineBodyProps = {
   readonly enablePinned: boolean;

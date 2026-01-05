@@ -2,15 +2,23 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import type { FAQItem, PickerItem, PickerUi } from "@/types/experience";
 import { FAQList } from "./FAQList";
 import { logAnalytics } from "@/lib/analytics";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { useParallaxBackground } from "@/hooks/use-parallax-background";
 import { cn } from "@/lib/utils";
-import { Container, Heading, Text } from "@/components/ui";
+import {
+  Container,
+  Heading,
+  RevealCollapsedHeader,
+  RevealExpandedHeader,
+  SectionBackdrop,
+  SectionShell,
+  Text,
+  useRevealHeight,
+} from "@/components/ui";
 
 type ExperiencePickerProps = {
   readonly items: PickerItem[];
@@ -128,203 +136,6 @@ export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<Exper
   );
 }
 
-const useExpandedHeight = (
-  enableTitleReveal: boolean,
-  revealPicker: boolean,
-  itemsCount: number,
-  faqItemsCount: number,
-) => {
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
-  const pickerShellRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!enableTitleReveal || !revealPicker) return;
-    const node = pickerShellRef.current;
-    if (!node) return;
-
-    const updateHeight = () => {
-      const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-      setExpandedHeight((prev) => (Object.is(prev, nextHeight) ? prev : nextHeight));
-    };
-
-    updateHeight();
-
-    if (!("ResizeObserver" in globalThis)) return;
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealPicker, itemsCount, faqItemsCount]);
-
-  return { expandedHeight, pickerShellRef };
-};
-
-const getExpandedHeightStyle = (
-  enableTitleReveal: boolean,
-  revealPicker: boolean,
-  expandedHeight: number | null,
-) =>
-  (enableTitleReveal && revealPicker && expandedHeight ? { minHeight: expandedHeight } : undefined);
-
-type ExperiencePickerBackgroundProps = Readonly<{
-  background: ExperiencePickerRevealSectionProps["background"];
-  revealPicker: boolean;
-  revealPhotoFocus: boolean;
-  enableParallax: boolean;
-}>;
-
-const ExperiencePickerBackground = ({
-  background,
-  revealPicker,
-  revealPhotoFocus,
-  enableParallax,
-}: ExperiencePickerBackgroundProps) => {
-  const parallaxRef = useParallaxBackground(enableParallax);
-
-  return (
-    <div className="absolute inset-0 -z-10 overflow-hidden">
-      <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
-        <Image
-          src={background.url}
-          alt={background.alt ?? "Perazzi experience background"}
-          fill
-          sizes="100vw"
-          className="object-cover"
-          priority={false}
-        />
-      </div>
-      <div
-        className={cn(
-          "absolute inset-0 bg-(--scrim-strong)",
-          { "opacity-0": revealPicker, "opacity-100": !revealPicker },
-        )}
-        aria-hidden
-      />
-      <div
-        className={cn(
-          "absolute inset-0 bg-(--scrim-strong)",
-          { "opacity-100": revealPhotoFocus, "opacity-0": !revealPhotoFocus },
-        )}
-        aria-hidden
-      />
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-          { "opacity-100": revealPhotoFocus, "opacity-0": !revealPhotoFocus },
-        )}
-        aria-hidden
-      />
-    </div>
-  );
-};
-
-type ExperiencePickerHeaderProps = Readonly<{
-  heading: string;
-  subheading: string;
-  headerThemeReady: boolean;
-  enableTitleReveal: boolean;
-  onCollapse: () => void;
-}>;
-
-const ExperiencePickerHeader = ({
-  heading,
-  subheading,
-  headerThemeReady,
-  enableTitleReveal,
-  onCollapse,
-}: ExperiencePickerHeaderProps) => (
-  <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8">
-    <div className="space-y-3">
-      <div className="relative">
-        <Heading
-          id="experience-picker-heading"
-          level={2}
-          size="xl"
-          className={cn({ "text-ink": headerThemeReady, "text-white": !headerThemeReady })}
-        >
-          {heading}
-        </Heading>
-      </div>
-      <div className="relative">
-        <Text
-          size="lg"
-          className={cn(
-            "type-section-subtitle",
-            { "text-ink-muted": headerThemeReady, "text-white": !headerThemeReady },
-          )}
-        >
-          {subheading}
-        </Text>
-      </div>
-    </div>
-    {enableTitleReveal && (
-      <button
-        type="button"
-        className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-        onClick={onCollapse}
-      >
-        Collapse
-      </button>
-    )}
-  </div>
-);
-
-type ExperiencePickerCollapsedHeaderProps = Readonly<{
-  heading: string;
-  subheading: string;
-  onExpand: () => void;
-}>;
-
-const ExperiencePickerCollapsedHeader = ({
-  heading,
-  subheading,
-  onExpand,
-}: ExperiencePickerCollapsedHeaderProps) => (
-  <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
-    <div className="relative inline-flex text-white">
-      <Heading
-        id="experience-picker-heading"
-        level={2}
-        size="xl"
-        className="type-section-collapsed"
-      >
-        {heading}
-      </Heading>
-      <button
-        type="button"
-        className="absolute inset-0 z-10 cursor-pointer focus-ring"
-
-
-        onClick={onExpand}
-        aria-expanded={false}
-        aria-controls="experience-picker-body"
-        aria-labelledby="experience-picker-heading"
-      >
-        <span className="sr-only">Expand {heading}</span>
-      </button>
-    </div>
-    <div className="relative text-white">
-      <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-        {subheading}
-      </Text>
-    </div>
-    <div className="mt-3">
-      <Text
-        size="button"
-        className="text-white/80 cursor-pointer focus-ring"
-        asChild
-      >
-        <button type="button" onClick={onExpand}>
-          Read more
-        </button>
-      </Text>
-    </div>
-  </div>
-);
-
 type ExperiencePickerBodyProps = Readonly<{
   items: PickerItem[];
   faqItems: FAQItem[];
@@ -382,14 +193,11 @@ const ExperiencePickerRevealSection = ({
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
   const revealPicker = !enableTitleReveal || pickerExpanded;
   const revealPhotoFocus = revealPicker;
-  const pickerMinHeight = enableTitleReveal && "min-h-[50vh]";
-  const { expandedHeight, pickerShellRef } = useExpandedHeight(
-    enableTitleReveal,
-    revealPicker,
-    items.length,
-    faqItems.length,
-  );
-  const expandedHeightStyle = getExpandedHeightStyle(enableTitleReveal, revealPicker, expandedHeight);
+  const pickerMinHeight = enableTitleReveal ? "min-h-[50vh]" : undefined;
+  const { ref: pickerShellRef, minHeightStyle } = useRevealHeight({
+    enabled: enableTitleReveal && revealPicker,
+    deps: [items.length, faqItems.length],
+  });
 
   const handlePickerExpand = () => {
     setPickerExpanded(true);
@@ -405,42 +213,37 @@ const ExperiencePickerRevealSection = ({
 
   return (
     <>
-      <ExperiencePickerBackground
-        background={background}
-        revealPicker={revealPicker}
-        revealPhotoFocus={revealPhotoFocus}
+      <SectionBackdrop
+        image={{ url: background.url, alt: background.alt ?? "Perazzi experience background" }}
+        reveal={revealPicker}
+        revealOverlay={revealPhotoFocus}
         enableParallax={enableTitleReveal && !revealPicker}
+        overlay="canvas"
       />
 
       <Container size="xl" className="relative z-10">
-        <div
+        <SectionShell
           ref={pickerShellRef}
-          style={expandedHeightStyle}
-          className={cn(
-            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            {
-              "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated":
-                revealPhotoFocus,
-              "border-transparent bg-transparent shadow-none backdrop-blur-none":
-                !revealPhotoFocus,
-            },
-            pickerMinHeight,
-          )}
+          style={minHeightStyle}
+          reveal={revealPhotoFocus}
+          minHeightClass={pickerMinHeight ?? undefined}
         >
-          {revealPicker && (
-            <ExperiencePickerHeader
+          {revealPicker ? (
+            <RevealExpandedHeader
+              headingId="experience-picker-heading"
               heading={heading}
               subheading={subheading}
               headerThemeReady={headerThemeReady}
               enableTitleReveal={enableTitleReveal}
               onCollapse={handlePickerCollapse}
             />
-          )}
-
-          {!revealPicker && (
-            <ExperiencePickerCollapsedHeader
+          ) : (
+            <RevealCollapsedHeader
+              headingId="experience-picker-heading"
               heading={heading}
               subheading={subheading}
+              controlsId="experience-picker-body"
+              expanded={revealPicker}
               onExpand={handlePickerExpand}
             />
           )}
@@ -455,7 +258,7 @@ const ExperiencePickerRevealSection = ({
               onAnchorClick={onAnchorClick}
             />
           )}
-        </div>
+        </SectionShell>
       </Container>
     </>
   );

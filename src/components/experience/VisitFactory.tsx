@@ -1,16 +1,27 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import type { VisitFactoryData } from "@/types/experience";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { useParallaxBackground } from "@/hooks/use-parallax-background";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
 import SafeHtml from "@/components/SafeHtml";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger, Container, Heading, Text } from "@/components/ui";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+  Container,
+  Heading,
+  RevealCollapsedHeader,
+  RevealExpandedHeader,
+  SectionBackdrop,
+  SectionShell,
+  Text,
+  useRevealHeight,
+} from "@/components/ui";
 
 type VisitFactoryProps = {
   readonly visitFactorySection: VisitFactoryData;
@@ -23,24 +34,6 @@ type VisitFactoryRevealSectionProps = {
   readonly background: { url: string; alt?: string };
   readonly enableTitleReveal: boolean;
   readonly onCollapsedChange?: (collapsed: boolean) => void;
-};
-
-type VisitFactoryBackdropProps = {
-  readonly background: { url: string; alt?: string };
-  readonly revealVisit: boolean;
-  readonly revealPhotoFocus: boolean;
-  readonly enableParallax: boolean;
-};
-
-type VisitFactoryHeaderProps = {
-  readonly revealVisit: boolean;
-  readonly headerThemeReady: boolean;
-  readonly heading: string;
-  readonly subheading: string;
-  readonly introHtml: string;
-  readonly enableTitleReveal: boolean;
-  readonly onCollapse: () => void;
-  readonly onExpand: () => void;
 };
 
 type VisitFactoryBodyProps = {
@@ -108,9 +101,7 @@ const VisitFactoryRevealSection = ({
 }: VisitFactoryRevealSectionProps) => {
   const [visitExpanded, setVisitExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const [expectOpen, setExpectOpen] = useState(false);
-  const visitShellRef = useRef<HTMLDivElement | null>(null);
 
   const mapPanelId = "visit-map-panel";
   const mapNoteId = "visit-map-note";
@@ -121,8 +112,10 @@ const VisitFactoryRevealSection = ({
   const revealVisit = !enableTitleReveal || visitExpanded;
   const revealPhotoFocus = revealVisit;
   const visitMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
-  const minHeightStyle =
-    enableTitleReveal && revealVisit && expandedHeight ? { minHeight: expandedHeight } : undefined;
+  const { ref: visitShellRef, minHeightStyle } = useRevealHeight({
+    enabled: enableTitleReveal && revealVisit,
+    deps: [expectOpen],
+  });
 
   const handleVisitExpand = () => {
     if (!enableTitleReveal) return;
@@ -138,59 +131,52 @@ const VisitFactoryRevealSection = ({
     onCollapsedChange?.(true);
   };
 
-  useEffect(() => {
-    if (!enableTitleReveal || !revealVisit) return;
-    const node = visitShellRef.current;
-    if (!node) return;
-
-    const updateHeight = () => {
-      const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-      setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") return;
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealVisit, expectOpen]);
-
   return (
     <>
-      <VisitFactoryBackdrop
-        background={background}
-        revealVisit={revealVisit}
-        revealPhotoFocus={revealPhotoFocus}
+      <SectionBackdrop
+        image={{ url: background.url, alt: background.alt ?? "Perazzi Botticino factory background" }}
+        reveal={revealVisit}
+        revealOverlay={revealPhotoFocus}
         enableParallax={enableTitleReveal && !revealVisit}
+        overlay="canvas"
+        loading="lazy"
       />
 
       <Container size="xl" className="relative z-10">
-        <div
+        <SectionShell
           ref={visitShellRef}
           style={minHeightStyle}
-          className={cn(
-            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            visitMinHeight,
-          )}
+          reveal={revealPhotoFocus}
+          minHeightClass={visitMinHeight ?? undefined}
         >
-          <VisitFactoryHeader
-            revealVisit={revealVisit}
-            headerThemeReady={headerThemeReady}
-            heading={heading}
-            subheading={subheading}
-            introHtml={visit.introHtml}
-            enableTitleReveal={enableTitleReveal}
-            onCollapse={handleVisitCollapse}
-            onExpand={handleVisitExpand}
-          />
+          {revealVisit ? (
+            <RevealExpandedHeader
+              headingId="visit-factory-heading"
+              heading={heading}
+              subheading={subheading}
+              headerThemeReady={headerThemeReady}
+              enableTitleReveal={enableTitleReveal}
+              onCollapse={handleVisitCollapse}
+            >
+              {visit.introHtml ? (
+                <div>
+                  <SafeHtml
+                    className="prose-journal max-w-none text-ink-muted md:max-w-4xl lg:max-w-4xl"
+                    html={visit.introHtml}
+                  />
+                </div>
+              ) : null}
+            </RevealExpandedHeader>
+          ) : (
+            <RevealCollapsedHeader
+              headingId="visit-factory-heading"
+              heading={heading}
+              subheading={subheading}
+              controlsId="visit-factory-body"
+              expanded={revealVisit}
+              onExpand={handleVisitExpand}
+            />
+          )}
           <VisitFactoryBody
             revealVisit={revealVisit}
             visit={visit}
@@ -200,147 +186,9 @@ const VisitFactoryRevealSection = ({
             expectOpen={expectOpen}
             onExpectOpenChange={setExpectOpen}
           />
-        </div>
+        </SectionShell>
       </Container>
     </>
-  );
-};
-
-const VisitFactoryBackdrop = ({
-  background,
-  revealVisit,
-  revealPhotoFocus,
-  enableParallax,
-}: VisitFactoryBackdropProps) => {
-  const parallaxRef = useParallaxBackground(enableParallax);
-
-  return (
-    <div className="absolute inset-0 -z-10 overflow-hidden">
-      <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
-        <Image
-          src={background.url}
-          alt={background.alt ?? "Perazzi Botticino factory background"}
-          fill
-          sizes="100vw"
-          className="object-cover"
-          priority={false}
-          loading="lazy"
-        />
-      </div>
-      <div
-        className={cn(
-          "absolute inset-0 bg-(--scrim-strong)",
-          revealVisit ? "opacity-0" : "opacity-100",
-        )}
-        aria-hidden
-      />
-      <div
-        className={cn(
-          "absolute inset-0 bg-(--scrim-strong)",
-          revealPhotoFocus ? "opacity-100" : "opacity-0",
-        )}
-        aria-hidden
-      />
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-          revealPhotoFocus ? "opacity-100" : "opacity-0",
-        )}
-        aria-hidden
-      />
-    </div>
-  );
-};
-
-const VisitFactoryHeader = ({
-  revealVisit,
-  headerThemeReady,
-  heading,
-  subheading,
-  introHtml,
-  enableTitleReveal,
-  onCollapse,
-  onExpand,
-}: VisitFactoryHeaderProps) => {
-  if (revealVisit) {
-    return (
-      <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8">
-        <div className="space-y-3">
-          <div className="relative">
-            <Heading
-              id="visit-factory-heading"
-              level={2}
-              size="xl"
-              className={headerThemeReady ? "text-ink" : "text-white"}
-            >
-              {heading}
-            </Heading>
-          </div>
-          <div className="relative">
-            <Text
-              size="lg"
-              className={cn(
-                "type-section-subtitle",
-                headerThemeReady ? "text-ink-muted" : "text-white",
-              )}
-            >
-              {subheading}
-            </Text>
-          </div>
-          {introHtml ? (
-            <div>
-              <SafeHtml
-                className="prose-journal max-w-none text-ink-muted md:max-w-4xl lg:max-w-4xl"
-                html={introHtml}
-              />
-            </div>
-          ) : null}
-        </div>
-        {enableTitleReveal ? (
-          <button
-            type="button"
-            className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-            onClick={onCollapse}
-          >
-            Collapse
-          </button>
-        ) : null}
-      </div>
-    );
-  }
-
-  return (
-    <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
-      <div className="relative inline-flex text-white">
-        <Heading id="visit-factory-heading" level={2} size="xl" className="type-section-collapsed">
-          {heading}
-        </Heading>
-        <button
-          type="button"
-          className="absolute inset-0 z-10 cursor-pointer focus-ring"
-
-
-          onClick={onExpand}
-          aria-expanded={revealVisit}
-          aria-controls="visit-factory-body"
-          aria-labelledby="visit-factory-heading"
-        >
-          <span className="sr-only">Expand {heading}</span>
-        </button>
-      </div>
-      <div className="relative text-white">
-        <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-          {subheading}
-        </Text>
-      </div>
-      <div className="mt-3">
-        <Text size="button" className="text-white/80 cursor-pointer focus-ring" asChild>
-          <button type="button" onClick={onExpand}>
-            Read more
-          </button>
-        </Text>
-      </div>
-    </div>
   );
 };
 

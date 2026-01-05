@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
 
 import type {
   AuthorizedDealerEntry,
@@ -12,8 +11,16 @@ import type {
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { useParallaxBackground } from "@/hooks/use-parallax-background";
-import { Container, Heading, Text } from "@/components/ui";
+import {
+  Container,
+  Heading,
+  RevealCollapsedHeader,
+  RevealExpandedHeader,
+  SectionBackdrop,
+  SectionShell,
+  Text,
+  useRevealHeight,
+} from "@/components/ui";
 
 type TabKey = "schedule" | "dealers";
 
@@ -32,13 +39,6 @@ type TravelNetworkRevealSectionProps = Readonly<{
 type TravelNetworkBackground = Readonly<{
   url: string;
   alt: string;
-}>;
-
-type TravelNetworkBackdropProps = Readonly<{
-  background: TravelNetworkBackground;
-  revealNetwork: boolean;
-  revealPhotoFocus: boolean;
-  enableParallax: boolean;
 }>;
 
 type ScheduleListProps = Readonly<{
@@ -93,9 +93,7 @@ const TravelNetworkRevealSection = ({
 }: TravelNetworkRevealSectionProps) => {
   const [networkExpanded, setNetworkExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>("schedule");
-  const networkShellRef = useRef<HTMLDivElement | null>(null);
 
   const tabs = useMemo(
     () => [
@@ -128,6 +126,10 @@ const TravelNetworkRevealSection = ({
   const revealNetwork = !enableTitleReveal || networkExpanded;
   const revealPhotoFocus = revealNetwork;
   const networkMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
+  const { ref: networkShellRef, minHeightStyle } = useRevealHeight({
+    enabled: enableTitleReveal && revealNetwork,
+    deps: [activeTab, data.dealers.length, data.scheduledEvents.length],
+  });
 
   const handleNetworkExpand = () => {
     if (!enableTitleReveal) return;
@@ -143,134 +145,58 @@ const TravelNetworkRevealSection = ({
     onCollapsedChange?.(true);
   };
 
-  useEffect(() => {
-    if (!enableTitleReveal || !revealNetwork) return;
-    const node = networkShellRef.current;
-    if (!node) return;
-
-    const updateHeight = () => {
-      const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-      setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") return;
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealNetwork, activeTab, data.dealers.length, data.scheduledEvents.length]);
-
   return (
     <>
-      <TravelNetworkBackdrop
-        background={background}
-        revealNetwork={revealNetwork}
-        revealPhotoFocus={revealPhotoFocus}
+      <SectionBackdrop
+        image={{ url: background.url, alt: background.alt }}
+        reveal={revealNetwork}
+        revealOverlay={revealPhotoFocus}
         enableParallax={enableTitleReveal && !revealNetwork}
+        overlay="canvas"
+        loading="lazy"
       />
 
       <Container size="xl" className="relative z-10">
-        <div
+        <SectionShell
           ref={networkShellRef}
-          style={
-            enableTitleReveal && revealNetwork && expandedHeight
-              ? { minHeight: expandedHeight }
-              : undefined
-          }
-          className={cn(
-            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            networkMinHeight,
-          )}
+          style={minHeightStyle}
+          reveal={revealPhotoFocus}
+          minHeightClass={networkMinHeight ?? undefined}
         >
           {revealNetwork ? (
-            <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8">
-              <div className="space-y-3">
-                <div className="relative">
-                  <Heading
-                    id="travel-network-heading"
-                    level={2}
-                    size="xl"
-                    className={headerThemeReady ? "text-ink" : "text-white"}
-                  >
-                    {heading}
-                  </Heading>
-                </div>
-                <div className="relative">
-                  <Text
-                    className={cn(
-                      "type-section-subtitle",
-                      headerThemeReady ? "text-ink-muted" : "text-white",
-                    )}
-                    leading="relaxed"
-                  >
-                    {lead}
-                  </Text>
-                </div>
-                <div>
-                  <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
-                    {supporting}
-                  </Text>
-                </div>
-              </div>
-              {enableTitleReveal ? (
-                <button
-                  type="button"
-                  className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-                  onClick={handleNetworkCollapse}
+            <RevealExpandedHeader
+              headingId="travel-network-heading"
+              heading={heading}
+              headerThemeReady={headerThemeReady}
+              enableTitleReveal={enableTitleReveal}
+              onCollapse={handleNetworkCollapse}
+            >
+              <div className="relative">
+                <Text
+                  className={cn(
+                    "type-section-subtitle",
+                    headerThemeReady ? "text-ink-muted" : "text-white",
+                  )}
+                  leading="relaxed"
                 >
-                  Collapse
-                </button>
-              ) : null}
-            </div>
-          ) : (
-            <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
-              <div className="relative inline-flex text-white">
-                <Heading
-                  id="travel-network-heading"
-                  level={2}
-                  size="xl"
-                  className="type-section-collapsed"
-                >
-                  {heading}
-                </Heading>
-                <button
-                  type="button"
-                  className="absolute inset-0 z-10 cursor-pointer focus-ring"
-
-
-                  onClick={handleNetworkExpand}
-                  aria-expanded={revealNetwork}
-                  aria-controls="travel-network-body"
-                  aria-labelledby="travel-network-heading"
-                >
-                  <span className="sr-only">Expand {heading}</span>
-                </button>
-              </div>
-              <div className="relative text-white">
-                <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
                   {lead}
                 </Text>
               </div>
-              <div className="mt-3">
-                <Text
-                  size="button"
-                  className="text-white/80 cursor-pointer focus-ring"
-                  asChild
-                >
-                  <button type="button" onClick={handleNetworkExpand}>
-                    Read more
-                  </button>
+              <div>
+                <Text className="type-section-subtitle text-ink-muted" leading="relaxed">
+                  {supporting}
                 </Text>
               </div>
-            </div>
+            </RevealExpandedHeader>
+          ) : (
+            <RevealCollapsedHeader
+              headingId="travel-network-heading"
+              heading={heading}
+              subheading={lead}
+              controlsId="travel-network-body"
+              expanded={revealNetwork}
+              onExpand={handleNetworkExpand}
+            />
           )}
 
           {revealNetwork ? (
@@ -328,55 +254,9 @@ const TravelNetworkRevealSection = ({
               </div>
             </div>
           ) : null}
-        </div>
+        </SectionShell>
       </Container>
     </>
-  );
-};
-
-const TravelNetworkBackdrop = ({
-  background,
-  revealNetwork,
-  revealPhotoFocus,
-  enableParallax,
-}: TravelNetworkBackdropProps) => {
-  const parallaxRef = useParallaxBackground(enableParallax);
-
-  return (
-    <div className="absolute inset-0 -z-10 overflow-hidden">
-      <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
-        <Image
-          src={background.url}
-          alt={background.alt}
-          fill
-          sizes="100vw"
-          className="object-cover"
-          priority={false}
-          loading="lazy"
-        />
-      </div>
-      <div
-        className={cn(
-          "absolute inset-0 bg-(--scrim-strong)",
-          revealNetwork ? "opacity-0" : "opacity-100",
-        )}
-        aria-hidden
-      />
-      <div
-        className={cn(
-          "absolute inset-0 bg-(--scrim-strong)",
-          revealPhotoFocus ? "opacity-100" : "opacity-0",
-        )}
-        aria-hidden
-      />
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-          revealPhotoFocus ? "opacity-100" : "opacity-0",
-        )}
-        aria-hidden
-      />
-    </div>
   );
 };
 

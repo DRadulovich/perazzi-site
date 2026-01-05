@@ -1,14 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import type { ChampionEvergreen, ChampionsGalleryUi } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { useParallaxBackground } from "@/hooks/use-parallax-background";
-import { Container, Heading, Section, Text } from "@/components/ui";
+import {
+  Container,
+  Heading,
+  RevealCollapsedHeader,
+  RevealExpandedHeader,
+  Section,
+  SectionBackdrop,
+  SectionShell,
+  Text,
+  useRevealHeight,
+} from "@/components/ui";
 
 type ChampionsGalleryProps = Readonly<{
   champions: ChampionEvergreen[];
@@ -79,8 +88,9 @@ const ChampionsGalleryRevealSection = ({
   const [selectedChampionId, setSelectedChampionId] = useState<string | null>(() => {
     return champions[0]?.id ?? null;
   });
-
-  const galleryShellRef = useRef<HTMLDivElement | null>(null);
+  const revealGallery = !enableTitleReveal || galleryExpanded;
+  const revealPhotoFocus = revealGallery;
+  const galleryMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
 
   const disciplines = useMemo(() => {
     const set = new Set<string>();
@@ -109,6 +119,11 @@ const ChampionsGalleryRevealSection = ({
   const selectedChampion =
     filteredChampions.find((champion) => champion.id === activeChampionId) ?? null;
 
+  const { ref: galleryShellRef, minHeightStyle } = useRevealHeight({
+    enabled: enableTitleReveal && revealGallery,
+    deps: [activeDiscipline, activeChampionId, champions.length],
+  });
+
   const heading = ui.heading ?? "Perazzi Champions";
   const subheading = ui.subheading ?? "The athletes who shaped our lineage";
   const championsLabel = ui.championsLabel ?? "Champions";
@@ -118,18 +133,6 @@ const ChampionsGalleryRevealSection = ({
   };
   const cardCtaLabel = ui.cardCtaLabel ?? "Read full interview";
 
-  const revealGallery = !enableTitleReveal || galleryExpanded;
-  const revealPhotoFocus = revealGallery;
-  const galleryMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
-
-  const expandedHeight = useExpandedHeightObserver({
-    enableTitleReveal,
-    revealGallery,
-    galleryShellRef,
-    activeDiscipline,
-    activeChampionId,
-    championsCount: champions.length,
-  });
 
   const handleGalleryExpand = () => {
     setGalleryExpanded(true);
@@ -150,38 +153,41 @@ const ChampionsGalleryRevealSection = ({
 
   return (
     <>
-      <ChampionsGalleryBackground
-        background={background}
-        revealGallery={revealGallery}
-        revealPhotoFocus={revealPhotoFocus}
+      <SectionBackdrop
+        image={{ url: background.url, alt: background.alt }}
+        reveal={revealGallery}
+        revealOverlay={revealPhotoFocus}
         enableParallax={enableTitleReveal && !revealGallery}
+        overlay="ink"
+        loading="lazy"
       />
 
       <Container size="xl" className="relative z-10">
-        <div
+        <SectionShell
           ref={galleryShellRef}
-          style={
-            enableTitleReveal && revealGallery && expandedHeight
-              ? { minHeight: expandedHeight }
-              : undefined
-          }
-          className={cn(
-            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            galleryMinHeight,
-          )}
+          style={minHeightStyle}
+          reveal={revealPhotoFocus}
+          minHeightClass={galleryMinHeight ?? undefined}
         >
-          <ChampionsGalleryHeader
-            heading={heading}
-            subheading={subheading}
-            enableTitleReveal={enableTitleReveal}
-            headerThemeReady={headerThemeReady}
-            revealGallery={revealGallery}
-            onCollapse={handleGalleryCollapse}
-            onExpand={handleGalleryExpand}
-          />
+          {revealGallery ? (
+            <RevealExpandedHeader
+              headingId="heritage-champions-heading"
+              heading={heading}
+              subheading={subheading}
+              headerThemeReady={headerThemeReady}
+              enableTitleReveal={enableTitleReveal}
+              onCollapse={handleGalleryCollapse}
+            />
+          ) : (
+            <RevealCollapsedHeader
+              headingId="heritage-champions-heading"
+              heading={heading}
+              subheading={subheading}
+              controlsId="heritage-champions-body"
+              expanded={revealGallery}
+              onExpand={handleGalleryExpand}
+            />
+          )}
 
           <ChampionsGalleryBody
             revealGallery={revealGallery}
@@ -195,219 +201,11 @@ const ChampionsGalleryRevealSection = ({
             selectedChampion={selectedChampion}
             cardCtaLabel={cardCtaLabel}
           />
-        </div>
+        </SectionShell>
       </Container>
     </>
   );
 };
-
-type ExpandedHeightObserverOptions = Readonly<{
-  enableTitleReveal: boolean;
-  revealGallery: boolean;
-  galleryShellRef: RefObject<HTMLDivElement | null>;
-  activeDiscipline: string | null;
-  activeChampionId: string | null;
-  championsCount: number;
-}>;
-
-function useExpandedHeightObserver({
-  enableTitleReveal,
-  revealGallery,
-  galleryShellRef,
-  activeDiscipline,
-  activeChampionId,
-  championsCount,
-}: ExpandedHeightObserverOptions) {
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!enableTitleReveal || !revealGallery) return;
-
-    const node = galleryShellRef.current;
-    if (!node) return;
-
-    const updateHeight = () => {
-      const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-      setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") return;
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [
-    enableTitleReveal,
-    revealGallery,
-    galleryShellRef,
-    activeDiscipline,
-    activeChampionId,
-    championsCount,
-  ]);
-
-  return expandedHeight;
-}
-
-type ChampionsGalleryBackgroundProps = Readonly<{
-  background: Readonly<{
-    url: string;
-    alt: string;
-  }>;
-  revealGallery: boolean;
-  revealPhotoFocus: boolean;
-  enableParallax: boolean;
-}>;
-
-function ChampionsGalleryBackground({
-  background,
-  revealGallery,
-  revealPhotoFocus,
-  enableParallax,
-}: ChampionsGalleryBackgroundProps) {
-  const parallaxRef = useParallaxBackground(enableParallax);
-
-  return (
-    <div className="absolute inset-0 -z-10 overflow-hidden">
-      <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
-        <Image
-          src={background.url}
-          alt={background.alt}
-          fill
-          sizes="100vw"
-          className="object-cover"
-          loading="lazy"
-        />
-      </div>
-      <div
-        className={cn(
-          "absolute inset-0 bg-(--scrim-strong)",
-          revealGallery ? "opacity-0" : "opacity-100",
-        )}
-        aria-hidden
-      />
-      <div
-        className={cn(
-          "absolute inset-0 bg-(--scrim-strong)",
-          revealPhotoFocus ? "opacity-100" : "opacity-0",
-        )}
-        aria-hidden
-      />
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-0 overlay-gradient-ink",
-          revealPhotoFocus ? "opacity-100" : "opacity-0",
-        )}
-        aria-hidden
-      />
-    </div>
-  );
-}
-
-type ChampionsGalleryHeaderProps = Readonly<{
-  heading: string;
-  subheading: string;
-  enableTitleReveal: boolean;
-  headerThemeReady: boolean;
-  revealGallery: boolean;
-  onCollapse: () => void;
-  onExpand: () => void;
-}>;
-
-function ChampionsGalleryHeader({
-  heading,
-  subheading,
-  enableTitleReveal,
-  headerThemeReady,
-  revealGallery,
-  onCollapse,
-  onExpand,
-}: ChampionsGalleryHeaderProps) {
-  if (revealGallery) {
-    return (
-      <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-8">
-        <div className="space-y-3">
-          <div className="relative">
-            <Heading
-              id="heritage-champions-heading"
-              level={2}
-              size="xl"
-              className={headerThemeReady ? "text-ink" : "text-white"}
-            >
-              {heading}
-            </Heading>
-          </div>
-          <div className="relative">
-            <Text
-              className={cn(
-                "type-section-subtitle",
-                headerThemeReady ? "text-ink-muted" : "text-white",
-              )}
-            >
-              {subheading}
-            </Text>
-          </div>
-        </div>
-        {enableTitleReveal ? (
-          <button
-            type="button"
-            className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-            onClick={onCollapse}
-          >
-            Collapse
-          </button>
-        ) : null}
-      </div>
-    );
-  }
-
-  return (
-    <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
-      <div className="relative inline-flex text-white">
-        <Heading
-          id="heritage-champions-heading"
-          level={2}
-          size="xl"
-          className="type-section-collapsed"
-        >
-          {heading}
-        </Heading>
-        <button
-          type="button"
-          className="absolute inset-0 z-10 cursor-pointer focus-ring"
-
-
-          onClick={onExpand}
-          aria-expanded={revealGallery}
-          aria-controls="heritage-champions-body"
-          aria-labelledby="heritage-champions-heading"
-        >
-          <span className="sr-only">Expand {heading}</span>
-        </button>
-      </div>
-      <div className="relative text-white">
-        <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-          {subheading}
-        </Text>
-      </div>
-      <div className="mt-3">
-        <Text
-          size="button"
-          className="text-white/80 cursor-pointer focus-ring"
-          asChild
-        >
-          <button type="button" onClick={onExpand}>
-            Read more
-          </button>
-        </Text>
-      </div>
-    </div>
-  );
-}
 
 type ChampionsGalleryBodyProps = Readonly<{
   revealGallery: boolean;

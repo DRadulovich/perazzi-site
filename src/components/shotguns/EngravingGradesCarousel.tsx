@@ -2,15 +2,23 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState, useRef, useEffect, type Dispatch, type SetStateAction } from "react";
-import { useParallaxBackground } from "@/hooks/use-parallax-background";
+import { useMemo, useState, useEffect, type Dispatch, type SetStateAction } from "react";
 
 import type { GradeSeries, ShotgunsLandingData } from "@/types/catalog";
 import { getGradeAnchorId } from "@/lib/grade-anchors";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { Container, Heading, Text } from "@/components/ui";
+import {
+  Container,
+  Heading,
+  RevealCollapsedHeader,
+  RevealExpandedHeader,
+  SectionBackdrop,
+  SectionShell,
+  Text,
+  useRevealHeight,
+} from "@/components/ui";
 
 type EngravingGradesCarouselProps = Readonly<{
   grades: readonly GradeSeries[];
@@ -41,16 +49,6 @@ type EngravingRevealSectionProps = {
   readonly enableTitleReveal: boolean;
   readonly onCollapsedChange?: (collapsed: boolean) => void;
 };
-
-type EngravingGradesHeaderProps = Readonly<{
-  revealCarousel: boolean;
-  enableTitleReveal: boolean;
-  headerThemeReady: boolean;
-  heading: string;
-  subheading: string;
-  onCollapse: () => void;
-  onExpand: () => void;
-}>;
 
 type EngravingGradesBodyProps = Readonly<{
   categories: EngravingCategory[];
@@ -220,13 +218,14 @@ const EngravingGradesRevealSection = ({
 }: EngravingRevealSectionProps) => {
   const [carouselExpanded, setCarouselExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
-  const carouselShellRef = useRef<HTMLDivElement | null>(null);
 
   const revealCarousel = !enableTitleReveal || carouselExpanded;
   const revealPhotoFocus = revealCarousel;
   const carouselMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
-  const parallaxRef = useParallaxBackground(enableTitleReveal && !revealCarousel);
+  const { ref: carouselShellRef, minHeightStyle } = useRevealHeight({
+    enabled: enableTitleReveal && revealCarousel,
+    deps: [openCategory, activeGradeId],
+  });
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
@@ -242,89 +241,53 @@ const EngravingGradesRevealSection = ({
     onCollapsedChange?.(true);
   };
 
-  useEffect(() => {
-    if (!enableTitleReveal || !revealCarousel) return;
-    const node = carouselShellRef.current;
-    if (!node) return;
-
-    const updateHeight = () => {
-      const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-      setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") return;
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealCarousel, openCategory, activeGradeId]);
-
   return (
     <>
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
-          <Image
-            src={background.url}
-            alt={background.alt}
-            fill
-            sizes="100vw"
-            className="object-cover"
-            priority={false}
-          />
-        </div>
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            revealCarousel ? "opacity-0" : "opacity-100",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "absolute inset-0 bg-(--scrim-strong)",
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "absolute inset-0 overlay-gradient-canvas-80",
-            revealPhotoFocus ? "opacity-100" : "opacity-0",
-          )}
-          aria-hidden
-        />
-      </div>
+      <SectionBackdrop
+        image={{ url: background.url, alt: background.alt }}
+        reveal={revealCarousel}
+        revealOverlay={revealPhotoFocus}
+        enableParallax={enableTitleReveal && !revealCarousel}
+        overlay="canvas-80"
+      />
 
       <Container size="xl" className="relative z-10">
-        <div
+        <SectionShell
           ref={carouselShellRef}
-          style={
-            enableTitleReveal && revealCarousel && expandedHeight
-              ? { minHeight: expandedHeight }
-              : undefined
-          }
-          className={cn(
-            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            carouselMinHeight,
-          )}
+          style={minHeightStyle}
+          reveal={revealPhotoFocus}
+          minHeightClass={carouselMinHeight ?? undefined}
         >
-          <EngravingGradesHeader
-            revealCarousel={revealCarousel}
-            enableTitleReveal={enableTitleReveal}
-            headerThemeReady={headerThemeReady}
-            heading={heading}
-            subheading={subheading}
-            onCollapse={handleCollapse}
-            onExpand={handleExpand}
-          />
+          {revealCarousel ? (
+            <RevealExpandedHeader
+              headingId="engraving-grades-heading"
+              heading={heading}
+              headerThemeReady={headerThemeReady}
+              enableTitleReveal={enableTitleReveal}
+              onCollapse={handleCollapse}
+            >
+              <div className="relative">
+                <Text
+                  className={cn(
+                    "max-w-4xl type-section-subtitle",
+                    headerThemeReady ? "text-ink-muted" : "text-white",
+                  )}
+                  leading="normal"
+                >
+                  {subheading}
+                </Text>
+              </div>
+            </RevealExpandedHeader>
+          ) : (
+            <RevealCollapsedHeader
+              headingId="engraving-grades-heading"
+              heading={heading}
+              subheading={subheading}
+              controlsId="engraving-grades-body"
+              expanded={revealCarousel}
+              onExpand={handleExpand}
+            />
+          )}
 
           {revealCarousel ? (
             <EngravingGradesBody
@@ -337,101 +300,9 @@ const EngravingGradesRevealSection = ({
               ctaLabel={ctaLabel}
             />
           ) : null}
-        </div>
+        </SectionShell>
       </Container>
     </>
-  );
-};
-
-const EngravingGradesHeader = ({
-  revealCarousel,
-  enableTitleReveal,
-  headerThemeReady,
-  heading,
-  subheading,
-  onCollapse,
-  onExpand,
-}: EngravingGradesHeaderProps) => {
-  if (revealCarousel) {
-    return (
-      <div className="relative z-10 space-y-4 md:flex md:items-start md:justify-between md:gap-8">
-        <div className="space-y-3">
-          <div className="relative">
-            <Heading
-              id="engraving-grades-heading"
-              level={2}
-              size="xl"
-              className={headerThemeReady ? "text-ink" : "text-white"}
-            >
-              {heading}
-            </Heading>
-          </div>
-          <div className="relative">
-            <Text
-              className={cn(
-                "max-w-4xl type-section-subtitle",
-                headerThemeReady ? "text-ink-muted" : "text-white",
-              )}
-              leading="normal"
-            >
-              {subheading}
-            </Text>
-          </div>
-        </div>
-        {enableTitleReveal ? (
-          <button
-            type="button"
-            className="mt-4 inline-flex items-center justify-center type-button text-ink-muted hover:text-ink focus-ring md:mt-0"
-            onClick={onCollapse}
-          >
-            Collapse
-          </button>
-        ) : null}
-      </div>
-    );
-  }
-
-  return (
-    <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
-      <div className="relative inline-flex text-white">
-        <Heading
-          id="engraving-grades-heading"
-          level={2}
-          size="xl"
-          className="type-section-collapsed"
-        >
-          {heading}
-        </Heading>
-        <button
-          type="button"
-          className="absolute inset-0 z-10 cursor-pointer focus-ring"
-
-
-          onClick={onExpand}
-          aria-expanded={revealCarousel}
-          aria-controls="engraving-grades-body"
-          aria-labelledby="engraving-grades-heading"
-        >
-          <span className="sr-only">Expand {heading}</span>
-        </button>
-      </div>
-      <div className="relative text-white">
-        <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-          {subheading}
-        </Text>
-      </div>
-      <div className="mt-3">
-        <Text
-          size="button"
-          className="text-white/80 cursor-pointer focus-ring"
-          asChild
-        >
-          <button type="button" onClick={onExpand}>
-            Read more
-          </button>
-        </Text>
-      </div>
-    </div>
   );
 };
 

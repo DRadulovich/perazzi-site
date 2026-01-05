@@ -3,14 +3,24 @@
 import Image from "next/image";
 import SafeHtml from "@/components/SafeHtml";
 import { PortableText } from "@/components/PortableText";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ShotgunsLandingData } from "@/types/catalog";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { useParallaxBackground } from "@/hooks/use-parallax-background";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger, Container, Heading, Text } from "@/components/ui";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+  Container,
+  Heading,
+  RevealCollapsedHeader,
+  SectionBackdrop,
+  SectionShell,
+  Text,
+  useRevealHeight,
+} from "@/components/ui";
 
 type TriggerExplainerProps = Readonly<{
   explainer: ShotgunsLandingData["triggerExplainer"];
@@ -24,13 +34,6 @@ type TriggerExplainerRevealSectionProps = {
   readonly onCollapsedChange?: (collapsed: boolean) => void;
 };
 
-type TriggerExplainerBackgroundProps = Readonly<{
-  background: NonNullable<ShotgunsLandingData["triggerExplainer"]["background"]>;
-  revealExplainer: boolean;
-  revealPhotoFocus: boolean;
-  enableParallax: boolean;
-}>;
-
 type TriggerExplainerExpandedLayoutProps = Readonly<{
   explainer: ShotgunsLandingData["triggerExplainer"];
   manualOpen: boolean;
@@ -39,12 +42,6 @@ type TriggerExplainerExpandedLayoutProps = Readonly<{
   subheading: string;
   enableTitleReveal: boolean;
   onCollapse: () => void;
-}>;
-
-type TriggerExplainerCollapsedLayoutProps = Readonly<{
-  explainer: ShotgunsLandingData["triggerExplainer"];
-  subheading: string;
-  onExpand: () => void;
 }>;
 
 type TriggerExplainerContentProps = Readonly<{
@@ -102,8 +99,6 @@ const TriggerExplainerRevealSection = ({
 }: TriggerExplainerRevealSectionProps) => {
   const [explainerExpanded, setExplainerExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
-  const explainerShellRef = useRef<HTMLDivElement | null>(null);
 
   const subheading = explainer.subheading ?? "Removable or fixed—choose by confidence and feel.";
   const background = explainer.background ?? {
@@ -115,6 +110,10 @@ const TriggerExplainerRevealSection = ({
 
   const revealExplainer = !enableTitleReveal || explainerExpanded;
   const revealPhotoFocus = revealExplainer;
+  const { ref: explainerShellRef, minHeightStyle } = useRevealHeight({
+    enabled: enableTitleReveal && revealExplainer,
+    deps: [manualOpen],
+  });
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
@@ -130,45 +129,22 @@ const TriggerExplainerRevealSection = ({
     onCollapsedChange?.(true);
   };
 
-  useEffect(() => {
-    if (!enableTitleReveal || !revealExplainer) return;
-    const node = explainerShellRef.current;
-    if (!node) return;
-
-    const updateHeight = () => {
-      const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-      setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") return;
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealExplainer, manualOpen]);
-
-  const minHeightStyle =
-    enableTitleReveal && revealExplainer && expandedHeight ? { minHeight: expandedHeight } : undefined;
-
   return (
     <>
-      <TriggerExplainerBackground
-        background={background}
-        revealExplainer={revealExplainer}
-        revealPhotoFocus={revealPhotoFocus}
+      <SectionBackdrop
+        image={{ url: background.url, alt: background.alt }}
+        reveal={revealExplainer}
+        revealOverlay={revealPhotoFocus}
         enableParallax={enableTitleReveal && !revealExplainer}
+        overlay="canvas"
       />
 
       <Container size="xl" className="relative z-10">
-        <div
+        <SectionShell
           ref={explainerShellRef}
           style={minHeightStyle}
-          className={getExplainerShellClassName(revealPhotoFocus, enableTitleReveal)}
+          reveal={revealPhotoFocus}
+          minHeightClass={enableTitleReveal ? "min-h-[50vh]" : undefined}
         >
           {revealExplainer ? (
             <TriggerExplainerExpandedLayout
@@ -181,69 +157,18 @@ const TriggerExplainerRevealSection = ({
               onCollapse={handleCollapse}
             />
           ) : (
-            <TriggerExplainerCollapsedLayout
-              explainer={explainer}
+            <RevealCollapsedHeader
+              headingId="trigger-explainer-heading"
+              heading={explainer.title}
               subheading={subheading}
+              controlsId="trigger-explainer-body"
+              expanded={revealExplainer}
               onExpand={handleExpand}
             />
           )}
-        </div>
+        </SectionShell>
       </Container>
     </>
-  );
-};
-
-const getExplainerShellClassName = (revealPhotoFocus: boolean, enableTitleReveal: boolean) =>
-  cn(
-    "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-    revealPhotoFocus
-      ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-      : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-    enableTitleReveal && "min-h-[50vh]",
-  );
-
-const TriggerExplainerBackground = ({
-  background,
-  revealExplainer,
-  revealPhotoFocus,
-  enableParallax,
-}: TriggerExplainerBackgroundProps) => {
-  const parallaxRef = useParallaxBackground(enableParallax);
-
-  return (
-    <div className="absolute inset-0 -z-10 overflow-hidden">
-      <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
-        <Image
-          src={background.url}
-          alt={background.alt}
-          fill
-          sizes="100vw"
-          className="object-cover"
-          priority={false}
-        />
-      </div>
-      <div
-        className={cn(
-          "absolute inset-0 bg-(--scrim-strong)",
-          revealExplainer ? "opacity-0" : "opacity-100",
-        )}
-        aria-hidden
-      />
-      <div
-        className={cn(
-          "absolute inset-0 bg-(--scrim-strong)",
-          revealPhotoFocus ? "opacity-100" : "opacity-0",
-        )}
-        aria-hidden
-      />
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-          revealPhotoFocus ? "opacity-100" : "opacity-0",
-        )}
-        aria-hidden
-      />
-    </div>
   );
 };
 
@@ -324,49 +249,6 @@ const TriggerExplainerExpandedLayout = ({
     </>
   );
 };
-
-const TriggerExplainerCollapsedLayout = ({
-  explainer,
-  subheading,
-  onExpand,
-}: TriggerExplainerCollapsedLayoutProps) => (
-  <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
-    <div className="relative inline-flex text-white">
-      <Heading
-        id="trigger-explainer-heading"
-        level={2}
-        size="xl"
-        className="type-section-collapsed"
-      >
-        {explainer.title}
-      </Heading>
-      <button
-        type="button"
-        className="absolute inset-0 z-10 cursor-pointer focus-ring"
-
-
-        onClick={onExpand}
-        aria-expanded={false}
-        aria-controls="trigger-explainer-body"
-        aria-labelledby="trigger-explainer-heading"
-      >
-        <span className="sr-only">Expand {explainer.title}</span>
-      </button>
-    </div>
-    <div className="relative text-white">
-      <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-        {subheading}
-      </Text>
-    </div>
-    <div className="mt-3">
-      <Text size="button" className="text-white/80 cursor-pointer focus-ring" asChild>
-        <button type="button" onClick={onExpand}>
-          Read more
-        </button>
-      </Text>
-    </div>
-  </div>
-);
 
 const TriggerExplainerCopy = ({ explainer, className }: TriggerExplainerCopyProps) => {
   if (explainer.copyPortableText?.length) {

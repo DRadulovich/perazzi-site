@@ -1,13 +1,20 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import type { Champion, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { useParallaxBackground } from "@/hooks/use-parallax-background";
 import { cn } from "@/lib/utils";
-import { Container, Heading, Text } from "@/components/ui";
+import {
+  Container,
+  Heading,
+  RevealCollapsedHeader,
+  SectionBackdrop,
+  SectionShell,
+  Text,
+  useRevealHeight,
+} from "@/components/ui";
 
 type MarqueeFeatureProps = Readonly<{
   champion: Champion;
@@ -55,58 +62,6 @@ type MarqueeFeatureRevealSectionProps = Readonly<{
   onCollapsedChange?: (collapsed: boolean) => void;
 }>;
 
-type MarqueeFeatureBackgroundProps = Readonly<{
-  background: HomeData["marqueeUi"]["background"];
-  revealMarquee: boolean;
-  revealPhotoFocus: boolean;
-  enableParallax: boolean;
-}>;
-
-function MarqueeFeatureBackground({
-  background,
-  revealMarquee,
-  revealPhotoFocus,
-  enableParallax,
-}: MarqueeFeatureBackgroundProps) {
-  const parallaxRef = useParallaxBackground(enableParallax);
-
-  return (
-    <div className="absolute inset-0 -z-10 overflow-hidden">
-      <div ref={parallaxRef} className="absolute inset-x-0 -top-20 -bottom-20 parallax-image scale-105">
-        <Image
-          src={background.url}
-          alt={background.alt}
-          fill
-          sizes="100vw"
-          className="object-cover"
-          priority={false}
-        />
-      </div>
-      <div
-        className={cn(
-          "absolute inset-0 bg-(--scrim-strong)",
-          revealMarquee ? "opacity-0" : "opacity-100",
-        )}
-        aria-hidden
-      />
-      <div
-        className={cn(
-          "absolute inset-0 bg-(--scrim-strong)",
-          revealPhotoFocus ? "opacity-100" : "opacity-0",
-        )}
-        aria-hidden
-      />
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-0 overlay-gradient-canvas",
-          revealPhotoFocus ? "opacity-100" : "opacity-0",
-        )}
-        aria-hidden
-      />
-    </div>
-  );
-}
-
 function MarqueeFeatureRevealSection({
   champion,
   ui,
@@ -115,8 +70,6 @@ function MarqueeFeatureRevealSection({
 }: MarqueeFeatureRevealSectionProps) {
   const [marqueeExpanded, setMarqueeExpanded] = useState(!enableTitleReveal);
   const [headerThemeReady, setHeaderThemeReady] = useState(!enableTitleReveal);
-  const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
-  const marqueeShellRef = useRef<HTMLDivElement | null>(null);
 
   const ratio = champion.image.aspectRatio ?? 3 / 4;
   const background = ui.background ?? {
@@ -132,6 +85,9 @@ function MarqueeFeatureRevealSection({
   const revealMarquee = !enableTitleReveal || marqueeExpanded;
   const revealPhotoFocus = revealMarquee;
   const marqueeMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
+  const { ref: marqueeShellRef, minHeightStyle } = useRevealHeight({
+    enabled: enableTitleReveal && revealMarquee,
+  });
 
   const handleMarqueeExpand = () => {
     if (!enableTitleReveal) return;
@@ -147,52 +103,22 @@ function MarqueeFeatureRevealSection({
     onCollapsedChange?.(true);
   };
 
-  useEffect(() => {
-    if (!enableTitleReveal || !revealMarquee) return;
-    const node = marqueeShellRef.current;
-    if (!node) return;
-
-    const updateHeight = () => {
-      const nextHeight = Math.ceil(node.getBoundingClientRect().height);
-      setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
-    };
-
-    updateHeight();
-
-    if (typeof ResizeObserver === "undefined") return;
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(node);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [enableTitleReveal, revealMarquee]);
-
   return (
     <>
-      <MarqueeFeatureBackground
-        background={background}
-        revealMarquee={revealMarquee}
-        revealPhotoFocus={revealPhotoFocus}
+      <SectionBackdrop
+        image={{ url: background.url, alt: background.alt }}
+        reveal={revealMarquee}
+        revealOverlay={revealPhotoFocus}
         enableParallax={enableTitleReveal && !revealMarquee}
+        overlay="canvas"
       />
 
       <Container size="xl" className="relative z-10">
-        <div
+        <SectionShell
           ref={marqueeShellRef}
-          style={
-            enableTitleReveal && revealMarquee && expandedHeight
-              ? { minHeight: expandedHeight }
-              : undefined
-          }
-          className={cn(
-            "relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-            revealPhotoFocus
-              ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-              : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-            marqueeMinHeight,
-          )}
+          style={minHeightStyle}
+          reveal={revealPhotoFocus}
+          minHeightClass={marqueeMinHeight ?? undefined}
         >
           {revealMarquee ? (
             <div id="marquee-feature-body" className="relative z-10">
@@ -269,48 +195,16 @@ function MarqueeFeatureRevealSection({
               </div>
             </div>
           ) : (
-            <div className="absolute inset-0 z-0 flex flex-col items-center justify-center gap-3 text-center">
-              <div className="relative inline-flex text-white">
-                <Heading
-                  id="champion-heading"
-                  level={2}
-                  size="xl"
-                  className="type-section-collapsed"
-                >
-                  {headingTitle}
-                </Heading>
-                <button
-                  type="button"
-                  className="absolute inset-0 z-10 cursor-pointer focus-ring"
-
-
-                  onClick={handleMarqueeExpand}
-                  aria-expanded={revealMarquee}
-                  aria-controls="marquee-feature-body"
-                  aria-labelledby="champion-heading"
-                >
-                  <span className="sr-only">Expand {headingTitle}</span>
-                </button>
-              </div>
-              <div className="relative text-white">
-                <Text size="lg" className="type-section-subtitle type-section-subtitle-collapsed">
-                  {headingSubtitle}
-                </Text>
-              </div>
-              <div className="mt-3">
-                <Text
-                  size="button"
-                  className="text-white/80 cursor-pointer focus-ring"
-                  asChild
-                >
-                  <button type="button" onClick={handleMarqueeExpand}>
-                    Read more
-                  </button>
-                </Text>
-              </div>
-            </div>
+            <RevealCollapsedHeader
+              headingId="champion-heading"
+              heading={headingTitle}
+              subheading={headingSubtitle}
+              controlsId="marquee-feature-body"
+              expanded={revealMarquee}
+              onExpand={handleMarqueeExpand}
+            />
           )}
-        </div>
+        </SectionShell>
       </Container>
     </>
   );
