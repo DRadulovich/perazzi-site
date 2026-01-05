@@ -112,20 +112,30 @@ const VisitFactoryRevealSection = ({
   const revealVisit = !enableTitleReveal || visitExpanded;
   const revealPhotoFocus = revealVisit;
   const visitMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
-  const { ref: visitShellRef, minHeightStyle } = useRevealHeight({
-    enabled: enableTitleReveal && revealVisit,
+  const {
+    ref: visitShellRef,
+    minHeightStyle,
+    beginExpand,
+    clearPremeasure,
+    isPreparing,
+  } = useRevealHeight({
+    enableObserver: enableTitleReveal && revealVisit,
     deps: [expectOpen],
   });
+  const showExpanded = revealVisit || isPreparing;
 
   const handleVisitExpand = () => {
     if (!enableTitleReveal) return;
-    setVisitExpanded(true);
-    setHeaderThemeReady(true);
-    onCollapsedChange?.(false);
+    beginExpand(() => {
+      setVisitExpanded(true);
+      setHeaderThemeReady(true);
+      onCollapsedChange?.(false);
+    });
   };
 
   const handleVisitCollapse = () => {
     if (!enableTitleReveal) return;
+    clearPremeasure();
     setHeaderThemeReady(false);
     setVisitExpanded(false);
     onCollapsedChange?.(true);
@@ -149,24 +159,35 @@ const VisitFactoryRevealSection = ({
           reveal={revealPhotoFocus}
           minHeightClass={visitMinHeight ?? undefined}
         >
-          {revealVisit ? (
-            <RevealExpandedHeader
-              headingId="visit-factory-heading"
-              heading={heading}
-              subheading={subheading}
-              headerThemeReady={headerThemeReady}
-              enableTitleReveal={enableTitleReveal}
-              onCollapse={handleVisitCollapse}
-            >
-              {visit.introHtml ? (
-                <div>
-                  <SafeHtml
-                    className="prose-journal max-w-none text-ink-muted md:max-w-4xl lg:max-w-4xl"
-                    html={visit.introHtml}
-                  />
-                </div>
-              ) : null}
-            </RevealExpandedHeader>
+          {showExpanded ? (
+            <div className={isPreparing ? "section-reveal-measure" : undefined}>
+              <RevealExpandedHeader
+                headingId="visit-factory-heading"
+                heading={heading}
+                subheading={subheading}
+                headerThemeReady={headerThemeReady}
+                enableTitleReveal={enableTitleReveal}
+                onCollapse={handleVisitCollapse}
+              >
+                {visit.introHtml ? (
+                  <div>
+                    <SafeHtml
+                      className="prose-journal max-w-none text-ink-muted md:max-w-4xl lg:max-w-4xl"
+                      html={visit.introHtml}
+                    />
+                  </div>
+                ) : null}
+              </RevealExpandedHeader>
+              <VisitFactoryBody
+                revealVisit={showExpanded}
+                visit={visit}
+                mapHref={mapHref}
+                mapPanelId={mapPanelId}
+                mapNoteId={mapNoteId}
+                expectOpen={expectOpen}
+                onExpectOpenChange={setExpectOpen}
+              />
+            </div>
           ) : (
             <RevealCollapsedHeader
               headingId="visit-factory-heading"
@@ -177,15 +198,6 @@ const VisitFactoryRevealSection = ({
               onExpand={handleVisitExpand}
             />
           )}
-          <VisitFactoryBody
-            revealVisit={revealVisit}
-            visit={visit}
-            mapHref={mapHref}
-            mapPanelId={mapPanelId}
-            mapNoteId={mapNoteId}
-            expectOpen={expectOpen}
-            onExpectOpenChange={setExpectOpen}
-          />
         </SectionShell>
       </Container>
     </>

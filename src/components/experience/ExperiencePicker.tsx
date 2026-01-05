@@ -194,18 +194,28 @@ const ExperiencePickerRevealSection = ({
   const revealPicker = !enableTitleReveal || pickerExpanded;
   const revealPhotoFocus = revealPicker;
   const pickerMinHeight = enableTitleReveal ? "min-h-[50vh]" : undefined;
-  const { ref: pickerShellRef, minHeightStyle } = useRevealHeight({
-    enabled: enableTitleReveal && revealPicker,
+  const {
+    ref: pickerShellRef,
+    minHeightStyle,
+    beginExpand,
+    clearPremeasure,
+    isPreparing,
+  } = useRevealHeight({
+    enableObserver: enableTitleReveal && revealPicker,
     deps: [items.length, faqItems.length],
   });
+  const showExpanded = revealPicker || isPreparing;
 
   const handlePickerExpand = () => {
-    setPickerExpanded(true);
-    setHeaderThemeReady(true);
-    onCollapsedChange?.(false);
+    beginExpand(() => {
+      setPickerExpanded(true);
+      setHeaderThemeReady(true);
+      onCollapsedChange?.(false);
+    });
   };
 
   const handlePickerCollapse = () => {
+    clearPremeasure();
     setHeaderThemeReady(false);
     setPickerExpanded(false);
     onCollapsedChange?.(true);
@@ -228,15 +238,25 @@ const ExperiencePickerRevealSection = ({
           reveal={revealPhotoFocus}
           minHeightClass={pickerMinHeight ?? undefined}
         >
-          {revealPicker ? (
-            <RevealExpandedHeader
-              headingId="experience-picker-heading"
-              heading={heading}
-              subheading={subheading}
-              headerThemeReady={headerThemeReady}
-              enableTitleReveal={enableTitleReveal}
-              onCollapse={handlePickerCollapse}
-            />
+          {showExpanded ? (
+            <div className={isPreparing ? "section-reveal-measure" : undefined}>
+              <RevealExpandedHeader
+                headingId="experience-picker-heading"
+                heading={heading}
+                subheading={subheading}
+                headerThemeReady={headerThemeReady}
+                enableTitleReveal={enableTitleReveal}
+                onCollapse={handlePickerCollapse}
+              />
+              <ExperiencePickerBody
+                items={items}
+                faqItems={faqItems}
+                faqHeading={faqHeading}
+                faqLead={faqLead}
+                microLabel={microLabel}
+                onAnchorClick={onAnchorClick}
+              />
+            </div>
           ) : (
             <RevealCollapsedHeader
               headingId="experience-picker-heading"
@@ -245,17 +265,6 @@ const ExperiencePickerRevealSection = ({
               controlsId="experience-picker-body"
               expanded={revealPicker}
               onExpand={handlePickerExpand}
-            />
-          )}
-
-          {revealPicker && (
-            <ExperiencePickerBody
-              items={items}
-              faqItems={faqItems}
-              faqHeading={faqHeading}
-              faqLead={faqLead}
-              microLabel={microLabel}
-              onAnchorClick={onAnchorClick}
             />
           )}
         </SectionShell>

@@ -4,6 +4,7 @@ import Image from "next/image";
 import {
   forwardRef,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -15,15 +16,19 @@ import { Heading } from "./heading";
 import { Text } from "./text";
 
 type RevealHeightOptions = {
-  enabled: boolean;
+  enableObserver: boolean;
   deps?: readonly unknown[];
 };
 
-export const useRevealHeight = ({ enabled, deps = [] }: RevealHeightOptions) => {
+export const useRevealHeight = ({ enableObserver, deps = [] }: RevealHeightOptions) => {
   const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
+  const [premeasureHeight, setPremeasureHeight] = useState<number | null>(null);
+  const [isPreparing, setIsPreparing] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
+  const pendingExpandRef = useRef<(() => void) | null>(null);
+
   useEffect(() => {
-    if (!enabled) return;
+    if (!enableObserver) return;
     const node = ref.current;
     if (!node) return;
 
@@ -42,12 +47,52 @@ export const useRevealHeight = ({ enabled, deps = [] }: RevealHeightOptions) => 
     return () => {
       observer.disconnect();
     };
-  }, [enabled, deps]);
+  }, [enableObserver, deps]);
+
+  useLayoutEffect(() => {
+    if (!isPreparing) return;
+    const node = ref.current;
+    if (!node) return;
+
+    const nextHeight = Math.ceil(node.getBoundingClientRect().height);
+    setPremeasureHeight(nextHeight);
+
+    const pendingExpand = pendingExpandRef.current;
+    if (!pendingExpand) {
+      setIsPreparing(false);
+      return;
+    }
+
+    pendingExpandRef.current = null;
+    globalThis.requestAnimationFrame(() => {
+      pendingExpand();
+      setIsPreparing(false);
+    });
+  }, [isPreparing]);
+
+  const resolvedHeight =
+    enableObserver && expandedHeight !== null ? expandedHeight : premeasureHeight;
 
   const minHeightStyle: CSSProperties | undefined =
-    enabled && expandedHeight ? { minHeight: expandedHeight } : undefined;
+    resolvedHeight === null ? undefined : { minHeight: resolvedHeight };
 
-  return { ref, minHeightStyle };
+  const beginExpand = (onExpand: () => void) => {
+    pendingExpandRef.current = onExpand;
+    setIsPreparing(true);
+  };
+
+  const clearPremeasure = () => {
+    setPremeasureHeight(null);
+    pendingExpandRef.current = null;
+  };
+
+  return {
+    ref,
+    minHeightStyle,
+    beginExpand,
+    clearPremeasure,
+    isPreparing,
+  };
 };
 
 type OverlayVariant = "canvas" | "canvas-80" | "ink" | "ink-50" | "none";

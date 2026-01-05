@@ -26,6 +26,7 @@ import {
   SectionBackdrop,
   SectionShell,
   Text,
+  useRevealHeight,
 } from "@/components/ui";
 
 type DisciplineCard = ShotgunsLandingData["disciplines"][number];
@@ -379,16 +380,30 @@ const DisciplineRailRevealSection = ({
   const revealPhotoFocus = revealRail;
   const railMinHeight =
     enableTitleReveal && !revealRail ? "min-h-[50vh]" : null;
+  const {
+    ref: railShellRef,
+    minHeightStyle,
+    beginExpand,
+    clearPremeasure,
+    isPreparing,
+  } = useRevealHeight({
+    enableObserver: enableTitleReveal && revealRail,
+    deps: [openCategory, activeDisciplineId, modelLoadingId],
+  });
+  const showExpanded = revealRail || isPreparing;
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
-    setRailExpanded(true);
-    setHeaderThemeReady(true);
-    onCollapsedChange?.(false);
+    beginExpand(() => {
+      setRailExpanded(true);
+      setHeaderThemeReady(true);
+      onCollapsedChange?.(false);
+    });
   };
 
   const handleCollapse = () => {
     if (!enableTitleReveal) return;
+    clearPremeasure();
     setHeaderThemeReady(false);
     setRailExpanded(false);
     onCollapsedChange?.(true);
@@ -406,18 +421,34 @@ const DisciplineRailRevealSection = ({
 
       <Container size="xl" className="relative z-10">
         <SectionShell
+          ref={railShellRef}
+          style={minHeightStyle}
           reveal={revealPhotoFocus}
           minHeightClass={railMinHeight ?? undefined}
         >
-          {revealRail ? (
-            <RevealExpandedHeader
-              headingId="discipline-rail-heading"
-              heading={heading}
-              subheading={subheading}
-              headerThemeReady={headerThemeReady}
-              enableTitleReveal={enableTitleReveal}
-              onCollapse={handleCollapse}
-            />
+          {showExpanded ? (
+            <div className={isPreparing ? "section-reveal-measure" : undefined}>
+              <RevealExpandedHeader
+                headingId="discipline-rail-heading"
+                heading={heading}
+                subheading={subheading}
+                headerThemeReady={headerThemeReady}
+                enableTitleReveal={enableTitleReveal}
+                onCollapse={handleCollapse}
+              />
+              <DisciplineRailBody
+                revealRail={showExpanded}
+                categories={categories}
+                openCategory={openCategory}
+                setOpenCategory={setOpenCategory}
+                activeDisciplineId={activeDisciplineId}
+                setActiveDisciplineId={setActiveDisciplineId}
+                selectedDiscipline={selectedDiscipline}
+                platformName={platformName}
+                handleModelSelect={handleModelSelect}
+                modelLoadingId={modelLoadingId}
+              />
+            </div>
           ) : (
             <RevealCollapsedHeader
               headingId="discipline-rail-heading"
@@ -428,18 +459,6 @@ const DisciplineRailRevealSection = ({
               onExpand={handleExpand}
             />
           )}
-          <DisciplineRailBody
-            revealRail={revealRail}
-            categories={categories}
-            openCategory={openCategory}
-            setOpenCategory={setOpenCategory}
-            activeDisciplineId={activeDisciplineId}
-            setActiveDisciplineId={setActiveDisciplineId}
-            selectedDiscipline={selectedDiscipline}
-            platformName={platformName}
-            handleModelSelect={handleModelSelect}
-            modelLoadingId={modelLoadingId}
-          />
         </SectionShell>
       </Container>
     </>

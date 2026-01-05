@@ -119,10 +119,17 @@ const ChampionsGalleryRevealSection = ({
   const selectedChampion =
     filteredChampions.find((champion) => champion.id === activeChampionId) ?? null;
 
-  const { ref: galleryShellRef, minHeightStyle } = useRevealHeight({
-    enabled: enableTitleReveal && revealGallery,
+  const {
+    ref: galleryShellRef,
+    minHeightStyle,
+    beginExpand,
+    clearPremeasure,
+    isPreparing,
+  } = useRevealHeight({
+    enableObserver: enableTitleReveal && revealGallery,
     deps: [activeDiscipline, activeChampionId, champions.length],
   });
+  const showExpanded = revealGallery || isPreparing;
 
   const heading = ui.heading ?? "Perazzi Champions";
   const subheading = ui.subheading ?? "The athletes who shaped our lineage";
@@ -135,12 +142,15 @@ const ChampionsGalleryRevealSection = ({
 
 
   const handleGalleryExpand = () => {
-    setGalleryExpanded(true);
-    setHeaderThemeReady(true);
-    onCollapsedChange?.(false);
+    beginExpand(() => {
+      setGalleryExpanded(true);
+      setHeaderThemeReady(true);
+      onCollapsedChange?.(false);
+    });
   };
 
   const handleGalleryCollapse = () => {
+    clearPremeasure();
     setHeaderThemeReady(false);
     setGalleryExpanded(false);
     onCollapsedChange?.(true);
@@ -169,15 +179,29 @@ const ChampionsGalleryRevealSection = ({
           reveal={revealPhotoFocus}
           minHeightClass={galleryMinHeight ?? undefined}
         >
-          {revealGallery ? (
-            <RevealExpandedHeader
-              headingId="heritage-champions-heading"
-              heading={heading}
-              subheading={subheading}
-              headerThemeReady={headerThemeReady}
-              enableTitleReveal={enableTitleReveal}
-              onCollapse={handleGalleryCollapse}
-            />
+          {showExpanded ? (
+            <div className={isPreparing ? "section-reveal-measure" : undefined}>
+              <RevealExpandedHeader
+                headingId="heritage-champions-heading"
+                heading={heading}
+                subheading={subheading}
+                headerThemeReady={headerThemeReady}
+                enableTitleReveal={enableTitleReveal}
+                onCollapse={handleGalleryCollapse}
+              />
+              <ChampionsGalleryBody
+                revealGallery={showExpanded}
+                disciplines={disciplines}
+                activeDiscipline={activeDiscipline}
+                onDisciplineChange={setActiveDiscipline}
+                championsLabel={championsLabel}
+                filteredChampions={filteredChampions}
+                activeChampionId={activeChampionId}
+                onChampionSelect={handleChampionSelect}
+                selectedChampion={selectedChampion}
+                cardCtaLabel={cardCtaLabel}
+              />
+            </div>
           ) : (
             <RevealCollapsedHeader
               headingId="heritage-champions-heading"
@@ -188,19 +212,6 @@ const ChampionsGalleryRevealSection = ({
               onExpand={handleGalleryExpand}
             />
           )}
-
-          <ChampionsGalleryBody
-            revealGallery={revealGallery}
-            disciplines={disciplines}
-            activeDiscipline={activeDiscipline}
-            onDisciplineChange={setActiveDiscipline}
-            championsLabel={championsLabel}
-            filteredChampions={filteredChampions}
-            activeChampionId={activeChampionId}
-            onChampionSelect={handleChampionSelect}
-            selectedChampion={selectedChampion}
-            cardCtaLabel={cardCtaLabel}
-          />
         </SectionShell>
       </Container>
     </>

@@ -110,20 +110,30 @@ const TriggerExplainerRevealSection = ({
 
   const revealExplainer = !enableTitleReveal || explainerExpanded;
   const revealPhotoFocus = revealExplainer;
-  const { ref: explainerShellRef, minHeightStyle } = useRevealHeight({
-    enabled: enableTitleReveal && revealExplainer,
+  const {
+    ref: explainerShellRef,
+    minHeightStyle,
+    beginExpand,
+    clearPremeasure,
+    isPreparing,
+  } = useRevealHeight({
+    enableObserver: enableTitleReveal && revealExplainer,
     deps: [manualOpen],
   });
+  const showExpanded = revealExplainer || isPreparing;
 
   const handleExpand = () => {
     if (!enableTitleReveal) return;
-    setExplainerExpanded(true);
-    setHeaderThemeReady(true);
-    onCollapsedChange?.(false);
+    beginExpand(() => {
+      setExplainerExpanded(true);
+      setHeaderThemeReady(true);
+      onCollapsedChange?.(false);
+    });
   };
 
   const handleCollapse = () => {
     if (!enableTitleReveal) return;
+    clearPremeasure();
     setHeaderThemeReady(false);
     setExplainerExpanded(false);
     onCollapsedChange?.(true);
@@ -146,16 +156,18 @@ const TriggerExplainerRevealSection = ({
           reveal={revealPhotoFocus}
           minHeightClass={enableTitleReveal ? "min-h-[50vh]" : undefined}
         >
-          {revealExplainer ? (
-            <TriggerExplainerExpandedLayout
-              explainer={explainer}
-              manualOpen={manualOpen}
-              setManualOpen={setManualOpen}
-              headerThemeReady={headerThemeReady}
-              subheading={subheading}
-              enableTitleReveal={enableTitleReveal}
-              onCollapse={handleCollapse}
-            />
+          {showExpanded ? (
+            <div className={isPreparing ? "section-reveal-measure" : undefined}>
+              <TriggerExplainerExpandedLayout
+                explainer={explainer}
+                manualOpen={manualOpen}
+                setManualOpen={setManualOpen}
+                headerThemeReady={headerThemeReady}
+                subheading={subheading}
+                enableTitleReveal={enableTitleReveal}
+                onCollapse={handleCollapse}
+              />
+            </div>
           ) : (
             <RevealCollapsedHeader
               headingId="trigger-explainer-heading"

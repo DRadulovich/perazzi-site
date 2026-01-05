@@ -275,6 +275,11 @@
     transition: min-height 400ms ease-out;
   }
 
+  .section-reveal-measure {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
   section[data-tease-active="true"] .section-backdrop-media {
     transform: scale(1);
   }

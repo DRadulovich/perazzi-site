@@ -86,20 +86,30 @@ const BookingOptionsRevealSection = ({
   const revealBooking = !enableTitleReveal || bookingExpanded;
   const revealPhotoFocus = revealBooking;
   const bookingMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
-  const { ref: bookingShellRef, minHeightStyle } = useRevealHeight({
-    enabled: enableTitleReveal && revealBooking,
+  const {
+    ref: bookingShellRef,
+    minHeightStyle,
+    beginExpand,
+    clearPremeasure,
+    isPreparing,
+  } = useRevealHeight({
+    enableObserver: enableTitleReveal && revealBooking,
     deps: [schedulerOpen, schedulerLoaded, options.length],
   });
+  const showExpanded = revealBooking || isPreparing;
 
   const handleBookingExpand = () => {
     if (!enableTitleReveal) return;
-    setBookingExpanded(true);
-    setHeaderThemeReady(true);
-    onCollapsedChange?.(false);
+    beginExpand(() => {
+      setBookingExpanded(true);
+      setHeaderThemeReady(true);
+      onCollapsedChange?.(false);
+    });
   };
 
   const handleBookingCollapse = () => {
     if (!enableTitleReveal) return;
+    clearPremeasure();
     setHeaderThemeReady(false);
     setBookingExpanded(false);
     onCollapsedChange?.(true);
@@ -133,26 +143,39 @@ const BookingOptionsRevealSection = ({
           reveal={revealPhotoFocus}
           minHeightClass={bookingMinHeight ?? undefined}
         >
-          {revealBooking ? (
-            <RevealExpandedHeader
-              headingId="experience-booking-heading"
-              heading={heading}
-              headerThemeReady={headerThemeReady}
-              enableTitleReveal={enableTitleReveal}
-              onCollapse={handleBookingCollapse}
-            >
-              <div className="relative">
-                <Text
-                  className={cn(
-                    "type-section-subtitle",
-                    headerThemeReady ? "text-ink-muted" : "text-white",
-                  )}
-                  leading="relaxed"
-                >
-                  {subheading}
-                </Text>
-              </div>
-            </RevealExpandedHeader>
+          {showExpanded ? (
+            <div className={isPreparing ? "section-reveal-measure" : undefined}>
+              <RevealExpandedHeader
+                headingId="experience-booking-heading"
+                heading={heading}
+                headerThemeReady={headerThemeReady}
+                enableTitleReveal={enableTitleReveal}
+                onCollapse={handleBookingCollapse}
+              >
+                <div className="relative">
+                  <Text
+                    className={cn(
+                      "type-section-subtitle",
+                      headerThemeReady ? "text-ink-muted" : "text-white",
+                    )}
+                    leading="relaxed"
+                  >
+                    {subheading}
+                  </Text>
+                </div>
+              </RevealExpandedHeader>
+              <BookingBody
+                revealBooking={showExpanded}
+                options={options}
+                optionCtaLabel={optionCtaLabel}
+                scheduler={scheduler}
+                schedulerOpen={schedulerOpen}
+                schedulerLoaded={schedulerLoaded}
+                schedulerPanelId={schedulerPanelId}
+                schedulerNoteId={schedulerNoteId}
+                onSchedulerToggle={handleSchedulerToggle}
+              />
+            </div>
           ) : (
             <RevealCollapsedHeader
               headingId="experience-booking-heading"
@@ -163,17 +186,6 @@ const BookingOptionsRevealSection = ({
               onExpand={handleBookingExpand}
             />
           )}
-          <BookingBody
-            revealBooking={revealBooking}
-            options={options}
-            optionCtaLabel={optionCtaLabel}
-            scheduler={scheduler}
-            schedulerOpen={schedulerOpen}
-            schedulerLoaded={schedulerLoaded}
-            schedulerPanelId={schedulerPanelId}
-            schedulerNoteId={schedulerNoteId}
-            onSchedulerToggle={handleSchedulerToggle}
-          />
         </SectionShell>
       </Container>
     </>
