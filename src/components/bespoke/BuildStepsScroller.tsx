@@ -18,6 +18,7 @@ import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import {
   Heading,
+  RevealAnimatedBody,
   RevealCollapsedHeader,
   RevealExpandedHeader,
   SectionBackdrop,
@@ -290,7 +291,7 @@ const BuildStepsRevealSection = ({
   }, [handleStepEnter, revealBuildSteps, steps.length]);
 
   const expandedContent = (
-    <>
+    <RevealAnimatedBody>
       <RevealExpandedHeader
         headingId="build-steps-heading"
         heading={heading}
@@ -347,7 +348,7 @@ const BuildStepsRevealSection = ({
         onStepCta={onStepCta}
         onMobileDotClick={handleMobileDotClick}
       />
-    </>
+    </RevealAnimatedBody>
   );
 
   return (

@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import {
   Button,
   Heading,
+  RevealAnimatedBody,
   RevealCollapsedHeader,
   RevealExpandedHeader,
   SectionBackdrop,
@@ -153,7 +154,7 @@ function TimelineRevealSection({
   };
 
   const expandedContent = (
-    <>
+    <RevealAnimatedBody>
       <RevealExpandedHeader
         headingId="craft-timeline-heading"
         heading={headingTitle}
@@ -173,7 +174,7 @@ function TimelineRevealSection({
         alternateTitle={alternateTitle}
         revealPhotoFocus={revealPhotoFocus}
       />
-    </>
+    </RevealAnimatedBody>
   );
 
   return (

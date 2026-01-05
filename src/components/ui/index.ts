@@ -28,6 +28,7 @@ export {
 export { Section } from "./section";
 export {
   RevealCollapsedHeader,
+  RevealAnimatedBody,
   RevealExpandedHeader,
   SectionBackdrop,
   SectionShell,

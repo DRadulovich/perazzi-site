@@ -10,6 +10,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   Container,
   Heading,
+  RevealAnimatedBody,
   RevealCollapsedHeader,
   RevealExpandedHeader,
   Section,
@@ -162,7 +163,7 @@ const ChampionsGalleryRevealSection = ({
   };
 
   const expandedContent = (
-    <>
+    <RevealAnimatedBody>
       <RevealExpandedHeader
         headingId="heritage-champions-heading"
         heading={heading}
@@ -183,7 +184,7 @@ const ChampionsGalleryRevealSection = ({
         selectedChampion={selectedChampion}
         cardCtaLabel={cardCtaLabel}
       />
-    </>
+    </RevealAnimatedBody>
   );
 
   return (

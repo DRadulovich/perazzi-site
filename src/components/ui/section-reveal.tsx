@@ -217,6 +217,14 @@ type RevealExpandedHeaderProps = Readonly<{
   children?: ReactNode;
 }>;
 
+type RevealAnimatedBodyProps = Readonly<{
+  children: ReactNode;
+}>;
+
+export function RevealAnimatedBody({ children }: RevealAnimatedBodyProps) {
+  return <div className="section-reveal-body">{children}</div>;
+}
+
 export function RevealExpandedHeader({
   headingId,
   heading,

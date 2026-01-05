@@ -12,6 +12,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   Container,
   Heading,
+  RevealAnimatedBody,
   RevealCollapsedHeader,
   RevealExpandedHeader,
   SectionBackdrop,
@@ -251,7 +252,7 @@ const EngravingGradesRevealSection = ({
   };
 
   const expandedContent = (
-    <>
+    <RevealAnimatedBody>
       <RevealExpandedHeader
         headingId="engraving-grades-heading"
         heading={heading}
@@ -280,7 +281,7 @@ const EngravingGradesRevealSection = ({
         selectedGrade={selectedGrade}
         ctaLabel={ctaLabel}
       />
-    </>
+    </RevealAnimatedBody>
   );
 
   return (

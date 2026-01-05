@@ -6,6 +6,7 @@ import {
   Button,
   Container,
   Heading,
+  RevealAnimatedBody,
   RevealCollapsedHeader,
   RevealExpandedHeader,
   SectionBackdrop,
@@ -127,7 +128,7 @@ const BookingOptionsRevealSection = ({
   };
 
   const expandedContent = (
-    <>
+    <RevealAnimatedBody>
       <RevealExpandedHeader
         headingId="experience-booking-heading"
         heading={heading}
@@ -158,7 +159,7 @@ const BookingOptionsRevealSection = ({
         schedulerNoteId={schedulerNoteId}
         onSchedulerToggle={handleSchedulerToggle}
       />
-    </>
+    </RevealAnimatedBody>
   );
 
   return (

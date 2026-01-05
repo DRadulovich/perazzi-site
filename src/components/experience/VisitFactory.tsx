@@ -15,6 +15,7 @@ import {
   CollapsibleTrigger,
   Container,
   Heading,
+  RevealAnimatedBody,
   RevealCollapsedHeader,
   RevealExpandedHeader,
   SectionBackdrop,
@@ -142,7 +143,7 @@ const VisitFactoryRevealSection = ({
   };
 
   const expandedContent = (
-    <>
+    <RevealAnimatedBody>
       <RevealExpandedHeader
         headingId="visit-factory-heading"
         heading={heading}
@@ -169,7 +170,7 @@ const VisitFactoryRevealSection = ({
         expectOpen={expectOpen}
         onExpectOpenChange={setExpectOpen}
       />
-    </>
+    </RevealAnimatedBody>
   );
 
   return (

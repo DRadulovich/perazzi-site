@@ -15,6 +15,7 @@ import {
   CollapsibleTrigger,
   Container,
   Heading,
+  RevealAnimatedBody,
   RevealCollapsedHeader,
   SectionBackdrop,
   SectionShell,
@@ -139,15 +140,17 @@ const TriggerExplainerRevealSection = ({
   };
 
   const expandedContent = (
-    <TriggerExplainerExpandedLayout
-      explainer={explainer}
-      manualOpen={manualOpen}
-      setManualOpen={setManualOpen}
-      headerThemeReady={headerThemeReady}
-      subheading={subheading}
-      enableTitleReveal={enableTitleReveal}
-      onCollapse={handleCollapse}
-    />
+    <RevealAnimatedBody>
+      <TriggerExplainerExpandedLayout
+        explainer={explainer}
+        manualOpen={manualOpen}
+        setManualOpen={setManualOpen}
+        headerThemeReady={headerThemeReady}
+        subheading={subheading}
+        enableTitleReveal={enableTitleReveal}
+        onCollapse={handleCollapse}
+      />
+    </RevealAnimatedBody>
   );
 
   return (

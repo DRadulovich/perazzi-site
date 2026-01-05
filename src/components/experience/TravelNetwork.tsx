@@ -14,6 +14,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   Container,
   Heading,
+  RevealAnimatedBody,
   RevealCollapsedHeader,
   RevealExpandedHeader,
   SectionBackdrop,
@@ -155,7 +156,7 @@ const TravelNetworkRevealSection = ({
   };
 
   const expandedContent = (
-    <>
+    <RevealAnimatedBody>
       <RevealExpandedHeader
         headingId="travel-network-heading"
         heading={heading}
@@ -234,7 +235,7 @@ const TravelNetworkRevealSection = ({
           </div>
         </div>
       </div>
-    </>
+    </RevealAnimatedBody>
   );
 
   return (

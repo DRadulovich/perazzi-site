@@ -292,6 +292,21 @@
     transition: min-height 500ms ease-out;
   }
 
+  .section-reveal-body {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(4px);
+    animation: reveal-body 500ms ease-out forwards;
+  }
+
+  @keyframes reveal-body {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0);
+    }
+  }
+
   .section-reveal-measure {
     position: absolute;
     left: 0;

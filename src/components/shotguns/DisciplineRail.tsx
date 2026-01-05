@@ -21,6 +21,7 @@ import { PortableText } from "@/components/PortableText";
 import {
   Container,
   Heading,
+  RevealAnimatedBody,
   RevealCollapsedHeader,
   RevealExpandedHeader,
   SectionBackdrop,
@@ -410,7 +411,7 @@ const DisciplineRailRevealSection = ({
   };
 
   const expandedContent = (
-    <>
+    <RevealAnimatedBody>
       <RevealExpandedHeader
         headingId="discipline-rail-heading"
         heading={heading}
@@ -431,7 +432,7 @@ const DisciplineRailRevealSection = ({
         handleModelSelect={handleModelSelect}
         modelLoadingId={modelLoadingId}
       />
-    </>
+    </RevealAnimatedBody>
   );
 
   return (

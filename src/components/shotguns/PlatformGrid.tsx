@@ -21,6 +21,7 @@ import type { ChatTriggerPayload } from "@/lib/chat-trigger";
 import { cn } from "@/lib/utils";
 import {
   RevealCollapsedHeader,
+  RevealAnimatedBody,
   RevealExpandedHeader,
   SectionBackdrop,
   SectionShell,
@@ -440,7 +441,7 @@ const PlatformGridRevealSection = ({
   }, [setActiveIndex]);
 
   const expandedContent = (
-    <>
+    <RevealAnimatedBody>
       <RevealExpandedHeader
         headingId="platforms-heading"
         heading={headingTitle}
@@ -470,7 +471,7 @@ const PlatformGridRevealSection = ({
         scrollRef={scrollRef}
         onSelect={handleTabSelect}
       />
-    </>
+    </RevealAnimatedBody>
   );
 
   useEffect(() => {

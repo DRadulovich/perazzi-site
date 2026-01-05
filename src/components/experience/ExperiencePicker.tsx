@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import {
   Container,
   Heading,
+  RevealAnimatedBody,
   RevealCollapsedHeader,
   RevealExpandedHeader,
   SectionBackdrop,
@@ -221,7 +222,7 @@ const ExperiencePickerRevealSection = ({
   };
 
   const expandedContent = (
-    <>
+    <RevealAnimatedBody>
       <RevealExpandedHeader
         headingId="experience-picker-heading"
         heading={heading}
@@ -238,7 +239,7 @@ const ExperiencePickerRevealSection = ({
         microLabel={microLabel}
         onAnchorClick={onAnchorClick}
       />
-    </>
+    </RevealAnimatedBody>
   );
 
   return (
