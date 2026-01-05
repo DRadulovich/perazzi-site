@@ -18,7 +18,7 @@ function assertEqual<T>(name: string, got: T, expected: T): void {
 }
 
 function normalizeNewlines(text: string): string {
-  return String(text ?? "").replace(/\r\n?/g, "\n");
+  return String(text ?? "").replaceAll(/\r\n?/g, "\n");
 }
 
 const EXPECTED_QUALIFIER_LINE =
