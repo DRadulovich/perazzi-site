@@ -8,7 +8,7 @@ function getPgSslMode(): string {
 function normalizePgCaCert(): string | undefined {
   const raw = process.env.PG_CA_CERT_PEM;
   if (!raw) return undefined;
-  const normalized = raw.replaceAll("\\n", "\n");
+  const normalized = raw.replaceAll(String.raw`\n`, "\n");
   const trimmed = normalized.trim();
   return trimmed.length > 0 ? normalized : undefined;
 }
