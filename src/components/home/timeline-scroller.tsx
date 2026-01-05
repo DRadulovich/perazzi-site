@@ -574,8 +574,15 @@ function TimelineStackedLayout({
                     {stage.title}
                   </Text>
                 </div>
-                <span className="type-button text-perazzi-red/70">
-                  {expanded ? "Collapse" : "Show more"}
+                <span className="type-button text-center leading-tight text-perazzi-red/70">
+                  {expanded ? (
+                    "Collapse"
+                  ) : (
+                    <>
+                      <span className="block">Show</span>
+                      <span className="block">more</span>
+                    </>
+                  )}
                 </span>
               </button>
 
@@ -584,7 +591,7 @@ function TimelineStackedLayout({
                 aria-labelledby={buttonId}
                 className={cn(
                   "mt-3 overflow-hidden transition-[max-height] duration-300 ease-out",
-                  expanded ? "max-h-[999px]" : "max-h-0",
+                  expanded ? "max-h-[9999px]" : "max-h-0",
                 )}
               >
                 <ChoreoPresence
