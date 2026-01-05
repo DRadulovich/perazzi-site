@@ -50,7 +50,7 @@ const GUN_TERM_TOKENS = [
 ];
 
 function normalizeText(value: string | null | undefined): string {
-  return (value ?? "").trim().replace(/\s+/g, " ");
+  return (value ?? "").trim().replaceAll(/\s+/g, " ");
 }
 
 function isAlphaNumeric(char: string): boolean {
@@ -152,7 +152,7 @@ function isChatMetaRewrite(text: string): boolean {
 
 function isGenericPleasantry(text: string): boolean {
   const lower = text.toLowerCase();
-  const cleaned = lower.replace(/[.!?]/g, "").trim();
+  const cleaned = lower.replaceAll(/[.!?]/g, "").trim();
   const tokens = cleaned.split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return true;
   if (tokens.length > 5) return false;
