@@ -395,7 +395,7 @@ export async function getExperienceHome(): Promise<ExperienceHomePayload | null>
     picker: data.picker
       ?.filter((item): item is typeof item & { _key: string } => Boolean(item._key))
       .map((item) => ({
-        id: item._key as string,
+        id: item._key,
         title: item.title ?? undefined,
         summary: item.summary ?? undefined,
         href: item.href ?? undefined,

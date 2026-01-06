@@ -234,7 +234,7 @@ export async function getBespokeHome(): Promise<BespokeHomePayload | null> {
     steps: data.steps
       ?.filter((step): step is typeof step & { _key: string } => Boolean(step._key))
       .map((step) => ({
-        id: step._key as string,
+        id: step._key,
         title: step.title ?? undefined,
         bodyHtml: step.bodyHtml ?? undefined,
         media: mapImageResult(step.media ?? null),
@@ -248,7 +248,7 @@ export async function getBespokeHome(): Promise<BespokeHomePayload | null> {
     experts: data.experts
       ?.filter((expert): expert is typeof expert & { _key: string } => Boolean(expert._key))
       .map((expert) => ({
-        id: expert._key as string,
+        id: expert._key,
         name: expert.name ?? undefined,
         role: expert.role ?? undefined,
         bioShort: expert.bioShort ?? undefined,

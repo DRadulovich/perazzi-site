@@ -4,10 +4,11 @@ import { isLocale } from "@/i18n/locales";
 
 export function proxy(request: NextRequest) {
   const localeParam = request.nextUrl.searchParams.get("locale");
+  const normalizedLocale = localeParam?.toLowerCase();
 
-  if (isLocale(localeParam?.toLowerCase())) {
+  if (normalizedLocale && isLocale(normalizedLocale)) {
     const requestHeaders = new Headers(request.headers);
-    requestHeaders.set("x-active-locale", localeParam!.toLowerCase());
+    requestHeaders.set("x-active-locale", normalizedLocale);
 
     return NextResponse.next({
       request: {
