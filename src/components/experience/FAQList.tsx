@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { ReactNode, RefObject } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import type { MotionProps, Variants } from "framer-motion";
 import Image from "next/image";
 import type { FAQItem } from "@/types/experience";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -19,42 +21,90 @@ type FAQListProps = Readonly<{
   lead?: string;
 }>;
 
+type FAQMotionConfig = Readonly<{
+  headerProps: MotionProps;
+  listProps: MotionProps;
+  sectionProps: MotionProps;
+  itemVariants: Variants;
+}>;
+
+type FAQContentProps = Readonly<{
+  items: FAQItem[];
+  title: string;
+  subtitle: string;
+  motionConfig: FAQMotionConfig;
+}>;
+
+type FAQSectionProps = Readonly<{
+  embedded: boolean;
+  analyticsRef: RefObject<HTMLElement | null>;
+  motionConfig: FAQMotionConfig;
+  children: ReactNode;
+}>;
+
 const MotionSection = motion(Section);
 
-export function FAQList({ items, embedded = false, heading, lead }: FAQListProps) {
-  const analyticsRef = useAnalyticsObserver<HTMLElement>("ExperienceFAQSeen");
-  const prefersReducedMotion = useReducedMotion();
+function resolveFAQItems(items: FAQItem[]) {
+  return items.length ? items : faqFixture;
+}
 
-  const faqItems = items.length ? items : faqFixture;
-
-  if (!faqItems.length) return null;
-
-  const title = heading ?? "FAQ";
-  const subtitle = lead ?? "Questions from future owners";
-
+function buildFAQMotionConfig(prefersReducedMotion: boolean): FAQMotionConfig {
   const motionEnabled = !prefersReducedMotion;
 
-  const list = {
+  const listVariants: Variants = {
     hidden: {},
     show: {
       transition: { staggerChildren: motionEnabled ? 0.08 : 0 },
     },
-  } as const;
+  };
 
-  const itemVariant = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 14, filter: "blur(10px)" },
     show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
-  } as const;
+  };
 
-  const content = (
+  const headerProps: MotionProps = motionEnabled
+    ? {
+        initial: { opacity: 0, y: 14, filter: "blur(10px)" },
+        whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
+        viewport: { once: true, amount: 0.6 },
+        transition: homeMotion.revealFast,
+      }
+    : { initial: false };
+
+  const listProps: MotionProps = motionEnabled
+    ? {
+        variants: listVariants,
+        initial: "hidden",
+        whileInView: "show",
+        viewport: { once: true, amount: 0.35 },
+      }
+    : {
+        variants: listVariants,
+        initial: false,
+      };
+
+  const sectionProps: MotionProps = motionEnabled
+    ? {
+        initial: { opacity: 0, y: 24, filter: "blur(10px)" },
+        whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
+        viewport: { once: true, amount: 0.35 },
+        transition: homeMotion.reveal,
+      }
+    : { initial: false };
+
+  return {
+    headerProps,
+    listProps,
+    sectionProps,
+    itemVariants,
+  };
+}
+
+function FAQContent({ items, title, subtitle, motionConfig }: FAQContentProps) {
+  return (
     <>
-      <motion.div
-        className="space-y-2"
-        initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
-        whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-        viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}
-        transition={motionEnabled ? homeMotion.revealFast : undefined}
-      >
+      <motion.div className="space-y-2" {...motionConfig.headerProps}>
         <Heading
           id="experience-faq-heading"
           level={2}
@@ -67,22 +117,18 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
           {subtitle}
         </Text>
       </motion.div>
-      <motion.div
-        className="space-y-4"
-        variants={list}
-        initial={motionEnabled ? "hidden" : false}
-        whileInView={motionEnabled ? "show" : undefined}
-        viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
-      >
-        {faqItems.map((item, index) => (
-          <motion.div key={item.q} variants={itemVariant}>
+      <motion.div className="space-y-4" {...motionConfig.listProps}>
+        {items.map((item, index) => (
+          <motion.div key={item.q} variants={motionConfig.itemVariants}>
             <FAQItemCard item={item} index={index} />
           </motion.div>
         ))}
       </motion.div>
     </>
   );
+}
 
+function FAQSection({ embedded, analyticsRef, motionConfig, children }: FAQSectionProps) {
   if (embedded) {
     return (
       <MotionSection
@@ -91,12 +137,9 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
         padding="md"
         className="space-y-6"
         aria-labelledby="experience-faq-heading"
-        initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(10px)" } : false}
-        whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-        viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
-        transition={motionEnabled ? homeMotion.reveal : undefined}
+        {...motionConfig.sectionProps}
       >
-        {content}
+        {children}
       </MotionSection>
     );
   }
@@ -130,15 +173,31 @@ export function FAQList({ items, embedded = false, heading, lead }: FAQListProps
         <MotionSection
           padding="md"
           className="space-y-6 bg-card/40"
-          initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(10px)" } : false}
-          whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-          viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
-          transition={motionEnabled ? homeMotion.reveal : undefined}
+          {...motionConfig.sectionProps}
         >
-          {content}
+          {children}
         </MotionSection>
       </Container>
     </section>
+  );
+}
+
+export function FAQList({ items, embedded = false, heading, lead }: FAQListProps) {
+  const analyticsRef = useAnalyticsObserver<HTMLElement>("ExperienceFAQSeen");
+  const prefersReducedMotion = useReducedMotion();
+
+  const faqItems = resolveFAQItems(items);
+
+  if (!faqItems.length) return null;
+
+  const title = heading ?? "FAQ";
+  const subtitle = lead ?? "Questions from future owners";
+  const motionConfig = buildFAQMotionConfig(Boolean(prefersReducedMotion));
+
+  return (
+    <FAQSection embedded={embedded} analyticsRef={analyticsRef} motionConfig={motionConfig}>
+      <FAQContent items={faqItems} title={title} subtitle={subtitle} motionConfig={motionConfig} />
+    </FAQSection>
   );
 }
 

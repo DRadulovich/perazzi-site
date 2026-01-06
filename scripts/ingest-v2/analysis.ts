@@ -28,7 +28,7 @@ export function parseNumberOption(value: unknown, defaultValue: number): number 
 
 function normalizeHeadingPath(headingPath?: string): string {
   const trimmed = headingPath?.trim();
-  return trimmed ? trimmed : "(no heading)";
+  return trimmed || "(no heading)";
 }
 
 function computeDocChunkStats(
@@ -84,11 +84,11 @@ function buildTokenHistogram(
 
   for (const chunk of chunks) {
     for (let i = 0; i < TOKEN_HISTOGRAM_BINS.length; i += 1) {
-      const bin = TOKEN_HISTOGRAM_BINS[i]!;
+      const bin = TOKEN_HISTOGRAM_BINS[i];
       const inMin = chunk.estTokens >= bin.min;
       const inMax = bin.max === undefined || chunk.estTokens <= bin.max;
       if (inMin && inMax) {
-        histogram[i]!.count += 1;
+        histogram[i].count += 1;
         break;
       }
     }
@@ -134,7 +134,7 @@ async function collectChunkAnalysis(options: AnalysisOptions): Promise<{
       });
     }
 
-    if (!rawText || !rawText.trim()) {
+    if (!rawText?.trim()) {
       perDocStats.push(recordEmptyDocStats(doc));
       continue;
     }

@@ -23,14 +23,14 @@ export async function MetricsSection({
   rerankFilter,
   snappedFilter,
   marginLt,
-}: {
+}: Readonly<{
   envFilter?: string;
   daysFilter?: number;
   tableDensityClass: string;
   rerankFilter?: string;
   snappedFilter?: string;
   marginLt?: string;
-}) {
+}>) {
   try {
     const parseMargin = (v?: string) => {
       if (!v || v === "any") return null;
@@ -75,6 +75,9 @@ export async function MetricsSection({
     const maxBucketHits = marginBuckets.reduce((m, b) => Math.max(m, b.hits), 0) || 0;
 
     const hasAnyData = dailyTokenUsage.length > 0 || avgMetrics.length > 0 || (snapSummary?.total ?? 0) > 0 || (rerankSummary?.total ?? 0) > 0 || marginBuckets.length > 0;
+    const snapPctLabel = snapPct === null ? "—" : `${snapPct}% snapped`;
+    const rerankPctLabel = rerankPct === null ? "—" : `${rerankPct}% on`;
+    const avgCandidateLimit = rerankSummary?.avg_candidate_limit ?? null;
 
     if (!hasAnyData) {
       return (
@@ -211,9 +214,7 @@ export async function MetricsSection({
             <div className="rounded-xl border border-border bg-background p-3 space-y-2">
               <div className="flex items-center justify-between gap-2 text-xs">
                 <div className="font-semibold text-foreground">Archetype snapped vs mixed</div>
-                <div className="text-muted-foreground">
-                  {snapPct !== null ? `${snapPct}% snapped` : "—"}
-                </div>
+                <div className="text-muted-foreground">{snapPctLabel}</div>
               </div>
               <div className="flex h-3 overflow-hidden rounded-full border border-border bg-muted/30">
                 <div
@@ -238,7 +239,7 @@ export async function MetricsSection({
             <div className="rounded-xl border border-border bg-background p-3 space-y-2">
               <div className="flex items-center justify-between gap-2 text-xs">
                 <div className="font-semibold text-foreground">Rerank enabled</div>
-                <div className="text-muted-foreground">{rerankPct !== null ? `${rerankPct}% on` : "—"}</div>
+                <div className="text-muted-foreground">{rerankPctLabel}</div>
               </div>
               <div className="flex h-3 overflow-hidden rounded-full border border-border bg-muted/30">
                 <div
@@ -261,9 +262,9 @@ export async function MetricsSection({
                 <span>off {rerankSummary?.rerank_off_count ?? 0}</span>
                 <span>unknown {rerankSummary?.unknown_count ?? 0}</span>
                 <span>total {rerankSummary?.total ?? 0}</span>
-                {rerankSummary?.avg_candidate_limit !== null ? (
-                  <span>avg candidateLimit {Math.round(rerankSummary.avg_candidate_limit)}</span>
-                ) : null}
+                {avgCandidateLimit === null ? null : (
+                  <span>avg candidateLimit {Math.round(avgCandidateLimit)}</span>
+                )}
               </div>
             </div>
           </div>

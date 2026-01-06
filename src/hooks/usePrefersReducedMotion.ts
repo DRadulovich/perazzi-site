@@ -6,9 +6,11 @@ export function usePrefersReducedMotion(): boolean {
   const [prefersReduced, setPrefersReduced] = React.useState(false);
 
   React.useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return;
+    const windowRef = globalThis.window as Window | undefined;
+    const matchMedia = windowRef?.matchMedia;
+    if (matchMedia === undefined) return;
 
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const media = matchMedia("(prefers-reduced-motion: reduce)");
 
     const handleChange = () => {
       setPrefersReduced(media.matches);

@@ -2,19 +2,19 @@
 
 import { cn } from "@/lib/utils";
 
-type DualPoint = {
+type DualPoint = Readonly<{
   label: string;
   bar: number;
   line: number | null;
-};
+}>;
 
-type DualAxisChartProps = {
-  data: DualPoint[];
+type DualAxisChartProps = Readonly<{
+  data: ReadonlyArray<DualPoint>;
   barLabel: string;
   lineLabel: string;
   className?: string;
   height?: number;
-};
+}>;
 
 function formatTick(n: number) {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}m`;
@@ -44,7 +44,7 @@ export function DualAxisChart({
     const x = padX + idx * step - barWidth / 2;
     const h = (d.bar / maxBar) * (height - padY * 2);
     const y = height - padY - h;
-    return { x, y, h };
+    return { key: d.label, x, y, h };
   });
 
   const linePath = data.reduce((acc, d, idx) => {
@@ -85,12 +85,14 @@ export function DualAxisChart({
         {yTicks.map((t, idx) => {
           const y = padY + (1 - t) * (height - padY * 2);
           const opacity = idx === 0 ? 0.15 : 0.08;
-          return <line key={t} x1={padX} x2={width - padX} y1={y} y2={y} stroke="currentColor" opacity={opacity} />;
+          return (
+            <line key={`grid-${t}`} x1={padX} x2={width - padX} y1={y} y2={y} stroke="currentColor" opacity={opacity} />
+          );
         })}
 
-        {barRects.map((rect, idx) => (
+        {barRects.map((rect) => (
           <rect
-            key={idx}
+            key={rect.key}
             x={rect.x}
             y={rect.y}
             width={barWidth}
@@ -125,7 +127,7 @@ export function DualAxisChart({
           const showLabel = data.length <= 14 || idx % Math.ceil(data.length / 14) === 0 || idx === data.length - 1;
           return showLabel ? (
             <text
-              key={`${label}-${idx}`}
+              key={label}
               x={x}
               y={height - padY + 18}
               fontSize="10"
@@ -139,12 +141,12 @@ export function DualAxisChart({
         })}
 
         <g aria-hidden>
-          {yTicks.map((t, idx) => {
+          {yTicks.map((t) => {
             const y = padY + (1 - t) * (height - padY * 2);
             const val = formatTick(Math.round(maxBar * t));
             return (
               <text
-                key={`bar-${idx}`}
+                key={`bar-${t}`}
                 x={padX - 8}
                 y={y + 4}
                 fontSize="10"
@@ -157,12 +159,12 @@ export function DualAxisChart({
             );
           })}
 
-          {yTicks.map((t, idx) => {
+          {yTicks.map((t) => {
             const y = padY + (1 - t) * (height - padY * 2);
             const val = Math.round(maxLine * t);
             return (
               <text
-                key={`line-${idx}`}
+                key={`line-${t}`}
                 x={width - padX + 8}
                 y={y + 4}
                 fontSize="10"

@@ -13,6 +13,7 @@ import type { PerazziAssistantRequest, PerazziMode } from "@/types/perazzi-assis
 
 const VALIDATION_SOURCE =
   "PGPT/V2/AI-Docs/P2/Validation.md";
+const PROJECT_ROOT = path.resolve(process.cwd());
 
 type RetrievalCase = {
   id: string;
@@ -146,6 +147,23 @@ type CaseResult = {
   results: ResultRow[];
 };
 
+type CliOptions = {
+  k: number;
+  candidateLimit: number | null;
+  rerankEnabled: boolean;
+  minHitsGlobal: number | null;
+  reportPath: string;
+  embeddingCachePath: string | null;
+  embeddingModel: string;
+};
+
+type EmbeddingState = {
+  embeddingCache: EmbeddingCache | null;
+  embeddingsById: Map<string, number[]>;
+};
+
+type RetrievalResponse = Awaited<ReturnType<typeof retrievePerazziContextWithEmbedding>>;
+
 function fail(message: string): never {
   throw new Error(message);
 }
@@ -192,9 +210,39 @@ function parseNumber(value: unknown, fallback: number, label: string): number {
   return Math.floor(n);
 }
 
+function parseOptionalNumber(value: unknown, fallback: number, label: string): number | null {
+  if (value === undefined || value === null) return null;
+  return parseNumber(value, fallback, label);
+}
+
+function ensurePathWithinBase(basePath: string, targetPath: string, label: string): string {
+  const normalizedBase = path.resolve(basePath);
+  const normalizedTarget = path.normalize(targetPath);
+  const relative = path.relative(normalizedBase, normalizedTarget);
+  if (relative.startsWith("..") || path.isAbsolute(relative)) {
+    fail(`${label} must resolve within ${normalizedBase}.`);
+  }
+  return normalizedTarget;
+}
+
+function resolveCliPath(value: unknown, label: string): string {
+  const normalized = Array.isArray(value) ? value.at(-1) : value;
+  if (typeof normalized !== "string" || !normalized.trim()) {
+    fail(`${label} must be a non-empty string.`);
+  }
+  const input = normalized.trim();
+  const resolved = path.resolve(PROJECT_ROOT, input);
+  return ensurePathWithinBase(PROJECT_ROOT, resolved, label);
+}
+
 function formatScore(value: number | null | undefined): string {
   if (!Number.isFinite(value)) return "n/a";
   return Number(value).toFixed(4);
+}
+
+function formatOptionalScore(label: string, value: number | null | undefined): string {
+  if (value === null || value === undefined) return "";
+  return ` ${label}=${formatScore(value)}`;
 }
 
 function resolveMinHits(caseItem: RetrievalCase, globalMinHits?: number | null): number {
@@ -244,7 +292,11 @@ function ensureEmbeddingVector(value: number[] | null, id: string): number[] {
 }
 
 async function loadEmbeddingCache(filePath: string): Promise<EmbeddingCache> {
-  const raw = await fs.readFile(filePath, "utf-8");
+  const safePath = ensurePathWithinBase(PROJECT_ROOT, filePath, "--embedding-cache");
+  const raw = await fs.readFile(
+    safePath,
+    "utf-8",
+  ); // nosemgrep: codacy.tools-configs.javascript_pathtraversal_rule-non-literal-fs-filename -- Path is normalized and constrained within PROJECT_ROOT.
   return JSON.parse(raw) as EmbeddingCache;
 }
 
@@ -346,8 +398,8 @@ Options:
   --candidate-limit <number>   Candidate pool size when rerank is enabled
   --rerank on|off               Enable reranking (default: env PERAZZI_ENABLE_RERANK or on)
   --min-hits <number>           Minimum expected-family hits to PASS (default: min(2, expected count))
-  --json <path>                 Output JSON report path (default: retrieval-report.json)
-  --embedding-cache <path>      JSON file with precomputed embeddings (offline mode)
+  --json <path>                 Output JSON report path (default: retrieval-report.json; must stay within project root)
+  --embedding-cache <path>      JSON file with precomputed embeddings (offline mode; must stay within project root)
   --help                        Show this help
 
 Embedding cache formats:
@@ -356,6 +408,183 @@ Embedding cache formats:
   - { "<query>": [..] }
   - [ { "id": "<case id>", "embedding": [..] } ]
 `);
+}
+
+function assertDatabaseUrl() {
+  const databaseUrl = process.env.DATABASE_URL;
+  if (databaseUrl) return;
+  fail("DATABASE_URL is required for retrieval (read-only).");
+}
+
+function parseCliOptions(argv: minimist.ParsedArgs): CliOptions {
+  const k = parseNumber(argv.k, 12, "--k");
+  const candidateLimit = parseOptionalNumber(argv["candidate-limit"], k, "--candidate-limit");
+  const rerankFlag = parseBooleanString(argv.rerank);
+  const rerankEnabled =
+    rerankFlag ?? parseBooleanString(process.env.PERAZZI_ENABLE_RERANK) ?? true;
+  const minHitsGlobal = parseOptionalNumber(argv["min-hits"], 1, "--min-hits");
+  const reportPath = resolveCliPath(argv.json ?? "retrieval-report.json", "--json");
+  const embeddingCachePath = argv["embedding-cache"]
+    ? resolveCliPath(argv["embedding-cache"], "--embedding-cache")
+    : null;
+  const embeddingModel = process.env.PERAZZI_EMBED_MODEL ?? "text-embedding-3-large";
+
+  return {
+    k,
+    candidateLimit,
+    rerankEnabled,
+    minHitsGlobal,
+    reportPath,
+    embeddingCachePath,
+    embeddingModel,
+  };
+}
+
+async function resolveEmbeddings(
+  embeddingCachePath: string | null,
+  embeddingModel: string,
+): Promise<EmbeddingState> {
+  if (embeddingCachePath) {
+    const embeddingCache = await loadEmbeddingCache(embeddingCachePath);
+    const embeddingsById = new Map(
+      RETRIEVAL_CASES.map((testCase) => [
+        testCase.id,
+        ensureEmbeddingVector(resolveEmbeddingFromCache(embeddingCache, testCase), testCase.id),
+      ]),
+    );
+    return { embeddingCache, embeddingsById };
+  }
+
+  const input = RETRIEVAL_CASES.map((testCase) => testCase.query);
+  let embeddingResponse;
+  try {
+    embeddingResponse = await createEmbeddings({
+      model: embeddingModel,
+      input,
+    });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error);
+    fail(
+      `Embedding generation failed: ${msg}. ` +
+        "Set OPENAI_API_KEY (or AI gateway) or use --embedding-cache for offline runs.",
+    );
+  }
+  const data = embeddingResponse.data ?? [];
+  if (data.length !== RETRIEVAL_CASES.length) {
+    fail(`Embedding response size mismatch (expected ${RETRIEVAL_CASES.length}, got ${data.length}).`);
+  }
+  const embeddingsById = new Map(
+    RETRIEVAL_CASES.map((testCase, idx) => [
+      testCase.id,
+      ensureEmbeddingVector(data[idx]?.embedding ?? null, testCase.id),
+    ]),
+  );
+  return { embeddingCache: null, embeddingsById };
+}
+
+function buildResultRows(
+  retrieval: RetrievalResponse,
+  testCase: RetrievalCase,
+  rerankEnabled: boolean,
+): ResultRow[] {
+  const breakdownByChunkId = new Map(
+    retrieval.rerankMetrics.topReturnedChunks.map((row) => [row.chunkId, row]),
+  );
+
+  const forbiddenPathPrefixes = testCase.forbiddenPathPrefixes ?? [];
+  const forbiddenCategories = normalizeList(testCase.forbiddenCategories);
+  const forbiddenDocTypes = normalizeList(testCase.forbiddenDocTypes);
+
+  return retrieval.chunks.map((chunk, idx) => {
+    const breakdown = breakdownByChunkId.get(chunk.chunkId);
+    const documentPath = chunk.documentPath ?? chunk.sourcePath ?? null;
+    const category = chunk.category ?? null;
+    const docType = chunk.docType ?? null;
+    const expectedMatch = matchesAnyFamily(documentPath, testCase.expectedFamilies);
+    const forbiddenMatch =
+      matchesAnyFamily(documentPath, forbiddenPathPrefixes) ||
+      (category ? forbiddenCategories.includes(category.toLowerCase()) : false) ||
+      (docType ? forbiddenDocTypes.includes(docType.toLowerCase()) : false);
+
+    return {
+      rank: idx + 1,
+      chunkId: chunk.chunkId,
+      documentPath,
+      headingPath: chunk.headingPath ?? null,
+      category,
+      docType,
+      baseScore: Number(chunk.baseScore ?? chunk.score ?? 0),
+      boost: breakdown?.boost ?? (rerankEnabled ? null : 0),
+      archetypeBoost: breakdown?.archetypeBoost ?? (rerankEnabled ? null : 0),
+      finalScore: Number(chunk.score ?? chunk.baseScore ?? 0),
+      expectedMatch,
+      forbiddenMatch,
+    };
+  });
+}
+
+function logCaseResult(params: {
+  testCase: RetrievalCase;
+  evaluation: Omit<CaseResult, "rerankEnabled" | "candidateLimit">;
+  retrieval: RetrievalResponse;
+  rows: ResultRow[];
+}) {
+  const { testCase, evaluation, retrieval, rows } = params;
+
+  console.log("\n---");
+  console.log(`${testCase.name} (${testCase.sourceSection})`);
+  console.log(`Query: ${testCase.query}`);
+  console.log(
+    `Result: ${evaluation.pass ? "PASS" : "FAIL"} - ${evaluation.reason}`,
+  );
+  console.log(
+    `Rerank: ${retrieval.rerankMetrics.rerankEnabled ? "on" : "off"} (candidateLimit=${retrieval.rerankMetrics.candidateLimit})`,
+  );
+  console.log("Top results:");
+  for (const row of rows) {
+    const heading = row.headingPath ?? "(none)";
+    const boost = formatOptionalScore("boost", row.boost);
+    const archetypeBoost = formatOptionalScore("archetypeBoost", row.archetypeBoost);
+    console.log(
+      `${row.rank}. ${row.documentPath ?? "unknown"} | ${heading} | base=${formatScore(row.baseScore)}${boost}${archetypeBoost} final=${formatScore(row.finalScore)}`,
+    );
+  }
+}
+
+async function runRetrievalCase(params: {
+  testCase: RetrievalCase;
+  embeddingsById: Map<string, number[]>;
+  k: number;
+  effectiveCandidateLimit: number;
+  rerankEnabled: boolean;
+  minHitsGlobal: number | null;
+}): Promise<CaseResult> {
+  const { testCase, embeddingsById, k, effectiveCandidateLimit, rerankEnabled, minHitsGlobal } =
+    params;
+  const hints = detectRetrievalHints(testCase.query);
+  const context = buildContext(hints.mode ?? null);
+  const embedding = embeddingsById.get(testCase.id);
+  const minHits = resolveMinHits(testCase, minHitsGlobal);
+
+  const retrieval = await retrievePerazziContextWithEmbedding({
+    queryEmbedding: ensureEmbeddingVector(embedding ?? null, testCase.id),
+    limit: k,
+    candidateLimit: effectiveCandidateLimit,
+    rerankEnabled,
+    hints,
+    context,
+  });
+
+  const rows = buildResultRows(retrieval, testCase, rerankEnabled);
+  const evaluation = evaluateCase({ testCase, results: rows, minHits });
+  const caseResult = {
+    ...evaluation,
+    rerankEnabled: retrieval.rerankMetrics.rerankEnabled,
+    candidateLimit: retrieval.rerankMetrics.candidateLimit,
+  };
+
+  logCaseResult({ testCase, evaluation, retrieval, rows });
+  return caseResult;
 }
 
 async function main() {
@@ -372,146 +601,29 @@ async function main() {
     return;
   }
 
-  if (!process.env.DATABASE_URL) {
-    fail("DATABASE_URL is required for retrieval (read-only).");
-  }
+  assertDatabaseUrl();
 
-  const k = parseNumber(argv.k, 12, "--k");
-  const candidateLimitArg = argv["candidate-limit"];
-  const candidateLimit =
-    candidateLimitArg !== undefined ? parseNumber(candidateLimitArg, k, "--candidate-limit") : null;
-  const rerankFlag = parseBooleanString(argv.rerank);
-  const rerankEnabled =
-    rerankFlag ?? parseBooleanString(process.env.PERAZZI_ENABLE_RERANK) ?? true;
-  const minHitsGlobal = argv["min-hits"] !== undefined
-    ? parseNumber(argv["min-hits"], 1, "--min-hits")
-    : null;
-
-  const reportPath = path.resolve(String(argv.json ?? "retrieval-report.json"));
-  const embeddingCachePath = argv["embedding-cache"] ? path.resolve(String(argv["embedding-cache"])) : null;
-  const embeddingModel = process.env.PERAZZI_EMBED_MODEL ?? "text-embedding-3-large";
-
-  const effectiveCandidateLimit = rerankEnabled
-    ? candidateLimit ?? getRerankCandidateLimit(k)
-    : k;
-
-  let embeddingCache: EmbeddingCache | null = null;
-  if (embeddingCachePath) {
-    embeddingCache = await loadEmbeddingCache(embeddingCachePath);
-  }
-
-  let embeddingsById: Map<string, number[]>;
-  if (embeddingCache) {
-    embeddingsById = new Map(
-      RETRIEVAL_CASES.map((testCase) => [
-        testCase.id,
-        ensureEmbeddingVector(resolveEmbeddingFromCache(embeddingCache, testCase), testCase.id),
-      ]),
-    );
-  } else {
-    const input = RETRIEVAL_CASES.map((testCase) => testCase.query);
-    let embeddingResponse;
-    try {
-      embeddingResponse = await createEmbeddings({
-        model: embeddingModel,
-        input,
-      });
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      fail(
-        `Embedding generation failed: ${msg}. ` +
-          "Set OPENAI_API_KEY (or AI gateway) or use --embedding-cache for offline runs.",
-      );
-    }
-    const data = embeddingResponse.data ?? [];
-    if (data.length !== RETRIEVAL_CASES.length) {
-      fail(`Embedding response size mismatch (expected ${RETRIEVAL_CASES.length}, got ${data.length}).`);
-    }
-    embeddingsById = new Map(
-      RETRIEVAL_CASES.map((testCase, idx) => [
-        testCase.id,
-        ensureEmbeddingVector(data[idx]?.embedding ?? null, testCase.id),
-      ]),
-    );
-  }
+  const options = parseCliOptions(argv);
+  const effectiveCandidateLimit = options.rerankEnabled
+    ? options.candidateLimit ?? getRerankCandidateLimit(options.k)
+    : options.k;
+  const { embeddingCache, embeddingsById } = await resolveEmbeddings(
+    options.embeddingCachePath,
+    options.embeddingModel,
+  );
 
   const results: CaseResult[] = [];
 
   for (const testCase of RETRIEVAL_CASES) {
-    const hints = detectRetrievalHints(testCase.query);
-    const context = buildContext(hints.mode ?? null);
-    const embedding = embeddingsById.get(testCase.id);
-    const minHits = resolveMinHits(testCase, minHitsGlobal);
-    const forbiddenPathPrefixes = testCase.forbiddenPathPrefixes ?? [];
-    const forbiddenCategories = normalizeList(testCase.forbiddenCategories);
-    const forbiddenDocTypes = normalizeList(testCase.forbiddenDocTypes);
-
-    const retrieval = await retrievePerazziContextWithEmbedding({
-      queryEmbedding: ensureEmbeddingVector(embedding ?? null, testCase.id),
-      limit: k,
-      candidateLimit: effectiveCandidateLimit,
-      rerankEnabled,
-      hints,
-      context,
+    const caseResult = await runRetrievalCase({
+      testCase,
+      embeddingsById,
+      k: options.k,
+      effectiveCandidateLimit,
+      rerankEnabled: options.rerankEnabled,
+      minHitsGlobal: options.minHitsGlobal,
     });
-
-    const breakdownByChunkId = new Map(
-      retrieval.rerankMetrics.topReturnedChunks.map((row) => [row.chunkId, row]),
-    );
-
-    const rows: ResultRow[] = retrieval.chunks.map((chunk, idx) => {
-      const breakdown = breakdownByChunkId.get(chunk.chunkId);
-      const documentPath = chunk.documentPath ?? chunk.sourcePath ?? null;
-      const category = chunk.category ?? null;
-      const docType = chunk.docType ?? null;
-      const expectedMatch = matchesAnyFamily(documentPath, testCase.expectedFamilies);
-      const forbiddenMatch =
-        matchesAnyFamily(documentPath, forbiddenPathPrefixes) ||
-        (category ? forbiddenCategories.includes(category.toLowerCase()) : false) ||
-        (docType ? forbiddenDocTypes.includes(docType.toLowerCase()) : false);
-
-      return {
-        rank: idx + 1,
-        chunkId: chunk.chunkId,
-        documentPath,
-        headingPath: chunk.headingPath ?? null,
-        category,
-        docType,
-        baseScore: Number(chunk.baseScore ?? chunk.score ?? 0),
-        boost: breakdown?.boost ?? (rerankEnabled ? null : 0),
-        archetypeBoost: breakdown?.archetypeBoost ?? (rerankEnabled ? null : 0),
-        finalScore: Number(chunk.score ?? chunk.baseScore ?? 0),
-        expectedMatch,
-        forbiddenMatch,
-      };
-    });
-
-    const evaluation = evaluateCase({ testCase, results: rows, minHits });
-    results.push({
-      ...evaluation,
-      rerankEnabled: retrieval.rerankMetrics.rerankEnabled,
-      candidateLimit: retrieval.rerankMetrics.candidateLimit,
-    });
-
-    console.log("\n---");
-    console.log(`${testCase.name} (${testCase.sourceSection})`);
-    console.log(`Query: ${testCase.query}`);
-    console.log(
-      `Result: ${evaluation.pass ? "PASS" : "FAIL"} - ${evaluation.reason}`,
-    );
-    console.log(
-      `Rerank: ${retrieval.rerankMetrics.rerankEnabled ? "on" : "off"} (candidateLimit=${retrieval.rerankMetrics.candidateLimit})`,
-    );
-    console.log("Top results:");
-    for (const row of rows) {
-      const heading = row.headingPath ? row.headingPath : "(none)";
-      const boost = row.boost !== null ? ` boost=${formatScore(row.boost)}` : "";
-      const archetypeBoost =
-        row.archetypeBoost !== null ? ` archetypeBoost=${formatScore(row.archetypeBoost)}` : "";
-      console.log(
-        `${row.rank}. ${row.documentPath ?? "unknown"} | ${heading} | base=${formatScore(row.baseScore)}${boost}${archetypeBoost} final=${formatScore(row.finalScore)}`,
-      );
-    }
+    results.push(caseResult);
   }
 
   const passed = results.filter((result) => result.pass).length;
@@ -519,11 +631,11 @@ async function main() {
     runner: "scripts/perazzi-eval/retrieval-suite.ts",
     generatedAt: new Date().toISOString(),
     validationSource: VALIDATION_SOURCE,
-    model: embeddingCache ? "embedding-cache" : embeddingModel,
-    embeddingCache: embeddingCachePath,
-    k,
+    model: embeddingCache ? "embedding-cache" : options.embeddingModel,
+    embeddingCache: options.embeddingCachePath,
+    k: options.k,
     rerank: {
-      enabled: rerankEnabled,
+      enabled: options.rerankEnabled,
       candidateLimit: effectiveCandidateLimit,
     },
     totals: {
@@ -534,15 +646,24 @@ async function main() {
     results,
   };
 
-  await fs.mkdir(path.dirname(reportPath), { recursive: true });
-  await fs.writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf-8");
+  const safeReportPath = ensurePathWithinBase(PROJECT_ROOT, options.reportPath, "--json");
+  await fs.mkdir(path.dirname(safeReportPath), {
+    recursive: true,
+  }); // nosemgrep: codacy.tools-configs.javascript_pathtraversal_rule-non-literal-fs-filename -- Path is normalized and constrained within PROJECT_ROOT.
+  await fs.writeFile(
+    safeReportPath,
+    `${JSON.stringify(report, null, 2)}\n`,
+    "utf-8",
+  ); // nosemgrep: codacy.tools-configs.javascript_pathtraversal_rule-non-literal-fs-filename -- Path is normalized and constrained within PROJECT_ROOT.
 
   console.log("\n---");
-  console.log(`Report: ${reportPath}`);
+  console.log(`Report: ${safeReportPath}`);
   console.log(`Summary: ${passed}/${results.length} passed`);
 }
 
-main().catch((error) => {
+try {
+  await main();
+} catch (error) {
   console.error(error instanceof Error ? error.message : String(error));
   process.exit(1);
-});
+}

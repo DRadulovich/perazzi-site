@@ -14,15 +14,15 @@ const warn = (message: string) => {
 };
 
 function cloneLanding(): JournalLandingData {
-  return JSON.parse(JSON.stringify(journalLanding));
+  return structuredClone(journalLanding);
 }
 
 function cloneCategories(): Record<CategoryKey, JournalCategoryData> {
-  return JSON.parse(JSON.stringify(journalCategories)) as Record<CategoryKey, JournalCategoryData>;
+  return structuredClone(journalCategories);
 }
 
 function cloneArticles(): Record<string, ArticlePageData> {
-  return JSON.parse(JSON.stringify(journalArticles)) as Record<string, ArticlePageData>;
+  return structuredClone(journalArticles);
 }
 
 export const getJournalLandingData = cache(async (): Promise<JournalLandingData> => {

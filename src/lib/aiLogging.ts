@@ -207,18 +207,18 @@ export async function logAiInteraction(input: AiInteractionLogInput): Promise<vo
   const promptTextTruncated = mode === "truncate" && rawPrompt.length > maxChars;
   const responseTextTruncated = mode === "truncate" && rawResponse.length > maxChars;
 
-  const metadataBase = sanitizeMetadata((metadata ?? {}) as Record<string, unknown>);
+  const metadataBase = sanitizeMetadata(metadata ?? {});
   const usageMetrics = extractUsageMetrics(usage);
   const metadataWithIds = {
     ...metadataBase,
     ...(responseId ? { responseId } : {}),
     ...(requestId ? { requestId } : {}),
     ...(usage ? { responseUsage: usage } : {}),
-    ...(usageMetrics.inputTokens !== undefined ? { inputTokens: usageMetrics.inputTokens } : {}),
-    ...(usageMetrics.outputTokens !== undefined ? { outputTokens: usageMetrics.outputTokens } : {}),
-    ...(usageMetrics.cachedTokens !== undefined ? { cachedTokens: usageMetrics.cachedTokens } : {}),
-    ...(usageMetrics.reasoningTokens !== undefined ? { reasoningTokens: usageMetrics.reasoningTokens } : {}),
-    ...(usageMetrics.totalTokens !== undefined ? { totalTokens: usageMetrics.totalTokens } : {}),
+    ...(usageMetrics.inputTokens === undefined ? {} : { inputTokens: usageMetrics.inputTokens }),
+    ...(usageMetrics.outputTokens === undefined ? {} : { outputTokens: usageMetrics.outputTokens }),
+    ...(usageMetrics.cachedTokens === undefined ? {} : { cachedTokens: usageMetrics.cachedTokens }),
+    ...(usageMetrics.reasoningTokens === undefined ? {} : { reasoningTokens: usageMetrics.reasoningTokens }),
+    ...(usageMetrics.totalTokens === undefined ? {} : { totalTokens: usageMetrics.totalTokens }),
     logTextMode: mode,
     logTextMaxChars: maxChars,
     promptTextOmitted,

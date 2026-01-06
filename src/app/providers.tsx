@@ -8,12 +8,12 @@ import {
   type ThemeMode,
 } from "@/components/theme/ThemeProvider";
 
-type ProvidersProps = {
+type ProvidersProps = Readonly<{
   children: ReactNode;
   locale: string;
   messages: AbstractIntlMessages;
   initialTheme: ThemeMode;
-};
+}>;
 
 export default function Providers({
   children,

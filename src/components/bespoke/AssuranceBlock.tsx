@@ -3,6 +3,7 @@
 import Image from "next/image";
 import SafeHtml from "@/components/SafeHtml";
 import { motion, useReducedMotion } from "framer-motion";
+import type { MotionProps } from "framer-motion";
 import { useEffect, useState } from "react";
 import type { AssuranceContent } from "@/types/build";
 import { homeMotion } from "@/lib/motionConfig";
@@ -12,7 +13,17 @@ type AssuranceBlockProps = Readonly<{
   assurance: AssuranceContent;
 }>;
 
+type RevealProps = Pick<MotionProps, "initial" | "whileInView" | "viewport" | "transition">;
+
 const MotionSection = motion(Section);
+
+const getRevealProps = (enabled: boolean, config: RevealProps): RevealProps => {
+  if (!enabled) {
+    return { initial: false };
+  }
+
+  return config;
+};
 
 export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
   const prefersReducedMotion = useReducedMotion();
@@ -28,23 +39,50 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
   const label = assurance.label;
   const body = assurance.body ?? html;
   const ratio = media?.aspectRatio ?? 3 / 2;
+  const blurRevealBase = {
+    initial: { opacity: 0, y: 14, filter: "blur(10px)" },
+    whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
+    transition: homeMotion.revealFast,
+  };
+  const sectionMotionProps = getRevealProps(motionEnabled, {
+    initial: { opacity: 0, y: 24, filter: "blur(10px)" },
+    whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
+    viewport: { once: true, amount: 0.35 },
+    transition: homeMotion.reveal,
+  });
+  const contentMotionProps = getRevealProps(motionEnabled, {
+    initial: { opacity: 0 },
+    whileInView: { opacity: 1 },
+    viewport: { once: true, amount: 0.5 },
+    transition: { ...homeMotion.revealFast, delay: 0.05 },
+  });
+  const labelMotionProps = getRevealProps(motionEnabled, {
+    ...blurRevealBase,
+    viewport: { once: true, amount: 0.6 },
+  });
+  const bodyMotionProps = getRevealProps(motionEnabled, {
+    ...blurRevealBase,
+    viewport: { once: true, amount: 0.35 },
+  });
+  const quoteMotionProps = getRevealProps(motionEnabled, {
+    ...blurRevealBase,
+    viewport: { once: true, amount: 0.35 },
+  });
+  const mediaMotionProps = getRevealProps(motionEnabled, {
+    ...blurRevealBase,
+    viewport: { once: true, amount: 0.35 },
+  });
 
   return (
     <MotionSection
       padding="md"
       className="lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] lg:gap-8"
       aria-labelledby="assurance-heading"
-      initial={motionEnabled ? { opacity: 0, y: 24, filter: "blur(10px)" } : false}
-      whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-      viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
-      transition={motionEnabled ? homeMotion.reveal : undefined}
+      {...sectionMotionProps}
     >
       <motion.div
         className="space-y-6"
-        initial={motionEnabled ? { opacity: 0 } : false}
-        whileInView={motionEnabled ? { opacity: 1 } : undefined}
-        viewport={motionEnabled ? { once: true, amount: 0.5 } : undefined}
-        transition={motionEnabled ? { ...homeMotion.revealFast, delay: 0.05 } : undefined}
+        {...contentMotionProps}
       >
         {heading ? (
           <Text
@@ -57,10 +95,7 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
         ) : null}
         {label ? (
           <motion.div
-            initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
-            whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-            viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}
-            transition={motionEnabled ? homeMotion.revealFast : undefined}
+            {...labelMotionProps}
           >
             <Heading level={2} size="xl" className="text-ink">
               {label}
@@ -69,10 +104,7 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
         ) : null}
         {body ? (
           <motion.div
-            initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
-            whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-            viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
-            transition={motionEnabled ? homeMotion.revealFast : undefined}
+            {...bodyMotionProps}
           >
             <SafeHtml
               className="max-w-none type-body text-ink [&_p]:mb-4 [&_p:last-child]:mb-0"
@@ -83,10 +115,7 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
         {quote ? (
           <motion.blockquote
             className="rounded-2xl border-l-4 border-perazzi-red/60 bg-card/60 px-5 py-4 text-ink shadow-soft backdrop-blur-sm"
-            initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
-            whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-            viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
-            transition={motionEnabled ? homeMotion.revealFast : undefined}
+            {...quoteMotionProps}
           >
             <Text asChild size="md" className="font-artisan text-ink text-2xl">
               <p>“{quote.text}”</p>
@@ -106,10 +135,7 @@ export function AssuranceBlock({ assurance }: AssuranceBlockProps) {
       {media ? (
         <motion.figure
           className="group mt-6 space-y-3 lg:mt-0"
-          initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
-          whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-          viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
-          transition={motionEnabled ? homeMotion.revealFast : undefined}
+          {...mediaMotionProps}
         >
           <div
             className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-dynamic"

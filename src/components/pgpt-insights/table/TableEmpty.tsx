@@ -1,7 +1,7 @@
-type TableEmptyProps = {
+type TableEmptyProps = Readonly<{
   colSpan: number;
   message?: string;
-};
+}>;
 
 export function TableEmpty({ colSpan, message = "No rows to display." }: TableEmptyProps) {
   return (

@@ -1,8 +1,8 @@
 import { vercelStegaSplit } from "@vercel/stega";
 
-type CleanTextProps = {
+type CleanTextProps = Readonly<{
   value: string;
-};
+}>;
 
 /**
  * Renders a Stega-encoded string in a layout-safe way:

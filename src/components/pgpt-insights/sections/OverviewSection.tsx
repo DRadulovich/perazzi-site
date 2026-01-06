@@ -12,11 +12,11 @@ export async function OverviewSection({
   envFilter,
   daysFilter,
   scopeSummary,
-}: {
+}: Readonly<{
   envFilter?: string;
   daysFilter?: number;
   scopeSummary: string;
-}) {
+}>) {
   try {
     const capDays =
       typeof daysFilter === "number" && Number.isFinite(daysFilter) ? Math.min(Math.max(daysFilter, 7), 90) : 90;
@@ -53,7 +53,7 @@ export async function OverviewSection({
 
     const requestsSeries = trends.map((r) => r.request_count);
     const tokensSeries = trends.map((r) => r.total_prompt_tokens + r.total_completion_tokens);
-    const latencySeries = trends.map((r) => (r.avg_latency_ms === null ? null : r.avg_latency_ms));
+    const latencySeries = trends.map((r) => r.avg_latency_ms ?? null);
 
     const lowMap = new Map(lowScore.map((r) => [r.day, r]));
     const lowRateSeries = trends.map((t) => {
@@ -65,7 +65,7 @@ export async function OverviewSection({
     return (
       <section
         id="overview"
-        className="rounded-2xl border border-border/80 bg-gradient-to-b from-card via-card/80 to-muted/20 shadow-lg"
+        className="rounded-2xl border border-border/80 bg-linear-to-b from-card via-card/80 to-muted/20 shadow-lg"
       >
         <SectionHeader
           title="Overview"

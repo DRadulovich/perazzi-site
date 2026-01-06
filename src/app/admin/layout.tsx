@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function AdminLayout({ children }: { children: ReactNode }) {
+export default async function AdminLayout({ children }: Readonly<{ children: ReactNode }>) {
   const locale = await getLocale();
   const messages = await getMessages();
   const headerList = await headers();

@@ -72,6 +72,14 @@ function parseQaFilter(v: unknown): QaFilter {
   return "any";
 }
 
+function parseFloat01(v: string | undefined | null): number | null {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return null;
+  if (n < 0) return 0;
+  if (n > 1) return 1;
+  return n;
+}
+
 export function parseLogsFilters(input: {
   envFilter?: string;
   endpointFilter?: string;
@@ -93,14 +101,6 @@ export function parseLogsFilters(input: {
   rerank?: string;
   snapped?: string;
 }): LogsFilters {
-  function parseFloat01(v: string | undefined | null): number | null {
-    const n = Number(v);
-    if (!Number.isFinite(n)) return null;
-    if (n < 0) return 0;
-    if (n > 1) return 1;
-    return n;
-  }
-
   const qNorm = normalizeShortText(input.q, 500);
   const winner_changed = String(input.winner_changed ?? "").trim();
   const margin_lt = String(input.margin_lt ?? "").trim();
@@ -118,7 +118,7 @@ export function parseLogsFilters(input: {
     envFilter: input.envFilter,
     endpointFilter: input.endpointFilter,
     daysFilter: input.daysFilter,
-    q: qNorm ? qNorm : undefined,
+    q: qNorm || undefined,
 
     grStatus: parseGuardrailStatus(input.gr_status),
     grReason: normalizeShortText(input.gr_reason, 140) || undefined,
@@ -142,132 +142,174 @@ export function parseLogsFilters(input: {
   };
 }
 
+type LogsQueryValue = string | number | boolean;
+
 type LogsQueryParts = {
   joinSql: string;
   whereClause: string;
-  values: Array<string | number | boolean>;
+  values: LogsQueryValue[];
   nextIndex: number;
 };
 
-function buildLogsQueryPartsInternal(args: {
-  filters: LogsFilters;
+type LogsQueryState = {
   conditions: string[];
-  values: Array<string | number | boolean>;
+  values: LogsQueryValue[];
   idx: number;
-}): LogsQueryParts {
-  const { filters } = args;
-  const conditions = args.conditions;
-  const values = args.values;
-  let idx = args.idx;
+};
 
-  // Base/global
+const GUARDRAIL_STATUS_CONDITIONS: Record<Exclude<GuardrailStatusFilter, "any">, string> = {
+  blocked: `l.metadata->>'guardrailStatus' = 'blocked'`,
+  not_blocked: `(l.metadata->>'guardrailStatus' is null OR l.metadata->>'guardrailStatus' <> 'blocked')`,
+};
+
+const SCORE_PRESET_CONDITIONS = new Map<Exclude<ScorePreset, "any">, string>([
+  ["lt0.25", `(l.metadata->>'maxScore')::float < 0.25`],
+  ["lt0.5", `(l.metadata->>'maxScore')::float < 0.5`],
+  ["0.25-0.5", `(l.metadata->>'maxScore')::float >= 0.25 and (l.metadata->>'maxScore')::float < 0.5`],
+  ["0.5-0.75", `(l.metadata->>'maxScore')::float >= 0.5 and (l.metadata->>'maxScore')::float < 0.75`],
+  ["gte0.75", `(l.metadata->>'maxScore')::float >= 0.75`],
+]);
+
+const QA_CONDITIONS: Record<Exclude<QaFilter, "any">, string> = {
+  open: `qf.qa_flag_id is not null and qf.qa_flag_status = 'open'`,
+  resolved: `qf.qa_flag_id is not null and qf.qa_flag_status <> 'open'`,
+  none: `qf.qa_flag_id is null`,
+};
+
+function addParamCondition(state: LogsQueryState, condition: string, value: LogsQueryValue): void {
+  state.conditions.push(`${condition} $${state.idx++}`);
+  state.values.push(value);
+}
+
+function addSearchFilter(state: LogsQueryState, q?: string): void {
+  if (!q) return;
+  const trimmed = q.trim();
+  if (!trimmed) return;
+  const token = `$${state.idx++}`;
+  state.conditions.push(`(l.prompt ILIKE ${token} OR l.response ILIKE ${token})`);
+  state.values.push(`%${trimmed}%`);
+}
+
+function addBooleanFilter(state: LogsQueryState, filter: BoolFilter, trueCondition: string, falseCondition: string): void {
+  if (filter === "true") {
+    state.conditions.push(trueCondition);
+  } else if (filter === "false") {
+    state.conditions.push(falseCondition);
+  }
+}
+
+function addBaseFilters(state: LogsQueryState, filters: LogsFilters): void {
   if (filters.envFilter) {
-    conditions.push(`l.env = $${idx++}`);
-    values.push(filters.envFilter);
+    addParamCondition(state, "l.env =", filters.envFilter);
   }
 
   if (filters.endpointFilter) {
-    conditions.push(`l.endpoint = $${idx++}`);
-    values.push(filters.endpointFilter);
+    addParamCondition(state, "l.endpoint =", filters.endpointFilter);
   }
 
-  idx = appendDaysFilter({ conditions, params: values, idx, days: filters.daysFilter, column: "l.created_at" });
+  state.idx = appendDaysFilter({
+    conditions: state.conditions,
+    params: state.values,
+    idx: state.idx,
+    days: filters.daysFilter,
+    column: "l.created_at",
+  });
+}
 
-  // Search over FULL prompt/response, but select previews
-  if (filters.q && filters.q.trim().length > 0) {
-    conditions.push(`(l.prompt ILIKE $${idx} OR l.response ILIKE $${idx})`);
-    values.push(`%${filters.q.trim()}%`);
-    idx += 1;
-  }
-
-  // Guardrails
-  if (filters.grStatus === "blocked") {
-    conditions.push(`l.metadata->>'guardrailStatus' = 'blocked'`);
-  } else if (filters.grStatus === "not_blocked") {
-    conditions.push(`(l.metadata->>'guardrailStatus' is null OR l.metadata->>'guardrailStatus' <> 'blocked')`);
+function addGuardrailFilters(state: LogsQueryState, filters: LogsFilters): void {
+  if (filters.grStatus !== "any") {
+    state.conditions.push(GUARDRAIL_STATUS_CONDITIONS[filters.grStatus]);
   }
 
   if (filters.grReason) {
-    conditions.push(`l.metadata->>'guardrailReason' = $${idx++}`);
-    values.push(filters.grReason);
+    addParamCondition(state, "l.metadata->>'guardrailReason' =", filters.grReason);
   }
+}
 
-  // Confidence
-  if (filters.lowConf === "true") {
-    conditions.push(`l.low_confidence = true`);
-  } else if (filters.lowConf === "false") {
-    conditions.push(`coalesce(l.low_confidence, false) = false`);
-  }
+function addConfidenceFilters(state: LogsQueryState, filters: LogsFilters): void {
+  addBooleanFilter(state, filters.lowConf, "l.low_confidence = true", "coalesce(l.low_confidence, false) = false");
+}
 
-  // maxScore presets
+function addScorePresetFilters(state: LogsQueryState, filters: LogsFilters): void {
   if (filters.score !== "any") {
-    conditions.push(`l.metadata->>'maxScore' is not null`);
-    if (filters.score === "lt0.25") {
-      conditions.push(`(l.metadata->>'maxScore')::float < 0.25`);
-    } else if (filters.score === "lt0.5") {
-      conditions.push(`(l.metadata->>'maxScore')::float < 0.5`);
-    } else if (filters.score === "0.25-0.5") {
-      conditions.push(`(l.metadata->>'maxScore')::float >= 0.25 and (l.metadata->>'maxScore')::float < 0.5`);
-    } else if (filters.score === "0.5-0.75") {
-      conditions.push(`(l.metadata->>'maxScore')::float >= 0.5 and (l.metadata->>'maxScore')::float < 0.75`);
-    } else if (filters.score === "gte0.75") {
-      conditions.push(`(l.metadata->>'maxScore')::float >= 0.75`);
+    const condition = SCORE_PRESET_CONDITIONS.get(filters.score);
+    if (condition) {
+      state.conditions.push(`l.metadata->>'maxScore' is not null`, condition);
     }
   }
+}
 
-  // Archetype / model
+function addArchetypeModelFilters(state: LogsQueryState, filters: LogsFilters): void {
   if (filters.archetype) {
-    conditions.push(`l.archetype = $${idx++}`);
-    values.push(filters.archetype);
+    addParamCondition(state, "l.archetype =", filters.archetype);
   }
 
   if (filters.model) {
-    conditions.push(`l.model = $${idx++}`);
-    values.push(filters.model);
+    addParamCondition(state, "l.model =", filters.model);
   }
+}
 
-  // Gateway
-  if (filters.gateway === "true") {
-    conditions.push(`l.used_gateway = true`);
-  } else if (filters.gateway === "false") {
-    conditions.push(`coalesce(l.used_gateway, false) = false`);
+function addGatewayFilter(state: LogsQueryState, filters: LogsFilters): void {
+  addBooleanFilter(state, filters.gateway, "l.used_gateway = true", "coalesce(l.used_gateway, false) = false");
+}
+
+function addQaFilters(state: LogsQueryState, filters: LogsFilters): void {
+  if (filters.qa !== "any") {
+    state.conditions.push(QA_CONDITIONS[filters.qa]);
   }
+}
 
-  // QA (requires join alias qf)
-  if (filters.qa === "open") {
-    conditions.push(`qf.qa_flag_id is not null and qf.qa_flag_status = 'open'`);
-  } else if (filters.qa === "resolved") {
-    conditions.push(`qf.qa_flag_id is not null and qf.qa_flag_status <> 'open'`);
-  } else if (filters.qa === "none") {
-    conditions.push(`qf.qa_flag_id is null`);
-  }
+function addRerankFilter(state: LogsQueryState, filters: LogsFilters): void {
+  addBooleanFilter(
+    state,
+    filters.rerank,
+    "coalesce((l.metadata->>'rerankEnabled')::boolean, false) = true",
+    "coalesce((l.metadata->>'rerankEnabled')::boolean, false) = false",
+  );
+}
 
-  if (filters.rerank === "true") {
-    conditions.push(`coalesce((l.metadata->>'rerankEnabled')::boolean, false) = true`);
-  } else if (filters.rerank === "false") {
-    conditions.push(`coalesce((l.metadata->>'rerankEnabled')::boolean, false) = false`);
-  }
+function addSnappedFilter(state: LogsQueryState, filters: LogsFilters): void {
+  addBooleanFilter(
+    state,
+    filters.snapped,
+    "coalesce((l.metadata->>'archetypeSnapped')::boolean, false) = true",
+    "coalesce((l.metadata->>'archetypeSnapped')::boolean, false) = false",
+  );
+}
 
-  if (filters.snapped === "true") {
-    conditions.push(`coalesce((l.metadata->>'archetypeSnapped')::boolean, false) = true`);
-  } else if (filters.snapped === "false") {
-    conditions.push(`coalesce((l.metadata->>'archetypeSnapped')::boolean, false) = false`);
-  }
-
+function addMarginFilter(state: LogsQueryState, filters: LogsFilters): void {
   if (filters.marginLt !== null && filters.marginLt !== undefined) {
-    conditions.push(
-      `coalesce((l.metadata->>'archetypeConfidenceMargin')::float, (l.metadata->>'archetypeConfidence')::float) < $${idx++}`,
+    addParamCondition(
+      state,
+      "coalesce((l.metadata->>'archetypeConfidenceMargin')::float, (l.metadata->>'archetypeConfidence')::float) <",
+      filters.marginLt,
     );
-    values.push(filters.marginLt);
   }
+}
 
+function addScoreArchetypeFilter(state: LogsQueryState, filters: LogsFilters): void {
   if (filters.scoreArchetype && filters.scoreArchetypeMin !== null && filters.scoreArchetypeMin !== undefined) {
-    const key = filters.scoreArchetype; // safe enum
-    conditions.push(`l.metadata->'archetypeScores' is not null`);
-    conditions.push(`(l.metadata->'archetypeScores'->>'${key}')::float >= $${idx++}`);
-    values.push(filters.scoreArchetypeMin);
+    const key = filters.scoreArchetype;
+    const scoreIndex = state.idx++;
+    state.conditions.push(
+      `l.metadata->'archetypeScores' is not null`,
+      `(l.metadata->'archetypeScores'->>'${key}')::float >= $${scoreIndex}`,
+    );
+    state.values.push(filters.scoreArchetypeMin);
   }
+}
 
+function addWinnerChangedFilters(state: LogsQueryState, filters: LogsFilters): void {
+  if (filters.winnerChanged) {
+    state.conditions.push(
+      `l.session_id is not null`,
+      `prev.prev_archetype is not null`,
+      `prev.prev_archetype is distinct from l.archetype`,
+    );
+  }
+}
+
+function buildJoinSql(filters: LogsFilters): string {
   const joins: string[] = [
     `
       left join lateral (
@@ -298,17 +340,39 @@ function buildLogsQueryPartsInternal(args: {
     `);
   }
 
-  if (filters.winnerChanged) {
-    conditions.push(`l.session_id is not null`);
-    conditions.push(`prev.prev_archetype is not null`);
-    conditions.push(`prev.prev_archetype is distinct from l.archetype`);
-  }
+  return joins.join("\n");
+}
 
-  const joinSql = joins.join("\n");
+function buildLogsQueryPartsInternal(args: {
+  filters: LogsFilters;
+  conditions: string[];
+  values: LogsQueryValue[];
+  idx: number;
+}): LogsQueryParts {
+  const state: LogsQueryState = {
+    conditions: args.conditions,
+    values: args.values,
+    idx: args.idx,
+  };
 
-  const whereClause = conditions.length ? `where ${conditions.join(" and ")}` : "";
+  addBaseFilters(state, args.filters);
+  addSearchFilter(state, args.filters.q);
+  addGuardrailFilters(state, args.filters);
+  addConfidenceFilters(state, args.filters);
+  addScorePresetFilters(state, args.filters);
+  addArchetypeModelFilters(state, args.filters);
+  addGatewayFilter(state, args.filters);
+  addQaFilters(state, args.filters);
+  addRerankFilter(state, args.filters);
+  addSnappedFilter(state, args.filters);
+  addMarginFilter(state, args.filters);
+  addScoreArchetypeFilter(state, args.filters);
+  addWinnerChangedFilters(state, args.filters);
 
-  return { joinSql, whereClause, values, nextIndex: idx };
+  const joinSql = buildJoinSql(args.filters);
+  const whereClause = state.conditions.length ? `where ${state.conditions.join(" and ")}` : "";
+
+  return { joinSql, whereClause, values: state.values, nextIndex: state.idx };
 }
 
 export function buildLogsQueryParts(filters: LogsFilters): LogsQueryParts {
@@ -322,7 +386,7 @@ export function buildLogsQueryParts(filters: LogsFilters): LogsQueryParts {
 export function buildLogsQueryPartsWithBase(args: {
   filters: LogsFilters;
   baseConditions: string[];
-  baseValues: Array<string | number | boolean>;
+  baseValues: LogsQueryValue[];
   startIndex: number;
 }): LogsQueryParts {
   return buildLogsQueryPartsInternal({

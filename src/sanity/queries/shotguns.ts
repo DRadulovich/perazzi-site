@@ -608,7 +608,7 @@ export async function getPlatforms(): Promise<ShotgunsPlatformPayload[]> {
   return (data ?? [])
     .filter((platform): platform is PlatformResponse & { _id: string } => Boolean(platform._id))
     .map((platform) => ({
-      id: platform._id as string,
+      id: platform._id,
       name: platform.name ?? undefined,
       slug: platform.slug?.current ?? undefined,
       lineage: platform.lineage ?? undefined,
@@ -632,16 +632,16 @@ export async function getPlatforms(): Promise<ShotgunsPlatformPayload[]> {
             },
           }
         : undefined,
-      disciplines: platform.disciplines
-        ?.map((ref) =>
-          ref._id
-            ? {
-                id: ref._id as string,
+      disciplines: platform.disciplines?.flatMap((ref) =>
+        ref._id
+          ? [
+              {
+                id: ref._id,
                 name: ref.name ?? undefined,
-              }
-            : null,
-        )
-        .filter(Boolean) as Array<{ id: string; name?: string }> | undefined,
+              },
+            ]
+          : [],
+      ),
       fixedCounterpart: platform.fixedCounterpart
         ? {
             id: platform.fixedCounterpart.id ?? undefined,
@@ -669,26 +669,26 @@ export async function getDisciplines(): Promise<ShotgunsDisciplinePayload[]> {
   return (data ?? [])
     .filter((discipline): discipline is DisciplineResponse & { _id: string } => Boolean(discipline._id))
     .map((discipline) => ({
-      id: discipline._id as string,
+      id: discipline._id,
       name: discipline.name ?? undefined,
       slug: discipline.slug?.current ?? undefined,
       overviewPortableText: discipline.overview,
       hero: mapImageResult(discipline.hero ?? null),
       championImage: mapImageResult(discipline.championImage ?? null),
-      recommendedPlatformIds: discipline.recommendedPlatforms
-        ?.map((ref) => ref._ref)
-        .filter(Boolean) as string[] | undefined,
-      popularModels: discipline.popularModels
-        ?.map((model) =>
-          model._id
-            ? {
-                id: model._id as string,
+      recommendedPlatformIds: discipline.recommendedPlatforms?.flatMap((ref) =>
+        ref._ref ? [ref._ref] : [],
+      ),
+      popularModels: discipline.popularModels?.flatMap((model) =>
+        model._id
+          ? [
+              {
+                id: model._id,
                 name: model.name ?? undefined,
                 hero: mapImageResult(model.image ?? null),
-              }
-            : null,
-        )
-        .filter(Boolean) as Array<{ id: string; name?: string; hero?: FactoryAsset }> | undefined,
+              },
+            ]
+          : [],
+      ),
     }));
 }
 
@@ -699,7 +699,7 @@ export async function getGrades(): Promise<ShotgunsGradePayload[]> {
   }).catch(() => ({ data: [] }));
   const data = (result?.data as GradeResponse[] | null) ?? null;
 
-  const slugifyGradeId = (value?: string | null, fallback?: string) => {
+  const slugifyGradeId = (value: string | null | undefined, fallback: string): string => {
     const base = value?.trim().toLowerCase();
     if (base) {
       const slug = base.replaceAll(/[^a-z0-9]+/g, "-").replaceAll(/(^-)|(-$)/g, "");
@@ -711,7 +711,7 @@ export async function getGrades(): Promise<ShotgunsGradePayload[]> {
   return (data ?? [])
     .filter((grade): grade is GradeResponse & { _id: string } => Boolean(grade._id))
     .map((grade) => ({
-      id: slugifyGradeId(grade.name, grade._id as string) as string,
+      id: slugifyGradeId(grade.name, grade._id),
       name: grade.name ?? undefined,
       description: grade.description ?? undefined,
       hero: mapImageResult(grade.hero ?? null),
@@ -719,12 +719,14 @@ export async function getGrades(): Promise<ShotgunsGradePayload[]> {
         grade.engravingGallery?.length
           ? grade.engravingGallery
           : grade.engravingLibrary?.map((entry) => entry.engraving_photo) ?? []
-      )
-        .map((asset) => mapImageResult(asset ?? null))
-        .filter(Boolean) as FactoryAsset[] | undefined,
-      woodImages: grade.woodImages
-        ?.map((asset) => mapImageResult(asset ?? null))
-        .filter(Boolean) as FactoryAsset[] | undefined,
+      ).flatMap((asset) => {
+        const mapped = mapImageResult(asset ?? null);
+        return mapped ? [mapped] : [];
+      }),
+      woodImages: grade.woodImages?.flatMap((asset) => {
+        const mapped = mapImageResult(asset ?? null);
+        return mapped ? [mapped] : [];
+      }),
     }));
 }
 

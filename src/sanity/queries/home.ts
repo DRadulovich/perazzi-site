@@ -264,6 +264,8 @@ type HomeSanityResponse = {
   } | null;
 };
 
+type GuidePlatformInput = NonNullable<NonNullable<HomeSanityResponse["guideSection"]>["platforms"]>[number];
+
 export async function getHome(): Promise<HomeData> {
   const result = await sanityFetch({
     query: homeQuery,
@@ -325,6 +327,10 @@ function mapTimelineFraming(
   };
 }
 
+function isNonNullable<T>(value: T | null | undefined): value is T {
+  return value != null;
+}
+
 function mapStages(stages?: HomeSanityResponse["timelineStages"] | null): HomeData["stages"] | undefined {
   if (!stages || stages.length === 0) return undefined;
   const mapped: FittingStage[] = stages
@@ -339,7 +345,7 @@ function mapStages(stages?: HomeSanityResponse["timelineStages"] | null): HomeDa
         media,
       };
     })
-    .filter((stage): stage is FittingStage => Boolean(stage));
+    .filter(isNonNullable);
 
   return mapped.length ? mapped : undefined;
 }
@@ -427,6 +433,12 @@ function mapMarqueeUi(input?: HomeSanityResponse["marqueeUi"] | null): HomeData[
   };
 }
 
+function hasGuidePlatformCode(
+  item: GuidePlatformInput | null | undefined,
+): item is GuidePlatformInput & { code: string } {
+  return typeof item?.code === "string" && item.code.length > 0;
+}
+
 function mapGuidePlatforms(
   platforms?: NonNullable<HomeSanityResponse["guideSection"]>["platforms"],
 ): HomeGuidePlatform[] {
@@ -443,7 +455,7 @@ function mapGuidePlatforms(
   });
 
   const extras = provided
-    .filter((item): item is NonNullable<typeof item> => Boolean(item?.code))
+    .filter(hasGuidePlatformCode)
     .filter((item) => isGuidePlatformCode(item.code))
     .filter((item) => !merged.some((platform) => platform.code === item.code))
     .map((item) => ({

@@ -31,12 +31,30 @@ function asRecord(v: unknown): Record<string, unknown> | null {
   return v && typeof v === "object" ? (v as Record<string, unknown>) : null;
 }
 
+function getStringMeta(meta: Record<string, unknown> | null, key: string): string | null {
+  const value = meta?.[key];
+  return typeof value === "string" ? value : null;
+}
+
+function parsePositiveMaxChars(value: unknown): number | null {
+  if (typeof value === "string") {
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isFinite(parsed) || parsed <= 0) return null;
+    return parsed;
+  }
+  if (typeof value === "number") {
+    if (!Number.isFinite(value) || value <= 0) return null;
+    return value;
+  }
+  return null;
+}
+
 export function getLogTextMode(metadata: unknown, explicit?: string | null): LogTextMode {
   const meta = asRecord(metadata);
   const raw =
     explicit ??
-    (typeof meta?.logTextMode === "string" ? meta.logTextMode : null) ??
-    (typeof (meta?.log_text_mode as unknown) === "string" ? (meta?.log_text_mode as string) : null);
+    getStringMeta(meta, "logTextMode") ??
+    getStringMeta(meta, "log_text_mode");
 
   if (typeof raw !== "string") return "unknown";
   const normalized = raw.trim().toLowerCase();
@@ -47,9 +65,7 @@ export function getLogTextMode(metadata: unknown, explicit?: string | null): Log
 export function getLogTextMaxChars(metadata: unknown, explicit?: number | null): number | null {
   const meta = asRecord(metadata);
   const raw = explicit ?? meta?.logTextMaxChars ?? meta?.log_text_max_chars;
-  const n = typeof raw === "string" ? Number.parseInt(raw, 10) : typeof raw === "number" ? raw : null;
-  if (!Number.isFinite(n as number) || (n as number) <= 0) return null;
-  return Number(n);
+  return parsePositiveMaxChars(raw);
 }
 
 function resolveFlag(metadata: unknown, key: string, explicit: boolean | null | undefined): boolean | null {
@@ -58,6 +74,84 @@ function resolveFlag(metadata: unknown, key: string, explicit: boolean | null | 
   const meta = asRecord(metadata);
   const fromMeta = coerceBoolean(meta?.[key]);
   return fromMeta;
+}
+
+function resolveIsOmittedStatus({
+  field,
+  trimmed,
+  metadata,
+  mode,
+  omittedFlag,
+}: {
+  field: "prompt" | "response";
+  trimmed: string;
+  metadata?: unknown;
+  mode: LogTextMode;
+  omittedFlag?: boolean | null;
+}): boolean {
+  const explicitOmitted = resolveFlag(metadata, `${field}TextOmitted`, omittedFlag);
+  if (explicitOmitted === true) return true;
+  if (trimmed === TEXT_PLACEHOLDER) return true;
+  if (mode === "omitted" && trimmed.length > 0) return true;
+  return false;
+}
+
+function resolveIsTruncatedStatus({
+  field,
+  trimmed,
+  metadata,
+  mode,
+  maxChars,
+  truncatedFlag,
+  isOmitted,
+  placeholder,
+}: {
+  field: "prompt" | "response";
+  trimmed: string;
+  metadata?: unknown;
+  mode: LogTextMode;
+  maxChars: number | null;
+  truncatedFlag?: boolean | null;
+  isOmitted: boolean;
+  placeholder: boolean;
+}): boolean {
+  if (isOmitted) return false;
+
+  const metaTruncated = resolveFlag(metadata, `${field}TextTruncated`, truncatedFlag);
+  if (metaTruncated !== null) return metaTruncated === true;
+  if (mode !== "truncate") return false;
+  if (maxChars === null || maxChars <= 0) return false;
+  if (trimmed.length < maxChars) return false;
+  if (placeholder) return false;
+  return true;
+}
+
+function resolveBadge(isOmitted: boolean, isTruncated: boolean, mode: LogTextMode): string | undefined {
+  if (isOmitted) return "OMITTED";
+  if (isTruncated) return "TRUNCATED";
+  if (mode === "truncate") return "TRUNCATE MODE";
+  return undefined;
+}
+
+function resolveBadgeTone(isOmitted: boolean, isTruncated: boolean): BadgeTone | undefined {
+  if (isOmitted) return "red";
+  if (isTruncated) return "amber";
+  return undefined;
+}
+
+function resolveCopyLabel(isOmitted: boolean, isTruncated: boolean): string {
+  if (isOmitted) return "Full text not stored";
+  if (isTruncated) return "Copy stored excerpt";
+  return "Copy text";
+}
+
+function resolveCallout(isOmitted: boolean, isTruncated: boolean, mode: LogTextMode, maxChars: number | null) {
+  if (isOmitted) return "Text omitted by logging settings.";
+
+  const maxCharsLabel = maxChars ? ` (max ${maxChars} chars)` : "";
+  if (isTruncated) return `Stored excerpt${maxCharsLabel}.`;
+  if (mode === "truncate") return `Logging in truncate mode${maxCharsLabel}.`;
+  return undefined;
 }
 
 function buildFieldStatus({
@@ -81,32 +175,25 @@ function buildFieldStatus({
   const trimmed = stored.trim();
   const placeholder = trimmed === TEXT_PLACEHOLDER;
 
-  const isOmitted =
-    resolveFlag(metadata, `${field}TextOmitted`, omittedFlag) === true ||
-    placeholder ||
-    (mode === "omitted" && trimmed.length > 0);
+  const isOmitted = resolveIsOmittedStatus({ field, trimmed, metadata, mode, omittedFlag });
+  const isTruncated = resolveIsTruncatedStatus({
+    field,
+    trimmed,
+    metadata,
+    mode,
+    maxChars,
+    truncatedFlag,
+    isOmitted,
+    placeholder,
+  });
 
-  const metaTruncated = resolveFlag(metadata, `${field}TextTruncated`, truncatedFlag);
-  const inferredTruncated =
-    metaTruncated !== null
-      ? metaTruncated
-      : mode === "truncate" && maxChars !== null && maxChars > 0 && trimmed.length >= maxChars && !placeholder;
-  const isTruncated = !isOmitted && inferredTruncated === true;
-
-  const badge =
-    isOmitted ? "OMITTED" : isTruncated ? "TRUNCATED" : mode === "truncate" ? "TRUNCATE MODE" : undefined;
-  const badgeTone: BadgeTone | undefined = isOmitted ? "red" : isTruncated ? "amber" : undefined;
+  const badge = resolveBadge(isOmitted, isTruncated, mode);
+  const badgeTone = resolveBadgeTone(isOmitted, isTruncated);
   const copyAllowed = !isOmitted;
-  const copyLabel = isOmitted ? "Full text not stored" : isTruncated ? "Copy stored excerpt" : "Copy text";
-  const callout = isOmitted
-    ? "Text omitted by logging settings."
-    : isTruncated
-      ? `Stored excerpt${maxChars ? ` (max ${maxChars} chars)` : ""}.`
-      : mode === "truncate"
-        ? `Logging in truncate mode${maxChars ? ` (max ${maxChars} chars)` : ""}.`
-        : undefined;
+  const copyLabel = resolveCopyLabel(isOmitted, isTruncated);
+  const callout = resolveCallout(isOmitted, isTruncated, mode, maxChars);
 
-  const displayValue = isOmitted && !trimmed ? TEXT_PLACEHOLDER : stored;
+  const displayValue = isOmitted && trimmed.length === 0 ? TEXT_PLACEHOLDER : stored;
 
   return {
     mode,

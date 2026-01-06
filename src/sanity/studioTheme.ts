@@ -1,6 +1,10 @@
 'use client'
 
-import {buildLegacyTheme} from 'sanity'
+import {
+  buildTheme,
+  type ColorConfigValue,
+  type ThemeColorTokenValue,
+} from '@sanity/ui/theme'
 
 export const perazziPalette = {
   red: '#DB1022',
@@ -14,29 +18,35 @@ export const perazziPalette = {
   border: '#2A2A2B',
 }
 
+const fontFamilyBase =
+  'var(--font-geist-sans), "Inter", "Segoe UI", system-ui, sans-serif'
+const fontFamilyMono =
+  'var(--font-geist-mono), "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace'
+
+const token = (
+  light: ColorConfigValue,
+  dark: ColorConfigValue = light
+): ThemeColorTokenValue => [light, dark]
+
+const baseTheme = buildTheme()
+const perazziFonts = {
+  ...baseTheme.v2!.font,
+  code: {...baseTheme.v2!.font.code, family: fontFamilyMono},
+  heading: {...baseTheme.v2!.font.heading, family: fontFamilyBase},
+  label: {...baseTheme.v2!.font.label, family: fontFamilyBase},
+  text: {...baseTheme.v2!.font.text, family: fontFamilyBase},
+}
+
 // Align Studio theming with site brand tokens (Perazzi red / black on warm canvas)
-export const perazziTheme = buildLegacyTheme({
-  '--font-family-base':
-    'var(--font-geist-sans), "Inter", "Segoe UI", system-ui, sans-serif',
-  '--font-family-monospace':
-    'var(--font-geist-mono), "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace',
-  '--black': perazziPalette.black,
-  '--white': perazziPalette.white,
-  '--gray-base': perazziPalette.black,
-  '--gray': perazziPalette.inkMuted,
-  '--brand-primary': perazziPalette.red,
-  '--focus-color': perazziPalette.red,
-  '--component-bg': perazziPalette.card,
-  '--component-text-color': perazziPalette.ink,
-  '--default-button-color': perazziPalette.black,
-  '--default-button-primary-color': perazziPalette.red,
-  '--default-button-success-color': perazziPalette.card,
-  '--default-button-warning-color': '#a15708',
-  '--default-button-danger-color': perazziPalette.red,
-  '--state-info-color': perazziPalette.red,
-  '--state-success-color': perazziPalette.card,
-  '--state-warning-color': '#a15708',
-  '--state-danger-color': perazziPalette.red,
-  '--main-navigation-color': perazziPalette.card,
-  '--main-navigation-color--inverted': perazziPalette.ink,
+export const perazziTheme = buildTheme({
+  color: {
+    base: {
+      '*': {
+        focusRing: token('red/600'),
+        link: {fg: token('red/600', 'red/500')},
+      },
+      primary: {_hue: 'red'},
+    },
+  },
+  font: perazziFonts,
 })

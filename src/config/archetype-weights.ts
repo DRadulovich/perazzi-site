@@ -17,7 +17,7 @@ export interface ArchetypeBoostTiers {
 const DEFAULT_TIERS: ArchetypeBoostTiers = {
   high: 0.45,
   mid: 0.25,
-  low: 0.10,
+  low: 0.1,
   maxPerMessage: 0.6,
 };
 

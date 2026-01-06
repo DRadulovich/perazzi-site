@@ -129,7 +129,7 @@ export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {
             aria-hidden="true"
             variants={item}
           >
-            <div className="group relative aspect-[16/9] w-full min-h-[360px] overflow-hidden rounded-2xl bg-black/30 shadow-elevated ring-1 ring-white/10">
+            <div className="group relative aspect-video w-full min-h-[360px] overflow-hidden rounded-2xl bg-black/30 shadow-elevated ring-1 ring-white/10">
               <Image
                 src={hero.background.url}
                 alt={hero.background.alt ?? hero.title}
@@ -140,7 +140,7 @@ export function ServiceHero({ hero, breadcrumbs }: ServiceHeroProps) {
               />
               <div className="pointer-events-none absolute inset-0 film-grain opacity-15" aria-hidden="true" />
               <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-black via-black/40 to-transparent" />
             </div>
           </motion.div>
         </motion.div>

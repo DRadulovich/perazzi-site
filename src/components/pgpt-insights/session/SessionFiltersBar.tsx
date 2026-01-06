@@ -30,10 +30,11 @@ export function SessionFiltersBar() {
   function replaceParams(next: URLSearchParams) {
     const qs = next.toString();
     const baseHref = qs ? `${pathname}?${qs}` : pathname;
-    const hash = typeof window !== "undefined" ? window.location.hash : "";
+    const windowRef = "window" in globalThis ? globalThis.window : null;
+    const hash = windowRef ? windowRef.location.hash : "";
 
-    if (typeof window !== "undefined") {
-      pendingScrollRef.current = window.scrollY;
+    if (windowRef) {
+      pendingScrollRef.current = windowRef.scrollY;
     }
 
     router.replace(`${baseHref}${hash}`, { scroll: false });
@@ -43,7 +44,7 @@ export function SessionFiltersBar() {
     if (pendingScrollRef.current === null) return;
     const y = pendingScrollRef.current;
     pendingScrollRef.current = null;
-    requestAnimationFrame(() => window.scrollTo({ top: y }));
+    globalThis.requestAnimationFrame(() => globalThis.scrollTo({ top: y }));
   }, [searchParamsKey]);
 
   function setParam(key: string, value: string) {
@@ -61,8 +62,8 @@ export function SessionFiltersBar() {
       key === "rerank" ||
       key === "snapped";
 
-    if (!v) next.delete(key);
-    else next.set(key, v);
+    if (v) next.set(key, v);
+    else next.delete(key);
 
     // delete defaults
     if (key === "density" && v === "comfortable") next.delete("density");
@@ -78,7 +79,7 @@ export function SessionFiltersBar() {
   // Persist density
   useEffect(() => {
     try {
-      window.localStorage.setItem(densityKey, density);
+      globalThis.localStorage.setItem(densityKey, density);
     } catch {}
   }, [density]);
 
@@ -91,7 +92,7 @@ export function SessionFiltersBar() {
     if (searchParams.get("density")) return;
 
     try {
-      const stored = window.localStorage.getItem(densityKey);
+      const stored = globalThis.localStorage.getItem(densityKey);
       if (stored && stored !== "comfortable") {
         const next = new URLSearchParams(searchParams.toString());
         next.set("density", stored);
@@ -108,18 +109,12 @@ export function SessionFiltersBar() {
   useEffect(() => {
     if (qInput === qUrl) return;
 
-    const t = window.setTimeout(() => {
+    const t = globalThis.setTimeout(() => {
       const trimmed = qInput.trim();
       setParam("q", trimmed);
-      if (!trimmed) {
-        const next = new URLSearchParams(searchParams.toString());
-        next.delete("q");
-        next.delete("page");
-        replaceParams(next);
-      }
     }, 350);
 
-    return () => window.clearTimeout(t);
+    return () => globalThis.clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qInput, qUrl]);
 
@@ -288,8 +283,6 @@ export function SessionFiltersBar() {
             onChange={(e) => {
               const v = e.target.value;
               setParam("score_archetype", v);
-              // If turning off archetype score filter, remove min too.
-              if (v === "any") setParam("min", "");
             }}
             className="h-9 rounded-md border bg-background px-2 text-sm"
           >
@@ -302,7 +295,7 @@ export function SessionFiltersBar() {
           </select>
         </div>
 
-        {scoreArchetype !== "any" ? (
+        {scoreArchetype === "any" ? null : (
           <div className="text-sm">
             <label htmlFor="sess-arch-min" className="block text-xs text-muted-foreground">
               ≥ min
@@ -320,7 +313,7 @@ export function SessionFiltersBar() {
               <option value="0.60">0.60</option>
             </select>
           </div>
-        ) : null}
+        )}
 
         <div className="text-sm">
           <label htmlFor="sess-density" className="block text-xs text-muted-foreground">

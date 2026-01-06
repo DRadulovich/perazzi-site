@@ -32,17 +32,42 @@ export function ConciergeHero({ hero }: ConciergeHeroProps) {
   const motionEnabled = !reduceMotion;
   const revealTransition = motionEnabled ? homeMotion.reveal : { duration: 0.01 };
   const revealFastTransition = motionEnabled ? homeMotion.revealFast : { duration: 0.01 };
+  const staggerChildren = motionEnabled ? 0.12 : 0;
+  const parallaxOffset = motionEnabled ? "12%" : "0%";
+  const copyContainerMotionProps = motionEnabled
+    ? { initial: "hidden", animate: "show" }
+    : { initial: false };
+  const buttonMotionProps = motionEnabled
+    ? {
+        whileHover: { y: -1, transition: homeMotion.micro },
+        whileTap: { y: 0, transition: homeMotion.micro },
+      }
+    : {};
+  const bulletMotionProps = motionEnabled
+    ? { whileHover: { y: -2, transition: homeMotion.micro } }
+    : {};
+  const snapshotMotionProps = motionEnabled
+    ? {
+        initial: { opacity: 0, y: 18, filter: "blur(12px)" },
+        animate: { opacity: 1, y: 0, filter: "blur(0px)" },
+        transition: { delay: 0.1, ...revealTransition },
+      }
+    : { initial: false };
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end start"],
   });
 
-  const parallaxY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0%", reduceMotion ? "0%" : "12%"],
-  );
+  const parallaxY = useTransform(scrollYProgress, [0, 1], ["0%", parallaxOffset]);
+  const backgroundMotionProps = motionEnabled
+    ? {
+        style: { y: parallaxY },
+        initial: { scale: 1.06 },
+        animate: { scale: 1.02 },
+        transition: { duration: 1.2, ease: homeMotion.cinematicEase },
+      }
+    : {};
 
   const setRefs = useCallback(
     (node: HTMLElement | null) => {
@@ -56,7 +81,7 @@ export function ConciergeHero({ hero }: ConciergeHeroProps) {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: motionEnabled ? 0.12 : 0 },
+      transition: { staggerChildren },
     },
   } as const;
 
@@ -74,10 +99,7 @@ export function ConciergeHero({ hero }: ConciergeHeroProps) {
     >
       <motion.div
         className="absolute inset-0"
-        style={reduceMotion ? undefined : { y: parallaxY }}
-        initial={motionEnabled ? { scale: 1.06 } : undefined}
-        animate={motionEnabled ? { scale: 1.02 } : undefined}
-        transition={motionEnabled ? { duration: 1.2, ease: homeMotion.cinematicEase } : undefined}
+        {...backgroundMotionProps}
         aria-hidden="true"
       >
         <Image
@@ -98,8 +120,7 @@ export function ConciergeHero({ hero }: ConciergeHeroProps) {
         <motion.div
           className="space-y-6 md:col-span-6 lg:col-span-7"
           variants={copyContainer}
-          initial={motionEnabled ? "hidden" : false}
-          animate={motionEnabled ? "show" : undefined}
+          {...copyContainerMotionProps}
         >
           <motion.div variants={copyItem}>
             <Text size="label-tight" className="text-ink/70">
@@ -116,10 +137,7 @@ export function ConciergeHero({ hero }: ConciergeHeroProps) {
           </motion.div>
 
           <motion.div variants={copyItem} className="flex flex-wrap gap-3">
-            <motion.div
-              whileHover={motionEnabled ? { y: -1, transition: homeMotion.micro } : undefined}
-              whileTap={motionEnabled ? { y: 0, transition: homeMotion.micro } : undefined}
-            >
+            <motion.div {...buttonMotionProps}>
               <Link
                 href="#concierge-conversation"
                 className="inline-flex min-h-10 items-center justify-center rounded-full bg-brand px-4 py-2 type-button text-ink transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
@@ -128,10 +146,7 @@ export function ConciergeHero({ hero }: ConciergeHeroProps) {
                 Open the conversation
               </Link>
             </motion.div>
-            <motion.div
-              whileHover={motionEnabled ? { y: -1, transition: homeMotion.micro } : undefined}
-              whileTap={motionEnabled ? { y: 0, transition: homeMotion.micro } : undefined}
-            >
+            <motion.div {...buttonMotionProps}>
               <Link
                 href="#concierge-navigator"
                 className="inline-flex min-h-10 items-center justify-center rounded-full border border-ink/30 bg-white/10 px-4 py-2 type-button text-ink/90 transition hover:border-ink hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink/60"
@@ -147,7 +162,7 @@ export function ConciergeHero({ hero }: ConciergeHeroProps) {
               <motion.div
                 key={bullet.title}
                 className="rounded-2xl border border-ink/10 bg-white/5 px-4 py-3 shadow-soft backdrop-blur-md"
-                whileHover={motionEnabled ? { y: -2, transition: homeMotion.micro } : undefined}
+                {...bulletMotionProps}
               >
                 <Text className="type-title-sm text-ink">{bullet.title}</Text>
                 <Text size="sm" className="mt-1 text-ink/75">{bullet.body}</Text>
@@ -158,9 +173,7 @@ export function ConciergeHero({ hero }: ConciergeHeroProps) {
 
         <motion.div
           className="space-y-4 rounded-2xl border border-ink/20 bg-white/5 p-4 shadow-soft backdrop-blur-md md:col-span-6 lg:col-span-5 sm:rounded-3xl sm:p-5"
-          initial={motionEnabled ? { opacity: 0, y: 18, filter: "blur(12px)" } : false}
-          animate={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-          transition={motionEnabled ? { delay: 0.1, ...revealTransition } : undefined}
+          {...snapshotMotionProps}
         >
           <div className="flex items-center justify-between gap-3">
             <Text size="label-tight" className="text-ink/70">

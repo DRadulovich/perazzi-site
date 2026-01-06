@@ -9,7 +9,7 @@ const warn = (message: string) => {
 };
 
 function cloneBespoke(): BuildPageData {
-  return JSON.parse(JSON.stringify(buildData));
+  return structuredClone(buildData);
 }
 
 type PartialStage = Partial<FittingStage> & { id: string };

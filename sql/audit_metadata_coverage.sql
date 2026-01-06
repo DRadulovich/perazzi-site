@@ -143,86 +143,115 @@ group by token
 order by chunk_count desc, token asc;
 
 -- 12) Sanity: ensure jsonb arrays only (documents)
+with jsonb_constants as (
+  select
+    'array'::text as jsonb_array_type
+)
 select
-  count(*) filter (where platforms is not null and jsonb_typeof(platforms) <> 'array') as platforms_non_array,
-  count(*) filter (where disciplines is not null and jsonb_typeof(disciplines) <> 'array') as disciplines_non_array,
-  count(*) filter (where audiences is not null and jsonb_typeof(audiences) <> 'array') as audiences_non_array,
-  count(*) filter (where tags is not null and jsonb_typeof(tags) <> 'array') as tags_non_array
-from public.documents;
+  count(*) filter (where platforms is not null and jsonb_typeof(platforms) <> jsonb_constants.jsonb_array_type) as platforms_non_array,
+  count(*) filter (where disciplines is not null and jsonb_typeof(disciplines) <> jsonb_constants.jsonb_array_type) as disciplines_non_array,
+  count(*) filter (where audiences is not null and jsonb_typeof(audiences) <> jsonb_constants.jsonb_array_type) as audiences_non_array,
+  count(*) filter (where tags is not null and jsonb_typeof(tags) <> jsonb_constants.jsonb_array_type) as tags_non_array
+from public.documents
+cross join jsonb_constants;
 
 -- 13) Sanity: ensure jsonb arrays only (chunks)
+with jsonb_constants as (
+  select
+    'array'::text as jsonb_array_type
+)
 select
-  count(*) filter (where platforms is not null and jsonb_typeof(platforms) <> 'array') as platforms_non_array,
-  count(*) filter (where disciplines is not null and jsonb_typeof(disciplines) <> 'array') as disciplines_non_array,
-  count(*) filter (where audiences is not null and jsonb_typeof(audiences) <> 'array') as audiences_non_array,
-  count(*) filter (where context_tags is not null and jsonb_typeof(context_tags) <> 'array') as context_tags_non_array,
-  count(*) filter (where related_entities is not null and jsonb_typeof(related_entities) <> 'array') as related_entities_non_array
-from public.chunks;
+  count(*) filter (where platforms is not null and jsonb_typeof(platforms) <> jsonb_constants.jsonb_array_type) as platforms_non_array,
+  count(*) filter (where disciplines is not null and jsonb_typeof(disciplines) <> jsonb_constants.jsonb_array_type) as disciplines_non_array,
+  count(*) filter (where audiences is not null and jsonb_typeof(audiences) <> jsonb_constants.jsonb_array_type) as audiences_non_array,
+  count(*) filter (where context_tags is not null and jsonb_typeof(context_tags) <> jsonb_constants.jsonb_array_type) as context_tags_non_array,
+  count(*) filter (where related_entities is not null and jsonb_typeof(related_entities) <> jsonb_constants.jsonb_array_type) as related_entities_non_array
+from public.chunks
+cross join jsonb_constants;
 
 -- 14) Token casing/spacing checks (documents)
+with token_checks as (
+  select
+    '[A-Z]'::text as upper_re,
+    '\s'::text as space_re
+)
 select
   'platforms' as field,
   count(*) as bad_tokens
 from public.documents
+cross join token_checks
 cross join lateral jsonb_array_elements_text(coalesce(platforms, '[]'::jsonb)) as token
-where token ~ '[A-Z]' or token ~ '\s'
+where token ~ token_checks.upper_re or token ~ token_checks.space_re
 union all
 select
   'disciplines' as field,
   count(*) as bad_tokens
 from public.documents
+cross join token_checks
 cross join lateral jsonb_array_elements_text(coalesce(disciplines, '[]'::jsonb)) as token
-where token ~ '[A-Z]' or token ~ '\s'
+where token ~ token_checks.upper_re or token ~ token_checks.space_re
 union all
 select
   'audiences' as field,
   count(*) as bad_tokens
 from public.documents
+cross join token_checks
 cross join lateral jsonb_array_elements_text(coalesce(audiences, '[]'::jsonb)) as token
-where token ~ '[A-Z]' or token ~ '\s'
+where token ~ token_checks.upper_re or token ~ token_checks.space_re
 union all
 select
   'tags' as field,
   count(*) as bad_tokens
 from public.documents
+cross join token_checks
 cross join lateral jsonb_array_elements_text(coalesce(tags, '[]'::jsonb)) as token
-where token ~ '[A-Z]' or token ~ '\s';
+where token ~ token_checks.upper_re or token ~ token_checks.space_re;
 
 -- 15) Token casing/spacing checks (chunks)
+with token_checks as (
+  select
+    '[A-Z]'::text as upper_re,
+    '\s'::text as space_re
+)
 select
   'platforms' as field,
   count(*) as bad_tokens
 from public.chunks
+cross join token_checks
 cross join lateral jsonb_array_elements_text(coalesce(platforms, '[]'::jsonb)) as token
-where token ~ '[A-Z]' or token ~ '\s'
+where token ~ token_checks.upper_re or token ~ token_checks.space_re
 union all
 select
   'disciplines' as field,
   count(*) as bad_tokens
 from public.chunks
+cross join token_checks
 cross join lateral jsonb_array_elements_text(coalesce(disciplines, '[]'::jsonb)) as token
-where token ~ '[A-Z]' or token ~ '\s'
+where token ~ token_checks.upper_re or token ~ token_checks.space_re
 union all
 select
   'audiences' as field,
   count(*) as bad_tokens
 from public.chunks
+cross join token_checks
 cross join lateral jsonb_array_elements_text(coalesce(audiences, '[]'::jsonb)) as token
-where token ~ '[A-Z]' or token ~ '\s'
+where token ~ token_checks.upper_re or token ~ token_checks.space_re
 union all
 select
   'context_tags' as field,
   count(*) as bad_tokens
 from public.chunks
+cross join token_checks
 cross join lateral jsonb_array_elements_text(coalesce(context_tags, '[]'::jsonb)) as token
-where token ~ '[A-Z]' or token ~ '\s'
+where token ~ token_checks.upper_re or token ~ token_checks.space_re
 union all
 select
   'related_entities' as field,
   count(*) as bad_tokens
 from public.chunks
+cross join token_checks
 cross join lateral jsonb_array_elements_text(coalesce(related_entities, '[]'::jsonb)) as token
-where token ~ '[A-Z]' or token ~ '\s';
+where token ~ token_checks.upper_re or token ~ token_checks.space_re;
 
 -- 16) Doc-type success thresholds (spot check)
 -- model-spec-text + base-model-index: related_entities present

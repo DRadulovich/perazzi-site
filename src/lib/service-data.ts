@@ -20,19 +20,23 @@ const warn = (message: string) => {
 };
 
 function cloneService(): ServicePageData {
-  return JSON.parse(JSON.stringify(serviceData));
+  return structuredClone(serviceData);
 }
 
-const listToHtml = (items: string[]) =>
-  `<ul>${items.map((item) => `<li>${item}</li>`).join("")}</ul>`;
+const listToHtml = (items: string[]) => {
+  const listItems = items.map((item) => `<li>${item}</li>`).join("");
+  return `<ul>${listItems}</ul>`;
+};
 
 function mergeOverview(
   fallback: ServiceOverviewSection,
   cms?: ServiceOverviewSection,
 ): ServiceOverviewSection {
-  const checks = cms?.checks?.length ? cms.checks : fallback.checks;
-  const checksHtml =
-    cms?.checks?.length ? listToHtml(cms.checks) : cms?.checksHtml ?? fallback.checksHtml ?? (checks ? listToHtml(checks) : "");
+  const cmsChecks = cms?.checks?.length ? cms.checks : undefined;
+  const checks = cmsChecks ?? fallback.checks;
+  let checksHtml = cmsChecks ? listToHtml(cmsChecks) : cms?.checksHtml ?? fallback.checksHtml;
+  const fallbackChecksHtml = checks && checks.length > 0 ? listToHtml(checks) : "";
+  checksHtml ??= fallbackChecksHtml;
 
   return {
     heading: cms?.heading ?? fallback.heading ?? "Overview",

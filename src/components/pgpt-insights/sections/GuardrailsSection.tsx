@@ -35,13 +35,13 @@ export async function GuardrailsSection({
   tableDensityClass,
   detailsDefaultOpen,
   truncSecondary,
-}: {
+}: Readonly<{
   envFilter?: string;
   daysFilter?: number;
   tableDensityClass: string;
   detailsDefaultOpen: boolean;
   truncSecondary: number;
-}) {
+}>) {
   try {
     const [guardrailStats, guardrailByArchetype, recentGuardrailBlocks] = await Promise.all([
       getGuardrailStats(envFilter, daysFilter),
@@ -105,7 +105,7 @@ export async function GuardrailsSection({
                       const maxHits = Math.max(...guardrailStats.map((r) => r.hits), 1);
                       return guardrailStats.map((row, idx) => (
                         <tr key={`${row.guardrail_reason ?? "none"}-${row.env}-${idx}`}>
-                          <td className="break-words">{row.guardrail_reason ?? "(none)"}</td>
+                          <td className="wrap-break-word">{row.guardrail_reason ?? "(none)"}</td>
                           <td>
                             <StatusBadge type="env" value={row.env} />
                           </td>
@@ -138,7 +138,7 @@ export async function GuardrailsSection({
                       <col className="w-[100px]" />
                       <col className="w-[220px]" />
                       <col className="w-[200px]" />
-                      <col className="w-[320px]" />
+                      <col className="w-80" />
                       <col className="w-[360px]" />
                     </colgroup>
                   }
@@ -164,7 +164,7 @@ export async function GuardrailsSection({
 
                       return (
                         <tr key={`guardrail-${log.id}`} className="border-l-[5px] border-red-500/70">
-                          <td className="whitespace-normal break-words leading-snug">
+                          <td className="whitespace-normal wrap-break-word leading-snug">
                             <span title={String(log.created_at)} className="tabular-nums">
                               {formatTimestampShort(String(log.created_at))}
                             </span>
@@ -192,7 +192,7 @@ export async function GuardrailsSection({
                               defaultOpen={detailsDefaultOpen}
                               summaryContent={
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <div className="break-words text-xs leading-snug text-foreground">
+                                  <div className="wrap-break-word text-xs leading-snug text-foreground">
                                     {truncate(promptStatus.displayValue ?? "", truncSecondary)}
                                   </div>
                                   {promptStatus.badge ? (
@@ -225,7 +225,7 @@ export async function GuardrailsSection({
                               defaultOpen={detailsDefaultOpen}
                               summaryContent={
                                 <div className="flex flex-wrap items-center gap-2">
-                                  <div className="break-words text-xs leading-snug text-foreground">
+                                  <div className="wrap-break-word text-xs leading-snug text-foreground">
                                     {truncate(responseStatus.displayValue ?? "", truncSecondary)}
                                   </div>
                                   {responseStatus.badge ? (
@@ -280,7 +280,7 @@ export async function GuardrailsSection({
                       const maxHits = Math.max(...orderedGuardrailByArchetype.map((r) => r.hits), 1);
                       return orderedGuardrailByArchetype.map((row, idx) => (
                         <tr key={`${row.guardrail_reason ?? "none"}-${row.archetype ?? "unknown"}-${idx}`}>
-                          <td className="break-words">{row.guardrail_reason ?? "(none)"}</td>
+                          <td className="wrap-break-word">{row.guardrail_reason ?? "(none)"}</td>
                           <td>{row.archetype ?? "(unknown)"}</td>
                           <td>
                             <MiniBar value={row.hits} max={maxHits} />

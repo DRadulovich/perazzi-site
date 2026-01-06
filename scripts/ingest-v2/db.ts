@@ -265,62 +265,103 @@ function detectChunkTagsFromText(text: string): string[] {
   return tags;
 }
 
-function buildChunkMetadata(
-  chunk: ChunkInput,
-  docMeta: NormalizedDocMetadata,
-): ChunkMetadataValues {
-  const labelPlatforms: string[] = [];
-  const labelDisciplines: string[] = [];
-  const relatedEntities: string[] = [];
-  const labels = chunk.sectionLabels ?? [];
+interface LabelMetadata {
+  labelPlatforms: string[];
+  labelDisciplines: string[];
+  relatedEntities: string[];
+}
+
+type LabelHandler = (value: string, meta: LabelMetadata) => void;
+
+const LABEL_PATTERN = /^(model|base-model|platform|disciplines?):(.+)$/i;
+
+const LABEL_HANDLERS: Record<string, LabelHandler> = {
+  model: handleModelLabel,
+  "base-model": handleModelLabel,
+  platform: handlePlatformLabel,
+  discipline: handleDisciplineLabel,
+  disciplines: handleDisciplineLabel,
+};
+
+function handleModelLabel(value: string, meta: LabelMetadata): void {
+  meta.relatedEntities.push(...normalizeRelatedEntities([value]));
+}
+
+function handlePlatformLabel(value: string, meta: LabelMetadata): void {
+  const platform = mapPlatformToken(value);
+  if (!platform) return;
+  meta.labelPlatforms.push(platform);
+  meta.relatedEntities.push(platform);
+  if (platform === "ht") {
+    meta.relatedEntities.push("high-tech");
+  }
+}
+
+function handleDisciplineLabel(value: string, meta: LabelMetadata): void {
+  meta.labelDisciplines.push(...mapDisciplineToken(value));
+}
+
+function collectLabelMetadata(labels: string[]): LabelMetadata {
+  const meta: LabelMetadata = {
+    labelPlatforms: [],
+    labelDisciplines: [],
+    relatedEntities: [],
+  };
 
   for (const label of labels) {
-    const match = /^(model|base-model|platform|disciplines?):(.+)$/i.exec(label);
+    const match = LABEL_PATTERN.exec(label);
     if (!match) continue;
+
     const prefix = match[1]?.toLowerCase();
     const value = match[2]?.trim();
     if (!prefix || !value) continue;
 
-    if (prefix === "model" || prefix === "base-model") {
-      relatedEntities.push(...normalizeRelatedEntities([value]));
-      continue;
-    }
-
-    if (prefix === "platform") {
-      const platform = mapPlatformToken(value);
-      if (platform) {
-        labelPlatforms.push(platform);
-        relatedEntities.push(platform);
-        if (platform === "ht") {
-          relatedEntities.push("high-tech");
-        }
-      }
-      continue;
-    }
-
-    if (prefix === "discipline" || prefix === "disciplines") {
-      labelDisciplines.push(...mapDisciplineToken(value));
-    }
+    const handler = LABEL_HANDLERS[prefix];
+    if (!handler) continue;
+    handler(value, meta);
   }
 
-  let normalizedRelated = normalizeRelatedEntities(relatedEntities);
-  if (
-    normalizedRelated.some((entity) => entity === "ht" || entity === "high-tech")
-  ) {
-    normalizedRelated = dedupeStable([
-      ...normalizedRelated,
-      "ht",
-      "high-tech",
-    ]);
+  return meta;
+}
+
+function ensureHighTechVariants(entities: string[]): string[] {
+  if (entities.some((entity) => entity === "ht" || entity === "high-tech")) {
+    return dedupeStable([...entities, "ht", "high-tech"]);
   }
+
+  return entities;
+}
+
+function inferPlatformsFromRelated(
+  relatedEntities: string[],
+  docPlatforms: string[],
+): string[] {
+  if (docPlatforms.length > 0) return [];
 
   const inferredPlatforms: string[] = [];
-  if (docMeta.platforms.length === 0) {
-    for (const entity of normalizedRelated) {
-      const inferred = inferPlatformFromRelatedSlug(entity);
-      if (inferred) inferredPlatforms.push(inferred);
-    }
+  for (const entity of relatedEntities) {
+    const inferred = inferPlatformFromRelatedSlug(entity);
+    if (inferred) inferredPlatforms.push(inferred);
   }
+
+  return inferredPlatforms;
+}
+
+function buildChunkMetadata(
+  chunk: ChunkInput,
+  docMeta: NormalizedDocMetadata,
+): ChunkMetadataValues {
+  const labels = chunk.sectionLabels ?? [];
+  const { labelPlatforms, labelDisciplines, relatedEntities } =
+    collectLabelMetadata(labels);
+
+  const normalizedRelated = ensureHighTechVariants(
+    normalizeRelatedEntities(relatedEntities),
+  );
+  const inferredPlatforms = inferPlatformsFromRelated(
+    normalizedRelated,
+    docMeta.platforms,
+  );
 
   const platforms = normalizePlatforms([
     ...docMeta.platforms,

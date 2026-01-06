@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import type { MotionProps } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger, Heading, Text } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -20,6 +21,11 @@ type BookingOptionsProps = Readonly<{
 type BookingOptionCardProps = Readonly<{
   option: BookingOption;
 }>;
+
+type BookingSection = BuildPageData["bookingSection"];
+type BookingSectionOption = NonNullable<NonNullable<BookingSection>["options"]>[number];
+
+type MotionToggleProps = Pick<MotionProps, "initial" | "whileInView" | "viewport" | "transition">;
 
 function BookingOptionCard({ option }: BookingOptionCardProps) {
   const optionRef = useAnalyticsObserver(`BookingOptionSeen:${option.id}`);
@@ -48,7 +54,7 @@ function BookingOptionCard({ option }: BookingOptionCardProps) {
           asChild
           variant="secondary"
           size="sm"
-          className="md:!type-button-lg md:!px-xl md:!py-sm"
+          className="md:!type-button-lg md:px-xl! md:py-sm!"
           onClick={() => {
             logAnalytics(`BookingClicked:${option.id}`);
           }}
@@ -127,6 +133,107 @@ const scheduler = {
   fallback: "https://calendly.com/perazzi/bespoke-fitting",
 };
 
+const DEFAULT_WHAT_TO_EXPECT_HEADING = "What to expect";
+
+const bookingOptionItem = {
+  hidden: { opacity: 0, y: 14, filter: "blur(10px)" },
+  show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
+} as const;
+
+const getGridVariants = (enabled: boolean) =>
+  ({
+    hidden: {},
+    show: {
+      transition: { staggerChildren: enabled ? 0.08 : 0 },
+    },
+  }) as const;
+
+const getMotionProps = (enabled: boolean, config: MotionToggleProps): MotionToggleProps => {
+  if (!enabled) {
+    return { initial: false };
+  }
+
+  return config;
+};
+
+const resolveDurationLabel = (
+  override: BookingSectionOption,
+  fallback?: BookingOption,
+): string | undefined => {
+  if (override.duration != null) {
+    return override.duration;
+  }
+
+  if (fallback?.durationLabel != null) {
+    return fallback.durationLabel;
+  }
+
+  if (fallback?.durationMins) {
+    return `${fallback.durationMins} minutes`;
+  }
+
+  return undefined;
+};
+
+const mergeBookingOption = (
+  override: BookingSectionOption,
+  fallback: BookingOption | undefined,
+  index: number,
+): BookingOption => ({
+  id: fallback?.id ?? `booking-${index}`,
+  title: override.title ?? fallback?.title ?? "Booking option",
+  durationLabel: resolveDurationLabel(override, fallback),
+  durationMins: fallback?.durationMins,
+  descriptionHtml: override.description ?? fallback?.descriptionHtml ?? "",
+  href: override.href ?? fallback?.href ?? "#",
+});
+
+const resolveBookingOptions = (
+  booking: BuildPageData["booking"],
+  bookingSection?: BookingSection,
+): BookingOption[] => {
+  const overrides = bookingSection?.options;
+  if (!overrides?.length) {
+    return booking.options;
+  }
+
+  return overrides.map((override, index) =>
+    mergeBookingOption(override, booking.options[index], index),
+  );
+};
+
+const resolveWhatToExpectHeading = (
+  booking: BuildPageData["booking"],
+  bookingSection?: BookingSection,
+): string =>
+  bookingSection?.whatToExpectHeading ??
+  booking.whatToExpectHeading ??
+  DEFAULT_WHAT_TO_EXPECT_HEADING;
+
+const mergeWhatToExpectItem = (
+  fallback: WhatToExpectItem | undefined,
+  bodyHtml: string | undefined,
+  index: number,
+): WhatToExpectItem => ({
+  id: fallback?.id ?? `expect-${index}`,
+  title: fallback?.title ?? `What to expect ${index + 1}`,
+  bodyHtml: bodyHtml ?? fallback?.bodyHtml ?? "",
+});
+
+const resolveWhatToExpectItems = (
+  booking: BuildPageData["booking"],
+  bookingSection?: BookingSection,
+): WhatToExpectItem[] => {
+  const overrides = bookingSection?.whatToExpectItems;
+  if (!overrides?.length) {
+    return booking.whatToExpect;
+  }
+
+  return overrides.map((bodyHtml, index) =>
+    mergeWhatToExpectItem(booking.whatToExpect[index], bodyHtml, index),
+  );
+};
+
 export function BookingOptions({ booking, bookingSection }: BookingOptionsProps) {
   const analyticsRef = useAnalyticsObserver("BookingOptionsSeen");
   const isDesktop = useMediaQuery("(min-width: 1024px)") ?? false;
@@ -139,50 +246,43 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
   }, [prefersReducedMotion]);
 
   const motionEnabled = !reduceMotion;
-
-  const grid = {
-    hidden: {},
-    show: {
-      transition: { staggerChildren: motionEnabled ? 0.08 : 0 },
-    },
-  } as const;
-
-  const item = {
-    hidden: { opacity: 0, y: 14, filter: "blur(10px)" },
-    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
-  } as const;
+  const blurRevealBase = {
+    initial: { opacity: 0, y: 14, filter: "blur(10px)" },
+    whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
+    transition: homeMotion.revealFast,
+  };
+  const noteRevealBase = {
+    initial: { opacity: 0, y: 10, filter: "blur(10px)" },
+    whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
+    transition: homeMotion.revealFast,
+  };
+  const headingMotionProps = getMotionProps(motionEnabled, {
+    ...blurRevealBase,
+    viewport: { once: true, amount: 0.6 },
+  });
+  const gridMotionProps = getMotionProps(motionEnabled, {
+    initial: "hidden",
+    whileInView: "show",
+    viewport: { once: true, amount: 0.4 },
+  });
+  const asideMotionProps = getMotionProps(motionEnabled, {
+    ...blurRevealBase,
+    viewport: { once: true, amount: 0.35 },
+  });
+  const schedulerMotionProps = getMotionProps(motionEnabled, {
+    ...blurRevealBase,
+    viewport: { once: true, amount: 0.35 },
+  });
+  const noteMotionProps = getMotionProps(motionEnabled, {
+    ...noteRevealBase,
+    viewport: { once: true, amount: 0.4 },
+  });
+  const gridVariants = getGridVariants(motionEnabled);
 
   const resolvedHeading = bookingSection?.heading ?? booking.headline;
-  const resolvedOptions = bookingSection?.options?.length
-    ? bookingSection.options.map((option, index) => {
-        const fallback = booking.options[index];
-        return {
-          id: fallback?.id ?? `booking-${index}`,
-          title: option.title ?? fallback?.title ?? "Booking option",
-          durationLabel: option.duration ?? fallback?.durationLabel ??
-            (fallback?.durationMins ? `${fallback.durationMins} minutes` : undefined),
-          durationMins: fallback?.durationMins,
-          descriptionHtml:
-            option.description ?? fallback?.descriptionHtml ?? "",
-          href: option.href ?? fallback?.href ?? "#",
-        } satisfies BookingOption;
-      })
-    : booking.options;
-
-  const resolvedWhatToExpectHeading =
-    bookingSection?.whatToExpectHeading ?? booking.whatToExpectHeading ?? "What to expect";
-
-  const resolvedWhatToExpect = bookingSection?.whatToExpectItems?.length
-    ? bookingSection.whatToExpectItems.map((item, index) => {
-        const fallback = booking.whatToExpect[index];
-        return {
-          id: fallback?.id ?? `expect-${index}`,
-          title: fallback?.title ?? `What to expect ${index + 1}`,
-          bodyHtml: item ?? fallback?.bodyHtml ?? "",
-        } satisfies WhatToExpectItem;
-      })
-    : booking.whatToExpect;
-
+  const resolvedOptions = resolveBookingOptions(booking, bookingSection);
+  const resolvedWhatToExpectHeading = resolveWhatToExpectHeading(booking, bookingSection);
+  const resolvedWhatToExpect = resolveWhatToExpectItems(booking, bookingSection);
   const resolvedNote = bookingSection?.note ?? booking.note;
 
   return (
@@ -194,10 +294,7 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
     >
       <motion.div
         className="space-y-2"
-        initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
-        whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-        viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}
-        transition={motionEnabled ? homeMotion.revealFast : undefined}
+        {...headingMotionProps}
       >
         <Text size="label-tight" muted>
           Reserve time
@@ -209,13 +306,11 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
 
       <motion.div
         className="grid gap-6 md:grid-cols-3"
-        variants={grid}
-        initial={motionEnabled ? "hidden" : false}
-        whileInView={motionEnabled ? "show" : undefined}
-        viewport={motionEnabled ? { once: true, amount: 0.4 } : undefined}
+        variants={gridVariants}
+        {...gridMotionProps}
       >
         {resolvedOptions.map((option) => (
-          <motion.div key={option.id} variants={item}>
+          <motion.div key={option.id} variants={bookingOptionItem}>
             <BookingOptionCard option={option} />
           </motion.div>
         ))}
@@ -224,10 +319,7 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
       <motion.aside
         aria-label="What to expect during your fitting"
         className="space-y-3 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm md:space-y-4 md:p-8 md:rounded-3xl md:bg-card/75 lg:space-y-5 lg:p-10"
-        initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
-        whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-        viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
-        transition={motionEnabled ? homeMotion.revealFast : undefined}
+        {...asideMotionProps}
       >
         <Text size="label-tight" muted>
           {resolvedWhatToExpectHeading}
@@ -246,10 +338,7 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
 
       <motion.div
         className="space-y-3 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm md:space-y-4 md:p-8 md:rounded-3xl md:bg-card/75 lg:space-y-5 lg:p-10"
-        initial={motionEnabled ? { opacity: 0, y: 14, filter: "blur(10px)" } : false}
-        whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-        viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
-        transition={motionEnabled ? homeMotion.revealFast : undefined}
+        {...schedulerMotionProps}
       >
         <Text size="label-tight" muted>
           Schedule with the concierge
@@ -289,10 +378,7 @@ export function BookingOptions({ booking, bookingSection }: BookingOptionsProps)
 
       {resolvedNote ? (
         <motion.div
-          initial={motionEnabled ? { opacity: 0, y: 10, filter: "blur(10px)" } : false}
-          whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-          viewport={motionEnabled ? { once: true, amount: 0.4 } : undefined}
-          transition={motionEnabled ? homeMotion.revealFast : undefined}
+          {...noteMotionProps}
         >
           <Text size="caption" className="text-ink-muted">
             {resolvedNote}

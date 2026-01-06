@@ -9,13 +9,13 @@ function truncate(text: string, length = 180) {
   return text.length > length ? `${text.slice(0, length)}...` : text;
 }
 
-export async function DataHealthSection({ envFilter }: { envFilter?: string }) {
+export async function DataHealthSection({ envFilter }: Readonly<{ envFilter?: string }>) {
   const health = await getDataHealth(envFilter);
   const errors = getInsightsErrors(6);
 
   const statusBadge = health.ok ? <Badge tone="blue">db ok</Badge> : <Badge tone="red">db error</Badge>;
   const latencyBadge =
-    health.latency_ms !== null ? <Badge>latency {formatDurationMs(health.latency_ms)}</Badge> : null;
+    health.latency_ms == null ? null : <Badge>latency {formatDurationMs(health.latency_ms)}</Badge>;
   const envBadge = <Badge>env {envFilter ?? "all"}</Badge>;
 
   return (

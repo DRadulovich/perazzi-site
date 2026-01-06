@@ -5,7 +5,7 @@ type LandingHeroProps = {
   hero: ShotgunsLandingData["hero"];
 };
 
-export function LandingHero({ hero }: LandingHeroProps) {
+export function LandingHero({ hero }: Readonly<LandingHeroProps>) {
   return (
     <HeroBanner
       hero={{

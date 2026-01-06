@@ -33,12 +33,36 @@ const engravingByGradeQuery = groq`*[
   "imageAlt": coalesce(engraving_photo.alt, "Engraving " + engraving_id + " " + engraving_side),
 } | order(engraving_grade->name asc, engraving_id asc, engraving_side asc)[0...50]`;
 
-export async function GET(request: NextRequest) {
+type EngravingRequestInputs = {
+  id: string;
+  grade: string;
+};
+
+const normalizeInputs = (input: { id?: unknown; grade?: unknown }): EngravingRequestInputs => ({
+  id: typeof input.id === "string" ? input.id.trim() : "",
+  grade: typeof input.grade === "string" ? input.grade.trim() : "",
+});
+
+const parseSearchParams = (request: NextRequest): EngravingRequestInputs => {
+  const searchParams = request.nextUrl.searchParams;
+  return normalizeInputs({
+    id: searchParams.get("id") ?? "",
+    grade: searchParams.get("grade") ?? "",
+  });
+};
+
+const parseBody = async (request: NextRequest): Promise<EngravingRequestInputs> => {
+  try {
+    const body = (await request.json()) as { id?: unknown; grade?: unknown };
+    return normalizeInputs(body);
+  } catch {
+    return { id: "", grade: "" };
+  }
+};
+
+const handleEngravingRequest = async ({ id, grade }: EngravingRequestInputs) => {
   // Use API client to avoid CDN issues and ensure access to latest published content.
   const client = baseClient.withConfig({ useCdn: false });
-  const searchParams = request.nextUrl.searchParams;
-  const id = (searchParams.get("id") ?? "").trim();
-  const grade = (searchParams.get("grade") ?? "").trim();
   if (!id && !grade) {
     return NextResponse.json({ error: "Missing id or grade query param" }, { status: 400 });
   }
@@ -66,4 +90,13 @@ export async function GET(request: NextRequest) {
     console.error("Failed to fetch engravings", error);
     return NextResponse.json({ error: "Failed to fetch engravings" }, { status: 500 });
   }
+};
+
+export async function GET(request: NextRequest) {
+  return handleEngravingRequest(parseSearchParams(request));
+}
+
+export async function POST(request: NextRequest) {
+  const inputs = await parseBody(request);
+  return handleEngravingRequest(inputs);
 }

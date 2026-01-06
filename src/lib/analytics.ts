@@ -3,7 +3,7 @@ export function logAnalytics(event: string, detail?: unknown) {
     return;
   }
 
-  if (typeof detail !== "undefined") {
+  if (detail !== undefined) {
     console.log(`[analytics] ${event}`, detail);
     return;
   }

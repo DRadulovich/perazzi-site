@@ -3,7 +3,7 @@
 import Image from "next/image";
 import * as Dialog from "@radix-ui/react-dialog";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import type { Expert } from "@/types/build";
 import { logAnalytics } from "@/lib/analytics";
 import { homeMotion } from "@/lib/motionConfig";
@@ -12,6 +12,150 @@ import { Heading, Text } from "@/components/ui";
 type ExpertCardProps = Readonly<{
   expert: Expert;
 }>;
+
+type ExpertBioDialogProps = Readonly<{
+  expert: Expert;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  motionEnabled: boolean;
+}>;
+
+type ExpertProfileLinkProps = Readonly<{
+  expert: Expert;
+}>;
+
+type ExpertQuoteProps = Readonly<{
+  quote?: string;
+}>;
+
+function getFadeMotionProps(motionEnabled: boolean) {
+  if (motionEnabled) {
+    return {
+      initial: { opacity: 0 },
+      animate: { opacity: 1 },
+      exit: { opacity: 0 },
+      transition: homeMotion.revealFast,
+    };
+  }
+
+  return {
+    initial: false,
+    animate: { opacity: 1 },
+  };
+}
+
+function getPanelMotionProps(motionEnabled: boolean) {
+  if (motionEnabled) {
+    return {
+      initial: { opacity: 0, y: 18, scale: 0.985, filter: "blur(14px)" },
+      animate: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" },
+      exit: { opacity: 0, y: 18, scale: 0.985, filter: "blur(14px)" },
+      transition: homeMotion.revealFast,
+    };
+  }
+
+  return {
+    initial: false,
+    animate: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" },
+  };
+}
+
+function handleDialogBackgroundClick(
+  event: MouseEvent<HTMLDivElement>,
+  onOpenChange: (open: boolean) => void
+) {
+  if (event.target === event.currentTarget) {
+    onOpenChange(false);
+  }
+}
+
+function ExpertQuote({ quote }: ExpertQuoteProps) {
+  if (!quote) return null;
+
+  return (
+    <blockquote className="border-l-2 border-perazzi-red/40 pl-3 font-artisan text-ink text-2xl">
+      “{quote}”
+    </blockquote>
+  );
+}
+
+function ExpertProfileLink({ expert }: ExpertProfileLinkProps) {
+  if (!expert.profileHref) return null;
+
+  return (
+    <a
+      href={expert.profileHref}
+      className="inline-flex items-center justify-center gap-2 pill border border-perazzi-red/60 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
+    >
+      Meet {expert.name.split(" ")[0]}
+      <span aria-hidden="true">→</span>
+    </a>
+  );
+}
+
+function ExpertBioDialog({
+  expert,
+  open,
+  onOpenChange,
+  motionEnabled,
+}: ExpertBioDialogProps) {
+  const fadeMotionProps = getFadeMotionProps(motionEnabled);
+  const panelMotionProps = getPanelMotionProps(motionEnabled);
+
+  return (
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Trigger
+        className="inline-flex items-center justify-center gap-2 pill border border-border/70 bg-card/60 type-button text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
+        onClick={() => logAnalytics(`ExpertBio:${expert.id}`)}
+      >
+        Full bio
+      </Dialog.Trigger>
+      <Dialog.Portal forceMount>
+        <AnimatePresence>
+          {open ? (
+            <>
+              <Dialog.Overlay forceMount asChild>
+                <motion.div
+                  className="fixed inset-0 bg-black/55 backdrop-blur-sm"
+                  {...fadeMotionProps}
+                >
+                  <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
+                </motion.div>
+              </Dialog.Overlay>
+
+              <Dialog.Content forceMount asChild>
+                <motion.div
+                  className="fixed inset-0 flex items-center justify-center p-4"
+                  {...fadeMotionProps}
+                  onClick={(event) => handleDialogBackgroundClick(event, onOpenChange)}
+                >
+                  <motion.div
+                    className="relative w-full max-w-lg rounded-2xl border border-border bg-card/95 p-4 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl focus:outline-none sm:rounded-3xl sm:p-6"
+                    {...panelMotionProps}
+                  >
+                    <div className="pointer-events-none absolute inset-0 film-grain opacity-10" aria-hidden="true" />
+                    <Heading asChild level={3} size="sm" className="type-body-title text-ink">
+                      <Dialog.Title>{expert.name}</Dialog.Title>
+                    </Heading>
+                    <Text asChild size="sm" muted className="mt-1">
+                      <Dialog.Description>{expert.role}</Dialog.Description>
+                    </Text>
+                    <Text size="md" className="mt-4 type-body text-ink-muted" leading="relaxed">
+                      {expert.bioShort}
+                    </Text>
+                    <Dialog.Close className="mt-6 inline-flex items-center justify-center gap-2 pill border border-border/70 bg-card/60 type-button text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring">
+                      Close
+                    </Dialog.Close>
+                  </motion.div>
+                </motion.div>
+              </Dialog.Content>
+            </>
+          ) : null}
+        </AnimatePresence>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
 
 export function ExpertCard({ expert }: ExpertCardProps) {
   const prefersReducedMotion = useReducedMotion();
@@ -38,9 +182,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
       data-analytics-id={`BuildExpert:${expert.id}`}
       className="group flex h-full flex-col rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm transition hover:-translate-y-0.5 hover:border-ink/20 hover:bg-card/80 hover:shadow-elevated sm:rounded-3xl sm:bg-card/80 sm:p-5"
     >
-      <div
-        className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-[3/4] lg:aspect-[4/3]"
-      >
+      <div className="relative overflow-hidden rounded-2xl bg-(--color-canvas) aspect-3/4 lg:aspect-4/3">
         <Image
           src={expert.headshot.url}
           alt={expert.headshot.alt}
@@ -61,89 +203,16 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         <Text size="md" className="type-body text-ink-muted my-7" leading="relaxed">
           {expert.bioShort}
         </Text>
-        {expert.quote ? (
-          <blockquote className="border-l-2 border-perazzi-red/40 pl-3 font-artisan text-ink text-2xl">
-            “{expert.quote}”
-          </blockquote>
-        ) : null}
+        <ExpertQuote quote={expert.quote} />
       </div>
       <div className="mt-auto flex flex-col gap-3 pt-6">
-        {expert.profileHref ? (
-          <a
-            href={expert.profileHref}
-            className="inline-flex items-center justify-center gap-2 pill border border-perazzi-red/60 type-button text-perazzi-red hover:border-perazzi-red hover:text-perazzi-red focus-ring"
-          >
-            Meet {expert.name.split(" ")[0]}
-            <span aria-hidden="true">→</span>
-          </a>
-        ) : null}
-
-        <Dialog.Root open={open} onOpenChange={setOpen}>
-          <Dialog.Trigger
-            className="inline-flex items-center justify-center gap-2 pill border border-border/70 bg-card/60 type-button text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring"
-            onClick={() => logAnalytics(`ExpertBio:${expert.id}`)}
-          >
-            Full bio
-          </Dialog.Trigger>
-          <Dialog.Portal forceMount>
-            <AnimatePresence>
-              {open ? (
-                <>
-                  <Dialog.Overlay forceMount asChild>
-                    <motion.div
-                      className="fixed inset-0 bg-black/55 backdrop-blur-sm"
-                      initial={motionEnabled ? { opacity: 0 } : false}
-                      animate={{ opacity: 1 }}
-                      exit={motionEnabled ? { opacity: 0 } : undefined}
-                      transition={motionEnabled ? homeMotion.revealFast : undefined}
-                    >
-                      <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
-                    </motion.div>
-                  </Dialog.Overlay>
-
-                  <Dialog.Content forceMount asChild>
-                    <motion.div
-                      className="fixed inset-0 flex items-center justify-center p-4"
-                      initial={motionEnabled ? { opacity: 0 } : false}
-                      animate={{ opacity: 1 }}
-                      exit={motionEnabled ? { opacity: 0 } : undefined}
-                      transition={motionEnabled ? homeMotion.revealFast : undefined}
-                      onClick={(event) => {
-                        if (event.target === event.currentTarget) setOpen(false);
-                      }}
-                    >
-                      <motion.div
-                        className="relative w-full max-w-lg rounded-2xl border border-border bg-card/95 p-4 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl focus:outline-none sm:rounded-3xl sm:p-6"
-                        initial={
-                          motionEnabled
-                            ? { opacity: 0, y: 18, scale: 0.985, filter: "blur(14px)" }
-                            : false
-                        }
-                        animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-                        exit={motionEnabled ? { opacity: 0, y: 18, scale: 0.985, filter: "blur(14px)" } : undefined}
-                        transition={motionEnabled ? homeMotion.revealFast : undefined}
-                      >
-                        <div className="pointer-events-none absolute inset-0 film-grain opacity-10" aria-hidden="true" />
-                        <Heading asChild level={3} size="sm" className="type-body-title text-ink">
-                          <Dialog.Title>{expert.name}</Dialog.Title>
-                        </Heading>
-                        <Text asChild size="sm" muted className="mt-1">
-                          <Dialog.Description>{expert.role}</Dialog.Description>
-                        </Text>
-                        <Text size="md" className="mt-4 type-body text-ink-muted" leading="relaxed">
-                          {expert.bioShort}
-                        </Text>
-                        <Dialog.Close className="mt-6 inline-flex items-center justify-center gap-2 pill border border-border/70 bg-card/60 type-button text-ink shadow-soft backdrop-blur-sm transition hover:border-ink/20 hover:bg-card/85 focus-ring">
-                          Close
-                        </Dialog.Close>
-                      </motion.div>
-                    </motion.div>
-                  </Dialog.Content>
-                </>
-              ) : null}
-            </AnimatePresence>
-          </Dialog.Portal>
-        </Dialog.Root>
+        <ExpertProfileLink expert={expert} />
+        <ExpertBioDialog
+          expert={expert}
+          open={open}
+          onOpenChange={setOpen}
+          motionEnabled={motionEnabled}
+        />
       </div>
     </article>
   );

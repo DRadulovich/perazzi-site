@@ -122,10 +122,11 @@ export async function retrievePerazziContextWithEmbedding(opts: {
   const effectiveLimit = Number.isFinite(limit) && Number(limit) > 0
     ? Math.floor(Number(limit))
     : CHUNK_LIMIT;
+  const parsedCandidateLimit = Number.isFinite(candidateLimit) && Number(candidateLimit) > 0
+    ? Math.floor(Number(candidateLimit))
+    : null;
   const effectiveCandidateLimit = rerankEnabled
-    ? Number.isFinite(candidateLimit) && Number(candidateLimit) > 0
-        ? Math.floor(Number(candidateLimit))
-        : getRerankCandidateLimit(effectiveLimit)
+    ? (parsedCandidateLimit ?? getRerankCandidateLimit(effectiveLimit))
     : effectiveLimit;
 
   const emptyMetrics: RerankMetrics = {
@@ -167,7 +168,7 @@ export function buildLanguageFallbacks(locale?: string | null): string[] {
 
 export function getBaseLanguage(locale?: string | null) {
   if (!locale) return null;
-  const match = locale.toLowerCase().match(/^[a-z]{2}/);
+  const match = /^[a-z]{2}/.exec(locale.toLowerCase());
   return match ? match[0] : null;
 }
 
@@ -211,11 +212,12 @@ export function computeBoost(
   }
 
   const contextPlatform = context?.platformSlug?.toLowerCase();
-  const metadataPlatforms: string[] = Array.isArray(metadata.platform_tags)
-    ? (metadata.platform_tags as unknown[]).map((value) => String(value).toLowerCase())
-    : metadata.platform
-      ? [String(metadata.platform).toLowerCase()]
-      : [];
+  let metadataPlatforms: string[] = [];
+  if (Array.isArray(metadata.platform_tags)) {
+    metadataPlatforms = (metadata.platform_tags as unknown[]).map((value) => String(value).toLowerCase());
+  } else if (metadata.platform) {
+    metadataPlatforms = [String(metadata.platform).toLowerCase()];
+  }
   if (contextPlatform && metadataPlatforms.includes(contextPlatform)) {
     boost += 0.1;
   }
@@ -278,11 +280,12 @@ export function computeBoost(
     }
   }
 
-  if (hints?.focusEntities?.length) {
+  const focusEntities = hints?.focusEntities ?? [];
+  if (focusEntities.length) {
     const entityIds: string[] = Array.isArray(metadata.entity_ids)
       ? (metadata.entity_ids as unknown[]).map((value) => String(value).toLowerCase())
       : [];
-    if (entityIds.some((id) => hints.focusEntities!.includes(id))) {
+    if (entityIds.some((id) => focusEntities.includes(id))) {
       boost += 0.15;
     }
   }
@@ -314,7 +317,25 @@ function normalizeStringToken(value: unknown): string | null {
   return s;
 }
 
-function tryParseJson(value: string): unknown | null {
+function createNormalizedTokenCollector(): {
+  out: string[];
+  push: (value: unknown) => void;
+} {
+  const out: string[] = [];
+  const seen = new Set<string>();
+
+  const push = (value: unknown) => {
+    const token = normalizeStringToken(value);
+    if (!token) return;
+    if (seen.has(token)) return;
+    seen.add(token);
+    out.push(token);
+  };
+
+  return { out, push };
+}
+
+function tryParseJson(value: string): unknown {
   try {
     return JSON.parse(value);
   } catch {
@@ -322,18 +343,49 @@ function tryParseJson(value: string): unknown | null {
   }
 }
 
+function walkStringWithJsonFallback(
+  raw: string,
+  depth: number,
+  walk: (value: unknown, depth: number) => void,
+  push: (value: unknown) => void,
+): void {
+  const trimmed = raw.trim();
+  if (!trimmed) return;
+
+  const parsed = tryParseJson(trimmed);
+  if (parsed !== null) {
+    walk(parsed, depth + 1);
+    return;
+  }
+
+  // Fallback: comma-separated strings
+  if (trimmed.includes(",")) {
+    for (const part of trimmed.split(",")) push(part);
+    return;
+  }
+
+  push(trimmed);
+}
+
 // Accepts jsonb coming back from PG as object/array/string/null
 // Returns normalized string[] lowercased + trimmed + de-duped
 export function parseJsonbStringArray(value: unknown): string[] {
-  const out: string[] = [];
-  const seen = new Set<string>();
+  const { out, push } = createNormalizedTokenCollector();
 
-  const push = (v: unknown) => {
-    const token = normalizeStringToken(v);
-    if (!token) return;
-    if (seen.has(token)) return;
-    seen.add(token);
-    out.push(token);
+  const walkArray = (items: unknown[], depth: number) => {
+    for (const item of items) walk(item, depth + 1);
+  };
+
+  const walkObject = (obj: Record<string, unknown>, depth: number) => {
+    // Handles odd cases like {"0":"owner","1":"prospect"} or nested structures
+    for (const item of Object.values(obj)) {
+      walk(item, depth + 1);
+    }
+  };
+
+  const walkPrimitive = (v: unknown) => {
+    // number/boolean/etc => stringify + normalize
+    push(v);
   };
 
   const walk = (v: unknown, depth: number) => {
@@ -341,40 +393,21 @@ export function parseJsonbStringArray(value: unknown): string[] {
     if (depth > 4) return;
 
     if (Array.isArray(v)) {
-      for (const item of v) walk(item, depth + 1);
+      walkArray(v, depth);
       return;
     }
 
     if (typeof v === "string") {
-      const trimmed = v.trim();
-      if (!trimmed) return;
-
-      const parsed = tryParseJson(trimmed);
-      if (parsed !== null) {
-        walk(parsed, depth + 1);
-        return;
-      }
-
-      // Fallback: comma-separated strings
-      if (trimmed.includes(",")) {
-        for (const part of trimmed.split(",")) push(part);
-        return;
-      }
-
-      push(trimmed);
+      walkStringWithJsonFallback(v, depth, walk, push);
       return;
     }
 
     if (typeof v === "object") {
-      // Handles odd cases like {"0":"owner","1":"prospect"} or nested structures
-      for (const item of Object.values(v as Record<string, unknown>)) {
-        walk(item, depth + 1);
-      }
+      walkObject(v as Record<string, unknown>, depth);
       return;
     }
 
-    // number/boolean/etc => stringify + normalize
-    push(v);
+    walkPrimitive(v);
   };
 
   walk(value, 0);
@@ -383,20 +416,24 @@ export function parseJsonbStringArray(value: unknown): string[] {
 
 // Parses chunk.related_entities jsonb into stable lowercase entity id/slug list
 export function extractRelatedEntityIds(value: unknown): string[] {
-  const out: string[] = [];
-  const seen = new Set<string>();
-
-  const push = (v: unknown) => {
-    const token = normalizeStringToken(v);
-    if (!token) return;
-    if (seen.has(token)) return;
-    seen.add(token);
-    out.push(token);
-  };
+  const { out, push } = createNormalizedTokenCollector();
 
   const extractFromObject = (obj: Record<string, unknown>) => {
     // Priority order for IDs
     push(obj.entity_id ?? obj.entityId ?? obj.slug ?? obj.id ?? obj.code);
+  };
+
+  const walkArray = (items: unknown[], depth: number) => {
+    for (const item of items) walk(item, depth + 1);
+  };
+
+  const walkObject = (obj: Record<string, unknown>) => {
+    extractFromObject(obj);
+  };
+
+  const walkPrimitive = (v: unknown) => {
+    // number/boolean/etc => stringify + normalize
+    push(v);
   };
 
   const walk = (v: unknown, depth: number) => {
@@ -404,37 +441,21 @@ export function extractRelatedEntityIds(value: unknown): string[] {
     if (depth > 4) return;
 
     if (Array.isArray(v)) {
-      for (const item of v) walk(item, depth + 1);
+      walkArray(v, depth);
       return;
     }
 
     if (typeof v === "string") {
-      const trimmed = v.trim();
-      if (!trimmed) return;
-
-      const parsed = tryParseJson(trimmed);
-      if (parsed !== null) {
-        walk(parsed, depth + 1);
-        return;
-      }
-
-      // Could be a single id/slug, or comma-separated fallback
-      if (trimmed.includes(",")) {
-        for (const part of trimmed.split(",")) push(part);
-        return;
-      }
-
-      push(trimmed);
+      walkStringWithJsonFallback(v, depth, walk, push);
       return;
     }
 
     if (typeof v === "object") {
-      extractFromObject(v as Record<string, unknown>);
+      walkObject(v as Record<string, unknown>);
       return;
     }
 
-    // number/boolean/etc => stringify + normalize
-    push(v);
+    walkPrimitive(v);
   };
 
   walk(value, 0);
@@ -514,7 +535,7 @@ function summarizeScoresForDebug(values: unknown[]): {
     min: sorted.length ? (sorted[0] ?? null) : null,
     p50: quantileSorted(sorted, 0.5),
     p90: quantileSorted(sorted, 0.9),
-    max: sorted.length ? (sorted[sorted.length - 1] ?? null) : null,
+    max: sorted.at(-1) ?? null,
   };
 }
 
@@ -641,6 +662,209 @@ function countKeywordMatchesStrict(keywords: string[], haystackText: string): nu
   return matchCount;
 }
 
+function computeModeBoostV2(
+  mode: string | null,
+  chunkModes: string[],
+  tuningV2Enabled: boolean,
+): number {
+  if (!mode || !chunkModes.includes(mode)) return 0;
+  return tuningV2Enabled ? 0.05 : 0.06;
+}
+
+function computePlatformBoostV2(opts: {
+  tuningV2Enabled: boolean;
+  contextPlatform: string | null;
+  topics: string[];
+  allPlatforms: string[];
+}): number {
+  const {
+    tuningV2Enabled,
+    contextPlatform,
+    topics,
+    allPlatforms,
+  } = opts;
+
+  if (tuningV2Enabled) {
+    let boost = 0;
+    if (contextPlatform && allPlatforms.includes(contextPlatform)) {
+      boost = Math.max(boost, 0.08);
+    }
+    if (topics.length) {
+      const hintPlatforms = topics
+        .filter((t) => t.startsWith("platform_"))
+        .map((t) => t.replace("platform_", ""))
+        .filter(Boolean);
+      if (countOverlap(hintPlatforms, allPlatforms) > 0) {
+        boost = Math.max(boost, 0.06);
+      }
+    }
+    return boost;
+  }
+
+  let boost = 0;
+  if (contextPlatform && allPlatforms.includes(contextPlatform)) {
+    boost += 0.1; // guideline: +0.05 to +0.12
+  }
+  if (topics.length) {
+    const hintPlatforms = topics
+      .filter((t) => t.startsWith("platform_"))
+      .map((t) => t.replace("platform_", ""))
+      .filter(Boolean);
+    if (countOverlap(hintPlatforms, allPlatforms) > 0) {
+      boost += 0.08;
+    }
+  }
+  return boost;
+}
+
+function computeDisciplineBoostV2(opts: {
+  topics: string[];
+  allDisciplines: string[];
+  tuningV2Enabled: boolean;
+}): number {
+  const { topics, allDisciplines, tuningV2Enabled } = opts;
+  if (!topics.length) return 0;
+
+  const hintDisciplines = topics
+    .filter((t) => t.startsWith("discipline_"))
+    .map((t) => t.replace("discipline_", ""))
+    .filter(Boolean);
+  if (countOverlap(hintDisciplines, allDisciplines) > 0) {
+    return tuningV2Enabled ? 0.05 : 0.06; // guideline: +0.03 to +0.08
+  }
+  return 0;
+}
+
+function computeEntityBoostV2(opts: {
+  contextModel: string | null;
+  focusEntities: string[];
+  relatedEntityIds: string[];
+  tuningV2Enabled: boolean;
+}): number {
+  const {
+    contextModel,
+    focusEntities,
+    relatedEntityIds,
+    tuningV2Enabled,
+  } = opts;
+
+  let boost = 0;
+  if (contextModel && relatedEntityIds.includes(contextModel)) {
+    boost = Math.max(boost, 0.12);
+  }
+  if (focusEntities.length && countOverlap(focusEntities, relatedEntityIds) > 0) {
+    boost = Math.max(boost, tuningV2Enabled ? 0.12 : 0.15);
+  }
+  return boost; // guideline: +0.10 to +0.20
+}
+
+function computeTopicalBoostV2(opts: {
+  topics: string[];
+  chunkContextTags: string[];
+  chunkSectionLabels: string[];
+  docTags: string[];
+  tuningV2Enabled: boolean;
+}): number {
+  const {
+    topics,
+    chunkContextTags,
+    chunkSectionLabels,
+    docTags,
+    tuningV2Enabled,
+  } = opts;
+
+  // Only count "non-platform / non-discipline" topics here to avoid double counting
+  const topicalTopics = topics.filter(
+    (t) => !t.startsWith("platform_") && !t.startsWith("discipline_"),
+  );
+  if (!topicalTopics.length) return 0;
+
+  if (tuningV2Enabled) {
+    const inContextTags = countOverlap(topicalTopics, chunkContextTags) > 0;
+    const inSectionLabels = countOverlap(topicalTopics, chunkSectionLabels) > 0;
+    const inDocTags = countOverlap(topicalTopics, docTags) > 0;
+    return Math.max(
+      inContextTags ? 0.05 : 0,
+      inSectionLabels ? 0.03 : 0,
+      inDocTags ? 0.03 : 0,
+    );
+  }
+
+  let boost = 0;
+  if (countOverlap(topicalTopics, chunkContextTags) > 0) {
+    boost += 0.06;
+  }
+  if (countOverlap(topicalTopics, chunkSectionLabels) > 0) {
+    boost += 0.04;
+  }
+  if (countOverlap(topicalTopics, docTags) > 0) {
+    boost += 0.04;
+  }
+  return boost;
+}
+
+function computeKeywordBoostV2(opts: {
+  keywords: string[];
+  tuningV2Enabled: boolean;
+  row: RetrievedRow;
+  chunkContextTags: string[];
+  chunkSectionLabels: string[];
+  docTags: string[];
+}): number {
+  const {
+    keywords,
+    tuningV2Enabled,
+    row,
+    chunkContextTags,
+    chunkSectionLabels,
+    docTags,
+  } = opts;
+
+  if (!keywords.length) return 0;
+
+  if (tuningV2Enabled) {
+    // Strict keyword matching to reduce substring noise and double-counting with tags/topics.
+    const haystack = [
+      String(row.document_title ?? ""),
+      String(row.document_path ?? ""),
+      String(row.heading_path ?? ""),
+      String(row.doc_summary ?? ""),
+    ].join(" ");
+
+    const matchCount = countKeywordMatchesStrict(keywords, haystack);
+    if (matchCount > 0) {
+      // 1 match => 0.02, 2 => 0.03, 3+ => 0.04
+      return clamp(0.01 + 0.01 * Math.min(matchCount, 3), 0, 0.04);
+    }
+    return 0;
+  }
+
+  const haystackParts: string[] = [
+    String(row.document_title ?? ""),
+    String(row.document_path ?? ""),
+    String(row.heading_path ?? ""),
+    String(row.doc_summary ?? ""),
+    // Include tags/labels as text
+    chunkContextTags.join(" "),
+    chunkSectionLabels.join(" "),
+    docTags.join(" "),
+  ];
+
+  const haystack = haystackParts.join(" ").toLowerCase();
+
+  let matchCount = 0;
+  for (const kw of keywords) {
+    if (haystack.includes(kw)) matchCount += 1;
+  }
+
+  // Small, bounded keyword boost
+  if (matchCount > 0) {
+    // 1 match => 0.03, 2 => 0.04, 3 => 0.05, 4+ => 0.06
+    return clamp(0.02 + 0.01 * Math.min(matchCount, 4), 0, 0.06);
+  }
+  return 0;
+}
+
 function computeBoostV2WithParts(
   row: RetrievedRow,
   context?: PerazziAssistantRequest["context"],
@@ -692,147 +916,55 @@ function computeBoostV2WithParts(
   const relatedEntityIds = extractRelatedEntityIds(row.chunk_related_entities);
 
   // ---------- Mode alignment ----------
-  if (mode && chunkModes.includes(mode)) {
-    const v = tuningV2Enabled ? 0.05 : 0.06;
-    parts.mode = v;
-    boost += v; // guideline: +0.03 to +0.08
-  }
+  parts.mode = computeModeBoostV2(mode, chunkModes, tuningV2Enabled);
+  boost += parts.mode; // guideline: +0.03 to +0.08
 
   // ---------- Platform alignment ----------
-  if (!tuningV2Enabled) {
-    if (contextPlatform && allPlatforms.includes(contextPlatform)) {
-      parts.platform += 0.1; // guideline: +0.05 to +0.12
-      boost += 0.1;
-    }
-    if (topics.length) {
-      const hintPlatforms = topics
-        .filter((t) => t.startsWith("platform_"))
-        .map((t) => t.replace("platform_", ""))
-        .filter(Boolean);
-      if (countOverlap(hintPlatforms, allPlatforms) > 0) {
-        parts.platform += 0.08;
-        boost += 0.08;
-      }
-    }
-  } else {
-    const platformContextMatch = contextPlatform && allPlatforms.includes(contextPlatform);
-    if (platformContextMatch) {
-      parts.platform = Math.max(parts.platform, 0.08);
-    }
-    if (topics.length) {
-      const hintPlatforms = topics
-        .filter((t) => t.startsWith("platform_"))
-        .map((t) => t.replace("platform_", ""))
-        .filter(Boolean);
-      if (countOverlap(hintPlatforms, allPlatforms) > 0) {
-        parts.platform = Math.max(parts.platform, 0.06);
-      }
-    }
-    boost += parts.platform;
-  }
+  parts.platform = computePlatformBoostV2({
+    tuningV2Enabled,
+    contextPlatform,
+    topics,
+    allPlatforms,
+  });
+  boost += parts.platform;
 
   // ---------- Discipline alignment ----------
-  if (topics.length) {
-    const hintDisciplines = topics
-      .filter((t) => t.startsWith("discipline_"))
-      .map((t) => t.replace("discipline_", ""))
-      .filter(Boolean);
-    if (countOverlap(hintDisciplines, allDisciplines) > 0) {
-      const v = tuningV2Enabled ? 0.05 : 0.06;
-      parts.discipline = v;
-      boost += v; // guideline: +0.03 to +0.08
-    }
-  }
+  parts.discipline = computeDisciplineBoostV2({
+    topics,
+    allDisciplines,
+    tuningV2Enabled,
+  });
+  boost += parts.discipline; // guideline: +0.03 to +0.08
 
   // ---------- Entity alignment (strong) ----------
-  // Prefer max-style (don't stack too hard)
-  let entityBoost = 0;
-  if (contextModel && relatedEntityIds.includes(contextModel)) {
-    entityBoost = Math.max(entityBoost, 0.12);
-  }
-  if (focusEntities.length && countOverlap(focusEntities, relatedEntityIds) > 0) {
-    entityBoost = Math.max(entityBoost, tuningV2Enabled ? 0.12 : 0.15);
-  }
-  parts.entity = entityBoost;
-  boost += entityBoost; // guideline: +0.10 to +0.20
+  parts.entity = computeEntityBoostV2({
+    contextModel,
+    focusEntities,
+    relatedEntityIds,
+    tuningV2Enabled,
+  });
+  boost += parts.entity; // guideline: +0.10 to +0.20
 
   // ---------- Topic alignment (tags/labels) ----------
-  // Only count "non-platform / non-discipline" topics here to avoid double counting
-  const topicalTopics = topics.filter(
-    (t) => !t.startsWith("platform_") && !t.startsWith("discipline_"),
-  );
-  if (topicalTopics.length) {
-    if (!tuningV2Enabled) {
-      if (countOverlap(topicalTopics, chunkContextTags) > 0) {
-        parts.topical += 0.06;
-        boost += 0.06;
-      }
-      if (countOverlap(topicalTopics, chunkSectionLabels) > 0) {
-        parts.topical += 0.04;
-        boost += 0.04;
-      }
-      if (countOverlap(topicalTopics, docTags) > 0) {
-        parts.topical += 0.04;
-        boost += 0.04;
-      }
-    } else {
-      const inContextTags = countOverlap(topicalTopics, chunkContextTags) > 0;
-      const inSectionLabels = countOverlap(topicalTopics, chunkSectionLabels) > 0;
-      const inDocTags = countOverlap(topicalTopics, docTags) > 0;
-      parts.topical = Math.max(
-        inContextTags ? 0.05 : 0,
-        inSectionLabels ? 0.03 : 0,
-        inDocTags ? 0.03 : 0,
-      );
-      boost += parts.topical;
-    }
-  }
+  parts.topical = computeTopicalBoostV2({
+    topics,
+    chunkContextTags,
+    chunkSectionLabels,
+    docTags,
+    tuningV2Enabled,
+  });
+  boost += parts.topical;
 
   // ---------- Keyword alignment ----------
-  if (keywords.length) {
-    if (!tuningV2Enabled) {
-      const haystackParts: string[] = [];
-
-      haystackParts.push(String(row.document_title ?? ""));
-      haystackParts.push(String(row.document_path ?? ""));
-      haystackParts.push(String(row.heading_path ?? ""));
-      haystackParts.push(String(row.doc_summary ?? ""));
-
-      // Include tags/labels as text
-      haystackParts.push(chunkContextTags.join(" "));
-      haystackParts.push(chunkSectionLabels.join(" "));
-      haystackParts.push(docTags.join(" "));
-
-      const haystack = haystackParts.join(" ").toLowerCase();
-
-      let matchCount = 0;
-      for (const kw of keywords) {
-        if (haystack.includes(kw)) matchCount += 1;
-      }
-
-      // Small, bounded keyword boost
-      if (matchCount > 0) {
-        // 1 match => 0.03, 2 => 0.04, 3 => 0.05, 4+ => 0.06
-        parts.keywords = clamp(0.02 + 0.01 * Math.min(matchCount, 4), 0, 0.06);
-        boost += parts.keywords;
-      }
-    } else {
-      // Strict keyword matching to reduce substring noise and double-counting with tags/topics.
-      const haystack = [
-        String(row.document_title ?? ""),
-        String(row.document_path ?? ""),
-        String(row.heading_path ?? ""),
-        String(row.doc_summary ?? ""),
-      ].join(" ");
-
-      const matchCount = countKeywordMatchesStrict(keywords, haystack);
-      if (matchCount > 0) {
-        // 1 match => 0.02, 2 => 0.03, 3+ => 0.04
-        parts.keywords = clamp(0.01 + 0.01 * Math.min(matchCount, 3), 0, 0.04);
-        boost += parts.keywords;
-      }
-    }
-  }
+  parts.keywords = computeKeywordBoostV2({
+    keywords,
+    tuningV2Enabled,
+    row,
+    chunkContextTags,
+    chunkSectionLabels,
+    docTags,
+  });
+  boost += parts.keywords;
 
   if (!Number.isFinite(boost)) {
     parts.total = 0;
@@ -1176,7 +1308,8 @@ async function fetchV2Chunks(opts: {
   };
   const maxBaseScore = typedRows.reduce((max, row) => {
     const s = Number(row.score ?? 0);
-    return s > max ? s : max;
+    if (Number.isNaN(s)) return max;
+    return Math.max(max, s);
   }, 0);
   const candidateBaseScoreStats = summarizeScoresForDebug(typedRows.map((r) => r.score));
 

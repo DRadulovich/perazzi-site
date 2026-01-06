@@ -96,7 +96,7 @@ export function JournalHero({ hero, breadcrumbs }: JournalHeroProps) {
               sizes="(min-width: 1280px) 960px, (min-width: 1024px) 66vw, 100vw"
               className="object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/40 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-r from-black via-black/40 to-transparent" />
           </div>
         </motion.div>
       </div>

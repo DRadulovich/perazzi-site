@@ -15,7 +15,7 @@ type BarChartProps = {
   maxBars?: number;
 };
 
-export function BarChart({ title, subtitle, data, className, maxBars }: BarChartProps) {
+export function BarChart({ title, subtitle, data, className, maxBars }: Readonly<BarChartProps>) {
     // Trim list to maxBars (if provided) and ensure values are finite numbers
   const rows = (maxBars ? data.slice(0, maxBars) : data).map((d) => ({
     ...d,

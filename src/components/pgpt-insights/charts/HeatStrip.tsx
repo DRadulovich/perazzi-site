@@ -2,15 +2,15 @@
 
 import { cn } from "@/lib/utils";
 
-type HeatStripProps = {
+type HeatStripProps = Readonly<{
   title: string;
-  data: Array<{ label: string; value: number | null }>;
+  data: ReadonlyArray<{ label: string; value: number | null }>;
   valueSuffix?: string;
   subtitle?: string;
   className?: string;
   emptyLabel?: string;
   invertColors?: boolean;
-};
+}>;
 
 function colorForValue(v: number | null, invert?: boolean) {
   if (v === null || Number.isNaN(v)) return "bg-muted";
@@ -55,20 +55,24 @@ export function HeatStrip({
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5">
-        {data.map((d) => (
-          <span
-            key={`${title}-${d.label}`}
-            className={cn(
-              "group relative inline-flex h-6 w-6 items-center justify-center rounded-md text-[10px] font-medium text-background/90 ring-1 ring-border/40",
-              colorForValue(d.value ?? null, invertColors),
-            )}
-            title={`${d.label}: ${d.value === null ? "n/a" : `${d.value.toFixed(1)}${valueSuffix ?? ""}`}`}
-          >
-            <span className="sr-only">
-              {d.label} {d.value === null ? "n/a" : `${d.value.toFixed(1)}${valueSuffix ?? ""}`}
+        {data.map((d) => {
+          const valueLabel = d.value === null ? "n/a" : `${d.value.toFixed(1)}${valueSuffix ?? ""}`;
+
+          return (
+            <span
+              key={`${title}-${d.label}`}
+              className={cn(
+                "group relative inline-flex h-6 w-6 items-center justify-center rounded-md text-[10px] font-medium text-background/90 ring-1 ring-border/40",
+                colorForValue(d.value, invertColors),
+              )}
+              title={`${d.label}: ${valueLabel}`}
+            >
+              <span className="sr-only">
+                {d.label} {valueLabel}
+              </span>
             </span>
-          </span>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

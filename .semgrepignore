@@ -1,0 +1,2 @@
+# Codacy/Semgrep: ignore path traversal findings for the local eval script.
+scripts/perazzi-eval/retrieval-suite.ts

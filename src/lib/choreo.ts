@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
 
+type CSSPropertiesWithVars = CSSProperties & Record<`--${string}`, string | number>;
+
 export const choreoDurations = {
   micro: 120,
   short: 180,
@@ -100,7 +102,7 @@ export const buildChoreoPresenceVars = ({
   exitScale = 1,
   enterBlur = 0,
   exitBlur = 0,
-}: ChoreoPresenceVarsOptions = {}): CSSProperties => ({
+}: ChoreoPresenceVarsOptions = {}): CSSPropertiesWithVars => ({
   "--choreo-presence-enter-duration": `${enterDurationMs}ms`,
   "--choreo-presence-exit-duration": `${exitDurationMs}ms`,
   "--choreo-presence-enter-ease": enterEase,
@@ -118,7 +120,7 @@ export const buildChoreoGroupVars = ({
   durationMs = choreoDurations.base,
   staggerMs = choreoStagger.base,
   easing = choreoEase,
-}: ChoreoGroupVarsOptions = {}): CSSProperties => ({
+}: ChoreoGroupVarsOptions = {}): CSSPropertiesWithVars => ({
   "--choreo-delay": `${delayMs}ms`,
   "--choreo-duration": `${durationMs}ms`,
   "--choreo-stagger": `${staggerMs}ms`,

@@ -269,7 +269,7 @@ function resolveImageSource(image?: ConfiguratorImage): SanityImageSource | null
   if (typeof image === "object" && "asset" in image) {
     const asset = image.asset as SanityImageSource | null | undefined;
     if (hasValidSanityImage(asset)) {
-      return asset as SanityImageSource;
+      return asset;
     }
   }
   return null;
@@ -380,17 +380,59 @@ async function fetchConfiguratorItems(client: SanityClient, field: string, value
 
 function parseSearchParams(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const field = (searchParams.get("field") ?? "").trim().toUpperCase();
-  const rawValue = (searchParams.get("value") ?? "").trim();
-  const rawModel = (searchParams.get("model") ?? "").trim();
-  const normalizedValue = field === "PLATFORM" ? rawValue : normalizeValue(field, rawValue);
-  return { field, rawValue, rawModel, normalizedValue };
+  return normalizeInputs({
+    field: searchParams.get("field") ?? "",
+    value: searchParams.get("value") ?? "",
+    model: searchParams.get("model") ?? "",
+  });
 }
 
 function buildSearchContext(normalizedValue: string) {
   const { term, altTerm, compactTerm, looseTerm } = buildTerms(normalizedValue);
   const lowerValue = normalizedValue.toLowerCase();
   return { term, altTerm, compactTerm, looseTerm, lowerValue };
+}
+
+function normalizeInputs(input: { field?: unknown; value?: unknown; model?: unknown }) {
+  const field = typeof input.field === "string" ? input.field.trim().toUpperCase() : "";
+  const rawValue = typeof input.value === "string" ? input.value.trim() : "";
+  const rawModel = typeof input.model === "string" ? input.model.trim() : "";
+  const normalizedValue = field === "PLATFORM" ? rawValue : normalizeValue(field, rawValue);
+  return { field, rawValue, rawModel, normalizedValue };
+}
+
+async function parseBody(request: NextRequest) {
+  try {
+    const body = (await request.json()) as { field?: unknown; value?: unknown; model?: unknown };
+    return normalizeInputs(body);
+  } catch {
+    return normalizeInputs({});
+  }
+}
+
+async function handleBuildInfoRequest(params: ReturnType<typeof normalizeInputs>) {
+  // Use API (non-CDN) client to avoid DNS/cache issues when resolving fresh data.
+  const client = baseClient.withConfig({ useCdn: false });
+  const { field, rawValue, rawModel, normalizedValue } = params;
+
+  if (!field || !normalizedValue) {
+    return NextResponse.json({ error: "Missing field or value" }, { status: 400 });
+  }
+
+  const search = buildSearchContext(normalizedValue);
+
+  try {
+    const shortcutResponse = await tryConfiguratorShortcut(client, field, rawValue, normalizedValue);
+    if (shortcutResponse) {
+      return shortcutResponse;
+    }
+
+    const rows = await fetchRowsForField(client, field, search, rawModel);
+    return NextResponse.json({ items: mapResult(rows) });
+  } catch (error) {
+    console.error("Failed to fetch build info", error);
+    return NextResponse.json({ error: "Failed to fetch build info" }, { status: 500 });
+  }
 }
 
 async function tryConfiguratorShortcut(
@@ -583,26 +625,10 @@ async function fetchRowsForField(
 }
 
 export async function GET(request: NextRequest) {
-  // Use API (non-CDN) client to avoid DNS/cache issues when resolving fresh data.
-  const client = baseClient.withConfig({ useCdn: false });
-  const { field, rawValue, rawModel, normalizedValue } = parseSearchParams(request);
+  return handleBuildInfoRequest(parseSearchParams(request));
+}
 
-  if (!field || !normalizedValue) {
-    return NextResponse.json({ error: "Missing field or value" }, { status: 400 });
-  }
-
-  const search = buildSearchContext(normalizedValue);
-
-  try {
-    const shortcutResponse = await tryConfiguratorShortcut(client, field, rawValue, normalizedValue);
-    if (shortcutResponse) {
-      return shortcutResponse;
-    }
-
-    const rows = await fetchRowsForField(client, field, search, rawModel);
-    return NextResponse.json({ items: mapResult(rows) });
-  } catch (error) {
-    console.error("Failed to fetch build info", error);
-    return NextResponse.json({ error: "Failed to fetch build info" }, { status: 500 });
-  }
+export async function POST(request: NextRequest) {
+  const params = await parseBody(request);
+  return handleBuildInfoRequest(params);
 }

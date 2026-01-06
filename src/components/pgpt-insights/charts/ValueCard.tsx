@@ -18,7 +18,7 @@ type ValueCardProps = {
   className?: string;
 };
 
-export function ValueCard({ title, value, tone = "default", description, kicker, className }: ValueCardProps) {
+export function ValueCard({ title, value, tone = "default", description, kicker, className }: Readonly<ValueCardProps>) {
   return (
     <div
       className={cn(

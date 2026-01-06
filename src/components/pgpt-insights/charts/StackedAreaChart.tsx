@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { cn } from "@/lib/utils";
 import { safeMax } from "@/lib/safeMax";
 
@@ -10,7 +11,7 @@ export type StackedAreaPoint = {
 // Minimum number of points required to render a trend area chart
 const MIN_POINTS = 2;
 
-type StackedAreaChartProps = {
+type StackedAreaChartProps = Readonly<{
   points: StackedAreaPoint[];
   order: string[];
   colors: Record<string, string>;
@@ -19,7 +20,7 @@ type StackedAreaChartProps = {
   lineLabel?: string;
   height?: number;
   className?: string;
-};
+}>;
 
 type SegmentBounds = { start: number; end: number };
 
@@ -68,6 +69,9 @@ export function StackedAreaChart({
   height = 320,
   className,
 }: StackedAreaChartProps) {
+  const chartTitleId = useId();
+  const accessibleTitle = title ? `${title} stacked area chart` : "Archetype trend stacked area";
+
   // Fail-soft when there are no points or not enough data to construct a trend
   if (points.length < MIN_POINTS || order.length === 0) {
     return (
@@ -150,7 +154,14 @@ export function StackedAreaChart({
         </div>
       </div>
 
-      <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={height} className="mt-3 w-full" role="img" aria-label="Archetype trend stacked area">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        width="100%"
+        height={height}
+        className="mt-3 w-full"
+        aria-labelledby={chartTitleId}
+      >
+        <title id={chartTitleId}>{accessibleTitle}</title>
         <defs>
           <linearGradient id="margin-line" x1="0" x2="0" y1="0" y2="1">
             <stop stopColor="#3b82f6" stopOpacity="0.9" offset="0%" />

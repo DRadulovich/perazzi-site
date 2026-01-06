@@ -10,9 +10,9 @@ export type ChatTriggerPayload = {
 export const CHAT_TRIGGER_EVENT = "perazzi-chat-open";
 
 export function triggerChat(payload: ChatTriggerPayload = {}) {
-  if (typeof window === "undefined") return;
+  if (globalThis.window === undefined) return;
   const event = new CustomEvent<ChatTriggerPayload>(CHAT_TRIGGER_EVENT, {
     detail: payload,
   });
-  window.dispatchEvent(event);
+  globalThis.window.dispatchEvent(event);
 }

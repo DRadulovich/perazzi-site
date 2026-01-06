@@ -1358,13 +1358,12 @@ export async function POST(request: Request) {
         openai: null,
         retrieval: {
           attempted: retrievalAttempted,
-          skipped: !retrievalAttempted,
+          skipped: false,
           reason: retrievalDecision.reason ?? null,
           chunk_count: retrievalChunkCount,
-          top_titles: retrievalAttempted ? retrieval.chunks.map((chunk) => chunk.title) : [],
-          rerank_enabled: retrievalAttempted ? Boolean(rerankMetrics.rerankEnabled) : null,
+          top_titles: retrieval.chunks.map((chunk) => chunk.title),
+          rerank_enabled: Boolean(rerankMetrics.rerankEnabled),
           rerank_metrics_present:
-            retrievalAttempted &&
             Array.isArray(rerankMetrics.topReturnedChunks) &&
             rerankMetrics.topReturnedChunks.length > 0,
           models_registry_sot_enabled: MODELS_REGISTRY_SOT_ENABLED,
@@ -1558,13 +1557,12 @@ export async function POST(request: Request) {
         blocked_intent: null,
         evidenceMode,
         evidenceReason,
-        postvalidate:
-          postvalidateDebug && postvalidateDebug.triggered
-            ? {
-                triggered: true,
-                reasons: postvalidateDebug.reasons.slice(0, 10),
-              }
-            : null,
+        postvalidate: postvalidateDebug?.triggered
+          ? {
+              triggered: true,
+              reasons: postvalidateDebug.reasons.slice(0, 10),
+            }
+          : null,
       },
     });
 
@@ -1689,6 +1687,15 @@ function serializeOpenAiError(error: unknown) {
     (err.error as Record<string, unknown> | undefined) ??
     undefined;
 
+  let requestID: string | undefined;
+  if (typeof err.requestID === "string") {
+    requestID = err.requestID;
+  } else if (typeof err.requestId === "string") {
+    requestID = err.requestId;
+  } else if (typeof err.request_id === "string") {
+    requestID = err.request_id;
+  }
+
   return {
     name: typeof err.name === "string" ? err.name : undefined,
     message: typeof err.message === "string" ? err.message : undefined,
@@ -1696,14 +1703,7 @@ function serializeOpenAiError(error: unknown) {
     code: typeof err.code === "string" ? err.code : undefined,
     param: typeof err.param === "string" ? err.param : undefined,
     type: typeof err.type === "string" ? err.type : undefined,
-    requestID:
-      typeof err.requestID === "string"
-        ? err.requestID
-        : typeof err.requestId === "string"
-          ? err.requestId
-          : typeof err.request_id === "string"
-            ? err.request_id
-            : undefined,
+    requestID,
     error: nested,
   };
 }
@@ -1753,14 +1753,14 @@ function isInvalidPreviousResponseIdError(error: unknown): boolean {
     err.param ??
     (typeof nestedBody?.param === "string" ? nestedBody.param : null) ??
     (typeof nestedError?.param === "string" ? nestedError.param : null);
-  const messageCandidate =
-    typeof err.message === "string"
-      ? err.message
-      : typeof nestedBody?.message === "string"
-        ? nestedBody.message
-        : typeof nestedError?.message === "string"
-          ? nestedError.message
-          : "";
+  let messageCandidate = "";
+  if (typeof err.message === "string") {
+    messageCandidate = err.message;
+  } else if (typeof nestedBody?.message === "string") {
+    messageCandidate = nestedBody.message;
+  } else if (typeof nestedError?.message === "string") {
+    messageCandidate = nestedError.message;
+  }
 
   const code = typeof codeCandidate === "string" ? codeCandidate.toLowerCase() : "";
   const param = typeof paramCandidate === "string" ? paramCandidate.toLowerCase() : "";
@@ -2012,7 +2012,7 @@ async function generateAssistantAnswer(
     metadata,
   };
 
-  let responseText = LOW_CONFIDENCE_MESSAGE;
+  let responseText: string | undefined;
   let responseId: string | null | undefined;
   let usage: OpenAI.Responses.ResponseUsage | null | undefined;
   const start = Date.now();
@@ -2074,7 +2074,7 @@ async function generateAssistantAnswer(
     throw error;
   }
 
-  return { text: responseText, responseId, usage, openai: openaiDebug };
+  return { text: responseText ?? LOW_CONFIDENCE_MESSAGE, responseId, usage, openai: openaiDebug };
 }
 
 export function buildDynamicContext(
@@ -2282,7 +2282,8 @@ function buildSafeDisplayTitle(chunk: RetrievedChunk): string {
   const fallbackTitle = "Perazzi Models Reference";
   const { modelName, platform } = extractModelMetadata(chunk.content);
   if (modelName) {
-    const candidate = `Model: ${modelName}${platform ? ` (Platform: ${platform})` : ""}`;
+    const platformSuffix = platform ? ` (Platform: ${platform})` : "";
+    const candidate = `Model: ${modelName}${platformSuffix}`;
     return sanitizeReferenceTitleForPrompt(candidate, fallbackTitle);
   }
 
@@ -2399,7 +2400,8 @@ function getTopBaseScores(chunks: RetrievedChunk[], limit = 3): number[] {
 
   if (!scores.length) return [];
 
-  const sorted = scores.sort((a, b) => b - a);
+  const sorted = [...scores];
+  sorted.sort((a, b) => b - a);
   return sorted.slice(0, Math.max(0, limit));
 }
 

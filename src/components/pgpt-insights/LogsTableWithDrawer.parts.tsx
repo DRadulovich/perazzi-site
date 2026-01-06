@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
 
 import { LOW_SCORE_THRESHOLD } from "../../lib/pgpt-insights/constants";
 import { getLogTextCalloutToneClass, getTextStorageBadges } from "../../lib/pgpt-insights/logTextStatus";
@@ -28,10 +27,6 @@ export function DrawerSkeleton() {
   );
 }
 
-function maybe(condition: boolean, node: ReactNode): ReactNode {
-  return condition ? node : null;
-}
-
 type RetrievalDebugRow = {
   rank: number;
   documentPath: string | null;
@@ -50,7 +45,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function toStringOrNull(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
-  return trimmed ? trimmed : null;
+  return trimmed || null;
 }
 
 function toNumberOrZero(value: unknown): number {
@@ -186,38 +181,34 @@ function StorageBadgesRow({
 }>) {
   return (
     <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-      {maybe(
-        !!promptStatus.badge,
+      {promptStatus.badge ? (
         <span className="inline-flex">
           <Badge tone={promptStatus.badgeTone ?? "default"} title={promptStatus.callout}>
             {promptStatus.badge}
           </Badge>
-        </span>,
-      )}
-      {maybe(
-        !!responseStatus.badge,
+        </span>
+      ) : null}
+      {responseStatus.badge ? (
         <span className="inline-flex">
           <Badge tone={responseStatus.badgeTone ?? "default"} title={responseStatus.callout}>
             {responseStatus.badge}
           </Badge>
-        </span>,
-      )}
-      {maybe(
-        promptPreviewTruncated,
+        </span>
+      ) : null}
+      {promptPreviewTruncated ? (
         <span className="inline-flex">
           <Badge tone="default" title="Preview shortened for table">
             prompt preview
           </Badge>
-        </span>,
-      )}
-      {maybe(
-        responsePreviewTruncated,
+        </span>
+      ) : null}
+      {responsePreviewTruncated ? (
         <span className="inline-flex">
           <Badge tone="default" title="Preview shortened for table">
             response preview
           </Badge>
-        </span>,
-      )}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -276,12 +267,12 @@ function MetaBadgesRow({
   return (
     <div className="flex flex-wrap items-center gap-2">
       <ArchetypeBadge log={log} />
-      {maybe(!!log.model, <Badge tone="blue">{log.model}</Badge>)}
-      {maybe(!!log.used_gateway, <Badge>gateway</Badge>)}
+      {log.model ? <Badge tone="blue">{log.model}</Badge> : null}
+      {log.used_gateway ? <Badge>gateway</Badge> : null}
 
       <ScoreBadge scoreNum={scoreNum} isLowScore={isLowScore} />
       <BlockedBadge guardrailReason={log.guardrail_reason} isBlocked={isBlocked} />
-      {maybe(isLowConfidence, <Badge tone="amber">low confidence</Badge>)}
+      {isLowConfidence ? <Badge tone="amber">low confidence</Badge> : null}
 
       <CountBadge label="intents" count={intentCount} />
       <CountBadge label="topics" count={topicCount} />
@@ -594,10 +585,10 @@ export function RetrievalTab({ detail }: Readonly<{ detail: PgptLogDetailRespons
           <table className="w-full min-w-[980px] table-fixed border-collapse text-[11px]">
             <colgroup>
               <col className="w-[60px]" />
-              <col className="w-[240px]" />
-              <col className="w-[240px]" />
+              <col className="w-60" />
+              <col className="w-60" />
               <col className="w-[90px]" />
-              <col className="w-[80px]" />
+              <col className="w-20" />
               <col className="w-[90px]" />
               <col className="w-[90px]" />
               <col className="w-[190px]" />

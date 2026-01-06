@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 
 import { LOW_SCORE_THRESHOLD } from "../../../lib/pgpt-insights/constants";
-import { getLogTextCalloutToneClass, getTextStorageBadges } from "../../../lib/pgpt-insights/logTextStatus";
+import { getLogTextCalloutToneClass, getTextStorageBadges, type TextFieldStatus } from "../../../lib/pgpt-insights/logTextStatus";
 import type { PerazziLogRow, PgptLogDetailResponse } from "../../../lib/pgpt-insights/types";
 
 import { Badge } from "../Badge";
@@ -21,6 +21,67 @@ type DetailStatus = {
   error: string | null;
 };
 
+type TokenMetrics = {
+  promptTokens: number | null;
+  completionTokens: number | null;
+  cachedTokens: number | null;
+  reasoningTokens: number | null;
+  totalTokens: number | null;
+};
+
+type SessionConversationViewProps = Readonly<{
+  logs: PerazziLogRow[];
+  hasMore: boolean;
+  sessionId: string;
+}>;
+
+type SessionConversationRowProps = Readonly<{
+  log: PerazziLogRow;
+  index: number;
+  detail: PgptLogDetailResponse | null;
+  status?: DetailStatus;
+  isExpanded: boolean;
+  onToggle: (id: string) => void;
+}>;
+
+type MessageBubbleProps = Readonly<{
+  label: string;
+  avatarClassName: string;
+  callout?: string;
+  calloutToneClass: string;
+  children: ReactNode;
+}>;
+
+type SummarySectionProps = Readonly<{
+  isExpanded: boolean;
+  status?: DetailStatus;
+  detail: PgptLogDetailResponse | null;
+  onToggle: () => void;
+}>;
+
+type LogHeaderProps = Readonly<{
+  log: PerazziLogRow;
+  index: number;
+}>;
+
+type TokenMetricsRowProps = Readonly<{
+  metrics: TokenMetrics;
+}>;
+
+type HeaderItem = {
+  key: string;
+  label: string;
+  className?: string;
+};
+
+type MetaBadgeArgs = {
+  log: PerazziLogRow;
+  promptStatus: TextFieldStatus;
+  responseStatus: TextFieldStatus;
+  scoreNum: number | null;
+  isLowScore: boolean;
+};
+
 function toNumberOrNull(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string") {
@@ -30,16 +91,18 @@ function toNumberOrNull(value: unknown): number | null {
   return null;
 }
 
-const PROTOTYPE_KEYS = new Set(["__proto__", "prototype", "constructor"]);
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object") return null;
+  return value as Record<string, unknown>;
+}
 
-function readNestedNumber(obj: unknown, path: string[]): number | null {
-  let current: unknown = obj;
-  for (const key of path) {
-    if (!current || typeof current !== "object" || PROTOTYPE_KEYS.has(key)) return null;
-    if (!Object.prototype.hasOwnProperty.call(current, key)) return null;
-    current = (current as Record<string, unknown>)[key];
-  }
-  return toNumberOrNull(current);
+function getRecordValue(record: Record<string, unknown> | null, key: string): unknown {
+  if (!record || !Object.prototype.hasOwnProperty.call(record, key)) return undefined;
+  return record[key];
+}
+
+function getRecordNumber(record: Record<string, unknown> | null, key: string): number | null {
+  return toNumberOrNull(getRecordValue(record, key));
 }
 
 function getTokenMetrics(source: {
@@ -48,34 +111,130 @@ function getTokenMetrics(source: {
   total_tokens?: unknown;
   prompt_tokens?: unknown;
   completion_tokens?: unknown;
-  metadata?: unknown | null;
-}) {
+  metadata?: unknown;
+}): TokenMetrics {
   const promptTokens = toNumberOrNull(source.prompt_tokens);
   const completionTokens = toNumberOrNull(source.completion_tokens);
-  const metadataObj =
-    source.metadata && typeof source.metadata === "object" ? (source.metadata as Record<string, unknown>) : null;
-  const responseUsage =
-    metadataObj && typeof (metadataObj as { responseUsage?: unknown }).responseUsage === "object"
-      ? (metadataObj as { responseUsage: unknown }).responseUsage
-      : null;
+  const metadataObj = asRecord(source.metadata);
+  const responseUsage = asRecord(getRecordValue(metadataObj, "responseUsage"));
+  const inputTokensDetails = asRecord(getRecordValue(responseUsage, "input_tokens_details"));
+  const outputTokensDetails = asRecord(getRecordValue(responseUsage, "output_tokens_details"));
 
   const cachedTokens =
     toNumberOrNull(source.cached_tokens) ??
-    readNestedNumber(metadataObj, ["cachedTokens"]) ??
-    readNestedNumber(responseUsage, ["input_tokens_details", "cached_tokens"]);
+    getRecordNumber(metadataObj, "cachedTokens") ??
+    getRecordNumber(inputTokensDetails, "cached_tokens");
 
   const reasoningTokens =
     toNumberOrNull(source.reasoning_tokens) ??
-    readNestedNumber(metadataObj, ["reasoningTokens"]) ??
-    readNestedNumber(responseUsage, ["output_tokens_details", "reasoning_tokens"]);
+    getRecordNumber(metadataObj, "reasoningTokens") ??
+    getRecordNumber(outputTokensDetails, "reasoning_tokens");
 
   const totalTokens =
     toNumberOrNull(source.total_tokens) ??
-    readNestedNumber(metadataObj, ["totalTokens"]) ??
-    readNestedNumber(responseUsage, ["total_tokens"]) ??
+    getRecordNumber(metadataObj, "totalTokens") ??
+    getRecordNumber(responseUsage, "total_tokens") ??
     (promptTokens !== null && completionTokens !== null ? promptTokens + completionTokens : null);
 
   return { promptTokens, completionTokens, cachedTokens, reasoningTokens, totalTokens };
+}
+
+function mergeTokenMetrics(preview: TokenMetrics, detail: TokenMetrics | null): TokenMetrics {
+  if (!detail) return preview;
+
+  return {
+    promptTokens: detail.promptTokens ?? preview.promptTokens,
+    completionTokens: detail.completionTokens ?? preview.completionTokens,
+    cachedTokens: detail.cachedTokens ?? preview.cachedTokens,
+    reasoningTokens: detail.reasoningTokens ?? preview.reasoningTokens,
+    totalTokens: detail.totalTokens ?? preview.totalTokens,
+  };
+}
+
+function getLogTokenMetrics(log: PerazziLogRow, detail: PgptLogDetailResponse | null): TokenMetrics {
+  const preview = getTokenMetrics(log);
+  const detailMetrics = detail ? getTokenMetrics(detail.log) : null;
+  return mergeTokenMetrics(preview, detailMetrics);
+}
+
+function getHeaderItems(log: PerazziLogRow): HeaderItem[] {
+  const items: HeaderItem[] = [];
+  if (log.env) items.push({ key: "env", label: log.env });
+  if (log.endpoint) items.push({ key: "endpoint", label: log.endpoint });
+  if (log.session_id) items.push({ key: "session", label: log.session_id, className: "break-all" });
+  return items;
+}
+
+function buildMetaBadges({ log, promptStatus, responseStatus, scoreNum, isLowScore }: MetaBadgeArgs): ReactNode[] {
+  const metaBadges: ReactNode[] = [];
+
+  if (log.archetype) metaBadges.push(<Badge key="arch">{log.archetype}</Badge>);
+  if (log.model) metaBadges.push(<Badge key="model" tone="blue">{log.model}</Badge>);
+  if (log.guardrail_status === "blocked") {
+    const reason = log.guardrail_reason ?? undefined;
+    metaBadges.push(
+      <Badge key="guardrail" tone="red" title={reason}>
+        blocked{reason ? `: ${reason}` : ""}
+      </Badge>,
+    );
+  }
+  if (log.low_confidence === true) metaBadges.push(<Badge key="low-conf" tone="amber">low confidence</Badge>);
+  if (log.used_gateway) metaBadges.push(<Badge key="gateway">gateway</Badge>);
+  if (scoreNum !== null && Number.isFinite(scoreNum)) {
+    metaBadges.push(
+      <Badge key="score" tone={isLowScore ? "yellow" : "default"}>
+        maxScore {log.max_score}
+      </Badge>,
+    );
+  }
+  if (promptStatus.badge) {
+    metaBadges.push(
+      <Badge
+        key="prompt-text"
+        tone={promptStatus.badgeTone ?? "default"}
+        title={promptStatus.callout ?? undefined}
+      >
+        P {promptStatus.badge}
+      </Badge>,
+    );
+  }
+  if (responseStatus.badge) {
+    metaBadges.push(
+      <Badge
+        key="response-text"
+        tone={responseStatus.badgeTone ?? "default"}
+        title={responseStatus.callout ?? undefined}
+      >
+        A {responseStatus.badge}
+      </Badge>,
+    );
+  }
+
+  return metaBadges;
+}
+
+function getSummaryLabel(status: DetailStatus | undefined, isExpanded: boolean): string {
+  if (status?.loading) return "loading…";
+  if (status?.error) return "error";
+  return isExpanded ? "hide" : "show";
+}
+
+function getSummaryContent(status: DetailStatus | undefined, detail: PgptLogDetailResponse | null): ReactNode {
+  if (status?.loading) {
+    return <SummarySkeleton />;
+  }
+  if (status?.error) {
+    return (
+      <div className="rounded-md border border-border bg-background/80 p-3 text-[11px] text-red-600 dark:text-red-300">
+        {status.error}
+      </div>
+    );
+  }
+  if (detail) {
+    return <LogSummaryPanel detail={detail} />;
+  }
+
+  return <div className="text-[11px] text-muted-foreground">No data for this interaction.</div>;
 }
 
 function SummarySkeleton() {
@@ -88,15 +247,157 @@ function SummarySkeleton() {
   );
 }
 
-export function SessionConversationView({
-  logs,
-  hasMore,
-  sessionId,
-}: {
-  logs: PerazziLogRow[];
-  hasMore: boolean;
-  sessionId: string;
-}) {
+function MessageBubble({ label, avatarClassName, callout, calloutToneClass, children }: MessageBubbleProps) {
+  return (
+    <div className="flex items-start gap-3">
+      <div
+        className={cn(
+          "mt-1 h-8 w-8 shrink-0 rounded-full border border-border text-[11px] font-semibold flex items-center justify-center",
+          avatarClassName,
+        )}
+      >
+        {label}
+      </div>
+      <div className="flex-1 rounded-2xl border border-border bg-background p-3 text-sm leading-relaxed text-foreground shadow-sm">
+        {callout ? (
+          <div className={cn("mb-2 rounded-md border px-2 py-1 text-[11px] leading-snug", calloutToneClass)}>
+            {callout}
+          </div>
+        ) : null}
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function TokenMetricsRow({ metrics }: TokenMetricsRowProps) {
+  return (
+    <div className="text-[11px] text-muted-foreground flex flex-wrap gap-3">
+      <span>Prompt: {metrics.promptTokens ?? "—"}</span>
+      <span>Completion: {metrics.completionTokens ?? "—"}</span>
+      <span>Total tokens: {metrics.totalTokens ?? "—"}</span>
+      <span>Cached tokens: {metrics.cachedTokens ?? "—"}</span>
+      <span>Reasoning tokens: {metrics.reasoningTokens ?? "—"}</span>
+    </div>
+  );
+}
+
+function LogHeader({ log, index }: LogHeaderProps) {
+  const items = getHeaderItems(log);
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+      <span className="font-semibold text-foreground">#{index + 1}</span>
+      <span className="tabular-nums">{formatTimestampShort(String(log.created_at))}</span>
+      {items.map((item) => (
+        <span key={item.key} className="inline-flex items-center gap-2">
+          <span>·</span>
+          <span className={item.className}>{item.label}</span>
+        </span>
+      ))}
+      <CopyButton value={log.id} label="Copy id" ariaLabel="Copy interaction id" />
+    </div>
+  );
+}
+
+function SummarySection({ isExpanded, status, detail, onToggle }: SummarySectionProps) {
+  const label = getSummaryLabel(status, isExpanded);
+
+  return (
+    <div className="rounded-lg border border-border bg-muted/10">
+      <button
+        type="button"
+        className={cn(
+          "flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-xs font-medium transition-colors",
+          isExpanded ? "bg-muted/40 text-foreground" : "text-foreground hover:bg-muted/20",
+        )}
+        onClick={onToggle}
+      >
+        <span>Summary</span>
+        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</span>
+      </button>
+
+      {isExpanded ? (
+        <div className="border-t border-border px-3 py-3">{getSummaryContent(status, detail)}</div>
+      ) : null}
+    </div>
+  );
+}
+
+function SessionConversationRow({
+  log,
+  index,
+  detail,
+  status,
+  isExpanded,
+  onToggle,
+}: SessionConversationRowProps) {
+  const textStatus = getTextStorageBadges({
+    promptText: log.prompt,
+    responseText: log.response,
+    metadata: log.metadata,
+    logTextMode: log.log_text_mode,
+    logTextMaxChars: log.log_text_max_chars,
+    promptTextOmitted: log.prompt_text_omitted,
+    responseTextOmitted: log.response_text_omitted,
+    promptTextTruncated: log.prompt_text_truncated,
+    responseTextTruncated: log.response_text_truncated,
+  });
+  const promptStatus = textStatus.prompt;
+  const responseStatus = textStatus.response;
+
+  const scoreNum = log.max_score ? Number(log.max_score) : null;
+  const isLowScore =
+    log.endpoint === "assistant" && scoreNum !== null && Number.isFinite(scoreNum) && scoreNum < LOW_SCORE_THRESHOLD;
+
+  const metaBadges = buildMetaBadges({
+    log,
+    promptStatus,
+    responseStatus,
+    scoreNum,
+    isLowScore,
+  });
+  const tokenMetrics = getLogTokenMetrics(log, detail);
+  const promptCalloutTone = getLogTextCalloutToneClass(promptStatus);
+  const responseCalloutTone = getLogTextCalloutToneClass(responseStatus);
+
+  return (
+    <div className="space-y-3 rounded-xl border border-border bg-background/80 p-4">
+      <LogHeader log={log} index={index} />
+      <div className="flex flex-wrap items-center gap-2">{metaBadges}</div>
+      <TokenMetricsRow metrics={tokenMetrics} />
+
+      <div className="space-y-3">
+        <MessageBubble
+          label="User"
+          avatarClassName="bg-muted/50 text-muted-foreground"
+          callout={promptStatus.callout}
+          calloutToneClass={promptCalloutTone}
+        >
+          <p className="whitespace-pre-wrap">{promptStatus.displayValue}</p>
+        </MessageBubble>
+
+        <MessageBubble
+          label="AI"
+          avatarClassName="bg-blue-50 text-blue-700 dark:bg-blue-500/20 dark:text-blue-100"
+          callout={responseStatus.callout}
+          calloutToneClass={responseCalloutTone}
+        >
+          <MarkdownViewClient markdown={responseStatus.displayValue ?? ""} />
+        </MessageBubble>
+      </div>
+
+      <SummarySection
+        isExpanded={isExpanded}
+        status={status}
+        detail={detail}
+        onToggle={() => onToggle(log.id)}
+      />
+    </div>
+  );
+}
+
+export function SessionConversationView({ logs, hasMore, sessionId }: SessionConversationViewProps) {
   const detailCache = useRef(new Map<string, PgptLogDetailResponse>());
   const [detailState, setDetailState] = useState<Record<string, DetailStatus>>({});
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -152,191 +453,20 @@ export function SessionConversationView({
         </div>
       </div>
 
-      {!hasLogs ? (
-        <div className="p-6 text-sm text-muted-foreground">No interactions match the current filters.</div>
-      ) : (
+      {hasLogs ? (
         <>
           <div className="max-h-[70vh] space-y-5 overflow-y-auto px-4 py-5">
-            {logs.map((log, idx) => {
-              const detail = detailCache.current.get(log.id) ?? null;
-              const status = detailState[log.id];
-              const isExpanded = expanded.has(log.id);
-              const scoreNum = log.max_score ? Number(log.max_score) : null;
-              const isLowScore =
-                log.endpoint === "assistant" && scoreNum !== null && Number.isFinite(scoreNum) && scoreNum < LOW_SCORE_THRESHOLD;
-
-              const textStatus = getTextStorageBadges({
-                promptText: log.prompt,
-                responseText: log.response,
-                metadata: log.metadata,
-                logTextMode: log.log_text_mode,
-                logTextMaxChars: log.log_text_max_chars,
-                promptTextOmitted: log.prompt_text_omitted,
-                responseTextOmitted: log.response_text_omitted,
-                promptTextTruncated: log.prompt_text_truncated,
-                responseTextTruncated: log.response_text_truncated,
-              });
-              const promptStatus = textStatus.prompt;
-              const responseStatus = textStatus.response;
-
-              const metaBadges = [];
-              if (log.archetype) metaBadges.push(<Badge key="arch">{log.archetype}</Badge>);
-              if (log.model) metaBadges.push(<Badge key="model" tone="blue">{log.model}</Badge>);
-              if (log.guardrail_status === "blocked")
-                metaBadges.push(
-                  <Badge key="guardrail" tone="red" title={log.guardrail_reason ?? undefined}>
-                    blocked{log.guardrail_reason ? `: ${log.guardrail_reason}` : ""}
-                  </Badge>,
-                );
-              if (log.low_confidence === true) metaBadges.push(<Badge key="low-conf" tone="amber">low confidence</Badge>);
-              if (log.used_gateway) metaBadges.push(<Badge key="gateway">gateway</Badge>);
-              if (scoreNum !== null && Number.isFinite(scoreNum))
-                metaBadges.push(
-                  <Badge key="score" tone={isLowScore ? "yellow" : "default"}>
-                    maxScore {log.max_score}
-                  </Badge>,
-                );
-              if (promptStatus.badge) {
-                metaBadges.push(
-                  <Badge
-                    key="prompt-text"
-                    tone={promptStatus.badgeTone ?? "default"}
-                    title={promptStatus.callout ?? undefined}
-                  >
-                    P {promptStatus.badge}
-                  </Badge>,
-                );
-              }
-              if (responseStatus.badge) {
-                metaBadges.push(
-                  <Badge
-                    key="response-text"
-                    tone={responseStatus.badgeTone ?? "default"}
-                    title={responseStatus.callout ?? undefined}
-                  >
-                    A {responseStatus.badge}
-                  </Badge>,
-                );
-              }
-
-              const previewTokens = getTokenMetrics(log);
-              const detailTokens = detail ? getTokenMetrics(detail.log) : null;
-              const promptTokens = detailTokens?.promptTokens ?? previewTokens.promptTokens;
-              const completionTokens = detailTokens?.completionTokens ?? previewTokens.completionTokens;
-              const cachedTokens = detailTokens?.cachedTokens ?? previewTokens.cachedTokens;
-              const reasoningTokens = detailTokens?.reasoningTokens ?? previewTokens.reasoningTokens;
-              const totalTokens = detailTokens?.totalTokens ?? previewTokens.totalTokens;
-
-              return (
-                <div key={log.id} className="space-y-3 rounded-xl border border-border bg-background/80 p-4">
-                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                    <span className="font-semibold text-foreground">#{idx + 1}</span>
-                    <span className="tabular-nums">{formatTimestampShort(String(log.created_at))}</span>
-                    {log.env ? (
-                      <>
-                        <span>·</span>
-                        <span>{log.env}</span>
-                      </>
-                    ) : null}
-                    {log.endpoint ? (
-                      <>
-                        <span>·</span>
-                        <span>{log.endpoint}</span>
-                      </>
-                    ) : null}
-                    {log.session_id ? (
-                      <>
-                        <span>·</span>
-                        <span className="break-all">{log.session_id}</span>
-                      </>
-                    ) : null}
-                    <CopyButton value={log.id} label="Copy id" ariaLabel="Copy interaction id" />
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2">{metaBadges}</div>
-
-                  <div className="text-[11px] text-muted-foreground flex flex-wrap gap-3">
-                    <span>Prompt: {promptTokens ?? "—"}</span>
-                    <span>Completion: {completionTokens ?? "—"}</span>
-                    <span>Total tokens: {totalTokens ?? "—"}</span>
-                    <span>Cached tokens: {cachedTokens ?? "—"}</span>
-                    <span>Reasoning tokens: {reasoningTokens ?? "—"}</span>
-                  </div>
-
-                    <div className="space-y-3">
-                      <div className="flex items-start gap-3">
-                        <div className="mt-1 h-8 w-8 shrink-0 rounded-full border border-border bg-muted/50 text-[11px] font-semibold text-muted-foreground flex items-center justify-center">
-                          User
-                        </div>
-                        <div className="flex-1 rounded-2xl border border-border bg-background p-3 text-sm leading-relaxed text-foreground shadow-sm">
-                          {promptStatus.callout ? (
-                            <div
-                              className={cn(
-                                "mb-2 rounded-md border px-2 py-1 text-[11px] leading-snug",
-                                getLogTextCalloutToneClass(promptStatus),
-                              )}
-                            >
-                              {promptStatus.callout}
-                            </div>
-                          ) : null}
-                          <p className="whitespace-pre-wrap">{promptStatus.displayValue}</p>
-                        </div>
-                      </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="mt-1 h-8 w-8 shrink-0 rounded-full border border-border bg-blue-50 text-[11px] font-semibold text-blue-700 dark:bg-blue-500/20 dark:text-blue-100 flex items-center justify-center">
-                        AI
-                      </div>
-                      <div className="flex-1 rounded-2xl border border-border bg-background p-3 text-sm leading-relaxed text-foreground shadow-sm">
-                        {responseStatus.callout ? (
-                          <div
-                            className={cn(
-                              "mb-2 rounded-md border px-2 py-1 text-[11px] leading-snug",
-                              getLogTextCalloutToneClass(responseStatus),
-                            )}
-                          >
-                            {responseStatus.callout}
-                          </div>
-                        ) : null}
-                        <MarkdownViewClient markdown={responseStatus.displayValue ?? ""} />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-lg border border-border bg-muted/10">
-                    <button
-                      type="button"
-                      className={cn(
-                        "flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-xs font-medium transition-colors",
-                        isExpanded ? "bg-muted/40 text-foreground" : "text-foreground hover:bg-muted/20",
-                      )}
-                      onClick={() => toggleExpanded(log.id)}
-                    >
-                      <span>Summary</span>
-                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                        {status?.loading ? "loading…" : status?.error ? "error" : isExpanded ? "hide" : "show"}
-                      </span>
-                    </button>
-
-                    {isExpanded ? (
-                      <div className="border-t border-border px-3 py-3">
-                        {status?.loading ? (
-                          <SummarySkeleton />
-                        ) : status?.error ? (
-                          <div className="rounded-md border border-border bg-background/80 p-3 text-[11px] text-red-600 dark:text-red-300">
-                            {status.error}
-                          </div>
-                        ) : detail ? (
-                          <LogSummaryPanel detail={detail} />
-                        ) : (
-                          <div className="text-[11px] text-muted-foreground">No data for this interaction.</div>
-                        )}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              );
-            })}
+            {logs.map((log, idx) => (
+              <SessionConversationRow
+                key={log.id}
+                log={log}
+                index={idx}
+                detail={detailCache.current.get(log.id) ?? null}
+                status={detailState[log.id]}
+                isExpanded={expanded.has(log.id)}
+                onToggle={toggleExpanded}
+              />
+            ))}
           </div>
 
           {hasMore ? (
@@ -345,6 +475,8 @@ export function SessionConversationView({
             </div>
           ) : null}
         </>
+      ) : (
+        <div className="p-6 text-sm text-muted-foreground">No interactions match the current filters.</div>
       )}
     </div>
   );

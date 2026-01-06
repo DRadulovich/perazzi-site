@@ -2,13 +2,13 @@
 
 import { cn } from "@/lib/utils";
 
-type MiniTrendProps = {
+type MiniTrendProps = Readonly<{
   values: Array<number | null | undefined>;
   className?: string;
   height?: number;
   title?: string;
   area?: boolean;
-};
+}>;
 
 function buildLine(values: Array<number | null | undefined>, width: number, height: number) {
   const finite = values.map((v) => (typeof v === "number" && Number.isFinite(v) ? v : null));
@@ -35,17 +35,23 @@ function buildLine(values: Array<number | null | undefined>, width: number, heig
     const t = (v - min) / range;
     const y = height - t * height;
 
-    if (!penDown) {
-      line += `M ${x.toFixed(2)} ${y.toFixed(2)} `;
-      areaPath += `${i === 0 ? `M 0 ${height}` : ""} L ${x.toFixed(2)} ${y.toFixed(2)} `;
-      penDown = true;
+    const xPos = x.toFixed(2);
+    const yPos = y.toFixed(2);
+
+    if (penDown) {
+      line += `L ${xPos} ${yPos} `;
+      areaPath += `L ${xPos} ${yPos} `;
     } else {
-      line += `L ${x.toFixed(2)} ${y.toFixed(2)} `;
-      areaPath += `L ${x.toFixed(2)} ${y.toFixed(2)} `;
+      line += `M ${xPos} ${yPos} `;
+      if (i === 0) {
+        areaPath += `M 0 ${height} `;
+      }
+      areaPath += `L ${xPos} ${yPos} `;
+      penDown = true;
     }
 
     if (i === finite.length - 1) {
-      areaPath += `L ${x.toFixed(2)} ${height} Z`;
+      areaPath += `L ${xPos} ${height} Z`;
     }
   }
 
@@ -59,7 +65,6 @@ export function MiniTrend({ values, className, height = 64, title, area = true }
 
   return (
     <svg
-      role="img"
       aria-label={title ?? "trend"}
       viewBox={`0 0 ${width} ${height}`}
       className={cn("h-16 w-full text-foreground/80", className)}

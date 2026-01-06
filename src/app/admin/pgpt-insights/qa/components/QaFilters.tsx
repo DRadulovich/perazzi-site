@@ -1,7 +1,7 @@
-type QaFiltersProps = {
+type QaFiltersProps = Readonly<{
   status: string;
   q: string;
-};
+}>;
 
 export function QaFilters({ status, q }: QaFiltersProps) {
   return (

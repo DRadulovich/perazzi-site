@@ -154,92 +154,113 @@ function LookupSubmitButton({ label }: Readonly<{ label: string }>) {
   );
 }
 
+function renderPending(reduceMotion: boolean) {
+  return (
+    <motion.div
+      key="pending"
+      initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+      animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+      exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
+      transition={reduceMotion ? undefined : homeMotion.micro}
+    >
+      <Text asChild className="type-section-subtitle text-white/70">
+        <p aria-live="polite">Consulting the archives...</p>
+      </Text>
+    </motion.div>
+  );
+}
+
+function renderIdle(reduceMotion: boolean, emptyStateText: string) {
+  return (
+    <motion.div
+      key="idle"
+      initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+      animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+      exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
+      transition={reduceMotion ? undefined : homeMotion.micro}
+    >
+      <Text asChild className="type-section-subtitle text-white/70">
+        <p aria-live="polite">{emptyStateText}</p>
+      </Text>
+    </motion.div>
+  );
+}
+
+function renderSuccess(reduceMotion: boolean, data: SerialLookupSuccess) {
+  return (
+    <motion.div
+      key="success"
+      className="relative isolate overflow-hidden rounded-2xl border border-perazzi-black/50 bg-perazzi-black/40 p-4 shadow-soft sm:bg-perazzi-black/70 md:p-6"
+      initial={reduceMotion ? false : { opacity: 0, y: 12, filter: "blur(10px)" }}
+      animate={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
+      exit={reduceMotion ? undefined : { opacity: 0, y: -10, filter: "blur(8px)" }}
+      transition={reduceMotion ? undefined : homeMotion.revealFast}
+      aria-live="polite"
+    >
+      <div className="pointer-events-none absolute inset-0 film-grain opacity-12" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
+
+      <Text size="label-tight" className="text-white/70">
+        Record Found
+      </Text>
+      <Heading level={3} size="xl" className="mt-2 text-white">
+        {data.year}
+      </Heading>
+      <Text size="sm" className="text-white/70">
+        Proof Code: {data.proofCode}
+      </Text>
+      <dl className="mt-4 space-y-1 type-body-sm text-white/70">
+        <div className="flex items-center justify-between">
+          <Text asChild size="sm" className="type-nav text-white">
+            <dt>Serial</dt>
+          </Text>
+          <Text asChild size="sm" className="text-white/70">
+            <dd>{data.serial.toLocaleString()}</dd>
+          </Text>
+        </div>
+        <div className="flex items-center justify-between">
+          <Text asChild size="sm" className="type-nav text-white">
+            <dt>Production Range:</dt>
+          </Text>
+          <Text asChild size="sm" className="text-white/70">
+            <dd>
+              {data.range.start.toLocaleString()}-
+              {data.range.end ? data.range.end.toLocaleString() : "present"}
+            </dd>
+          </Text>
+        </div>
+        {data.model ? (
+          <div className="flex items-center justify-between">
+            <Text asChild size="sm" className="type-nav text-white">
+              <dt>Model Lineage:</dt>
+            </Text>
+            <Text asChild size="sm" className="text-white/70">
+              <dd>{data.model}</dd>
+            </Text>
+          </div>
+        ) : null}
+      </dl>
+    </motion.div>
+  );
+}
+
 function LookupResult({ state, emptyStateText }: Readonly<{ state: SerialLookupFormState; emptyStateText: string }>) {
   const { pending } = useFormStatus();
   const prefersReducedMotion = useReducedMotion();
   const reduceMotion = Boolean(prefersReducedMotion);
+  let content = null;
+
+  if (pending) {
+    content = renderPending(reduceMotion);
+  } else if (state.status === "idle") {
+    content = renderIdle(reduceMotion, emptyStateText);
+  } else if (state.status === "success") {
+    content = renderSuccess(reduceMotion, state.data);
+  }
 
   return (
     <AnimatePresence mode="wait">
-      {pending ? (
-        <motion.div
-          key="pending"
-          initial={reduceMotion ? false : { opacity: 0, y: 6 }}
-          animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-          exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
-          transition={reduceMotion ? undefined : homeMotion.micro}
-        >
-          <Text asChild className="type-section-subtitle text-white/70">
-            <p aria-live="polite">Consulting the archives...</p>
-          </Text>
-        </motion.div>
-      ) : state.status === "idle" ? (
-        <motion.div
-          key="idle"
-          initial={reduceMotion ? false : { opacity: 0, y: 6 }}
-          animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-          exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
-          transition={reduceMotion ? undefined : homeMotion.micro}
-        >
-          <Text asChild className="type-section-subtitle text-white/70">
-            <p aria-live="polite">{emptyStateText}</p>
-          </Text>
-        </motion.div>
-      ) : state.status === "error" ? null : (
-        <motion.div
-          key="success"
-          className="relative isolate overflow-hidden rounded-2xl border border-perazzi-black/50 bg-perazzi-black/40 p-4 shadow-soft sm:bg-perazzi-black/70 md:p-6"
-          initial={reduceMotion ? false : { opacity: 0, y: 12, filter: "blur(10px)" }}
-          animate={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
-          exit={reduceMotion ? undefined : { opacity: 0, y: -10, filter: "blur(8px)" }}
-          transition={reduceMotion ? undefined : homeMotion.revealFast}
-          aria-live="polite"
-        >
-          <div className="pointer-events-none absolute inset-0 film-grain opacity-12" aria-hidden="true" />
-          <div className="pointer-events-none absolute inset-0 glint-sweep" aria-hidden="true" />
-
-          <Text size="label-tight" className="text-white/70">
-            Record Found
-          </Text>
-          <Heading level={3} size="xl" className="mt-2 text-white">
-            {state.data.year}
-          </Heading>
-          <Text size="sm" className="text-white/70">
-            Proof Code: {state.data.proofCode}
-          </Text>
-          <dl className="mt-4 space-y-1 type-body-sm text-white/70">
-            <div className="flex items-center justify-between">
-              <Text asChild size="sm" className="type-nav text-white">
-                <dt>Serial</dt>
-              </Text>
-              <Text asChild size="sm" className="text-white/70">
-                <dd>{state.data.serial.toLocaleString()}</dd>
-              </Text>
-            </div>
-            <div className="flex items-center justify-between">
-              <Text asChild size="sm" className="type-nav text-white">
-                <dt>Production Range:</dt>
-              </Text>
-              <Text asChild size="sm" className="text-white/70">
-                <dd>
-                  {state.data.range.start.toLocaleString()}-
-                  {state.data.range.end ? state.data.range.end.toLocaleString() : "present"}
-                </dd>
-              </Text>
-            </div>
-            {state.data.model ? (
-              <div className="flex items-center justify-between">
-                <Text asChild size="sm" className="type-nav text-white">
-                  <dt>Model Lineage:</dt>
-                </Text>
-                <Text asChild size="sm" className="text-white/70">
-                  <dd>{state.data.model}</dd>
-                </Text>
-              </div>
-            ) : null}
-          </dl>
-        </motion.div>
-      )}
+      {content}
     </AnimatePresence>
   );
 }

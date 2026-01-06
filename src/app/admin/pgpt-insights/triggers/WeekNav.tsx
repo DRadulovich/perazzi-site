@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import Link from "next/link";
 
-export function WeekNav({ weeks }: { weeks: string[] }) {
+export function WeekNav({ weeks }: Readonly<{ weeks: string[] }>) {
   const router = useRouter();
   const params = useSearchParams();
   const active = params.get("week") ?? weeks[0] ?? null;

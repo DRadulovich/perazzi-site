@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 type AlertEvent = {
   at: string;
@@ -20,6 +20,13 @@ function formatTime(iso: string) {
 function formatPct(value: unknown): string {
   return typeof value === "number" && Number.isFinite(value) ? `${(value * 100).toFixed(1)}%` : "—";
 }
+
+const STATUS_CONFIG: Record<StreamStatus, { tone: string; label: string }> = {
+  open: { tone: "bg-emerald-500", label: "Connected" },
+  reconnecting: { tone: "bg-amber-500", label: "Reconnecting" },
+  connecting: { tone: "bg-amber-500", label: "Connecting" },
+  closed: { tone: "bg-red-500", label: "Disconnected" },
+};
 
 export function AlertStream() {
   const [events, setEvents] = useState<AlertEvent[]>([]);
@@ -65,21 +72,45 @@ export function AlertStream() {
     };
   }, []);
 
-  const tone =
-    status === "open"
-      ? "bg-emerald-500"
-      : status === "reconnecting" || status === "connecting"
-      ? "bg-amber-500"
-      : "bg-red-500";
+  const { tone, label: statusLabel } = STATUS_CONFIG[status];
 
-  const statusLabel =
-    status === "open"
-      ? "Connected"
-      : status === "reconnecting"
-      ? "Reconnecting"
-      : status === "connecting"
-      ? "Connecting"
-      : "Disconnected";
+  let streamContent: ReactNode;
+  if (errorMsg) {
+    streamContent = (
+      <p className="mt-4 rounded-md border border-red-300/60 bg-red-50 p-3 text-xs text-red-700">{errorMsg}</p>
+    );
+  } else if (events.length === 0) {
+    streamContent = <p className="mt-4 text-xs text-muted-foreground">Waiting for alerts...</p>;
+  } else {
+    streamContent = (
+      <div className="mt-3 space-y-2">
+        {events.map((evt, idx) => {
+          const details: ReactNode[] = [];
+          if (evt.curr !== undefined) {
+            details.push(<span key="curr">curr: {formatPct(evt.curr)}</span>);
+          }
+          if (evt.ref !== undefined) {
+            details.push(<span key="ref">ref: {formatPct(evt.ref)}</span>);
+          }
+
+          return (
+            <div
+              key={`${evt.at}-${idx}`}
+              className="rounded-xl border border-border/70 bg-muted/30 px-3 py-2 text-xs"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-semibold text-foreground">{evt.message}</span>
+                <span className="text-[11px] text-muted-foreground">{formatTime(evt.at)}</span>
+              </div>
+              {details.length > 0 && (
+                <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">{details}</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-2xl border border-border bg-card shadow-sm p-4">
@@ -94,31 +125,7 @@ export function AlertStream() {
         </div>
       </div>
 
-      {errorMsg ? (
-        <p className="mt-4 rounded-md border border-red-300/60 bg-red-50 p-3 text-xs text-red-700">{errorMsg}</p>
-      ) : events.length === 0 ? (
-        <p className="mt-4 text-xs text-muted-foreground">Waiting for alerts...</p>
-      ) : (
-        <div className="mt-3 space-y-2">
-          {events.map((evt, idx) => (
-            <div
-              key={`${evt.at}-${idx}`}
-              className="rounded-xl border border-border/70 bg-muted/30 px-3 py-2 text-xs"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-semibold text-foreground">{evt.message}</span>
-                <span className="text-[11px] text-muted-foreground">{formatTime(evt.at)}</span>
-              </div>
-              {(evt.curr !== undefined || evt.ref !== undefined) && (
-                <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
-                  {evt.curr !== undefined ? <span>curr: {formatPct(evt.curr)}</span> : null}
-                  {evt.ref !== undefined ? <span>ref: {formatPct(evt.ref)}</span> : null}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+      {streamContent}
     </div>
   );
 }

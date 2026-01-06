@@ -1,6 +1,10 @@
 import { cn } from "@/lib/utils";
 
-export function NoDataCard({ title, hint, className }: { title?: string; hint?: string; className?: string }) {
+export function NoDataCard({
+  title,
+  hint,
+  className,
+}: Readonly<{ title?: string; hint?: string; className?: string }>) {
   return (
     <div
       className={cn(
