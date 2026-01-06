@@ -106,6 +106,9 @@ export default async function TemplateHeatmapPage({
 
   const templateRows = await getTemplateUsageHeatmap(days);
   const dataset = buildHeatmap(templateRows, rowLimit);
+  const rowOmittedSuffix =
+    dataset.rowOmitted > 0 ? ` ( ${dataset.rowOmitted} more rows hidden )` : "";
+  const subtitle = `Top ${dataset.columns.length} templates · showing ${dataset.rows.length}${rowOmittedSuffix}`;
 
   return (
     <div className="space-y-6">
@@ -118,7 +121,7 @@ export default async function TemplateHeatmapPage({
 
       <HeatMapGrid
         title="Template usage"
-        subtitle={`Top ${dataset.columns.length} templates · showing ${dataset.rows.length}${dataset.rowOmitted && dataset.rowOmitted > 0 ? ` ( ${dataset.rowOmitted} more rows hidden )` : ""}`}
+        subtitle={subtitle}
         columns={dataset.columns}
         rows={dataset.rows}
         className="min-w-0"
