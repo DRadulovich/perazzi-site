@@ -372,7 +372,7 @@ export async function getHeritageHome(): Promise<HeritageHomePayload | null> {
     photoEssay: data.photoEssay
       ?.filter((item): item is typeof item & { _key: string } => Boolean(item._key))
       .map((item) => ({
-        id: item._key as string,
+        id: item._key,
         image: mapImageResult(item ?? null),
       })),
     heritageIntro: data.heritageIntro
@@ -443,7 +443,7 @@ export async function getHeritageHome(): Promise<HeritageHomePayload | null> {
     oralHistories: data.oralHistories
       ?.filter((entry): entry is typeof entry & { _key: string } => Boolean(entry._key))
       .map((entry) => ({
-        id: entry._key as string,
+        id: entry._key,
         title: entry.title ?? undefined,
         quote: entry.quote ?? undefined,
         attribution: entry.attribution ?? undefined,
@@ -462,7 +462,7 @@ export async function getHeritageEvents(): Promise<HeritageEventPayload[]> {
   return (data ?? [])
     .filter((event): event is HeritageEventResponse & { _id: string } => Boolean(event._id))
     .map((event) => ({
-      id: event._id as string,
+      id: event._id,
       title: event.title ?? undefined,
       date: event.date ?? undefined,
       bodyPortableText: event.body,
@@ -470,13 +470,13 @@ export async function getHeritageEvents(): Promise<HeritageEventPayload[]> {
       champions: event.champions
         ?.filter((champion): champion is { _id: string; name?: string } => Boolean(champion._id))
         .map((champion) => ({
-          id: champion._id as string,
+          id: champion._id,
           name: champion.name ?? undefined,
         })),
       platforms: event.platforms
         ?.filter((platform): platform is { _id: string; name?: string; slug?: { current?: string } } => Boolean(platform._id))
         .map((platform) => ({
-          id: platform._id as string,
+          id: platform._id,
           name: platform.name ?? undefined,
           slug: platform.slug?.current ?? undefined,
         })),
@@ -493,20 +493,26 @@ export async function getHeritageChampions(): Promise<ChampionPayload[]> {
   return (data ?? [])
     .filter((champion): champion is ChampionResponse & { _id: string } => Boolean(champion._id))
     .map((champion) => {
-      const article = champion.articles?.find((item) => item._id);
+      const article = champion.articles?.find(
+        (item): item is NonNullable<typeof item> & { _id: string } => Boolean(item._id),
+      );
       return {
-        id: champion._id as string,
+        id: champion._id,
         name: champion.name ?? undefined,
         title: champion.title ?? undefined,
         quote: champion.quote ?? undefined,
         image: mapImageResult(champion.image ?? null),
-        disciplines: champion.disciplines?.map((discipline) => discipline.name).filter(Boolean) as string[] | undefined,
-        platforms: champion.platforms?.map((platform) => platform.name).filter(Boolean) as string[] | undefined,
+        disciplines: champion.disciplines
+          ?.map((discipline) => discipline.name)
+          .filter((name): name is string => name != null && name !== ""),
+        platforms: champion.platforms
+          ?.map((platform) => platform.name)
+          .filter((name): name is string => name != null && name !== ""),
         bio: champion.bio?.text ?? undefined,
         resume: champion.resume,
         article: article
           ? {
-              id: article._id as string,
+              id: article._id,
               title: article.title ?? undefined,
               slug: article.slug?.current ?? undefined,
             }
