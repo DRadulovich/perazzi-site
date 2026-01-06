@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion, type Variants } from "framer-motion";
 
 import type { ChatTriggerPayload } from "@/lib/chat-trigger";
 import { homeMotion } from "@/lib/motionConfig";
@@ -24,6 +24,33 @@ type ChatAction = Readonly<{
   className?: string;
 }>;
 
+type HeritageSplitBackgroundProps = Readonly<{
+  className?: string;
+}>;
+
+type HeritageSplitActionsProps = Readonly<{
+  links?: readonly LinkAction[];
+  chatAction?: ChatAction;
+  variants: Variants;
+}>;
+
+type HeritageActionLinkProps = Readonly<{
+  link: LinkAction;
+}>;
+
+type HeritageBulletItemProps = Readonly<{
+  bullet: string;
+  reduceMotion: boolean;
+  variants: Variants;
+}>;
+
+type HeritageBulletListProps = Readonly<{
+  bullets: readonly string[];
+  reduceMotion: boolean;
+  itemVariants: Variants;
+  listVariants: Variants;
+}>;
+
 export type HeritageSplitSectionProps = Readonly<{
   sectionId?: string;
   className?: string;
@@ -38,6 +65,125 @@ export type HeritageSplitSectionProps = Readonly<{
   links?: readonly LinkAction[];
   chatAction?: ChatAction;
 }>;
+
+function HeritageSplitBackground({ className }: HeritageSplitBackgroundProps) {
+  if (!className) {
+    return null;
+  }
+
+  return <div className={cn("absolute inset-0 -z-10", className)} aria-hidden="true" />;
+}
+
+function HeritageActionLink({ link }: HeritageActionLinkProps) {
+  return (
+    <Link
+      href={link.href}
+      className={cn(
+        "group type-button inline-flex min-h-10 items-center justify-center gap-2 pill border transition hover:translate-x-0.5 focus-ring",
+        link.className,
+      )}
+    >
+      {link.icon ? (
+        <span aria-hidden="true" className="text-lg leading-none">
+          {link.icon}
+        </span>
+      ) : null}
+      <span className="relative">{link.label}</span>
+    </Link>
+  );
+}
+
+function HeritageSplitActions({ links, chatAction, variants }: HeritageSplitActionsProps) {
+  const hasLinks = Boolean(links?.length);
+  const hasChatAction = Boolean(chatAction);
+
+  if (!hasLinks && !hasChatAction) {
+    return null;
+  }
+
+  return (
+    <motion.div variants={variants} className="flex flex-wrap justify-start gap-3">
+      {chatAction ? (
+        <ChatTriggerButton
+          label={chatAction.label}
+          payload={chatAction.payload}
+          variant={chatAction.variant}
+          className={chatAction.className}
+        />
+      ) : null}
+      {links?.map((link) => (
+        <HeritageActionLink key={`${link.href}-${link.label}`} link={link} />
+      ))}
+    </motion.div>
+  );
+}
+
+function HeritageBulletItem({ bullet, reduceMotion, variants }: HeritageBulletItemProps) {
+  const [label, ...rest] = bullet.split(" - ");
+  const detail = rest.length ? rest.join(" - ") : null;
+  const hoverMotion = reduceMotion ? undefined : { x: 4, transition: homeMotion.micro };
+
+  return (
+    <motion.li
+      key={bullet}
+      variants={variants}
+      whileHover={hoverMotion}
+    >
+      <span className="text-white">{label}</span>
+      {detail ? (
+        <>
+          {" "}-{" "}
+          {detail}
+        </>
+      ) : null}
+    </motion.li>
+  );
+}
+
+function HeritageBulletList({
+  bullets,
+  reduceMotion,
+  itemVariants,
+  listVariants,
+}: HeritageBulletListProps) {
+  return (
+    <motion.ul className="space-y-2" variants={listVariants}>
+      {bullets.map((bullet) => (
+        <HeritageBulletItem
+          key={bullet}
+          bullet={bullet}
+          reduceMotion={reduceMotion}
+          variants={itemVariants}
+        />
+      ))}
+    </motion.ul>
+  );
+}
+
+function getSectionMotionProps(reduceMotion: boolean) {
+  if (reduceMotion) {
+    return { initial: false } as const;
+  }
+
+  return {
+    initial: { opacity: 0, y: 18, filter: "blur(10px)" },
+    whileInView: { opacity: 1, y: 0, filter: "blur(0px)" },
+    viewport: { once: true, amount: 0.35 },
+    transition: homeMotion.reveal,
+  } as const;
+}
+
+function getColumnMotionProps(reduceMotion: boolean) {
+  if (reduceMotion) {
+    return { initial: false } as const;
+  }
+
+  return {
+    initial: "hidden",
+    whileInView: "show",
+    viewport: { once: true, amount: 0.6 },
+  } as const;
+}
 
 export function HeritageSplitSection({
   sectionId,
@@ -55,28 +201,30 @@ export function HeritageSplitSection({
 }: HeritageSplitSectionProps) {
   const prefersReducedMotion = useReducedMotion();
   const reduceMotion = Boolean(prefersReducedMotion);
+  const columnMotionProps = getColumnMotionProps(reduceMotion);
+  const sectionMotionProps = getSectionMotionProps(reduceMotion);
+  const columnStagger = reduceMotion ? 0 : 0.1;
+  const listStagger = reduceMotion ? 0 : 0.06;
 
-  const column = {
+  const column: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: reduceMotion ? 0 : 0.1 },
+      transition: { staggerChildren: columnStagger },
     },
-  } as const;
+  };
 
-  const list = {
+  const list: Variants = {
     hidden: {},
     show: {
-      transition: { staggerChildren: reduceMotion ? 0 : 0.06 },
+      transition: { staggerChildren: listStagger },
     },
-  } as const;
+  };
 
-  const item = {
+  const item: Variants = {
     hidden: { opacity: 0, y: 14, filter: "blur(10px)" },
     show: { opacity: 1, y: 0, filter: "blur(0px)", transition: homeMotion.revealFast },
-  } as const;
-
-  const actions = links?.length || chatAction;
+  };
 
   return (
     <motion.section
@@ -86,14 +234,9 @@ export function HeritageSplitSection({
         className,
       )}
       aria-labelledby={headingId}
-      initial={reduceMotion ? false : { opacity: 0, y: 18, filter: "blur(10px)" }}
-      whileInView={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
-      viewport={reduceMotion ? undefined : { once: true, amount: 0.35 }}
-      transition={reduceMotion ? undefined : homeMotion.reveal}
+      {...sectionMotionProps}
     >
-      {backgroundLayerClassName ? (
-        <div className={cn("absolute inset-0 -z-10", backgroundLayerClassName)} aria-hidden="true" />
-      ) : null}
+      <HeritageSplitBackground className={backgroundLayerClassName} />
 
       <div
         className={cn(
@@ -104,9 +247,7 @@ export function HeritageSplitSection({
         <motion.div
           className="space-y-4"
           variants={column}
-          initial={reduceMotion ? false : "hidden"}
-          whileInView={reduceMotion ? undefined : "show"}
-          viewport={reduceMotion ? undefined : { once: true, amount: 0.6 }}
+          {...columnMotionProps}
         >
           <motion.div variants={item}>
             <Heading id={headingId} level={2} size="xl" className="text-white">
@@ -120,43 +261,17 @@ export function HeritageSplitSection({
             </Text>
           </motion.div>
 
-          {actions ? (
-            <motion.div variants={item} className="flex flex-wrap justify-start gap-3">
-              {chatAction ? (
-                <ChatTriggerButton
-                  label={chatAction.label}
-                  payload={chatAction.payload}
-                  variant={chatAction.variant}
-                  className={chatAction.className}
-                />
-              ) : null}
-              {links?.map((link) => (
-                <Link
-                  key={`${link.href}-${link.label}`}
-                  href={link.href}
-                  className={cn(
-                    "group type-button inline-flex min-h-10 items-center justify-center gap-2 pill border transition hover:translate-x-0.5 focus-ring",
-                    link.className,
-                  )}
-                >
-                  {link.icon ? (
-                    <span aria-hidden="true" className="text-lg leading-none">
-                      {link.icon}
-                    </span>
-                  ) : null}
-                  <span className="relative">{link.label}</span>
-                </Link>
-              ))}
-            </motion.div>
-          ) : null}
+          <HeritageSplitActions
+            links={links}
+            chatAction={chatAction}
+            variants={item}
+          />
         </motion.div>
 
         <motion.div
           className="space-y-3 type-subsection text-gray-300"
           variants={column}
-          initial={reduceMotion ? false : "hidden"}
-          whileInView={reduceMotion ? undefined : "show"}
-          viewport={reduceMotion ? undefined : { once: true, amount: 0.6 }}
+          {...columnMotionProps}
         >
           <motion.div variants={item}>
             <Text className="text-white" leading="normal">
@@ -164,26 +279,12 @@ export function HeritageSplitSection({
             </Text>
           </motion.div>
 
-          <motion.ul className="space-y-2" variants={list}>
-            {bullets.map((bullet) => {
-              const [label, ...rest] = bullet.split(" - ");
-              return (
-                <motion.li
-                  key={bullet}
-                  variants={item}
-                  whileHover={reduceMotion ? undefined : { x: 4, transition: homeMotion.micro }}
-                >
-                  <span className="text-white">{label}</span>
-                  {rest.length ? (
-                    <>
-                      {" "}-{" "}
-                      {rest.join(" - ")}
-                    </>
-                  ) : null}
-                </motion.li>
-              );
-            })}
-          </motion.ul>
+          <HeritageBulletList
+            bullets={bullets}
+            reduceMotion={reduceMotion}
+            itemVariants={item}
+            listVariants={list}
+          />
 
           <motion.div variants={item}>
             <Text className="text-gray-300" leading="relaxed">
