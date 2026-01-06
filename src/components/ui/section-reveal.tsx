@@ -434,6 +434,36 @@ export function RevealCollapsedHeader({
     }
   }, []);
 
+  useEffect(() => {
+    const section = buttonRef.current?.closest("section");
+    if (!section || section.dataset.revealInvite === "true") return;
+
+    const triggerInvite = () => {
+      section.dataset.revealInvite = "true";
+    };
+
+    if (typeof IntersectionObserver === "undefined") {
+      triggerInvite();
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          triggerInvite();
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.35 },
+    );
+
+    observer.observe(section);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   const activateTease = (event: React.SyntheticEvent<HTMLButtonElement>) => {
     const section = event.currentTarget.closest("section");
     if (!section) return;
@@ -467,7 +497,7 @@ export function RevealCollapsedHeader({
     <div className="absolute inset-0 z-0 flex items-center justify-center">
       <button
         type="button"
-        className="group flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl px-4 py-3 text-center focus-ring"
+        className="group flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl px-4 py-3 text-center transition-transform duration-300 focus-ring"
         onClick={handleExpand}
         onPointerEnter={activateTease}
         onFocus={activateTease}
@@ -502,10 +532,14 @@ export function RevealCollapsedHeader({
           <Text
             asChild
             size="button"
-            className="section-reveal-collapsed-text"
+            className="section-reveal-collapsed-text section-reveal-cta relative isolate inline-flex items-center justify-center overflow-hidden rounded-sm border border-white/40 bg-white/10 px-4 py-2 text-white/90 shadow-soft backdrop-blur-sm transition-colors duration-200 group-hover:border-white/60 group-hover:bg-white/15 group-hover:text-white group-focus-visible:border-white/60 group-focus-visible:bg-white/15 group-focus-visible:text-white"
           >
-            <span className="inline-flex items-center justify-center rounded-sm border border-white/40 bg-white/10 px-4 py-2 text-white/90 shadow-soft backdrop-blur-sm transition-colors duration-200 group-hover:border-white/60 group-hover:bg-white/15 group-hover:text-white group-focus-visible:border-white/60 group-focus-visible:bg-white/15 group-focus-visible:text-white">
-              {readMoreLabel}
+            <span>
+              <span className="section-reveal-cta-label">{readMoreLabel}</span>
+              <span
+                className="section-reveal-cta-glint glint-sweep pointer-events-none absolute inset-0"
+                aria-hidden="true"
+              />
             </span>
           </Text>
         </div>
