@@ -10,7 +10,7 @@ type SeriesHeroProps = {
   analyticsId?: string;
 };
 
-export function SeriesHero({ hero, analyticsId }: SeriesHeroProps) {
+export function SeriesHero({ hero, analyticsId }: Readonly<SeriesHeroProps>) {
   const ratio = hero.media.aspectRatio ?? 16 / 9;
   const heroId = analyticsId ?? "HeroSeen:shotguns-series";
   const heroRef = useAnalyticsObserver(heroId);
@@ -53,7 +53,7 @@ export function SeriesHero({ hero, analyticsId }: SeriesHeroProps) {
               sizes="(min-width: 1280px) 960px, (min-width: 1024px) 66vw, 100vw"
               className="object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent" />
           </div>
         </div>
       </div>

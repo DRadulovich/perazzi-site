@@ -50,7 +50,7 @@ export function DisciplineHero({ hero, name }: DisciplineHeroProps) {
           sizes="(min-width: 1024px) 1100px, 100vw"
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black via-black/30 to-transparent" />
         <div className="absolute inset-0 flex flex-col justify-end px-6 pb-10 sm:px-12">
           <Heading level={1} size="display" className="text-white">
             {name}

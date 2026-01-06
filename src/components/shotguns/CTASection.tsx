@@ -89,7 +89,7 @@ export function CTASection({
             asChild
             variant="primary"
             size="sm"
-            className="md:!type-button-lg md:!px-xl md:!py-sm"
+            className="md:!type-button-lg md:px-xl! md:py-sm!"
             onClick={() => { logClick("primary"); }}
           >
             <a href={primary.href}>{primary.label}</a>
@@ -99,7 +99,7 @@ export function CTASection({
               asChild
               variant="secondary"
               size="sm"
-              className="md:!type-button-lg md:!px-xl md:!py-sm"
+              className="md:!type-button-lg md:px-xl! md:py-sm!"
               onClick={() => { logClick("secondary"); }}
             >
               <a href={secondary.href}>{secondary.label}</a>

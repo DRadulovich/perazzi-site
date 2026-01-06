@@ -17,7 +17,7 @@ export function GaugeHero({
   subheading,
   background,
   dataAnalyticsId,
-}: GaugeHeroProps) {
+}: Readonly<GaugeHeroProps>) {
   const ratio = background.aspectRatio ?? 16 / 9;
   const analyticsId = dataAnalyticsId ?? "HeroSeen:shotguns-gauges";
   const heroRef = useAnalyticsObserver(analyticsId);
@@ -40,7 +40,7 @@ export function GaugeHero({
           sizes="(min-width: 1024px) 1100px, 100vw"
           className="object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/60 to-transparent" />
         <div className="absolute inset-0 flex flex-col justify-end px-6 pb-10 sm:px-12">
           <Text size="label-tight" className="text-white/70">
             Gauge primer
