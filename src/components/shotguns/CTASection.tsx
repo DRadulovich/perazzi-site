@@ -60,7 +60,7 @@ export function CTASection({
       data-analytics-id={dataAnalyticsId}
       padding="md"
       bordered={false}
-      className="bg-canvas text-ink"
+      className="mt-12 md:mt-16 bg-canvas text-ink"
       initial={motionEnabled ? { opacity: 0, y: 30 } : false}
       whileInView={motionEnabled ? { opacity: 1, y: 0 } : undefined}
       viewport={motionEnabled ? { once: true, amount: 0.6 } : undefined}

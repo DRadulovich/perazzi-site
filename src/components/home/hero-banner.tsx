@@ -211,7 +211,7 @@ function HeroMedia({
         />
       </picture>
       <div className="absolute inset-0 bg-linear-to-t from-black via-black/75 to-black/0" />
-      <div className="pointer-events-none absolute inset-0 radial-vignette opacity-90" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-0 radial-vignette opacity-100" aria-hidden="true" />
       <div className="pointer-events-none absolute inset-0 film-grain opacity-25" aria-hidden="true" />
     </motion.div>
   );

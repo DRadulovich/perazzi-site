@@ -45,7 +45,7 @@ export function CTASection({ finale }: CTASectionProps) {
       data-analytics-id="FinalCTASeen"
       padding="md"
       bordered={false}
-      className="bg-canvas text-ink"
+      className="mt-12 md:mt-16 bg-canvas text-ink"
       initial={motionEnabled ? { opacity: 0, y: 30 } : false}
       whileInView={motionEnabled ? { opacity: 1, y: 0 } : undefined}
       viewport={{ once: true, amount: 0.6 }}
