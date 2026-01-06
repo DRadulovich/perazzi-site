@@ -34,6 +34,17 @@ function assertEqual<T>(name: string, got: T, expected: T): void {
   }
 }
 
+const DEFAULT_ALLOWED_HOSTS = ["localhost", "127.0.0.1", "::1"];
+
+function parseAllowedHosts(value: string | undefined): Set<string> {
+  if (!value) return new Set(DEFAULT_ALLOWED_HOSTS);
+  const hosts = value
+    .split(",")
+    .map((host) => host.trim().toLowerCase())
+    .filter(Boolean);
+  return new Set(hosts.length ? hosts : DEFAULT_ALLOWED_HOSTS);
+}
+
 function asString(value: unknown): string | null {
   return typeof value === "string" ? value : null;
 }
@@ -43,8 +54,40 @@ function normalizeBaseUrl(value: string): string {
   return trimmed.length ? trimmed : "http://localhost:3333";
 }
 
-async function fetchJson(url: string, init: Parameters<typeof fetch>[1]) {
-  const res = await fetch(url, init);
+function parseAndValidateUrl(value: string, allowedHosts: Set<string>): URL {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    fail(`Invalid URL "${value}". Expected http(s)://host[:port].`);
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    fail(`Unsupported URL protocol "${url.protocol}" in "${value}".`);
+  }
+  if (url.username || url.password) {
+    fail(`URL "${value}" must not include credentials.`);
+  }
+  const hostname = url.hostname.toLowerCase();
+  if (!allowedHosts.has(hostname)) {
+    const allowed = Array.from(allowedHosts).sort((a, b) => a.localeCompare(b)).join(", ");
+    fail(`URL host "${hostname}" is not in allowlist (${allowed}). Set PERAZZI_EVAL_ALLOWED_HOSTS to override.`);
+  }
+  return url;
+}
+
+function assertAllowedBaseUrl(value: string, allowedHosts: Set<string>): string {
+  const url = parseAndValidateUrl(value, allowedHosts);
+  const normalizedPath = url.pathname.replace(/\/+$/, "");
+  return `${url.origin}${normalizedPath}`;
+}
+
+function assertAllowedUrl(value: string, allowedHosts: Set<string>): string {
+  return parseAndValidateUrl(value, allowedHosts).toString();
+}
+
+async function fetchJson(url: string, init: Parameters<typeof fetch>[1], allowedHosts: Set<string>) {
+  const safeUrl = assertAllowedUrl(url, allowedHosts);
+  const res = await fetch(safeUrl, init);
   const text = await res.text();
   let json: unknown = null;
   try {
@@ -55,7 +98,7 @@ async function fetchJson(url: string, init: Parameters<typeof fetch>[1]) {
   return { res, text, json };
 }
 
-async function waitForOk(url: string, timeoutMs: number): Promise<void> {
+async function waitForOk(url: string, timeoutMs: number, allowedHosts: Set<string>): Promise<void> {
   const started = Date.now();
   let lastError: string | null = null;
   // Simple backoff: 50ms -> 250ms -> 1s
@@ -64,7 +107,7 @@ async function waitForOk(url: string, timeoutMs: number): Promise<void> {
 
   while (Date.now() - started < timeoutMs) {
     try {
-      const { res } = await fetchJson(url, { method: "GET" });
+      const { res } = await fetchJson(url, { method: "GET" }, allowedHosts);
       if (res.ok) return;
       lastError = `HTTP ${res.status}`;
     } catch (error) {
@@ -92,6 +135,7 @@ async function requestAssistant(params: {
   context?: Record<string, unknown>;
   adminDebugToken: string;
   requestCountRef: { count: number };
+  allowedHosts: Set<string>;
 }): Promise<PerazziAssistantResponse> {
   const payload = {
     messages: params.messages,
@@ -114,7 +158,7 @@ async function requestAssistant(params: {
     method: "POST",
     headers,
     body: JSON.stringify(payload),
-  });
+  }, params.allowedHosts);
 
   if (!res.ok) {
     fail(`Request failed (${res.status}): ${text.slice(0, 400)}`);
@@ -171,7 +215,9 @@ async function main() {
   const baseUrl = normalizeBaseUrl(
     (argv["base-url"] as string | undefined) ?? process.env.PERAZZI_EVAL_BASE_URL ?? "http://localhost:3333",
   );
-  const port = parsePortFromBaseUrl(baseUrl);
+  const allowedHosts = parseAllowedHosts(process.env.PERAZZI_EVAL_ALLOWED_HOSTS);
+  const baseUrlAllowed = assertAllowedBaseUrl(baseUrl, allowedHosts);
+  const port = parsePortFromBaseUrl(baseUrlAllowed);
 
   const adminDebugToken = (process.env.PERAZZI_ADMIN_DEBUG_TOKEN ?? "").trim();
   if (!adminDebugToken) {
@@ -196,9 +242,9 @@ async function main() {
   try {
     if (shouldAutoStart) {
       devProc = startDevServer(port, Boolean(argv.verbose));
-      await waitForOk(baseUrl, 120_000);
+      await waitForOk(baseUrlAllowed, 120_000, allowedHosts);
     } else {
-      await waitForOk(baseUrl, 10_000);
+      await waitForOk(baseUrlAllowed, 10_000, allowedHosts);
     }
 
     if (argv["intentionally-fail"]) {
@@ -213,12 +259,13 @@ async function main() {
       "turn1: perazzi retrieval + responseId",
       async () => {
         const turn1 = await requestAssistant({
-          baseUrl,
+          baseUrl: baseUrlAllowed,
           adminDebugToken,
           sessionId,
           messages: [{ role: "user", content: perazziRetrievalPrompt }],
           context: { pageUrl: "/shotguns", mode: "prospect", locale: "en-US" },
           requestCountRef,
+          allowedHosts,
         });
 
         assert(typeof turn1.answer === "string" && turn1.answer.length > 0, "Expected non-empty answer.");
@@ -261,13 +308,14 @@ async function main() {
         ];
 
         const turn2 = await requestAssistant({
-          baseUrl,
+          baseUrl: baseUrlAllowed,
           adminDebugToken,
           sessionId,
           previousResponseId: turn1ResponseId,
           messages,
           context: { pageUrl: "/shotguns", mode: "prospect", locale: "en-US" },
           requestCountRef,
+          allowedHosts,
         });
 
         turn2Answer = turn2.answer;
@@ -293,12 +341,13 @@ async function main() {
       "general label: general_unsourced prefix present",
       async () => {
         const response = await requestAssistant({
-          baseUrl,
+          baseUrl: baseUrlAllowed,
           adminDebugToken,
           sessionId,
           messages: [{ role: "user", content: generalLabelPrompt }],
           context: { pageUrl: "/eval/general", mode: "prospect", locale: "en-US" },
           requestCountRef,
+          allowedHosts,
         });
 
         assert(typeof response.answer === "string" && response.answer.length > 0, "Expected non-empty answer.");
@@ -324,12 +373,13 @@ async function main() {
       "guardrail: pricing refusal exact text",
       async () => {
         const response = await requestAssistant({
-          baseUrl,
+          baseUrl: baseUrlAllowed,
           adminDebugToken,
           sessionId,
           messages: [{ role: "user", content: pricingBlockedPrompt }],
           context: { pageUrl: "/shotguns/high-tech", mode: "prospect", locale: "en-US" },
           requestCountRef,
+          allowedHosts,
         });
 
         assertEqual("pricing.guardrail.status", response.guardrail?.status, "blocked");
@@ -362,10 +412,10 @@ async function main() {
         let lastAssistantText: string = turn2Answer;
         let consecutiveThreadResetMessages = 0;
 
-        for (let i = 0; i < prompts.length; i += 1) {
-          const prompt = prompts[i]!;
+        for (const [i, prompt] of prompts.entries()) {
+          const turnNumber = i + 3;
           const response = await requestAssistant({
-            baseUrl,
+            baseUrl: baseUrlAllowed,
             adminDebugToken,
             sessionId,
             previousResponseId: previousId,
@@ -376,22 +426,26 @@ async function main() {
             ],
             context: { pageUrl: "/shotguns", mode: "prospect", locale: "en-US" },
             requestCountRef,
+            allowedHosts,
           });
 
-          assert(typeof response.answer === "string" && response.answer.length > 0, `turn ${i + 3}: expected non-empty answer`);
+          assert(
+            typeof response.answer === "string" && response.answer.length > 0,
+            `turn ${turnNumber}: expected non-empty answer`,
+          );
           const newId = asString(response.responseId);
-          assert(newId, `turn ${i + 3}: expected responseId`);
+          assert(newId, `turn ${turnNumber}: expected responseId`);
 
-          const debug = requireDebug(response, `long chat turn ${i + 3}`);
-          assertEqual(`turn ${i + 3}.thread.previous_response_id_present`, debug.thread.previous_response_id_present, true);
-          assertEqual(`turn ${i + 3}.openai.input_item_count`, debug.openai?.input_item_count ?? 0, 1);
+          const debug = requireDebug(response, `long chat turn ${turnNumber}`);
+          assertEqual(`turn ${turnNumber}.thread.previous_response_id_present`, debug.thread.previous_response_id_present, true);
+          assertEqual(`turn ${turnNumber}.openai.input_item_count`, debug.openai?.input_item_count ?? 0, 1);
           assertEqual(
-            `turn ${i + 3}.openai.input_counts_by_role.user`,
+            `turn ${turnNumber}.openai.input_counts_by_role.user`,
             debug.openai?.input_counts_by_role?.["user"] ?? 0,
             1,
           );
-          assertEqual(`turn ${i + 3}.retrieval.skipped`, debug.retrieval.skipped, true);
-          assertEqual(`turn ${i + 3}.retrieval.reason`, debug.retrieval.reason, "chat_meta");
+          assertEqual(`turn ${turnNumber}.retrieval.skipped`, debug.retrieval.skipped, true);
+          assertEqual(`turn ${turnNumber}.retrieval.reason`, debug.retrieval.reason, "chat_meta");
 
           const isThreadReset = Boolean(response.thread_reset_required || debug.thread.thread_reset_required);
           const looksLikeThreadResetMessage = response.answer.startsWith("Quick rebuild:");
@@ -399,11 +453,11 @@ async function main() {
           else consecutiveThreadResetMessages = 0;
           assert(
             !looksLikeThreadResetMessage || isThreadReset,
-            `turn ${i + 3}: got thread-reset rebuild message but thread_reset_required was false`,
+            `turn ${turnNumber}: got thread-reset rebuild message but thread_reset_required was false`,
           );
           assert(
             consecutiveThreadResetMessages <= 1 || isThreadReset,
-            `turn ${i + 3}: repeated thread-reset loop without thread_reset_required=true`,
+            `turn ${turnNumber}: repeated thread-reset loop without thread_reset_required=true`,
           );
 
           previousId = newId;
@@ -416,7 +470,7 @@ async function main() {
     const summary: SmokeSummary = {
       ok: true,
       runner: "scripts/perazzi-eval/smoke.ts",
-      baseUrl,
+      baseUrl: baseUrlAllowed,
       requestCount: requestCountRef.count,
       tests,
       durationMs: Date.now() - startedAt,
@@ -432,8 +486,10 @@ async function main() {
   }
 }
 
-main().catch((error) => {
+try {
+  await main();
+} catch (error) {
   const message = error instanceof Error ? error.message : String(error);
   console.error(message);
   process.exit(1);
-});
+}
