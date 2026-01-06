@@ -37,7 +37,12 @@ function parseScore(score: string | null): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-export function QaTable({ rows, currentHref }: { rows: QaRow[]; currentHref: string }) {
+type QaTableProps = Readonly<{
+  rows: ReadonlyArray<QaRow>;
+  currentHref: string;
+}>;
+
+export function QaTable({ rows, currentHref }: QaTableProps) {
   return (
     <TableShell
       title="QA Flags"
@@ -67,7 +72,7 @@ export function QaTable({ rows, currentHref }: { rows: QaRow[]; currentHref: str
             <col className="w-[120px]" />
             <col className="w-[120px]" />
             <col className="w-[210px]" />
-            <col className="w-[320px]" />
+            <col className="w-80" />
             <col className="w-[360px]" />
             <col className="w-[200px]" />
             <col className="w-[140px]" />
@@ -78,16 +83,17 @@ export function QaTable({ rows, currentHref }: { rows: QaRow[]; currentHref: str
         {rows.map((row) => {
           const score = parseScore(row.max_score);
           const isOpen = row.flag_status === "open";
-          const rowTone = isOpen
-            ? "border-l-4 border-red-500/50 bg-red-500/5"
-            : row.flag_status === "resolved"
-              ? "border-l-4 border-emerald-500/30"
-              : "border-l-4 border-transparent";
+          let rowTone = "border-l-4 border-transparent";
+          if (isOpen) {
+            rowTone = "border-l-4 border-red-500/50 bg-red-500/5";
+          } else if (row.flag_status === "resolved") {
+            rowTone = "border-l-4 border-emerald-500/30";
+          }
           const anchorId = `flag-${row.flag_id}`;
 
           return (
             <tr key={row.flag_id} id={anchorId} className={`${rowTone} scroll-mt-24`}>
-              <td className="whitespace-normal break-words leading-snug">
+              <td className="whitespace-normal wrap-break-word leading-snug">
                 <span className="tabular-nums">{String(row.flag_created_at)}</span>
               </td>
               <td>
@@ -98,7 +104,7 @@ export function QaTable({ rows, currentHref }: { rows: QaRow[]; currentHref: str
                 )}
               </td>
               <td>{row.flag_reason ?? "(none)"}</td>
-              <td className="break-words">
+              <td className="wrap-break-word">
                 {row.flag_notes ? (
                   <TruncateCell text={row.flag_notes} previewChars={140}>
                     <pre className="whitespace-pre-wrap rounded-lg border border-border bg-background p-2 text-xs leading-snug text-foreground">
