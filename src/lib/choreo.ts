@@ -229,6 +229,7 @@ export const buildChoreoItemVars = (
     case "mask-wipe": {
       const gradient = maskGradientFromDirection(maskDirection);
       vars["--choreo-mask-from"] = maskInsetFromDirection(maskDirection);
+      vars["--choreo-mask-to"] = "inset(0 0 0 0)";
       vars["--choreo-mask-direction"] = gradient.direction;
       vars["--choreo-mask-size"] = gradient.size;
       vars["--choreo-mask-position-from"] = gradient.from;

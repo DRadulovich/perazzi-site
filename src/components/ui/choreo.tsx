@@ -36,6 +36,7 @@ type ChoreoGroupProps = {
   readonly maskDirection?: ChoreoDirection;
   readonly maskFeather?: number;
   readonly scaleFrom?: number;
+  readonly disableMask?: boolean;
   readonly className?: string;
   readonly itemClassName?: string;
   readonly itemStyle?: CSSProperties;
@@ -83,6 +84,7 @@ export function ChoreoGroup({
   maskDirection,
   maskFeather,
   scaleFrom,
+  disableMask = false,
   className,
   itemClassName,
   itemStyle,
@@ -103,7 +105,7 @@ export function ChoreoGroup({
       durationMs={durationMs}
       staggerMs={staggerMs}
       easing={easing}
-      className={cn("choreo-group", className)}
+      className={cn("choreo-group", disableMask && "choreo-mask-none", className)}
       style={groupVars}
     >
       {childArray.map((child, index) => {

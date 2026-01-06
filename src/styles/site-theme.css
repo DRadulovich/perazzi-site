@@ -421,7 +421,7 @@
     opacity: 0;
     transform: translate3d(var(--choreo-translate-x, 0px), var(--choreo-translate-y, 10px), 0)
       scale(var(--choreo-scale-from, 1));
-    clip-path: var(--choreo-mask-from, inset(0 0 0 0));
+    clip-path: var(--choreo-mask-from, none);
     filter: blur(var(--choreo-blur-from, 0px));
     animation: choreo-in var(--choreo-duration, 320ms) var(--choreo-ease, cubic-bezier(0.22, 1, 0.36, 1)) forwards;
     animation-delay: calc(
@@ -475,6 +475,17 @@
     mask-repeat: no-repeat;
   }
 
+  .choreo-group.choreo-mask-none .choreo-item {
+    --choreo-mask-from: none;
+    --choreo-mask-to: none;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .choreo-group.choreo-mask-none .choreo-item.choreo-mask-wipe {
+    overflow: visible;
+  }
+
   .choreo-group .choreo-item.choreo-mask-wipe > * {
     position: relative;
     z-index: 1;
@@ -484,7 +495,7 @@
     to {
       opacity: 1;
       transform: translate3d(0px, 0px, 0px) scale(1);
-      clip-path: inset(0 0 0 0);
+      clip-path: var(--choreo-mask-to, none);
       filter: blur(0px);
       -webkit-mask-position: var(--choreo-mask-position-to, 0% 0%);
       mask-position: var(--choreo-mask-position-to, 0% 0%);
