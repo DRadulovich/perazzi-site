@@ -202,7 +202,7 @@ export async function fetchRagSummary(envFilter?: string, daysFilter?: number): 
     params.push(envFilter);
     idx += 1;
   }
-  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
+  appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const thresholdParamIndex = idx;
   params.push(threshold);
@@ -257,7 +257,7 @@ export async function fetchLowScoreLogs(
     params.push(envFilter);
     idx += 1;
   }
-  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
+  appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const thresholdParamIndex = idx;
   params.push(threshold);
@@ -332,7 +332,7 @@ export async function fetchGuardrailStats(envFilter?: string, daysFilter?: numbe
     params.push(envFilter);
     idx += 1;
   }
-  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
+  appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const query = `
     select
@@ -362,7 +362,7 @@ export async function fetchGuardrailByArchetype(envFilter?: string, daysFilter?:
     params.push(envFilter);
     idx += 1;
   }
-  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
+  appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const query = `
     select
@@ -402,7 +402,7 @@ export async function fetchRecentGuardrailBlocks(
     params.push(envFilter);
     idx += 1;
   }
-  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
+  appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const limitParamIndex = idx;
   params.push(limit);
@@ -444,7 +444,7 @@ export async function fetchArchetypeIntentStats(envFilter?: string, daysFilter?:
     params.push(envFilter);
     idx += 1;
   }
-  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
+  appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const query = `
     select
@@ -478,7 +478,7 @@ export async function fetchArchetypeSummary(envFilter?: string, daysFilter?: num
     params.push(envFilter);
     idx += 1;
   }
-  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
+  appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const query = `
     select
@@ -528,7 +528,7 @@ export async function fetchDailyTokenUsage(envFilter?: string, daysFilter?: numb
     params.push(envFilter);
     idx += 1;
   }
-  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
+  appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const query = `
     select
@@ -576,7 +576,7 @@ export async function fetchAvgMetrics(envFilter?: string, daysFilter?: number): 
     params.push(envFilter);
     idx += 1;
   }
-  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
+  appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const query = `
     select
@@ -838,7 +838,7 @@ export async function fetchDailyTrends(args: {
     conditions.push(`endpoint in ('assistant', 'soul_journey')`);
   }
 
-  idx = appendDaysFilter({ conditions, params, idx, days });
+  appendDaysFilter({ conditions, params, idx, days });
 
   const query = `
     select
