@@ -3,7 +3,7 @@
 import type {LogoProps, NavbarProps} from 'sanity'
 import {perazziPalette} from './studioTheme'
 
-export function StudioLogo(props: LogoProps) {
+export function StudioLogo(props: Readonly<LogoProps>) {
   return (
     <div
       style={{
@@ -42,7 +42,7 @@ export function StudioLogo(props: LogoProps) {
   )
 }
 
-export function StudioNavbar(props: NavbarProps) {
+export function StudioNavbar(props: Readonly<NavbarProps>) {
   const {renderDefault} = props
   return (
     <div
