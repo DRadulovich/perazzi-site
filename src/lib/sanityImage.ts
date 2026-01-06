@@ -15,11 +15,11 @@ export function hasValidSanityImage(source?: SanityImageSource | null): source i
   }
   if (typeof source === "object") {
     const assetRef = (source as { asset?: { _ref?: string } }).asset?._ref;
-    if (assetRef && assetRef.trim()) {
+    if (assetRef?.trim()) {
       return true;
     }
     const ref = (source as { _ref?: string })._ref;
-    if (ref && ref.trim()) {
+    if (ref?.trim()) {
       return true;
     }
   }
