@@ -7,18 +7,23 @@ import { formatTimestampShort } from "../format";
 
 type Mode = "instant" | "rolling5";
 type EndpointFilter = "all" | "assistant" | "user";
+type StatusState = "snapped" | "mixed" | "unknown";
 const archetypeKeys = ["Loyalist", "Prestige", "Analyst", "Achiever", "Legacy"] as const;
 type ArchetypeKey = (typeof archetypeKeys)[number];
 type ArchetypeScoreMap = Record<ArchetypeKey, number>;
 type ArchetypeScoreInput = Partial<Record<ArchetypeKey, number>> | Record<string, number> | null;
 
-function StatusBadge({ state }: { state: "snapped" | "mixed" | "unknown" }) {
-  const cls =
-    state === "snapped"
-      ? "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300"
-      : state === "mixed"
-        ? "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
-        : "border-border bg-background text-muted-foreground";
+type StatusBadgeProps = Readonly<{ state: StatusState }>;
+type SessionArchetypeTimelineProps = Readonly<{ rows: PgptSessionTimelineRow[] }>;
+
+const STATUS_CLASS_BY_STATE: Record<StatusState, string> = {
+  snapped: "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300",
+  mixed: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+  unknown: "border-border bg-background text-muted-foreground",
+};
+
+function StatusBadge({ state }: StatusBadgeProps) {
+  const cls = STATUS_CLASS_BY_STATE[state];
 
   return (
     <span
@@ -54,7 +59,183 @@ function normalize(scores: ArchetypeScoreInput): ArchetypeScoreMap | null {
   };
 }
 
-export function SessionArchetypeTimeline({ rows }: { rows: PgptSessionTimelineRow[] }) {
+function getSnappedState(snappedRaw: PgptSessionTimelineRow["archetype_snapped"]): StatusState {
+  if (snappedRaw === true) return "snapped";
+  if (snappedRaw === false) return "mixed";
+  return "unknown";
+}
+
+function normalizeScores(scores: PgptSessionTimelineRow["archetype_scores"]): ArchetypeScoreMap | null {
+  if (isRecord(scores)) {
+    return normalize(scores);
+  }
+  return null;
+}
+
+type WinnerInfo = {
+  winnerText: string;
+  runnerText: string | null;
+  computedMargin: number | null;
+  winnerPct: number | null;
+  runnerPct: number | null;
+};
+
+function getWinnerInfo(row: PgptSessionTimelineRow, norm: ArchetypeScoreMap | null): WinnerInfo {
+  if (norm === null) {
+    return {
+      winnerText: row.archetype ?? "—",
+      runnerText: null,
+      computedMargin: null,
+      winnerPct: null,
+      runnerPct: null,
+    };
+  }
+
+  const { winner, runner, margin } = computeWinnerAndRunner(norm);
+
+  return {
+    winnerText: winner.k,
+    runnerText: runner?.k ?? null,
+    computedMargin: margin,
+    winnerPct: winner.v,
+    runnerPct: runner?.v ?? null,
+  };
+}
+
+function getMarginPp(row: PgptSessionTimelineRow, computedMargin: number | null): number | null {
+  const rowMargin =
+    typeof row.archetype_confidence_margin === "number" ? row.archetype_confidence_margin : null;
+  const marginToShow = rowMargin ?? computedMargin;
+  if (marginToShow === null) return null;
+  return Math.round(marginToShow * 100);
+}
+
+function getLegacyConfPct(row: PgptSessionTimelineRow): number | null {
+  if (typeof row.archetype_confidence === "number") {
+    return Math.round(row.archetype_confidence * 100);
+  }
+  return null;
+}
+
+function getPrevWinnerText(prevRow: PgptSessionTimelineRow | undefined): string | null {
+  if (prevRow === undefined) return null;
+  const prevNorm = normalizeScores(prevRow.archetype_scores);
+  if (prevNorm === null) {
+    if (prevRow.archetype) return prevRow.archetype;
+    return null;
+  }
+  return computeWinnerAndRunner(prevNorm).winner.k;
+}
+
+function didWinnerChange(prevWinnerText: string | null, winnerText: string): boolean {
+  if (prevWinnerText === null) return false;
+  if (winnerText === "—") return false;
+  return prevWinnerText !== winnerText;
+}
+
+function formatPctSuffix(pct: number | null): string {
+  if (pct === null) return "";
+  return ` (${Math.round(pct * 100)}%)`;
+}
+
+function formatLabelWithPct(label: string, pct: number | null): string {
+  return `${label}${formatPctSuffix(pct)}`;
+}
+
+type HoverTitleArgs = {
+  endpoint: PgptSessionTimelineRow["endpoint"];
+  state: StatusState;
+  winnerText: string;
+  winnerPct: number | null;
+  runnerText: string | null;
+  runnerPct: number | null;
+  marginPp: number | null;
+  legacyConfPct: number | null;
+};
+
+function buildHoverTitle({
+  endpoint,
+  state,
+  winnerText,
+  winnerPct,
+  runnerText,
+  runnerPct,
+  marginPp,
+  legacyConfPct,
+}: HoverTitleArgs): string {
+  const lines = [
+    `endpoint: ${endpoint}`,
+    `state: ${state}`,
+    `winner: ${formatLabelWithPct(winnerText, winnerPct)}`,
+  ];
+
+  if (runnerText) {
+    lines.push(`runner-up: ${formatLabelWithPct(runnerText, runnerPct)}`);
+  }
+
+  const confLine = legacyConfPct === null ? null : `conf: ${legacyConfPct}%`;
+  if (marginPp === null) {
+    if (confLine) lines.push(confLine);
+  } else {
+    lines.push(`margin: +${marginPp}pp`);
+  }
+
+  return lines.join("\n");
+}
+
+function getDetailText(marginPp: number | null, legacyConfPct: number | null): string {
+  if (marginPp === null) {
+    if (legacyConfPct === null) return "—";
+    return `conf ${legacyConfPct}%`;
+  }
+  return `margin +${marginPp}pp`;
+}
+
+type RowViewModel = {
+  state: StatusState;
+  norm: ArchetypeScoreMap | null;
+  winnerText: string;
+  runnerText: string | null;
+  changed: boolean;
+  hoverTitle: string;
+  detailText: string;
+};
+
+function buildRowViewModel(
+  row: PgptSessionTimelineRow,
+  prevRow: PgptSessionTimelineRow | undefined,
+): RowViewModel {
+  const state = getSnappedState(row.archetype_snapped);
+  const norm = normalizeScores(row.archetype_scores);
+  const winnerInfo = getWinnerInfo(row, norm);
+  const marginPp = getMarginPp(row, winnerInfo.computedMargin);
+  const legacyConfPct = getLegacyConfPct(row);
+  const prevWinnerText = getPrevWinnerText(prevRow);
+  const changed = didWinnerChange(prevWinnerText, winnerInfo.winnerText);
+  const detailText = getDetailText(marginPp, legacyConfPct);
+  const hoverTitle = buildHoverTitle({
+    endpoint: row.endpoint,
+    state,
+    winnerText: winnerInfo.winnerText,
+    winnerPct: winnerInfo.winnerPct,
+    runnerText: winnerInfo.runnerText,
+    runnerPct: winnerInfo.runnerPct,
+    marginPp,
+    legacyConfPct,
+  });
+
+  return {
+    state,
+    norm,
+    winnerText: winnerInfo.winnerText,
+    runnerText: winnerInfo.runnerText,
+    changed,
+    hoverTitle,
+    detailText,
+  };
+}
+
+export function SessionArchetypeTimeline({ rows }: SessionArchetypeTimelineProps) {
   const [mode, setMode] = useState<Mode>("instant");
   const [endpointFilter, setEndpointFilter] = useState<EndpointFilter>("all");
 
@@ -180,65 +361,8 @@ export function SessionArchetypeTimeline({ rows }: { rows: PgptSessionTimelineRo
             </thead>
             <tbody className="divide-y divide-border/60">
               {computed.map((r, idx) => {
-                const snappedRaw = r.archetype_snapped;
-                const state: "snapped" | "mixed" | "unknown" =
-                  snappedRaw === true ? "snapped" : snappedRaw === false ? "mixed" : "unknown";
-
-                const scores = isRecord(r.archetype_scores) ? r.archetype_scores : null;
-                const norm = normalize(scores);
-
-                let winnerText = r.archetype ?? "—";
-                let runnerText: string | null = null;
-                let computedMargin: number | null = null;
-                let winnerPct: number | null = null;
-                let runnerPct: number | null = null;
-
-                if (norm) {
-                  const { winner, runner, margin } = computeWinnerAndRunner(norm);
-                  winnerText = winner.k;
-                  runnerText = runner?.k ?? null;
-                  computedMargin = margin;
-                  winnerPct = winner.v;
-                  runnerPct = runner?.v ?? null;
-                }
-
-                const rowMargin =
-                  typeof r.archetype_confidence_margin === "number"
-                    ? r.archetype_confidence_margin
-                    : null;
-
-                const marginToShow = rowMargin ?? computedMargin;
-                const marginPp = typeof marginToShow === "number" ? Math.round(marginToShow * 100) : null;
-
-                const legacyConf = typeof r.archetype_confidence === "number" ? r.archetype_confidence : null;
-                const legacyConfPct = legacyConf !== null ? Math.round(legacyConf * 100) : null;
-
-                let prevWinnerText: string | null = null;
-                if (idx > 0) {
-                  const prev = computed[idx - 1];
-                  const prevScores = isRecord(prev.archetype_scores) ? prev.archetype_scores : null;
-                  const prevNorm = normalize(prevScores);
-                  if (prevNorm) {
-                    prevWinnerText = computeWinnerAndRunner(prevNorm).winner.k;
-                  } else if (prev.archetype) {
-                    prevWinnerText = prev.archetype;
-                  }
-                }
-
-                const changed = prevWinnerText && winnerText !== "—" && prevWinnerText !== winnerText;
-
-                const hoverTitle = [
-                  `endpoint: ${r.endpoint}`,
-                  `state: ${state}`,
-                  `winner: ${winnerText}${winnerPct !== null ? ` (${Math.round(winnerPct * 100)}%)` : ""}`,
-                  runnerText
-                    ? `runner-up: ${runnerText}${runnerPct !== null ? ` (${Math.round(runnerPct * 100)}%)` : ""}`
-                    : null,
-                  marginPp !== null ? `margin: +${marginPp}pp` : null,
-                  marginPp === null && legacyConfPct !== null ? `conf: ${legacyConfPct}%` : null,
-                ]
-                  .filter(Boolean)
-                  .join("\n");
+                const { state, norm, winnerText, runnerText, changed, hoverTitle, detailText } =
+                  buildRowViewModel(r, computed[idx - 1]);
 
                 return (
                   <tr key={r.id} className={changed ? "bg-muted/15" : undefined}>
@@ -254,14 +378,8 @@ export function SessionArchetypeTimeline({ rows }: { rows: PgptSessionTimelineRo
                         {changed ? <span className="ml-1 text-[10px] uppercase tracking-wide text-muted-foreground">flip</span> : null}
                       </div>
                       <div className="mt-0.5 text-[10px] text-muted-foreground tabular-nums">
-                        {marginPp !== null ? (
-                          <>margin +{marginPp}pp</>
-                        ) : legacyConfPct !== null ? (
-                          <>conf {legacyConfPct}%</>
-                        ) : (
-                          <>—</>
-                        )}
-                        {runnerText ? <> · runner-up {runnerText}</> : null}
+                        {detailText}
+                        {runnerText === null ? null : <> · runner-up {runnerText}</>}
                       </div>
                     </td>
                   </tr>
