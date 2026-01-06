@@ -2,7 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Dispatch,
+  type KeyboardEvent,
+  type SetStateAction,
+} from "react";
 import type { FittingStage, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -90,7 +98,6 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
           framing={framing}
           enableTitleReveal={enableTitleReveal}
           enablePinned={enablePinned}
-          activeStage={activeStage}
           setActiveStage={setActiveStage}
           resolvedActiveStage={resolvedActiveStage}
           onCollapsedChange={setIsCollapsed}
@@ -105,7 +112,6 @@ type TimelineRevealSectionProps = {
   readonly framing: HomeData["timelineFraming"];
   readonly enableTitleReveal: boolean;
   readonly enablePinned: boolean;
-  readonly activeStage: number;
   readonly setActiveStage: Dispatch<SetStateAction<number>>;
   readonly resolvedActiveStage: number;
   readonly onCollapsedChange?: (collapsed: boolean) => void;
@@ -116,7 +122,6 @@ function TimelineRevealSection({
   framing,
   enableTitleReveal,
   enablePinned,
-  activeStage,
   setActiveStage,
   resolvedActiveStage,
   onCollapsedChange,
@@ -182,7 +187,6 @@ function TimelineRevealSection({
           enablePinned={enablePinned}
           stages={stages}
           resolvedActiveStage={resolvedActiveStage}
-          activeStage={activeStage}
           setActiveStage={setActiveStage}
           alternateTitle={alternateTitle}
           revealPhotoFocus={revealPhotoFocus}
@@ -331,7 +335,6 @@ type TimelineBodyProps = {
   readonly enablePinned: boolean;
   readonly stages: readonly FittingStage[];
   readonly resolvedActiveStage: number;
-  readonly activeStage: number;
   readonly setActiveStage: Dispatch<SetStateAction<number>>;
   readonly alternateTitle: string;
   readonly revealPhotoFocus: boolean;
@@ -341,7 +344,6 @@ function TimelineBody({
   enablePinned,
   stages,
   resolvedActiveStage,
-  activeStage,
   setActiveStage,
   alternateTitle,
   revealPhotoFocus,
@@ -360,7 +362,6 @@ function TimelineBody({
         ) : (
           <TimelineStackedLayout
             stages={stages}
-            activeStage={activeStage}
             setActiveStage={setActiveStage}
             alternateTitle={alternateTitle}
           />
@@ -414,6 +415,8 @@ function TimelinePinnedLayout({
   const [presenceStageIndex, setPresenceStageIndex] = useState(resolvedActiveStage);
   const [presenceState, setPresenceState] = useState<ChoreoPresenceState>("enter");
   const presenceTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const panelId = "craft-timeline-panel";
   const presenceVars = buildChoreoPresenceVars({
     enterDurationMs: dreamyPace.enterMs,
     enterEase: dreamyPace.easing,
@@ -454,7 +457,46 @@ function TimelinePinnedLayout({
     }, choreoDurations.short);
   };
 
+  const focusTab = (index: number) => {
+    if (stages.length === 0) return;
+    const resolvedIndex = (index + stages.length) % stages.length;
+    tabRefs.current[resolvedIndex]?.focus();
+    handleStageSelect(resolvedIndex);
+  };
+
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (stages.length === 0) return;
+
+    switch (event.key) {
+      case "ArrowDown":
+      case "ArrowRight": {
+        event.preventDefault();
+        focusTab(index === stages.length - 1 ? 0 : index + 1);
+        break;
+      }
+      case "ArrowUp":
+      case "ArrowLeft": {
+        event.preventDefault();
+        focusTab(index === 0 ? stages.length - 1 : index - 1);
+        break;
+      }
+      case "Home": {
+        event.preventDefault();
+        focusTab(0);
+        break;
+      }
+      case "End": {
+        event.preventDefault();
+        focusTab(stages.length - 1);
+        break;
+      }
+      default:
+        break;
+    }
+  };
+
   const activeStage = stages[presenceStageIndex];
+  const activeTabId = activeStage ? `craft-timeline-tab-${activeStage.id}` : undefined;
 
   return (
     <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:items-start">
@@ -469,29 +511,40 @@ function TimelinePinnedLayout({
             {alternateTitle}
           </Text>
         </ChoreoGroup>
-        <ChoreoGroup
-          effect="fade-lift"
-          distance={choreoDistance.tight}
-          staggerMs={dreamyPace.staggerMs}
-          delayMs={choreoDurations.micro}
-          className="space-y-1"
+        <div
+          role="tablist"
+          aria-orientation="vertical"
+          aria-label={`${alternateTitle} stages`}
         >
-          {stages.map((stage, index) => (
-            <TimelineControlButton
-              key={`control-${stage.id}`}
-              label={stage.title}
-              order={stage.order}
-              active={resolvedActiveStage === index}
-              onSelect={() => { handleStageSelect(index); }}
-            />
-          ))}
-        </ChoreoGroup>
+          <ChoreoGroup
+            effect="fade-lift"
+            distance={choreoDistance.tight}
+            staggerMs={dreamyPace.staggerMs}
+            delayMs={choreoDurations.micro}
+            className="space-y-1"
+          >
+            {stages.map((stage, index) => (
+              <TimelineControlButton
+                key={`control-${stage.id}`}
+                buttonRef={(node) => { tabRefs.current[index] = node; }}
+                tabId={`craft-timeline-tab-${stage.id}`}
+                panelId={panelId}
+                label={stage.title}
+                order={stage.order}
+                active={resolvedActiveStage === index}
+                tabIndex={resolvedActiveStage === index ? 0 : -1}
+                onKeyDown={(event) => { handleTabKeyDown(event, index); }}
+                onSelect={() => { handleStageSelect(index); }}
+              />
+            ))}
+          </ChoreoGroup>
+        </div>
       </div>
 
       <div className="space-y-5">
         <div
           className={cn(
-            "relative min-h-[640px] overflow-hidden rounded-3xl border",
+            "relative min-h-[clamp(22rem,60vh,40rem)] overflow-hidden rounded-3xl border",
             revealPhotoFocus
               ? "border-border/70 bg-card/70 shadow-elevated ring-1 ring-border/70 backdrop-blur-sm"
               : "border-transparent bg-transparent shadow-none ring-0 backdrop-blur-none",
@@ -502,6 +555,10 @@ function TimelinePinnedLayout({
               state={presenceState}
               className="relative"
               style={presenceVars}
+              id={panelId}
+              role="tabpanel"
+              aria-labelledby={activeTabId}
+              tabIndex={0}
             >
               <PinnedStagePanel
                 stage={activeStage}
@@ -517,14 +574,12 @@ function TimelinePinnedLayout({
 
 type TimelineStackedLayoutProps = {
   readonly stages: readonly FittingStage[];
-  readonly activeStage: number;
   readonly setActiveStage: Dispatch<SetStateAction<number>>;
   readonly alternateTitle: string;
 };
 
 function TimelineStackedLayout({
   stages,
-  activeStage,
   setActiveStage,
   alternateTitle,
 }: TimelineStackedLayoutProps) {
@@ -532,6 +587,47 @@ function TimelineStackedLayout({
     enterY: choreoDistance.tight,
     exitY: choreoDistance.tight,
   });
+  const [openStageIds, setOpenStageIds] = useState<Set<string>>(() => {
+    const firstStageId = stages[0]?.id;
+    return new Set(firstStageId ? [firstStageId] : []);
+  });
+
+  const stageIdSet = useMemo(() => new Set(stages.map((stage) => stage.id)), [stages]);
+  const resolvedOpenStageIds = useMemo(() => {
+    if (openStageIds.size === 0) return openStageIds;
+    let hasInvalid = false;
+    for (const id of openStageIds) {
+      if (!stageIdSet.has(id)) {
+        hasInvalid = true;
+        break;
+      }
+    }
+    if (!hasInvalid) return openStageIds;
+    const next = new Set<string>();
+    for (const id of openStageIds) {
+      if (stageIdSet.has(id)) next.add(id);
+    }
+    return next;
+  }, [openStageIds, stageIdSet]);
+
+  const handleToggleStage = (stageId: string, index: number) => {
+    const isOpen = resolvedOpenStageIds.has(stageId);
+    setOpenStageIds((prev) => {
+      const next = new Set<string>();
+      for (const id of prev) {
+        if (stageIdSet.has(id)) next.add(id);
+      }
+      if (next.has(stageId)) {
+        next.delete(stageId);
+      } else {
+        next.add(stageId);
+      }
+      return next;
+    });
+    if (!isOpen) {
+      setActiveStage(index);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -549,7 +645,7 @@ function TimelineStackedLayout({
         itemAsChild
       >
         {stages.map((stage, index) => {
-          const expanded = activeStage === index;
+          const expanded = resolvedOpenStageIds.has(stage.id);
           const panelId = `craft-stage-panel-${stage.id}`;
           const buttonId = `craft-stage-trigger-${stage.id}`;
 
@@ -563,7 +659,7 @@ function TimelineStackedLayout({
                 id={buttonId}
                 aria-expanded={expanded}
                 aria-controls={panelId}
-                onClick={() => { setActiveStage(expanded ? -1 : index); }}
+                onClick={() => { handleToggleStage(stage.id, index); }}
                 className="flex w-full items-center justify-between gap-3 text-left focus-ring"
               >
                 <div>
@@ -590,7 +686,7 @@ function TimelineStackedLayout({
                 id={panelId}
                 aria-labelledby={buttonId}
                 className={cn(
-                  "mt-3 overflow-hidden transition-[max-height] duration-300 ease-out",
+                  "mt-3 overflow-hidden transition-[max-height] duration-300 ease-out motion-reduce:transition-none",
                   expanded ? "max-h-[9999px]" : "max-h-0",
                 )}
               >
@@ -615,16 +711,26 @@ function TimelineStackedLayout({
 }
 
 type ControlButtonProps = {
+  readonly buttonRef?: (node: HTMLButtonElement | null) => void;
+  readonly tabId: string;
+  readonly panelId: string;
   readonly label: string;
   readonly order: number;
   readonly active: boolean;
+  readonly tabIndex: number;
+  readonly onKeyDown: (event: KeyboardEvent<HTMLButtonElement>) => void;
   readonly onSelect: () => void;
 };
 
 function TimelineControlButton({
+  buttonRef,
+  tabId,
+  panelId,
   label,
   order,
   active,
+  tabIndex,
+  onKeyDown,
   onSelect,
 }: ControlButtonProps) {
   const baseClass = cn(
@@ -637,9 +743,15 @@ function TimelineControlButton({
   return (
     <button
       type="button"
+      ref={buttonRef}
+      id={tabId}
+      role="tab"
+      aria-selected={active}
+      aria-controls={panelId}
+      tabIndex={tabIndex}
       className={baseClass}
       onClick={onSelect}
-      aria-pressed={active}
+      onKeyDown={onKeyDown}
     >
       {active ? (
         <span
