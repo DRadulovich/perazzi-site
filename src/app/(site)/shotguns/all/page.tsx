@@ -76,7 +76,7 @@ export default async function ModelSearchPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
       <section className="relative mb-12 overflow-hidden rounded-3xl border border-white/10 bg-black/60">
-        <div className="relative h-72 w-full sm:h-96 lg:h-[28rem]">
+        <div className="relative h-72 w-full sm:h-96 lg:h-112">
           <Image
             src={medalsHero}
             alt="Perazzi Olympic medals and shotguns"
@@ -85,7 +85,7 @@ export default async function ModelSearchPage() {
             className="object-cover object-top"
             sizes="(min-width: 1024px) 1200px, 100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-r from-black/80 via-black/40 to-transparent" />
           <div className="absolute inset-0 flex flex-col justify-center gap-4 px-8 py-10 text-white sm:px-12 lg:px-16">
             <Text size="label-tight" className="text-white/70">Model Search</Text>
             <Heading level={1} size="xl" className="text-white">
