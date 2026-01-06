@@ -61,12 +61,42 @@ type IngestRunStats = IngestStats & {
   warnings: number;
 };
 
+type ParsedArgs = ReturnType<typeof minimist>;
+
 type DocAction = "new" | "updated" | "repaired" | "skipped";
 
 type DocIntegrity = {
   chunkCount: number;
   expectedChunkCount: number | null;
   embeddingCount: number;
+};
+
+type MetadataOnlyContext = {
+  pool: Pool;
+  doc: ActiveDoc;
+  checksum: string;
+  meta: Partial<DocumentMetadata>;
+  action: DocAction;
+  opts: IngestRunOptions;
+  metadataWarnings: string[];
+  stats: IngestRunStats;
+};
+
+type FullIngestContext = {
+  pool: Pool;
+  doc: ActiveDoc;
+  rawText: string;
+  checksum: string;
+  meta: Partial<DocumentMetadata>;
+  action: DocAction;
+  existingId: string | null;
+  opts: IngestRunOptions;
+  stats: IngestRunStats;
+};
+
+type ExistingDocumentRow = {
+  id: string;
+  source_checksum: string | null;
 };
 
 interface NormalizedDocMetadata {
@@ -181,7 +211,7 @@ async function releaseAdvisoryLock(pool: Pool): Promise<void> {
 async function fetchExistingDocumentRow(
   pool: Pool,
   docPath: string,
-): Promise<{ id: string; source_checksum: string | null } | null> {
+): Promise<ExistingDocumentRow | null> {
   const existing = await pool.query<{
     id: string;
     source_checksum: string | null;
@@ -343,14 +373,28 @@ function detectChunkTagsFromText(text: string): string[] {
   return tags;
 }
 
-function buildChunkMetadata(
-  chunk: ChunkInput,
-  docMeta: NormalizedDocMetadata,
-): ChunkMetadataValues {
+function addPlatformLabel(
+  value: string,
+  labelPlatforms: string[],
+  relatedEntities: string[],
+): void {
+  const platform = mapPlatformToken(value);
+  if (!platform) return;
+  labelPlatforms.push(platform);
+  relatedEntities.push(platform);
+  if (platform === "ht") {
+    relatedEntities.push("high-tech");
+  }
+}
+
+function parseSectionLabels(labels: string[]): {
+  labelPlatforms: string[];
+  labelDisciplines: string[];
+  relatedEntities: string[];
+} {
   const labelPlatforms: string[] = [];
   const labelDisciplines: string[] = [];
   const relatedEntities: string[] = [];
-  const labels = chunk.sectionLabels ?? [];
 
   for (const label of labels) {
     const match = /^(model|base-model|platform|disciplines?):(.+)$/i.exec(label);
@@ -365,14 +409,7 @@ function buildChunkMetadata(
     }
 
     if (prefix === "platform") {
-      const platform = mapPlatformToken(value);
-      if (platform) {
-        labelPlatforms.push(platform);
-        relatedEntities.push(platform);
-        if (platform === "ht") {
-          relatedEntities.push("high-tech");
-        }
-      }
+      addPlatformLabel(value, labelPlatforms, relatedEntities);
       continue;
     }
 
@@ -381,24 +418,51 @@ function buildChunkMetadata(
     }
   }
 
+  return { labelPlatforms, labelDisciplines, relatedEntities };
+}
+
+function normalizeRelatedEntitiesWithAliases(
+  relatedEntities: string[],
+): string[] {
   let normalizedRelated = normalizeRelatedEntities(relatedEntities);
-  if (
-    normalizedRelated.some((entity) => entity === "ht" || entity === "high-tech")
-  ) {
+  const hasHighTech = normalizedRelated.some(
+    (entity) => entity === "ht" || entity === "high-tech",
+  );
+  if (hasHighTech) {
     normalizedRelated = dedupeStable([
       ...normalizedRelated,
       "ht",
       "high-tech",
     ]);
   }
+  return normalizedRelated;
+}
 
+function inferPlatformsIfMissing(
+  platforms: string[],
+  relatedEntities: string[],
+): string[] {
+  if (platforms.length > 0) return [];
   const inferredPlatforms: string[] = [];
-  if (docMeta.platforms.length === 0) {
-    for (const entity of normalizedRelated) {
-      const inferred = inferPlatformFromRelatedSlug(entity);
-      if (inferred) inferredPlatforms.push(inferred);
-    }
+  for (const entity of relatedEntities) {
+    const inferred = inferPlatformFromRelatedSlug(entity);
+    if (inferred) inferredPlatforms.push(inferred);
   }
+  return inferredPlatforms;
+}
+
+function buildChunkMetadata(
+  chunk: ChunkInput,
+  docMeta: NormalizedDocMetadata,
+): ChunkMetadataValues {
+  const labels = chunk.sectionLabels ?? [];
+  const { labelPlatforms, labelDisciplines, relatedEntities } =
+    parseSectionLabels(labels);
+  const normalizedRelated = normalizeRelatedEntitiesWithAliases(relatedEntities);
+  const inferredPlatforms = inferPlatformsIfMissing(
+    docMeta.platforms,
+    normalizedRelated,
+  );
 
   const platforms = normalizePlatforms([
     ...docMeta.platforms,
@@ -685,114 +749,140 @@ function buildDryRunDetails(options: {
   return details;
 }
 
-async function processDocument(
+function determineDocAction(
+  hasRow: boolean,
+  checksumChanged: boolean,
+  needsRepair: boolean,
+): DocAction {
+  if (!hasRow) return "new";
+  if (checksumChanged) return "updated";
+  if (needsRepair) return "repaired";
+  return "skipped";
+}
+
+function getPlanMode(opts: IngestRunOptions): "dry-run" | "audit" | null {
+  if (opts.dryRun) return "dry-run";
+  if (opts.audit) return "audit";
+  return null;
+}
+
+function logPlanMode(
+  mode: "dry-run" | "audit",
+  options: {
+    action: DocAction;
+    checksumChanged: boolean;
+    needsRepair: boolean;
+    repairReasons: string[];
+    doc: ActiveDoc;
+    integrity: DocIntegrity | null;
+    previewChunkCount: number | null;
+    metadataWarnings: string[];
+    full: boolean;
+  },
+  stats: IngestRunStats,
+): void {
+  const details = buildDryRunDetails(options);
+  if (mode === "audit") {
+    if (options.action !== "skipped" || options.metadataWarnings.length > 0) {
+      logPlannedAction("audit", options.action, options.doc, details);
+    }
+  } else {
+    logPlannedAction("dry-run", options.action, options.doc, details);
+  }
+  recordActionStats(stats, options.action);
+}
+
+function computePreviewChunkCount(
+  opts: IngestRunOptions,
+  doc: ActiveDoc,
+  action: DocAction,
+  rawText: string,
+): number | null {
+  if (!opts.dryRun && !opts.audit) return null;
+  if (action === "skipped") return null;
+  if (doc.embedMode !== "full") return null;
+  const chunkInputs = chunkDocument(doc, rawText);
+  return chunkInputs.length;
+}
+
+async function fetchIntegrityState(
   pool: Pool,
   doc: ActiveDoc,
-  opts: IngestRunOptions,
-  stats: IngestRunStats,
-): Promise<void> {
-  stats.scanned += 1;
-
-  const { rawText, checksum } = await readDocumentFile(doc);
-
-  const existing = await fetchExistingDocumentRow(pool, doc.path);
-  const hasRow = Boolean(existing);
-  const checksumChanged =
-    opts.full || !hasRow || existing?.source_checksum !== checksum;
-
-  let integrity: DocIntegrity | null = null;
-  let repairReasons: string[] = [];
-  let metadataWarnings: string[] = [];
-
-  if (hasRow) {
-    integrity = await fetchDocIntegrity(pool, existing!.id);
-    if (doc.embedMode === "full") {
-      repairReasons = computeRepairReasons(integrity);
-    } else if (doc.embedMode === "metadata-only") {
-      metadataWarnings = computeMetadataOnlyWarnings(integrity);
-    }
+  existing: ExistingDocumentRow | null,
+): Promise<{
+  integrity: DocIntegrity | null;
+  repairReasons: string[];
+  metadataWarnings: string[];
+}> {
+  if (!existing) {
+    return { integrity: null, repairReasons: [], metadataWarnings: [] };
   }
-
-  const needsRepair =
-    !checksumChanged && doc.embedMode === "full" && repairReasons.length > 0;
-
-  const action: DocAction = !hasRow
-    ? "new"
-    : checksumChanged
-      ? "updated"
-      : needsRepair
-        ? "repaired"
-        : "skipped";
-
-  let previewChunkCount: number | null = null;
-  if ((opts.dryRun || opts.audit) && action !== "skipped") {
-    if (doc.embedMode === "full") {
-      const chunkInputs = chunkDocument(doc, rawText);
-      previewChunkCount = chunkInputs.length;
-    }
-  }
-
-  if (opts.dryRun) {
-    const details = buildDryRunDetails({
-      action,
-      checksumChanged,
-      needsRepair,
-      repairReasons,
-      doc,
+  const integrity = await fetchDocIntegrity(pool, existing.id);
+  if (doc.embedMode === "full") {
+    return {
       integrity,
-      previewChunkCount,
-      metadataWarnings,
-      full: opts.full,
-    });
-    logPlannedAction("dry-run", action, doc, details);
-    recordActionStats(stats, action);
-    return;
+      repairReasons: computeRepairReasons(integrity),
+      metadataWarnings: [],
+    };
   }
-
-  if (opts.audit) {
-    const details = buildDryRunDetails({
-      action,
-      checksumChanged,
-      needsRepair,
-      repairReasons,
-      doc,
-      integrity,
-      previewChunkCount,
-      metadataWarnings,
-      full: opts.full,
-    });
-    if (action !== "skipped" || metadataWarnings.length > 0) {
-      logPlannedAction("audit", action, doc, details);
-    }
-    recordActionStats(stats, action);
-    return;
-  }
-
-  if (action === "skipped") {
-    recordActionStats(stats, action);
-    return;
-  }
-
-  const meta = parseDocumentMetadata(rawText, doc.docType);
-  const existingId = existing?.id ?? null;
-
   if (doc.embedMode === "metadata-only") {
-    if (action === "new" || action === "updated") {
-      await upsertDocumentRow(pool, doc, checksum, meta, {
-        forceUpdate: opts.full,
-      });
-    }
-    if (metadataWarnings.length) {
-      console.warn("[warn] Metadata-only doc has existing embeddings", {
-        path: doc.path,
-        details: metadataWarnings,
-      });
-      stats.warnings += 1;
-    }
-    recordActionStats(stats, action);
-    return;
+    return {
+      integrity,
+      repairReasons: [],
+      metadataWarnings: computeMetadataOnlyWarnings(integrity),
+    };
   }
+  return { integrity, repairReasons: [], metadataWarnings: [] };
+}
 
+function computeNeedsRepair(
+  checksumChanged: boolean,
+  doc: ActiveDoc,
+  repairReasons: string[],
+): boolean {
+  return !checksumChanged && doc.embedMode === "full" && repairReasons.length > 0;
+}
+
+async function handleMetadataOnlyDocument(
+  context: MetadataOnlyContext,
+): Promise<void> {
+  const {
+    pool,
+    doc,
+    checksum,
+    meta,
+    action,
+    opts,
+    metadataWarnings,
+    stats,
+  } = context;
+  if (action === "new" || action === "updated") {
+    await upsertDocumentRow(pool, doc, checksum, meta, {
+      forceUpdate: opts.full,
+    });
+  }
+  if (metadataWarnings.length) {
+    console.warn("[warn] Metadata-only doc has existing embeddings", {
+      path: doc.path,
+      details: metadataWarnings,
+    });
+    stats.warnings += 1;
+  }
+  recordActionStats(stats, action);
+}
+
+async function ingestFullDocument(context: FullIngestContext): Promise<void> {
+  const {
+    pool,
+    doc,
+    rawText,
+    checksum,
+    meta,
+    action,
+    existingId,
+    opts,
+    stats,
+  } = context;
   const chunkInputs = chunkDocument(doc, rawText);
   const chunkIds = chunkInputs.map(() => randomUUID());
   const { embeddings, embedModel } = await generateEmbeddingsForChunks(
@@ -838,12 +928,95 @@ async function processDocument(
   recordActionStats(stats, action);
 }
 
+async function processDocument(
+  pool: Pool,
+  doc: ActiveDoc,
+  opts: IngestRunOptions,
+  stats: IngestRunStats,
+): Promise<void> {
+  stats.scanned += 1;
+
+  const { rawText, checksum } = await readDocumentFile(doc);
+
+  const existing = await fetchExistingDocumentRow(pool, doc.path);
+  const hasRow = Boolean(existing);
+  const checksumChanged =
+    opts.full || !hasRow || existing?.source_checksum !== checksum;
+
+  const { integrity, repairReasons, metadataWarnings } =
+    await fetchIntegrityState(pool, doc, existing);
+
+  const needsRepair = computeNeedsRepair(checksumChanged, doc, repairReasons);
+  const action = determineDocAction(hasRow, checksumChanged, needsRepair);
+  const previewChunkCount = computePreviewChunkCount(
+    opts,
+    doc,
+    action,
+    rawText,
+  );
+
+  const planMode = getPlanMode(opts);
+  if (planMode) {
+    logPlanMode(
+      planMode,
+      {
+        action,
+        checksumChanged,
+        needsRepair,
+        repairReasons,
+        doc,
+        integrity,
+        previewChunkCount,
+        metadataWarnings,
+        full: opts.full,
+      },
+      stats,
+    );
+    return;
+  }
+
+  if (action === "skipped") {
+    recordActionStats(stats, action);
+    return;
+  }
+
+  const meta = parseDocumentMetadata(rawText, doc.docType);
+  const existingId = existing?.id ?? null;
+
+  if (doc.embedMode === "metadata-only") {
+    await handleMetadataOnlyDocument({
+      pool,
+      doc,
+      checksum,
+      meta,
+      action,
+      opts,
+      metadataWarnings,
+      stats,
+    });
+    return;
+  }
+
+  await ingestFullDocument({
+    pool,
+    doc,
+    rawText,
+    checksum,
+    meta,
+    action,
+    existingId,
+    opts,
+    stats,
+  });
+}
+
 function printIngestSummary(stats: IngestRunStats, opts: IngestRunOptions): void {
-  const title = opts.audit
-    ? "---- Audit Summary ----"
-    : opts.dryRun
-      ? "---- Dry-run Summary ----"
-      : "---- Ingest Summary ----";
+  let title = "---- Ingest Summary ----";
+  if (opts.audit) {
+    title = "---- Audit Summary ----";
+  } else if (opts.dryRun) {
+    title = "---- Dry-run Summary ----";
+  }
 
   console.log(title);
   console.log("Docs scanned:", stats.scanned);
@@ -906,17 +1079,17 @@ function assertEnv(): void {
   }
 }
 
-async function main(): Promise<void> {
+function parseCliArgs(): ParsedArgs {
   const rawArgs = process.argv.slice(2);
-  const argv = minimist(rawArgs[0] === "--" ? rawArgs.slice(1) : rawArgs);
-  const analyzeChunks = Boolean(argv["analyze-chunks"]);
+  return minimist(rawArgs[0] === "--" ? rawArgs.slice(1) : rawArgs);
+}
+
+function shouldShowHelp(argv: ParsedArgs): boolean {
+  return Boolean(argv.help || argv.h);
+}
+
+async function handleAnalysisModes(argv: ParsedArgs): Promise<boolean> {
   const analyzeSynthetic = Boolean(argv["analyze-synthetic"]);
-
-  if (argv.help || argv.h) {
-    printHelp();
-    return;
-  }
-
   if (analyzeSynthetic) {
     try {
       await runSyntheticParagraphAnalysis();
@@ -924,29 +1097,32 @@ async function main(): Promise<void> {
       console.error("Fatal synthetic analysis error:", err);
       process.exitCode = 1;
     }
-    return;
+    return true;
   }
 
-  if (analyzeChunks) {
-    const top = parseNumberOption(argv.top, DEFAULT_ANALYSIS_OPTIONS.top);
-    const maxChars = parseNumberOption(
-      argv["max-chars"],
-      DEFAULT_ANALYSIS_OPTIONS.maxChars,
-    );
-    const maxTokens = parseNumberOption(
-      argv["max-tokens"],
-      DEFAULT_ANALYSIS_OPTIONS.maxTokens,
-    );
+  const analyzeChunks = Boolean(argv["analyze-chunks"]);
+  if (!analyzeChunks) return false;
 
-    try {
-      await runChunkAnalysis({ top, maxChars, maxTokens });
-    } catch (err) {
-      console.error("Fatal chunk analysis error:", err);
-      process.exitCode = 1;
-    }
-    return;
+  const top = parseNumberOption(argv.top, DEFAULT_ANALYSIS_OPTIONS.top);
+  const maxChars = parseNumberOption(
+    argv["max-chars"],
+    DEFAULT_ANALYSIS_OPTIONS.maxChars,
+  );
+  const maxTokens = parseNumberOption(
+    argv["max-tokens"],
+    DEFAULT_ANALYSIS_OPTIONS.maxTokens,
+  );
+
+  try {
+    await runChunkAnalysis({ top, maxChars, maxTokens });
+  } catch (err) {
+    console.error("Fatal chunk analysis error:", err);
+    process.exitCode = 1;
   }
+  return true;
+}
 
+function getIngestRunOptions(argv: ParsedArgs): IngestRunOptions {
   const full = Boolean(argv.full);
   const dryRun = Boolean(argv["dry-run"]);
   const audit = Boolean(argv.audit);
@@ -956,10 +1132,14 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  return { full, dryRun, audit };
+}
+
+async function runIngestCommand(opts: IngestRunOptions): Promise<void> {
   assertEnv();
 
   const pool = createPool();
-  const shouldLock = !dryRun && !audit;
+  const shouldLock = !opts.dryRun && !opts.audit;
   let lockAcquired = false;
 
   try {
@@ -974,7 +1154,7 @@ async function main(): Promise<void> {
       }
     }
 
-    await runIngest(pool, { full, dryRun, audit });
+    await runIngest(pool, opts);
   } catch (err) {
     console.error("Fatal ingest error:", err);
     process.exitCode = 1;
@@ -988,6 +1168,20 @@ async function main(): Promise<void> {
     }
     await pool.end();
   }
+}
+
+async function main(): Promise<void> {
+  const argv = parseCliArgs();
+  if (shouldShowHelp(argv)) {
+    printHelp();
+    return;
+  }
+
+  const handledAnalysis = await handleAnalysisModes(argv);
+  if (handledAnalysis) return;
+
+  const ingestOptions = getIngestRunOptions(argv);
+  await runIngestCommand(ingestOptions);
 }
 
 try {
