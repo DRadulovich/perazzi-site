@@ -1,5 +1,5 @@
 export type LogTextMetadata = {
-  metadata?: unknown | null;
+  metadata?: unknown;
   log_text_mode?: string | null;
   log_text_max_chars?: number | null;
   prompt_text_truncated?: boolean | null;
@@ -93,7 +93,7 @@ export type GuardrailLogRow = {
   env: string;
   archetype: string | null;
   session_id: string | null;
-  metadata?: unknown | null;
+  metadata?: unknown;
   log_text_mode?: string | null;
   log_text_max_chars?: number | null;
   prompt_text_truncated?: boolean | null;
@@ -164,10 +164,10 @@ export type PgptLogDetail = PerazziLogRow & {
   total_tokens?: number | null;
   latency_ms: number | null;
   retrieved_chunks: unknown[];
-  metadata?: unknown | null;
+  metadata?: unknown;
   archetype_scores?: Record<string, number> | null;
   archetype_confidence?: number | null;
-  archetype_decision?: unknown | null;
+  archetype_decision?: unknown;
   page_url?: string | null;
   user_id?: string | null;
   mode?: string | null;
