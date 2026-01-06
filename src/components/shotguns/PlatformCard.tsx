@@ -157,7 +157,7 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
       ref={analyticsRef}
       href={`/shotguns/${platform.slug}`}
       data-analytics-id={`PlatformCard:${platform.id}`}
-      className="group flex h-full flex-col rounded-2xl border border-border bg-canvas/30 p-4 shadow-soft backdrop-blur-sm transition-transform focus-ring hover:-translate-y-1 sm:rounded-3xl sm:bg-canvas/40 sm:p-6 sm:shadow-elevated"
+      className="group flex h-full flex-col rounded-2xl border border-border bg-canvas/75 p-4 shadow-soft backdrop-blur-md transition-transform focus-ring hover:-translate-y-1 sm:rounded-3xl sm:bg-canvas/75 sm:p-6 sm:shadow-elevated"
       onClick={() => logAnalytics(`shotguns_platform_card_click:${platform.id}`)}
     >
       <div className="card-media relative rounded-2xl bg-(--surface-elevated) transition-transform duration-300 group-hover:scale-[1.01] aspect-video">

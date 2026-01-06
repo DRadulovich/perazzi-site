@@ -136,6 +136,7 @@ const defaultBackground: PlatformBackground = {
   url: "/redesign-photos/shotguns/pweb-shotguns-platformgrid-bg.jpg",
   alt: "Perazzi workshop background for platform section",
 };
+const presenceExitDurationMs = 420;
 
 const formatTemplate = (template: string, platformName: string) =>
   template.replaceAll("{platformName}", platformName);
@@ -238,10 +239,10 @@ const PlatformTabs = ({
     {platforms.map((platform, index) => {
       const isActive = index === activeIndex;
       const buttonClass = cn(
-        "group relative overflow-hidden type-label-tight pill border focus-ring",
+        "group relative overflow-hidden type-label-tight pill border focus-ring backdrop-blur-sm",
         isActive
-          ? "border-perazzi-red text-perazzi-red shadow-elevated"
-          : "border-border/70 bg-transparent text-ink-muted hover:border-ink/60",
+          ? "border-perazzi-red bg-card/60 text-perazzi-red shadow-elevated"
+          : "border-border/70 bg-card/40 text-ink-muted hover:border-ink/60 hover:bg-card/60",
       );
 
       return (
@@ -316,7 +317,7 @@ const MobilePlatformCarousel = ({
   <div className="md:hidden">
     <div
       ref={scrollRef}
-      className="overflow-x-auto snap-x snap-mandatory scrollbar-none px-6 -mx-6 pt-6 pb-6 sm:mx-0 sm:px-6"
+      className="overflow-x-auto snap-x snap-mandatory scrollbar-none -mx-10 px-4 py-8 sm:-mx-12"
       aria-label="Swipe to explore platforms"
     >
       <ChoreoGroup
@@ -334,7 +335,7 @@ const MobilePlatformCarousel = ({
           <div
             key={platform.id}
             data-index={index}
-            className="snap-center shrink-0 w-[85vw] max-w-sm"
+            className="snap-center shrink-0 w-[92vw]"
           >
             <PlatformCardWithChat
               platform={platform}
@@ -578,7 +579,7 @@ const PlatformGridRevealSection = ({
   const platformMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
   const presenceVars = buildChoreoPresenceVars({
     enterDurationMs: dreamyPace.textMs,
-    exitDurationMs: dreamyPace.textMs,
+    exitDurationMs: presenceExitDurationMs,
     enterEase: dreamyPace.easing,
     exitEase: dreamyPace.easing,
     enterY: choreoDistance.tight,
@@ -620,7 +621,10 @@ const PlatformGridRevealSection = ({
 
   const handleTabSelect = useCallback((index: number) => {
     setActiveIndex(index);
-    scrollToIndex(scrollRef.current, index);
+    const scrollContainer = scrollRef.current;
+    if (scrollContainer?.offsetParent) {
+      scrollToIndex(scrollContainer, index);
+    }
 
     if (presenceTimeoutRef.current) {
       globalThis.clearTimeout(presenceTimeoutRef.current);
@@ -638,7 +642,7 @@ const PlatformGridRevealSection = ({
       setDisplayIndex(index);
       setPresenceState("enter");
       presenceTimeoutRef.current = null;
-    }, dreamyPace.staggerMs);
+    }, presenceExitDurationMs);
   }, [displayIndex, reduceMotion, setActiveIndex]);
 
   const expandedContent = (
@@ -715,7 +719,7 @@ const PlatformGridRevealSection = ({
         <SectionShell
           ref={platformShellRef}
           style={minHeightStyle}
-          reveal={revealPhotoFocus}
+          reveal={false}
           minHeightClass={platformMinHeight ?? undefined}
           className="space-y-8"
         >
