@@ -773,21 +773,32 @@ function EngravingCompareDialog({
 function highlightText(text: string, needle: string): ReactNode {
   const trimmedNeedle = needle.trim();
   if (!trimmedNeedle) return text;
-  const escapePattern = /[.*+?^${}()|[\]\\]/g;
-  const escapedNeedle = trimmedNeedle.replaceAll(escapePattern, String.raw`\$&`);
-  const regex = new RegExp(String.raw`(${escapedNeedle})`, "ig");
-  const occurrences = new Map<string, number>();
+  const lowerText = text.toLowerCase();
+  const lowerNeedle = trimmedNeedle.toLowerCase();
+  const nodes: ReactNode[] = [];
+  let start = 0;
+  let matchIndex = lowerText.indexOf(lowerNeedle, start);
+  let keyIndex = 0;
 
-  return text.split(regex).map((part) => {
-    const occurrenceIndex = (occurrences.get(part) ?? 0) + 1;
-    occurrences.set(part, occurrenceIndex);
-    const key = `${part}-${occurrenceIndex}`;
-    return part.toLowerCase() === trimmedNeedle.toLowerCase() ? (
-      <mark key={key} className="bg-transparent text-perazzi-red">
-        {part}
-      </mark>
-    ) : (
-      <span key={key}>{part}</span>
+  while (matchIndex !== -1) {
+    if (matchIndex > start) {
+      nodes.push(<span key={`text-${keyIndex}`}>{text.slice(start, matchIndex)}</span>);
+      keyIndex += 1;
+    }
+    const end = matchIndex + trimmedNeedle.length;
+    nodes.push(
+      <mark key={`mark-${keyIndex}`} className="bg-transparent text-perazzi-red">
+        {text.slice(matchIndex, end)}
+      </mark>,
     );
-  });
+    keyIndex += 1;
+    start = end;
+    matchIndex = lowerText.indexOf(lowerNeedle, start);
+  }
+
+  if (start < text.length) {
+    nodes.push(<span key={`text-${keyIndex}`}>{text.slice(start)}</span>);
+  }
+
+  return nodes;
 }
