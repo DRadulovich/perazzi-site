@@ -558,7 +558,7 @@ function ModelDetailDialog({
                 ]
                   .filter((entry) => Boolean(entry.value))
                   .map((entry) => (
-                    <DetailGrid key={entry.label} label={entry.label} value={entry.value} />
+                    <Spec key={entry.label} label={entry.label} value={entry.value} />
                   ))}
               </div>
             </div>
@@ -652,20 +652,6 @@ function FilterChip({
 }
 
 function Spec({ label, value }: SpecProps) {
-  const display = humanizeValue(value) ?? value;
-  return (
-    <div>
-      <Text size="label-tight" className="text-perazzi-red">
-        {label}
-      </Text>
-      <Text size="sm" className="text-white">
-        {display || "—"}
-      </Text>
-    </div>
-  );
-}
-
-function DetailGrid({ label, value }: SpecProps) {
   const display = humanizeValue(value) ?? value;
   return (
     <div>
