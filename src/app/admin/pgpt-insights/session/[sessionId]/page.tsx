@@ -34,53 +34,83 @@ type SearchParams = {
 
 const SESSION_LOGS_LIMIT = 2000;
 
-export default async function PgptInsightsSessionPage({
-  params,
-  searchParams,
-}: {
-  params?: Promise<{ sessionId?: string }>;
-  searchParams?: Promise<SearchParams>;
-}) {
-  const resolvedParams = (await params) ?? {};
-  const resolvedSearchParams = (await searchParams) ?? {};
-  const sessionId = resolvedParams.sessionId;
+type SessionLogsPreview = Awaited<ReturnType<typeof fetchSessionLogsPreview>>;
+type SessionConversationLogs = Awaited<ReturnType<typeof fetchSessionConversationLogs>>;
+type SessionTimelineRows = Awaited<ReturnType<typeof fetchSessionTimelineRows>>;
+type SessionLogFilters = Omit<Parameters<typeof fetchSessionLogsPreview>[0], "limit" | "offset">;
 
+function assertPgptInsightsAccess() {
   const env = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "development";
   const allowInProd = process.env.PGPT_INSIGHTS_ALLOW_PROD === "true";
   if (env === "production" && !allowInProd) {
     notFound();
   }
+}
 
+function getSessionIdOrNotFound(params?: { sessionId?: string }): string {
+  const sessionId = params?.sessionId;
   if (!sessionId || typeof sessionId !== "string" || sessionId.trim().length === 0) {
     notFound();
   }
+  return sessionId;
+}
 
-  const qRaw = (resolvedSearchParams.q ?? "").trim();
-  const q = qRaw.length ? qRaw.slice(0, 500) : undefined;
+function normalizeQuery(raw?: string) {
+  const trimmed = (raw ?? "").trim();
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+  return trimmed.slice(0, 500);
+}
 
-  const densityParam = resolvedSearchParams.density;
-  const density = densityParam === "compact" ? "compact" : "comfortable";
-  const isCompact = density === "compact";
+function getTableDensityConfig(densityParam?: string) {
+  const isCompact = densityParam === "compact";
+  return {
+    tableDensityClass: isCompact ? "[&_td]:!py-1 [&_th]:!py-1" : "[&_td]:!py-2 [&_th]:!py-2",
+    truncPrimary: isCompact ? 120 : 180,
+  };
+}
 
-  const tableDensityClass = isCompact ? "[&_td]:!py-1 [&_th]:!py-1" : "[&_td]:!py-2 [&_th]:!py-2";
-  const truncPrimary = isCompact ? 120 : 180;
+function buildSessionLogFilters(searchParams: SearchParams, sessionId: string, q?: string): SessionLogFilters {
+  return {
+    sessionId,
+    q,
+    gr_status: searchParams.gr_status,
+    low_conf: searchParams.low_conf,
+    score: searchParams.score,
+    qa: searchParams.qa,
+    winner_changed: searchParams.winner_changed,
+    margin_lt: searchParams.margin_lt,
+    score_archetype: searchParams.score_archetype,
+    min: searchParams.min,
+    rerank: searchParams.rerank,
+    snapped: searchParams.snapped,
+  };
+}
 
-  // ---------------- Resilient parallel data fetching ----------------
+function unwrapSettled<T>(result: PromiseSettledResult<T>) {
+  if (result.status === "fulfilled") {
+    return { value: result.value, error: null };
+  }
+  return { value: null, error: result.reason };
+}
+
+function getLogsWithLimit<T>(logs: T[] | null, limit: number) {
+  if (!logs) {
+    return { logs: [], hasMore: false };
+  }
+
+  const hasMore = logs.length > limit;
+  const trimmedLogs = hasMore ? logs.slice(0, limit) : logs;
+
+  return { logs: trimmedLogs, hasMore };
+}
+
+async function fetchSessionData(filters: SessionLogFilters) {
   const [logsRes, convRes, timelineRes] = await Promise.allSettled([
     withTimeout(
       fetchSessionLogsPreview({
-        sessionId,
-        q,
-        gr_status: resolvedSearchParams.gr_status,
-        low_conf: resolvedSearchParams.low_conf,
-        score: resolvedSearchParams.score,
-        qa: resolvedSearchParams.qa,
-        winner_changed: resolvedSearchParams.winner_changed,
-        margin_lt: resolvedSearchParams.margin_lt,
-        score_archetype: resolvedSearchParams.score_archetype,
-        min: resolvedSearchParams.min,
-        rerank: resolvedSearchParams.rerank,
-        snapped: resolvedSearchParams.snapped,
+        ...filters,
         limit: SESSION_LOGS_LIMIT + 1,
         offset: 0,
       }),
@@ -89,18 +119,7 @@ export default async function PgptInsightsSessionPage({
     ),
     withTimeout(
       fetchSessionConversationLogs({
-        sessionId,
-        q,
-        gr_status: resolvedSearchParams.gr_status,
-        low_conf: resolvedSearchParams.low_conf,
-        score: resolvedSearchParams.score,
-        qa: resolvedSearchParams.qa,
-        winner_changed: resolvedSearchParams.winner_changed,
-        margin_lt: resolvedSearchParams.margin_lt,
-        score_archetype: resolvedSearchParams.score_archetype,
-        min: resolvedSearchParams.min,
-        rerank: resolvedSearchParams.rerank,
-        snapped: resolvedSearchParams.snapped,
+        ...filters,
         limit: SESSION_LOGS_LIMIT,
         offset: 0,
       }),
@@ -108,25 +127,118 @@ export default async function PgptInsightsSessionPage({
       "Conversation query timed out",
     ),
     withTimeout(
-      fetchSessionTimelineRows({ sessionId, limit: 2000, offset: 0 }),
+      fetchSessionTimelineRows({ sessionId: filters.sessionId, limit: 2000, offset: 0 }),
       30000,
       "Timeline query timed out",
     ),
   ] as const);
 
-  const logsMaybeMore = logsRes.status === "fulfilled" ? logsRes.value : null;
-  const conversationLogs = convRes.status === "fulfilled" ? convRes.value : null;
-  const timelineRows = timelineRes.status === "fulfilled" ? timelineRes.value : null;
+  const logsResult = unwrapSettled(logsRes);
+  const convResult = unwrapSettled(convRes);
+  const timelineResult = unwrapSettled(timelineRes);
 
-  const logsError = logsRes.status === "rejected" ? logsRes.reason : null;
-  const convError = convRes.status === "rejected" ? convRes.reason : null;
-  const timelineError = timelineRes.status === "rejected" ? timelineRes.reason : null;
+  const { logs, hasMore } = getLogsWithLimit(logsResult.value, SESSION_LOGS_LIMIT);
 
-  const hasMore = logsMaybeMore ? logsMaybeMore.length > SESSION_LOGS_LIMIT : false;
-  const logs = logsMaybeMore ? (hasMore ? logsMaybeMore.slice(0, SESSION_LOGS_LIMIT) : logsMaybeMore) : [];
+  return {
+    logs,
+    hasMore,
+    conversationLogs: convResult.value ?? [],
+    timelineRows: timelineResult.value,
+    logsError: logsResult.error,
+    convError: convResult.error,
+    timelineError: timelineResult.error,
+  };
+}
 
-  // -----------------------------------------------------------------
-  // (old sequential fetch block fully removed)
+function renderTimelineSection(timelineRows: SessionTimelineRows | null, timelineError: unknown | null) {
+  if (timelineRows) {
+    return <ArchetypeTimeline rows={timelineRows} />;
+  }
+
+  return <SectionError id="timeline" title="Archetype Timeline" error={timelineError} />;
+}
+
+function renderLogsSection({
+  logsError,
+  convError,
+  logs,
+  conversationLogs,
+  tableDensityClass,
+  truncPrimary,
+  hasMore,
+  sessionId,
+}: {
+  logsError: unknown | null;
+  convError: unknown | null;
+  logs: SessionLogsPreview;
+  conversationLogs: SessionConversationLogs;
+  tableDensityClass: string;
+  truncPrimary: number;
+  hasMore: boolean;
+  sessionId: string;
+}) {
+  if (logsError || convError) {
+    return <SectionError id="logs" title="Session Logs" error={logsError ?? convError} />;
+  }
+
+  if (logs.length === 0) {
+    return (
+      <div className="rounded-2xl border border-border bg-card shadow-sm p-6 text-sm text-muted-foreground">
+        No interactions match the current filters.
+      </div>
+    );
+  }
+
+  return (
+    <SessionLogsView
+      tableLogs={logs}
+      conversationLogs={conversationLogs}
+      tableDensityClass={tableDensityClass}
+      truncPrimary={truncPrimary}
+      hasMore={hasMore}
+      sessionId={sessionId}
+    />
+  );
+}
+
+export default async function PgptInsightsSessionPage({
+  params,
+  searchParams,
+}: {
+  params?: Promise<{ sessionId?: string }>;
+  searchParams?: Promise<SearchParams>;
+}) {
+  assertPgptInsightsAccess();
+
+  const resolvedParams = (await params) ?? {};
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const sessionId = getSessionIdOrNotFound(resolvedParams);
+
+  const q = normalizeQuery(resolvedSearchParams.q);
+  const { tableDensityClass, truncPrimary } = getTableDensityConfig(resolvedSearchParams.density);
+  const filters = buildSessionLogFilters(resolvedSearchParams, sessionId, q);
+
+  const {
+    logs,
+    hasMore,
+    conversationLogs,
+    timelineRows,
+    logsError,
+    convError,
+    timelineError,
+  } = await fetchSessionData(filters);
+
+  const timelineSection = renderTimelineSection(timelineRows, timelineError);
+  const logsSection = renderLogsSection({
+    logsError,
+    convError,
+    logs,
+    conversationLogs,
+    tableDensityClass,
+    truncPrimary,
+    hasMore,
+    sessionId,
+  });
 
   return (
     <div className="space-y-8">
@@ -158,32 +270,12 @@ export default async function PgptInsightsSessionPage({
 
       <SessionSummary sessionId={sessionId} />
 
-      {timelineRows ? (
-        <ArchetypeTimeline rows={timelineRows} />
-      ) : (
-        <SectionError id="timeline" title="Archetype Timeline" error={timelineError} />
-      )}
-
+      {timelineSection}
 
       <SessionFilters />
 
       <section id="logs" className="space-y-3 min-w-0">
-        {logsError || convError ? (
-          <SectionError id="logs" title="Session Logs" error={logsError ?? convError} />
-        ) : logs.length === 0 ? (
-          <div className="rounded-2xl border border-border bg-card shadow-sm p-6 text-sm text-muted-foreground">
-            No interactions match the current filters.
-          </div>
-        ) : (
-          <SessionLogsView
-            tableLogs={logs}
-            conversationLogs={conversationLogs ?? []}
-            tableDensityClass={tableDensityClass}
-            truncPrimary={truncPrimary}
-            hasMore={hasMore}
-            sessionId={sessionId}
-          />
-        )}
+        {logsSection}
       </section>
     </div>
   );
