@@ -39,6 +39,64 @@ type SearchParams = {
   snapped?: string;
 };
 
+type LogsSectionProps = Readonly<{
+  envFilter?: string;
+  endpointFilter?: string;
+  daysFilter?: number;
+  q: string;
+  page: number;
+  resolvedSearchParams: SearchParams;
+  tableDensityClass: string;
+  truncPrimary: number;
+}>;
+
+type PaginationLinksProps = Readonly<{
+  prevHref: string | null;
+  nextHref: string | null;
+  linkClassName: string;
+  disabledClassName: string;
+}>;
+
+const normalizeQuery = (query: string) => (query.length ? query : undefined);
+
+const formatQaCountLabel = (qaOpenFlagCount: number) =>
+  qaOpenFlagCount > 0 ? ` (${qaOpenFlagCount})` : "";
+
+const buildPaginationHrefs = (
+  resolvedSearchParams: SearchParams,
+  query: string | undefined,
+  page: number,
+  hasNextPage: boolean,
+) => {
+  const hrefParams = { ...resolvedSearchParams, q: query };
+
+  return {
+    prevHref: page > 1 ? buildInsightsHref({ ...hrefParams, page: String(page - 1) }) : null,
+    nextHref: hasNextPage ? buildInsightsHref({ ...hrefParams, page: String(page + 1) }) : null,
+  };
+};
+
+function PaginationLinks({ prevHref, nextHref, linkClassName, disabledClassName }: PaginationLinksProps) {
+  return (
+    <>
+      {prevHref ? (
+        <Link href={prevHref} className={linkClassName}>
+          Previous
+        </Link>
+      ) : (
+        <span className={disabledClassName}>Previous</span>
+      )}
+      {nextHref ? (
+        <Link href={nextHref} className={linkClassName}>
+          Next
+        </Link>
+      ) : (
+        <span className={disabledClassName}>Next</span>
+      )}
+    </>
+  );
+}
+
 export async function LogsSection({
   envFilter,
   endpointFilter,
@@ -48,24 +106,16 @@ export async function LogsSection({
   resolvedSearchParams,
   tableDensityClass,
   truncPrimary,
-}: {
-  envFilter?: string;
-  endpointFilter?: string;
-  daysFilter?: number;
-  q: string;
-  page: number;
-  resolvedSearchParams: SearchParams;
-  tableDensityClass: string;
-  truncPrimary: number;
-}) {
+}: LogsSectionProps) {
   try {
     const offset = (page - 1) * LOGS_PAGE_SIZE;
+    const query = normalizeQuery(q);
 
     const logsMaybeMore = await fetchLogs({
       envFilter,
       endpointFilter,
       daysFilter,
-      q: q.length ? q : undefined,
+      q: query,
 
       gr_status: resolvedSearchParams.gr_status,
       gr_reason: resolvedSearchParams.gr_reason,
@@ -96,60 +146,8 @@ export async function LogsSection({
     }
 
     const qaOpenFlagCount = await getOpenQaFlagCount();
-    const qaCountLabel = qaOpenFlagCount > 0 ? ` (${qaOpenFlagCount})` : "";
-
-    const prevHref =
-      page > 1
-        ? buildInsightsHref({
-            env: resolvedSearchParams.env,
-            endpoint: resolvedSearchParams.endpoint,
-            days: resolvedSearchParams.days,
-            q: q.length ? q : undefined,
-            page: String(page - 1),
-            density: resolvedSearchParams.density,
-            view: resolvedSearchParams.view,
-            gr_status: resolvedSearchParams.gr_status,
-            gr_reason: resolvedSearchParams.gr_reason,
-            low_conf: resolvedSearchParams.low_conf,
-            score: resolvedSearchParams.score,
-            archetype: resolvedSearchParams.archetype,
-            model: resolvedSearchParams.model,
-            gateway: resolvedSearchParams.gateway,
-            qa: resolvedSearchParams.qa,
-            winner_changed: resolvedSearchParams.winner_changed,
-            margin_lt: resolvedSearchParams.margin_lt,
-            score_archetype: resolvedSearchParams.score_archetype,
-            min: resolvedSearchParams.min,
-            rerank: resolvedSearchParams.rerank,
-            snapped: resolvedSearchParams.snapped,
-          })
-        : null;
-
-    const nextHref = hasNextPage
-      ? buildInsightsHref({
-          env: resolvedSearchParams.env,
-          endpoint: resolvedSearchParams.endpoint,
-          days: resolvedSearchParams.days,
-          q: q.length ? q : undefined,
-          page: String(page + 1),
-          density: resolvedSearchParams.density,
-          view: resolvedSearchParams.view,
-          gr_status: resolvedSearchParams.gr_status,
-          gr_reason: resolvedSearchParams.gr_reason,
-          low_conf: resolvedSearchParams.low_conf,
-          score: resolvedSearchParams.score,
-          archetype: resolvedSearchParams.archetype,
-          model: resolvedSearchParams.model,
-          gateway: resolvedSearchParams.gateway,
-          qa: resolvedSearchParams.qa,
-          winner_changed: resolvedSearchParams.winner_changed,
-          margin_lt: resolvedSearchParams.margin_lt,
-          score_archetype: resolvedSearchParams.score_archetype,
-          min: resolvedSearchParams.min,
-          rerank: resolvedSearchParams.rerank,
-          snapped: resolvedSearchParams.snapped,
-        })
-      : null;
+    const qaCountLabel = formatQaCountLabel(qaOpenFlagCount);
+    const { prevHref, nextHref } = buildPaginationHrefs(resolvedSearchParams, query, page, hasNextPage);
 
     return (
       <TableShell
@@ -190,21 +188,12 @@ export async function LogsSection({
           </div>
 
           <div className="flex items-center gap-2">
-            {prevHref ? (
-              <Link href={prevHref} className="rounded-md border px-2 py-1 text-xs hover:bg-muted">
-                Previous
-              </Link>
-            ) : (
-              <span className="rounded-md border px-2 py-1 text-xs text-muted-foreground opacity-60">Previous</span>
-            )}
-
-            {nextHref ? (
-              <Link href={nextHref} className="rounded-md border px-2 py-1 text-xs hover:bg-muted">
-                Next
-              </Link>
-            ) : (
-              <span className="rounded-md border px-2 py-1 text-xs text-muted-foreground opacity-60">Next</span>
-            )}
+            <PaginationLinks
+              prevHref={prevHref}
+              nextHref={nextHref}
+              linkClassName="rounded-md border px-2 py-1 text-xs hover:bg-muted"
+              disabledClassName="rounded-md border px-2 py-1 text-xs text-muted-foreground opacity-60"
+            />
 
             <Link href="/admin/pgpt-insights/qa" className="ml-2 text-xs text-blue-600 underline">
               QA Review{qaCountLabel}
@@ -223,20 +212,12 @@ export async function LogsSection({
             Showing <span className="font-medium text-foreground">{logsWithQa.length}</span> results on this page.
           </div>
           <div className="flex items-center gap-2">
-            {prevHref ? (
-              <Link href={prevHref} className="rounded-md border px-2 py-1 hover:bg-muted">
-                Previous
-              </Link>
-            ) : (
-              <span className="rounded-md border px-2 py-1 opacity-60">Previous</span>
-            )}
-            {nextHref ? (
-              <Link href={nextHref} className="rounded-md border px-2 py-1 hover:bg-muted">
-                Next
-              </Link>
-            ) : (
-              <span className="rounded-md border px-2 py-1 opacity-60">Next</span>
-            )}
+            <PaginationLinks
+              prevHref={prevHref}
+              nextHref={nextHref}
+              linkClassName="rounded-md border px-2 py-1 hover:bg-muted"
+              disabledClassName="rounded-md border px-2 py-1 opacity-60"
+            />
           </div>
         </div>
       </TableShell>
