@@ -13,7 +13,7 @@ import type { PerazziAssistantRequest, PerazziMode } from "@/types/perazzi-assis
 
 const VALIDATION_SOURCE =
   "PGPT/V2/AI-Docs/P2/Validation.md";
-const PROJECT_ROOT = process.cwd();
+const PROJECT_ROOT = path.resolve(process.cwd());
 
 type RetrievalCase = {
   id: string;
@@ -215,20 +215,24 @@ function parseOptionalNumber(value: unknown, fallback: number, label: string): n
   return parseNumber(value, fallback, label);
 }
 
+function ensurePathWithinBase(basePath: string, targetPath: string, label: string): string {
+  const normalizedBase = path.resolve(basePath);
+  const normalizedTarget = path.normalize(targetPath);
+  const relative = path.relative(normalizedBase, normalizedTarget);
+  if (relative.startsWith("..") || path.isAbsolute(relative)) {
+    fail(`${label} must resolve within ${normalizedBase}.`);
+  }
+  return normalizedTarget;
+}
+
 function resolveCliPath(value: unknown, label: string): string {
   const normalized = Array.isArray(value) ? value.at(-1) : value;
   if (typeof normalized !== "string" || !normalized.trim()) {
     fail(`${label} must be a non-empty string.`);
   }
   const input = normalized.trim();
-  const resolved = path.resolve(input);
-  if (!path.isAbsolute(input)) {
-    const relative = path.relative(PROJECT_ROOT, resolved);
-    if (relative.startsWith("..") || path.isAbsolute(relative)) {
-      fail(`${label} must resolve within ${PROJECT_ROOT}. Use an absolute path to target elsewhere.`);
-    }
-  }
-  return resolved;
+  const resolved = path.resolve(PROJECT_ROOT, input);
+  return ensurePathWithinBase(PROJECT_ROOT, resolved, label);
 }
 
 function formatScore(value: number | null | undefined): string {
@@ -288,8 +292,11 @@ function ensureEmbeddingVector(value: number[] | null, id: string): number[] {
 }
 
 async function loadEmbeddingCache(filePath: string): Promise<EmbeddingCache> {
-  // nosemgrep: codacy.tools-configs.javascript_pathtraversal_rule-non-literal-fs-filename -- filePath is resolved from CLI input and constrained for relative paths.
-  const raw = await fs.readFile(filePath, "utf-8");
+  const safePath = ensurePathWithinBase(PROJECT_ROOT, filePath, "--embedding-cache");
+  const raw = await fs.readFile(
+    safePath,
+    "utf-8",
+  ); // nosemgrep: codacy.tools-configs.javascript_pathtraversal_rule-non-literal-fs-filename -- Path is normalized and constrained within PROJECT_ROOT.
   return JSON.parse(raw) as EmbeddingCache;
 }
 
@@ -391,8 +398,8 @@ Options:
   --candidate-limit <number>   Candidate pool size when rerank is enabled
   --rerank on|off               Enable reranking (default: env PERAZZI_ENABLE_RERANK or on)
   --min-hits <number>           Minimum expected-family hits to PASS (default: min(2, expected count))
-  --json <path>                 Output JSON report path (default: retrieval-report.json; relative stays in cwd)
-  --embedding-cache <path>      JSON file with precomputed embeddings (offline mode; relative stays in cwd)
+  --json <path>                 Output JSON report path (default: retrieval-report.json; must stay within project root)
+  --embedding-cache <path>      JSON file with precomputed embeddings (offline mode; must stay within project root)
   --help                        Show this help
 
 Embedding cache formats:
@@ -639,13 +646,18 @@ async function main() {
     results,
   };
 
-  // nosemgrep: codacy.tools-configs.javascript_pathtraversal_rule-non-literal-fs-filename -- reportPath is resolved from CLI input and constrained for relative paths.
-  await fs.mkdir(path.dirname(options.reportPath), { recursive: true });
-  // nosemgrep: codacy.tools-configs.javascript_pathtraversal_rule-non-literal-fs-filename -- reportPath is resolved from CLI input and constrained for relative paths.
-  await fs.writeFile(options.reportPath, `${JSON.stringify(report, null, 2)}\n`, "utf-8");
+  const safeReportPath = ensurePathWithinBase(PROJECT_ROOT, options.reportPath, "--json");
+  await fs.mkdir(path.dirname(safeReportPath), {
+    recursive: true,
+  }); // nosemgrep: codacy.tools-configs.javascript_pathtraversal_rule-non-literal-fs-filename -- Path is normalized and constrained within PROJECT_ROOT.
+  await fs.writeFile(
+    safeReportPath,
+    `${JSON.stringify(report, null, 2)}\n`,
+    "utf-8",
+  ); // nosemgrep: codacy.tools-configs.javascript_pathtraversal_rule-non-literal-fs-filename -- Path is normalized and constrained within PROJECT_ROOT.
 
   console.log("\n---");
-  console.log(`Report: ${options.reportPath}`);
+  console.log(`Report: ${safeReportPath}`);
   console.log(`Summary: ${passed}/${results.length} passed`);
 }
 
