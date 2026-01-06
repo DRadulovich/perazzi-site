@@ -13,7 +13,7 @@ declare global {
 }
 
 export const pool =
-  global.__perazziPgPool ??
+  globalThis.__perazziPgPool ??
   new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: getPgSslOptions(),
@@ -25,5 +25,5 @@ logTlsDiagForDb("pg.shared.pool", process.env.DATABASE_URL, sharedSslMode, {
 });
 
 if (process.env.NODE_ENV !== "production") {
-  global.__perazziPgPool = pool;
+  globalThis.__perazziPgPool = pool;
 }
