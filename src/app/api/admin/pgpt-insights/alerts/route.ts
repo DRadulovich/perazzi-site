@@ -39,11 +39,12 @@ export async function GET(request: Request) {
       send({ type: "connected", at: new Date().toISOString() });
 
       const onNotification = (msg: { payload?: string | null }) => {
-        let payload: unknown = msg.payload ?? null;
+        const rawPayload = msg.payload ?? null;
+        let payload: unknown;
         try {
-          payload = msg.payload ? JSON.parse(msg.payload) : msg.payload;
+          payload = rawPayload ? JSON.parse(rawPayload) : rawPayload;
         } catch {
-          payload = { message: msg.payload };
+          payload = { message: rawPayload };
         }
 
         send({
