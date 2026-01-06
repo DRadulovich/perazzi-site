@@ -21,7 +21,7 @@ type HeatMapGridProps = {
   className?: string;
 };
 
-export function HeatMapGrid({ title, subtitle, columns, rows, density, className }: HeatMapGridProps) {
+export function HeatMapGrid({ title, subtitle, columns, rows, density, className }: Readonly<HeatMapGridProps>) {
   return (
     <HeatmapMatrix
       title={title}

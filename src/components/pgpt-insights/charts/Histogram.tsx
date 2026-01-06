@@ -17,7 +17,7 @@ function formatValue(n: number, formatType?: HistogramProps["formatType"]) {
   return `${n}`;
 }
 
-export function Histogram({ title, values, bins, className, subtitle, formatType = "number" }: HistogramProps) {
+export function Histogram({ title, values, bins, className, subtitle, formatType = "number" }: Readonly<HistogramProps>) {
   if (!values.length) {
     return (
       <div className={cn("rounded-2xl border border-border bg-card p-4 text-xs text-muted-foreground", className)}>

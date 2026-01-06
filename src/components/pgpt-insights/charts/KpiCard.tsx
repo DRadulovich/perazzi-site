@@ -19,7 +19,7 @@ function toneClass(tone?: KpiCardProps["tone"]) {
   return "text-slate-700 border-border/60 bg-background";
 }
 
-export function KpiCard({ title, value, deltaLabel, trend, subtitle, tone = "default", density = "comfortable" }: KpiCardProps) {
+export function KpiCard({ title, value, deltaLabel, trend, subtitle, tone = "default", density = "comfortable" }: Readonly<KpiCardProps>) {
   return (
     <div className="flex h-full flex-col rounded-2xl border border-border bg-card shadow-sm p-4 sm:p-5 space-y-3">
       <div className="flex items-start justify-between gap-3">
