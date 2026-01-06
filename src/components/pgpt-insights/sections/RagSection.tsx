@@ -23,13 +23,13 @@ export async function RagSection({
   tableDensityClass,
   detailsDefaultOpen,
   truncSecondary,
-}: {
+}: Readonly<{
   envFilter?: string;
   daysFilter?: number;
   tableDensityClass: string;
   detailsDefaultOpen: boolean;
   truncSecondary: number;
-}) {
+}>) {
   try {
     const [ragSummary, lowScoreLogs, topChunks] = await Promise.all([
       getRagSummary(envFilter, daysFilter),
@@ -68,9 +68,7 @@ export async function RagSection({
         }
         contentClassName="space-y-3"
       >
-        {!ragSummary ? (
-          <p className="text-xs text-muted-foreground">No maxScore data yet for the current filters.</p>
-        ) : (
+        {ragSummary ? (
           <div className="flex flex-wrap gap-3 text-xs">
             <div>Avg maxScore: {formatScore(ragSummary.avg_max_score)}</div>
             <div>Min maxScore: {formatScore(ragSummary.min_max_score)}</div>
@@ -80,6 +78,8 @@ export async function RagSection({
               Low-score (&lt; {ragSummary.threshold}): {ragSummary.low_count}
             </div>
           </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">No maxScore data yet for the current filters.</p>
         )}
 
         {lowScoreLogs.length > 0 && (
@@ -99,7 +99,7 @@ export async function RagSection({
                   <col className="w-[220px]" />
                   <col className="w-[100px]" />
                   <col className="w-[220px]" />
-                  <col className="w-[320px]" />
+                  <col className="w-80" />
                   <col className="w-[360px]" />
                   <col className="w-[120px]" />
                 </colgroup>
@@ -110,7 +110,7 @@ export async function RagSection({
               <RowLimiter colSpan={6} defaultVisible={10} label="logs">
                 {lowScoreLogs.map((log) => (
                   <tr key={`low-${log.id}`} className="border-l-[5px] border-yellow-500/70">
-                    <td className="whitespace-normal break-words leading-snug">
+                    <td className="whitespace-normal wrap-break-word leading-snug">
                       <span title={String(log.created_at)} className="tabular-nums">
                         {formatTimestampShort(String(log.created_at))}
                       </span>
@@ -184,7 +184,7 @@ export async function RagSection({
                   const maxHits = Math.max(...topChunks.map((c) => c.hits), 1);
                   return topChunks.map((chunk) => (
                     <tr key={chunk.chunk_id}>
-                      <td className="break-words">
+                      <td className="wrap-break-word">
                         <MonoCell>{chunk.chunk_id}</MonoCell>
                       </td>
                       <td>

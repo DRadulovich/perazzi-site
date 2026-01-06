@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Chevron } from "../Chevron";
 import { SectionHeader } from "../SectionHeader";
 
-type TableShellProps = {
+type TableShellProps = Readonly<{
   id?: string;
   title: string;
   description?: string;
@@ -16,7 +16,7 @@ type TableShellProps = {
   contentClassName?: string;
   collapsible?: boolean;
   defaultOpen?: boolean;
-};
+}>;
 
 export function TableShell({
   id,
@@ -41,7 +41,7 @@ export function TableShell({
       <section
         id={id}
         className={cn(
-          "rounded-2xl border border-border/80 bg-gradient-to-b from-card via-card/80 to-muted/20 shadow-lg",
+          "rounded-2xl border border-border/80 bg-linear-to-b from-card via-card/80 to-muted/20 shadow-lg",
           className,
         )}
       >
@@ -64,7 +64,7 @@ export function TableShell({
     <section
       id={id}
       className={cn(
-        "rounded-2xl border border-border/80 bg-gradient-to-b from-card via-card/80 to-muted/20 shadow-lg",
+        "rounded-2xl border border-border/80 bg-linear-to-b from-card via-card/80 to-muted/20 shadow-lg",
         className,
       )}
     >

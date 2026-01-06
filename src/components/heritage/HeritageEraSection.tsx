@@ -210,7 +210,7 @@ export function HeritageEraSection({
 
       <div
         className={cn(
-          "relative sticky flex items-center top-offset-dynamic",
+          "sticky flex items-center top-offset-dynamic",
           isShortViewport ? "h-[85vh]" : "h-screen",
         )}
         style={{ "--top-offset": `${headerOffset ?? 0}px` }}

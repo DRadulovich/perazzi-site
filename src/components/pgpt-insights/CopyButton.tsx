@@ -9,14 +9,14 @@ export function CopyButton({
   className,
   disabled = false,
   title,
-}: {
+}: Readonly<{
   value: string;
   label?: string;
   ariaLabel?: string;
   className?: string;
   disabled?: boolean;
   title?: string;
-}) {
+}>) {
   const [copied, setCopied] = useState(false);
 
   async function onCopy() {
@@ -24,7 +24,7 @@ export function CopyButton({
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
-      window.setTimeout(() => setCopied(false), 900);
+      globalThis.setTimeout(() => setCopied(false), 900);
     } catch {
       // ignore
     }
