@@ -223,22 +223,6 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
     });
   };
 
-  const handleCardMouseMove = useCallback((event: React.MouseEvent<HTMLElement>) => {
-    const target = event.currentTarget as HTMLElement;
-    const rect = target.getBoundingClientRect();
-    const offsetX = event.clientX - rect.left;
-    const offsetY = event.clientY - rect.top;
-    const moveX = ((offsetX / rect.width) - 0.5) * 20;
-    const moveY = ((offsetY / rect.height) - 0.5) * 12;
-    target.style.setProperty("--parallax-x", `${moveX}px`);
-    target.style.setProperty("--parallax-y", `${moveY}px`);
-  }, []);
-
-  const handleCardMouseLeave = useCallback((event: React.MouseEvent<HTMLElement>) => {
-    const target = event.currentTarget as HTMLElement;
-    target.style.setProperty("--parallax-x", "0px");
-    target.style.setProperty("--parallax-y", "0px");
-  }, []);
 
   const hasActiveFilters = useMemo(
     () =>
@@ -362,8 +346,6 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
             <article
               key={model._id}
               className={CARD_SHELL_CLASS}
-              onMouseMove={handleCardMouseMove}
-              onMouseLeave={handleCardMouseLeave}
             >
               <div className="card-media relative aspect-16/10 w-full bg-perazzi-white">
                 {cardImageUrl ? (
@@ -372,7 +354,7 @@ export function ModelSearchTable({ models }: ModelShowcaseProps) {
                     alt={model.imageAlt || model.name}
                     fill
                     sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
-                    className="object-contain bg-perazzi-white transition-transform duration-500 parallax-image"
+                    className="object-contain bg-perazzi-white"
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center bg-card text-ink-muted">
