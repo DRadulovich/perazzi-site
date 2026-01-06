@@ -2,22 +2,26 @@ import { errorMessage } from "@/lib/pgpt-insights/error-utils";
 import { recordInsightsError } from "@/lib/pgpt-insights/insights-errors";
 import { SectionHeader } from "../SectionHeader";
 
-export function SectionError({
-  id,
-  title,
-  error,
-}: {
+type SectionErrorProps = Readonly<{
   id?: string;
   title: string;
   error: unknown;
-}) {
+}>;
+
+type SectionSkeletonProps = Readonly<{
+  id?: string;
+  title: string;
+  lines?: number;
+}>;
+
+export function SectionError({ id, title, error }: SectionErrorProps) {
   const msg = errorMessage(error);
   recordInsightsError({ sectionId: id, sectionTitle: title, error });
 
   return (
     <section
       id={id}
-      className="rounded-2xl border border-border/80 bg-gradient-to-b from-card via-card/80 to-muted/20 shadow-lg"
+      className="rounded-2xl border border-border/80 bg-linear-to-b from-card via-card/80 to-muted/20 shadow-lg"
     >
       <SectionHeader
         title={title}
@@ -42,15 +46,13 @@ export function SectionSkeleton({
   id,
   title,
   lines = 4,
-}: {
-  id?: string;
-  title: string;
-  lines?: number;
-}) {
+}: SectionSkeletonProps) {
+  const lineKeys = Array.from({ length: lines }, (_, idx) => `line-${idx + 1}`);
+
   return (
     <section
       id={id}
-      className="rounded-2xl border border-border/80 bg-gradient-to-b from-card via-card/80 to-muted/20 shadow-lg"
+      className="rounded-2xl border border-border/80 bg-linear-to-b from-card via-card/80 to-muted/20 shadow-lg"
     >
       <SectionHeader
         title={title}
@@ -64,8 +66,8 @@ export function SectionSkeleton({
 
       <div className="border-t border-border/80 bg-card/70 px-4 pb-4 pt-3 sm:px-6 sm:pb-6">
         <div className="animate-pulse space-y-2">
-          {Array.from({ length: lines }).map((_, i) => (
-            <div key={i} className="h-4 w-full rounded bg-muted/30" />
+          {lineKeys.map((lineKey) => (
+            <div key={lineKey} className="h-4 w-full rounded bg-muted/30" />
           ))}
           <div className="h-24 w-full rounded bg-muted/20" />
         </div>
