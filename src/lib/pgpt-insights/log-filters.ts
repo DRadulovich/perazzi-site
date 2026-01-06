@@ -162,13 +162,13 @@ const GUARDRAIL_STATUS_CONDITIONS: Record<Exclude<GuardrailStatusFilter, "any">,
   not_blocked: `(l.metadata->>'guardrailStatus' is null OR l.metadata->>'guardrailStatus' <> 'blocked')`,
 };
 
-const SCORE_PRESET_CONDITIONS: Record<Exclude<ScorePreset, "any">, string> = {
-  "lt0.25": `(l.metadata->>'maxScore')::float < 0.25`,
-  "lt0.5": `(l.metadata->>'maxScore')::float < 0.5`,
-  "0.25-0.5": `(l.metadata->>'maxScore')::float >= 0.25 and (l.metadata->>'maxScore')::float < 0.5`,
-  "0.5-0.75": `(l.metadata->>'maxScore')::float >= 0.5 and (l.metadata->>'maxScore')::float < 0.75`,
-  "gte0.75": `(l.metadata->>'maxScore')::float >= 0.75`,
-};
+const SCORE_PRESET_CONDITIONS = new Map<Exclude<ScorePreset, "any">, string>([
+  ["lt0.25", `(l.metadata->>'maxScore')::float < 0.25`],
+  ["lt0.5", `(l.metadata->>'maxScore')::float < 0.5`],
+  ["0.25-0.5", `(l.metadata->>'maxScore')::float >= 0.25 and (l.metadata->>'maxScore')::float < 0.5`],
+  ["0.5-0.75", `(l.metadata->>'maxScore')::float >= 0.5 and (l.metadata->>'maxScore')::float < 0.75`],
+  ["gte0.75", `(l.metadata->>'maxScore')::float >= 0.75`],
+]);
 
 const QA_CONDITIONS: Record<Exclude<QaFilter, "any">, string> = {
   open: `qf.qa_flag_id is not null and qf.qa_flag_status = 'open'`,
@@ -232,7 +232,10 @@ function addConfidenceFilters(state: LogsQueryState, filters: LogsFilters): void
 
 function addScorePresetFilters(state: LogsQueryState, filters: LogsFilters): void {
   if (filters.score !== "any") {
-    state.conditions.push(`l.metadata->>'maxScore' is not null`, SCORE_PRESET_CONDITIONS[filters.score]);
+    const condition = SCORE_PRESET_CONDITIONS.get(filters.score);
+    if (condition) {
+      state.conditions.push(`l.metadata->>'maxScore' is not null`, condition);
+    }
   }
 }
 
