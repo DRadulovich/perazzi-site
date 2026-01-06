@@ -22,18 +22,18 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 const STORAGE_KEY = "theme";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 
-type ThemeProviderProps = {
+type ThemeProviderProps = Readonly<{
   children: ReactNode;
   initialTheme: ThemeMode;
   forcedTheme?: ThemeMode;
-};
+}>;
 
 export function ThemeProvider({
   children,
   initialTheme,
   forcedTheme,
 }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<ThemeMode>(
+  const [theme, setTheme] = useState<ThemeMode>(
     forcedTheme ?? initialTheme,
   );
 
@@ -41,17 +41,19 @@ export function ThemeProvider({
     (nextTheme: ThemeMode, persist = true) => {
       const resolvedTheme = forcedTheme ?? nextTheme;
 
-      setThemeState(resolvedTheme);
+      setTheme(resolvedTheme);
 
-      if (typeof document !== "undefined") {
-        document.documentElement.dataset.theme = resolvedTheme;
+      if (globalThis.document !== undefined) {
+        globalThis.document.documentElement.dataset.theme = resolvedTheme;
       }
 
       // If we're in a forced theme subtree, don't write to storage/cookies.
-      if (!forcedTheme && persist && typeof window !== "undefined") {
+      if (!forcedTheme && persist && globalThis.window !== undefined) {
         try {
-          window.localStorage.setItem(STORAGE_KEY, resolvedTheme);
-          document.cookie = `theme=${resolvedTheme}; path=/; max-age=${COOKIE_MAX_AGE}`;
+          globalThis.window.localStorage.setItem(STORAGE_KEY, resolvedTheme);
+          if (globalThis.document !== undefined) {
+            globalThis.document.cookie = `theme=${resolvedTheme}; path=/; max-age=${COOKIE_MAX_AGE}`;
+          }
         } catch {
           // swallow storage errors (e.g., private mode)
         }
@@ -61,18 +63,18 @@ export function ThemeProvider({
   );
 
   useEffect(() => {
-    if (typeof window === "undefined") {
+    if (globalThis.window === undefined) {
       return;
     }
 
-    const raf = window.requestAnimationFrame(() => {
+    const raf = globalThis.window.requestAnimationFrame(() => {
       // If a forced theme is provided, always use that and bail.
       if (forcedTheme) {
         applyTheme(forcedTheme, false);
         return;
       }
 
-      const stored = window.localStorage.getItem(STORAGE_KEY);
+      const stored = globalThis.window.localStorage.getItem(STORAGE_KEY);
 
       if (stored === "light" || stored === "dark") {
         applyTheme(stored, false);
@@ -81,7 +83,9 @@ export function ThemeProvider({
       }
     });
 
-    return () => { window.cancelAnimationFrame(raf); };
+    return () => {
+      globalThis.window.cancelAnimationFrame(raf);
+    };
   }, [applyTheme, forcedTheme, initialTheme]);
 
   const value = useMemo(
