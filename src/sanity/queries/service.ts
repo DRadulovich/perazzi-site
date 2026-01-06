@@ -313,10 +313,10 @@ export async function getRecommendedServiceCenters(): Promise<RecommendedService
           Boolean(center._id && center?.centerName && center?.address && center?.city),
       )
       .map((center) => ({
-        id: center._id as string,
-        centerName: center.centerName as string,
-        address: center.address as string,
-        city: center.city as string,
+        id: center._id,
+        centerName: center.centerName,
+        address: center.address,
+        city: center.city,
         state: center.state ?? undefined,
         phone: center.phone ?? undefined,
         contact: center.contact ?? undefined,
