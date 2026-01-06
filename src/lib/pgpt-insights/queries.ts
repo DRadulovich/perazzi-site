@@ -202,7 +202,7 @@ export async function fetchRagSummary(envFilter?: string, daysFilter?: number): 
     params.push(envFilter);
     idx += 1;
   }
-  appendDaysFilter({ conditions, params, idx, days: daysFilter });
+  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const thresholdParamIndex = idx;
   params.push(threshold);
@@ -257,7 +257,7 @@ export async function fetchLowScoreLogs(
     params.push(envFilter);
     idx += 1;
   }
-  appendDaysFilter({ conditions, params, idx, days: daysFilter });
+  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const thresholdParamIndex = idx;
   params.push(threshold);
@@ -332,7 +332,7 @@ export async function fetchGuardrailStats(envFilter?: string, daysFilter?: numbe
     params.push(envFilter);
     idx += 1;
   }
-  appendDaysFilter({ conditions, params, idx, days: daysFilter });
+  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const query = `
     select
@@ -362,7 +362,7 @@ export async function fetchGuardrailByArchetype(envFilter?: string, daysFilter?:
     params.push(envFilter);
     idx += 1;
   }
-  appendDaysFilter({ conditions, params, idx, days: daysFilter });
+  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const query = `
     select
@@ -402,7 +402,7 @@ export async function fetchRecentGuardrailBlocks(
     params.push(envFilter);
     idx += 1;
   }
-  appendDaysFilter({ conditions, params, idx, days: daysFilter });
+  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const limitParamIndex = idx;
   params.push(limit);
