@@ -155,6 +155,7 @@ export function DisciplineRail({
   const [modalRoot, setModalRoot] = useState<HTMLElement | null>(null);
   const modelRequestRef = useRef<AbortController | null>(null);
   const modalTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
+  const preloadedImagesRef = useRef<Set<string>>(new Set());
   const railKey = enableTitleReveal ? "title-reveal" : "always-reveal";
   const modalExitMs = reduceMotion ? 0 : choreoDurations.short;
   const overlayPresenceVars = buildChoreoPresenceVars({
@@ -179,6 +180,24 @@ export function DisciplineRail({
   useEffect(() => {
     setIsCollapsed(enableTitleReveal);
   }, [enableTitleReveal]);
+
+  useEffect(() => {
+    if (!isHydrated || globalThis.Image === undefined) return;
+    const urls = new Set<string>();
+    disciplines.forEach((discipline) => {
+      if (discipline.hero?.url) urls.add(discipline.hero.url);
+      discipline.popularModels?.forEach((model) => {
+        if (model.hero?.url) urls.add(model.hero.url);
+      });
+    });
+    urls.forEach((url) => {
+      if (preloadedImagesRef.current.has(url)) return;
+      const image = new globalThis.Image();
+      image.decoding = "async";
+      image.src = url;
+      preloadedImagesRef.current.add(url);
+    });
+  }, [disciplines, isHydrated]);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -751,6 +770,9 @@ function DisciplineCard({
     `shotguns_discipline_card_impression:${discipline.id}`,
     { threshold: 0.4 },
   );
+  const [loadedHeroes, setLoadedHeroes] = useState<Record<string, boolean>>({});
+  const [loadedModels, setLoadedModels] = useState<Record<string, boolean>>({});
+  const heroLoaded = loadedHeroes[discipline.id] ?? false;
   let overviewContent: ReactNode = null;
 
   if (discipline.overviewPortableText?.length) {
@@ -784,14 +806,31 @@ function DisciplineCard({
         scaleFrom={1.02}
         itemAsChild
       >
-        <div className="card-media relative aspect-30/11 w-full rounded-t-3xl bg-(--color-canvas)">
+        <div className="card-media relative aspect-30/11 w-full overflow-hidden rounded-t-3xl bg-(--color-canvas)">
+          <div
+            className={cn(
+              "absolute inset-0 bg-linear-to-br from-perazzi-black/20 via-transparent to-perazzi-red/20 transition-opacity duration-700 ease-out",
+              heroLoaded ? "opacity-0" : "opacity-100",
+            )}
+            aria-hidden
+          />
           {discipline.hero ? (
             <Image
               src={discipline.hero.url}
               alt={discipline.hero.alt}
               fill
-              className="object-cover object-center"
+              className={cn(
+                "object-cover object-center transition-opacity duration-700 ease-out",
+                heroLoaded ? "opacity-100" : "opacity-0",
+              )}
               sizes="(min-width: 1024px) 33vw, 100vw"
+              priority
+              loading="eager"
+              onLoadingComplete={() => {
+                setLoadedHeroes((prev) => (
+                  prev[discipline.id] ? prev : { ...prev, [discipline.id]: true }
+                ));
+              }}
             />
           ) : null}
         </div>
@@ -852,33 +891,59 @@ function DisciplineCard({
               className="flex flex-col gap-3"
               itemAsChild
             >
-              {discipline.popularModels.map((model) => (
-                <button
-                  type="button"
-                  key={model.idLegacy ?? model.id}
-                  onClick={() => { onSelectModel(model.idLegacy ?? model.id); }}
-                  className="group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card/60 shadow-soft backdrop-blur-sm hover:border-ink/20 hover:bg-card/85 focus-ring"
-                >
-                  {model.hero ? (
-                    <Image
-                      src={model.hero.url}
-                      alt={model.hero.alt}
-                      width={800}
-                      height={600}
-                      className="w-full object-contain"
-                      sizes="(min-width: 1024px) 320px, 100vw"
-                    />
-                  ) : null}
-                  <div className="pointer-events-none absolute inset-0 bg-perazzi-black/75" />
-                  <span
-                    className={cn(
-                      "absolute inset-0 flex items-center justify-center p-2 text-center type-card-title text-white text-xl sm:text-2xl lg:text-3xl group-hover:opacity-0",
-                    )}
+              {discipline.popularModels.map((model) => {
+                const modelId = model.idLegacy ?? model.id;
+                const modelLoaded = loadedModels[modelId];
+                const modelAspectRatio = model.hero?.aspectRatio ?? 4 / 3;
+
+                return (
+                  <button
+                    type="button"
+                    key={modelId}
+                    onClick={() => { onSelectModel(modelId); }}
+                    className="group relative w-full overflow-hidden rounded-2xl border border-border/70 bg-card/60 shadow-soft backdrop-blur-sm hover:border-ink/20 hover:bg-card/85 focus-ring"
                   >
-                    {loadingModelId === (model.idLegacy ?? model.id) ? "Loading…" : model.name || "Untitled"}
-                  </span>
-                </button>
-              ))}
+                    <div
+                      className="relative w-full bg-(--color-canvas)"
+                      style={{ aspectRatio: modelAspectRatio }}
+                    >
+                      <div
+                        className={cn(
+                          "absolute inset-0 bg-linear-to-br from-perazzi-black/20 via-transparent to-perazzi-red/20 transition-opacity duration-700 ease-out",
+                          modelLoaded ? "opacity-0" : "opacity-100",
+                        )}
+                        aria-hidden
+                      />
+                      {model.hero ? (
+                        <Image
+                          src={model.hero.url}
+                          alt={model.hero.alt}
+                          fill
+                          className={cn(
+                            "object-contain transition-opacity duration-700 ease-out",
+                            modelLoaded ? "opacity-100" : "opacity-0",
+                          )}
+                          sizes="(min-width: 1024px) 320px, 100vw"
+                          loading="eager"
+                          onLoadingComplete={() => {
+                            setLoadedModels((prev) => (
+                              prev[modelId] ? prev : { ...prev, [modelId]: true }
+                            ));
+                          }}
+                        />
+                      ) : null}
+                    </div>
+                    <div className="pointer-events-none absolute inset-0 bg-perazzi-black/75" />
+                    <span
+                      className={cn(
+                        "absolute inset-0 flex items-center justify-center p-2 text-center type-card-title text-white text-xl sm:text-2xl lg:text-3xl group-hover:opacity-0",
+                      )}
+                    >
+                      {loadingModelId === modelId ? "Loading…" : model.name || "Untitled"}
+                    </span>
+                  </button>
+                );
+              })}
             </ChoreoGroup>
           </div>
         ) : null}
