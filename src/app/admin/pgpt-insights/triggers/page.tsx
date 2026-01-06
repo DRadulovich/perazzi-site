@@ -83,7 +83,7 @@ export default async function TriggerTermsPage({
                 <tbody>
                   {tokens.map((row) => (
                     <tr key={row.token} className="border-b border-border/50">
-                      <td className="px-3 py-2 max-w-[160px] truncate" title={row.token}>{row.token}</td>
+                      <td className="px-3 py-2 max-w-40 truncate" title={row.token}>{row.token}</td>
                       <td className="px-3 py-2 text-right tabular-nums">{formatCompactNumber(row.hits)}</td>
                     </tr>
                   ))}

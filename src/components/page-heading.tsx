@@ -1,10 +1,10 @@
 import { Heading, Text } from "@/components/ui";
 
-type PageHeadingProps = {
+type PageHeadingProps = Readonly<{
   title: string;
   description?: string;
   kicker?: string;
-};
+}>;
 
 export function PageHeading({ title, description, kicker }: PageHeadingProps) {
   return (

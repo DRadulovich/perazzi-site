@@ -1,7 +1,7 @@
-type SkipToContentProps = {
+type SkipToContentProps = Readonly<{
   targetId?: string;
   label?: string;
-};
+}>;
 
 export function SkipToContent({
   targetId = "site-content",
