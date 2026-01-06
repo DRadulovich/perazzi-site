@@ -8,6 +8,12 @@ type ThemeToggleProps = {
   variant?: "default" | "inverted" | "ghost";
 } & ComponentProps<"button">;
 
+const ringByVariant = {
+  default: "focus-ring",
+  inverted: "focus-ring focus:ring-white/60",
+  ghost: "focus-ring focus:ring-white/50",
+} satisfies Record<NonNullable<ThemeToggleProps["variant"]>, string>;
+
 export function ThemeToggle({ variant = "default", className = "", ...props }: ThemeToggleProps) {
   const { theme, setTheme } = useTheme();
   const isDark = theme === "dark";
@@ -17,12 +23,7 @@ export function ThemeToggle({ variant = "default", className = "", ...props }: T
   };
 
   const padding = variant === "ghost" ? "p-0" : "p-0.5";
-  const ring =
-    variant === "inverted"
-      ? "focus-ring focus:ring-white/60"
-      : variant === "ghost"
-        ? "focus-ring focus:ring-white/50"
-        : "focus-ring";
+  const ring = ringByVariant[variant];
 
   return (
     <button
