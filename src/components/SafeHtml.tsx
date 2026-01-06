@@ -25,14 +25,14 @@ function InternalSafeHtml<E extends React.ElementType = "div">({
   as,
   ...rest
 }: SafeHtmlProps<E>) {
-  const Component = (as ?? "div") as React.ElementType;
+  const Component = as ?? "div";
 
   const sanitized = useMemo(() => {
     // Using DOMPurify default "html" profile for balanced strictness.
     return DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
   }, [html]);
 
-  {/* nosemgrep: SafeHtml centralizes sanitized HTML injection */}
+  // nosemgrep: SafeHtml centralizes sanitized HTML injection.
   return <Component {...rest} dangerouslySetInnerHTML={{ __html: sanitized }} />;
 }
 
