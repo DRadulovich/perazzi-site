@@ -13,6 +13,140 @@ type PlatformCardProps = {
   footerLabel?: string;
 };
 
+type PlatformCounterpartsProps = Pick<Platform, "fixedCounterpart" | "detachableCounterpart">;
+
+function PlatformWeightDistribution({ weightDistribution }: Readonly<{ weightDistribution?: string }>) {
+  if (!weightDistribution) {
+    return null;
+  }
+
+  return (
+    <Text size="caption" className="mt-2 text-ink-muted">
+      {weightDistribution}
+    </Text>
+  );
+}
+
+function PlatformDisciplines({ disciplines }: Readonly<{ disciplines: string[] }>) {
+  return (
+    <div className="mt-4">
+      <Text size="label-tight" className="text-ink-muted">
+        Disciplines
+      </Text>
+      <ul className="mt-2 mb-7 flex flex-wrap gap-2 type-body-sm text-ink">
+        {disciplines.map((discipline) => (
+          <li
+            key={discipline}
+            className="pill bg-(--surface-elevated)/85 type-label-tight text-ink"
+          >
+            {discipline}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function PlatformCounterparts({
+  fixedCounterpart,
+  detachableCounterpart,
+}: Readonly<PlatformCounterpartsProps>) {
+  if (!fixedCounterpart && !detachableCounterpart) {
+    return null;
+  }
+
+  return (
+    <>
+      {fixedCounterpart ? (
+        <Text size="sm" className="mt-4 type-label-tight text-ink-muted">
+          Fixed-trigger counterpart:{" "}
+          <span className="text-ink">{fixedCounterpart.name}</span>
+        </Text>
+      ) : null}
+      {detachableCounterpart ? (
+        <Text size="sm" className="mt-1 mb-7 type-label-tight text-ink-muted">
+          Detachable counterpart:{" "}
+          <span className="text-ink">{detachableCounterpart.name}</span>
+        </Text>
+      ) : null}
+    </>
+  );
+}
+
+function PlatformChampionDetails({ champion }: Readonly<{ champion?: Platform["champion"] }>) {
+  if (!champion) {
+    return null;
+  }
+
+  const { image, name, title, resume } = champion;
+  const altText = image?.alt ?? name ?? "Perazzi champion";
+
+  return (
+    <div className="flex items-center gap-3">
+      {image ? (
+        <div className="relative h-12 w-12 overflow-hidden rounded-full">
+          <Image
+            src={image.url}
+            alt={altText}
+            fill
+            sizes="48px"
+            className="object-cover"
+          />
+        </div>
+      ) : null}
+      <div>
+        {name ? (
+          <p className="type-body-title text-ink">
+            {name}
+          </p>
+        ) : null}
+        {title ? (
+          <Text size="sm" className="type-label-tight text-ink-muted" leading="normal">
+            {title}
+          </Text>
+        ) : null}
+        {resume?.winOne ? (
+          <Text size="sm" className="mt-1 text-ink-muted" leading="normal">
+            Win highlight: <span className="text-ink">{resume.winOne}</span>
+          </Text>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function PlatformHallmarkChampion({
+  hallmark,
+  champion,
+}: Readonly<{
+  hallmark: Platform["hallmark"];
+  champion?: Platform["champion"];
+}>) {
+  if (!hallmark && !champion) {
+    return null;
+  }
+
+  const showChampionDetails = Boolean(
+    champion?.name || champion?.image || champion?.resume?.winOne,
+  );
+
+  return (
+    <div className="mt-6 flex gap-3 md:hidden">
+      <span className="w-1 self-stretch rounded-full bg-perazzi-red/80" />
+      <div className="flex flex-col gap-4">
+        {hallmark ? (
+          <Text size="sm" className="text-ink-muted font-artisan text-lg" leading="normal">
+            {hallmark}
+          </Text>
+        ) : null}
+        {showChampionDetails ? (
+          <PlatformChampionDetails champion={champion} />
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export function PlatformCard({ platform, priority = false, footerLabel }: Readonly<PlatformCardProps>) {
   const analyticsRef = useAnalyticsObserver<HTMLAnchorElement>(
     `shotguns_platform_card_impression:${platform.id}`,
@@ -54,88 +188,16 @@ export function PlatformCard({ platform, priority = false, footerLabel }: Readon
         </Text>
       </header>
 
-      {platform.weightDistribution ? (
-        <Text
-          size="caption"
-          className="mt-2 text-ink-muted"
-        >
-          {platform.weightDistribution}
-        </Text>
-      ) : null}
+      <PlatformWeightDistribution weightDistribution={platform.weightDistribution} />
 
-      <div className="mt-4">
-        <Text size="label-tight" className="text-ink-muted">
-          Disciplines
-        </Text>
-        <ul className="mt-2 mb-7 flex flex-wrap gap-2 type-body-sm text-ink">
-          {platform.typicalDisciplines.map((discipline) => (
-            <li
-              key={discipline}
-              className="pill bg-(--surface-elevated)/85 type-label-tight text-ink"
-            >
-              {discipline}
-            </li>
-          ))}
-        </ul>
-      </div>
+      <PlatformDisciplines disciplines={platform.typicalDisciplines} />
 
-      {platform.fixedCounterpart ? (
-        <Text size="sm" className="mt-4 type-label-tight text-ink-muted">
-          Fixed-trigger counterpart:{" "}
-          <span className="text-ink">{platform.fixedCounterpart.name}</span>
-        </Text>
-      ) : null}
-      {platform.detachableCounterpart ? (
-        <Text size="sm" className="mt-1 mb-7 type-label-tight text-ink-muted">
-          Detachable counterpart:{" "}
-          <span className="text-ink">{platform.detachableCounterpart.name}</span>
-        </Text>
-      ) : null}
+      <PlatformCounterparts
+        fixedCounterpart={platform.fixedCounterpart}
+        detachableCounterpart={platform.detachableCounterpart}
+      />
 
-      {platform.hallmark || platform.champion ? (
-        <div className="mt-6 flex gap-3 md:hidden">
-          <span className="w-1 self-stretch rounded-full bg-perazzi-red/80" />
-          <div className="flex flex-col gap-4">
-            {platform.hallmark ? (
-              <Text size="sm" className="text-ink-muted font-artisan text-lg" leading="normal">
-                {platform.hallmark}
-              </Text>
-            ) : null}
-            {platform.champion?.name || platform.champion?.image || platform.champion?.resume?.winOne ? (
-              <div className="flex items-center gap-3">
-                {platform.champion?.image ? (
-                  <div className="relative h-12 w-12 overflow-hidden rounded-full">
-                    <Image
-                      src={platform.champion.image.url}
-                      alt={platform.champion.image.alt ?? `${platform.champion.name ?? "Perazzi champion"}`}
-                      fill
-                      sizes="48px"
-                      className="object-cover"
-                    />
-                  </div>
-                ) : null}
-                <div>
-                  {platform.champion?.name ? (
-                    <p className="type-body-title text-ink">
-                      {platform.champion.name}
-                    </p>
-                  ) : null}
-                  {platform.champion?.title ? (
-                    <Text size="sm" className="type-label-tight text-ink-muted" leading="normal">
-                      {platform.champion.title}
-                    </Text>
-                  ) : null}
-                  {platform.champion?.resume?.winOne ? (
-                    <Text size="sm" className="mt-1 text-ink-muted" leading="normal">
-                      Win highlight: <span className="text-ink">{platform.champion.resume.winOne}</span>
-                    </Text>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
+      <PlatformHallmarkChampion hallmark={platform.hallmark} champion={platform.champion} />
 
       <div className="mt-auto pt-6">
         <Text
