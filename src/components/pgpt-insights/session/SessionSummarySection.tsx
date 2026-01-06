@@ -19,7 +19,7 @@ function formatDurationMs(ms: number | null) {
   return remM ? `${h}h ${remM}m` : `${h}h`;
 }
 
-export async function SessionSummarySection({ sessionId }: { sessionId: string }) {
+export async function SessionSummarySection({ sessionId }: Readonly<{ sessionId: string }>) {
   const s = await fetchSessionSummary(sessionId, LOW_SCORE_THRESHOLD).catch(() => null);
 
   if (!s) {
