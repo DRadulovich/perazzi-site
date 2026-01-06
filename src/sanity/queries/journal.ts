@@ -149,15 +149,14 @@ export async function getJournalLanding(): Promise<JournalLandingPayload | null>
           background: mapImageResult(data.hero.background ?? null),
         }
       : undefined,
-    featuredArticle:
-      data.featuredArticle && data.featuredArticle._id
-        ? {
-            id: data.featuredArticle._id,
-            title: data.featuredArticle.title ?? undefined,
-            slug: data.featuredArticle.slug ?? undefined,
-            hero: mapImageResult(data.featuredArticle.heroImage ?? null),
-          }
-        : undefined,
+    featuredArticle: data.featuredArticle?._id
+      ? {
+          id: data.featuredArticle._id,
+          title: data.featuredArticle.title ?? undefined,
+          slug: data.featuredArticle.slug ?? undefined,
+          hero: mapImageResult(data.featuredArticle.heroImage ?? null),
+        }
+      : undefined,
   };
 }
 
@@ -171,7 +170,7 @@ export async function getArticles(): Promise<JournalArticlePayload[]> {
   return (data ?? [])
     .filter((article): article is JournalArticleResponse & { _id: string } => Boolean(article._id))
     .map((article) => ({
-      id: article._id as string,
+      id: article._id,
       title: article.title ?? undefined,
       slug: article.slug?.current ?? undefined,
       excerpt: article.excerpt ?? undefined,
@@ -196,7 +195,7 @@ export async function getAuthor(slug: string): Promise<JournalAuthorPayload | nu
     stega: true,
   }).catch(() => ({ data: null }));
   const data = (result?.data as AuthorResponse | null) ?? null;
-  if (!data || !data._id) return null;
+  if (!data?._id) return null;
 
   return {
     id: data._id,
