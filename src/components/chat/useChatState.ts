@@ -83,6 +83,7 @@ const DEFAULT_STORAGE_KEY = "perazzi-chat-history";
 const MAX_RENDER_MESSAGES = 200;
 const THREAD_STORAGE_SUFFIX = ":previousResponseId";
 export const ADMIN_DEBUG_TOKEN_STORAGE_KEY = "perazzi_admin_debug_token";
+const ARCHETYPE_RESET_REGEX = /^please\s+clear\s+your\s+memory\s+of\s+my\s+archetype\.?$/i;
 
 function normalizeResponseId(value: unknown): string | null {
   if (typeof value !== "string") return null;
@@ -165,6 +166,147 @@ class ConciergeRequestError extends Error {
   }
 }
 
+function isArchetypeResetRequest(question: string): boolean {
+  return ARCHETYPE_RESET_REGEX.test(question.trim());
+}
+
+function buildEffectiveContext(
+  payloadContext: ChatContextShape | undefined,
+  currentContext: ChatContextShape,
+  isArchetypeReset: boolean,
+): ChatContextShape {
+  const normalizedMode =
+    normalizeOutgoingMode(payloadContext?.mode) ?? normalizeOutgoingMode(currentContext.mode);
+  const hasIncomingVerbosity =
+    payloadContext !== undefined && "textVerbosity" in payloadContext;
+
+  return {
+    pageUrl: payloadContext?.pageUrl ?? currentContext.pageUrl,
+    locale: payloadContext?.locale ?? currentContext.locale,
+    modelSlug: payloadContext?.modelSlug ?? currentContext.modelSlug,
+    platformSlug: payloadContext?.platformSlug ?? currentContext.platformSlug,
+    mode: normalizedMode,
+    textVerbosity: hasIncomingVerbosity
+      ? payloadContext?.textVerbosity
+      : currentContext.textVerbosity,
+    archetype: isArchetypeReset
+      ? null
+      : payloadContext?.archetype ?? currentContext.archetype ?? null,
+    archetypeVector: isArchetypeReset
+      ? null
+      : payloadContext?.archetypeVector ?? currentContext.archetypeVector ?? null,
+    previousResponseId: isArchetypeReset
+      ? null
+      : normalizeResponseId(
+          payloadContext?.previousResponseId ?? currentContext.previousResponseId,
+        ),
+  };
+}
+
+function buildRequestHeaders(): Record<string, string> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (!("localStorage" in globalThis)) return headers;
+  const adminDebugToken = globalThis.localStorage.getItem(ADMIN_DEBUG_TOKEN_STORAGE_KEY);
+  if (adminDebugToken) {
+    headers["x-perazzi-admin-debug"] = adminDebugToken;
+  }
+  return headers;
+}
+
+async function getConciergeErrorMessage(res: Response): Promise<string> {
+  let message =
+    res.status === 503
+      ? "The Perazzi workshop is briefly offline. Please try again in a moment."
+      : "Something went wrong. Please try again.";
+  try {
+    const payload = await res.json();
+    if (payload?.error) {
+      message = payload.error;
+    }
+  } catch {
+    // Ignore body parsing failures; fall back to default message
+  }
+  return message;
+}
+
+function getRetrievalMeta(data: PerazziAssistantResponse): {
+  retrievalScores?: number[];
+  retrievalLabel: string;
+} {
+  const retrievalScores = Array.isArray(data.retrievalScores) ? data.retrievalScores : undefined;
+  const retrievalLabel = getRetrievalLabelFromScores(
+    retrievalScores ?? (data.similarity === undefined ? [] : [data.similarity]),
+  );
+  return { retrievalScores, retrievalLabel };
+}
+
+function buildAssistantEntry(
+  data: PerazziAssistantResponse,
+  retrievalLabel: string,
+  retrievalScores: number[] | undefined,
+): ChatEntry {
+  return {
+    id: crypto.randomUUID(),
+    role: "assistant",
+    content: data.answer,
+    similarity: data.similarity,
+    retrievalLabel,
+    retrievalScores,
+    mode: data.mode ?? null,
+    archetype: data.archetype ?? null,
+    archetypeBreakdown: data.archetypeBreakdown,
+  };
+}
+
+function maybeResetThreadState(
+  data: PerazziAssistantResponse,
+  threadStorageKey: string,
+  storageKey: string,
+) {
+  if (!data.thread_reset_required) return;
+  persistPreviousResponseId(threadStorageKey, null);
+  clearPreviousResponseIdFromStoredChatState(storageKey);
+}
+
+function getNextContextFromResponse(
+  prev: ChatContextShape,
+  data: PerazziAssistantResponse,
+  isArchetypeReset: boolean,
+): ChatContextShape {
+  // Explicit reset should stay cleared, regardless of server output.
+  if (isArchetypeReset) {
+    return {
+      ...prev,
+      mode: data.mode ?? prev.mode,
+      archetype: null,
+      archetypeVector: null,
+    };
+  }
+
+  if (data.thread_reset_required) {
+    return {
+      ...prev,
+      mode: data.mode ?? prev.mode,
+      previousResponseId: null,
+    };
+  }
+
+  // Only fall back when the server omitted the field (undefined).
+  const nextArchetype =
+    data.archetype === undefined ? (prev.archetype ?? null) : data.archetype;
+
+  const nextArchetypeVector =
+    data.archetypeBreakdown?.vector ?? prev.archetypeVector ?? null;
+
+  return {
+    ...prev,
+    mode: data.mode ?? prev.mode,
+    archetype: nextArchetype,
+    archetypeVector: nextArchetypeVector,
+    previousResponseId: normalizeResponseId(data.responseId) ?? prev.previousResponseId ?? null,
+  };
+}
+
 export function useChatState(
   initialMessages: ChatEntry[] = [],
   options: UseChatStateOptions = {},
@@ -237,36 +379,8 @@ export function useChatState(
     setIsTyping(true);
     setError(null);
     try {
-      const resetRegex = /^please\s+clear\s+your\s+memory\s+of\s+my\s+archetype\.?$/i;
-      const isArchetypeReset = resetRegex.test(payload.question.trim());
-
-      const normalizedMode =
-        normalizeOutgoingMode(payload.context?.mode) ??
-        normalizeOutgoingMode(context.mode);
-      const hasIncomingVerbosity =
-        payload.context !== undefined && "textVerbosity" in payload.context;
-
-      const effectiveContext: ChatContextShape = {
-        pageUrl: payload.context?.pageUrl ?? context.pageUrl,
-        locale: payload.context?.locale ?? context.locale,
-        modelSlug: payload.context?.modelSlug ?? context.modelSlug,
-        platformSlug: payload.context?.platformSlug ?? context.platformSlug,
-        mode: normalizedMode,
-        textVerbosity: hasIncomingVerbosity
-          ? payload.context?.textVerbosity
-          : context.textVerbosity,
-        archetype: isArchetypeReset
-          ? null
-          : payload.context?.archetype ?? context.archetype ?? null,
-        archetypeVector: isArchetypeReset
-          ? null
-          : payload.context?.archetypeVector ?? context.archetypeVector ?? null,
-        previousResponseId: isArchetypeReset
-          ? null
-          : normalizeResponseId(
-              payload.context?.previousResponseId ?? context.previousResponseId,
-            ),
-      };
+      const isArchetypeReset = isArchetypeResetRequest(payload.question);
+      const effectiveContext = buildEffectiveContext(payload.context, context, isArchetypeReset);
 
       setContext(effectiveContext);
 
@@ -275,15 +389,7 @@ export function useChatState(
       const apiMessages = [{ role: "user" as const, content: userEntry.content }];
       const sessionId = getOrCreateSessionId();
 
-      const adminDebugToken =
-        "localStorage" in globalThis
-          ? globalThis.localStorage.getItem(ADMIN_DEBUG_TOKEN_STORAGE_KEY)
-          : null;
-
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (adminDebugToken) {
-        headers["x-perazzi-admin-debug"] = adminDebugToken;
-      }
+      const headers = buildRequestHeaders();
 
       const res = await fetch("/api/perazzi-assistant", {
         method: "POST",
@@ -296,79 +402,16 @@ export function useChatState(
         }),
       });
       if (!res.ok) {
-        let message =
-          res.status === 503
-            ? "The Perazzi workshop is briefly offline. Please try again in a moment."
-            : "Something went wrong. Please try again.";
-        try {
-          const payload = await res.json();
-          if (payload?.error) {
-            message = payload.error;
-          }
-        } catch {
-          // Ignore body parsing failures; fall back to default message
-        }
-        throw new ConciergeRequestError(message, res.status);
+        throw new ConciergeRequestError(await getConciergeErrorMessage(res), res.status);
       }
       const data: PerazziAssistantResponse = await res.json();
       setLastAdminDebug(data.debug ?? null);
-      const retrievalScores = Array.isArray(data.retrievalScores) ? data.retrievalScores : undefined;
-      const retrievalLabel = getRetrievalLabelFromScores(
-        retrievalScores ?? (data.similarity === undefined ? [] : [data.similarity]),
-      );
-      const assistantEntry: ChatEntry = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: data.answer,
-        similarity: data.similarity,
-        retrievalLabel,
-        retrievalScores,
-        mode: data.mode ?? null,
-        archetype: data.archetype ?? null,
-        archetypeBreakdown: data.archetypeBreakdown,
-      };
+      const { retrievalLabel, retrievalScores } = getRetrievalMeta(data);
+      const assistantEntry = buildAssistantEntry(data, retrievalLabel, retrievalScores);
       addMessage(assistantEntry);
 
-      if (data.thread_reset_required) {
-        persistPreviousResponseId(threadStorageKey, null);
-        clearPreviousResponseIdFromStoredChatState(storageKey);
-      }
-
-      setContext((prev) => {
-        // Explicit reset should stay cleared, regardless of server output.
-        if (isArchetypeReset) {
-          return {
-            ...prev,
-            mode: data.mode ?? prev.mode,
-            archetype: null,
-            archetypeVector: null,
-          };
-        }
-
-        if (data.thread_reset_required) {
-          return {
-            ...prev,
-            mode: data.mode ?? prev.mode,
-            previousResponseId: null,
-          };
-        }
-
-        // Only fall back when the server omitted the field (undefined).
-        const nextArchetype =
-          data.archetype === undefined ? (prev.archetype ?? null) : data.archetype;
-
-        const nextArchetypeVector =
-          data.archetypeBreakdown?.vector ?? prev.archetypeVector ?? null;
-
-        return {
-          ...prev,
-          mode: data.mode ?? prev.mode,
-          archetype: nextArchetype,
-          archetypeVector: nextArchetypeVector,
-          previousResponseId:
-            normalizeResponseId(data.responseId) ?? prev.previousResponseId ?? null,
-        };
-      });
+      maybeResetThreadState(data, threadStorageKey, storageKey);
+      setContext((prev) => getNextContextFromResponse(prev, data, isArchetypeReset));
       options.onResponseMeta?.({
         citations: data.citations,
         guardrail: data.guardrail,
