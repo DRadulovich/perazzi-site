@@ -2,15 +2,15 @@ import { Children, cloneElement, isValidElement, type ReactElement, type ReactNo
 
 import { cn } from "@/lib/utils";
 
-type Header = {
+type Header = Readonly<{
   key: string;
   label: ReactNode;
   align?: "left" | "center" | "right";
   className?: string;
-};
+}>;
 
-type DataTableProps = {
-  headers: Header[];
+type DataTableProps = Readonly<{
+  headers: readonly Header[];
   children: ReactNode;
   colgroup?: ReactNode;
   minWidth?: string;
@@ -19,7 +19,7 @@ type DataTableProps = {
   stickyHeader?: boolean;
   className?: string;
   bodyClassName?: string;
-};
+}>;
 
 function withRowChrome(node: ReactNode, idx: number) {
   if (!isValidElement(node)) return node;
@@ -40,6 +40,12 @@ function withRowChrome(node: ReactNode, idx: number) {
   return cloneElement(element, { className: baseRowClass });
 }
 
+function getHeaderAlignmentClass(align?: Header["align"]) {
+  if (align === "right") return "text-right";
+  if (align === "center") return "text-center";
+  return "text-left";
+}
+
 export function DataTable({
   headers,
   children,
@@ -54,7 +60,7 @@ export function DataTable({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-xl border border-border/80 bg-gradient-to-b from-card/90 via-card/80 to-muted/20 shadow-sm ring-1 ring-border/50",
+        "overflow-hidden rounded-xl border border-border/80 bg-linear-to-b from-card/90 via-card/80 to-muted/20 shadow-sm ring-1 ring-border/50",
         maxHeightClassName ? "overflow-y-auto" : "overflow-x-auto",
       )}
     >
@@ -78,13 +84,9 @@ export function DataTable({
                   key={header.key}
                   scope="col"
                   className={cn(
-                    "border-b border-border/80 bg-card/90 backdrop-blur supports-[backdrop-filter]:bg-card/80 shadow-[0_1px_0_rgba(0,0,0,0.03)]",
+                    "border-b border-border/80 bg-card/90 backdrop-blur supports-backdrop-filter:bg-card/80 shadow-[0_1px_0_rgba(0,0,0,0.03)]",
                     stickyHeader && "sticky top-0 z-20",
-                    header.align === "right"
-                      ? "text-right"
-                      : header.align === "center"
-                        ? "text-center"
-                        : "text-left",
+                    getHeaderAlignmentClass(header.align),
                     header.className,
                   )}
                 >
