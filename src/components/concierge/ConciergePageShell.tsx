@@ -58,6 +58,17 @@ type SavedBuild = {
   selectedInfoByField?: Partial<Record<string, InfoCard[]>>;
 };
 
+type EngravingRequestPayload = {
+  id?: string;
+  grade?: string;
+};
+
+type BuildInfoRequestPayload = {
+  field: string;
+  value: string;
+  model?: string;
+};
+
 const FIELD_DESCRIPTIONS: Record<string, string> = {
   FRAME_SIZE: "Choose the frame size that defines core architecture and which gauges/platforms are possible.",
   PLATFORM: "Pick the platform family (MX, HT, TM, DC) that matches your shooting style and recoil/handling feel.",
@@ -147,20 +158,26 @@ const MODES = [
   { label: "Navigation / visit", value: "navigation" as const },
 ];
 
+const ENGRAVINGS_ENDPOINT = "/api/engravings";
+const BUILD_INFO_ENDPOINT = "/api/build-info";
 const SAFE_ENGRAVING_QUERY = /^[\w\s\-./()']+$/;
+const MAX_ENGRAVING_QUERY_LENGTH = 100;
 
-const buildSafeEngravingsUrl = (query: string, byGrade = false) => {
+const buildSafeEngravingsPayload = (query: string, byGrade = false): EngravingRequestPayload | null => {
   const cleaned = query.trim();
   // Guard against protocol injection and unexpected characters to avoid SSRF-style input.
-  if (!cleaned || cleaned.length > 100 || cleaned.startsWith("//") || /https?:\/\//i.test(cleaned)) {
+  if (
+    !cleaned ||
+    cleaned.length > MAX_ENGRAVING_QUERY_LENGTH ||
+    cleaned.startsWith("//") ||
+    /https?:\/\//i.test(cleaned)
+  ) {
     return null;
   }
   if (!SAFE_ENGRAVING_QUERY.test(cleaned)) {
     return null;
   }
-  const params = new URLSearchParams();
-  params.set(byGrade ? "grade" : "id", cleaned);
-  return `/api/engravings?${params.toString()}`;
+  return byGrade ? { grade: cleaned } : { id: cleaned };
 };
 
 export function ConciergePageShell() {
@@ -268,23 +285,23 @@ export function ConciergePageShell() {
   };
   const isSafeFieldId = (fieldId: string) =>
     /^[A-Z0-9_]+$/.test(fieldId) && !["__proto__", "prototype", "constructor"].includes(fieldId);
-  const buildSafeBuildInfoUrl = useCallback(
+  const buildSafeBuildInfoPayload = useCallback(
     (fieldId: string, value: string, model?: string) => {
-      if (!fieldOrder.includes(fieldId) || isUnsafeQueryValue(value)) {
+      if (!fieldOrder.includes(fieldId) || !isSafeFieldId(fieldId) || isUnsafeQueryValue(value)) {
         return null;
       }
       const allowedValues = getValidOptions(fieldId, buildState).map((opt) => opt.value);
       if (allowedValues.length > 0 && !allowedValues.includes(value)) {
         return null;
       }
-      const params = new URLSearchParams({ field: fieldId, value });
+      const payload: BuildInfoRequestPayload = { field: fieldId, value };
       if (model && !isUnsafeQueryValue(model)) {
         const allowedModels = getValidOptions("MODEL", buildState).map((opt) => opt.value);
         if (allowedModels.length === 0 || allowedModels.includes(model)) {
-          params.set("model", model);
+          payload.model = model;
         }
       }
-      return `/api/build-info?${params.toString()}`;
+      return payload;
     },
     [buildState, fieldOrder],
   );
@@ -458,15 +475,19 @@ export function ConciergePageShell() {
       }
       setEngravingLoading(true);
       setEngravingError(null);
-      const url = buildSafeEngravingsUrl(trimmed, byGrade);
-      if (!url) {
+      const payload = buildSafeEngravingsPayload(trimmed, byGrade);
+      if (!payload) {
         setEngravingResults([]);
         setEngravingError("Please enter a valid engraving search term.");
         setEngravingLoading(false);
         return;
       }
       try {
-        const res = await fetch(url);
+        const res = await fetch(ENGRAVINGS_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
         if (!res.ok) {
           setEngravingError("Unable to fetch engravings. Please try again.");
           setEngravingResults([]);
@@ -541,15 +562,20 @@ export function ConciergePageShell() {
       try {
         const results = await Promise.all(
           options.map(async (opt) => {
-            const url = buildSafeBuildInfoUrl(
+            const payload = buildSafeBuildInfoPayload(
               nextField.id,
               opt,
               nextField.id === "GRADE" ? buildState.MODEL : undefined,
             );
-            if (!url) {
+            if (!payload) {
               return { option: opt, items: [] };
             }
-            const res = await fetch(url, { signal: controller.signal });
+            const res = await fetch(BUILD_INFO_ENDPOINT, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+              signal: controller.signal,
+            });
             if (!res.ok) {
               throw new Error("fetch_failed");
             }
@@ -576,7 +602,7 @@ export function ConciergePageShell() {
     };
     void run();
     return () => controller.abort();
-  }, [nextField, nextFieldOptions, buildState.MODEL, buildSafeBuildInfoUrl]);
+  }, [nextField, nextFieldOptions, buildState.MODEL, buildSafeBuildInfoPayload]);
 
   const handleExplainCurrent = async () => {
     if (!nextField) return;
@@ -632,10 +658,14 @@ export function ConciergePageShell() {
       const gradeModel = buildState.MODEL;
       if (fieldId === "ENGRAVING") {
         const idPart = value.split(" ")[0];
-        const url = buildSafeEngravingsUrl(idPart);
-        if (!url) return [];
+        const payload = buildSafeEngravingsPayload(idPart);
+        if (!payload) return [];
         try {
-          const res = await fetch(url);
+          const res = await fetch(ENGRAVINGS_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
           if (!res.ok) return [];
           const data = await res.json();
           return (data.engravings ?? []).map((engraving: EngravingResult) => ({
@@ -652,9 +682,13 @@ export function ConciergePageShell() {
         }
       }
       try {
-        const url = buildSafeBuildInfoUrl(fieldId, value, fieldId === "GRADE" ? gradeModel : undefined);
-        if (!url) return [];
-        const res = await fetch(url);
+        const payload = buildSafeBuildInfoPayload(fieldId, value, fieldId === "GRADE" ? gradeModel : undefined);
+        if (!payload) return [];
+        const res = await fetch(BUILD_INFO_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
         if (!res.ok) return [];
         const data = await res.json();
         const rawItems = (data.items ?? []) as InfoCard[];
@@ -663,7 +697,7 @@ export function ConciergePageShell() {
         return [];
       }
     },
-    [buildState, buildSafeBuildInfoUrl],
+    [buildState, buildSafeBuildInfoPayload],
   );
 
   useEffect(() => {
@@ -939,6 +973,19 @@ export function ConciergePageShell() {
                           {displayOptions.map((opt) => {
                             const isHighlighted =
                               highlightedOption?.fieldId === nextField.id && highlightedOption.value === opt.value;
+                            let highlightOverlay: React.ReactNode = null;
+                            if (isHighlighted) {
+                              highlightOverlay = motionEnabled ? (
+                                <motion.span
+                                  layoutId="concierge-step-highlight"
+                                  className="absolute inset-0 bg-card/85"
+                                  transition={homeMotion.springHighlight}
+                                  aria-hidden="true"
+                                />
+                              ) : (
+                                <span className="absolute inset-0 bg-card/85" aria-hidden="true" />
+                              );
+                            }
                             return (
                               <motion.button
                                 key={opt.value}
@@ -954,18 +1001,7 @@ export function ConciergePageShell() {
                                 )}
                                 initial={false}
                               >
-                                {isHighlighted ? (
-                                  motionEnabled ? (
-                                    <motion.span
-                                      layoutId="concierge-step-highlight"
-                                      className="absolute inset-0 bg-card/85"
-                                      transition={homeMotion.springHighlight}
-                                      aria-hidden="true"
-                                    />
-                                  ) : (
-                                    <span className="absolute inset-0 bg-card/85" aria-hidden="true" />
-                                  )
-                                ) : null}
+                                {highlightOverlay}
                                 <span className="relative z-10">{opt.label ?? opt.value}</span>
                               </motion.button>
                             );
