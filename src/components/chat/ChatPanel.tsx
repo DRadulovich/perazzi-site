@@ -1,22 +1,5 @@
 "use client";
 
-const ARCHETYPE_ORDER: { key: string; label: string }[] = [
-  { key: "loyalist", label: "Loyalist" },
-  { key: "prestige", label: "Prestige" },
-  { key: "analyst", label: "Analyst" },
-  { key: "achiever", label: "Achiever" },
-  { key: "legacy", label: "Legacy" },
-];
-
-function formatArchetypePercentages(vector: Record<string, number> | undefined) {
-  if (!vector) return [] as { label: string; percent: number }[];
-  return ARCHETYPE_ORDER.map(({ key, label }) => {
-    const raw = typeof vector[key] === "number" ? vector[key] : 0;
-    const percent = Math.round(raw * 100);
-    return { label, percent };
-  });
-}
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
@@ -33,6 +16,23 @@ import { usePerazziAssistant } from "@/hooks/usePerazziAssistant";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import type { PerazziAdminDebugPayload } from "@/types/perazzi-assistant";
 import { getRetrievalLabelFromScores } from "@/lib/retrieval-label";
+
+const ARCHETYPE_ORDER: { key: string; label: string }[] = [
+  { key: "loyalist", label: "Loyalist" },
+  { key: "prestige", label: "Prestige" },
+  { key: "analyst", label: "Analyst" },
+  { key: "achiever", label: "Achiever" },
+  { key: "legacy", label: "Legacy" },
+];
+
+function formatArchetypePercentages(vector: Record<string, number> | undefined) {
+  if (!vector) return [] as { label: string; percent: number }[];
+  return ARCHETYPE_ORDER.map(({ key, label }) => {
+    const raw = typeof vector[key] === "number" ? vector[key] : 0;
+    const percent = Math.round(raw * 100);
+    return { label, percent };
+  });
+}
 
 const QUICK_STARTS = [
   {
@@ -450,7 +450,7 @@ export function ChatPanel({
     setLegacyAnswers([]);
     setLegacyTriggerSeen(true);
     appendLocal({
-      id: crypto.randomUUID(),
+      id: createRandomId(),
       role: "assistant",
       content: legacyQuestions[0],
     });
@@ -536,7 +536,7 @@ export function ChatPanel({
     setLegacyStep(nextStep);
     if (nextStep < legacyQuestions.length) {
       appendLocal({
-        id: crypto.randomUUID(),
+        id: createRandomId(),
         role: "assistant",
         content: legacyQuestions[nextStep],
       });
@@ -557,7 +557,7 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
       !legacyTriggerSeen && legacyTriggers.some((phrase) => normalized.includes(phrase));
 
     if (legacyMode || matchesLegacy) {
-      const userEntry = { id: crypto.randomUUID(), role: "user" as const, content: question };
+      const userEntry = { id: createRandomId(), role: "user" as const, content: question };
       appendLocal(userEntry);
       if (matchesLegacy && !legacyMode) {
         startLegacyMode();
@@ -810,7 +810,7 @@ Make it deeply reverent and personal: 3-4 paragraphs. At the end, skip a few lin
                   )}
                   <div className={isAssistant ? "text-left" : "text-right"}>
                     <div
-                      className={`inline-block max-w-full break-words rounded-2xl px-4 py-3 ${
+                      className={`inline-block max-w-full wrap-break-word rounded-2xl px-4 py-3 ${
                         isAssistant
                           ? "bg-card/80 border border-border/70 text-ink shadow-soft backdrop-blur-sm"
                           : "bg-ink text-card shadow-soft"
