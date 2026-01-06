@@ -17,7 +17,12 @@ function normalize(scores: ArchetypeScores | null | undefined): Record<Archetype
 
   const raw = ORDER.map((k) => {
     const v = scores[k];
-    const n = typeof v === "number" ? v : typeof v === "string" ? Number(v) : 0;
+    let n = 0;
+    if (typeof v === "number") {
+      n = v;
+    } else if (typeof v === "string") {
+      n = Number(v);
+    }
     return clamp01(Number.isFinite(n) ? n : 0);
   });
 
@@ -67,11 +72,11 @@ export function ArchetypeStackedBar({
   scores,
   heightClass = "h-2.5",
   showLabels = true,
-}: {
+}: Readonly<{
   scores: ArchetypeScores | null | undefined;
   heightClass?: string;
   showLabels?: boolean;
-}) {
+}>) {
   const normalized = normalize(scores);
   if (!normalized) {
     return <div className="text-xs text-muted-foreground">—</div>;
@@ -85,7 +90,6 @@ export function ArchetypeStackedBar({
         className={`flex w-full overflow-hidden rounded-full border border-border bg-muted/20 ${heightClass}`}
         title={title}
         aria-label={title}
-        role="img"
       >
         {ORDER.map((k) => {
           const w = normalized[k] * 100;
