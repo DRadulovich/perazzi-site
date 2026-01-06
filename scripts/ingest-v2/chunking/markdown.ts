@@ -102,48 +102,60 @@ function packUnitsWithJoiner(
     current = "";
   };
 
-  for (const unitRaw of units) {
-    const unit = unitRaw.trim();
-    if (!unit) continue;
-
+  const pushStandaloneUnit = (unit: string) => {
     const unitTokens = estimateTokens(unit);
-    if (!current) {
-      if (unitTokens > options.maxTokens) {
-        const hardSlices = sliceByTokens(unit, options.maxTokens);
-        result.push(...hardSlices);
-        continue;
-      }
-      current = unit;
-      if (estimateTokens(current) >= options.targetTokens) {
-        flush();
-      }
-      continue;
+    if (unitTokens > options.maxTokens) {
+      result.push(...sliceByTokens(unit, options.maxTokens));
+      return;
     }
+    current = unit;
+    if (unitTokens >= options.targetTokens) {
+      flush();
+    }
+  };
 
+  const appendUnit = (unit: string) => {
     const candidate = `${current}${joiner}${unit}`;
     const candidateTokens = estimateTokens(candidate);
     if (candidateTokens > options.maxTokens) {
       flush();
-      if (unitTokens > options.maxTokens) {
-        const hardSlices = sliceByTokens(unit, options.maxTokens);
-        result.push(...hardSlices);
-        continue;
-      }
-      current = unit;
-      if (estimateTokens(current) >= options.targetTokens) {
-        flush();
-      }
+      pushStandaloneUnit(unit);
+      return;
+    }
+    current = candidate;
+    if (candidateTokens >= options.targetTokens) {
+      flush();
+    }
+  };
+
+  for (const unitRaw of units) {
+    const unit = unitRaw.trim();
+    if (!unit) continue;
+
+    if (!current) {
+      pushStandaloneUnit(unit);
       continue;
     }
 
-    current = candidate;
-    if (estimateTokens(current) >= options.targetTokens) {
-      flush();
-    }
+    appendUnit(unit);
   }
 
   flush();
   return result;
+}
+
+function expandParagraphUnits(paragraph: string): string[] {
+  if (estimateTokens(paragraph) > MAX_TOKENS) {
+    return splitOversizedParagraph(paragraph);
+  }
+  return [paragraph];
+}
+
+function normalizeUnitToTokenLimit(unit: string): string[] {
+  if (estimateTokens(unit) > MAX_TOKENS) {
+    return sliceByTokens(unit, MAX_TOKENS);
+  }
+  return [unit];
 }
 
 function splitOversizedParagraph(text: string): string[] {
@@ -213,30 +225,28 @@ function processSectionIntoParagraphChunks(
     bufferTokens = 0;
   };
 
+  const addNormalizedUnit = (normalizedUnit: string) => {
+    const normalizedTokens = estimateTokens(normalizedUnit);
+    if (bufferTokens > 0 && bufferTokens + normalizedTokens > MAX_TOKENS) {
+      flushBuffer();
+    }
+
+    buffer.push(normalizedUnit);
+    bufferTokens += normalizedTokens;
+    if (bufferTokens >= TARGET_TOKENS) {
+      flushBuffer();
+    }
+  };
+
   for (const para of paragraphs) {
     const paraText = para.trim();
     if (!paraText) continue;
 
-    const paraTokens = estimateTokens(paraText);
-    const paraUnits =
-      paraTokens > MAX_TOKENS ? splitOversizedParagraph(paraText) : [paraText];
-
+    const paraUnits = expandParagraphUnits(paraText);
     for (const unit of paraUnits) {
-      const unitTokens = estimateTokens(unit);
-      const normalizedUnits =
-        unitTokens > MAX_TOKENS ? sliceByTokens(unit, MAX_TOKENS) : [unit];
-
+      const normalizedUnits = normalizeUnitToTokenLimit(unit);
       for (const normalizedUnit of normalizedUnits) {
-        const normalizedTokens = estimateTokens(normalizedUnit);
-        if (bufferTokens > 0 && bufferTokens + normalizedTokens > MAX_TOKENS) {
-          flushBuffer();
-        }
-
-        buffer.push(normalizedUnit);
-        bufferTokens += normalizedTokens;
-        if (bufferTokens >= TARGET_TOKENS) {
-          flushBuffer();
-        }
+        addNormalizedUnit(normalizedUnit);
       }
     }
   }
