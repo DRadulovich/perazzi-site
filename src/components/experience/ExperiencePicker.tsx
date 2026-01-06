@@ -7,6 +7,7 @@ import type { FAQItem, PickerItem, PickerUi } from "@/types/experience";
 import { FAQList } from "./FAQList";
 import { logAnalytics } from "@/lib/analytics";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   buildChoreoGroupVars,
@@ -60,7 +61,8 @@ type ExperiencePickerRevealSectionProps = {
 
 export function ExperiencePicker({ items, faqSection, pickerUi }: Readonly<ExperiencePickerProps>) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const enableTitleReveal = isDesktop;
+  const isHydrated = useHydrated();
+  const enableTitleReveal = isHydrated && isDesktop;
   const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const analyticsRef = useAnalyticsObserver<HTMLElement>("ExperiencePickerSeen");
   const pickerKey = enableTitleReveal ? "title-reveal" : "always-reveal";

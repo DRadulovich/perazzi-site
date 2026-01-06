@@ -8,6 +8,7 @@ import type { GradeSeries, ShotgunsLandingData } from "@/types/catalog";
 import { getGradeAnchorId } from "@/lib/grade-anchors";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   buildChoreoPresenceVars,
@@ -102,7 +103,8 @@ const normalize = (value?: string | null) =>
 
 export function EngravingGradesCarousel({ grades, ui }: EngravingGradesCarouselProps) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const enableTitleReveal = isDesktop;
+  const isHydrated = useHydrated();
+  const enableTitleReveal = isHydrated && isDesktop;
   const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const carouselKey = enableTitleReveal ? "title-reveal" : "always-reveal";
 

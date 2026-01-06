@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import type { ChampionEvergreen, ChampionsGalleryUi } from "@/types/heritage";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { logAnalytics } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -47,7 +48,8 @@ type ChampionsGalleryRevealSectionProps = Readonly<{
 
 export function ChampionsGallery({ champions, ui }: ChampionsGalleryProps) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const enableTitleReveal = isDesktop;
+  const isHydrated = useHydrated();
+  const enableTitleReveal = isHydrated && isDesktop;
   const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const galleryKey = enableTitleReveal ? "title-reveal" : "always-reveal";
 

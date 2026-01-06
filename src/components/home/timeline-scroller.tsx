@@ -13,6 +13,7 @@ import {
 } from "react";
 import type { FittingStage, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { logAnalytics } from "@/lib/analytics";
 import {
@@ -49,7 +50,8 @@ export function TimelineScroller({ stages, framing }: TimelineScrollerProps) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const analyticsRef = useAnalyticsObserver("CraftTimelineSeen");
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const enablePinned = isDesktop;
+  const isHydrated = useHydrated();
+  const enablePinned = isHydrated && isDesktop;
   const enableTitleReveal = enablePinned;
   const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const [activeStage, setActiveStage] = useState(0);

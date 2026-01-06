@@ -5,6 +5,7 @@ import Image from "next/image";
 import type { VisitFactoryData } from "@/types/experience";
 import { Button } from "@/components/ui/button";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import { logAnalytics } from "@/lib/analytics";
@@ -59,7 +60,8 @@ type VisitFactoryBodyProps = {
 export function VisitFactory({ visitFactorySection }: VisitFactoryProps) {
   const analyticsRef = useAnalyticsObserver("VisitFactorySeen");
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const enableTitleReveal = isDesktop;
+  const isHydrated = useHydrated();
+  const enableTitleReveal = isHydrated && isDesktop;
   const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const visitKey = enableTitleReveal ? "title-reveal" : "always-reveal";
 

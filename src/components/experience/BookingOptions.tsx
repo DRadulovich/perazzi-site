@@ -19,6 +19,7 @@ import {
   useRevealHeight,
 } from "@/components/ui";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { logAnalytics } from "@/lib/analytics";
 import {
@@ -42,7 +43,8 @@ type BookingOptionsRevealSectionProps = Readonly<{
 export function BookingOptions({ bookingSection }: BookingOptionsProps) {
   const analyticsRef = useAnalyticsObserver("ExperienceBookingSeen");
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const enableTitleReveal = isDesktop;
+  const isHydrated = useHydrated();
+  const enableTitleReveal = isHydrated && isDesktop;
   const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const bookingKey = enableTitleReveal ? "title-reveal" : "always-reveal";
   const options = bookingSection.options;

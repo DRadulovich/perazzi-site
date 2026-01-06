@@ -12,6 +12,7 @@ import {
   type RefObject,
 } from "react";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import type { Platform, ShotgunsLandingData } from "@/types/catalog";
 import { PlatformCard } from "./PlatformCard";
@@ -756,8 +757,9 @@ const PlatformGridRevealSection = ({
 export function PlatformGrid({ platforms, ui }: PlatformGridProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const isDesktop = useMediaQuery("(min-width: 1024px)");
+  const isHydrated = useHydrated();
   const analyticsRef = useAnalyticsObserver("PlatformGridSeen");
-  const enableTitleReveal = isDesktop;
+  const enableTitleReveal = isHydrated && isDesktop;
   const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
 
   const orderedPlatforms = useMemo(() => orderPlatforms(platforms), [platforms]);

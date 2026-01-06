@@ -10,6 +10,7 @@ import type {
 } from "@/types/experience";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   buildChoreoPresenceVars,
@@ -65,7 +66,8 @@ type DealerListProps = Readonly<{
 export function TravelNetwork({ data, ui }: TravelNetworkProps) {
   const analyticsRef = useAnalyticsObserver("TravelNetworkSeen");
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const enableTitleReveal = isDesktop;
+  const isHydrated = useHydrated();
+  const enableTitleReveal = isHydrated && isDesktop;
   const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const travelKey = enableTitleReveal ? "title-reveal" : "always-reveal";
 

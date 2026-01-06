@@ -15,6 +15,7 @@ import { createPortal } from "react-dom";
 
 import type { Platform, ShotgunsLandingData } from "@/types/catalog";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   buildChoreoPresenceVars,
@@ -138,7 +139,8 @@ export function DisciplineRail({
   ui,
 }: DisciplineRailProps) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const enableTitleReveal = isDesktop;
+  const isHydrated = useHydrated();
+  const enableTitleReveal = isHydrated && isDesktop;
   const railAnalyticsRef = useAnalyticsObserver<HTMLElement>("DisciplineRailSeen");
   const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const reduceMotion = prefersReducedMotion();
@@ -473,6 +475,7 @@ const DisciplineRailRevealSection = ({
     enableTitleReveal && !revealRail ? "min-h-[50vh]" : null;
   const {
     ref: railShellRef,
+    contentRef,
     measureRef,
     minHeightStyle,
     beginExpand,
@@ -502,32 +505,34 @@ const DisciplineRailRevealSection = ({
   };
 
   const expandedContent = (
-    <RevealAnimatedBody sequence>
-      <RevealItem index={0}>
-        <RevealExpandedHeader
-          headingId="discipline-rail-heading"
-          heading={heading}
-          subheading={subheading}
-          headerThemeReady={headerThemeReady}
-          enableTitleReveal={enableTitleReveal}
-          onCollapse={handleCollapse}
-        />
-      </RevealItem>
-      <RevealGroup delayMs={140}>
-        <DisciplineRailBody
-          revealRail={revealRailForMeasure}
-          categories={categories}
-          openCategory={openCategory}
-          setOpenCategory={setOpenCategory}
-          activeDisciplineId={activeDisciplineId}
-          setActiveDisciplineId={setActiveDisciplineId}
-          selectedDiscipline={selectedDiscipline}
-          platformName={platformName}
-          handleModelSelect={handleModelSelect}
-          modelLoadingId={modelLoadingId}
-        />
-      </RevealGroup>
-    </RevealAnimatedBody>
+    <div ref={contentRef}>
+      <RevealAnimatedBody sequence>
+        <RevealItem index={0}>
+          <RevealExpandedHeader
+            headingId="discipline-rail-heading"
+            heading={heading}
+            subheading={subheading}
+            headerThemeReady={headerThemeReady}
+            enableTitleReveal={enableTitleReveal}
+            onCollapse={handleCollapse}
+          />
+        </RevealItem>
+        <RevealGroup delayMs={140}>
+          <DisciplineRailBody
+            revealRail={revealRailForMeasure}
+            categories={categories}
+            openCategory={openCategory}
+            setOpenCategory={setOpenCategory}
+            activeDisciplineId={activeDisciplineId}
+            setActiveDisciplineId={setActiveDisciplineId}
+            selectedDiscipline={selectedDiscipline}
+            platformName={platformName}
+            handleModelSelect={handleModelSelect}
+            modelLoadingId={modelLoadingId}
+          />
+        </RevealGroup>
+      </RevealAnimatedBody>
+    </div>
   );
 
   return (
@@ -632,15 +637,20 @@ function DisciplineRailBody({
                       </span>
                     </button>
                     <div className="border-t border-border/70">
-                        <div
-                          className={cn(
-                            "overflow-hidden transition-[max-height] duration-300 ease-out",
-                            isOpen ? "max-h-80" : "max-h-0",
-                          )}
-                          aria-hidden={!isOpen}
-                        >
-                        <div className="p-3">
-                          {isOpen ? (
+                      <div
+                        className={cn(
+                          "grid transition-[grid-template-rows] duration-300 ease-out",
+                          isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+                        )}
+                        aria-hidden={!isOpen}
+                      >
+                        <div className="overflow-hidden">
+                          <div
+                            className={cn(
+                              "p-3",
+                              isOpen ? "pointer-events-auto" : "pointer-events-none",
+                            )}
+                          >
                             <ChoreoGroup
                               effect="fade-lift"
                               distance={choreoDistance.tight}
@@ -655,6 +665,7 @@ function DisciplineRailBody({
                                   <div key={discipline.id}>
                                     <button
                                       type="button"
+                                      tabIndex={isOpen ? 0 : -1}
                                       onClick={() => { setActiveDisciplineId(discipline.id); }}
                                       className={cn(
                                         "group relative w-full overflow-hidden rounded-2xl px-3 py-2 text-left focus-ring",
@@ -683,7 +694,7 @@ function DisciplineRailBody({
                                 );
                               })}
                             </ChoreoGroup>
-                          ) : null}
+                          </div>
                         </div>
                       </div>
                     </div>

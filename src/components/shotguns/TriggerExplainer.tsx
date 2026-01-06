@@ -13,6 +13,7 @@ import {
 } from "@/lib/choreo";
 import { cn } from "@/lib/utils";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   ChoreoGroup,
@@ -65,7 +66,8 @@ type TriggerExplainerCopyProps = Readonly<{
 export function TriggerExplainer({ explainer }: TriggerExplainerProps) {
   const [manualOpen, setManualOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const enableTitleReveal = isDesktop;
+  const isHydrated = useHydrated();
+  const enableTitleReveal = isHydrated && isDesktop;
   const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const triggerKey = enableTitleReveal ? "title-reveal" : "always-reveal";
 

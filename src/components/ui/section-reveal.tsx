@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Slot } from "@radix-ui/react-slot";
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -31,17 +32,36 @@ export const useRevealHeight = ({
   const [premeasureHeight, setPremeasureHeight] = useState<number | null>(null);
   const [isPreparing, setIsPreparing] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
   const measureRef = useRef<HTMLDivElement | null>(null);
   const pendingExpandRef = useRef<(() => void) | null>(null);
   const revealTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
 
+  const getFrameOffset = useCallback(() => {
+    const frame = ref.current;
+    if (!frame || typeof globalThis.getComputedStyle !== "function") return 0;
+    const style = globalThis.getComputedStyle(frame);
+    const paddingTop = Number.parseFloat(style.paddingTop) || 0;
+    const paddingBottom = Number.parseFloat(style.paddingBottom) || 0;
+    const borderTop = Number.parseFloat(style.borderTopWidth) || 0;
+    const borderBottom = Number.parseFloat(style.borderBottomWidth) || 0;
+    return paddingTop + paddingBottom + borderTop + borderBottom;
+  }, []);
+
+  const measureHeight = useCallback((node: HTMLElement, includeFrameOffset: boolean) => {
+    const baseHeight = node.getBoundingClientRect().height;
+    const offset = includeFrameOffset ? getFrameOffset() : 0;
+    return Math.ceil(baseHeight + offset);
+  }, [getFrameOffset]);
+
   useEffect(() => {
     if (!enableObserver) return;
-    const node = ref.current;
+    const node = contentRef.current ?? ref.current;
     if (!node) return;
+    const includeFrameOffset = node === contentRef.current;
 
     const updateHeight = () => {
-      const nextHeight = Math.ceil(node.getBoundingClientRect().height);
+      const nextHeight = measureHeight(node, includeFrameOffset);
       setExpandedHeight((prev) => (prev === nextHeight ? prev : nextHeight));
     };
 
@@ -55,14 +75,15 @@ export const useRevealHeight = ({
     return () => {
       observer.disconnect();
     };
-  }, [enableObserver, deps]);
+  }, [enableObserver, deps, measureHeight]);
 
   useLayoutEffect(() => {
     if (!isPreparing) return;
-    const node = measureRef.current ?? ref.current;
+    const node = measureRef.current ?? contentRef.current ?? ref.current;
     if (!node) return;
+    const includeFrameOffset = node === contentRef.current;
 
-    const nextHeight = Math.ceil(node.getBoundingClientRect().height);
+    const nextHeight = measureHeight(node, includeFrameOffset);
     setPremeasureHeight(nextHeight);
 
     const pendingExpand = pendingExpandRef.current;
@@ -79,7 +100,7 @@ export const useRevealHeight = ({
         revealTimeoutRef.current = null;
       }, revealDelayMs);
     });
-  }, [isPreparing, revealDelayMs]);
+  }, [isPreparing, revealDelayMs, measureHeight]);
 
   const resolvedHeight =
     enableObserver && expandedHeight !== null ? expandedHeight : premeasureHeight;
@@ -103,6 +124,7 @@ export const useRevealHeight = ({
 
   return {
     ref,
+    contentRef,
     measureRef,
     minHeightStyle,
     beginExpand,
@@ -401,7 +423,7 @@ export function RevealCollapsedHeader({
   controlsId,
   expanded,
   onExpand,
-  readMoreLabel = "Read more",
+  readMoreLabel = "Click to Expand",
 }: RevealCollapsedHeaderProps) {
   const buttonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -478,10 +500,13 @@ export function RevealCollapsedHeader({
         ) : null}
         <div className="mt-3">
           <Text
+            asChild
             size="button"
-            className="text-white/80 section-reveal-collapsed-text"
+            className="section-reveal-collapsed-text"
           >
-            {readMoreLabel}
+            <span className="inline-flex items-center justify-center rounded-sm border border-white/40 bg-white/10 px-4 py-2 text-white/90 shadow-soft backdrop-blur-sm transition-colors duration-200 group-hover:border-white/60 group-hover:bg-white/15 group-hover:text-white group-focus-visible:border-white/60 group-focus-visible:bg-white/15 group-focus-visible:text-white">
+              {readMoreLabel}
+            </span>
           </Text>
         </div>
         <span className="sr-only">Expand {heading}</span>

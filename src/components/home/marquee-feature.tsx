@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { Champion, HomeData } from "@/types/content";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import {
@@ -31,7 +32,8 @@ type MarqueeFeatureProps = Readonly<{
 export function MarqueeFeature({ champion, ui }: MarqueeFeatureProps) {
   const analyticsRef = useAnalyticsObserver("ChampionStorySeen");
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const enableTitleReveal = isDesktop;
+  const isHydrated = useHydrated();
+  const enableTitleReveal = isHydrated && isDesktop;
   const [isCollapsed, setIsCollapsed] = useState(enableTitleReveal);
   const marqueeKey = enableTitleReveal ? "title-reveal" : "always-reveal";
 
