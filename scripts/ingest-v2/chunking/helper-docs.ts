@@ -9,7 +9,13 @@ function isBulletLine(line: string): boolean {
 
 type HelperLabelAugmenter = (labels: string[], heading: string) => void;
 
-const helperLabelAugmenters: Record<string, HelperLabelAugmenter> = {
+type HelperDocType =
+  | "discipline-index"
+  | "platform-guide"
+  | "base-model-index"
+  | "model-spec-text";
+
+const helperLabelAugmenters: Record<HelperDocType, HelperLabelAugmenter> = {
   "discipline-index": (labels, heading) => {
     const normalized = heading.toLowerCase().replaceAll(/\s+/g, "-");
     labels.push(`disciplines:${normalized}`);
@@ -50,8 +56,22 @@ function appendDocTypeLabels(
   heading?: string,
 ): void {
   if (!heading) return;
-  const augment = helperLabelAugmenters[docType];
-  if (augment) augment(labels, heading);
+  switch (docType) {
+    case "discipline-index":
+      helperLabelAugmenters["discipline-index"](labels, heading);
+      return;
+    case "platform-guide":
+      helperLabelAugmenters["platform-guide"](labels, heading);
+      return;
+    case "base-model-index":
+      helperLabelAugmenters["base-model-index"](labels, heading);
+      return;
+    case "model-spec-text":
+      helperLabelAugmenters["model-spec-text"](labels, heading);
+      return;
+    default:
+      return;
+  }
 }
 
 function buildHelperSectionLabels(
