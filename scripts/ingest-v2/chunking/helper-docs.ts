@@ -285,7 +285,7 @@ function buildHelperChunksFromSlices(params: {
   let chunkIndex = startIndex;
 
   for (let i = 0; i < slices.length; i += 1) {
-    const slice = slices[i]!;
+    const slice = slices[i];
     const body = slice.join(joiner);
     const text = buildSplitChunkText(headingBase, i + 1, totalParts, body);
     chunks.push({
