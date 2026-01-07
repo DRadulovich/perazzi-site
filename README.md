@@ -2,6 +2,8 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/b86f3cb0e2c44ab8a4ed70b079e905f5)](https://app.codacy.com/gh/DRadulovich/perazzi-site?utm_source=github.com&utm_medium=referral&utm_content=DRadulovich/perazzi-site&utm_campaign=Badge_Grade)
+
 First, run the development server:
 
 ```bash
