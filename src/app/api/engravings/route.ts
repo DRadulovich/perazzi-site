@@ -11,6 +11,15 @@ type EngravingRow = {
   imageAlt?: string | null;
 };
 
+type Engraving = {
+  _id: string;
+  engravingId: string;
+  engravingSide: string;
+  gradeName: string;
+  image: unknown;
+  imageAlt: string;
+};
+
 const engravingByIdQuery = groq`*[_type == "engravings" && engraving_id match $pattern]{
   _id,
   "engravingId": engraving_id,
@@ -60,6 +69,41 @@ const parseBody = async (request: NextRequest): Promise<EngravingRequestInputs> 
   }
 };
 
+const coalesce = <T>(value: T | null | undefined, fallback: T): T => value ?? fallback;
+
+const coalesceLazy = <T>(value: T | null | undefined, fallback: () => T): T =>
+  value ?? fallback();
+
+const buildFallbackAlt = (row: EngravingRow): string =>
+  `Engraving ${coalesce(row.engravingId, "")}`;
+
+const toEngraving = (row: EngravingRow): Engraving => ({
+  _id: row._id,
+  engravingId: coalesce(row.engravingId, ""),
+  engravingSide: coalesce(row.engravingSide, ""),
+  gradeName: coalesce(row.gradeName, ""),
+  image: coalesce(row.image, null),
+  imageAlt: coalesceLazy(row.imageAlt, () => buildFallbackAlt(row)),
+});
+
+const fetchEngravingRows = async (
+  client: typeof baseClient,
+  { id, grade }: EngravingRequestInputs,
+): Promise<EngravingRow[]> => {
+  if (grade) {
+    const gradePattern = `${grade}*`;
+    const gradeLower = grade.toLowerCase();
+    const rows = await client.fetch<EngravingRow[]>(engravingByGradeQuery, {
+      gradePattern,
+      gradeLower,
+    });
+    return rows ?? [];
+  }
+  const pattern = `${id}*`;
+  const rows = await client.fetch<EngravingRow[]>(engravingByIdQuery, { pattern });
+  return rows ?? [];
+};
+
 const handleEngravingRequest = async ({ id, grade }: EngravingRequestInputs) => {
   // Use API client to avoid CDN issues and ensure access to latest published content.
   const client = baseClient.withConfig({ useCdn: false });
@@ -67,24 +111,8 @@ const handleEngravingRequest = async ({ id, grade }: EngravingRequestInputs) => 
     return NextResponse.json({ error: "Missing id or grade query param" }, { status: 400 });
   }
   try {
-    const rows = await (() => {
-      if (grade) {
-        const gradePattern = `${grade}*`;
-        const gradeLower = grade.toLowerCase();
-        return client.fetch<EngravingRow[]>(engravingByGradeQuery, { gradePattern, gradeLower });
-      }
-      const pattern = `${id}*`;
-      return client.fetch<EngravingRow[]>(engravingByIdQuery, { pattern });
-    })();
-
-    const engravings = (rows ?? []).map((row: EngravingRow) => ({
-      _id: row._id,
-      engravingId: row.engravingId ?? "",
-      engravingSide: row.engravingSide ?? "",
-      gradeName: row.gradeName ?? "",
-      image: row.image ?? null,
-      imageAlt: row.imageAlt ?? `Engraving ${row.engravingId ?? ""}`,
-    }));
+    const rows = await fetchEngravingRows(client, { id, grade });
+    const engravings = rows.map(toEngraving);
     return NextResponse.json({ engravings });
   } catch (error) {
     console.error("Failed to fetch engravings", error);

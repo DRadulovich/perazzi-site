@@ -1,9 +1,23 @@
 import type { SanityClient } from "@sanity/client";
 import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import { NextRequest, NextResponse } from "next/server";
-import { groq } from "next-sanity";
 import { sanityClient as baseClient } from "../../../../sanity/client";
 import { getSanityImageUrl, hasValidSanityImage } from "@/lib/sanityImage";
+import {
+  buildConfiguratorQuery,
+  disciplineFallback,
+  disciplineQuery,
+  gaugeFallback,
+  gaugeQuery,
+  gradeFallback,
+  gradeQuery,
+  modelFallback,
+  modelGradeQuery,
+  modelQuery,
+  platformFallback,
+  platformQuery,
+  triggerTypeQuery,
+} from "./queries";
 
 const skipFields = new Set(["RIB_TAPER_20", "RIB_TAPER_28_410", "RIB_TAPER_SXS"]);
 
@@ -55,207 +69,13 @@ type BuildInfoItem = {
   imageUrl: string | null;
   fullImageUrl: string | null;
 };
-
-const buildConfiguratorQuery = groq`*[_type == "buildConfigurator"][0]{
-  FRAME_SIZE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  PLATFORM[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  DISCIPLINE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  MODEL[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  TRIGGER_TYPE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  GRADE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  ENGRAVING[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  ACTION_FINISH[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  GAUGE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  LENGTH[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  WEIGHT[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  CHOKE_TYPE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  B1_CHOKE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  B2_CHOKE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  CHAMBER_LENGTH[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  BORE_DIAMETER[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  MONOBLOC[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  SIDERIBS_LENGTH[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  SIDERIBS_VENTILATION[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  BEAD_FRONT[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  BEAD_FRONT_COLOR[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  BEAD_FRONT_STYLE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  BEAD_MID[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  RIB_TYPE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  RIB_HEIGHT[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  RIB_STYLE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  RIB_TRAMLINE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  RIB_TRAMLINE_SIZE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  RIB_TAPER_12[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  TRIGGER_GROUP_SPRINGS[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  TRIGGER_GROUP_SELECTIVE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  TRIGGER_GROUP_SAFETY[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  WOOD_UPGRADE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  FOREND_SHAPE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  FOREND_CHECKER[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-  STOCK_PROFILE[]->{..., stepId, optionValue, description, platform, discipline, grade, gauge, trigger, side, order, image},
-}`;
-
-const platformQuery = groq`*[
-  _type == "platform" && (
-    name match $term ||
-    name match $altTerm ||
-    name match $compactTerm ||
-    name match $looseTerm ||
-    slug.current match $term ||
-    slug.current match $altTerm ||
-    slug.current match $compactTerm ||
-    slug.current match $looseTerm
-  )
-]{
-  _id,
-  "title": name,
-  "description": lineage,
-  "image": hero.asset
-}[0...5]`;
-
-const modelQuery = groq`*[
-  _type == "allModels" && (
-    name match $term ||
-    name match $altTerm ||
-    name match $compactTerm ||
-    name match $looseTerm ||
-    slug.current match $term ||
-    slug.current match $altTerm ||
-    slug.current match $compactTerm ||
-    slug.current match $looseTerm ||
-    baseModel match $term ||
-    baseModel match $altTerm ||
-    baseModel match $compactTerm ||
-    baseModel match $looseTerm
-  )
-]{
-  _id,
-  "title": name,
-  "platform": platform->name,
-  "gauges": gauges,
-  "triggerTypes": trigger.type ? [trigger.type] : [],
-  "grade": grade->name,
-  "image": coalesce(image.asset, null)
-}[0...5]`;
-
-const disciplineQuery = groq`*[_type == "discipline" && (name match $term || slug.current match $term)]{
-  _id,
-  "title": name,
-  overview,
-  "recommendedPlatforms": recommendedPlatforms[]->name,
-  "popularModels": []
-}[0...5]`;
-
-const gaugeQuery = groq`*[_type == "gauge" && (name match $term || name match $altTerm || name match $compactTerm || name match $looseTerm)]{
-  _id,
-  "title": name,
-  "description": handlingNotes
-}[0...5]`;
-
-const gradeQuery = groq`*[
-  _type == "grade" && (
-    name match $term ||
-    name match $altTerm ||
-    name match $compactTerm ||
-    name match $looseTerm
-  )
-]{
-  _id,
-  "title": name,
-  "description": description,
-  "image": hero.asset
-}[0...5]`;
-
-const modelGradeQuery = groq`*[
-  _type == "allModels" && (
-    name match $modelTerm ||
-    name match $altModelTerm ||
-    name match $compactModelTerm ||
-    name match $looseModelTerm ||
-    slug.current match $modelTerm ||
-    slug.current match $altModelTerm ||
-    slug.current match $compactModelTerm ||
-    slug.current match $looseModelTerm
-  )
-][0...3]{
-  "grade": grade->name
-}`;
-
-const platformFallback = groq`*[_type == "platform"] | order(name asc)[0...10]{
-  _id,
-  "title": name,
-  "description": lineage,
-  "image": hero.asset
-}`;
-
-const modelFallback = groq`*[
-  _type == "allModels" && (
-    lower(name) == $lowerValue ||
-    name match $looseTerm ||
-    slug.current match $looseTerm ||
-    lower(baseModel) == $lowerValue
-  )
-][0...10]{
-  _id,
-  "title": name,
-  "platform": platform->name,
-  "gauges": gauges,
-  "triggerTypes": trigger.type ? [trigger.type] : [],
-  "grade": grade->name,
-  "image": coalesce(image.asset, null)
-}`;
-
-const disciplineFallback = groq`*[
-  _type == "discipline" && (
-    lower(name) == $lowerValue ||
-    name match $looseTerm ||
-    slug.current match $looseTerm
-  )
-][0...10]{
-  _id,
-  "title": name,
-  overview,
-  "recommendedPlatforms": recommendedPlatforms[]->name,
-  "popularModels": []
-}`;
-
-const gaugeFallback = groq`*[
-  _type == "gauge" && (
-    lower(name) == $lowerValue ||
-    name match $looseTerm
-  )
-][0...10]{
-  _id,
-  "title": name,
-  "description": handlingNotes
-}`;
-
-const gradeFallback = groq`*[
-  _type == "grade" && (
-    lower(name) == $lowerValue ||
-    name match $looseTerm
-  )
-][0...10]{
-  _id,
-  "title": name,
-  "description": description,
-  "image": hero.asset
-}`;
-
-const triggerTypeQuery = groq`*[
-  _type == "allModels" && (
-    trigger.type match $term ||
-    trigger.type match $altTerm ||
-    trigger.type match $compactTerm ||
-    trigger.type match $looseTerm
-  )
-]{
-  _id,
-  "title": name,
-  "platform": platform->name,
-  "triggerTypes": trigger.type ? [trigger.type] : [],
-  "image": coalesce(image.asset, null)
-}[0...5]`;
+type SearchContext = {
+  term: string;
+  altTerm: string;
+  compactTerm: string;
+  looseTerm: string;
+  lowerValue: string;
+};
 
 const PLATFORM_ALIASES: Record<string, string> = {
   HT: "High Tech",
@@ -283,47 +103,81 @@ function normalizeValue(field: string, value: string) {
   return value;
 }
 
-function toPlainText(value: PortableTextValue): string {
-  if (!value) return "";
-  if (typeof value === "string") return value;
-  // Handle Sanity Portable Text blocks
-  if (Array.isArray(value)) {
-    return value
-      .map((block) => {
-        if (typeof block === "string") return block;
-        if (Array.isArray(block.children)) {
-          return block.children.map((child: PortableTextChild) => child?.text ?? "").join("");
-        }
-        if (block.text) return block.text;
-        return "";
-      })
-      .filter(Boolean)
-      .join("\n")
-      .trim();
+function plainTextFromBlock(block: PortableTextBlock | string): string {
+  if (typeof block === "string") return block;
+  if (Array.isArray(block.children)) {
+    return block.children.map((child: PortableTextChild) => child?.text ?? "").join("");
   }
-  if (value && typeof value === "object" && "text" in value && value.text) {
-    return String(value.text);
-  }
+  if (block.text) return block.text;
   return "";
 }
 
+function plainTextFromArray(blocks: Array<PortableTextBlock | string>): string {
+  return blocks.map(plainTextFromBlock).filter(Boolean).join("\n").trim();
+}
+
+function plainTextFromObject(value: PortableTextBlock): string {
+  return value.text ? String(value.text) : "";
+}
+
+function toPlainText(value: PortableTextValue): string {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return plainTextFromArray(value);
+  return plainTextFromObject(value);
+}
+
+function buildRowId(id: string | undefined, idx: number): string {
+  return id ?? `row-${idx}`;
+}
+
+function coalesceString(value: string | null | undefined, fallback = ""): string {
+  return value ?? fallback;
+}
+
+function coalesceNullableString(value: string | null | undefined): string | null {
+  return value ?? null;
+}
+
+function coalesceStringArray(value: string[] | null | undefined): string[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function toStringArray(value: Array<string | null | undefined> | null | undefined): string[] {
+  return (value ?? []).filter(Boolean).map(String);
+}
+
+function buildImageUrls(image: ConfiguratorImage): { imageUrl: string | null; fullImageUrl: string | null } {
+  const imageSource = resolveImageSource(image);
+  return {
+    imageUrl: imageSource ? getSanityImageUrl(imageSource, { width: 400, quality: 80 }) : null,
+    fullImageUrl: imageSource ? getSanityImageUrl(imageSource, { width: 1600, quality: 90 }) : null,
+  };
+}
+
+function pickDescription(row: SearchRow): PortableTextValue {
+  return row.description ?? row.overview ?? "";
+}
+
+function mapRowToItem(row: SearchRow, idx: number): BuildInfoItem {
+  const { imageUrl, fullImageUrl } = buildImageUrls(row.image);
+  return {
+    id: buildRowId(row._id, idx),
+    title: coalesceString(row.title),
+    description: toPlainText(pickDescription(row)),
+    platform: coalesceNullableString(row.platform),
+    gauges: toStringArray(row.gauges),
+    triggerTypes: toStringArray(row.triggerTypes),
+    grade: coalesceNullableString(row.grade),
+    recommendedPlatforms: coalesceStringArray(row.recommendedPlatforms),
+    popularModels: coalesceStringArray(row.popularModels),
+    imageUrl,
+    fullImageUrl,
+  };
+}
+
 function mapResult(rows: SearchRow[]): BuildInfoItem[] {
-  return (rows ?? []).map((row, idx) => {
-    const imageSource = resolveImageSource(row.image);
-    return {
-      id: row._id ?? `row-${idx}`,
-      title: row.title ?? "",
-      description: toPlainText(row.description ?? row.overview ?? ""),
-      platform: row.platform ?? null,
-      gauges: (row.gauges ?? []).filter(Boolean).map(String),
-      triggerTypes: (row.triggerTypes ?? []).filter(Boolean).map(String),
-      grade: row.grade ?? null,
-      recommendedPlatforms: row.recommendedPlatforms ?? [],
-      popularModels: row.popularModels ?? [],
-      imageUrl: imageSource ? getSanityImageUrl(imageSource, { width: 400, quality: 80 }) : null,
-      fullImageUrl: imageSource ? getSanityImageUrl(imageSource, { width: 1600, quality: 90 }) : null,
-    };
-  });
+  return (rows ?? []).map(mapRowToItem);
 }
 
 function buildTerms(rawValue: string) {
@@ -387,7 +241,7 @@ function parseSearchParams(request: NextRequest) {
   });
 }
 
-function buildSearchContext(normalizedValue: string) {
+function buildSearchContext(normalizedValue: string): SearchContext {
   const { term, altTerm, compactTerm, looseTerm } = buildTerms(normalizedValue);
   const lowerValue = normalizedValue.toLowerCase();
   return { term, altTerm, compactTerm, looseTerm, lowerValue };
@@ -397,7 +251,7 @@ function normalizeInputs(input: { field?: unknown; value?: unknown; model?: unkn
   const field = typeof input.field === "string" ? input.field.trim().toUpperCase() : "";
   const rawValue = typeof input.value === "string" ? input.value.trim() : "";
   const rawModel = typeof input.model === "string" ? input.model.trim() : "";
-  const normalizedValue = field === "PLATFORM" ? rawValue : normalizeValue(field, rawValue);
+  const normalizedValue = normalizeValue(field, rawValue);
   return { field, rawValue, rawModel, normalizedValue };
 }
 
@@ -461,12 +315,7 @@ async function tryConfiguratorShortcut(
 // Helper functions for each field-specific query branch
 async function fetchPlatformRows(
   client: SanityClient,
-  search: {
-    term: string;
-    altTerm: string;
-    compactTerm: string;
-    looseTerm: string;
-  },
+  search: SearchContext,
 ): Promise<SearchRow[]> {
   const { term, altTerm, compactTerm, looseTerm } = search;
   let rows = await client.fetch<SearchRow[]>(platformQuery, { term, altTerm, compactTerm, looseTerm });
@@ -478,13 +327,7 @@ async function fetchPlatformRows(
 
 async function fetchModelRows(
   client: SanityClient,
-  search: {
-    term: string;
-    altTerm: string;
-    compactTerm: string;
-    looseTerm: string;
-    lowerValue: string;
-  },
+  search: SearchContext,
 ): Promise<SearchRow[]> {
   const { term, altTerm, compactTerm, looseTerm, lowerValue } = search;
   let rows = await client.fetch<SearchRow[]>(modelQuery, { term, altTerm, compactTerm, looseTerm });
@@ -496,13 +339,7 @@ async function fetchModelRows(
 
 async function fetchDisciplineRows(
   client: SanityClient,
-  search: {
-    term: string;
-    altTerm: string;
-    compactTerm: string;
-    looseTerm: string;
-    lowerValue: string;
-  },
+  search: SearchContext,
 ): Promise<SearchRow[]> {
   const { term, altTerm, compactTerm, looseTerm, lowerValue } = search;
   let rows = await client.fetch<SearchRow[]>(disciplineQuery, { term, altTerm, compactTerm, looseTerm });
@@ -514,13 +351,7 @@ async function fetchDisciplineRows(
 
 async function fetchGaugeRows(
   client: SanityClient,
-  search: {
-    term: string;
-    altTerm: string;
-    compactTerm: string;
-    looseTerm: string;
-    lowerValue: string;
-  },
+  search: SearchContext,
 ): Promise<SearchRow[]> {
   const { term, altTerm, compactTerm, looseTerm, lowerValue } = search;
   let rows = await client.fetch<SearchRow[]>(gaugeQuery, { term, altTerm, compactTerm, looseTerm });
@@ -532,13 +363,7 @@ async function fetchGaugeRows(
 
 async function fetchGradeRows(
   client: SanityClient,
-  search: {
-    term: string;
-    altTerm: string;
-    compactTerm: string;
-    looseTerm: string;
-    lowerValue: string;
-  },
+  search: SearchContext,
   rawModel: string,
 ): Promise<SearchRow[]> {
   const { term, altTerm, compactTerm, looseTerm, lowerValue } = search;
@@ -578,13 +403,7 @@ async function fetchGradeRows(
 
 async function fetchTriggerTypeRows(
   client: SanityClient,
-  search: {
-    term: string;
-    altTerm: string;
-    compactTerm: string;
-    looseTerm: string;
-    lowerValue: string;
-  },
+  search: SearchContext,
 ): Promise<SearchRow[]> {
   const { term, altTerm, compactTerm, looseTerm, lowerValue } = search;
   let rows = await client.fetch<SearchRow[]>(triggerTypeQuery, { term, altTerm, compactTerm, looseTerm });
@@ -597,13 +416,7 @@ async function fetchTriggerTypeRows(
 async function fetchRowsForField(
   client: SanityClient,
   field: string,
-  search: {
-    term: string;
-    altTerm: string;
-    compactTerm: string;
-    looseTerm: string;
-    lowerValue: string;
-  },
+  search: SearchContext,
   rawModel: string,
 ): Promise<SearchRow[]> {
   switch (field) {

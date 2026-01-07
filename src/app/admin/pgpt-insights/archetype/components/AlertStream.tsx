@@ -3,17 +3,88 @@
 import { useEffect, useState, type ReactNode } from "react";
 
 type AlertEvent = {
-  at: string;
+  at: string | number;
   message: string;
+  curr?: number | null;
+  ref?: number | null;
+};
+
+type AlertPayload = {
+  message?: string;
   curr?: number | null;
   ref?: number | null;
 };
 
 type StreamStatus = "connecting" | "open" | "reconnecting" | "closed";
 
-function formatTime(iso: string) {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
+const MAX_EVENTS = 12;
+
+function hasOwn(payload: Record<string, unknown>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(payload, key);
+}
+
+function toFiniteNumberOrNull(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function normalizeTimestamp(value: unknown): AlertEvent["at"] {
+  if (typeof value === "string" && value.trim() !== "") return value;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  return Date.now();
+}
+
+function normalizeAlertPayload(value: unknown): AlertPayload {
+  if (value == null) return {};
+  if (typeof value === "string") return { message: value };
+  if (typeof value !== "object") return {};
+
+  const payload = value as Record<string, unknown>;
+  const message = typeof payload.message === "string" && payload.message.trim() !== "" ? payload.message : undefined;
+
+  return {
+    message,
+    curr: hasOwn(payload, "curr") ? toFiniteNumberOrNull(payload.curr) : undefined,
+    ref: hasOwn(payload, "ref") ? toFiniteNumberOrNull(payload.ref) : undefined,
+  };
+}
+
+function parseAlertEvent(data: string): AlertEvent | null {
+  let payload: unknown;
+  try {
+    payload = JSON.parse(data);
+  } catch (error) {
+    console.error("[alert-stream] failed to parse payload", error);
+    return null;
+  }
+
+  if (!payload || typeof payload !== "object") return null;
+  const record = payload as Record<string, unknown>;
+  if (record.type !== "alert") return null;
+
+  const alert = normalizeAlertPayload(record.payload);
+
+  return {
+    at: normalizeTimestamp(record.at),
+    message: alert.message ?? "Alert received",
+    curr: alert.curr,
+    ref: alert.ref,
+  };
+}
+
+function buildAlertDetails(evt: AlertEvent): ReactNode[] {
+  const details: ReactNode[] = [];
+  if (evt.curr !== undefined) {
+    details.push(<span key="curr">curr: {formatPct(evt.curr)}</span>);
+  }
+  if (evt.ref !== undefined) {
+    details.push(<span key="ref">ref: {formatPct(evt.ref)}</span>);
+  }
+  return details;
+}
+
+function formatTime(value: AlertEvent["at"]) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
   return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
@@ -37,7 +108,10 @@ export function AlertStream() {
     const source = new EventSource("/api/admin/pgpt-insights/alerts");
 
     // Connection successfully (re)established
-    source.onopen = () => setStatus("open");
+    source.onopen = () => {
+      setStatus("open");
+      setErrorMsg(null);
+    };
 
     // onerror fires for transient issues; EventSource keeps trying.
     source.onerror = () => {
@@ -48,23 +122,14 @@ export function AlertStream() {
         );
       } else {
         setStatus("reconnecting");
+        setErrorMsg(null);
       }
     };
 
     source.onmessage = (event) => {
-      try {
-        const payload = JSON.parse(event.data);
-        if (payload.type !== "alert") return;
-        const next: AlertEvent = {
-          at: payload.at ?? new Date().toISOString(),
-          message: payload.payload?.message ?? "Alert received",
-          curr: payload.payload?.curr ?? null,
-          ref: payload.payload?.ref ?? null,
-        };
-        setEvents((prev) => [next, ...prev].slice(0, 12));
-      } catch (error) {
-        console.error("[alert-stream] failed to parse payload", error);
-      }
+      const next = parseAlertEvent(event.data);
+      if (!next) return;
+      setEvents((prev) => [next, ...prev].slice(0, MAX_EVENTS));
     };
 
     return () => {
@@ -85,13 +150,7 @@ export function AlertStream() {
     streamContent = (
       <div className="mt-3 space-y-2">
         {events.map((evt, idx) => {
-          const details: ReactNode[] = [];
-          if (evt.curr !== undefined) {
-            details.push(<span key="curr">curr: {formatPct(evt.curr)}</span>);
-          }
-          if (evt.ref !== undefined) {
-            details.push(<span key="ref">ref: {formatPct(evt.ref)}</span>);
-          }
+          const details = buildAlertDetails(evt);
 
           return (
             <div

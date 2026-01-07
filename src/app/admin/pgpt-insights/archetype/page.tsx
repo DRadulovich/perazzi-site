@@ -38,53 +38,78 @@ function normalizeArchetype(label: string | null): string {
   return match ?? raw;
 }
 
+type DayAccumulator = {
+  segments: Record<string, number>;
+  total: number;
+  marginSum: number;
+};
+
+function createDayAccumulator(): DayAccumulator {
+  return {
+    segments: {},
+    total: 0,
+    marginSum: 0,
+  };
+}
+
+function getDayAccumulator(byDay: Map<string, DayAccumulator>, day: string): DayAccumulator {
+  const existing = byDay.get(day);
+  if (existing) return existing;
+  const next = createDayAccumulator();
+  byDay.set(day, next);
+  return next;
+}
+
+function toFiniteNumber(value: number | null | undefined): number | null {
+  if (value === null || value === undefined) return null;
+  return Number.isFinite(value) ? Number(value) : null;
+}
+
+function addRowToAccumulator(entry: DayAccumulator, row: ArchetypeDailyRow): void {
+  const count = row.cnt ?? 0;
+  const archetype = normalizeArchetype(row.archetype);
+  entry.segments[archetype] = (entry.segments[archetype] ?? 0) + count;
+  entry.total += count;
+  const margin = toFiniteNumber(row.avg_margin);
+  if (margin === null) return;
+  entry.marginSum += margin * count;
+}
+
+function compareDayStrings(a: string, b: string): number {
+  return new Date(a).getTime() - new Date(b).getTime();
+}
+
+function buildSegments(entrySegments: Record<string, number>, order: readonly string[]): Record<string, number> {
+  const segments: Record<string, number> = {};
+  order.forEach((key) => {
+    segments[key] = entrySegments[key] ?? 0;
+  });
+  Object.keys(entrySegments).forEach((key) => {
+    segments[key] ??= entrySegments[key];
+  });
+  return segments;
+}
+
 export function buildTrendPoints(
   rows: ArchetypeDailyRow[],
   order: readonly string[],
 ): StackedAreaPoint[] {
-  const byDay = new Map<
-    string,
-    {
-      segments: Record<string, number>;
-      total: number;
-      marginSum: number;
-    }
-  >();
+  const byDay = new Map<string, DayAccumulator>();
 
-  rows.forEach((row) => {
+  for (const row of rows) {
     const day = String(row.day);
-    const entry =
-      byDay.get(day) ??
-      {
-        segments: {},
-        total: 0,
-        marginSum: 0,
-      };
-    const archetype = normalizeArchetype(row.archetype);
-    entry.segments[archetype] = (entry.segments[archetype] ?? 0) + (row.cnt ?? 0);
-    entry.total += row.cnt ?? 0;
-    if (row.avg_margin !== null && row.avg_margin !== undefined && Number.isFinite(row.avg_margin)) {
-      entry.marginSum += Number(row.avg_margin) * (row.cnt ?? 0);
-    }
-    byDay.set(day, entry);
-  });
+    const entry = getDayAccumulator(byDay, day);
+    addRowToAccumulator(entry, row);
+  }
 
-  const sortedDays = Array.from(byDay.keys()).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+  const sortedDays = Array.from(byDay.keys()).sort(compareDayStrings);
 
   return sortedDays.map((day) => {
     const entry = byDay.get(day)!;
     const margin = entry.total > 0 ? entry.marginSum / entry.total : null;
-    const segments: Record<string, number> = {};
-    order.forEach((key) => {
-      segments[key] = entry.segments[key] ?? 0;
-    });
-    const extras = Object.keys(entry.segments).filter((k) => !order.includes(k));
-    extras.forEach((key) => {
-      segments[key] = entry.segments[key];
-    });
     return {
       label: formatDayLabel(day),
-      segments,
+      segments: buildSegments(entry.segments, order),
       line: margin,
     };
   });
@@ -104,41 +129,93 @@ export function gradeMargin(
   return { tone: "critical", label: "Low margin" };
 }
 
-function formatVariantData(rows: ArchetypeVariantSplitRow[]): ArchetypeVariantSplitRow[] {
-  const order = ["baseline", "tiered"];
-  const sorted = [...rows].sort((a, b) => {
-    const ai = order.indexOf((a.variant ?? "").toLowerCase());
-    const bi = order.indexOf((b.variant ?? "").toLowerCase());
-    if (ai !== -1 && bi !== -1 && ai !== bi) return ai - bi;
-    return (b.total ?? 0) - (a.total ?? 0);
-  });
-  return sorted;
+const VARIANT_ORDER = ["baseline", "tiered"];
+
+type VariantBarDatum = {
+  label: string;
+  value: number;
+  secondary: string | null;
+};
+
+function getVariantRank(variant: ArchetypeVariantSplitRow["variant"]): number {
+  const index = VARIANT_ORDER.indexOf((variant ?? "").toLowerCase());
+  return index === -1 ? VARIANT_ORDER.length : index;
 }
 
-export default async function ArchetypePage({
-  searchParams = {},
-}: Readonly<{
-  searchParams?: { days?: string };
-}>) {
-  await withAdminAuth();
-  const resolvedSearchParams = searchParams ?? {};
-  const daysRaw = Number.parseInt(resolvedSearchParams.days ?? "45", 10);
-  const days = Number.isFinite(daysRaw) && daysRaw > 0 ? Math.min(daysRaw, 120) : 45;
+function compareVariantRows(a: ArchetypeVariantSplitRow, b: ArchetypeVariantSplitRow): number {
+  const ai = getVariantRank(a.variant);
+  const bi = getVariantRank(b.variant);
+  if (ai !== bi) return ai - bi;
+  return (b.total ?? 0) - (a.total ?? 0);
+}
 
+function formatVariantData(rows: ArchetypeVariantSplitRow[]): ArchetypeVariantSplitRow[] {
+  return [...rows].sort(compareVariantRows);
+}
+
+function formatVariantSecondary(value: number | null | undefined): string | null {
+  if (value === null || value === undefined) return null;
+  return `Avg margin ${formatMargin(value)}`;
+}
+
+function buildVariantBars(rows: ArchetypeVariantSplitRow[]): VariantBarDatum[] {
+  return formatVariantData(rows).map((row) => ({
+    label: (row.variant ?? "unknown").toString(),
+    value: row.total ?? 0,
+    secondary: formatVariantSecondary(row.avg_margin),
+  }));
+}
+
+type ArchetypePageSearchParams = { days?: string };
+
+type ArchetypePageProps = Readonly<{
+  searchParams?: ArchetypePageSearchParams;
+}>;
+
+type ArchetypePageState = {
+  days: number;
+  trendPoints: StackedAreaPoint[];
+  margin: number | null;
+  marginGrade: ReturnType<typeof gradeMargin>;
+  variantBars: VariantBarDatum[];
+};
+
+function resolveDays(searchParams?: { days?: string }): number {
+  const daysRaw = Number.parseInt(searchParams?.days ?? "45", 10);
+  if (!Number.isFinite(daysRaw) || daysRaw <= 0) return 45;
+  return Math.min(daysRaw, 120);
+}
+
+async function loadArchetypeInsights(days: number) {
   const [daily, margin, variants] = await Promise.all([
     getArchetypeDailySeries(days),
     getArchetypeMarginSummary(Math.min(days, 30)),
     getArchetypeVariantSplit(Math.min(days, 60)),
   ]);
 
-  const trendPoints = buildTrendPoints(daily, CANONICAL_ARCHETYPE_ORDER);
-  const marginGrade = gradeMargin(margin);
-  const variantBars = formatVariantData(variants).map((row) => ({
-    label: (row.variant ?? "unknown").toString(),
-    value: row.total ?? 0,
-    secondary: row.avg_margin !== null && row.avg_margin !== undefined ? `Avg margin ${formatMargin(row.avg_margin)}` : null,
-  }));
+  return {
+    trendPoints: buildTrendPoints(daily, CANONICAL_ARCHETYPE_ORDER),
+    margin,
+    marginGrade: gradeMargin(margin),
+    variantBars: buildVariantBars(variants),
+  };
+}
 
+async function getArchetypePageState(searchParams?: ArchetypePageSearchParams): Promise<ArchetypePageState> {
+  await withAdminAuth();
+  const days = resolveDays(searchParams);
+  const { trendPoints, margin, marginGrade, variantBars } = await loadArchetypeInsights(days);
+
+  return {
+    days,
+    trendPoints,
+    margin,
+    marginGrade,
+    variantBars,
+  };
+}
+
+function ArchetypePageView({ days, trendPoints, margin, marginGrade, variantBars }: Readonly<ArchetypePageState>) {
   const subtitle = `Last ${days} days · stacked archetype mix + avg margin line`;
 
   return (
@@ -181,4 +258,9 @@ export default async function ArchetypePage({
       <AlertStream />
     </div>
   );
+}
+
+export default async function ArchetypePage({ searchParams }: ArchetypePageProps) {
+  const state = await getArchetypePageState(searchParams);
+  return <ArchetypePageView {...state} />;
 }

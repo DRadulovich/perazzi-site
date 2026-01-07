@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Pool } from "pg";
 import { getPgSslDiagnostics, getPgSslOptions } from "@/lib/pgSsl";
+import { requireAdmin } from "@/lib/requireAdmin";
 import { logTlsDiagForDb } from "@/lib/tlsDiag";
 
 const { sslMode: qaFlagSslMode, hasCa: qaFlagHasCa } = getPgSslDiagnostics();
@@ -41,18 +42,24 @@ function sanitizeNotes(value: unknown): string | null {
   return clipped.replaceAll(/\s*\n\s*/g, " ").trim() || null;
 }
 
+function isSafeSameSitePath(value: string): boolean {
+  if (!value.startsWith("/")) return false;
+  if (value.startsWith("//") || value.startsWith("/\\")) return false;
+  return !value.includes("\r") && !value.includes("\n");
+}
+
 function normalizeFallback(referer: string | null, defaultPath: string): string {
   const raw = String(referer ?? "").trim();
   if (!raw) return defaultPath;
 
   // If we already have a same-site path, use it.
-  if (raw.startsWith("/")) return raw;
+  if (isSafeSameSitePath(raw)) return raw;
 
   // If a full URL is provided, strip it down to a same-site path.
   try {
     const url = new URL(raw);
     const path = `${url.pathname}${url.search}${url.hash}`;
-    return path.startsWith("/") ? path : defaultPath;
+    return isSafeSameSitePath(path) ? path : defaultPath;
   } catch {
     return defaultPath;
   }
@@ -61,11 +68,8 @@ function normalizeFallback(referer: string | null, defaultPath: string): string 
 function safeReturnTo(value: unknown, fallback: string): string {
   const raw = String(value ?? "").trim();
   // prevent open redirects: only allow same-site paths
-  if (raw.startsWith("/")) return raw;
-  return fallback;
+  return isSafeSameSitePath(raw) ? raw : fallback;
 }
-
-import { requireAdmin } from "@/lib/requireAdmin";
 
 export async function POST(req: Request) {
   const authResp = await requireAdmin();

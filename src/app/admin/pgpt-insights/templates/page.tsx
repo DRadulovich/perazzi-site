@@ -21,26 +21,24 @@ function normalizeIntentLabel(intent: string | null) {
   return label || "(none)";
 }
 
+function normalizeTemplateLabel(template: string | null) {
+  const label = (template ?? "").trim();
+  return label || "(unknown)";
+}
+
 type HeatmapColumn = { key: string; label: string; tooltip?: string };
+type TemplateEntry = [string, number];
+type HeatmapRow = { archetype: string; total: number; cells: Array<{ key: string; hits: number }> };
 
-export function buildHeatmap(rows: TemplateUsageRow[], maxRows = 40): {
-  columns: HeatmapColumn[];
-  rows: Array<{ archetype: string; total: number; cells: Array<{ key: string; hits: number }> }>;
-  omitted: number;
-  rowOmitted: number;
-} {
-  if (rows.length === 0) {
-    return { columns: [], rows: [], omitted: 0, rowOmitted: 0 };
-  }
-
+function collectHeatmapData(rows: TemplateUsageRow[]) {
   const cellMap = new Map<string, number>();
   const templateTotals = new Map<string, number>();
   const rowTotals = new Map<string, number>();
 
-  rows.forEach((row) => {
+  for (const row of rows) {
     const archetype = normalizeArchetypeLabel(row.archetype);
     const intent = normalizeIntentLabel(row.intent);
-    const template = (row.template ?? "").trim() || "(unknown)";
+    const template = normalizeTemplateLabel(row.template);
     const key = `${archetype} · ${intent}`;
     const hits = row.hits ?? 0;
 
@@ -48,10 +46,13 @@ export function buildHeatmap(rows: TemplateUsageRow[], maxRows = 40): {
     cellMap.set(cellKey, (cellMap.get(cellKey) ?? 0) + hits);
     templateTotals.set(template, (templateTotals.get(template) ?? 0) + hits);
     rowTotals.set(key, (rowTotals.get(key) ?? 0) + hits);
-  });
+  }
 
+  return { cellMap, templateTotals, rowTotals };
+}
+
+function buildHeatmapColumns(templateTotals: Map<string, number>, maxColumns: number) {
   const sortedTemplates = [...templateTotals.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-  const maxColumns = 10;
   const primaryTemplates = sortedTemplates.slice(0, maxColumns);
   const omittedTemplates = sortedTemplates.slice(maxColumns);
   const columns: HeatmapColumn[] = primaryTemplates.map(([template]) => ({ key: template, label: template }));
@@ -63,29 +64,67 @@ export function buildHeatmap(rows: TemplateUsageRow[], maxRows = 40): {
     });
   }
 
+  return { columns, primaryTemplates, omittedTemplates };
+}
+
+function buildHeatmapRows(
+  rowTotals: Map<string, number>,
+  cellMap: Map<string, number>,
+  primaryTemplates: TemplateEntry[],
+  omittedTemplates: TemplateEntry[],
+  maxRows: number,
+) {
   const rowEntries = [...rowTotals.entries()].sort((a, b) => b[1] - a[1]);
   const limitedRowEntries = rowEntries.slice(0, maxRows);
   const rowOmitted = rowEntries.length - limitedRowEntries.length;
 
-  const rowsPrepared = limitedRowEntries.map(([key, total]) => {
+  const rows = limitedRowEntries.map(([key, total]) => {
     const baseCells = primaryTemplates.map(([template]) => ({
       key: template,
       hits: cellMap.get(`${key}||${template}`) ?? 0,
     }));
-    const otherHits =
-      omittedTemplates.length > 0
-        ? omittedTemplates.reduce((acc, [template]) => acc + (cellMap.get(`${key}||${template}`) ?? 0), 0)
-        : 0;
-    const cells = omittedTemplates.length > 0 ? [...baseCells, { key: "__other__", hits: otherHits }] : baseCells;
-    return { archetype: key, total, cells };
+    if (omittedTemplates.length === 0) {
+      return { archetype: key, total, cells: baseCells };
+    }
+
+    const otherHits = omittedTemplates.reduce(
+      (acc, [template]) => acc + (cellMap.get(`${key}||${template}`) ?? 0),
+      0,
+    );
+    return { archetype: key, total, cells: [...baseCells, { key: "__other__", hits: otherHits }] };
   });
 
-  // Attach tooltip listing omitted template names (comma-separated, truncated)
-  if (omittedTemplates.length > 0) {
-    const tooltip = omittedTemplates.map(([name]) => name).join(", ").slice(0, 200);
-    const otherCol = columns.find((c) => c.key === "__other__");
-    if (otherCol) otherCol.tooltip = tooltip;
+  return { rows, rowOmitted };
+}
+
+function attachOtherColumnTooltip(columns: HeatmapColumn[], omittedTemplates: TemplateEntry[]) {
+  if (omittedTemplates.length === 0) return;
+  const otherCol = columns.find((col) => col.key === "__other__");
+  if (!otherCol) return;
+  otherCol.tooltip = omittedTemplates.map(([name]) => name).join(", ").slice(0, 200);
+}
+
+export function buildHeatmap(rows: TemplateUsageRow[], maxRows = 40): {
+  columns: HeatmapColumn[];
+  rows: HeatmapRow[];
+  omitted: number;
+  rowOmitted: number;
+} {
+  if (rows.length === 0) {
+    return { columns: [], rows: [], omitted: 0, rowOmitted: 0 };
   }
+
+  const { cellMap, templateTotals, rowTotals } = collectHeatmapData(rows);
+  const maxColumns = 10;
+  const { columns, primaryTemplates, omittedTemplates } = buildHeatmapColumns(templateTotals, maxColumns);
+  const { rows: rowsPrepared, rowOmitted } = buildHeatmapRows(
+    rowTotals,
+    cellMap,
+    primaryTemplates,
+    omittedTemplates,
+    maxRows,
+  );
+  attachOtherColumnTooltip(columns, omittedTemplates);
 
   return { columns, rows: rowsPrepared, omitted: omittedTemplates.length, rowOmitted };
 }

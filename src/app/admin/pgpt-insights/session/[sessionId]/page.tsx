@@ -47,9 +47,22 @@ function assertPgptInsightsAccess() {
   }
 }
 
+function normalizeSessionId(value?: string) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+
+  return trimmed;
+}
+
 function getSessionIdOrNotFound(params?: { sessionId?: string }): string {
-  const sessionId = params?.sessionId;
-  if (!sessionId || typeof sessionId !== "string" || sessionId.trim().length === 0) {
+  const sessionId = normalizeSessionId(params?.sessionId);
+  if (!sessionId) {
     notFound();
   }
   return sessionId;
@@ -158,16 +171,7 @@ function renderTimelineSection(timelineRows: SessionTimelineRows | null, timelin
   return <SectionError id="timeline" title="Archetype Timeline" error={timelineError} />;
 }
 
-function renderLogsSection({
-  logsError,
-  convError,
-  logs,
-  conversationLogs,
-  tableDensityClass,
-  truncPrimary,
-  hasMore,
-  sessionId,
-}: {
+type LogsSectionProps = {
   logsError: unknown | null;
   convError: unknown | null;
   logs: SessionLogsPreview;
@@ -176,7 +180,19 @@ function renderLogsSection({
   truncPrimary: number;
   hasMore: boolean;
   sessionId: string;
-}) {
+};
+
+function renderLogsSection(props: LogsSectionProps) {
+  const {
+    logsError,
+    convError,
+    logs,
+    conversationLogs,
+    tableDensityClass,
+    truncPrimary,
+    hasMore,
+    sessionId,
+  } = props;
   if (logsError || convError) {
     return <SectionError id="logs" title="Session Logs" error={logsError ?? convError} />;
   }

@@ -30,7 +30,7 @@ function isObjectWithSafeKey(value: unknown, key: string): value is Record<strin
   );
 }
 
-function readNestedNumber(obj: unknown, path: string[]): number | null {
+function readNestedValue(obj: unknown, path: string[]): unknown | null {
   let current: unknown = obj;
   for (const key of path) {
     if (!isObjectWithSafeKey(current, key)) return null;
@@ -38,7 +38,132 @@ function readNestedNumber(obj: unknown, path: string[]): number | null {
     if (!descriptor || descriptor.get || descriptor.set) return null;
     current = descriptor.value as unknown;
   }
-  return toNumberOrNull(current);
+  return current;
+}
+
+function readNestedNumber(obj: unknown, path: string[]): number | null {
+  return toNumberOrNull(readNestedValue(obj, path));
+}
+
+function readNestedObject(obj: unknown, path: string[]): Record<string, unknown> | null {
+  const value = readNestedValue(obj, path);
+  if (value === null || typeof value !== "object") return null;
+  return value as Record<string, unknown>;
+}
+
+function toRecordOrNull(value: unknown): Record<string, unknown> | null {
+  if (value === null || typeof value !== "object") return null;
+  return value as Record<string, unknown>;
+}
+
+type LogRow = {
+  id: string;
+  created_at: string;
+  env: string;
+  endpoint: string;
+  archetype: string | null;
+  session_id: string | null;
+  model: string | null;
+  used_gateway: boolean | null;
+  metadata: unknown | null;
+  page_url?: string | null;
+  user_id?: string | null;
+  mode?: string | null;
+  prompt: string | null;
+  response: string | null;
+  low_confidence: boolean | null;
+  intents: string[] | null;
+  topics: string[] | null;
+  prompt_tokens: string | number | null | undefined;
+  completion_tokens: string | number | null | undefined;
+  max_score: string | null;
+  guardrail_status: string | null;
+  guardrail_reason: string | null;
+  latency_ms: string | number | null | undefined;
+  retrieved_chunks: unknown;
+  archetype_scores: Record<string, number> | null;
+  archetype_confidence: number | null;
+  archetype_decision: unknown | null;
+};
+
+type TokenCounts = {
+  promptTokens: number | null;
+  completionTokens: number | null;
+  cachedTokens: number | null;
+  reasoningTokens: number | null;
+  totalTokens: number | null;
+};
+
+function computeTokenCounts(row: LogRow): TokenCounts {
+  const promptTokens = toNumberOrNull(row.prompt_tokens);
+  const completionTokens = toNumberOrNull(row.completion_tokens);
+
+  const metadataObj = toRecordOrNull(row.metadata);
+  const responseUsage = readNestedObject(metadataObj, ["responseUsage"]);
+
+  const cachedTokens =
+    readNestedNumber(metadataObj, ["cachedTokens"]) ??
+    readNestedNumber(responseUsage, ["input_tokens_details", "cached_tokens"]);
+  const reasoningTokens =
+    readNestedNumber(metadataObj, ["reasoningTokens"]) ??
+    readNestedNumber(responseUsage, ["output_tokens_details", "reasoning_tokens"]);
+  const totalTokens =
+    readNestedNumber(metadataObj, ["totalTokens"]) ??
+    readNestedNumber(responseUsage, ["total_tokens"]) ??
+    (promptTokens !== null && completionTokens !== null ? promptTokens + completionTokens : null);
+
+  return {
+    promptTokens,
+    completionTokens,
+    cachedTokens,
+    reasoningTokens,
+    totalTokens,
+  };
+}
+
+function normalizeLatencyMs(value: LogRow["latency_ms"]): number | null {
+  return toNumberOrNull(value);
+}
+
+function normalizeRetrievedChunks(value: LogRow["retrieved_chunks"]): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function buildLogPayload(row: LogRow): PgptLogDetailResponse["log"] {
+  const { promptTokens, completionTokens, cachedTokens, reasoningTokens, totalTokens } = computeTokenCounts(row);
+
+  return {
+    id: String(row.id),
+    created_at: String(row.created_at),
+    env: String(row.env),
+    endpoint: String(row.endpoint),
+    archetype: row.archetype ?? null,
+    session_id: row.session_id ?? null,
+    model: row.model ?? null,
+    used_gateway: row.used_gateway ?? null,
+    metadata: row.metadata ?? null,
+    page_url: row.page_url ?? null,
+    user_id: row.user_id ?? null,
+    prompt: row.prompt ?? "",
+    response: row.response ?? "",
+    low_confidence: row.low_confidence ?? null,
+    intents: row.intents ?? null,
+    topics: row.topics ?? null,
+    max_score: row.max_score ?? null,
+    guardrail_status: row.guardrail_status ?? null,
+    guardrail_reason: row.guardrail_reason ?? null,
+    prompt_tokens: promptTokens,
+    completion_tokens: completionTokens,
+    cached_tokens: cachedTokens,
+    reasoning_tokens: reasoningTokens,
+    total_tokens: totalTokens,
+    latency_ms: normalizeLatencyMs(row.latency_ms),
+    retrieved_chunks: normalizeRetrievedChunks(row.retrieved_chunks),
+    archetype_scores: row.archetype_scores ?? null,
+    archetype_confidence: row.archetype_confidence ?? null,
+    archetype_decision: row.archetype_decision ?? null,
+    mode: row.mode ?? null,
+  };
 }
 
 export async function GET(
@@ -59,36 +184,6 @@ export async function GET(
   }
 
   try {
-    type LogRow = {
-      id: string;
-      created_at: string;
-      env: string;
-      endpoint: string;
-      archetype: string | null;
-      session_id: string | null;
-      model: string | null;
-      used_gateway: boolean | null;
-      metadata: unknown | null;
-      page_url?: string | null;
-      user_id?: string | null;
-      mode?: string | null;
-      prompt: string | null;
-      response: string | null;
-      low_confidence: boolean | null;
-      intents: string[] | null;
-      topics: string[] | null;
-      prompt_tokens: string | number | null | undefined;
-      completion_tokens: string | number | null | undefined;
-      max_score: string | null;
-      guardrail_status: string | null;
-      guardrail_reason: string | null;
-      latency_ms: string | number | null | undefined;
-      retrieved_chunks: unknown;
-      archetype_scores: Record<string, number> | null;
-      archetype_confidence: number | null;
-      archetype_decision: unknown | null;
-    };
-
     const { rows } = await pool.query<LogRow>(
       `
       select
@@ -155,59 +250,8 @@ export async function GET(
 
     const qa_latest = qa_latest_rows[0] ?? null;
 
-    const promptTokens = toNumberOrNull(r.prompt_tokens);
-    const completionTokens = toNumberOrNull(r.completion_tokens);
-
-    const metadataObj = r.metadata && typeof r.metadata === "object" ? (r.metadata as Record<string, unknown>) : null;
-    const responseUsage =
-      metadataObj && typeof (metadataObj as { responseUsage?: unknown }).responseUsage === "object"
-        ? (metadataObj as { responseUsage: unknown }).responseUsage
-        : null;
-
-    const cachedTokens =
-      readNestedNumber(metadataObj, ["cachedTokens"]) ??
-      readNestedNumber(responseUsage, ["input_tokens_details", "cached_tokens"]);
-    const reasoningTokens =
-      readNestedNumber(metadataObj, ["reasoningTokens"]) ??
-      readNestedNumber(responseUsage, ["output_tokens_details", "reasoning_tokens"]);
-    const totalTokens =
-      readNestedNumber(metadataObj, ["totalTokens"]) ??
-      readNestedNumber(responseUsage, ["total_tokens"]) ??
-      (promptTokens !== null && completionTokens !== null ? promptTokens + completionTokens : null);
-
     const payload: PgptLogDetailResponse = {
-      log: {
-        id: String(r.id),
-        created_at: String(r.created_at),
-        env: String(r.env),
-        endpoint: String(r.endpoint),
-        archetype: r.archetype ?? null,
-        session_id: r.session_id ?? null,
-        model: r.model ?? null,
-        used_gateway: r.used_gateway ?? null,
-        metadata: r.metadata ?? null,
-        page_url: r.page_url ?? null,
-        user_id: r.user_id ?? null,
-        prompt: r.prompt ?? "",
-        response: r.response ?? "",
-        low_confidence: r.low_confidence ?? null,
-        intents: r.intents ?? null,
-        topics: r.topics ?? null,
-        max_score: r.max_score ?? null,
-        guardrail_status: r.guardrail_status ?? null,
-        guardrail_reason: r.guardrail_reason ?? null,
-        prompt_tokens: promptTokens,
-        completion_tokens: completionTokens,
-        cached_tokens: cachedTokens,
-        reasoning_tokens: reasoningTokens,
-        total_tokens: totalTokens,
-        latency_ms: r.latency_ms === null || r.latency_ms === undefined ? null : Number(r.latency_ms),
-        retrieved_chunks: Array.isArray(r.retrieved_chunks) ? r.retrieved_chunks : [],
-        archetype_scores: r.archetype_scores ?? null,
-        archetype_confidence: r.archetype_confidence ?? null,
-        archetype_decision: r.archetype_decision ?? null,
-        mode: r.mode ?? null,
-      },
+      log: buildLogPayload(r),
       qa_latest,
       qa_history,
     };

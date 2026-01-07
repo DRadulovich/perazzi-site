@@ -8,9 +8,51 @@ import { logTlsDiagForDb } from "@/lib/tlsDiag";
 import { QaFilters } from "./components/QaFilters";
 import { QaTable, type QaRow } from "./components/QaTable";
 
+type QaSearchParams = {
+  status?: string;
+  q?: string;
+};
+
+const QA_STATUS_VALUES = ["open", "resolved", "all"] as const;
+type QaStatus = (typeof QA_STATUS_VALUES)[number];
+
 const { sslMode: qaSslMode, hasCa: qaHasCa } = getPgSslDiagnostics();
 const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: getPgSslOptions() });
 logTlsDiagForDb("pg.qa.page.pool", process.env.DATABASE_URL, qaSslMode, { hasCa: qaHasCa });
+
+async function resolveSearchParams(searchParams?: Promise<QaSearchParams>): Promise<QaSearchParams> {
+  return (await searchParams) ?? {};
+}
+
+function enforcePgptInsightsAccess(): void {
+  const env = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "development";
+  const allowInProd = process.env.PGPT_INSIGHTS_ALLOW_PROD === "true";
+  if (env === "production" && !allowInProd) {
+    notFound();
+  }
+}
+
+function normalizeStatus(value?: string): QaStatus {
+  const status = (value ?? "open").trim();
+  return QA_STATUS_VALUES.includes(status as QaStatus) ? (status as QaStatus) : "open";
+}
+
+function normalizeQuery(value?: string): string {
+  const q = (value ?? "").trim();
+  return q.length > 0 ? q.slice(0, 200) : "";
+}
+
+function buildCurrentHref(status: QaStatus, q: string): string {
+  const params = new URLSearchParams({ status });
+  if (q) {
+    params.set("q", q);
+  }
+  return `/admin/pgpt-insights/qa?${params.toString()}`;
+}
+
+function formatOpenCountLabel(openCount: number): string {
+  return openCount > 0 ? ` (${openCount})` : "";
+}
 
 async function fetchOpenCount(): Promise<number> {
   const { rows } = await pool.query<{ open_count: string | number }>(
@@ -19,7 +61,7 @@ async function fetchOpenCount(): Promise<number> {
   return Number(rows[0]?.open_count ?? 0);
 }
 
-async function fetchQaFlags(args: { status?: string; q?: string; limit: number }): Promise<QaRow[]> {
+async function fetchQaFlags(args: { status?: QaStatus; q?: string; limit: number }): Promise<QaRow[]> {
   const conditions: string[] = [];
   const params: (string | number)[] = [];
   let idx = 1;
@@ -74,38 +116,30 @@ async function fetchQaFlags(args: { status?: string; q?: string; limit: number }
   return rows;
 }
 
-export default async function PgptInsightsQaPage({
-  searchParams,
-}: Readonly<{
-  searchParams?: Promise<{ status?: string; q?: string }>;
-}>) {
-  const resolvedSearchParams = (await searchParams) ?? {};
-
-  const env = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "development";
-  const allowInProd = process.env.PGPT_INSIGHTS_ALLOW_PROD === "true";
-  if (env === "production" && !allowInProd) {
-    notFound();
-  }
-
-  const statusRaw = (resolvedSearchParams.status ?? "open").trim();
-  const status = statusRaw === "open" || statusRaw === "resolved" || statusRaw === "all" ? statusRaw : "open";
-
-  const qRaw = (resolvedSearchParams.q ?? "").trim();
-  const q = qRaw.length > 0 ? qRaw.slice(0, 200) : "";
-
+async function fetchQaData(status: QaStatus, q: string): Promise<{ openCount: number; rows: QaRow[] }> {
   const [openCount, rows] = await Promise.all([
     fetchOpenCount(),
     fetchQaFlags({ status, q: q.length ? q : undefined, limit: 250 }),
   ]);
+  return { openCount, rows };
+}
 
-  const qaCountLabel = openCount > 0 ? ` (${openCount})` : "";
+export default async function PgptInsightsQaPage({
+  searchParams,
+}: Readonly<{
+  searchParams?: Promise<QaSearchParams>;
+}>) {
+  const resolvedSearchParams = await resolveSearchParams(searchParams);
 
-  const currentHrefParams = new URLSearchParams();
-  if (status) currentHrefParams.set("status", status);
-  if (q) currentHrefParams.set("q", q);
-  const currentHref = currentHrefParams.toString()
-    ? `/admin/pgpt-insights/qa?${currentHrefParams.toString()}`
-    : "/admin/pgpt-insights/qa";
+  enforcePgptInsightsAccess();
+
+  const status = normalizeStatus(resolvedSearchParams.status);
+  const q = normalizeQuery(resolvedSearchParams.q);
+
+  const { openCount, rows } = await fetchQaData(status, q);
+
+  const qaCountLabel = formatOpenCountLabel(openCount);
+  const currentHref = buildCurrentHref(status, q);
 
   return (
     <div className="space-y-8">

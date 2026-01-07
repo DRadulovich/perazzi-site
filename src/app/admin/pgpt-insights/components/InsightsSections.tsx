@@ -52,21 +52,22 @@ type InsightsSectionsProps = {
   density: string;
 };
 
-export function InsightsSections({
-  envFilter,
-  endpointFilter,
-  daysFilter,
-  resolvedSearchParams,
-  isTriageView,
-  scopeSummary,
-  tableDensityClass,
-  detailsDefaultOpen,
-  truncPrimary,
-  truncSecondary,
-  q,
-  page,
-  density,
-}: Readonly<InsightsSectionsProps>) {
+export function InsightsSections(props: Readonly<InsightsSectionsProps>) {
+  const {
+    envFilter,
+    endpointFilter,
+    daysFilter,
+    resolvedSearchParams,
+    isTriageView,
+    scopeSummary,
+    tableDensityClass,
+    detailsDefaultOpen,
+    truncPrimary,
+    truncSecondary,
+    q,
+    page,
+    density,
+  } = props;
   return (
     <div className="space-y-12 lg:space-y-14">
       <Suspense fallback={<SectionSkeleton id="data-health" title="Data Health" lines={4} />}>

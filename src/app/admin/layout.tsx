@@ -43,21 +43,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function AdminLayout({ children }: Readonly<{ children: ReactNode }>) {
-  const locale = await getLocale();
-  const messages = await getMessages();
-  const headerList = await headers();
-  const initialTheme = resolveInitialTheme(headerList);
-  const t = await getTranslations("Header");
-  let qaOpenCount: number = 0;
+async function getQaOpenCount(): Promise<number> {
   try {
-    qaOpenCount = await fetchOpenQaFlagCount();
+    return await fetchOpenQaFlagCount();
   } catch (error) {
     // Fail-soft: keep the admin shell alive even if the count query fails
     console.error("[admin-layout] failed to fetch QA open flag count", error);
+    return 0;
   }
+}
 
-  const navItems: AdminSidebarNavItem[] = [
+function getAdminNavItems(qaOpenCount: number): AdminSidebarNavItem[] {
+  return [
     {
       href: "/admin/pgpt-insights",
       label: "Insights",
@@ -111,6 +108,16 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
       matchers: [{ type: "startsWith", prefix: "/admin/pgpt-insights/quality" }],
     },
   ];
+}
+
+export default async function AdminLayout({ children }: Readonly<{ children: ReactNode }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+  const headerList = await headers();
+  const initialTheme = resolveInitialTheme(headerList);
+  const t = await getTranslations("Header");
+  const qaOpenCount = await getQaOpenCount();
+  const navItems = getAdminNavItems(qaOpenCount);
 
   return (
     <Providers
