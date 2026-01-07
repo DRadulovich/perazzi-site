@@ -12,6 +12,7 @@ import type {
   PerazziAdminDebugUsage,
   RetrievedChunk,
   Archetype,
+  ArchetypeVector,
   PerazziMode,
 } from "@/types/perazzi-assistant";
 import {
@@ -336,7 +337,7 @@ function getClientIp(req: Request): string {
     if (first) return first.trim();
   }
   // Some runtimes attach `ip` to the request; fall back to a generic value if not present.
-  return (req as any).ip ?? "unknown";
+  return (req as Request & { ip?: string }).ip ?? "unknown";
 }
 
 function checkRateLimit(req: Request): { ok: boolean; retryAfterMs?: number } {
@@ -744,8 +745,542 @@ function summarizeInputMessagesForDebug(messages: ChatMessage[]) {
   return { items, totalChars, countsByRole };
 }
 
-export async function POST(request: Request) {
-  // --- Rate limiting and CORS/origin guard ---
+type EarlyReturnDebugContext = {
+  previousResponseId: string | null;
+  openAiStoreEnabled: boolean;
+  conversationStrategy: string | null;
+  enforcedThreadInput: boolean;
+  textVerbosity: CreateResponseTextParams["textVerbosity"] | null | undefined;
+  archetypeVariant: "tiered" | "baseline" | null;
+};
+
+type EarlyReturnResult = {
+  payload: PerazziAssistantResponse;
+  debug: PerazziAdminDebugPayload;
+};
+
+function buildPromptForLog(messages: ChatMessage[]): string {
+  return messages
+    .filter((msg) => msg.role === "user")
+    .map((msg) => msg.content ?? "")
+    .filter(Boolean)
+    .slice(-3)
+    .join("\n\n");
+}
+
+function buildNeutralArchetypeBreakdown(reasoning: string, signalsUsed: string[]) {
+  return {
+    primary: null,
+    vector: getNeutralArchetypeVector(),
+    reasoning,
+    signalsUsed,
+  };
+}
+
+function buildEarlyReturnDebugPayload(params: {
+  reason: string;
+  blockedIntent?: string | null;
+  answerText?: string | null;
+  retrievalPolicy: RetrievalPolicy;
+  debugContext: EarlyReturnDebugContext;
+}): PerazziAdminDebugPayload {
+  const { evidenceMode, evidenceReason } = computeEvidenceMode({
+    retrievalAttempted: false,
+    retrievalChunkCount: 0,
+    retrievalSkipReason: params.reason,
+  });
+
+  return buildDebugPayload({
+    thread: {
+      previous_response_id_present: Boolean(params.debugContext.previousResponseId),
+      store_enabled: params.debugContext.openAiStoreEnabled,
+      thread_reset_required: false,
+      conversationStrategy: params.debugContext.conversationStrategy,
+      enforced_thread_input: params.debugContext.enforcedThreadInput,
+    },
+    openai: null,
+    retrieval: {
+      attempted: false,
+      skipped: true,
+      reason: params.reason,
+      chunk_count: 0,
+      top_titles: [],
+      rerank_enabled: null,
+      rerank_metrics_present: false,
+      models_registry_sot_enabled: MODELS_REGISTRY_SOT_ENABLED,
+      models_registry_sot_applied: false,
+      models_registry_chunk_count: 0,
+    },
+    usage: null,
+    flags: {
+      convo_strategy: params.debugContext.conversationStrategy,
+      retrieval_policy: params.retrievalPolicy,
+      text_verbosity: params.debugContext.textVerbosity ?? null,
+      reasoning_effort: REASONING_EFFORT ?? null,
+      require_general_label: REQUIRE_GENERAL_LABEL,
+      postvalidate_enabled: ENABLE_POST_VALIDATE_OUTPUT,
+      prompt_cache_retention: PROMPT_CACHE_RETENTION ?? null,
+      prompt_cache_key_present: Boolean(PROMPT_CACHE_KEY),
+    },
+    output:
+      typeof params.answerText === "string"
+        ? {
+            general_unsourced_label_present: params.answerText
+              .trimStart()
+              .startsWith(GENERAL_UNSOURCED_LABEL_PREFIX),
+          }
+        : null,
+    archetypeAnalytics: buildArchetypeAnalytics(params.debugContext.archetypeVariant, null, [], []),
+    triggers: {
+      blocked_intent: params.blockedIntent ?? null,
+      evidenceMode,
+      evidenceReason,
+      postvalidate: null,
+    },
+  });
+}
+
+function handlePreArchetypeEarlyReturn(params: {
+  latestQuestion: string | null;
+  fullBody: PerazziAssistantRequest;
+  body: Partial<PerazziAssistantRequest>;
+  hints: RetrievalHints;
+  effectiveMode: PerazziMode;
+  retrievalPolicy: RetrievalPolicy;
+  debugContext: EarlyReturnDebugContext;
+}): EarlyReturnResult | null {
+  if (detectAssistantOriginQuestion(params.latestQuestion)) {
+    logRetrievalDecision({
+      retrieve: false,
+      reason: "early_return:assistant_origin",
+      policy: params.retrievalPolicy,
+      userText: params.latestQuestion,
+      mode: params.effectiveMode,
+      pageUrl: params.body?.context?.pageUrl ?? null,
+      sessionId: params.fullBody.sessionId ?? null,
+    });
+    const archetypeBreakdown = buildNeutralArchetypeBreakdown(
+      "Archetype profile not used: assistant-origin meta question handled via fixed, brand-aligned narrative.",
+      ["meta:assistant_origin"],
+    );
+
+    const answer = [
+      "I was designed by David Radulovich, one of Perazzi’s professional shooters, in collaboration with Perazzi USA.",
+      "",
+      "The idea is the same as with a bespoke Perazzi gun: it grows out of a conversation between the craftsmen who build it and the shooter who will live with it. David brought the perspective of the competitor and coach; Perazzi brought the heritage, craft, and standards.",
+      "",
+      "My job is to express that shared point of view in conversation and help you make good decisions about your gun and your journey with Perazzi. The important part is not my internal wiring, but that everything I say reflects how Perazzi thinks about its guns and its owners.",
+    ].join("\n");
+
+    logInteraction(
+      params.fullBody,
+      [],
+      0,
+      "ok",
+      undefined,
+      params.hints,
+      [],
+    );
+
+    const payload: PerazziAssistantResponse = {
+      answer,
+      guardrail: { status: "ok", reason: null },
+      citations: [],
+      intents: params.hints.intents,
+      topics: params.hints.topics,
+      templates: [],
+      similarity: 0,
+      mode: params.effectiveMode,
+      archetype: null,
+      archetypeBreakdown,
+    };
+    return {
+      payload,
+      debug: buildEarlyReturnDebugPayload({
+        reason: "early_return:assistant_origin",
+        blockedIntent: null,
+        answerText: answer,
+        retrievalPolicy: params.retrievalPolicy,
+        debugContext: params.debugContext,
+      }),
+    };
+  }
+
+  if (detectKnowledgeSourceQuestion(params.latestQuestion)) {
+    logRetrievalDecision({
+      retrieve: false,
+      reason: "early_return:knowledge_source",
+      policy: params.retrievalPolicy,
+      userText: params.latestQuestion,
+      mode: params.effectiveMode,
+      pageUrl: params.body?.context?.pageUrl ?? null,
+      sessionId: params.fullBody.sessionId ?? null,
+    });
+    const archetypeBreakdown = buildNeutralArchetypeBreakdown(
+      "Archetype profile not used: knowledge-source meta question handled via fixed, brand-aligned narrative.",
+      ["meta:knowledge_source"],
+    );
+
+    const answer = [
+      "I don’t search the open internet. I’m built on curated Perazzi-specific information: platform and product references, service and fitting guidance, heritage and history material, and internal references that capture how Perazzi thinks about ownership and competition.",
+      "",
+      "All of that is selected and maintained by Perazzi so that the conversation stays focused on the real Perazzi experience, rather than whatever happens to be online at the moment.",
+    ].join("\n");
+
+    logInteraction(
+      params.fullBody,
+      [],
+      0,
+      "ok",
+      undefined,
+      params.hints,
+      [],
+    );
+
+    const payload: PerazziAssistantResponse = {
+      answer,
+      guardrail: { status: "ok", reason: null },
+      citations: [],
+      intents: params.hints.intents,
+      topics: params.hints.topics,
+      templates: [],
+      similarity: 0,
+      mode: params.effectiveMode,
+      archetype: null,
+      archetypeBreakdown,
+    };
+    return {
+      payload,
+      debug: buildEarlyReturnDebugPayload({
+        reason: "early_return:knowledge_source",
+        blockedIntent: null,
+        answerText: answer,
+        retrievalPolicy: params.retrievalPolicy,
+        debugContext: params.debugContext,
+      }),
+    };
+  }
+
+  if (detectArchetypeResetPhrase(params.latestQuestion)) {
+    logRetrievalDecision({
+      retrieve: false,
+      reason: "early_return:archetype_reset",
+      policy: params.retrievalPolicy,
+      userText: params.latestQuestion,
+      mode: params.effectiveMode,
+      pageUrl: params.body?.context?.pageUrl ?? null,
+      sessionId: params.fullBody.sessionId ?? null,
+    });
+    const archetypeBreakdown = buildNeutralArchetypeBreakdown(
+      'Archetype profile reset to neutral via dev reset phrase: "Please clear your memory of my archetype."',
+      ["reset:neutral"],
+    );
+
+    const answer =
+      "Understood. I’ve cleared your archetype profile and will treat you neutrally again from here.";
+
+    logInteraction(
+      params.fullBody,
+      [],
+      0,
+      "ok",
+      undefined,
+      params.hints,
+      [],
+    );
+
+    const payload: PerazziAssistantResponse = {
+      answer,
+      guardrail: { status: "ok", reason: null },
+      citations: [],
+      intents: params.hints.intents,
+      topics: params.hints.topics,
+      templates: [],
+      similarity: 0,
+      mode: params.effectiveMode,
+      archetype: null,
+      archetypeBreakdown,
+    };
+    return {
+      payload,
+      debug: buildEarlyReturnDebugPayload({
+        reason: "early_return:archetype_reset",
+        blockedIntent: null,
+        answerText: answer,
+        retrievalPolicy: params.retrievalPolicy,
+        debugContext: params.debugContext,
+      }),
+    };
+  }
+
+  return null;
+}
+
+async function handlePostArchetypeEarlyReturn(params: {
+  latestQuestion: string | null;
+  fullBody: PerazziAssistantRequest;
+  body: Partial<PerazziAssistantRequest>;
+  sanitizedMessages: ChatMessage[];
+  hints: RetrievalHints;
+  effectiveMode: PerazziMode;
+  effectiveTextVerbosity: CreateResponseTextParams["textVerbosity"];
+  retrievalPolicy: RetrievalPolicy;
+  archetypeOverride: Archetype | null;
+  effectiveArchetype: Archetype | null;
+  archetypeBreakdown: ReturnType<typeof computeArchetypeBreakdown>;
+  archetypeClassification: ArchetypeClassification | null;
+  archetypeMetrics: ReturnType<typeof computeArchetypeConfidenceMetrics>;
+  debugContext: EarlyReturnDebugContext;
+}): Promise<EarlyReturnResult | null> {
+  if (params.archetypeOverride) {
+    logRetrievalDecision({
+      retrieve: false,
+      reason: "early_return:archetype_override",
+      policy: params.retrievalPolicy,
+      userText: params.latestQuestion,
+      mode: params.effectiveMode,
+      pageUrl: params.body?.context?.pageUrl ?? null,
+      sessionId: params.fullBody.sessionId ?? null,
+    });
+    const answer = `Understood. I’ll answer from the perspective of a ${capitalize(
+      params.archetypeOverride,
+    )} from now on.`;
+    logInteraction(
+      params.fullBody,
+      [],
+      0,
+      "ok",
+      undefined,
+      params.hints,
+      [],
+    );
+    const payload: PerazziAssistantResponse = {
+      answer,
+      guardrail: { status: "ok", reason: null },
+      citations: [],
+      intents: params.hints.intents,
+      topics: params.hints.topics,
+      templates: [],
+      similarity: 0,
+      mode: params.effectiveMode,
+      archetype: params.effectiveArchetype,
+      archetypeBreakdown: params.archetypeBreakdown,
+    };
+    return {
+      payload,
+      debug: buildEarlyReturnDebugPayload({
+        reason: "early_return:archetype_override",
+        blockedIntent: null,
+        answerText: answer,
+        retrievalPolicy: params.retrievalPolicy,
+        debugContext: params.debugContext,
+      }),
+    };
+  }
+
+  const guardrailBlock = detectBlockedIntent(params.sanitizedMessages);
+  if (guardrailBlock) {
+    logRetrievalDecision({
+      retrieve: false,
+      reason: `early_return:guardrail:${guardrailBlock.reason ?? "blocked"}`,
+      policy: params.retrievalPolicy,
+      userText: params.latestQuestion,
+      mode: params.effectiveMode,
+      pageUrl: params.body?.context?.pageUrl ?? null,
+      sessionId: params.fullBody.sessionId ?? null,
+    });
+    logInteraction(
+      params.fullBody,
+      [],
+      0,
+      "blocked",
+      guardrailBlock.reason,
+      params.hints,
+    );
+
+    const env = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local";
+    const promptForLog = buildPromptForLog(params.sanitizedMessages);
+
+    try {
+      await logAiInteraction({
+        context: {
+          env,
+          endpoint: "assistant",
+          pageUrl: params.body?.context?.pageUrl ?? undefined,
+          archetype: params.effectiveArchetype ?? null,
+          archetypeClassification: params.archetypeClassification ?? undefined,
+          sessionId: params.fullBody.sessionId ?? null,
+          userId: null,
+          lowConfidence: false,
+          intents: params.hints?.intents,
+          topics: params.hints?.topics,
+          metadata: {
+            mode: params.effectiveMode ?? null,
+            textVerbosity: params.effectiveTextVerbosity,
+            guardrailStatus: "blocked",
+            guardrailReason: guardrailBlock.reason ?? null,
+            archetypeVariant: params.debugContext.archetypeVariant ?? null,
+            signalsUsed: Array.isArray(params.archetypeClassification?.archetypeDecision?.signals)
+              ? params.archetypeClassification?.archetypeDecision?.signals
+              : undefined,
+            ...params.archetypeMetrics,
+          },
+        },
+        model: OPENAI_MODEL,
+        usedGateway: isUsingGateway(),
+        prompt: promptForLog,
+        response: guardrailBlock.message,
+      });
+    } catch (error) {
+      console.error("logAiInteraction guardrail block failed", error);
+    }
+
+    const payload: PerazziAssistantResponse = {
+      answer: guardrailBlock.message,
+      guardrail: { status: "blocked", reason: guardrailBlock.reason },
+      citations: [],
+      intents: params.hints.intents,
+      topics: params.hints.topics,
+      templates: [],
+      similarity: 0,
+      mode: params.effectiveMode,
+      archetype: params.effectiveArchetype,
+      archetypeBreakdown: params.archetypeBreakdown,
+    };
+    const reason = `early_return:guardrail:${guardrailBlock.reason ?? "blocked"}`;
+    return {
+      payload,
+      debug: buildEarlyReturnDebugPayload({
+        reason,
+        blockedIntent: guardrailBlock.reason,
+        answerText: payload.answer,
+        retrievalPolicy: params.retrievalPolicy,
+        debugContext: params.debugContext,
+      }),
+    };
+  }
+
+  return null;
+}
+
+function maybePostValidateAnswer(params: {
+  answer: string;
+  evidenceMode: EvidenceMode;
+  requireGeneralLabel: boolean;
+  threadResetRequired: boolean;
+  sessionId: string | null;
+  pageUrl: string | null | undefined;
+}): { answer: string; postvalidateDebug: { triggered: boolean; reasons: string[] } | null } {
+  if (!ENABLE_POST_VALIDATE_OUTPUT || params.threadResetRequired) {
+    return { answer: params.answer, postvalidateDebug: null };
+  }
+
+  const result = postValidate(params.answer, {
+    evidenceMode: params.evidenceMode,
+    requireGeneralLabel: params.requireGeneralLabel,
+  });
+  logPostValidate({
+    sessionId: params.sessionId ?? null,
+    pageUrl: params.pageUrl ?? null,
+    evidenceMode: params.evidenceMode,
+    triggered: result.triggered,
+    reasons: result.reasons,
+    replacedWithBlock: result.replacedWithBlock,
+    labelInjected: result.labelInjected,
+    qualifierInjected: result.qualifierInjected,
+    changed: result.changed,
+  });
+  return { answer: result.text, postvalidateDebug: { triggered: result.triggered, reasons: result.reasons } };
+}
+
+type RespondFn = <T extends PerazziAssistantResponse>(
+  payload: T,
+  debugPayload?: PerazziAdminDebugPayload,
+) => NextResponse;
+
+type ParsedRequestResult =
+  | {
+      ok: true;
+      body: Partial<PerazziAssistantRequest>;
+      fullBody: PerazziAssistantRequest;
+    }
+  | { ok: false; response: NextResponse };
+
+type AssistantRequestState = {
+  body: Partial<PerazziAssistantRequest>;
+  fullBody: PerazziAssistantRequest;
+  sanitizedMessages: ChatMessage[];
+  latestQuestion: string | null;
+  hints: RetrievalHints;
+  previousResponseId: string | null;
+  effectiveMode: PerazziMode;
+  retrievalPolicy: RetrievalPolicy;
+  effectiveTextVerbosity: CreateResponseTextParams["textVerbosity"];
+  debugContext: EarlyReturnDebugContext;
+  conversationStrategy: string | null;
+  openAiStoreEnabled: boolean;
+  enforcedThreadInput: boolean;
+  useTieredBoosts: boolean;
+};
+
+type RetrievalDecision = {
+  retrieve: boolean;
+  reason: string;
+};
+
+type RetrievalFlowResult = {
+  retrieval: Awaited<ReturnType<typeof retrievePerazziContext>>;
+  retrievalDecision: RetrievalDecision;
+  retrievalAttempted: boolean;
+  retrievalChunkCount: number;
+  evidenceContext: EvidenceContext;
+  evidenceMode: EvidenceMode;
+  evidenceReason: string;
+  rerankMetrics: RerankMetrics;
+  loggingMetrics: Record<string, unknown>;
+  retrievalScores: number[];
+  modelsRegistryResult: ReturnType<typeof applyModelsRegistrySot>;
+  modelSpecFactQuery: boolean;
+};
+
+type ArchetypeState = {
+  archetypeOverride: Archetype | null;
+  archetypeContext: ArchetypeContext;
+  archetypeBreakdown: ReturnType<typeof computeArchetypeBreakdown>;
+  archetypeMetrics: ReturnType<typeof computeArchetypeConfidenceMetrics>;
+  archetypeClassification: ArchetypeClassification | null;
+  effectiveArchetype: Archetype | null;
+};
+
+type AssistantCompletion = {
+  answer: string;
+  responseId: string | null;
+  threadResetRequired: boolean;
+  assistantUsage: OpenAI.Responses.ResponseUsage | null;
+  assistantOpenAiDebug: PerazziAdminDebugPayload["openai"] | null;
+  postvalidateDebug: { triggered: boolean; reasons: string[] } | null;
+};
+
+function logAdminDebugAuthorization(authorized: boolean) {
+  console.info(
+    JSON.stringify({
+      type: "perazzi-admin-debug-auth",
+      authorized,
+    }),
+  );
+}
+
+function createResponder(adminDebugAuthorized: boolean): RespondFn {
+  return <T extends PerazziAssistantResponse>(
+    payload: T,
+    debugPayload?: PerazziAdminDebugPayload,
+  ) => {
+    if (!adminDebugAuthorized || !debugPayload) return NextResponse.json(payload);
+    return NextResponse.json({ ...payload, debug: debugPayload });
+  };
+}
+
+function handlePreflight(request: Request): NextResponse | null {
   const rate = checkRateLimit(request);
   if (!rate.ok) {
     const retryAfterSeconds = Math.ceil(
@@ -774,827 +1309,710 @@ export async function POST(request: Request) {
       { status: 403 },
     );
   }
-  // -------------------------------------------
-  const adminDebugAuthorized = isAdminDebugAuthorized(request);
-  console.info(
-    JSON.stringify({
-      type: "perazzi-admin-debug-auth",
-      authorized: adminDebugAuthorized,
-    }),
-  );
 
-  const respond = <T extends PerazziAssistantResponse>(
-    payload: T,
-    debugPayload?: PerazziAdminDebugPayload,
-  ) => {
-    if (!adminDebugAuthorized || !debugPayload) return NextResponse.json(payload);
-    return NextResponse.json({ ...payload, debug: debugPayload });
-  };
+  return null;
+}
 
-  try {
-    const body: Partial<PerazziAssistantRequest> = await request.json();
-    const validationError = validateRequest(body);
-    if (validationError) {
-      return NextResponse.json({ error: validationError }, { status: 400 });
-    }
+function getTotalUserChars(messages: ChatMessage[]): number {
+  return messages
+    .filter((msg) => msg.role === "user" && typeof msg.content === "string")
+    .reduce((sum, msg) => sum + (msg.content?.length ?? 0), 0);
+}
 
-    const fullBody = body as PerazziAssistantRequest;
+async function parseAndValidateRequest(request: Request): Promise<ParsedRequestResult> {
+  const body: Partial<PerazziAssistantRequest> = await request.json();
+  const validationError = validateRequest(body);
+  if (validationError) {
+    return { ok: false, response: NextResponse.json({ error: validationError }, { status: 400 }) };
+  }
 
-    // --- Input length guard ---
-    const messages = fullBody.messages;
-    const totalUserChars = messages
-      .filter((msg) => msg.role === "user" && typeof msg.content === "string")
-      .reduce((sum, msg) => sum + (msg.content?.length ?? 0), 0);
-
-    if (totalUserChars > MAX_INPUT_CHARS) {
-      return NextResponse.json(
+  const fullBody = body as PerazziAssistantRequest;
+  const totalUserChars = getTotalUserChars(fullBody.messages);
+  if (totalUserChars > MAX_INPUT_CHARS) {
+    return {
+      ok: false,
+      response: NextResponse.json(
         {
           error: "Message too long. Please shorten your question.",
           maxLength: MAX_INPUT_CHARS,
         },
         { status: 413 },
-      );
-    }
-    // -------------------------
-
-    // --- Archetype tiered boost A/B bucket (secure RNG) ---
-    // Use cryptographically secure RNG for A/B bucketing to satisfy security linters
-    const abPercent = Number(process.env.ARCHETYPE_AB_PERCENT ?? 0);
-    const isTierBucket =
-      Number.isFinite(abPercent) &&
-      abPercent > 0 &&
-      randomInt(0, 100) < abPercent;
-    const useTieredBoosts = isTieredBoostsEnabled() || isTierBucket;
-    const archetypeVariant = useTieredBoosts ? "tiered" : "baseline";
-
-    // expose variant in context for logging / downstream use
-    fullBody.context = {
-      ...(fullBody.context as NonNullable<PerazziAssistantRequest["context"]>),
-      archetypeVariant,
+      ),
     };
+  }
 
-    const sanitizedMessages = sanitizeMessages(fullBody.messages);
-    const latestQuestion = getLatestUserContent(sanitizedMessages);
-    const hints: RetrievalHints = detectRetrievalHints(latestQuestion, body?.context);
-    const previousResponseId = normalizePreviousResponseId(
-      fullBody.previousResponseId ?? fullBody.context?.previousResponseId,
-    );
+  return { ok: true, body, fullBody };
+}
 
-    const conversationStrategyRaw = (process.env.PERAZZI_CONVO_STRATEGY ?? "").trim().toLowerCase();
-    const conversationStrategy = conversationStrategyRaw.length ? conversationStrategyRaw : null;
-    const openAiStoreEnabled = process.env.PERAZZI_OPENAI_STORE === "true";
-    const enforcedThreadInput =
-      conversationStrategy === "thread" && normalizePreviousResponseId(previousResponseId) !== null;
+function normalizeConversationStrategy(raw: string | undefined): string | null {
+  const cleaned = (raw ?? "").trim().toLowerCase();
+  return cleaned.length ? cleaned : null;
+}
 
-    const effectiveMode: PerazziMode =
-      normalizeMode(hints.mode) ?? normalizeMode(body?.context?.mode) ?? "prospect";
-    const retrievalPolicy = getRetrievalPolicy();
-    const requestedTextVerbosity = parseTextVerbosity(body?.context?.textVerbosity);
-    const effectiveTextVerbosity = requestedTextVerbosity ?? ENV_TEXT_VERBOSITY;
+function applyArchetypeVariant(fullBody: PerazziAssistantRequest): {
+  useTieredBoosts: boolean;
+  archetypeVariant: "tiered" | "baseline";
+} {
+  const abPercent = Number(process.env.ARCHETYPE_AB_PERCENT ?? 0);
+  const isTierBucket =
+    Number.isFinite(abPercent) &&
+    abPercent > 0 &&
+    randomInt(0, 100) < abPercent;
+  const useTieredBoosts = isTieredBoostsEnabled() || isTierBucket;
+  const archetypeVariant = useTieredBoosts ? "tiered" : "baseline";
 
-    const buildEarlyReturnDebugPayload = (
-      reason: string,
-      blockedIntent?: string | null,
-      answerText?: string | null,
-    ) => {
-      const { evidenceMode, evidenceReason } = computeEvidenceMode({
-        retrievalAttempted: false,
-        retrievalChunkCount: 0,
-        retrievalSkipReason: reason,
-      });
-      return buildDebugPayload({
-        thread: {
-          previous_response_id_present: Boolean(previousResponseId),
-          store_enabled: openAiStoreEnabled,
-          thread_reset_required: false,
-          conversationStrategy,
-          enforced_thread_input: enforcedThreadInput,
-        },
-        openai: null,
-        retrieval: {
-          attempted: false,
-          skipped: true,
-          reason,
-          chunk_count: 0,
-          top_titles: [],
-          rerank_enabled: null,
-          rerank_metrics_present: false,
-          models_registry_sot_enabled: MODELS_REGISTRY_SOT_ENABLED,
-          models_registry_sot_applied: false,
-          models_registry_chunk_count: 0,
-        },
-        usage: null,
-        flags: {
-          convo_strategy: conversationStrategy,
-          retrieval_policy: retrievalPolicy,
-          text_verbosity: effectiveTextVerbosity ?? null,
-          reasoning_effort: REASONING_EFFORT ?? null,
-          require_general_label: REQUIRE_GENERAL_LABEL,
-          postvalidate_enabled: ENABLE_POST_VALIDATE_OUTPUT,
-          prompt_cache_retention: PROMPT_CACHE_RETENTION ?? null,
-          prompt_cache_key_present: Boolean(PROMPT_CACHE_KEY),
-        },
-        output:
-          typeof answerText === "string"
-            ? {
-                general_unsourced_label_present: answerText
-                  .trimStart()
-                  .startsWith(GENERAL_UNSOURCED_LABEL_PREFIX),
-              }
-            : null,
-        archetypeAnalytics: buildArchetypeAnalytics(
-          fullBody.context?.archetypeVariant ?? null,
-          null,
-          [],
-          [],
-        ),
-        triggers: {
-          blocked_intent: blockedIntent ?? null,
-          evidenceMode,
-          evidenceReason,
-          postvalidate: null,
-        },
-      });
-    };
+  fullBody.context = {
+    ...(fullBody.context as NonNullable<PerazziAssistantRequest["context"]>),
+    archetypeVariant,
+  };
 
-    // Soft-meta origin handler: answer who built/designed the assistant, without exposing internals.
-    if (detectAssistantOriginQuestion(latestQuestion)) {
-      logRetrievalDecision({
-        retrieve: false,
-        reason: "early_return:assistant_origin",
-        policy: retrievalPolicy,
-        userText: latestQuestion,
-        mode: effectiveMode,
-        pageUrl: body?.context?.pageUrl ?? null,
-        sessionId: fullBody.sessionId ?? null,
-      });
-      const neutralVector = getNeutralArchetypeVector();
-      const archetypeBreakdown = {
-        primary: null,
-        vector: neutralVector,
-        reasoning:
-          "Archetype profile not used: assistant-origin meta question handled via fixed, brand-aligned narrative.",
-        signalsUsed: ["meta:assistant_origin"],
-      };
+  return { useTieredBoosts, archetypeVariant };
+}
 
-      const answer = [
-        "I was designed by David Radulovich, one of Perazzi’s professional shooters, in collaboration with Perazzi USA.",
-        "",
-        "The idea is the same as with a bespoke Perazzi gun: it grows out of a conversation between the craftsmen who build it and the shooter who will live with it. David brought the perspective of the competitor and coach; Perazzi brought the heritage, craft, and standards.",
-        "",
-        "My job is to express that shared point of view in conversation and help you make good decisions about your gun and your journey with Perazzi. The important part is not my internal wiring, but that everything I say reflects how Perazzi thinks about its guns and its owners.",
-      ].join("\n");
+function buildAssistantRequestState(params: {
+  body: Partial<PerazziAssistantRequest>;
+  fullBody: PerazziAssistantRequest;
+  useTieredBoosts: boolean;
+}): AssistantRequestState {
+  const sanitizedMessages = sanitizeMessages(params.fullBody.messages);
+  const latestQuestion = getLatestUserContent(sanitizedMessages);
+  const hints: RetrievalHints = detectRetrievalHints(latestQuestion, params.body?.context);
+  const previousResponseId = normalizePreviousResponseId(
+    params.fullBody.previousResponseId ?? params.fullBody.context?.previousResponseId,
+  );
+  const conversationStrategy = normalizeConversationStrategy(process.env.PERAZZI_CONVO_STRATEGY);
+  const openAiStoreEnabled = process.env.PERAZZI_OPENAI_STORE === "true";
+  const enforcedThreadInput = conversationStrategy === "thread" && previousResponseId !== null;
+  const effectiveMode: PerazziMode =
+    normalizeMode(hints.mode) ?? normalizeMode(params.body?.context?.mode) ?? "prospect";
+  const retrievalPolicy = getRetrievalPolicy();
+  const requestedTextVerbosity = parseTextVerbosity(params.body?.context?.textVerbosity);
+  const effectiveTextVerbosity = requestedTextVerbosity ?? ENV_TEXT_VERBOSITY;
 
-      logInteraction(
-        fullBody,
-        [],
-        0,
-        "ok",
-        undefined,
-        hints,
-        [],
-      );
+  const debugContext: EarlyReturnDebugContext = {
+    previousResponseId,
+    openAiStoreEnabled,
+    conversationStrategy,
+    enforcedThreadInput,
+    textVerbosity: effectiveTextVerbosity ?? null,
+    archetypeVariant: params.fullBody.context?.archetypeVariant ?? null,
+  };
 
-      const payload: PerazziAssistantResponse = {
-        answer,
-        guardrail: { status: "ok", reason: null },
-        citations: [],
-        intents: hints.intents,
-        topics: hints.topics,
-        templates: [],
-        similarity: 0,
-        mode: effectiveMode,
-        archetype: null,
-        archetypeBreakdown,
-      };
-      return respond(
-        payload,
-        buildEarlyReturnDebugPayload("early_return:assistant_origin", null, answer),
-      );
-    }
+  return {
+    body: params.body,
+    fullBody: params.fullBody,
+    sanitizedMessages,
+    latestQuestion,
+    hints,
+    previousResponseId,
+    effectiveMode,
+    retrievalPolicy,
+    effectiveTextVerbosity,
+    debugContext,
+    conversationStrategy,
+    openAiStoreEnabled,
+    enforcedThreadInput,
+    useTieredBoosts: params.useTieredBoosts,
+  };
+}
 
-    // Knowledge-source handler: explain curated Perazzi corpus without exposing internal docs or architecture.
-    if (detectKnowledgeSourceQuestion(latestQuestion)) {
-      logRetrievalDecision({
-        retrieve: false,
-        reason: "early_return:knowledge_source",
-        policy: retrievalPolicy,
-        userText: latestQuestion,
-        mode: effectiveMode,
-        pageUrl: body?.context?.pageUrl ?? null,
-        sessionId: fullBody.sessionId ?? null,
-      });
-      const neutralVector = getNeutralArchetypeVector();
-      const archetypeBreakdown = {
-        primary: null,
-        vector: neutralVector,
-        reasoning:
-          "Archetype profile not used: knowledge-source meta question handled via fixed, brand-aligned narrative.",
-        signalsUsed: ["meta:knowledge_source"],
-      };
-
-      const answer = [
-        "I don’t search the open internet. I’m built on curated Perazzi-specific information: platform and product references, service and fitting guidance, heritage and history material, and internal references that capture how Perazzi thinks about ownership and competition.",
-        "",
-        "All of that is selected and maintained by Perazzi so that the conversation stays focused on the real Perazzi experience, rather than whatever happens to be online at the moment.",
-      ].join("\n");
-
-      logInteraction(
-        fullBody,
-        [],
-        0,
-        "ok",
-        undefined,
-        hints,
-        [],
-      );
-
-      const payload: PerazziAssistantResponse = {
-        answer,
-        guardrail: { status: "ok", reason: null },
-        citations: [],
-        intents: hints.intents,
-        topics: hints.topics,
-        templates: [],
-        similarity: 0,
-        mode: effectiveMode,
-        archetype: null,
-        archetypeBreakdown,
-      };
-      return respond(
-        payload,
-        buildEarlyReturnDebugPayload("early_return:knowledge_source", null, answer),
-      );
-    }
-
-    const resetRequested = detectArchetypeResetPhrase(latestQuestion);
-
-    if (resetRequested) {
-      logRetrievalDecision({
-        retrieve: false,
-        reason: "early_return:archetype_reset",
-        policy: retrievalPolicy,
-        userText: latestQuestion,
-        mode: effectiveMode,
-        pageUrl: body?.context?.pageUrl ?? null,
-        sessionId: fullBody.sessionId ?? null,
-      });
-      const neutralVector = getNeutralArchetypeVector();
-      const archetypeBreakdown = {
-        primary: null,
-        vector: neutralVector,
-        reasoning:
-          'Archetype profile reset to neutral via dev reset phrase: "Please clear your memory of my archetype."',
-        signalsUsed: ["reset:neutral"],
-      };
-
-      const answer =
-        "Understood. I’ve cleared your archetype profile and will treat you neutrally again from here.";
-
-      logInteraction(
-        fullBody,
-        [],
-        0,
-        "ok",
-        undefined,
-        hints,
-        [],
-      );
-
-      const payload: PerazziAssistantResponse = {
-        answer,
-        guardrail: { status: "ok", reason: null },
-        citations: [],
-        intents: hints.intents,
-        topics: hints.topics,
-        templates: [],
-        similarity: 0,
-        mode: effectiveMode,
-        archetype: null,
-        archetypeBreakdown,
-      };
-      return respond(
-        payload,
-        buildEarlyReturnDebugPayload("early_return:archetype_reset", null, answer),
-      );
-    }
-
-    // Dev feature: manual archetype override via phrase
-    const archetypeOverride = detectArchetypeOverridePhrase(latestQuestion);
-
-    const previousVector =
-      body?.context?.archetypeVector ?? null;
-
-    const archetypeContext: ArchetypeContext = {
-      mode: effectiveMode,
-    pageUrl: body?.context?.pageUrl ?? null,
-    modelSlug: body?.context?.modelSlug ?? null,
-    platformSlug: body?.context?.platformSlug ?? null,
-    intents: Array.isArray(hints?.intents) ? hints.intents : [],
-    topics: Array.isArray(hints?.topics) ? hints.topics : [],
-    userMessage: latestQuestion ?? "",
+function computeArchetypeState(params: {
+  state: AssistantRequestState;
+}): ArchetypeState {
+  const archetypeOverride = detectArchetypeOverridePhrase(params.state.latestQuestion);
+  const previousVector = params.state.body?.context?.archetypeVector ?? null;
+  const archetypeContext: ArchetypeContext = {
+    mode: params.state.effectiveMode,
+    pageUrl: params.state.body?.context?.pageUrl ?? null,
+    modelSlug: params.state.body?.context?.modelSlug ?? null,
+    platformSlug: params.state.body?.context?.platformSlug ?? null,
+    intents: Array.isArray(params.state.hints?.intents) ? params.state.hints.intents : [],
+    topics: Array.isArray(params.state.hints?.topics) ? params.state.hints.topics : [],
+    userMessage: params.state.latestQuestion ?? "",
     devOverrideArchetype: archetypeOverride,
   };
 
-    const archetypeBreakdown = computeArchetypeBreakdown(
-      archetypeContext,
-      previousVector,
-      { useTieredBoosts },
+  const archetypeBreakdown = computeArchetypeBreakdown(
+    archetypeContext,
+    previousVector,
+    { useTieredBoosts: params.state.useTieredBoosts },
+  );
+  const archetypeMetrics = computeArchetypeConfidenceMetrics(archetypeBreakdown.vector);
+  const archetypeClassification = buildArchetypeClassification(archetypeBreakdown);
+  const effectiveArchetype: Archetype | null =
+    archetypeOverride ?? archetypeBreakdown.primary ?? null;
+
+  return {
+    archetypeOverride,
+    archetypeContext,
+    archetypeBreakdown,
+    archetypeMetrics,
+    archetypeClassification,
+    effectiveArchetype,
+  };
+}
+
+function decideRetrieval(params: {
+  retrievalPolicy: RetrievalPolicy;
+  latestQuestion: string | null;
+  effectiveMode: PerazziMode;
+  pageUrl: string | null | undefined;
+}): RetrievalDecision {
+  if (params.retrievalPolicy === "always") {
+    return { retrieve: true, reason: "policy:always" };
+  }
+  return shouldRetrieve({
+    userText: params.latestQuestion,
+    mode: params.effectiveMode,
+    pageUrl: params.pageUrl ?? null,
+  });
+}
+
+function buildEmptyRerankMetrics(): RerankMetrics {
+  return {
+    rerankEnabled: false,
+    candidateLimit: 0,
+    topReturnedChunks: [],
+  };
+}
+
+async function fetchRetrieval(params: {
+  retrievalDecision: RetrievalDecision;
+  retrievalBody: PerazziAssistantRequest;
+  hints: RetrievalHints;
+}): Promise<{
+  retrieval: Awaited<ReturnType<typeof retrievePerazziContext>>;
+  retrievalAttempted: boolean;
+}> {
+  const emptyRerankMetrics = buildEmptyRerankMetrics();
+  if (!params.retrievalDecision.retrieve) {
+    return {
+      retrieval: { chunks: [], maxScore: 0, rerankMetrics: emptyRerankMetrics },
+      retrievalAttempted: false,
+    };
+  }
+
+  const retrieval = await retrievePerazziContext(params.retrievalBody, params.hints);
+  return { retrieval, retrievalAttempted: true };
+}
+
+function buildRetrievalBody(params: {
+  fullBody: PerazziAssistantRequest;
+  context: PerazziAssistantRequest["context"] | undefined;
+  effectiveMode: PerazziMode;
+  archetypeVector: ArchetypeVector;
+}): PerazziAssistantRequest {
+  const baseContext = params.context ?? {};
+  const retrievalContext = {
+    ...baseContext,
+    mode: params.effectiveMode,
+    archetypeVector: params.archetypeVector,
+  };
+  return {
+    ...params.fullBody,
+    context: retrievalContext,
+  };
+}
+
+async function runRetrievalFlow(params: {
+  state: AssistantRequestState;
+  retrievalBody: PerazziAssistantRequest;
+  archetypeMetrics: ReturnType<typeof computeArchetypeConfidenceMetrics>;
+}): Promise<RetrievalFlowResult> {
+  const modelSpecFactQuery = isModelSpecFactQuery(params.state.latestQuestion);
+  const retrievalDecision = decideRetrieval({
+    retrievalPolicy: params.state.retrievalPolicy,
+    latestQuestion: params.state.latestQuestion,
+    effectiveMode: params.state.effectiveMode,
+    pageUrl: params.state.body?.context?.pageUrl ?? null,
+  });
+
+  logRetrievalDecision({
+    retrieve: retrievalDecision.retrieve,
+    reason: retrievalDecision.reason,
+    policy: params.state.retrievalPolicy,
+    userText: params.state.latestQuestion,
+    mode: params.state.effectiveMode,
+    pageUrl: params.state.body?.context?.pageUrl ?? null,
+    sessionId: params.state.fullBody.sessionId ?? null,
+  });
+
+  const { retrieval, retrievalAttempted } = await fetchRetrieval({
+    retrievalDecision,
+    retrievalBody: params.retrievalBody,
+    hints: params.state.hints,
+  });
+
+  const modelsRegistryResult = applyModelsRegistrySot({
+    enabled: MODELS_REGISTRY_SOT_ENABLED,
+    modelSpecFactQuery,
+    retrievalAttempted,
+    chunks: retrieval.chunks,
+  });
+  const normalizedRetrieval = { ...retrieval, chunks: modelsRegistryResult.chunks };
+
+  logModelsRegistrySot({
+    enabled: MODELS_REGISTRY_SOT_ENABLED,
+    modelSpecFactQuery,
+    ...modelsRegistryResult,
+  });
+
+  const retrievalScores = getTopBaseScores(normalizedRetrieval.chunks);
+  const retrievalChunkCount = retrievalAttempted ? normalizedRetrieval.chunks.length : 0;
+  const retrievalSkipReason = retrievalAttempted ? null : retrievalDecision.reason;
+  const { evidenceMode, evidenceReason } = computeEvidenceMode({
+    retrievalAttempted,
+    retrievalChunkCount,
+    retrievalSkipReason,
+  });
+  const evidenceContext: EvidenceContext = {
+    evidenceMode,
+    evidenceReason,
+    requireGeneralLabel: REQUIRE_GENERAL_LABEL,
+  };
+
+  const emptyRerankMetrics = buildEmptyRerankMetrics();
+  const rerankMetrics = normalizedRetrieval.rerankMetrics ?? emptyRerankMetrics;
+  const loggingMetrics = {
+    ...params.archetypeMetrics,
+    ...rerankMetrics,
+    retrievalPolicy: params.state.retrievalPolicy,
+    retrievalSkipped: !retrievalAttempted,
+    retrievalSkipReason,
+    retrievalChunkCount,
+    evidenceMode,
+    evidenceReason,
+    requireGeneralLabel: REQUIRE_GENERAL_LABEL,
+    modelsRegistrySotEnabled: MODELS_REGISTRY_SOT_ENABLED,
+    modelsRegistrySotApplied: modelsRegistryResult.applied,
+    modelsRegistryChunkCount: modelsRegistryResult.registryChunkCount,
+    modelSpecFactQuery,
+  };
+
+  logEvidenceModeDecision({
+    evidenceMode,
+    evidenceReason,
+    retrievalPolicy: params.state.retrievalPolicy,
+    retrievalSkipped: !retrievalAttempted,
+    retrievalSkipReason,
+    retrievalChunkCount,
+    mode: params.state.effectiveMode,
+    pageUrl: params.state.body?.context?.pageUrl ?? null,
+    sessionId: params.state.fullBody.sessionId ?? null,
+  });
+
+  return {
+    retrieval: normalizedRetrieval,
+    retrievalDecision,
+    retrievalAttempted,
+    retrievalChunkCount,
+    evidenceContext,
+    evidenceMode,
+    evidenceReason,
+    rerankMetrics,
+    loggingMetrics,
+    retrievalScores,
+    modelsRegistryResult,
+    modelSpecFactQuery,
+  };
+}
+
+function buildLowConfidenceEarlyReturn(params: {
+  state: AssistantRequestState;
+  retrievalFlow: RetrievalFlowResult;
+  responseTemplates: string[];
+  effectiveArchetype: Archetype | null;
+  archetypeBreakdown: ReturnType<typeof computeArchetypeBreakdown>;
+}): EarlyReturnResult | null {
+  if (
+    !params.retrievalFlow.retrievalAttempted ||
+    params.retrievalFlow.retrieval.maxScore >= getLowConfidenceThreshold()
+  ) {
+    return null;
+  }
+
+  logInteraction(
+    params.state.fullBody,
+    params.retrievalFlow.retrieval.chunks,
+    params.retrievalFlow.retrieval.maxScore,
+    "low_confidence",
+    "retrieval_low",
+    params.state.hints,
+    params.responseTemplates,
+    params.retrievalFlow.loggingMetrics,
+  );
+
+  const debugPayload = buildDebugPayload({
+    thread: {
+      previous_response_id_present: Boolean(params.state.previousResponseId),
+      store_enabled: params.state.openAiStoreEnabled,
+      thread_reset_required: false,
+      conversationStrategy: params.state.conversationStrategy,
+      enforced_thread_input: params.state.enforcedThreadInput,
+    },
+    openai: null,
+    retrieval: {
+      attempted: params.retrievalFlow.retrievalAttempted,
+      skipped: false,
+      reason: params.retrievalFlow.retrievalDecision.reason ?? null,
+      chunk_count: params.retrievalFlow.retrievalChunkCount,
+      top_titles: params.retrievalFlow.retrieval.chunks.map((chunk) => chunk.title),
+      rerank_enabled: Boolean(params.retrievalFlow.rerankMetrics.rerankEnabled),
+      rerank_metrics_present:
+        Array.isArray(params.retrievalFlow.rerankMetrics.topReturnedChunks) &&
+        params.retrievalFlow.rerankMetrics.topReturnedChunks.length > 0,
+      models_registry_sot_enabled: MODELS_REGISTRY_SOT_ENABLED,
+      models_registry_sot_applied: params.retrievalFlow.modelsRegistryResult.applied,
+      models_registry_chunk_count: params.retrievalFlow.modelsRegistryResult.registryChunkCount,
+    },
+    usage: null,
+    flags: {
+      convo_strategy: params.state.conversationStrategy,
+      retrieval_policy: params.state.retrievalPolicy,
+      text_verbosity: params.state.effectiveTextVerbosity ?? null,
+      reasoning_effort: REASONING_EFFORT ?? null,
+      require_general_label: REQUIRE_GENERAL_LABEL,
+      postvalidate_enabled: ENABLE_POST_VALIDATE_OUTPUT,
+      prompt_cache_retention: PROMPT_CACHE_RETENTION ?? null,
+      prompt_cache_key_present: Boolean(PROMPT_CACHE_KEY),
+    },
+    output: { general_unsourced_label_present: false },
+    archetypeAnalytics: buildArchetypeAnalytics(
+      params.state.fullBody.context?.archetypeVariant ?? null,
+      null,
+      [],
+      [],
+    ),
+    triggers: {
+      blocked_intent: null,
+      evidenceMode: params.retrievalFlow.evidenceMode,
+      evidenceReason: params.retrievalFlow.evidenceReason,
+      postvalidate: null,
+    },
+  });
+
+  const payload: PerazziAssistantResponse = {
+    answer: LOW_CONFIDENCE_MESSAGE,
+    guardrail: { status: "low_confidence", reason: "retrieval_low" },
+    citations: [],
+    intents: params.state.hints.intents,
+    topics: params.state.hints.topics,
+    templates: params.responseTemplates,
+    similarity: params.retrievalFlow.retrieval.maxScore,
+    retrievalScores: params.retrievalFlow.retrievalScores,
+    mode: params.state.effectiveMode,
+    archetype: params.effectiveArchetype,
+    archetypeBreakdown: params.archetypeBreakdown,
+  };
+
+  return { payload, debug: debugPayload };
+}
+
+async function buildAssistantCompletion(params: {
+  state: AssistantRequestState;
+  retrievalFlow: RetrievalFlowResult;
+  responseTemplates: string[];
+  archetypeState: ArchetypeState;
+  guardrail: { status: "ok"; reason: string | null };
+}): Promise<AssistantCompletion> {
+  const generated = await generateAssistantAnswerWithThreadReset({
+    generateParams: {
+      sanitizedMessages: params.state.sanitizedMessages,
+      context: params.state.body?.context,
+      chunks: params.retrievalFlow.retrieval.chunks,
+      templates: params.responseTemplates,
+      mode: params.state.effectiveMode,
+      archetype: params.archetypeState.effectiveArchetype,
+      archetypeClassification: params.archetypeState.archetypeClassification,
+      textVerbosity: params.state.effectiveTextVerbosity,
+      maxScore: params.retrievalFlow.retrieval.maxScore,
+      rerankMetrics: params.retrievalFlow.rerankMetrics,
+      guardrail: params.guardrail,
+      hints: params.state.hints,
+      sessionId: params.state.fullBody.sessionId ?? null,
+      extraMetadata: params.retrievalFlow.loggingMetrics,
+      previousResponseId: params.state.previousResponseId,
+      evidence: params.retrievalFlow.evidenceContext,
+    },
+    previousResponseId: params.state.previousResponseId,
+    evidenceContext: params.retrievalFlow.evidenceContext,
+    sessionId: params.state.fullBody.sessionId ?? null,
+    pageUrl: params.state.body?.context?.pageUrl ?? null,
+  });
+
+  let answer = generated.answer;
+  const { answer: postvalidatedAnswer, postvalidateDebug } = maybePostValidateAnswer({
+    answer,
+    evidenceMode: params.retrievalFlow.evidenceContext.evidenceMode,
+    requireGeneralLabel: params.retrievalFlow.evidenceContext.requireGeneralLabel,
+    threadResetRequired: generated.threadResetRequired,
+    sessionId: params.state.fullBody.sessionId ?? null,
+    pageUrl: params.state.body?.context?.pageUrl ?? null,
+  });
+  answer = postvalidatedAnswer;
+
+  return {
+    answer,
+    postvalidateDebug,
+    responseId: generated.responseId ?? null,
+    threadResetRequired: generated.threadResetRequired,
+    assistantUsage: generated.usage ?? null,
+    assistantOpenAiDebug: generated.openai ?? null,
+  };
+}
+
+function buildPostvalidateTrigger(
+  postvalidateDebug: { triggered: boolean; reasons: string[] } | null,
+): NonNullable<PerazziAdminDebugPayload["triggers"]>["postvalidate"] {
+  if (!postvalidateDebug?.triggered) return null;
+  return {
+    triggered: true,
+    reasons: postvalidateDebug.reasons.slice(0, 10),
+  };
+}
+
+function buildSuccessDebugPayload(params: {
+  state: AssistantRequestState;
+  retrievalFlow: RetrievalFlowResult;
+  answer: string;
+  threadResetRequired: boolean;
+  assistantUsage: OpenAI.Responses.ResponseUsage | null;
+  assistantOpenAiDebug: PerazziAdminDebugPayload["openai"] | null;
+  postvalidateDebug: { triggered: boolean; reasons: string[] } | null;
+  archetypeAnalytics: PerazziAdminDebugPayload["archetypeAnalytics"];
+}): PerazziAdminDebugPayload {
+  const postvalidate = buildPostvalidateTrigger(params.postvalidateDebug);
+
+  return buildDebugPayload({
+    thread: {
+      previous_response_id_present: Boolean(params.state.previousResponseId),
+      store_enabled: params.state.openAiStoreEnabled,
+      thread_reset_required: params.threadResetRequired,
+      conversationStrategy: params.state.conversationStrategy,
+      enforced_thread_input: params.state.enforcedThreadInput,
+    },
+    openai: params.assistantOpenAiDebug,
+    retrieval: {
+      attempted: params.retrievalFlow.retrievalAttempted,
+      skipped: !params.retrievalFlow.retrievalAttempted,
+      reason: params.retrievalFlow.retrievalDecision.reason ?? null,
+      chunk_count: params.retrievalFlow.retrievalChunkCount,
+      top_titles: params.retrievalFlow.retrievalAttempted
+        ? params.retrievalFlow.retrieval.chunks.map((chunk) => chunk.title)
+        : [],
+      rerank_enabled: params.retrievalFlow.retrievalAttempted
+        ? Boolean(params.retrievalFlow.rerankMetrics.rerankEnabled)
+        : null,
+      rerank_metrics_present:
+        params.retrievalFlow.retrievalAttempted &&
+        Array.isArray(params.retrievalFlow.rerankMetrics.topReturnedChunks) &&
+        params.retrievalFlow.rerankMetrics.topReturnedChunks.length > 0,
+      models_registry_sot_enabled: MODELS_REGISTRY_SOT_ENABLED,
+      models_registry_sot_applied: params.retrievalFlow.modelsRegistryResult.applied,
+      models_registry_chunk_count: params.retrievalFlow.modelsRegistryResult.registryChunkCount,
+    },
+    usage: params.assistantUsage,
+    flags: {
+      convo_strategy: params.state.conversationStrategy,
+      retrieval_policy: params.state.retrievalPolicy,
+      text_verbosity: params.state.effectiveTextVerbosity ?? null,
+      reasoning_effort: REASONING_EFFORT ?? null,
+      require_general_label: REQUIRE_GENERAL_LABEL,
+      postvalidate_enabled: ENABLE_POST_VALIDATE_OUTPUT,
+      prompt_cache_retention: PROMPT_CACHE_RETENTION ?? null,
+      prompt_cache_key_present: Boolean(PROMPT_CACHE_KEY),
+    },
+    output: {
+      general_unsourced_label_present: params.answer
+        .trimStart()
+        .startsWith(GENERAL_UNSOURCED_LABEL_PREFIX),
+    },
+    archetypeAnalytics: params.archetypeAnalytics,
+    triggers: {
+      blocked_intent: null,
+      evidenceMode: params.retrievalFlow.evidenceMode,
+      evidenceReason: params.retrievalFlow.evidenceReason,
+      postvalidate,
+    },
+  });
+}
+
+function buildSuccessPayload(params: {
+  state: AssistantRequestState;
+  retrievalFlow: RetrievalFlowResult;
+  responseTemplates: string[];
+  archetypeState: ArchetypeState;
+  answer: string;
+  responseId: string | null;
+  threadResetRequired: boolean;
+}): PerazziAssistantResponse {
+  const payload: PerazziAssistantResponse = {
+    answer: params.answer,
+    citations: params.threadResetRequired
+      ? []
+      : params.retrievalFlow.retrieval.chunks.map(mapChunkToCitation),
+    guardrail: { status: "ok", reason: null },
+    intents: params.state.hints.intents,
+    topics: params.state.hints.topics,
+    templates: params.responseTemplates,
+    similarity: params.retrievalFlow.retrieval.maxScore,
+    retrievalScores: params.retrievalFlow.retrievalScores,
+    mode: params.state.effectiveMode,
+    archetype: params.archetypeState.effectiveArchetype,
+    archetypeBreakdown: params.archetypeState.archetypeBreakdown,
+    responseId: params.responseId ?? null,
+  };
+
+  if (params.threadResetRequired) {
+    payload.thread_reset_required = true;
+  }
+
+  return payload;
+}
+
+function handleAssistantError(error: unknown): NextResponse {
+  console.error("Perazzi assistant error", error);
+  if (error instanceof OpenAIConnectionError) {
+    return NextResponse.json(
+      { error: "We’re having trouble reaching the Perazzi knowledge service. Please try again in a moment." },
+      { status: 503 },
     );
-    const archetypeMetrics = computeArchetypeConfidenceMetrics(archetypeBreakdown.vector);
-    const archetypeClassification = buildArchetypeClassification(archetypeBreakdown);
-    const effectiveArchetype: Archetype | null =
-      archetypeOverride ?? archetypeBreakdown.primary ?? null;
+  }
+  return NextResponse.json(
+    { error: "Unexpected error while processing the request." },
+    { status: 500 },
+  );
+}
 
-    if (archetypeOverride) {
-      logRetrievalDecision({
-        retrieve: false,
-        reason: "early_return:archetype_override",
-        policy: retrievalPolicy,
-        userText: latestQuestion,
-        mode: effectiveMode,
-        pageUrl: body?.context?.pageUrl ?? null,
-        sessionId: fullBody.sessionId ?? null,
-      });
-      const answer = `Understood. I’ll answer from the perspective of a ${capitalize(
-        archetypeOverride,
-      )} from now on.`;
-      logInteraction(
-        fullBody,
-        [],
-        0,
-        "ok",
-        undefined,
-        hints,
-        [],
-      );
-      const payload: PerazziAssistantResponse = {
-        answer,
-        guardrail: { status: "ok", reason: null },
-        citations: [],
-        intents: hints.intents,
-        topics: hints.topics,
-        templates: [],
-        similarity: 0,
-        mode: effectiveMode,
-        archetype: effectiveArchetype,
-        archetypeBreakdown,
-      };
-      return respond(
-        payload,
-        buildEarlyReturnDebugPayload("early_return:archetype_override", null, answer),
-      );
-    }
+async function handleAssistantRequest(
+  request: Request,
+  respond: RespondFn,
+): Promise<NextResponse> {
+  try {
+    const parsed = await parseAndValidateRequest(request);
+    if (!parsed.ok) return parsed.response;
 
-    const guardrailBlock = detectBlockedIntent(sanitizedMessages);
-    if (guardrailBlock) {
-      logRetrievalDecision({
-        retrieve: false,
-        reason: `early_return:guardrail:${guardrailBlock.reason ?? "blocked"}`,
-        policy: retrievalPolicy,
-        userText: latestQuestion,
-        mode: effectiveMode,
-        pageUrl: body?.context?.pageUrl ?? null,
-        sessionId: fullBody.sessionId ?? null,
-      });
-      logInteraction(
-        fullBody,
-        [],
-        0,
-        "blocked",
-        guardrailBlock.reason,
-        hints,
-      );
+    const { body, fullBody } = parsed;
+    const { useTieredBoosts } = applyArchetypeVariant(fullBody);
+    const state = buildAssistantRequestState({ body, fullBody, useTieredBoosts });
 
-      const env = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local";
-      const promptForLog = sanitizedMessages
-        .filter((msg) => msg.role === "user")
-        .map((msg) => msg.content ?? "")
-        .filter(Boolean)
-        .slice(-3)
-        .join("\n\n");
+    const preEarlyReturn = handlePreArchetypeEarlyReturn({
+      latestQuestion: state.latestQuestion,
+      fullBody,
+      body,
+      hints: state.hints,
+      effectiveMode: state.effectiveMode,
+      retrievalPolicy: state.retrievalPolicy,
+      debugContext: state.debugContext,
+    });
+    if (preEarlyReturn) return respond(preEarlyReturn.payload, preEarlyReturn.debug);
 
-      try {
-        await logAiInteraction({
-          context: {
-            env,
-            endpoint: "assistant",
-            pageUrl: body?.context?.pageUrl ?? undefined,
-            archetype: effectiveArchetype ?? null,
-            archetypeClassification,
-            sessionId: fullBody.sessionId ?? null,
-            userId: null,
-            lowConfidence: false,
-            intents: hints?.intents,
-            topics: hints?.topics,
-            metadata: {
-              mode: effectiveMode ?? null,
-              textVerbosity: effectiveTextVerbosity,
-              guardrailStatus: "blocked",
-              guardrailReason: guardrailBlock.reason ?? null,
-              archetypeVariant: fullBody.context?.archetypeVariant ?? null,
-              signalsUsed: Array.isArray(archetypeClassification?.archetypeDecision?.signals)
-                ? archetypeClassification?.archetypeDecision?.signals
-                : undefined,
-              ...archetypeMetrics,
-            },
-          },
-          model: OPENAI_MODEL,
-          usedGateway: isUsingGateway(),
-          prompt: promptForLog,
-          response: guardrailBlock.message,
-        });
-      } catch (error) {
-        console.error("logAiInteraction guardrail block failed", error);
-      }
+    const archetypeState = computeArchetypeState({ state });
 
-      const payload: PerazziAssistantResponse = {
-        answer: guardrailBlock.message,
-        guardrail: { status: "blocked", reason: guardrailBlock.reason },
-        citations: [],
-        intents: hints.intents,
-        topics: hints.topics,
-        templates: [],
-        similarity: 0,
-        mode: effectiveMode,
-        archetype: effectiveArchetype,
-        archetypeBreakdown,
-      };
-      const reason = `early_return:guardrail:${guardrailBlock.reason ?? "blocked"}`;
-      return respond(
-        payload,
-        buildEarlyReturnDebugPayload(reason, guardrailBlock.reason, payload.answer),
-      );
-    }
+    const postEarlyReturn = await handlePostArchetypeEarlyReturn({
+      latestQuestion: state.latestQuestion,
+      fullBody,
+      body,
+      sanitizedMessages: state.sanitizedMessages,
+      hints: state.hints,
+      effectiveMode: state.effectiveMode,
+      effectiveTextVerbosity: state.effectiveTextVerbosity,
+      retrievalPolicy: state.retrievalPolicy,
+      archetypeOverride: archetypeState.archetypeOverride,
+      effectiveArchetype: archetypeState.effectiveArchetype,
+      archetypeBreakdown: archetypeState.archetypeBreakdown,
+      archetypeClassification: archetypeState.archetypeClassification,
+      archetypeMetrics: archetypeState.archetypeMetrics,
+      debugContext: state.debugContext,
+    });
+    if (postEarlyReturn) return respond(postEarlyReturn.payload, postEarlyReturn.debug);
 
     const guardrail = { status: "ok" as const, reason: null as string | null };
-
-    const responseTemplates = buildResponseTemplates(hints, effectiveArchetype);
-    const baseContext = body.context ?? {};
-
-    const retrievalContext = {
-      ...baseContext,
-      mode: effectiveMode,
-      archetypeVector: archetypeBreakdown.vector,
-    };
-
-    const retrievalBody = {
-      ...fullBody,
-      context: retrievalContext,
-    };
-
-    const modelSpecFactQuery = isModelSpecFactQuery(latestQuestion);
-
-    const retrievalDecision =
-      retrievalPolicy === "always"
-        ? { retrieve: true, reason: "policy:always" }
-        : shouldRetrieve({
-            userText: latestQuestion,
-            mode: effectiveMode,
-            pageUrl: body?.context?.pageUrl ?? null,
-          });
-    logRetrievalDecision({
-      retrieve: retrievalDecision.retrieve,
-      reason: retrievalDecision.reason,
-      policy: retrievalPolicy,
-      userText: latestQuestion,
-      mode: effectiveMode,
-      pageUrl: body?.context?.pageUrl ?? null,
-      sessionId: fullBody.sessionId ?? null,
+    const responseTemplates = buildResponseTemplates(state.hints, archetypeState.effectiveArchetype);
+    const retrievalBody = buildRetrievalBody({
+      fullBody,
+      context: body.context,
+      effectiveMode: state.effectiveMode,
+      archetypeVector: archetypeState.archetypeBreakdown.vector,
     });
 
-    const emptyRerankMetrics = {
-      rerankEnabled: false,
-      candidateLimit: 0,
-      topReturnedChunks: [],
-    };
-    let retrieval: Awaited<ReturnType<typeof retrievePerazziContext>> = {
-      chunks: [],
-      maxScore: 0,
-      rerankMetrics: emptyRerankMetrics,
-    };
-    const retrievalAttempted = retrievalDecision.retrieve;
-    if (retrievalDecision.retrieve) {
-      retrieval = await retrievePerazziContext(retrievalBody, hints);
-    }
-
-    const modelsRegistryResult = applyModelsRegistrySot({
-      enabled: MODELS_REGISTRY_SOT_ENABLED,
-      modelSpecFactQuery,
-      retrievalAttempted,
-      chunks: retrieval.chunks,
-    });
-    retrieval = { ...retrieval, chunks: modelsRegistryResult.chunks };
-
-    logModelsRegistrySot({
-      enabled: MODELS_REGISTRY_SOT_ENABLED,
-      modelSpecFactQuery,
-      ...modelsRegistryResult,
+    const retrievalFlow = await runRetrievalFlow({
+      state,
+      retrievalBody,
+      archetypeMetrics: archetypeState.archetypeMetrics,
     });
 
-    const retrievalScores = getTopBaseScores(retrieval.chunks);
-
-    const retrievalChunkCount = retrievalAttempted ? retrieval.chunks.length : 0;
-    const { evidenceMode, evidenceReason } = computeEvidenceMode({
-      retrievalAttempted,
-      retrievalChunkCount,
-      retrievalSkipReason: retrievalAttempted ? null : retrievalDecision.reason,
+    const lowConfidenceReturn = buildLowConfidenceEarlyReturn({
+      state,
+      retrievalFlow,
+      responseTemplates,
+      effectiveArchetype: archetypeState.effectiveArchetype,
+      archetypeBreakdown: archetypeState.archetypeBreakdown,
     });
-    const evidenceContext: EvidenceContext = {
-      evidenceMode,
-      evidenceReason,
-      requireGeneralLabel: REQUIRE_GENERAL_LABEL,
-    };
+    if (lowConfidenceReturn) return respond(lowConfidenceReturn.payload, lowConfidenceReturn.debug);
 
-    const rerankMetrics = retrieval.rerankMetrics ?? emptyRerankMetrics;
-    const loggingMetrics = {
-      ...archetypeMetrics,
-      ...rerankMetrics,
-      retrievalPolicy,
-      retrievalSkipped: !retrievalAttempted,
-      retrievalSkipReason: retrievalAttempted ? null : retrievalDecision.reason,
-      retrievalChunkCount,
-      evidenceMode,
-      evidenceReason,
-      requireGeneralLabel: REQUIRE_GENERAL_LABEL,
-      modelsRegistrySotEnabled: MODELS_REGISTRY_SOT_ENABLED,
-      modelsRegistrySotApplied: modelsRegistryResult.applied,
-      modelsRegistryChunkCount: modelsRegistryResult.registryChunkCount,
-      modelSpecFactQuery,
-    };
-
-    logEvidenceModeDecision({
-      evidenceMode,
-      evidenceReason,
-      retrievalPolicy,
-      retrievalSkipped: !retrievalAttempted,
-      retrievalSkipReason: retrievalAttempted ? null : retrievalDecision.reason,
-      retrievalChunkCount,
-      mode: effectiveMode,
-      pageUrl: body?.context?.pageUrl ?? null,
-      sessionId: fullBody.sessionId ?? null,
+    const completion = await buildAssistantCompletion({
+      state,
+      retrievalFlow,
+      responseTemplates,
+      archetypeState,
+      guardrail,
     });
-
-    if (retrievalAttempted && retrieval.maxScore < getLowConfidenceThreshold()) {
-      logInteraction(
-        fullBody,
-        retrieval.chunks,
-        retrieval.maxScore,
-        "low_confidence",
-        "retrieval_low",
-        hints,
-        responseTemplates,
-        loggingMetrics,
-      );
-      const debugPayload = buildDebugPayload({
-        thread: {
-          previous_response_id_present: Boolean(previousResponseId),
-          store_enabled: openAiStoreEnabled,
-          thread_reset_required: false,
-          conversationStrategy,
-          enforced_thread_input: enforcedThreadInput,
-        },
-        openai: null,
-        retrieval: {
-          attempted: retrievalAttempted,
-          skipped: false,
-          reason: retrievalDecision.reason ?? null,
-          chunk_count: retrievalChunkCount,
-          top_titles: retrieval.chunks.map((chunk) => chunk.title),
-          rerank_enabled: Boolean(rerankMetrics.rerankEnabled),
-          rerank_metrics_present:
-            Array.isArray(rerankMetrics.topReturnedChunks) &&
-            rerankMetrics.topReturnedChunks.length > 0,
-          models_registry_sot_enabled: MODELS_REGISTRY_SOT_ENABLED,
-          models_registry_sot_applied: modelsRegistryResult.applied,
-          models_registry_chunk_count: modelsRegistryResult.registryChunkCount,
-        },
-        usage: null,
-        flags: {
-          convo_strategy: conversationStrategy,
-          retrieval_policy: retrievalPolicy,
-          text_verbosity: effectiveTextVerbosity ?? null,
-          reasoning_effort: REASONING_EFFORT ?? null,
-          require_general_label: REQUIRE_GENERAL_LABEL,
-          postvalidate_enabled: ENABLE_POST_VALIDATE_OUTPUT,
-          prompt_cache_retention: PROMPT_CACHE_RETENTION ?? null,
-          prompt_cache_key_present: Boolean(PROMPT_CACHE_KEY),
-        },
-        output: { general_unsourced_label_present: false },
-        archetypeAnalytics: buildArchetypeAnalytics(
-          fullBody.context?.archetypeVariant ?? null,
-          null,
-          [],
-          [],
-        ),
-        triggers: {
-          blocked_intent: null,
-          evidenceMode,
-          evidenceReason,
-          postvalidate: null,
-        },
-      });
-
-      const payload: PerazziAssistantResponse = {
-        answer: LOW_CONFIDENCE_MESSAGE,
-        guardrail: { status: "low_confidence", reason: "retrieval_low" },
-        citations: [],
-        intents: hints.intents,
-        topics: hints.topics,
-        templates: responseTemplates,
-        similarity: retrieval.maxScore,
-        retrievalScores,
-        mode: effectiveMode,
-        archetype: effectiveArchetype,
-        archetypeBreakdown,
-      };
-      return respond(payload, debugPayload);
-    }
-
-    let answer: string;
-    let responseId: string | null | undefined;
-    let threadResetRequired = false;
-    let assistantUsage: OpenAI.Responses.ResponseUsage | null = null;
-    let assistantOpenAiDebug: PerazziAdminDebugPayload["openai"] = null;
-    let postvalidateDebug: { triggered: boolean; reasons: string[] } | null = null;
-
-    try {
-      const generated = await generateAssistantAnswer(
-        sanitizedMessages,
-        body?.context,
-        retrieval.chunks,
-        responseTemplates,
-        effectiveMode,
-        effectiveArchetype,
-        archetypeClassification,
-        effectiveTextVerbosity,
-        retrieval.maxScore,
-        rerankMetrics,
-        guardrail,
-        hints,
-        fullBody.sessionId ?? null,
-        loggingMetrics,
-        previousResponseId,
-        evidenceContext,
-      );
-      answer = enforceEvidenceAwareFormatting(generated.text, evidenceContext);
-      responseId = generated.responseId;
-      assistantUsage = generated.usage ?? null;
-      assistantOpenAiDebug = generated.openai ?? null;
-    } catch (error) {
-      if (previousResponseId && isInvalidPreviousResponseIdError(error)) {
-        threadResetRequired = true;
-      answer = THREAD_RESET_REBUILD_MESSAGE;
-      responseId = null;
-        assistantUsage = null;
-        assistantOpenAiDebug = null;
-        const preview =
-          previousResponseId.length > 18
-            ? `${previousResponseId.slice(0, 8)}…${previousResponseId.slice(-6)}`
-            : previousResponseId;
-        console.warn(
-          "[PERAZZI_THREAD_RESET] thread reset triggered (invalid previous_response_id)",
-          JSON.stringify({
-            event: "perazzi.thread_reset_required",
-            thread_reset_required: true,
-            reason: "invalid_previous_response_id",
-            endpoint: "perazzi-assistant",
-            sessionId: fullBody.sessionId ?? null,
-            pageUrl: body?.context?.pageUrl ?? null,
-            previous_response_id: {
-              present: true,
-              length: previousResponseId.length,
-              preview,
-            },
-            openai_error: serializeOpenAiError(error),
-          }),
-        );
-      } else {
-        throw error;
-      }
-    }
-
-    if (ENABLE_POST_VALIDATE_OUTPUT && !threadResetRequired) {
-      const before = answer;
-      const result = postValidate(before, {
-        evidenceMode,
-        requireGeneralLabel: evidenceContext.requireGeneralLabel,
-      });
-      answer = result.text;
-      postvalidateDebug = { triggered: result.triggered, reasons: result.reasons };
-      logPostValidate({
-        sessionId: fullBody.sessionId ?? null,
-        pageUrl: body?.context?.pageUrl ?? null,
-        evidenceMode,
-        triggered: result.triggered,
-        reasons: result.reasons,
-        replacedWithBlock: result.replacedWithBlock,
-        labelInjected: result.labelInjected,
-        qualifierInjected: result.qualifierInjected,
-        changed: result.changed,
-      });
-    }
 
     const archetypeAnalytics = buildArchetypeAnalytics(
-      fullBody.context?.archetypeVariant ?? null,
-      archetypeMetrics.archetypeConfidenceMargin ?? null,
-      archetypeClassification?.archetypeDecision?.signals ?? [],
+      state.fullBody.context?.archetypeVariant ?? null,
+      archetypeState.archetypeMetrics.archetypeConfidenceMargin ?? null,
+      archetypeState.archetypeClassification?.archetypeDecision?.signals ?? [],
       responseTemplates,
     );
 
     logInteraction(
-      fullBody,
-      retrieval.chunks,
-      retrieval.maxScore,
+      state.fullBody,
+      retrievalFlow.retrieval.chunks,
+      retrievalFlow.retrieval.maxScore,
       "ok",
       undefined,
-      hints,
+      state.hints,
       responseTemplates,
-      loggingMetrics,
+      retrievalFlow.loggingMetrics,
     );
 
-    const debugPayload = buildDebugPayload({
-      thread: {
-        previous_response_id_present: Boolean(previousResponseId),
-        store_enabled: openAiStoreEnabled,
-        thread_reset_required: threadResetRequired,
-        conversationStrategy,
-        enforced_thread_input: enforcedThreadInput,
-      },
-      openai: assistantOpenAiDebug,
-      retrieval: {
-        attempted: retrievalAttempted,
-        skipped: !retrievalAttempted,
-        reason: retrievalDecision.reason ?? null,
-        chunk_count: retrievalChunkCount,
-        top_titles: retrievalAttempted ? retrieval.chunks.map((chunk) => chunk.title) : [],
-        rerank_enabled: retrievalAttempted ? Boolean(rerankMetrics.rerankEnabled) : null,
-        rerank_metrics_present:
-          retrievalAttempted &&
-          Array.isArray(rerankMetrics.topReturnedChunks) &&
-          rerankMetrics.topReturnedChunks.length > 0,
-        models_registry_sot_enabled: MODELS_REGISTRY_SOT_ENABLED,
-        models_registry_sot_applied: modelsRegistryResult.applied,
-        models_registry_chunk_count: modelsRegistryResult.registryChunkCount,
-      },
-      usage: assistantUsage,
-      flags: {
-        convo_strategy: conversationStrategy,
-        retrieval_policy: retrievalPolicy,
-        text_verbosity: effectiveTextVerbosity ?? null,
-        reasoning_effort: REASONING_EFFORT ?? null,
-        require_general_label: REQUIRE_GENERAL_LABEL,
-        postvalidate_enabled: ENABLE_POST_VALIDATE_OUTPUT,
-        prompt_cache_retention: PROMPT_CACHE_RETENTION ?? null,
-        prompt_cache_key_present: Boolean(PROMPT_CACHE_KEY),
-      },
-      output: {
-        general_unsourced_label_present: answer.trimStart().startsWith(GENERAL_UNSOURCED_LABEL_PREFIX),
-      },
+    const debugPayload = buildSuccessDebugPayload({
+      state,
+      retrievalFlow,
+      answer: completion.answer,
+      threadResetRequired: completion.threadResetRequired,
+      assistantUsage: completion.assistantUsage,
+      assistantOpenAiDebug: completion.assistantOpenAiDebug,
+      postvalidateDebug: completion.postvalidateDebug,
       archetypeAnalytics,
-      triggers: {
-        blocked_intent: null,
-        evidenceMode,
-        evidenceReason,
-        postvalidate: postvalidateDebug?.triggered
-          ? {
-              triggered: true,
-              reasons: postvalidateDebug.reasons.slice(0, 10),
-            }
-          : null,
-      },
     });
 
-    const payload: PerazziAssistantResponse = {
-      answer,
-      ...(threadResetRequired ? { thread_reset_required: true } : {}),
-      citations: threadResetRequired ? [] : retrieval.chunks.map(mapChunkToCitation),
-      guardrail: { status: "ok", reason: null },
-      intents: hints.intents,
-      topics: hints.topics,
-      templates: responseTemplates,
-      similarity: retrieval.maxScore,
-      retrievalScores,
-      mode: effectiveMode,
-      archetype: effectiveArchetype,
-      archetypeBreakdown,
-      responseId: responseId ?? null,
-    };
+    const payload = buildSuccessPayload({
+      state,
+      retrievalFlow,
+      responseTemplates,
+      archetypeState,
+      answer: completion.answer,
+      responseId: completion.responseId,
+      threadResetRequired: completion.threadResetRequired,
+    });
 
     return respond(payload, debugPayload);
   } catch (error) {
-    console.error("Perazzi assistant error", error);
-    if (error instanceof OpenAIConnectionError) {
-      return NextResponse.json(
-        { error: "We’re having trouble reaching the Perazzi knowledge service. Please try again in a moment." },
-        { status: 503 },
-      );
-    }
-    return NextResponse.json(
-      { error: "Unexpected error while processing the request." },
-      { status: 500 },
-    );
+    return handleAssistantError(error);
   }
+}
+
+export async function POST(request: Request) {
+  const preflightResponse = handlePreflight(request);
+  if (preflightResponse) return preflightResponse;
+
+  const adminDebugAuthorized = isAdminDebugAuthorized(request);
+  logAdminDebugAuthorization(adminDebugAuthorized);
+  const respond = createResponder(adminDebugAuthorized);
+
+  return handleAssistantRequest(request, respond);
 }
 
 function validateRequest(
@@ -1707,51 +2125,63 @@ function serializeOpenAiError(error: unknown) {
   };
 }
 
-function isInvalidPreviousResponseIdError(error: unknown): boolean {
-  const normalize = (value: unknown) =>
-    typeof value === "string" ? value.trim().toLowerCase() : "";
+type NormalizedErrorFields = {
+  code: string;
+  param: string;
+  message: string;
+};
 
-  if (error instanceof APIError) {
-    if (error.status !== 400) return false;
+function normalizeErrorField(value: unknown): string {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
 
-    const param = normalize((error as { param?: unknown }).param);
-    if (param === "previous_response_id") return true;
+function normalizeErrorFields(fields: {
+  code?: unknown;
+  param?: unknown;
+  message?: unknown;
+}): NormalizedErrorFields {
+  return {
+    code: normalizeErrorField(fields.code),
+    param: normalizeErrorField(fields.param),
+    message: normalizeErrorField(fields.message),
+  };
+}
 
-    const code = normalize((error as { code?: unknown }).code);
-    if (code.includes("previous") && code.includes("response")) return true;
-
-    const message = normalize(error.message);
-    if (
-      message.includes("previous_response_id") &&
-      (message.includes("invalid") ||
-        message.includes("not found") ||
-        message.includes("unknown") ||
-        message.includes("no longer valid"))
-    ) {
-      return true;
-    }
-
-    return false;
+function matchesInvalidPreviousResponseIdError(fields: NormalizedErrorFields): boolean {
+  if (fields.code.includes("previous") && fields.code.includes("response")) return true;
+  if (fields.param === "previous_response_id" || fields.param === "previousresponseid") return true;
+  if (
+    fields.message.includes("previous_response_id") &&
+    (fields.message.includes("invalid") ||
+      fields.message.includes("not found") ||
+      fields.message.includes("unknown") ||
+      fields.message.includes("no longer valid"))
+  ) {
+    return true;
   }
+  return false;
+}
 
-  if (!error || typeof error !== "object") return false;
+function extractApiErrorFields(error: APIError): NormalizedErrorFields {
+  return normalizeErrorFields({
+    code: (error as { code?: unknown }).code,
+    param: (error as { param?: unknown }).param,
+    message: error.message,
+  });
+}
+
+function extractOpenAiErrorFields(error: unknown): NormalizedErrorFields | null {
+  if (!error || typeof error !== "object") return null;
   const err = error as OpenAiApiErrorLike & {
     error?: { error?: unknown; code?: unknown; param?: unknown; message?: unknown };
   };
-
-  if (err.status !== 400) return false;
+  if (err.status !== 400) return null;
 
   const nestedBody = (err.error as Record<string, unknown> | undefined) ?? undefined;
   const nestedError = (nestedBody?.error as Record<string, unknown> | undefined) ?? undefined;
 
-  const codeCandidate =
-    err.code ??
-    (typeof nestedBody?.code === "string" ? nestedBody.code : null) ??
-    (typeof nestedError?.code === "string" ? nestedError.code : null);
-  const paramCandidate =
-    err.param ??
-    (typeof nestedBody?.param === "string" ? nestedBody.param : null) ??
-    (typeof nestedError?.param === "string" ? nestedError.param : null);
+  const codeCandidate = err.code ?? nestedBody?.code ?? nestedError?.code;
+  const paramCandidate = err.param ?? nestedBody?.param ?? nestedError?.param;
   let messageCandidate = "";
   if (typeof err.message === "string") {
     messageCandidate = err.message;
@@ -1761,20 +2191,21 @@ function isInvalidPreviousResponseIdError(error: unknown): boolean {
     messageCandidate = nestedError.message;
   }
 
-  const code = typeof codeCandidate === "string" ? codeCandidate.toLowerCase() : "";
-  const param = typeof paramCandidate === "string" ? paramCandidate.toLowerCase() : "";
-  const message = messageCandidate.toLowerCase();
+  return normalizeErrorFields({
+    code: codeCandidate,
+    param: paramCandidate,
+    message: messageCandidate,
+  });
+}
 
-  if (code.includes("previous") && code.includes("response")) return true;
-  if (param === "previous_response_id" || param === "previousresponseid") return true;
-  if (
-    message.includes("previous_response_id") &&
-    (message.includes("invalid") || message.includes("not found") || message.includes("unknown"))
-  ) {
-    return true;
+function isInvalidPreviousResponseIdError(error: unknown): boolean {
+  if (error instanceof APIError) {
+    if (error.status !== 400) return false;
+    return matchesInvalidPreviousResponseIdError(extractApiErrorFields(error));
   }
 
-  return false;
+  const fields = extractOpenAiErrorFields(error);
+  return fields ? matchesInvalidPreviousResponseIdError(fields) : false;
 }
 
 function buildThreadStrategyInput(messages: ChatMessage[]): ChatMessage[] {
@@ -1820,29 +2251,60 @@ function enforceEvidenceAwareFormatting(text: string, evidence: EvidenceContext)
   return ensureGeneralUnsourcedLabelFirstLine(text ?? "");
 }
 
-async function generateAssistantAnswer(
+type InputSummary = ReturnType<typeof summarizeInputMessagesForDebug>;
+
+type GenerateAssistantAnswerParams = {
+  sanitizedMessages: ChatMessage[];
+  context: PerazziAssistantRequest["context"];
+  chunks: RetrievedChunk[];
+  templates: string[];
+  mode: PerazziMode | null;
+  archetype: Archetype | null;
+  archetypeClassification: ArchetypeClassification | null;
+  textVerbosity: CreateResponseTextParams["textVerbosity"];
+  maxScore?: number;
+  rerankMetrics?: RerankMetrics | null;
+  guardrail?: { status: "ok" | "blocked"; reason: string | null };
+  hints?: RetrievalHints;
+  sessionId?: string | null;
+  extraMetadata?: Record<string, unknown> | null;
+  previousResponseId?: string | null;
+  evidence?: EvidenceContext;
+};
+
+type PromptDebugParams = {
+  instructions: string;
+  dynamicContext: string;
+  retrievalPrompt: ReturnType<typeof buildRetrievedReferencesForPrompt>;
+  inputSummary: InputSummary;
+  chunks: RetrievedChunk[];
+  mode: PerazziMode | null;
+  context: PerazziAssistantRequest["context"];
+  archetype: Archetype | null;
+  textVerbosity: CreateResponseTextParams["textVerbosity"];
+  openAiStoreEnabled: boolean;
+  previousResponseId: string | null | undefined;
+  extraMetadata?: Record<string, unknown> | null;
+};
+
+type InteractionMetadataParams = {
+  context: PerazziAssistantRequest["context"];
+  mode: PerazziMode | null;
+  textVerbosity: CreateResponseTextParams["textVerbosity"];
+  guardrail: { status: "ok" | "blocked"; reason: string | null };
+  archetypeClassification: ArchetypeClassification | null;
+  templates: string[];
+  maxScore?: number;
+  chunks: RetrievedChunk[];
+  retrievalPrompt: ReturnType<typeof buildRetrievedReferencesForPrompt>;
+  extraMetadata?: Record<string, unknown> | null;
+  rerankMetrics?: RerankMetrics | null;
+};
+
+function resolveOpenAiInputMessages(
   sanitizedMessages: ChatMessage[],
-  context: PerazziAssistantRequest["context"],
-  chunks: RetrievedChunk[],
-  templates: string[],
-  mode: PerazziMode | null,
-  archetype: Archetype | null,
-  archetypeClassification: ArchetypeClassification | null,
-  textVerbosity: CreateResponseTextParams["textVerbosity"],
-  maxScore?: number,
-  rerankMetrics?: RerankMetrics | null,
-  guardrail?: { status: "ok" | "blocked"; reason: string | null },
-  hints?: RetrievalHints,
-  sessionId?: string | null,
-  extraMetadata?: Record<string, unknown> | null,
-  previousResponseId?: string | null,
-  evidence?: EvidenceContext,
-): Promise<{
-  text: string;
-  responseId?: string | null;
-  usage?: OpenAI.Responses.ResponseUsage | null;
-  openai?: PerazziAdminDebugPayload["openai"];
-}> {
+  previousResponseId: string | null | undefined,
+): { openaiInputMessages: ChatMessage[]; openAiStoreEnabled: boolean } {
   const conversationStrategy = (process.env.PERAZZI_CONVO_STRATEGY ?? "").trim().toLowerCase();
   const shouldEnforceThreadInput =
     conversationStrategy === "thread" && normalizePreviousResponseId(previousResponseId) !== null;
@@ -1855,119 +2317,137 @@ async function generateAssistantAnswer(
       : sanitizedMessages;
   const openAiStoreEnabled = process.env.PERAZZI_OPENAI_STORE === "true";
 
-  const dynamicContext = buildDynamicContext(context, chunks, templates, mode, archetype, evidence);
-  const instructions = [CORE_INSTRUCTIONS, dynamicContext].join("\n\n");
-  const retrievalPrompt = buildRetrievedReferencesForPrompt(chunks);
-  const inputSummary = summarizeInputMessagesForDebug(openaiInputMessages);
-  const openaiDebug: PerazziAdminDebugPayload["openai"] = {
-    input_item_count: inputSummary.items.length,
-    input_counts_by_role: inputSummary.countsByRole,
-    input_items: inputSummary.items,
+  return { openaiInputMessages, openAiStoreEnabled };
+}
+
+function buildOpenAiDebugPayload(summary: InputSummary): PerazziAdminDebugPayload["openai"] {
+  return {
+    input_item_count: summary.items.length,
+    input_counts_by_role: summary.countsByRole,
+    input_items: summary.items,
   };
+}
 
-  if (DEBUG_PROMPT) {
-    const retrievedChunkTextChars = chunks.reduce(
-      (sum, chunk) => sum + (chunk.content?.length ?? 0),
-      0,
-    );
-    const effectiveMode = mode ?? context?.mode ?? null;
-    const effectiveArchetype = archetype ?? null;
-    const bridgeGuidance = getModeArchetypeBridgeGuidance(
-      effectiveMode,
-      effectiveArchetype,
-    );
-    const archetypeGuidanceBlock = buildArchetypeGuidanceBlock(effectiveArchetype);
-    const extra: Record<string, unknown> = extraMetadata ?? {};
-    const rerankEnabled =
-      typeof extra.rerankEnabled === "boolean" ? extra.rerankEnabled : undefined;
-    const candidateLimit =
-      typeof extra.candidateLimit === "number" ? extra.candidateLimit : undefined;
-    const evidenceMode = typeof extra.evidenceMode === "string" ? extra.evidenceMode : undefined;
-    const evidenceReason =
-      typeof extra.evidenceReason === "string" ? extra.evidenceReason : undefined;
-    const retrievalChunkCount =
-      typeof extra.retrievalChunkCount === "number" ? extra.retrievalChunkCount : undefined;
-    const retrievalSkipped =
-      typeof extra.retrievalSkipped === "boolean" ? extra.retrievalSkipped : undefined;
+function logPromptDebug(params: PromptDebugParams) {
+  if (!DEBUG_PROMPT) return;
 
-    console.info(
-      "[PERAZZI_DEBUG_PROMPT] perazzi-assistant prompt summary",
-      JSON.stringify({
-        model: OPENAI_MODEL,
-        hasInstructions: instructions.length > 0,
-        instructionsChars: instructions.length,
-        coreChars: CORE_INSTRUCTIONS.length,
-        coreHash: CORE_INSTRUCTIONS_HASH,
-        dynamicChars: dynamicContext.length,
-        dynamicHash: hashText(dynamicContext),
-        specChars: PHASE_ONE_SPEC.length,
-        exemplarsChars: STYLE_EXEMPLARS.length,
-        archetypeGuidanceChars: archetypeGuidanceBlock.length,
-        bridgeGuidanceChars: bridgeGuidance.length,
-        archetypeBridgeChars: archetypeGuidanceBlock.length + bridgeGuidance.length,
-        relatabilityBlockChars: RELATABILITY_BLOCK.length,
-        outputFormatRuleChars: OUTPUT_FORMAT_RULES.length,
-        hardRuleRecapChars: HARD_RULE_RECAP.length,
-        retrievedChunkTextChars,
-        retrievedReferencesPromptChars: retrievalPrompt.promptBlock.length,
-        chatHistoryTextChars: inputSummary.totalChars,
-        inputItemCount: inputSummary.items.length,
-        inputItems: inputSummary.items,
-        inputCountsByRole: inputSummary.countsByRole,
-        previous_response_id_present: Boolean(previousResponseId),
-        store_present: openAiStoreEnabled,
-        store_value: openAiStoreEnabled ? true : undefined,
-        prompt_cache_retention: PROMPT_CACHE_RETENTION ?? null,
-        prompt_cache_key_present: Boolean(PROMPT_CACHE_KEY),
-        prompt_cache_key_chars: PROMPT_CACHE_KEY?.length ?? 0,
-        reasoning_effort: REASONING_EFFORT ?? null,
-        text_verbosity: textVerbosity,
-        temperature: ASSISTANT_TEMPERATURE,
-        max_output_tokens: MAX_OUTPUT_TOKENS,
-        evidence: {
-          evidenceMode: evidenceMode ?? null,
-          evidenceReason: evidenceReason ?? null,
-          retrievalChunkCount: retrievalChunkCount ?? null,
-          retrievalSkipped: retrievalSkipped ?? null,
-        },
-        retrieval: {
-          rerankEnabled,
-          candidateLimit,
-          returnedChunkCount: chunks.length,
-        },
-      }),
-    );
+  const retrievedChunkTextChars = params.chunks.reduce(
+    (sum, chunk) => sum + (chunk.content?.length ?? 0),
+    0,
+  );
+  const effectiveMode = params.mode ?? params.context?.mode ?? null;
+  const effectiveArchetype = params.archetype ?? null;
+  const bridgeGuidance = getModeArchetypeBridgeGuidance(
+    effectiveMode,
+    effectiveArchetype,
+  );
+  const archetypeGuidanceBlock = buildArchetypeGuidanceBlock(effectiveArchetype);
+  const extra: Record<string, unknown> = params.extraMetadata ?? {};
+  const rerankEnabled =
+    typeof extra.rerankEnabled === "boolean" ? extra.rerankEnabled : undefined;
+  const candidateLimit =
+    typeof extra.candidateLimit === "number" ? extra.candidateLimit : undefined;
+  const evidenceMode = typeof extra.evidenceMode === "string" ? extra.evidenceMode : undefined;
+  const evidenceReason =
+    typeof extra.evidenceReason === "string" ? extra.evidenceReason : undefined;
+  const retrievalChunkCount =
+    typeof extra.retrievalChunkCount === "number" ? extra.retrievalChunkCount : undefined;
+  const retrievalSkipped =
+    typeof extra.retrievalSkipped === "boolean" ? extra.retrievalSkipped : undefined;
 
-    console.info(
-      "[PERAZZI_DEBUG_PROMPT] perazzi-assistant dynamicContext",
-      JSON.stringify({
-        dynamicContext,
-      }),
-    );
-  }
+  console.info(
+    "[PERAZZI_DEBUG_PROMPT] perazzi-assistant prompt summary",
+    JSON.stringify({
+      model: OPENAI_MODEL,
+      hasInstructions: params.instructions.length > 0,
+      instructionsChars: params.instructions.length,
+      coreChars: CORE_INSTRUCTIONS.length,
+      coreHash: CORE_INSTRUCTIONS_HASH,
+      dynamicChars: params.dynamicContext.length,
+      dynamicHash: hashText(params.dynamicContext),
+      specChars: PHASE_ONE_SPEC.length,
+      exemplarsChars: STYLE_EXEMPLARS.length,
+      archetypeGuidanceChars: archetypeGuidanceBlock.length,
+      bridgeGuidanceChars: bridgeGuidance.length,
+      archetypeBridgeChars: archetypeGuidanceBlock.length + bridgeGuidance.length,
+      relatabilityBlockChars: RELATABILITY_BLOCK.length,
+      outputFormatRuleChars: OUTPUT_FORMAT_RULES.length,
+      hardRuleRecapChars: HARD_RULE_RECAP.length,
+      retrievedChunkTextChars,
+      retrievedReferencesPromptChars: params.retrievalPrompt.promptBlock.length,
+      chatHistoryTextChars: params.inputSummary.totalChars,
+      inputItemCount: params.inputSummary.items.length,
+      inputItems: params.inputSummary.items,
+      inputCountsByRole: params.inputSummary.countsByRole,
+      previous_response_id_present: Boolean(params.previousResponseId),
+      store_present: params.openAiStoreEnabled,
+      store_value: params.openAiStoreEnabled ? true : undefined,
+      prompt_cache_retention: PROMPT_CACHE_RETENTION ?? null,
+      prompt_cache_key_present: Boolean(PROMPT_CACHE_KEY),
+      prompt_cache_key_chars: PROMPT_CACHE_KEY?.length ?? 0,
+      reasoning_effort: REASONING_EFFORT ?? null,
+      text_verbosity: params.textVerbosity,
+      temperature: ASSISTANT_TEMPERATURE,
+      max_output_tokens: MAX_OUTPUT_TOKENS,
+      evidence: {
+        evidenceMode: evidenceMode ?? null,
+        evidenceReason: evidenceReason ?? null,
+        retrievalChunkCount: retrievalChunkCount ?? null,
+        retrievalSkipped: retrievalSkipped ?? null,
+      },
+      retrieval: {
+        rerankEnabled,
+        candidateLimit,
+        returnedChunkCount: params.chunks.length,
+      },
+    }),
+  );
 
-  const env = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local";
-  const guardrailInfo = guardrail ?? { status: "ok", reason: null as string | null };
+  console.info(
+    "[PERAZZI_DEBUG_PROMPT] perazzi-assistant dynamicContext",
+    JSON.stringify({
+      dynamicContext: params.dynamicContext,
+    }),
+  );
+}
+
+function logPromptUsage(response: {
+  responseId?: string | null;
+  requestId?: string | null;
+  usage?: OpenAI.Responses.ResponseUsage | null;
+}) {
+  if (!DEBUG_PROMPT) return;
+  console.info(
+    "[PERAZZI_DEBUG_PROMPT] perazzi-assistant openai usage",
+    JSON.stringify({
+      responseId: response.responseId ?? null,
+      requestId: response.requestId ?? null,
+      usage: response.usage ?? null,
+    }),
+  );
+}
+
+function buildInteractionMetadata(params: InteractionMetadataParams): Record<string, unknown> {
   const metadata: Record<string, unknown> = {
-    mode: mode ?? context?.mode ?? null,
-    textVerbosity,
-    guardrailStatus: guardrailInfo.status,
-    guardrailReason: guardrailInfo.reason ?? null,
+    mode: params.mode ?? params.context?.mode ?? null,
+    textVerbosity: params.textVerbosity,
+    guardrailStatus: params.guardrail.status,
+    guardrailReason: params.guardrail.reason ?? null,
   };
-  if (context?.archetypeVariant) {
-    metadata.archetypeVariant = context.archetypeVariant;
+  if (params.context?.archetypeVariant) {
+    metadata.archetypeVariant = params.context.archetypeVariant;
   }
-  if (Array.isArray(archetypeClassification?.archetypeDecision?.signals)) {
-    metadata.signalsUsed = archetypeClassification?.archetypeDecision?.signals;
+  if (Array.isArray(params.archetypeClassification?.archetypeDecision?.signals)) {
+    metadata.signalsUsed = params.archetypeClassification?.archetypeDecision?.signals;
   }
-  if (Array.isArray(templates) && templates.length > 0) {
-    metadata.templates = templates;
+  if (Array.isArray(params.templates) && params.templates.length > 0) {
+    metadata.templates = params.templates;
   }
-  if (typeof maxScore === "number") {
-    metadata.maxScore = maxScore;
+  if (typeof params.maxScore === "number") {
+    metadata.maxScore = params.maxScore;
   }
-  if (chunks.length > 0) {
-    metadata.retrievedChunks = retrievalPrompt.metadata.map((meta) => ({
+  if (params.chunks.length > 0) {
+    metadata.retrievedChunks = params.retrievalPrompt.metadata.map((meta) => ({
       chunkId: meta.chunkId,
       title: meta.title,
       displayTitle: meta.displayTitle,
@@ -1981,21 +2461,101 @@ async function generateAssistantAnswer(
     metadata.retrievalExcerptCharLimit = RETRIEVAL_EXCERPT_CHAR_LIMIT;
     metadata.retrievalTotalCharLimit = RETRIEVAL_TOTAL_CHAR_LIMIT;
   }
-  if (extraMetadata && typeof extraMetadata === "object") {
-    Object.assign(metadata, extraMetadata);
+  if (params.extraMetadata && typeof params.extraMetadata === "object") {
+    Object.assign(metadata, params.extraMetadata);
   }
 
   const retrievalDebug = buildRetrievalDebugPayload({
     enabled:
       process.env.PERAZZI_AI_LOGGING_ENABLED === "true" &&
       process.env.PERAZZI_LOG_RETRIEVAL_DEBUG === "true",
-    chunks,
-    rerankMetrics,
-    maxScore,
+    chunks: params.chunks,
+    rerankMetrics: params.rerankMetrics,
+    maxScore: params.maxScore,
   });
   if (retrievalDebug) {
     metadata.retrievalDebug = retrievalDebug;
   }
+
+  return metadata;
+}
+
+async function logAiInteractionSafe(params: Parameters<typeof logAiInteraction>[0]) {
+  try {
+    await logAiInteraction(params);
+  } catch (logError) {
+    console.error("logAiInteraction failed", logError);
+  }
+}
+
+async function generateAssistantAnswer(
+  params: GenerateAssistantAnswerParams,
+): Promise<{
+  text: string;
+  responseId?: string | null;
+  usage?: OpenAI.Responses.ResponseUsage | null;
+  openai?: PerazziAdminDebugPayload["openai"];
+}> {
+  const {
+    sanitizedMessages,
+    context,
+    chunks,
+    templates,
+    mode,
+    archetype,
+    archetypeClassification,
+    textVerbosity,
+    maxScore,
+    rerankMetrics,
+    guardrail,
+    hints,
+    sessionId,
+    extraMetadata,
+    previousResponseId,
+    evidence,
+  } = params;
+
+  const { openaiInputMessages, openAiStoreEnabled } = resolveOpenAiInputMessages(
+    sanitizedMessages,
+    previousResponseId,
+  );
+
+  const dynamicContext = buildDynamicContext(context, chunks, templates, mode, archetype, evidence);
+  const instructions = [CORE_INSTRUCTIONS, dynamicContext].join("\n\n");
+  const retrievalPrompt = buildRetrievedReferencesForPrompt(chunks);
+  const inputSummary = summarizeInputMessagesForDebug(openaiInputMessages);
+  const openaiDebug = buildOpenAiDebugPayload(inputSummary);
+
+  logPromptDebug({
+    instructions,
+    dynamicContext,
+    retrievalPrompt,
+    inputSummary,
+    chunks,
+    mode,
+    context,
+    archetype,
+    textVerbosity,
+    openAiStoreEnabled,
+    previousResponseId,
+    extraMetadata,
+  });
+
+  const env = process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "local";
+  const guardrailInfo = guardrail ?? { status: "ok", reason: null as string | null };
+  const metadata = buildInteractionMetadata({
+    context,
+    mode,
+    textVerbosity,
+    guardrail: guardrailInfo,
+    archetypeClassification,
+    templates,
+    maxScore,
+    chunks,
+    retrievalPrompt,
+    extraMetadata,
+    rerankMetrics,
+  });
 
   const interactionContext: AiInteractionContext = {
     env,
@@ -2015,12 +2575,7 @@ async function generateAssistantAnswer(
   let responseId: string | null | undefined;
   let usage: OpenAI.Responses.ResponseUsage | null | undefined;
   const start = Date.now();
-  const promptForLog = sanitizedMessages
-    .filter((msg) => msg.role === "user")
-    .map((msg) => msg.content ?? "")
-    .filter(Boolean)
-    .slice(-3)
-    .join("\n\n");
+  const promptForLog = buildPromptForLog(sanitizedMessages);
   try {
     const response = await createResponseText({
       model: OPENAI_MODEL,
@@ -2039,33 +2594,20 @@ async function generateAssistantAnswer(
     responseText = response.text ?? LOW_CONFIDENCE_MESSAGE;
     responseId = response.responseId ?? null;
     usage = response.usage ?? null;
-    if (DEBUG_PROMPT) {
-      console.info(
-        "[PERAZZI_DEBUG_PROMPT] perazzi-assistant openai usage",
-        JSON.stringify({
-          responseId: response.responseId ?? null,
-          requestId: response.requestId ?? null,
-          usage: response.usage ?? null,
-        }),
-      );
-    }
 
-    try {
-      await logAiInteraction({
-        context: interactionContext,
-        model: OPENAI_MODEL,
-        usedGateway: isUsingGateway(),
-        prompt: promptForLog,
-        response: responseText,
-        promptTokens: response.usage?.input_tokens ?? undefined,
-        completionTokens: response.usage?.output_tokens ?? undefined,
-        responseId: response.responseId,
-        requestId: response.requestId,
-        usage: response.usage,
-      });
-    } catch (logError) {
-      console.error("logAiInteraction failed", logError);
-    }
+    logPromptUsage(response);
+    await logAiInteractionSafe({
+      context: interactionContext,
+      model: OPENAI_MODEL,
+      usedGateway: isUsingGateway(),
+      prompt: promptForLog,
+      response: responseText,
+      promptTokens: response.usage?.input_tokens ?? undefined,
+      completionTokens: response.usage?.output_tokens ?? undefined,
+      responseId: response.responseId,
+      requestId: response.requestId,
+      usage: response.usage,
+    });
   } catch (error) {
     if (isConnectionError(error)) {
       throw new OpenAIConnectionError("Unable to reach OpenAI responses endpoint", { cause: error });
@@ -2074,6 +2616,63 @@ async function generateAssistantAnswer(
   }
 
   return { text: responseText ?? LOW_CONFIDENCE_MESSAGE, responseId, usage, openai: openaiDebug };
+}
+
+async function generateAssistantAnswerWithThreadReset(params: {
+  generateParams: GenerateAssistantAnswerParams;
+  previousResponseId: string | null;
+  evidenceContext: EvidenceContext;
+  sessionId: string | null;
+  pageUrl: string | null | undefined;
+}): Promise<{
+  answer: string;
+  responseId: string | null;
+  usage: OpenAI.Responses.ResponseUsage | null;
+  openai: PerazziAdminDebugPayload["openai"] | null;
+  threadResetRequired: boolean;
+}> {
+  try {
+    const generated = await generateAssistantAnswer(params.generateParams);
+    return {
+      answer: enforceEvidenceAwareFormatting(generated.text, params.evidenceContext),
+      responseId: generated.responseId ?? null,
+      usage: generated.usage ?? null,
+      openai: generated.openai ?? null,
+      threadResetRequired: false,
+    };
+  } catch (error) {
+    if (params.previousResponseId && isInvalidPreviousResponseIdError(error)) {
+      const preview =
+        params.previousResponseId.length > 18
+          ? `${params.previousResponseId.slice(0, 8)}…${params.previousResponseId.slice(-6)}`
+          : params.previousResponseId;
+      console.warn(
+        "[PERAZZI_THREAD_RESET] thread reset triggered (invalid previous_response_id)",
+        JSON.stringify({
+          event: "perazzi.thread_reset_required",
+          thread_reset_required: true,
+          reason: "invalid_previous_response_id",
+          endpoint: "perazzi-assistant",
+          sessionId: params.sessionId ?? null,
+          pageUrl: params.pageUrl ?? null,
+          previous_response_id: {
+            present: true,
+            length: params.previousResponseId.length,
+            preview,
+          },
+          openai_error: serializeOpenAiError(error),
+        }),
+      );
+      return {
+        answer: THREAD_RESET_REBUILD_MESSAGE,
+        responseId: null,
+        usage: null,
+        openai: null,
+        threadResetRequired: true,
+      };
+    }
+    throw error;
+  }
 }
 
 export function buildDynamicContext(
