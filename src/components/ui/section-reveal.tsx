@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { Slot } from "@radix-ui/react-slot";
+import { createPortal } from "react-dom";
 import {
   forwardRef,
   useCallback,
@@ -10,10 +11,12 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type RefObject,
   type ReactNode,
 } from "react";
 import { useParallaxBackground } from "@/hooks/use-parallax-background";
 import { cn } from "@/lib/utils";
+import { createFluidSmoke } from "@/lib/fluid-smoke";
 import { Heading } from "./heading";
 import { Text } from "./text";
 
@@ -209,22 +212,26 @@ type SectionShellProps = {
 };
 
 export const SectionShell = forwardRef<HTMLDivElement, SectionShellProps>(
-  ({ reveal, minHeightClass, style, className, children }, ref) => (
-    <div
-      ref={ref}
-      style={style}
-      className={cn(
-        "section-reveal-shell relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
-        reveal
-          ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
-          : "border-transparent bg-transparent shadow-none backdrop-blur-none",
-        minHeightClass,
-        className,
-      )}
-    >
-      {children}
-    </div>
-  ),
+  ({ reveal, minHeightClass, style, className, children }, ref) => {
+    const resolvedMinHeightClass = minHeightClass ?? (reveal ? undefined : "min-h-[45vh]");
+
+    return (
+      <div
+        ref={ref}
+        style={style}
+        className={cn(
+          "section-reveal-shell relative flex flex-col space-y-6 rounded-2xl border p-4 sm:rounded-3xl sm:px-6 sm:py-8 lg:px-10",
+          reveal
+            ? "border-border/70 bg-card/40 shadow-soft backdrop-blur-md sm:bg-card/25 sm:shadow-elevated"
+            : "border-transparent bg-transparent shadow-none backdrop-blur-none",
+          resolvedMinHeightClass,
+          className,
+        )}
+      >
+        {children}
+      </div>
+    );
+  },
 );
 
 SectionShell.displayName = "SectionShell";
@@ -416,6 +423,127 @@ type RevealCollapsedHeaderProps = Readonly<{
   readMoreLabel?: string;
 }>;
 
+type SectionRevealSmokeProps = Readonly<{
+  anchorRef: RefObject<HTMLButtonElement | null>;
+}>;
+
+function SectionRevealSmoke({ anchorRef }: SectionRevealSmokeProps) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+  const pointerRef = useRef({ x: 0, y: 0 });
+  const dprRef = useRef(1);
+  const stopTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
+
+  useEffect(() => {
+    const anchor = anchorRef.current;
+    if (!anchor) return;
+    const container = anchor.closest("section");
+    if (container instanceof HTMLElement) {
+      setPortalTarget(container);
+    }
+  }, [anchorRef]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !portalTarget) return;
+
+    const reduceMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)");
+    const desktopQuery = globalThis.matchMedia?.("(min-width: 1024px)");
+    const pointerQuery = globalThis.matchMedia?.("(pointer: fine)");
+    if (!desktopQuery?.matches || !pointerQuery?.matches || reduceMotion?.matches) return;
+
+    const smoke = createFluidSmoke(canvas, {
+      baseColor: [0.15, 0.15, 0.15],
+      colorJitter: 0.2,
+    });
+
+    const resizeCanvas = () => {
+      const rect = portalTarget.getBoundingClientRect();
+      const dpr = Math.min(globalThis.devicePixelRatio || 1, 2);
+      dprRef.current = dpr;
+      smoke.resize(rect.width, rect.height, dpr);
+    };
+
+    resizeCanvas();
+
+    const resizeObserver = typeof ResizeObserver === "undefined"
+      ? null
+      : new ResizeObserver(resizeCanvas);
+    resizeObserver?.observe(portalTarget);
+
+    const clearStopTimer = () => {
+      if (stopTimeoutRef.current !== null) {
+        globalThis.clearTimeout(stopTimeoutRef.current);
+        stopTimeoutRef.current = null;
+      }
+    };
+
+    const handlePointerMove = (event: PointerEvent) => {
+      const rect = portalTarget.getBoundingClientRect();
+      const rawX = event.clientX - rect.left;
+      const rawY = event.clientY - rect.top;
+      const scale = dprRef.current;
+      const dx = (rawX - pointerRef.current.x) * scale * 4;
+      const dy = (rawY - pointerRef.current.y) * scale * 4;
+
+      pointerRef.current.x = rawX;
+      pointerRef.current.y = rawY;
+
+      smoke.start();
+      smoke.setPointer(rawX * scale, rawY * scale, dx, dy, true);
+    };
+
+    const handlePointerEnter = (event: PointerEvent) => {
+      clearStopTimer();
+      smoke.start();
+      const rect = portalTarget.getBoundingClientRect();
+      const rawX = event.clientX - rect.left;
+      const rawY = event.clientY - rect.top;
+      pointerRef.current.x = rawX;
+      pointerRef.current.y = rawY;
+      smoke.setPointer(rawX * dprRef.current, rawY * dprRef.current, 0, 0, true);
+    };
+
+    const handlePointerLeave = () => {
+      smoke.setPointer(
+        pointerRef.current.x * dprRef.current,
+        pointerRef.current.y * dprRef.current,
+        0,
+        0,
+        false,
+      );
+      clearStopTimer();
+      stopTimeoutRef.current = globalThis.setTimeout(() => {
+        smoke.stop();
+      }, 5000);
+    };
+
+    portalTarget.addEventListener("pointerenter", handlePointerEnter);
+    portalTarget.addEventListener("pointermove", handlePointerMove);
+    portalTarget.addEventListener("pointerleave", handlePointerLeave);
+    portalTarget.addEventListener("pointercancel", handlePointerLeave);
+
+    return () => {
+      portalTarget.removeEventListener("pointerenter", handlePointerEnter);
+      portalTarget.removeEventListener("pointermove", handlePointerMove);
+      portalTarget.removeEventListener("pointerleave", handlePointerLeave);
+      portalTarget.removeEventListener("pointercancel", handlePointerLeave);
+      resizeObserver?.disconnect();
+      clearStopTimer();
+      smoke.destroy();
+    };
+  }, [portalTarget]);
+
+  if (!portalTarget) return null;
+
+  return createPortal(
+    <div className="section-reveal-smoke" aria-hidden="true">
+      <canvas ref={canvasRef} />
+    </div>,
+    portalTarget,
+  );
+}
+
 export function RevealCollapsedHeader({
   headingId,
   heading,
@@ -495,9 +623,10 @@ export function RevealCollapsedHeader({
 
   return (
     <div className="absolute inset-0 z-0 flex items-center justify-center">
+      <SectionRevealSmoke anchorRef={buttonRef} />
       <button
         type="button"
-        className="group flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl px-4 py-3 text-center transition-transform duration-300 focus-ring"
+        className="group relative z-10 flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl px-4 py-3 text-center transition-transform duration-300 focus-ring"
         onClick={handleExpand}
         onPointerEnter={activateTease}
         onFocus={activateTease}
