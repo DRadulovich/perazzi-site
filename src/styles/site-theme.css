@@ -296,7 +296,7 @@
     opacity: 0;
     transform: translateY(var(--reveal-body-offset, 10px));
     filter: blur(var(--reveal-body-blur, 4px));
-    animation: reveal-body var(--reveal-body-duration, 500ms) var(--reveal-body-ease, ease-out) forwards;
+    animation: reveal-body var(--reveal-body-duration, 900ms) var(--reveal-body-ease, cubic-bezier(0.2, 0.9, 0.2, 1)) forwards;
     animation-delay: var(--reveal-body-delay, 0ms);
   }
 
@@ -311,10 +311,10 @@
     opacity: 0;
     transform: translateY(var(--reveal-item-offset, 12px));
     filter: blur(var(--reveal-item-blur, 8px));
-    animation: reveal-item var(--reveal-duration, 520ms) var(--reveal-ease, cubic-bezier(0.16, 1, 0.3, 1)) forwards;
+    animation: reveal-item var(--reveal-duration, 900ms) var(--reveal-ease, cubic-bezier(0.2, 0.9, 0.2, 1)) forwards;
     animation-delay: calc(
       var(--reveal-delay, 0ms) +
-      (var(--reveal-index, 0) * var(--reveal-stagger, 90ms))
+      (var(--reveal-index, 0) * var(--reveal-stagger, 160ms))
     );
     will-change: transform, opacity, filter;
   }

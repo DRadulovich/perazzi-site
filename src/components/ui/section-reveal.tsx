@@ -29,7 +29,7 @@ type RevealHeightOptions = {
 export const useRevealHeight = ({
   enableObserver,
   deps = [],
-  revealDelayMs = 900,
+  revealDelayMs = 1200,
 }: RevealHeightOptions) => {
   const [expandedHeight, setExpandedHeight] = useState<number | null>(null);
   const [premeasureHeight, setPremeasureHeight] = useState<number | null>(null);
@@ -261,9 +261,9 @@ export function RevealAnimatedBody({
   children,
   sequence = false,
   delayMs = 0,
-  staggerMs = 90,
-  durationMs = 520,
-  easing = "cubic-bezier(0.16, 1, 0.3, 1)",
+  staggerMs = 160,
+  durationMs = 900,
+  easing = "cubic-bezier(0.2, 0.9, 0.2, 1)",
   className,
 }: RevealAnimatedBodyProps) {
   const style = sequence
