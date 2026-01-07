@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactElement } from "react";
 import SafeHtml from "@/components/SafeHtml";
 import {
   Button,
@@ -39,6 +39,135 @@ type BookingOptionsRevealSectionProps = Readonly<{
   enableTitleReveal: boolean;
   onCollapsedChange?: (collapsed: boolean) => void;
 }>;
+
+type BooleanStateSetter = (value: boolean | ((prev: boolean) => boolean)) => void;
+type RevealMeasureRef = ReturnType<typeof useRevealHeight>["measureRef"];
+
+type BookingExpandHandlerArgs = Readonly<{
+  enableTitleReveal: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
+  beginExpand: (onExpanded: () => void) => void;
+  setBookingExpanded: BooleanStateSetter;
+  setHeaderThemeReady: BooleanStateSetter;
+}>;
+
+const createBookingExpandHandler =
+  ({
+    enableTitleReveal,
+    onCollapsedChange,
+    beginExpand,
+    setBookingExpanded,
+    setHeaderThemeReady,
+  }: BookingExpandHandlerArgs) =>
+  () => {
+    if (!enableTitleReveal) return;
+    onCollapsedChange?.(false);
+    beginExpand(() => {
+      setBookingExpanded(true);
+      setHeaderThemeReady(true);
+    });
+  };
+
+type BookingCollapseHandlerArgs = Readonly<{
+  enableTitleReveal: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
+  clearPremeasure: () => void;
+  setBookingExpanded: BooleanStateSetter;
+  setHeaderThemeReady: BooleanStateSetter;
+}>;
+
+const createBookingCollapseHandler =
+  ({
+    enableTitleReveal,
+    onCollapsedChange,
+    clearPremeasure,
+    setBookingExpanded,
+    setHeaderThemeReady,
+  }: BookingCollapseHandlerArgs) =>
+  () => {
+    if (!enableTitleReveal) return;
+    clearPremeasure();
+    setHeaderThemeReady(false);
+    setBookingExpanded(false);
+    onCollapsedChange?.(true);
+  };
+
+type SchedulerToggleHandlerArgs = Readonly<{
+  schedulerLoaded: boolean;
+  setSchedulerLoaded: BooleanStateSetter;
+  setSchedulerOpen: BooleanStateSetter;
+}>;
+
+const createSchedulerToggleHandler =
+  ({ schedulerLoaded, setSchedulerLoaded, setSchedulerOpen }: SchedulerToggleHandlerArgs) =>
+  () => {
+    setSchedulerOpen((prev) => {
+      const next = !prev;
+      if (next && !schedulerLoaded) {
+        setSchedulerLoaded(true);
+      }
+      logAnalytics(`ExperienceScheduler:${next ? "open" : "close"}`);
+      return next;
+    });
+  };
+
+type BookingSectionCopy = Readonly<{
+  heading: string;
+  subheading: string;
+  optionCtaLabel: string;
+}>;
+
+const getBookingSectionCopy = (bookingSection: BookingSection): BookingSectionCopy => ({
+  heading: bookingSection.heading ?? "Book a fitting",
+  subheading: bookingSection.subheading ?? "Choose the session that fits your journey",
+  optionCtaLabel: bookingSection.optionCtaLabel ?? "Reserve this session",
+});
+
+type BookingRevealStateArgs = Readonly<{
+  enableTitleReveal: boolean;
+  bookingExpanded: boolean;
+}>;
+
+type BookingRevealState = Readonly<{
+  revealBooking: boolean;
+  bookingMinHeightClass: string | undefined;
+  enableObserver: boolean;
+}>;
+
+const getBookingRevealState = ({
+  enableTitleReveal,
+  bookingExpanded,
+}: BookingRevealStateArgs): BookingRevealState => {
+  const revealBooking = !enableTitleReveal || bookingExpanded;
+
+  return {
+    revealBooking,
+    bookingMinHeightClass: enableTitleReveal ? "min-h-[50vh]" : undefined,
+    enableObserver: enableTitleReveal && revealBooking,
+  };
+};
+
+type BookingMeasureStateArgs = Readonly<{
+  enableTitleReveal: boolean;
+  revealBooking: boolean;
+  isPreparing: boolean;
+}>;
+
+type BookingMeasureState = Readonly<{
+  revealBookingForMeasure: boolean;
+  revealPhotoFocus: boolean;
+  enableParallax: boolean;
+}>;
+
+const getBookingMeasureState = ({
+  enableTitleReveal,
+  revealBooking,
+  isPreparing,
+}: BookingMeasureStateArgs): BookingMeasureState => ({
+  revealBookingForMeasure: revealBooking || isPreparing,
+  revealPhotoFocus: revealBooking,
+  enableParallax: enableTitleReveal && !revealBooking,
+});
 
 export function BookingOptions({ bookingSection }: BookingOptionsProps) {
   const analyticsRef = useAnalyticsObserver("ExperienceBookingSeen");
@@ -90,13 +219,12 @@ const BookingOptionsRevealSection = ({
   const schedulerNoteId = "experience-scheduler-note";
   const options = bookingSection.options;
   const scheduler = bookingSection.scheduler;
-  const heading = bookingSection.heading ?? "Book a fitting";
-  const subheading = bookingSection.subheading ?? "Choose the session that fits your journey";
-  const optionCtaLabel = bookingSection.optionCtaLabel ?? "Reserve this session";
+  const { heading, subheading, optionCtaLabel } = getBookingSectionCopy(bookingSection);
 
-  const revealBooking = !enableTitleReveal || bookingExpanded;
-  const revealPhotoFocus = revealBooking;
-  const bookingMinHeight = enableTitleReveal ? "min-h-[50vh]" : null;
+  const { revealBooking, bookingMinHeightClass, enableObserver } = getBookingRevealState({
+    enableTitleReveal,
+    bookingExpanded,
+  });
   const {
     ref: bookingShellRef,
     measureRef,
@@ -105,76 +233,54 @@ const BookingOptionsRevealSection = ({
     clearPremeasure,
     isPreparing,
   } = useRevealHeight({
-    enableObserver: enableTitleReveal && revealBooking,
+    enableObserver,
     deps: [schedulerOpen, schedulerLoaded, options.length],
   });
-  const revealBookingForMeasure = revealBooking || isPreparing;
+  const { revealBookingForMeasure, revealPhotoFocus, enableParallax } = getBookingMeasureState({
+    enableTitleReveal,
+    revealBooking,
+    isPreparing,
+  });
 
-  const handleBookingExpand = () => {
-    if (!enableTitleReveal) return;
-    onCollapsedChange?.(false);
-    beginExpand(() => {
-      setBookingExpanded(true);
-      setHeaderThemeReady(true);
-    });
-  };
+  const handleBookingExpand = createBookingExpandHandler({
+    enableTitleReveal,
+    onCollapsedChange,
+    beginExpand,
+    setBookingExpanded,
+    setHeaderThemeReady,
+  });
 
-  const handleBookingCollapse = () => {
-    if (!enableTitleReveal) return;
-    clearPremeasure();
-    setHeaderThemeReady(false);
-    setBookingExpanded(false);
-    onCollapsedChange?.(true);
-  };
+  const handleBookingCollapse = createBookingCollapseHandler({
+    enableTitleReveal,
+    onCollapsedChange,
+    clearPremeasure,
+    setBookingExpanded,
+    setHeaderThemeReady,
+  });
 
-  const handleSchedulerToggle = () => {
-    setSchedulerOpen((prev) => {
-      const next = !prev;
-      if (next && !schedulerLoaded) {
-        setSchedulerLoaded(true);
-      }
-      logAnalytics(`ExperienceScheduler:${next ? "open" : "close"}`);
-      return next;
-    });
-  };
+  const handleSchedulerToggle = createSchedulerToggleHandler({
+    schedulerLoaded,
+    setSchedulerLoaded,
+    setSchedulerOpen,
+  });
 
   const expandedContent = (
-    <RevealAnimatedBody sequence>
-      <RevealItem index={0}>
-        <RevealExpandedHeader
-          headingId="experience-booking-heading"
-          heading={heading}
-          headerThemeReady={headerThemeReady}
-          enableTitleReveal={enableTitleReveal}
-          onCollapse={handleBookingCollapse}
-        >
-          <div className="relative">
-            <Text
-              className={cn(
-                "type-section-subtitle",
-                headerThemeReady ? "text-ink-muted" : "text-white",
-              )}
-              leading="relaxed"
-            >
-              {subheading}
-            </Text>
-          </div>
-        </RevealExpandedHeader>
-      </RevealItem>
-      <RevealGroup delayMs={140}>
-        <BookingBody
-          revealBooking={revealBookingForMeasure}
-          options={options}
-          optionCtaLabel={optionCtaLabel}
-          scheduler={scheduler}
-          schedulerOpen={schedulerOpen}
-          schedulerLoaded={schedulerLoaded}
-          schedulerPanelId={schedulerPanelId}
-          schedulerNoteId={schedulerNoteId}
-          onSchedulerToggle={handleSchedulerToggle}
-        />
-      </RevealGroup>
-    </RevealAnimatedBody>
+    <BookingExpandedContent
+      heading={heading}
+      subheading={subheading}
+      headerThemeReady={headerThemeReady}
+      enableTitleReveal={enableTitleReveal}
+      onCollapse={handleBookingCollapse}
+      revealBooking={revealBookingForMeasure}
+      options={options}
+      optionCtaLabel={optionCtaLabel}
+      scheduler={scheduler}
+      schedulerOpen={schedulerOpen}
+      schedulerLoaded={schedulerLoaded}
+      schedulerPanelId={schedulerPanelId}
+      schedulerNoteId={schedulerNoteId}
+      onSchedulerToggle={handleSchedulerToggle}
+    />
   );
 
   return (
@@ -184,7 +290,7 @@ const BookingOptionsRevealSection = ({
         reveal={revealBooking}
         revealOverlay={revealPhotoFocus}
         preparing={isPreparing}
-        enableParallax={enableTitleReveal && !revealBooking}
+        enableParallax={enableParallax}
         overlay="canvas"
       />
 
@@ -193,39 +299,137 @@ const BookingOptionsRevealSection = ({
           ref={bookingShellRef}
           style={minHeightStyle}
           reveal={revealPhotoFocus}
-          minHeightClass={bookingMinHeight ?? undefined}
+          minHeightClass={bookingMinHeightClass}
         >
-          {revealBooking ? (
-            expandedContent
-          ) : (
-            <>
-              <ChoreoGroup
-                effect="fade-lift"
-                distance={choreoDistance.base}
-                durationMs={dreamyPace.textMs}
-                easing={dreamyPace.easing}
-                staggerMs={dreamyPace.staggerMs}
-                itemClassName="absolute inset-0"
-              >
-                <RevealCollapsedHeader
-                  headingId="experience-booking-heading"
-                  heading={heading}
-                  subheading={subheading}
-                  controlsId="experience-booking-body"
-                  expanded={revealBooking}
-                  onExpand={handleBookingExpand}
-                />
-              </ChoreoGroup>
-              <div ref={measureRef} className="section-reveal-measure" aria-hidden>
-                {expandedContent}
-              </div>
-            </>
-          )}
+          <BookingRevealContent
+            revealBooking={revealBooking}
+            expandedContent={expandedContent}
+            measureRef={measureRef}
+            heading={heading}
+            subheading={subheading}
+            onExpand={handleBookingExpand}
+          />
         </SectionShell>
       </Container>
     </>
   );
 };
+
+type BookingRevealContentProps = Readonly<{
+  revealBooking: boolean;
+  expandedContent: ReactElement;
+  measureRef: RevealMeasureRef;
+  heading: string;
+  subheading: string;
+  onExpand: () => void;
+}>;
+
+const BookingRevealContent = ({
+  revealBooking,
+  expandedContent,
+  measureRef,
+  heading,
+  subheading,
+  onExpand,
+}: BookingRevealContentProps) => {
+  if (revealBooking) return expandedContent;
+
+  return (
+    <>
+      <ChoreoGroup
+        effect="fade-lift"
+        distance={choreoDistance.base}
+        durationMs={dreamyPace.textMs}
+        easing={dreamyPace.easing}
+        staggerMs={dreamyPace.staggerMs}
+        itemClassName="absolute inset-0"
+      >
+        <RevealCollapsedHeader
+          headingId="experience-booking-heading"
+          heading={heading}
+          subheading={subheading}
+          controlsId="experience-booking-body"
+          expanded={revealBooking}
+          onExpand={onExpand}
+        />
+      </ChoreoGroup>
+      <div ref={measureRef} className="section-reveal-measure" aria-hidden>
+        {expandedContent}
+      </div>
+    </>
+  );
+};
+
+type BookingExpandedContentProps = Readonly<{
+  heading: string;
+  subheading: string;
+  headerThemeReady: boolean;
+  enableTitleReveal: boolean;
+  onCollapse: () => void;
+  revealBooking: boolean;
+  options: BookingSection["options"];
+  optionCtaLabel: string;
+  scheduler: BookingSection["scheduler"];
+  schedulerOpen: boolean;
+  schedulerLoaded: boolean;
+  schedulerPanelId: string;
+  schedulerNoteId: string;
+  onSchedulerToggle: () => void;
+}>;
+
+const BookingExpandedContent = ({
+  heading,
+  subheading,
+  headerThemeReady,
+  enableTitleReveal,
+  onCollapse,
+  revealBooking,
+  options,
+  optionCtaLabel,
+  scheduler,
+  schedulerOpen,
+  schedulerLoaded,
+  schedulerPanelId,
+  schedulerNoteId,
+  onSchedulerToggle,
+}: BookingExpandedContentProps) => (
+  <RevealAnimatedBody sequence>
+    <RevealItem index={0}>
+      <RevealExpandedHeader
+        headingId="experience-booking-heading"
+        heading={heading}
+        headerThemeReady={headerThemeReady}
+        enableTitleReveal={enableTitleReveal}
+        onCollapse={onCollapse}
+      >
+        <div className="relative">
+          <Text
+            className={cn(
+              "type-section-subtitle",
+              headerThemeReady ? "text-ink-muted" : "text-white",
+            )}
+            leading="relaxed"
+          >
+            {subheading}
+          </Text>
+        </div>
+      </RevealExpandedHeader>
+    </RevealItem>
+    <RevealGroup delayMs={140}>
+      <BookingBody
+        revealBooking={revealBooking}
+        options={options}
+        optionCtaLabel={optionCtaLabel}
+        scheduler={scheduler}
+        schedulerOpen={schedulerOpen}
+        schedulerLoaded={schedulerLoaded}
+        schedulerPanelId={schedulerPanelId}
+        schedulerNoteId={schedulerNoteId}
+        onSchedulerToggle={onSchedulerToggle}
+      />
+    </RevealGroup>
+  </RevealAnimatedBody>
+);
 
 
 type BookingBodyProps = Readonly<{
