@@ -332,7 +332,7 @@ export async function fetchGuardrailStats(envFilter?: string, daysFilter?: numbe
     params.push(envFilter);
     idx += 1;
   }
-  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
+  appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const query = `
     select
@@ -362,7 +362,7 @@ export async function fetchGuardrailByArchetype(envFilter?: string, daysFilter?:
     params.push(envFilter);
     idx += 1;
   }
-  idx = appendDaysFilter({ conditions, params, idx, days: daysFilter });
+  appendDaysFilter({ conditions, params, idx, days: daysFilter });
 
   const query = `
     select
@@ -1028,7 +1028,7 @@ export async function fetchTriggerTermWeeks(limit = 12): Promise<string[]> {
 }
 
 export async function fetchTriggerTermsForWeek(rawWeek: string, limit = 20): Promise<TriggerTermRow[]> {
-    const safeLimit = Math.max(1, Math.min(limit, 100));
+  const safeLimit = Math.max(1, Math.min(limit, 100));
 
   // Ensure the week string is in ISO YYYY-MM-DD format to avoid Postgres
   // time-zone parsing errors such as "time zone \"gmt-0600\" not recognized".
@@ -1061,7 +1061,7 @@ export async function fetchTriggerTermsForWeek(rawWeek: string, limit = 20): Pro
         order by hits desc
         limit $2;
       `,
-            [isoWeek, safeLimit],
+      [isoWeek, safeLimit],
     );
     return rows.map((r) => ({
       week: String(r.week),
