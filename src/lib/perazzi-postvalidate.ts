@@ -32,7 +32,7 @@ const SYSTEM_META_PATTERNS: Pattern[] = [
   { id: "tooling_markers", re: /\b(tool call|function call|api key|bearer token)\b/i },
   { id: "model_markers", re: /\b(openai|chatgpt|gpt-\d|responses api)\b/i },
   { id: "retrieval_markers", re: /\b(rag|retrieval|embedding|vector database|pgvector|rerank)\b/i },
-  { id: "system_block_header", re: /(^|\n)\s*(?:SYSTEM|DEVELOPER)\s*[:\-]/i },
+  { id: "system_block_header", re: /(^|\n)\s*(?:SYSTEM|DEVELOPER)\s*[:-]/i },
 ];
 
 const PRICING_PATTERNS: Pattern[] = [
@@ -55,7 +55,7 @@ const PRICING_PATTERNS: Pattern[] = [
   },
   {
     id: "figure_phrases",
-    re: /\b(?:low|mid|high)\s+(?:five|six)\s*figures\b|\b(?:five|six)\s*figures\b|\b(?:tens?\s+of\s+thousands)\b/i,
+    re: /\b(?:tens?\s+of\s+thousands|(?:(?:low|mid|high)\s+)?(?:five|six)\s*figures)\b/i,
   },
 ];
 
