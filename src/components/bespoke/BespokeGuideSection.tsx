@@ -13,7 +13,7 @@ type BespokeGuideSectionProps = Readonly<{
   guide?: BuildPageData["bespokeGuide"];
 }>;
 
-const MotionSection = motion(Section);
+const MotionSection = motion.create(Section);
 const DEFAULT_GUIDE_ITEMS = [
   "Fit & Dynamics — try-gun measurements, balance targets, and barrel regulation priorities.",
   "Platform & Wood — HT or MX lineage, fore-end/stock profiles, and wood blank options.",

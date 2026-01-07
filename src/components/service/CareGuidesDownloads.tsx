@@ -12,7 +12,7 @@ type CareGuidesDownloadsProps = Readonly<{
   guidesSection: GuidesSection;
 }>;
 
-const MotionSection = motion(Section);
+const MotionSection = motion.create(Section);
 
 export function CareGuidesDownloads({ guidesSection }: CareGuidesDownloadsProps) {
   const analyticsRef = useAnalyticsObserver("CareGuidesSeen");

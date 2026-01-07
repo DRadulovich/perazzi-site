@@ -12,7 +12,7 @@ type CTASectionProps = {
   readonly finale: HomeData["finale"];
 };
 
-const MotionSection = motion(Section);
+const MotionSection = motion.create(Section);
 
 export function CTASection({ finale }: CTASectionProps) {
   const analyticsRef = useAnalyticsObserver("FinalCTASeen");

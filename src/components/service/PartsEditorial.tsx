@@ -12,7 +12,7 @@ type PartsEditorialProps = Readonly<{
   partsEditorialSection: PartsEditorialSection;
 }>;
 
-const MotionSection = motion(Section);
+const MotionSection = motion.create(Section);
 
 export function PartsEditorial({ partsEditorialSection }: PartsEditorialProps) {
   const analyticsRef = useAnalyticsObserver("PartsEditorialSeen");

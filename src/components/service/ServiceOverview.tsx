@@ -11,7 +11,7 @@ type ServiceOverviewProps = {
   readonly overview: ServiceOverviewSection;
 };
 
-const MotionSection = motion(Section);
+const MotionSection = motion.create(Section);
 
 export function ServiceOverview({ overview }: ServiceOverviewProps) {
   const analyticsRef = useAnalyticsObserver("ServiceOverviewSeen");

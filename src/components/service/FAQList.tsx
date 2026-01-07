@@ -16,7 +16,7 @@ type FAQListProps = Readonly<{
   intro?: string;
 }>;
 
-const MotionSection = motion(Section);
+const MotionSection = motion.create(Section);
 
 export function FAQList({ items, heading, intro }: FAQListProps) {
   const analyticsRef = useAnalyticsObserver("ServiceFAQSeen");

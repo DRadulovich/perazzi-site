@@ -10,7 +10,7 @@ type IntegrityAdvisoryProps = Readonly<{
   integrityAdvisory: IntegrityAdvisorySection;
 }>;
 
-const MotionSection = motion(Section);
+const MotionSection = motion.create(Section);
 
 export function IntegrityAdvisory({ integrityAdvisory }: IntegrityAdvisoryProps) {
   const analyticsRef = useAnalyticsObserver("IntegrityAdvisorySeen");

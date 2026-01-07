@@ -5,6 +5,7 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
   images: {
+    qualities: [100, 75],
     remotePatterns: [
       {
         protocol: "https",

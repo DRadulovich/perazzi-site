@@ -15,7 +15,7 @@ type MaintenanceRepairsProps = {
   readonly guide?: GuideDownload;
 };
 
-const MotionSection = motion(Section);
+const MotionSection = motion.create(Section);
 
 type GuideLinkProps = {
   readonly guide?: GuideDownload;

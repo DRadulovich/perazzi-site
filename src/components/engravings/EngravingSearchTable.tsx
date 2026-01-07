@@ -658,7 +658,7 @@ function EngravingDetailDialog({
                       heroStatus === "loaded" ? "opacity-100" : "opacity-0",
                     )}
                     priority
-                    onLoadingComplete={() => { setHeroStatus("loaded"); }}
+                    onLoad={() => { setHeroStatus("loaded"); }}
                     onError={() => { setHeroStatus("error"); }}
                   />
                 ) : (

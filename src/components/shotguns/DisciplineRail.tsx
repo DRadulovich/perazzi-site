@@ -826,7 +826,7 @@ function DisciplineCard({
               sizes="(min-width: 1024px) 33vw, 100vw"
               priority
               loading="eager"
-              onLoadingComplete={() => {
+              onLoad={() => {
                 setLoadedHeroes((prev) => (
                   prev[discipline.id] ? prev : { ...prev, [discipline.id]: true }
                 ));
@@ -925,7 +925,7 @@ function DisciplineCard({
                           )}
                           sizes="(min-width: 1024px) 320px, 100vw"
                           loading="eager"
-                          onLoadingComplete={() => {
+                          onLoad={() => {
                             setLoadedModels((prev) => (
                               prev[modelId] ? prev : { ...prev, [modelId]: true }
                             ));

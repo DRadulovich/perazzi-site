@@ -17,7 +17,7 @@ type RequestProps = {
   readonly fallbackLinkLabel?: string;
 };
 
-const MotionSection = motion(Section);
+const MotionSection = motion.create(Section);
 
 const ERROR_MESSAGE = "Enter a valid email so we can reply.";
 

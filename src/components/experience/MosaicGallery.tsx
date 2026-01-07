@@ -41,7 +41,7 @@ type MosaicLightboxFrameProps = {
   readonly onNavigate: (direction: 1 | -1) => void;
 };
 
-const MotionSection = motion(Section);
+const MotionSection = motion.create(Section);
 
 const fadeMotion = { opacity: 0 };
 const figureMotion = { opacity: 0, y: 18, scale: 0.985, filter: "blur(14px)" };

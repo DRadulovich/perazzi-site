@@ -17,7 +17,7 @@ type ServiceGuidanceSectionProps = Readonly<{
   chatPayload: ChatTriggerPayload;
 }>;
 
-const MotionSection = motion(Section);
+const MotionSection = motion.create(Section);
 
 export function ServiceGuidanceSection({
   analyticsId,

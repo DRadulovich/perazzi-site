@@ -15,7 +15,7 @@ type CTASectionProps = {
   readonly analyticsPrefix?: string;
 };
 
-const MotionSection = motion(Section);
+const MotionSection = motion.create(Section);
 
 export function CTASection({
   text,

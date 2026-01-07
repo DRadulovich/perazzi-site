@@ -15,7 +15,7 @@ type AssuranceBlockProps = Readonly<{
 
 type RevealProps = Pick<MotionProps, "initial" | "whileInView" | "viewport" | "transition">;
 
-const MotionSection = motion(Section);
+const MotionSection = motion.create(Section);
 
 const getRevealProps = (enabled: boolean, config: RevealProps): RevealProps => {
   if (!enabled) {

@@ -10,7 +10,7 @@ type JourneyOverviewProps = Readonly<{
   journey: JourneyOverviewData;
 }>;
 
-const MotionSection = motion(Section);
+const MotionSection = motion.create(Section);
 
 export function JourneyOverview({ journey }: JourneyOverviewProps) {
   const prefersReducedMotion = useReducedMotion();

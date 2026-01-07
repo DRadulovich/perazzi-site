@@ -25,7 +25,7 @@ type ShotgunsAdvisorySectionProps = Readonly<{
   closing: string;
 }>;
 
-const MotionSection = motion(Section);
+const MotionSection = motion.create(Section);
 
 export function ShotgunsAdvisorySection({
   headingId,

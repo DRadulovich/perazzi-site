@@ -13,7 +13,7 @@ type HomeGuideSectionProps = Readonly<{
   guidePlatforms: readonly HomeGuidePlatform[];
 }>;
 
-const MotionSection = motion(Section);
+const MotionSection = motion.create(Section);
 
 export function HomeGuideSection({ guideSection, guidePlatforms }: HomeGuideSectionProps) {
   const prefersReducedMotion = useReducedMotion();

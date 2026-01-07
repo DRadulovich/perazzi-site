@@ -42,7 +42,7 @@ type FAQSectionProps = Readonly<{
   children: ReactNode;
 }>;
 
-const MotionSection = motion(Section);
+const MotionSection = motion.create(Section);
 
 function resolveFAQItems(items: FAQItem[]) {
   return items.length ? items : faqFixture;
