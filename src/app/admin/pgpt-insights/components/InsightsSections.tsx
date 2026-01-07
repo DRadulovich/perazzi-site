@@ -66,7 +66,7 @@ export function InsightsSections({
   q,
   page,
   density,
-}: InsightsSectionsProps) {
+}: Readonly<InsightsSectionsProps>) {
   return (
     <div className="space-y-12 lg:space-y-14">
       <Suspense fallback={<SectionSkeleton id="data-health" title="Data Health" lines={4} />}>
@@ -77,7 +77,7 @@ export function InsightsSections({
         <OverviewSection envFilter={envFilter} daysFilter={daysFilter} scopeSummary={scopeSummary} />
       </Suspense>
 
-      {!isTriageView ? (
+      {isTriageView ? null : (
         <Suspense fallback={<SectionSkeleton id="trends" title="Trends" lines={8} />}>
           <TrendsSection
             envFilter={envFilter}
@@ -89,15 +89,15 @@ export function InsightsSections({
             tableDensityClass={tableDensityClass}
           />
         </Suspense>
-      ) : null}
+      )}
 
-      {!isTriageView ? (
+      {isTriageView ? null : (
         <Suspense fallback={<SectionSkeleton id="top-issues" title="Top Issues" />}>
           <TopIssuesSection envFilter={envFilter} daysFilter={daysFilter} resolvedSearchParams={resolvedSearchParams} />
         </Suspense>
-      ) : null}
+      )}
 
-      {!isTriageView ? (
+      {isTriageView ? null : (
         <Suspense fallback={<SectionSkeleton id="rag" title="RAG Health (assistant)" lines={6} />}>
           <RagSection
             envFilter={envFilter}
@@ -107,7 +107,7 @@ export function InsightsSections({
             truncSecondary={truncSecondary}
           />
         </Suspense>
-      ) : null}
+      )}
 
       <Suspense fallback={<SectionSkeleton id="guardrails" title="Guardrail Analytics (assistant)" lines={6} />}>
         <GuardrailsSection
@@ -119,7 +119,7 @@ export function InsightsSections({
         />
       </Suspense>
 
-      {!isTriageView ? (
+      {isTriageView ? null : (
         <Suspense fallback={<SectionSkeleton id="archetypes" title="Archetype & Intent Analytics" lines={6} />}>
           <ArchetypesSection
             envFilter={envFilter}
@@ -128,9 +128,9 @@ export function InsightsSections({
             density={density === "compact" ? "compact" : "comfortable"}
           />
         </Suspense>
-      ) : null}
+      )}
 
-      {!isTriageView ? (
+      {isTriageView ? null : (
         <Suspense fallback={<SectionSkeleton id="metrics" title="Metrics (Tokens & Latency)" lines={6} />}>
           <MetricsSection
             envFilter={envFilter}
@@ -141,7 +141,7 @@ export function InsightsSections({
             marginLt={resolvedSearchParams.margin_lt}
           />
         </Suspense>
-      ) : null}
+      )}
 
       <Suspense fallback={<SectionSkeleton id="logs" title="Recent Interactions" lines={6} />}>
         <LogsSection
