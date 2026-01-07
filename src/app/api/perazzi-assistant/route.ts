@@ -336,7 +336,6 @@ function getClientIp(req: Request): string {
     if (first) return first.trim();
   }
   // Some runtimes attach `ip` to the request; fall back to a generic value if not present.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (req as any).ip ?? "unknown";
 }
 

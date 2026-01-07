@@ -1,4 +1,3 @@
--- Read-only audit pack for V2 metadata coverage
 -- Run in Supabase SQL editor or psql. No writes.
 
 -- 1) NULL vs non-NULL counts: documents
