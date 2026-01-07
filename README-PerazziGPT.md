@@ -1,3 +1,5 @@
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/8aeaeae4bed2402baeccf37892f16f88)](https://app.codacy.com/gh/DRadulovich/perazzi-site/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
+
 # PerazziGPT (Developer Guide)
 
 This document is the developer-facing overview for the PerazziGPT system. For a non-dev guide, see `README-PerazziGPT-Guide.md`.
