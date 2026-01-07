@@ -1,5 +1,6 @@
 exclude_paths:
     - PGPT/V2/Brand-Strategy/Brand-Bible.md
+    - src/app/head.tsx
 runtimes:
     - java@17.0.10
     - node@22.2.0
