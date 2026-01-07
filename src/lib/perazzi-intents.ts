@@ -336,6 +336,53 @@ function clampQuestionLength(input: string): string {
 
 const ALLOWED_MODES: PerazziMode[] = ["prospect", "owner", "navigation"];
 
+const NAVIGATION_PATTERNS: RegExp[] = [
+  /\bwhere\s+can\s+i\s+(find|get|buy|try|contact|reach)\b/i,
+  /\b(link|show)\s+me\b/i,
+  /\bwhat\s+page\b/i,
+  /\bnear\s+me\b/i,
+  /\bauthorized\s+dealer\b/i,
+  /\bdealer\b/i,
+  /\bstockist\b/i,
+  /\bcontact\b/i,
+];
+
+const OWNER_PATTERNS: RegExp[] = [
+  /\bmy\s+(gun|perazzi|shotgun)\b/i,
+  /\bserial(\s*number)?\b/i,
+  /\bs\/n\b/i,
+  /\bmaintenance\b/i,
+  /\bservic(e|ing)\b/i,
+  /\bclean(ing)?\b/i,
+  /\brepair\b/i,
+  /\btiming\b/i,
+  /\bwarranty\b/i,
+];
+
+const PROSPECT_SIGNAL_INTENTS = new Set<string>(["models", "bespoke", "grade_sc3", "grade_sco", "grade_lusso"]);
+
+const PROSPECT_PATTERNS: RegExp[] = [
+  /\bmx\b/i,
+  /\bhts?\b/i,
+  /\btmx\b/i,
+  /\bcompare\b/i,
+  /\bdifference\b/i,
+  /\bvs\.?\b/i,
+  /\bwhich\s+(model|platform)\b/i,
+  /\brecommend\b/i,
+];
+
+function matchesAnyPattern(patterns: RegExp[], input: string): boolean {
+  return patterns.some((pattern) => pattern.test(input));
+}
+
+function hasAnyIntent(intents: Set<string>, targets: Set<string>): boolean {
+  for (const intent of targets) {
+    if (intents.has(intent)) return true;
+  }
+  return false;
+}
+
 function normalizeMode(input: unknown): PerazziMode | null {
   if (typeof input !== "string") return null;
   const cleaned = input.trim().toLowerCase();
@@ -352,22 +399,15 @@ function inferMode(
   const hasNavigationSignal =
     intents.has("dealers") ||
     intents.has("events") ||
-    /\b(where\s+can\s+i\s+(find|get|buy|try|contact|reach)|link\s+me|show\s+me|what\s+page|contact|dealer|stockist|authorized\s+dealer|near\s+me)\b/i.test(
-      q,
-    );
+    matchesAnyPattern(NAVIGATION_PATTERNS, q);
 
   const hasOwnerSignal =
     intents.has("service") ||
-    /\b(my\s+(gun|perazzi|shotgun)|serial(\s*number)?|s\/n|maintenance|servic(e|ing)|clean(ing)?|repair|timing|warranty)\b/i.test(
-      q,
-    );
+    matchesAnyPattern(OWNER_PATTERNS, q);
 
   const hasProspectSignal =
-    intents.has("models") ||
-    intents.has("bespoke") ||
-    /\b(mx\s?(8|10|12|2000)?|mx8|mx10|mx12|mx2000|high\s*tech|hts?|tm1|tmx|compare|difference|vs\.?|which\s+(model|platform)|recommend|bespoke|atelier|made\s+to\s+order|sco|sc3|lusso)\b/i.test(
-      q,
-    );
+    hasAnyIntent(intents, PROSPECT_SIGNAL_INTENTS) ||
+    matchesAnyPattern(PROSPECT_PATTERNS, q);
 
   if (hasNavigationSignal) return "navigation";
   if (hasOwnerSignal) return "owner";
@@ -469,17 +509,16 @@ function getTemplateGuide(intent: string, archetype: Archetype | null): string |
   return TEMPLATE_GUIDES[intent];
 }
 
-export function buildResponseTemplates(hints: RetrievalHints, archetype?: Archetype | null): string[] {
-  const resolvedArchetype = archetype ?? null;
+export function buildResponseTemplates(hints: RetrievalHints, archetype: Archetype | null = null): string[] {
   const templates = new Set<string>();
   hints.intents.forEach((intent) => {
-    const guide = getTemplateGuide(intent, resolvedArchetype);
+    const guide = getTemplateGuide(intent, archetype);
     if (guide) templates.add(guide);
   });
 
   // Preserve existing fallback behavior when nothing matched but the question is model-related.
   if (!templates.size && hints.topics.includes("models")) {
-    const fallback = getTemplateGuide("models", resolvedArchetype) ?? TEMPLATE_GUIDES.models;
+    const fallback = getTemplateGuide("models", archetype) ?? TEMPLATE_GUIDES.models;
     templates.add(fallback);
   }
   return Array.from(templates);
