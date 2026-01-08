@@ -20,15 +20,132 @@ export const platform = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: "tagline",
+      type: "string",
+      title: "Tagline",
+    }),
+    defineField({
       name: "lineage",
       type: "text",
       title: "Lineage",
       rows: 3,
     }),
     defineField({
+      name: "lineageHtml",
+      type: "text",
+      title: "Lineage (HTML)",
+      rows: 6,
+    }),
+    defineField({
       name: "hero",
       title: "Hero",
       type: "imageWithMeta",
+    }),
+    defineField({
+      name: "hallmark",
+      title: "Hallmark",
+      type: "string",
+    }),
+    defineField({
+      name: "weightDistribution",
+      title: "Weight Distribution",
+      type: "string",
+    }),
+    defineField({
+      name: "typicalDisciplines",
+      title: "Typical Disciplines",
+      type: "array",
+      of: [{ type: "string" }],
+    }),
+    defineField({
+      name: "atAGlance",
+      title: "At a Glance",
+      type: "object",
+      fields: [
+        defineField({ name: "triggerType", type: "string" }),
+        defineField({ name: "weightDistribution", type: "string" }),
+        defineField({
+          name: "typicalDisciplines",
+          type: "array",
+          of: [{ type: "string" }],
+        }),
+        defineField({
+          name: "links",
+          type: "array",
+          of: [
+            {
+              type: "object",
+              fields: [
+                defineField({ name: "label", type: "string" }),
+                defineField({ name: "href", type: "string" }),
+              ],
+            },
+          ],
+        }),
+      ],
+    }),
+    defineField({
+      name: "disciplineMap",
+      title: "Discipline Map",
+      type: "array",
+      of: [
+        {
+          type: "object",
+          fields: [
+            defineField({
+              name: "discipline",
+              type: "reference",
+              to: [{ type: "discipline" }],
+            }),
+            defineField({ name: "label", type: "string" }),
+            defineField({ name: "rationale", type: "text" }),
+            defineField({ name: "href", type: "string" }),
+          ],
+        },
+      ],
+    }),
+    defineField({
+      name: "relatedArticles",
+      title: "Related Articles",
+      type: "array",
+      of: [{ type: "reference", to: [{ type: "article" }] }],
+    }),
+    defineField({
+      name: "guidance",
+      title: "Platform Guidance",
+      type: "object",
+      fields: [
+        defineField({ name: "heading", type: "string" }),
+        defineField({ name: "body", type: "text", rows: 3 }),
+        defineField({ name: "chatLabel", type: "string" }),
+        defineField({ name: "chatPrompt", type: "text", rows: 3 }),
+      ],
+    }),
+    defineField({
+      name: "finalCta",
+      title: "Final CTA",
+      type: "object",
+      fields: [
+        defineField({ name: "text", type: "text" }),
+        defineField({
+          name: "primary",
+          title: "Primary Button",
+          type: "object",
+          fields: [
+            defineField({ name: "label", type: "string" }),
+            defineField({ name: "href", type: "string" }),
+          ],
+        }),
+        defineField({
+          name: "secondary",
+          title: "Secondary Button",
+          type: "object",
+          fields: [
+            defineField({ name: "label", type: "string" }),
+            defineField({ name: "href", type: "string" }),
+          ],
+        }),
+      ],
     }),
     defineField({
       name: "highlights",

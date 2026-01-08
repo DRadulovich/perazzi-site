@@ -219,5 +219,31 @@ export const serviceHome = defineType({
         }),
       ],
     }),
+    defineField({
+      name: 'finalCta',
+      title: 'Final CTA',
+      type: 'object',
+      fields: [
+        defineField({ name: 'text', title: 'Body Text', type: 'text' }),
+        defineField({
+          name: 'primary',
+          title: 'Primary Button',
+          type: 'object',
+          fields: [
+            defineField({ name: 'label', type: 'string' }),
+            defineField({ name: 'href', type: 'string' }),
+          ],
+        }),
+        defineField({
+          name: 'secondary',
+          title: 'Secondary Button',
+          type: 'object',
+          fields: [
+            defineField({ name: 'label', type: 'string' }),
+            defineField({ name: 'href', type: 'string' }),
+          ],
+        }),
+      ],
+    }),
   ],
 })

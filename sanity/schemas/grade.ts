@@ -16,6 +16,27 @@ export const grade = defineType({
       rows: 3,
     }),
     defineField({
+      name: "provenanceHtml",
+      title: "Provenance (HTML)",
+      type: "text",
+      rows: 4,
+    }),
+    defineField({
+      name: "options",
+      title: "Options",
+      type: "array",
+      of: [
+        {
+          type: "object",
+          fields: [
+            defineField({ name: "id", title: "ID", type: "string" }),
+            defineField({ name: "title", title: "Title", type: "string" }),
+            defineField({ name: "description", title: "Description", type: "text" }),
+          ],
+        },
+      ],
+    }),
+    defineField({
       name: "hero",
       title: "Hero Image",
       type: "imageWithMeta",

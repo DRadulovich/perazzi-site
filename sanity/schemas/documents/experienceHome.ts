@@ -81,6 +81,7 @@ export const experienceHome = defineType({
             },
           ],
         }),
+        defineField({ name: 'backgroundImage', title: 'Background Image', type: 'image' }),
       ],
     }),
     defineField({
@@ -90,6 +91,7 @@ export const experienceHome = defineType({
       fieldset: 'guides',
       fields: [
         defineField({ name: 'heading', title: 'Heading', type: 'string' }),
+        defineField({ name: 'rightTitle', title: 'Right Column Title', type: 'string' }),
         defineField({ name: 'intro', title: 'Intro Paragraph', type: 'text' }),
         defineField({
           name: 'bullets',
@@ -111,6 +113,7 @@ export const experienceHome = defineType({
       fieldset: 'guides',
       fields: [
         defineField({ name: 'heading', title: 'Heading', type: 'string' }),
+        defineField({ name: 'rightTitle', title: 'Right Column Title', type: 'string' }),
         defineField({ name: 'intro', title: 'Intro Paragraph', type: 'text' }),
         defineField({
           name: 'bullets',
@@ -132,6 +135,7 @@ export const experienceHome = defineType({
       fieldset: 'guides',
       fields: [
         defineField({ name: 'heading', title: 'Heading', type: 'string' }),
+        defineField({ name: 'rightTitle', title: 'Right Column Title', type: 'string' }),
         defineField({ name: 'intro', title: 'Intro Paragraph', type: 'text' }),
         defineField({
           name: 'bullets',
@@ -179,6 +183,7 @@ export const experienceHome = defineType({
       fields: [
         defineField({ name: 'heading', title: 'Section Heading', type: 'string' }),
         defineField({ name: 'subheading', title: 'Section Subheading', type: 'text' }),
+        defineField({ name: 'backgroundImage', title: 'Background Image', type: 'image' }),
         defineField({
           name: 'options',
           title: 'Fitting Options',
@@ -244,6 +249,32 @@ export const experienceHome = defineType({
       type: 'array',
       fieldset: 'mosaic',
       of: [{ type: 'imageWithMeta' }],
+    }),
+    defineField({
+      name: 'finalCta',
+      title: 'Final CTA',
+      type: 'object',
+      fields: [
+        defineField({ name: 'text', title: 'Body Text', type: 'text' }),
+        defineField({
+          name: 'primary',
+          title: 'Primary Button',
+          type: 'object',
+          fields: [
+            defineField({ name: 'label', type: 'string' }),
+            defineField({ name: 'href', type: 'string' }),
+          ],
+        }),
+        defineField({
+          name: 'secondary',
+          title: 'Secondary Button',
+          type: 'object',
+          fields: [
+            defineField({ name: 'label', type: 'string' }),
+            defineField({ name: 'href', type: 'string' }),
+          ],
+        }),
+      ],
     }),
   ],
 })

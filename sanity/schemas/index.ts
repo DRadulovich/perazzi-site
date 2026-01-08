@@ -25,6 +25,17 @@ import { engravings } from "./documents/engravings";
 import { allModels } from "./documents/allModels";
 import { buildConfigurator } from "./documents/buildConfigurator";
 import { configuratorSidebarCard } from "./documents/configuratorSidebarCard";
+import { engravingSearchPage } from "./documents/engravingSearchPage";
+import { modelSearchPage } from "./documents/modelSearchPage";
+import { fullScreenChatPage } from "./documents/fullScreenChatPage";
+import { conciergePage } from "./documents/conciergePage";
+import { bespokeBuildLanding } from "./documents/bespokeBuildLanding";
+import { bespokeBuildStage } from "./documents/bespokeBuildStage";
+import { heritageSection } from "./documents/heritageSection";
+import { buildJourneyLanding } from "./documents/buildJourneyLanding";
+import { shotgunsGaugesPage } from "./documents/shotgunsGaugesPage";
+import { shotgunsGradesPage } from "./documents/shotgunsGradesPage";
+import { journalCategory } from "./documents/journalCategory";
 
 export const schemaTypes = [
   // Objects first so they’re available to documents
@@ -55,6 +66,17 @@ export const schemaTypes = [
   heritageHome,
   serviceHome,
   journalLanding,
+  journalCategory,
+  engravingSearchPage,
+  modelSearchPage,
+  shotgunsGaugesPage,
+  shotgunsGradesPage,
+  fullScreenChatPage,
+  conciergePage,
+  bespokeBuildLanding,
+  bespokeBuildStage,
+  heritageSection,
+  buildJourneyLanding,
   author,
   engravings,
   allModels,

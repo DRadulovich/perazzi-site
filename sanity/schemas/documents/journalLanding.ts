@@ -23,5 +23,17 @@ export const journalLanding = defineType({
       type: 'reference',
       to: [{ type: 'article' }],
     }),
+    defineField({
+      name: 'defaults',
+      title: 'Fallback Defaults',
+      type: 'object',
+      fields: [
+        defineField({ name: 'missingArticleTitle', title: 'Missing Article Title', type: 'string' }),
+        defineField({ name: 'missingArticleBody', title: 'Missing Article Body', type: 'text' }),
+        defineField({ name: 'missingArticleCtaLabel', title: 'Missing Article CTA Label', type: 'string' }),
+        defineField({ name: 'missingArticleCtaHref', title: 'Missing Article CTA Href', type: 'string' }),
+        defineField({ name: 'fallbackSeoDescription', title: 'Fallback SEO Description', type: 'text' }),
+      ],
+    }),
   ],
 })

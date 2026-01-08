@@ -6,6 +6,11 @@ export const siteSettings = defineType({
   type: "document",
   fields: [
     defineField({
+      name: "brandLabel",
+      title: "Brand Label",
+      type: "string",
+    }),
+    defineField({
       name: "nav",
       title: "Navigation",
       type: "array",
@@ -28,10 +33,167 @@ export const siteSettings = defineType({
       ],
     }),
     defineField({
+      name: "navFlyouts",
+      title: "Navigation Flyouts",
+      type: "object",
+      fields: [
+        defineField({
+          name: "shotguns",
+          title: "Shotguns Flyout",
+          type: "object",
+          fields: [
+            defineField({ name: "heading", type: "string" }),
+            defineField({ name: "description", type: "text", rows: 3 }),
+            defineField({ name: "ctaLabel", type: "string" }),
+            defineField({ name: "ctaHref", type: "url" }),
+            defineField({
+              name: "cards",
+              title: "Cards",
+              type: "array",
+              of: [
+                defineArrayMember({
+                  type: "object",
+                  fields: [
+                    defineField({ name: "title", type: "string" }),
+                    defineField({ name: "description", type: "text", rows: 2 }),
+                    defineField({ name: "href", type: "url" }),
+                  ],
+                }),
+              ],
+            }),
+          ],
+        }),
+        defineField({
+          name: "experience",
+          title: "Experience Flyout",
+          type: "object",
+          fields: [
+            defineField({
+              name: "sections",
+              title: "Sections",
+              type: "array",
+              of: [
+                defineArrayMember({
+                  type: "object",
+                  fields: [
+                    defineField({ name: "label", type: "string" }),
+                    defineField({
+                      name: "links",
+                      type: "array",
+                      of: [
+                        defineArrayMember({
+                          type: "object",
+                          fields: [
+                            defineField({ name: "label", type: "string" }),
+                            defineField({ name: "href", type: "url" }),
+                          ],
+                        }),
+                      ],
+                    }),
+                  ],
+                }),
+              ],
+            }),
+            defineField({ name: "footerCtaLabel", type: "string" }),
+            defineField({ name: "footerCtaHref", type: "url" }),
+          ],
+        }),
+        defineField({
+          name: "heritage",
+          title: "Heritage Flyout",
+          type: "object",
+          fields: [
+            defineField({ name: "heading", type: "string" }),
+            defineField({ name: "description", type: "text", rows: 3 }),
+            defineField({ name: "ctaLabel", type: "string" }),
+            defineField({ name: "ctaHref", type: "url" }),
+            defineField({
+              name: "columns",
+              title: "Columns",
+              type: "array",
+              of: [
+                defineArrayMember({
+                  type: "object",
+                  fields: [
+                    defineField({ name: "title", type: "string" }),
+                    defineField({
+                      name: "links",
+                      type: "array",
+                      of: [
+                        defineArrayMember({
+                          type: "object",
+                          fields: [
+                            defineField({ name: "label", type: "string" }),
+                            defineField({ name: "href", type: "url" }),
+                          ],
+                        }),
+                      ],
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          ],
+        }),
+      ],
+    }),
+    defineField({
+      name: "navCtas",
+      title: "Navigation CTAs",
+      type: "object",
+      fields: [
+        defineField({
+          name: "buildPlanner",
+          title: "Build Planner",
+          type: "object",
+          fields: [
+            defineField({ name: "label", type: "string" }),
+            defineField({ name: "href", type: "url" }),
+          ],
+        }),
+      ],
+    }),
+    defineField({
+      name: "storeLink",
+      title: "Store Link",
+      type: "object",
+      fields: [
+        defineField({ name: "label", type: "string" }),
+        defineField({ name: "href", type: "url" }),
+      ],
+    }),
+    defineField({
       name: "footer",
       title: "Footer",
       type: "object",
       fields: [
+        defineField({
+          name: "brandLabel",
+          type: "string",
+        }),
+        defineField({
+          name: "description",
+          type: "text",
+          rows: 3,
+        }),
+        defineField({
+          name: "addressLine",
+          type: "string",
+        }),
+        defineField({
+          name: "legalLinks",
+          title: "Legal Links",
+          type: "array",
+          of: [
+            defineArrayMember({
+              type: "object",
+              fields: [
+                defineField({ name: "label", type: "string" }),
+                defineField({ name: "href", type: "url" }),
+              ],
+            }),
+          ],
+        }),
         defineField({
           name: "columns",
           type: "array",
@@ -95,6 +257,45 @@ export const siteSettings = defineType({
           name: "image",
           type: "image",
           options: { hotspot: true },
+        }),
+      ],
+    }),
+    defineField({
+      name: "ctaDefaults",
+      title: "CTA Defaults",
+      type: "object",
+      fields: [
+        defineField({ name: "heading", type: "string" }),
+      ],
+    }),
+    defineField({
+      name: "journalUi",
+      title: "Journal UI",
+      type: "object",
+      fields: [
+        defineField({ name: "heroLabel", type: "string" }),
+        defineField({ name: "categoryLabel", type: "string" }),
+        defineField({ name: "featuredLabel", type: "string" }),
+        defineField({
+          name: "search",
+          type: "object",
+          fields: [
+            defineField({ name: "label", type: "string" }),
+            defineField({ name: "placeholder", type: "string" }),
+            defineField({ name: "buttonLabel", type: "string" }),
+          ],
+        }),
+        defineField({
+          name: "newsletter",
+          type: "object",
+          fields: [
+            defineField({ name: "heading", type: "string" }),
+            defineField({ name: "body", type: "text", rows: 3 }),
+            defineField({ name: "inputLabel", type: "string" }),
+            defineField({ name: "inputPlaceholder", type: "string" }),
+            defineField({ name: "submitLabel", type: "string" }),
+            defineField({ name: "successMessage", type: "text", rows: 2 }),
+          ],
         }),
       ],
     }),

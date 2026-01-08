@@ -128,12 +128,14 @@ export const shotgunsLanding = defineType({
       fields: [
         defineField({name: 'eyebrow', title: 'Eyebrow', type: 'string'}),
         defineField({name: 'heading', title: 'Heading', type: 'string'}),
+        defineField({name: 'rightTitle', title: 'Right Column Title', type: 'string'}),
         defineField({
           name: 'paragraphs',
           title: 'Body Paragraphs',
           type: 'array',
           of: [{type: 'text'}],
         }),
+        defineField({name: 'chatLabel', title: 'Chat Button Label', type: 'string'}),
         defineField({name: 'chatPrompt', title: 'Chat Payload', type: 'text', rows: 3}),
         defineField({
           name: 'bullets',
@@ -181,6 +183,7 @@ export const shotgunsLanding = defineType({
       fields: [
         defineField({name: 'heading', title: 'Heading', type: 'string'}),
         defineField({name: 'intro', title: 'Intro Paragraph', type: 'text', rows: 3}),
+        defineField({name: 'rightTitle', title: 'Right Column Title', type: 'string'}),
         defineField({name: 'chatLabel', title: 'Chat Button Label', type: 'string'}),
         defineField({name: 'chatPrompt', title: 'Chat Payload', type: 'text', rows: 3}),
         defineField({name: 'linkLabel', title: 'Link Label', type: 'string'}),
@@ -202,6 +205,7 @@ export const shotgunsLanding = defineType({
       fields: [
         defineField({name: 'heading', title: 'Heading', type: 'string'}),
         defineField({name: 'intro', title: 'Intro Paragraph', type: 'text', rows: 3}),
+        defineField({name: 'rightTitle', title: 'Right Column Title', type: 'string'}),
         defineField({name: 'chatLabel', title: 'Chat Button Label', type: 'string'}),
         defineField({name: 'chatPrompt', title: 'Chat Payload', type: 'text', rows: 3}),
         defineField({name: 'linkLabel', title: 'Link Label', type: 'string'}),
@@ -260,6 +264,32 @@ export const shotgunsLanding = defineType({
           ],
           preview: { select: { title: 'title', media: 'championImage.asset' } },
         },
+      ],
+    }),
+    defineField({
+      name: 'finalCta',
+      title: 'Final CTA',
+      type: 'object',
+      fields: [
+        defineField({ name: 'text', title: 'Body Text', type: 'text' }),
+        defineField({
+          name: 'primary',
+          title: 'Primary Button',
+          type: 'object',
+          fields: [
+            defineField({ name: 'label', type: 'string' }),
+            defineField({ name: 'href', type: 'string' }),
+          ],
+        }),
+        defineField({
+          name: 'secondary',
+          title: 'Secondary Button',
+          type: 'object',
+          fields: [
+            defineField({ name: 'label', type: 'string' }),
+            defineField({ name: 'href', type: 'string' }),
+          ],
+        }),
       ],
     }),
   ],

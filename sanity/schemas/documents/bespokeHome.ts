@@ -14,6 +14,7 @@ export const bespokeHome = defineType({
     {name: 'experts', title: 'Atelier experts', options: {collapsible: true, collapsed: true}},
     {name: 'booking', title: 'Booking rail & options', options: {collapsible: true, collapsed: true}},
     {name: 'assurance', title: 'Assurance / proof overlay', options: {collapsible: true, collapsed: true}},
+    {name: 'footerCta', title: 'Footer CTA', options: {collapsible: true, collapsed: true}},
   ],
   fields: [
     defineField({
@@ -168,6 +169,19 @@ export const bespokeHome = defineType({
         defineField({name: 'label', title: 'Label / Eyebrow', type: 'string'}),
         defineField({name: 'body', title: 'Body Text', type: 'text', rows: 4}),
         defineField({name: 'quote', title: 'Quote Text', type: 'text', rows: 3}),
+      ],
+    }),
+    defineField({
+      name: 'footerCta',
+      title: 'Footer CTA',
+      type: 'object',
+      fieldset: 'footerCta',
+      fields: [
+        defineField({name: 'text', title: 'Body Text', type: 'text', rows: 3}),
+        defineField({name: 'ctaLabel', title: 'Primary Label', type: 'string'}),
+        defineField({name: 'href', title: 'Primary Href', type: 'string'}),
+        defineField({name: 'secondaryLabel', title: 'Secondary Label', type: 'string'}),
+        defineField({name: 'secondaryHref', title: 'Secondary Href', type: 'string'}),
       ],
     }),
   ],
