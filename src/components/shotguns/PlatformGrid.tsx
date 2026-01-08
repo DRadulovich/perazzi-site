@@ -571,6 +571,8 @@ const PlatformGridRevealSection = ({
   const presenceTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
   const reduceMotion = prefersReducedMotion();
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const scrollFrameRef = useRef<number | null>(null);
+  const lastClosestIndexRef = useRef<number>(activeIndex);
 
   const headingTitle = templates.heading;
   const headingSubtitle = templates.subheading;
@@ -680,21 +682,37 @@ const PlatformGridRevealSection = ({
   );
 
   useEffect(() => {
+    lastClosestIndexRef.current = activeIndex;
+  }, [activeIndex]);
+
+  useEffect(() => {
     if (!revealGrid) return;
     const container = scrollRef.current;
     if (!container) return undefined;
 
-    const handleScroll = () => {
+    const flushScroll = () => {
+      scrollFrameRef.current = null;
       const closestIndex = getClosestCardIndex(container);
+      if (closestIndex === lastClosestIndexRef.current) return;
+      lastClosestIndexRef.current = closestIndex;
       setActiveIndex((current) => (current === closestIndex ? current : closestIndex));
       setDisplayIndex(closestIndex);
+    };
+
+    const handleScroll = () => {
+      if (scrollFrameRef.current !== null) return;
+      scrollFrameRef.current = globalThis.requestAnimationFrame(flushScroll);
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       container.removeEventListener("scroll", handleScroll);
+      if (scrollFrameRef.current !== null) {
+        globalThis.cancelAnimationFrame(scrollFrameRef.current);
+        scrollFrameRef.current = null;
+      }
     };
-  }, [revealGrid, setActiveIndex]);
+  }, [revealGrid, setActiveIndex, setDisplayIndex]);
 
   useEffect(() => (
     () => {
