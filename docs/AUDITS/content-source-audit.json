@@ -1,0 +1,3009 @@
+{
+  "generated_at": "2026-01-07T21:08:27-06:00",
+  "repo": {
+    "root": "/Users/davidradulovich/perazzi-site",
+    "branch": "main",
+    "commit": "2f8a0f6ac1946e194c97c6ccee0b09e8903b43b8"
+  },
+  "detected_stack": {
+    "frameworks": [
+      "Next.js",
+      "React",
+      "Sanity Studio"
+    ],
+    "router": [
+      "app_router"
+    ],
+    "languages": [
+      "ts",
+      "tsx",
+      "js",
+      "json",
+      "css",
+      "md"
+    ]
+  },
+  "content_integrations": [
+    {
+      "name": "Sanity",
+      "type": "cms",
+      "client_files": [
+        "sanity/client.ts",
+        "src/sanity/lib/client.ts",
+        "src/sanity/lib/live.ts",
+        "src/sanity/lib/image.ts"
+      ],
+      "schema_paths": [
+        "sanity/schemas",
+        "src/sanity/schemaTypes"
+      ],
+      "query_patterns": [
+        "groq"
+      ],
+      "env_vars": [
+        "SANITY_PROJECT_ID",
+        "SANITY_DATASET",
+        "SANITY_API_VERSION",
+        "NEXT_PUBLIC_SANITY_PROJECT_ID",
+        "NEXT_PUBLIC_SANITY_DATASET",
+        "NEXT_PUBLIC_SANITY_API_VERSION",
+        "SANITY_API_READ_TOKEN",
+        "SANITY_READ_TOKEN",
+        "SANITY_STUDIO_TOKEN",
+        "NEXT_PUBLIC_SANITY_BROWSER_TOKEN"
+      ],
+      "notes": [
+        "Sanity Studio mounted at /next-studio and /debug-studio; GROQ queries live in src/sanity/queries/**."
+      ]
+    },
+    {
+      "name": "Local content fixtures",
+      "type": "local_content",
+      "client_files": [
+        "src/content",
+        "src/config/heritage-eras.ts",
+        "src/messages/en.json"
+      ],
+      "schema_paths": [],
+      "query_patterns": [
+        "other"
+      ],
+      "env_vars": [],
+      "notes": [
+        "Static TS/JSON fixtures used as defaults when CMS data is missing or for placeholder pages."
+      ]
+    },
+    {
+      "name": "Postgres (pg/pgvector)",
+      "type": "db",
+      "client_files": [
+        "src/lib/db.ts",
+        "src/lib/pgpt-insights/queries.ts",
+        "src/lib/perazzi-retrieval.ts",
+        "src/app/admin/pgpt-insights/qa/page.tsx"
+      ],
+      "schema_paths": [
+        "sql"
+      ],
+      "query_patterns": [
+        "sql"
+      ],
+      "env_vars": [
+        "DATABASE_URL",
+        "PGSSL_MODE",
+        "PG_CA_CERT_PEM"
+      ],
+      "notes": [
+        "Backs PGPT Insights dashboards and retrieval/search for the assistant."
+      ]
+    },
+    {
+      "name": "OpenAI Responses/Embeddings",
+      "type": "unknown",
+      "client_files": [
+        "src/lib/aiClient.ts",
+        "src/app/api/perazzi-assistant/route.ts",
+        "src/app/api/soul-journey-step/route.ts"
+      ],
+      "schema_paths": [],
+      "query_patterns": [
+        "other"
+      ],
+      "env_vars": [
+        "OPENAI_API_KEY",
+        "AI_GATEWAY_URL",
+        "AI_GATEWAY_TOKEN",
+        "AI_FORCE_DIRECT",
+        "PERAZZI_MODEL",
+        "PERAZZI_ASSISTANT_TEMPERATURE",
+        "PERAZZI_REASONING_EFFORT",
+        "PERAZZI_TEXT_VERBOSITY",
+        "PERAZZI_PROMPT_CACHE_RETENTION",
+        "PERAZZI_PROMPT_CACHE_KEY"
+      ],
+      "notes": [
+        "External API used to generate concierge and build-journey responses."
+      ]
+    }
+  ],
+  "routes": [
+    {
+      "route_id": "home",
+      "url_path": "/",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/page.tsx",
+      "related_files": [
+        "src/sanity/queries/home.ts",
+        "src/content/home/hero.ts",
+        "src/components/home/hero-banner.tsx"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "hero.tagline",
+          "kind": "cms",
+          "origin": "Sanity homeSingleton.hero.tagline via getHome()",
+          "evidence": [
+            {
+              "file": "src/sanity/queries/home.ts",
+              "line_start": 94,
+              "line_end": 94,
+              "symbol": "homeQuery",
+              "snippet": "tagline,"
+            }
+          ]
+        },
+        {
+          "field": "hero.tagline (fallback)",
+          "kind": "config",
+          "origin": "Local fixture in src/content/home/hero.ts",
+          "evidence": [
+            {
+              "file": "src/content/home/hero.ts",
+              "line_start": 9,
+              "line_end": 9,
+              "symbol": "hero",
+              "snippet": "tagline: \"Bespoke builds from Brescia\","
+            }
+          ]
+        },
+        {
+          "field": "finale.placeholder",
+          "kind": "hardcoded",
+          "origin": "Inline fallback when homeData.finale is missing",
+          "evidence": [
+            {
+              "file": "src/app/(site)/page.tsx",
+              "line_start": 21,
+              "line_end": 29,
+              "symbol": "HomePage",
+              "snippet": "Final invitation coming soon"
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [
+        "homeSingleton",
+        "champion",
+        "article"
+      ],
+      "queries_referenced": [
+        "homeQuery",
+        "getHome"
+      ],
+      "components_used": [
+        {
+          "name": "HeroBanner",
+          "file": "src/components/home/hero-banner.tsx"
+        },
+        {
+          "name": "TimelineScroller",
+          "file": "src/components/home/timeline-scroller.tsx"
+        },
+        {
+          "name": "HomeGuideSection",
+          "file": "src/components/home/home-guide-section.tsx"
+        },
+        {
+          "name": "MarqueeFeature",
+          "file": "src/components/home/marquee-feature.tsx"
+        },
+        {
+          "name": "CTASection",
+          "file": "src/components/shotguns/CTASection.tsx"
+        }
+      ],
+      "notes": [
+        "Sanity data is merged with local fixtures; page includes hardcoded fallback copy."
+      ]
+    },
+    {
+      "route_id": "engravings",
+      "url_path": "/engravings",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/engravings/page.tsx",
+      "related_files": [
+        "src/components/engravings/EngravingSearchTable.tsx",
+        "src/sanity/lib/client.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "engraving.list",
+          "kind": "cms",
+          "origin": "Sanity GROQ query in page",
+          "evidence": [
+            {
+              "file": "src/app/(site)/engravings/page.tsx",
+              "line_start": 11,
+              "line_end": 18,
+              "symbol": "engravingsQuery",
+              "snippet": "*[_type == \"engravings\"] | order(engraving_grade->name asc"
+            }
+          ]
+        },
+        {
+          "field": "hero.heading",
+          "kind": "hardcoded",
+          "origin": "Inline hero copy in page",
+          "evidence": [
+            {
+              "file": "src/app/(site)/engravings/page.tsx",
+              "line_start": 61,
+              "line_end": 66,
+              "symbol": "EngravingsPage",
+              "snippet": "Engraving Search"
+            }
+          ]
+        },
+        {
+          "field": "seo.title",
+          "kind": "hardcoded",
+          "origin": "Metadata const in page",
+          "evidence": [
+            {
+              "file": "src/app/(site)/engravings/page.tsx",
+              "line_start": 30,
+              "line_end": 30,
+              "symbol": "metadata",
+              "snippet": "title: \"Engraving Search | Perazzi\","
+            }
+          ]
+        },
+        {
+          "field": "seo.description",
+          "kind": "hardcoded",
+          "origin": "Metadata const in page",
+          "evidence": [
+            {
+              "file": "src/app/(site)/engravings/page.tsx",
+              "line_start": 31,
+              "line_end": 31,
+              "symbol": "metadata",
+              "snippet": "description: \"Browse every catalogued Perazzi engraving pattern across grades and view each side in high resolution.\""
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [
+        "engravings",
+        "grade"
+      ],
+      "queries_referenced": [
+        "engravingsQuery"
+      ],
+      "components_used": [
+        {
+          "name": "EngravingSearchTable",
+          "file": "src/components/engravings/EngravingSearchTable.tsx"
+        }
+      ],
+      "notes": [
+        "Metadata is hardcoded in the route."
+      ]
+    },
+    {
+      "route_id": "experience",
+      "url_path": "/experience",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/experience/page.tsx",
+      "related_files": [
+        "src/lib/experience-data.ts",
+        "src/sanity/queries/experience.ts",
+        "src/content/experience"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "hero.title",
+          "kind": "cms",
+          "origin": "getExperienceHome() merged in getExperiencePageData()",
+          "evidence": [
+            {
+              "file": "src/lib/experience-data.ts",
+              "line_start": 285,
+              "line_end": 295,
+              "symbol": "getExperiencePageData",
+              "snippet": "const cms = await getExperienceHome();"
+            }
+          ]
+        },
+        {
+          "field": "visitPlanning.intro (fallback)",
+          "kind": "hardcoded",
+          "origin": "Inline fallback copy in page",
+          "evidence": [
+            {
+              "file": "src/app/(site)/experience/page.tsx",
+              "line_start": 78,
+              "line_end": 82,
+              "symbol": "ExperiencePage",
+              "snippet": "const visitPlanningHeading = visitPlanningBlock.heading ?? \"Visit planning\";"
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [
+        "experienceHome",
+        "scheduledEvent",
+        "authorizedDealer",
+        "recommendedServiceCenter"
+      ],
+      "queries_referenced": [
+        "getExperienceHome",
+        "experienceNetworkQuery",
+        "getExperienceNetworkData"
+      ],
+      "components_used": [
+        {
+          "name": "ExperienceHero",
+          "file": "src/components/experience/ExperienceHero.tsx"
+        },
+        {
+          "name": "ExperiencePicker",
+          "file": "src/components/experience/ExperiencePicker.tsx"
+        },
+        {
+          "name": "VisitFactory",
+          "file": "src/components/experience/VisitFactory.tsx"
+        },
+        {
+          "name": "TravelNetwork",
+          "file": "src/components/experience/TravelNetwork.tsx"
+        }
+      ],
+      "notes": [
+        "CMS content merges with local fixtures; network data comes from Sanity."
+      ]
+    },
+    {
+      "route_id": "fschat",
+      "url_path": "/fschat",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/fschat/page.tsx",
+      "related_files": [
+        "src/components/chat/FullScreenChat.tsx",
+        "src/components/chat/useChatState.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "header.title",
+          "kind": "hardcoded",
+          "origin": "Inline page header copy",
+          "evidence": [
+            {
+              "file": "src/app/(site)/fschat/page.tsx",
+              "line_start": 57,
+              "line_end": 66,
+              "symbol": "FullScreenChatPage",
+              "snippet": "Full-screen conversation"
+            }
+          ]
+        },
+        {
+          "field": "chat.responses",
+          "kind": "external_api",
+          "origin": "POST /api/perazzi-assistant",
+          "evidence": [
+            {
+              "file": "src/components/chat/useChatState.ts",
+              "line_start": 394,
+              "line_end": 399,
+              "symbol": "sendMessage",
+              "snippet": "fetch(\"/api/perazzi-assistant\", {"
+            }
+          ]
+        },
+        {
+          "field": "seo.title",
+          "kind": "hardcoded",
+          "origin": "Metadata const in page",
+          "evidence": [
+            {
+              "file": "src/app/(site)/fschat/page.tsx",
+              "line_start": 12,
+              "line_end": 12,
+              "symbol": "metadata",
+              "snippet": "title: \"Perazzi Concierge \u2013 Full Screen\","
+            }
+          ]
+        },
+        {
+          "field": "seo.description",
+          "kind": "hardcoded",
+          "origin": "Metadata const in page",
+          "evidence": [
+            {
+              "file": "src/app/(site)/fschat/page.tsx",
+              "line_start": 13,
+              "line_end": 13,
+              "symbol": "metadata",
+              "snippet": "description: \"A focused, full-screen view of the Perazzi concierge chat experience.\""
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [],
+      "queries_referenced": [
+        "/api/perazzi-assistant"
+      ],
+      "components_used": [
+        {
+          "name": "FullScreenChat",
+          "file": "src/components/chat/FullScreenChat.tsx"
+        },
+        {
+          "name": "SiteShell",
+          "file": "src/components/site-shell.tsx"
+        }
+      ],
+      "notes": [
+        "Chat text is generated by the assistant API."
+      ]
+    },
+    {
+      "route_id": "service",
+      "url_path": "/service",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/service/page.tsx",
+      "related_files": [
+        "src/lib/service-data.ts",
+        "src/sanity/queries/service.ts",
+        "src/content/service"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "hero.title",
+          "kind": "cms",
+          "origin": "getServiceHome() merged in getServicePageData()",
+          "evidence": [
+            {
+              "file": "src/lib/service-data.ts",
+              "line_start": 107,
+              "line_end": 117,
+              "symbol": "getServicePageData",
+              "snippet": "const [cms, serviceCenters] = await Promise.all([getServiceHome()"
+            }
+          ]
+        },
+        {
+          "field": "serviceGuidance.body (fallback)",
+          "kind": "hardcoded",
+          "origin": "Inline fallback copy in page",
+          "evidence": [
+            {
+              "file": "src/app/(site)/service/page.tsx",
+              "line_start": 67,
+              "line_end": 71,
+              "symbol": "ServicePage",
+              "snippet": "Need help mapping out service and care cadence?"
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [
+        "serviceHome",
+        "recommendedServiceCenter"
+      ],
+      "queries_referenced": [
+        "getServiceHome",
+        "getRecommendedServiceCenters",
+        "getServicePageData"
+      ],
+      "components_used": [
+        {
+          "name": "ServiceHero",
+          "file": "src/components/service/ServiceHero.tsx"
+        },
+        {
+          "name": "ServiceOverview",
+          "file": "src/components/service/ServiceOverview.tsx"
+        },
+        {
+          "name": "ServiceNetworkFinder",
+          "file": "src/components/service/ServiceNetworkFinder.tsx"
+        }
+      ],
+      "notes": [
+        "Sanity data merges with local fixtures; page includes fallback guidance copy."
+      ]
+    },
+    {
+      "route_id": "concierge",
+      "url_path": "/concierge",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/concierge/page.tsx",
+      "related_files": [
+        "src/components/concierge/ConciergePageShell.tsx",
+        "src/app/api/engravings/route.ts",
+        "src/app/api/build-info/route.ts",
+        "src/app/api/perazzi-assistant/route.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "hero.title",
+          "kind": "hardcoded",
+          "origin": "Inline conciergeHero object",
+          "evidence": [
+            {
+              "file": "src/app/(site)/concierge/page.tsx",
+              "line_start": 4,
+              "line_end": 8,
+              "symbol": "conciergeHero",
+              "snippet": "title: \"Design your Perazzi with the atelier beside you\""
+            }
+          ]
+        },
+        {
+          "field": "details.api",
+          "kind": "external_api",
+          "origin": "Concierge UI calls API endpoints for engraving/build info",
+          "evidence": [
+            {
+              "file": "src/components/concierge/ConciergePageShell.tsx",
+              "line_start": 161,
+              "line_end": 162,
+              "symbol": "ENGRAVINGS_ENDPOINT",
+              "snippet": "const ENGRAVINGS_ENDPOINT = \"/api/engravings\";"
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [
+        "engravings",
+        "buildConfigurator"
+      ],
+      "queries_referenced": [
+        "/api/engravings",
+        "/api/build-info",
+        "/api/perazzi-assistant"
+      ],
+      "components_used": [
+        {
+          "name": "ConciergeHero",
+          "file": "src/components/concierge/ConciergeHero.tsx"
+        },
+        {
+          "name": "ConciergePageShell",
+          "file": "src/components/concierge/ConciergePageShell.tsx"
+        }
+      ],
+      "notes": [
+        "Concierge content mixes hardcoded hero copy with API-backed details and assistant responses."
+      ]
+    },
+    {
+      "route_id": "bespoke-build",
+      "url_path": "/bespoke-build",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/bespoke-build/page.tsx",
+      "related_files": [
+        "src/components/page-heading.tsx"
+      ],
+      "overall_classification": "hardcoded",
+      "content_fields": [
+        {
+          "field": "page.heading",
+          "kind": "hardcoded",
+          "origin": "Inline placeholder copy",
+          "evidence": [
+            {
+              "file": "src/app/(site)/bespoke-build/page.tsx",
+              "line_start": 7,
+              "line_end": 11,
+              "symbol": "BespokeBuildPage",
+              "snippet": "title=\"From measurements to final engraving\""
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [],
+      "queries_referenced": [],
+      "components_used": [
+        {
+          "name": "PageHeading",
+          "file": "src/components/page-heading.tsx"
+        },
+        {
+          "name": "Text",
+          "file": "src/components/ui/text.tsx"
+        }
+      ],
+      "notes": [
+        "Static placeholder page."
+      ]
+    },
+    {
+      "route_id": "heritage",
+      "url_path": "/heritage",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/heritage/page.tsx",
+      "related_files": [
+        "src/lib/heritage-data.ts",
+        "src/config/heritage-eras.ts",
+        "src/sanity/queries/heritage.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "hero.title",
+          "kind": "cms",
+          "origin": "getHeritageHome() merged in getHeritagePageData()",
+          "evidence": [
+            {
+              "file": "src/lib/heritage-data.ts",
+              "line_start": 102,
+              "line_end": 103,
+              "symbol": "getHeritagePageData",
+              "snippet": "title: home.hero.title ?? data.hero.title,"
+            }
+          ]
+        },
+        {
+          "field": "eras.config",
+          "kind": "config",
+          "origin": "HERITAGE_ERAS static config",
+          "evidence": [
+            {
+              "file": "src/config/heritage-eras.ts",
+              "line_start": 31,
+              "line_end": 37,
+              "symbol": "HERITAGE_ERAS",
+              "snippet": "label: \"The Workshop in Brescia\""
+            }
+          ]
+        },
+        {
+          "field": "intro.heading (fallback)",
+          "kind": "hardcoded",
+          "origin": "Inline fallback copy in page",
+          "evidence": [
+            {
+              "file": "src/app/(site)/heritage/page.tsx",
+              "line_start": 90,
+              "line_end": 92,
+              "symbol": "HeritagePage",
+              "snippet": "const heritageIntroHeading = heritageIntro.heading ?? \"A living lineage of craft\";"
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [
+        "heritageHome",
+        "heritageEvent",
+        "champion",
+        "manufactureYear"
+      ],
+      "queries_referenced": [
+        "getHeritageHome",
+        "getHeritageEvents",
+        "getHeritageChampions",
+        "getManufactureYearBySerial",
+        "getHeritagePageData"
+      ],
+      "components_used": [
+        {
+          "name": "HeritageHero",
+          "file": "src/components/heritage/HeritageHero.tsx"
+        },
+        {
+          "name": "HeritageIntroSection",
+          "file": "src/components/heritage/HeritageIntroSection.tsx"
+        },
+        {
+          "name": "SerialLookup",
+          "file": "src/components/heritage/SerialLookup.tsx"
+        }
+      ],
+      "notes": [
+        "Serial lookup data is fetched from Sanity via server action."
+      ]
+    },
+    {
+      "route_id": "bespoke",
+      "url_path": "/bespoke",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/bespoke/page.tsx",
+      "related_files": [
+        "src/lib/bespoke-data.ts",
+        "src/sanity/queries/bespoke.ts",
+        "src/content/build"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "hero.title",
+          "kind": "cms",
+          "origin": "getBespokeHome() merged in getBespokePageData()",
+          "evidence": [
+            {
+              "file": "src/lib/bespoke-data.ts",
+              "line_start": 39,
+              "line_end": 53,
+              "symbol": "getBespokePageData",
+              "snippet": "const cms = await getBespokeHome();"
+            }
+          ]
+        },
+        {
+          "field": "cta.secondary.label",
+          "kind": "hardcoded",
+          "origin": "Inline CTA label",
+          "evidence": [
+            {
+              "file": "src/app/(site)/bespoke/page.tsx",
+              "line_start": 46,
+              "line_end": 51,
+              "symbol": "BespokeBuildPage",
+              "snippet": "secondary={{ label: \"Request a Visit\", href: \"/experience/visit\" }}"
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [
+        "bespokeHome"
+      ],
+      "queries_referenced": [
+        "getBespokeHome",
+        "getBespokePageData"
+      ],
+      "components_used": [
+        {
+          "name": "BuildHero",
+          "file": "src/components/bespoke/BuildHero.tsx"
+        },
+        {
+          "name": "BuildStepsScroller",
+          "file": "src/components/bespoke/BuildStepsScroller.tsx"
+        },
+        {
+          "name": "BookingOptions",
+          "file": "src/components/bespoke/BookingOptions.tsx"
+        }
+      ],
+      "notes": [
+        "Sanity content merges with local build fixtures."
+      ]
+    },
+    {
+      "route_id": "shotguns-gauges",
+      "url_path": "/shotguns/gauges",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/shotguns/gauges/page.tsx",
+      "related_files": [
+        "src/content/shotguns/gauges-content.ts",
+        "src/content/shotguns/gauges.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "hero.title",
+          "kind": "config",
+          "origin": "Local fixture gaugesHero",
+          "evidence": [
+            {
+              "file": "src/content/shotguns/gauges-content.ts",
+              "line_start": 9,
+              "line_end": 12,
+              "symbol": "gaugesHero",
+              "snippet": "title: \"Gauges & balance\""
+            }
+          ]
+        },
+        {
+          "field": "cta.text",
+          "kind": "hardcoded",
+          "origin": "Inline CTA text",
+          "evidence": [
+            {
+              "file": "src/app/(site)/shotguns/gauges/page.tsx",
+              "line_start": 35,
+              "line_end": 35,
+              "symbol": "GaugesPage",
+              "snippet": "text=\"Bring your preferred gauge to the atelier and we\\u2019ll balance frame, barrels, and rib geometry to your rhythm.\""
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [],
+      "queries_referenced": [],
+      "components_used": [
+        {
+          "name": "GaugeHero",
+          "file": "src/components/shotguns/GaugeHero.tsx"
+        },
+        {
+          "name": "GaugeCardGrid",
+          "file": "src/components/shotguns/GaugeCardGrid.tsx"
+        },
+        {
+          "name": "FAQList",
+          "file": "src/components/shotguns/FAQList.tsx"
+        }
+      ],
+      "notes": [
+        "Fully driven by local fixtures with a hardcoded CTA."
+      ]
+    },
+    {
+      "route_id": "shotguns-all",
+      "url_path": "/shotguns/all",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/shotguns/all/page.tsx",
+      "related_files": [
+        "src/components/shotguns/ModelSearchTable.tsx",
+        "src/sanity/lib/client.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "models.list",
+          "kind": "cms",
+          "origin": "Sanity GROQ query in page",
+          "evidence": [
+            {
+              "file": "src/app/(site)/shotguns/all/page.tsx",
+              "line_start": 11,
+              "line_end": 20,
+              "symbol": "modelsQuery",
+              "snippet": "*[_type == \"allModels\"] | order(name asc)"
+            }
+          ]
+        },
+        {
+          "field": "hero.heading",
+          "kind": "hardcoded",
+          "origin": "Inline hero copy",
+          "evidence": [
+            {
+              "file": "src/app/(site)/shotguns/all/page.tsx",
+              "line_start": 90,
+              "line_end": 97,
+              "symbol": "ModelSearchPage",
+              "snippet": "The Perazzi Shotguns Database"
+            }
+          ]
+        },
+        {
+          "field": "seo.title",
+          "kind": "hardcoded",
+          "origin": "Metadata const in page",
+          "evidence": [
+            {
+              "file": "src/app/(site)/shotguns/all/page.tsx",
+              "line_start": 50,
+              "line_end": 50,
+              "symbol": "metadata",
+              "snippet": "title: \"Model Search | Perazzi\","
+            }
+          ]
+        },
+        {
+          "field": "seo.description",
+          "kind": "hardcoded",
+          "origin": "Metadata const in page",
+          "evidence": [
+            {
+              "file": "src/app/(site)/shotguns/all/page.tsx",
+              "line_start": 52,
+              "line_end": 52,
+              "symbol": "metadata",
+              "snippet": "\"Explore every Perazzi model in one searchable database."
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [
+        "allModels",
+        "platform",
+        "grade"
+      ],
+      "queries_referenced": [
+        "modelsQuery"
+      ],
+      "components_used": [
+        {
+          "name": "ModelSearchTable",
+          "file": "src/components/shotguns/ModelSearchTable.tsx"
+        }
+      ],
+      "notes": [
+        "Hero copy and metadata are hardcoded in the route."
+      ]
+    },
+    {
+      "route_id": "shotguns",
+      "url_path": "/shotguns",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/shotguns/page.tsx",
+      "related_files": [
+        "src/lib/shotguns-data.ts",
+        "src/sanity/queries/shotguns.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "landing.data",
+          "kind": "cms",
+          "origin": "Sanity queries merged in getShotgunsSectionData()",
+          "evidence": [
+            {
+              "file": "src/lib/shotguns-data.ts",
+              "line_start": 46,
+              "line_end": 55,
+              "symbol": "getShotgunsSectionData",
+              "snippet": "const [landing, platforms, disciplines, grades] = await Promise.all(["
+            }
+          ]
+        },
+        {
+          "field": "disciplineFit.heading (fallback)",
+          "kind": "hardcoded",
+          "origin": "Inline fallback copy in page",
+          "evidence": [
+            {
+              "file": "src/app/(site)/shotguns/page.tsx",
+              "line_start": 12,
+              "line_end": 16,
+              "symbol": "ShotgunsLandingPage",
+              "snippet": "heading: \"The geometry of rhythm\""
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [
+        "shotgunsLanding",
+        "platform",
+        "discipline",
+        "grade"
+      ],
+      "queries_referenced": [
+        "getShotgunsLanding",
+        "getPlatforms",
+        "getDisciplines",
+        "getGrades",
+        "getShotgunsSectionData"
+      ],
+      "components_used": [
+        {
+          "name": "LandingHero",
+          "file": "src/components/shotguns/LandingHero.tsx"
+        },
+        {
+          "name": "PlatformGrid",
+          "file": "src/components/shotguns/PlatformGrid.tsx"
+        },
+        {
+          "name": "TriggerExplainer",
+          "file": "src/components/shotguns/TriggerExplainer.tsx"
+        }
+      ],
+      "notes": [
+        "Marketing copy mixes Sanity data with inline fallback strings."
+      ]
+    },
+    {
+      "route_id": "bespoke-build-stage",
+      "url_path": "/bespoke-build/[stage]",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/bespoke-build/[stage]/page.tsx",
+      "related_files": [],
+      "overall_classification": "hardcoded",
+      "content_fields": [
+        {
+          "field": "stageCopy.title",
+          "kind": "hardcoded",
+          "origin": "Inline stageCopy object",
+          "evidence": [
+            {
+              "file": "src/app/(site)/bespoke-build/[stage]/page.tsx",
+              "line_start": 5,
+              "line_end": 10,
+              "symbol": "stageCopy",
+              "snippet": "title: \"Fitting Session\""
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [],
+      "queries_referenced": [],
+      "components_used": [
+        {
+          "name": "PageHeading",
+          "file": "src/components/page-heading.tsx"
+        }
+      ],
+      "notes": [
+        "Static placeholder content for each stage slug."
+      ]
+    },
+    {
+      "route_id": "journal-article",
+      "url_path": "/journal/[slug]",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/journal/[slug]/page.tsx",
+      "related_files": [
+        "src/lib/journal-data.ts",
+        "src/sanity/queries/journal.ts",
+        "src/content/journal"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "article.bodyPortableText",
+          "kind": "cms",
+          "origin": "Sanity articles merged into local fixtures",
+          "evidence": [
+            {
+              "file": "src/lib/journal-data.ts",
+              "line_start": 69,
+              "line_end": 79,
+              "symbol": "fetchArticles",
+              "snippet": "fallback.article.bodyPortableText = article.bodyPortableText ?? fallback.article.bodyPortableText;"
+            }
+          ]
+        },
+        {
+          "field": "emptyState.title",
+          "kind": "hardcoded",
+          "origin": "Inline missing-article fallback",
+          "evidence": [
+            {
+              "file": "src/app/(site)/journal/[slug]/page.tsx",
+              "line_start": 56,
+              "line_end": 60,
+              "symbol": "ArticlePage",
+              "snippet": "Article coming soon"
+            }
+          ]
+        },
+        {
+          "field": "seo.title",
+          "kind": "cms",
+          "origin": "generateMetadata uses article.title",
+          "evidence": [
+            {
+              "file": "src/app/(site)/journal/[slug]/page.tsx",
+              "line_start": 33,
+              "line_end": 33,
+              "symbol": "generateMetadata",
+              "snippet": "title: article.title,"
+            }
+          ]
+        },
+        {
+          "field": "seo.description",
+          "kind": "cms",
+          "origin": "generateMetadata uses article.dekHtml",
+          "evidence": [
+            {
+              "file": "src/app/(site)/journal/[slug]/page.tsx",
+              "line_start": 30,
+              "line_end": 30,
+              "symbol": "generateMetadata",
+              "snippet": "article.dekHtml ? stripHtml(article.dekHtml)"
+            }
+          ]
+        },
+        {
+          "field": "seo.description (fallback)",
+          "kind": "hardcoded",
+          "origin": "Fallback description string in generateMetadata",
+          "evidence": [
+            {
+              "file": "src/app/(site)/journal/[slug]/page.tsx",
+              "line_start": 30,
+              "line_end": 30,
+              "symbol": "generateMetadata",
+              "snippet": "\"Perazzi Journal story\""
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [
+        "article",
+        "author"
+      ],
+      "queries_referenced": [
+        "getArticles",
+        "getJournalArticleData",
+        "getJournalArticleSlugs"
+      ],
+      "components_used": [
+        {
+          "name": "ArticleHero",
+          "file": "src/components/journal/ArticleHero.tsx"
+        },
+        {
+          "name": "PortableBody",
+          "file": "src/components/journal/PortableBody.tsx"
+        },
+        {
+          "name": "AuthorBox",
+          "file": "src/components/journal/AuthorBox.tsx"
+        }
+      ],
+      "notes": [
+        "Article SEO metadata is built from article fields but has hardcoded site URLs."
+      ]
+    },
+    {
+      "route_id": "heritage-section",
+      "url_path": "/heritage/[section]",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/heritage/[section]/page.tsx",
+      "related_files": [],
+      "overall_classification": "hardcoded",
+      "content_fields": [
+        {
+          "field": "sectionCopy.title",
+          "kind": "hardcoded",
+          "origin": "Inline heritageSections object",
+          "evidence": [
+            {
+              "file": "src/app/(site)/heritage/[section]/page.tsx",
+              "line_start": 5,
+              "line_end": 10,
+              "symbol": "heritageSections",
+              "snippet": "title: \"Timeline\""
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [],
+      "queries_referenced": [],
+      "components_used": [
+        {
+          "name": "PageHeading",
+          "file": "src/components/page-heading.tsx"
+        }
+      ],
+      "notes": [
+        "Static placeholder sections."
+      ]
+    },
+    {
+      "route_id": "pgpt-session-redirect",
+      "url_path": "/admin/pgpt-insights/session",
+      "router": "app_router",
+      "entry_file": "src/app/admin/pgpt-insights/session/page.tsx",
+      "related_files": [],
+      "overall_classification": "hardcoded",
+      "content_fields": [
+        {
+          "field": "redirect.target",
+          "kind": "hardcoded",
+          "origin": "Inline redirect path",
+          "evidence": [
+            {
+              "file": "src/app/admin/pgpt-insights/session/page.tsx",
+              "line_start": 8,
+              "line_end": 9,
+              "symbol": "PgptSessionIndexRedirect",
+              "snippet": "redirect(\"/admin/pgpt-insights?view=triage#logs\")"
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [],
+      "queries_referenced": [],
+      "components_used": [],
+      "notes": [
+        "Redirect-only route with no rendered content."
+      ]
+    },
+    {
+      "route_id": "shotguns-mx",
+      "url_path": "/shotguns/mx",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/shotguns/mx/page.tsx",
+      "related_files": [
+        "src/lib/shotguns-data.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "series.content",
+          "kind": "cms",
+          "origin": "Sanity shotguns data merged in getShotgunsSectionData()",
+          "evidence": [
+            {
+              "file": "src/lib/shotguns-data.ts",
+              "line_start": 46,
+              "line_end": 55,
+              "symbol": "getShotgunsSectionData",
+              "snippet": "const [landing, platforms, disciplines, grades] = await Promise.all(["
+            }
+          ]
+        },
+        {
+          "field": "platformGuidance.body",
+          "kind": "hardcoded",
+          "origin": "Inline guidance copy",
+          "evidence": [
+            {
+              "file": "src/app/(site)/shotguns/mx/page.tsx",
+              "line_start": 27,
+              "line_end": 32,
+              "symbol": "MXSeriesPage",
+              "snippet": "Questions about the MX Platform? Ask Perazzi."
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [
+        "shotgunsLanding",
+        "platform",
+        "discipline",
+        "grade"
+      ],
+      "queries_referenced": [
+        "getShotgunsSectionData"
+      ],
+      "components_used": [
+        {
+          "name": "SeriesHero",
+          "file": "src/components/shotguns/SeriesHero.tsx"
+        },
+        {
+          "name": "AtAGlanceStrip",
+          "file": "src/components/shotguns/AtAGlanceStrip.tsx"
+        },
+        {
+          "name": "SeriesStory",
+          "file": "src/components/shotguns/SeriesStory.tsx"
+        }
+      ],
+      "notes": [
+        "Mix of Sanity data and hardcoded guidance/CTA copy."
+      ]
+    },
+    {
+      "route_id": "shotguns-grades",
+      "url_path": "/shotguns/grades",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/shotguns/grades/page.tsx",
+      "related_files": [
+        "src/content/shotguns/grades-content.ts",
+        "src/lib/shotguns-data.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "grades.list",
+          "kind": "cms",
+          "origin": "Sanity grades merged in getShotgunsSectionData()",
+          "evidence": [
+            {
+              "file": "src/lib/shotguns-data.ts",
+              "line_start": 50,
+              "line_end": 55,
+              "symbol": "getShotgunsSectionData",
+              "snippet": "const [landing, platforms, disciplines, grades] = await Promise.all(["
+            }
+          ]
+        },
+        {
+          "field": "gradesHero.title",
+          "kind": "config",
+          "origin": "Local grades-content fixture",
+          "evidence": [
+            {
+              "file": "src/content/shotguns/grades-content.ts",
+              "line_start": 1,
+              "line_end": 4,
+              "symbol": "gradesHero",
+              "snippet": "title: \"Grades & custom artistry\""
+            }
+          ]
+        },
+        {
+          "field": "cta.text",
+          "kind": "hardcoded",
+          "origin": "Inline CTA text",
+          "evidence": [
+            {
+              "file": "src/app/(site)/shotguns/grades/page.tsx",
+              "line_start": 55,
+              "line_end": 56,
+              "symbol": "GradesPage",
+              "snippet": "text=\"Begin your fitting to commission engraving, wood selection, and finishing details that reflect your legacy.\""
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [
+        "grade"
+      ],
+      "queries_referenced": [
+        "getGrades",
+        "getShotgunsSectionData"
+      ],
+      "components_used": [
+        {
+          "name": "GradesHero",
+          "file": "src/components/shotguns/GradesHero.tsx"
+        },
+        {
+          "name": "EngravingGallery",
+          "file": "src/components/shotguns/EngravingGallery.tsx"
+        },
+        {
+          "name": "WoodCarousel",
+          "file": "src/components/shotguns/WoodCarousel.tsx"
+        }
+      ],
+      "notes": [
+        "Mixes Sanity grades with local fixtures and hardcoded CTA text."
+      ]
+    },
+    {
+      "route_id": "shotguns-ht",
+      "url_path": "/shotguns/ht",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/shotguns/ht/page.tsx",
+      "related_files": [
+        "src/lib/shotguns-data.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "series.content",
+          "kind": "cms",
+          "origin": "Sanity shotguns data merged in getShotgunsSectionData()",
+          "evidence": [
+            {
+              "file": "src/lib/shotguns-data.ts",
+              "line_start": 46,
+              "line_end": 55,
+              "symbol": "getShotgunsSectionData",
+              "snippet": "const [landing, platforms, disciplines, grades] = await Promise.all(["
+            }
+          ]
+        },
+        {
+          "field": "platformGuidance.body",
+          "kind": "hardcoded",
+          "origin": "Inline guidance copy",
+          "evidence": [
+            {
+              "file": "src/app/(site)/shotguns/ht/page.tsx",
+              "line_start": 27,
+              "line_end": 32,
+              "symbol": "HighTechSeriesPage",
+              "snippet": "Questions about the High Tech Platform? Ask Perazzi."
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [
+        "shotgunsLanding",
+        "platform",
+        "discipline",
+        "grade"
+      ],
+      "queries_referenced": [
+        "getShotgunsSectionData"
+      ],
+      "components_used": [
+        {
+          "name": "SeriesHero",
+          "file": "src/components/shotguns/SeriesHero.tsx"
+        },
+        {
+          "name": "AtAGlanceStrip",
+          "file": "src/components/shotguns/AtAGlanceStrip.tsx"
+        }
+      ],
+      "notes": [
+        "Series page mixes Sanity data with hardcoded guidance copy."
+      ]
+    },
+    {
+      "route_id": "journal-stories-of-craft",
+      "url_path": "/journal/stories-of-craft",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/journal/stories-of-craft/page.tsx",
+      "related_files": [
+        "src/content/journal/categories/craft.ts",
+        "src/lib/journal-data.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "category.header.title",
+          "kind": "config",
+          "origin": "Local category fixture",
+          "evidence": [
+            {
+              "file": "src/content/journal/categories/craft.ts",
+              "line_start": 11,
+              "line_end": 15,
+              "symbol": "craft",
+              "snippet": "title: \"Stories of Craft\""
+            }
+          ]
+        },
+        {
+          "field": "emptyState.message",
+          "kind": "hardcoded",
+          "origin": "Inline fallback copy",
+          "evidence": [
+            {
+              "file": "src/app/(site)/journal/stories-of-craft/page.tsx",
+              "line_start": 15,
+              "line_end": 18,
+              "symbol": "StoriesOfCraftPage",
+              "snippet": "Craft stories are coming soon."
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [],
+      "queries_referenced": [
+        "getJournalCategoryData"
+      ],
+      "components_used": [
+        {
+          "name": "CategoryPageLayout",
+          "file": "src/components/journal/CategoryPageLayout.tsx"
+        }
+      ],
+      "notes": [
+        "Category data comes from local fixtures; empty state is hardcoded."
+      ]
+    },
+    {
+      "route_id": "build-journey",
+      "url_path": "/the-build/why-a-perazzi-has-a-soul",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/the-build/why-a-perazzi-has-a-soul/page.tsx",
+      "related_files": [
+        "src/app/(site)/the-build/why-a-perazzi-has-a-soul/BuildJourneyClient.tsx",
+        "src/app/api/soul-journey-step/route.ts",
+        "src/sanity/lib/client.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "stations",
+          "kind": "cms",
+          "origin": "Sanity GROQ query for build journey articles",
+          "evidence": [
+            {
+              "file": "src/app/(site)/the-build/why-a-perazzi-has-a-soul/page.tsx",
+              "line_start": 8,
+              "line_end": 14,
+              "symbol": "BUILD_JOURNEY_QUERY",
+              "snippet": "*[_type == \"article\" && isBuildJourneyStep == true]"
+            }
+          ]
+        },
+        {
+          "field": "intro.heading",
+          "kind": "hardcoded",
+          "origin": "Inline intro copy",
+          "evidence": [
+            {
+              "file": "src/app/(site)/the-build/why-a-perazzi-has-a-soul/page.tsx",
+              "line_start": 75,
+              "line_end": 80,
+              "symbol": "IntroSection",
+              "snippet": "Through the Eyes of the Makers"
+            }
+          ]
+        },
+        {
+          "field": "artisan.response",
+          "kind": "external_api",
+          "origin": "POST /api/soul-journey-step",
+          "evidence": [
+            {
+              "file": "src/app/(site)/the-build/why-a-perazzi-has-a-soul/BuildJourneyClient.tsx",
+              "line_start": 394,
+              "line_end": 402,
+              "symbol": "onSubmit",
+              "snippet": "fetch(\"/api/soul-journey-step\", {"
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [
+        "article"
+      ],
+      "queries_referenced": [
+        "BUILD_JOURNEY_QUERY",
+        "/api/soul-journey-step"
+      ],
+      "components_used": [
+        {
+          "name": "BuildJourneyClient",
+          "file": "src/app/(site)/the-build/why-a-perazzi-has-a-soul/BuildJourneyClient.tsx"
+        }
+      ],
+      "notes": [
+        "Build steps come from Sanity; artisan reflection is generated by OpenAI."
+      ]
+    },
+    {
+      "route_id": "journal",
+      "url_path": "/journal",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/journal/page.tsx",
+      "related_files": [
+        "src/lib/journal-data.ts",
+        "src/content/journal/landing.ts",
+        "src/sanity/queries/journal.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "hero.title",
+          "kind": "cms",
+          "origin": "Sanity journalLanding merged in getJournalLandingData()",
+          "evidence": [
+            {
+              "file": "src/lib/journal-data.ts",
+              "line_start": 31,
+              "line_end": 35,
+              "symbol": "getJournalLandingData",
+              "snippet": "const cms = await getJournalLanding();"
+            }
+          ]
+        },
+        {
+          "field": "hero.title (fallback)",
+          "kind": "config",
+          "origin": "Local landing fixture",
+          "evidence": [
+            {
+              "file": "src/content/journal/landing.ts",
+              "line_start": 11,
+              "line_end": 14,
+              "symbol": "landing",
+              "snippet": "title: \"Journal\""
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [
+        "journalLanding",
+        "article"
+      ],
+      "queries_referenced": [
+        "getJournalLanding",
+        "getJournalLandingData"
+      ],
+      "components_used": [
+        {
+          "name": "JournalHero",
+          "file": "src/components/journal/JournalHero.tsx"
+        },
+        {
+          "name": "CategoryHub",
+          "file": "src/components/journal/CategoryHub.tsx"
+        },
+        {
+          "name": "JournalSearch",
+          "file": "src/components/journal/JournalSearch.tsx"
+        }
+      ],
+      "notes": [
+        "Landing data comes from Sanity with fixture fallbacks."
+      ]
+    },
+    {
+      "route_id": "pgpt-session-detail",
+      "url_path": "/admin/pgpt-insights/session/[sessionId]",
+      "router": "app_router",
+      "entry_file": "src/app/admin/pgpt-insights/session/[sessionId]/page.tsx",
+      "related_files": [
+        "src/lib/pgpt-insights/queries.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "session.logs",
+          "kind": "external_api",
+          "origin": "Postgres queries via pgpt-insights",
+          "evidence": [
+            {
+              "file": "src/lib/pgpt-insights/queries.ts",
+              "line_start": 61,
+              "line_end": 74,
+              "symbol": "fetchQaFlagsForInteractions",
+              "snippet": "const { rows } = await pool.query"
+            }
+          ]
+        },
+        {
+          "field": "page.title",
+          "kind": "hardcoded",
+          "origin": "Inline AdminPageHeader props",
+          "evidence": [
+            {
+              "file": "src/app/admin/pgpt-insights/session/[sessionId]/page.tsx",
+              "line_start": 261,
+              "line_end": 264,
+              "symbol": "PgptInsightsSessionPage",
+              "snippet": "title=\"Session Explorer\""
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [],
+      "queries_referenced": [
+        "fetchSessionLogsPreview",
+        "fetchSessionConversationLogs",
+        "fetchSessionTimelineRows"
+      ],
+      "components_used": [
+        {
+          "name": "AdminPageHeader",
+          "file": "src/components/admin/AdminPageHeader.tsx"
+        },
+        {
+          "name": "SessionSummary",
+          "file": "src/components/pgpt-insights/session/SessionSummarySection.tsx"
+        }
+      ],
+      "notes": [
+        "Content is primarily DB-driven with hardcoded UI labels."
+      ]
+    },
+    {
+      "route_id": "pgpt-insights",
+      "url_path": "/admin/pgpt-insights",
+      "router": "app_router",
+      "entry_file": "src/app/admin/pgpt-insights/page.tsx",
+      "related_files": [
+        "src/components/pgpt-insights/sections/LogsSection.tsx"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "logs.data",
+          "kind": "external_api",
+          "origin": "DB-backed pgpt-insights queries",
+          "evidence": [
+            {
+              "file": "src/components/pgpt-insights/sections/LogsSection.tsx",
+              "line_start": 4,
+              "line_end": 7,
+              "symbol": "LogsSection",
+              "snippet": "import { fetchLogs } from \"../../../lib/pgpt-insights/queries\";"
+            }
+          ]
+        },
+        {
+          "field": "page.title",
+          "kind": "hardcoded",
+          "origin": "Inline AdminPageHeader props",
+          "evidence": [
+            {
+              "file": "src/app/admin/pgpt-insights/page.tsx",
+              "line_start": 110,
+              "line_end": 113,
+              "symbol": "PgptInsightsPage",
+              "snippet": "title=\"PerazziGPT Insights\""
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [],
+      "queries_referenced": [
+        "fetchLogs",
+        "getOpenQaFlagCount"
+      ],
+      "components_used": [
+        {
+          "name": "AdminPageHeader",
+          "file": "src/components/admin/AdminPageHeader.tsx"
+        },
+        {
+          "name": "InsightsSections",
+          "file": "src/app/admin/pgpt-insights/components/InsightsSections.tsx"
+        }
+      ],
+      "notes": [
+        "Dashboard mixes DB-driven metrics with hardcoded labels."
+      ]
+    },
+    {
+      "route_id": "shotguns-tm",
+      "url_path": "/shotguns/tm",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/shotguns/tm/page.tsx",
+      "related_files": [
+        "src/lib/shotguns-data.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "series.content",
+          "kind": "cms",
+          "origin": "Sanity shotguns data merged in getShotgunsSectionData()",
+          "evidence": [
+            {
+              "file": "src/lib/shotguns-data.ts",
+              "line_start": 46,
+              "line_end": 55,
+              "symbol": "getShotgunsSectionData",
+              "snippet": "const [landing, platforms, disciplines, grades] = await Promise.all(["
+            }
+          ]
+        },
+        {
+          "field": "platformGuidance.body",
+          "kind": "hardcoded",
+          "origin": "Inline guidance copy",
+          "evidence": [
+            {
+              "file": "src/app/(site)/shotguns/tm/page.tsx",
+              "line_start": 27,
+              "line_end": 32,
+              "symbol": "TMSeriesPage",
+              "snippet": "Questions about the TM Platform? Ask Perazzi."
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [
+        "shotgunsLanding",
+        "platform",
+        "discipline",
+        "grade"
+      ],
+      "queries_referenced": [
+        "getShotgunsSectionData"
+      ],
+      "components_used": [
+        {
+          "name": "SeriesHero",
+          "file": "src/components/shotguns/SeriesHero.tsx"
+        },
+        {
+          "name": "AtAGlanceStrip",
+          "file": "src/components/shotguns/AtAGlanceStrip.tsx"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "route_id": "shotguns-dc",
+      "url_path": "/shotguns/dc",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/shotguns/dc/page.tsx",
+      "related_files": [
+        "src/lib/shotguns-data.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "series.content",
+          "kind": "cms",
+          "origin": "Sanity shotguns data merged in getShotgunsSectionData()",
+          "evidence": [
+            {
+              "file": "src/lib/shotguns-data.ts",
+              "line_start": 46,
+              "line_end": 55,
+              "symbol": "getShotgunsSectionData",
+              "snippet": "const [landing, platforms, disciplines, grades] = await Promise.all(["
+            }
+          ]
+        },
+        {
+          "field": "platformGuidance.body",
+          "kind": "hardcoded",
+          "origin": "Inline guidance copy",
+          "evidence": [
+            {
+              "file": "src/app/(site)/shotguns/dc/page.tsx",
+              "line_start": 27,
+              "line_end": 32,
+              "symbol": "DCSeriesPage",
+              "snippet": "Questions about the DC Platform? Ask Perazzi."
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [
+        "shotgunsLanding",
+        "platform",
+        "discipline",
+        "grade"
+      ],
+      "queries_referenced": [
+        "getShotgunsSectionData"
+      ],
+      "components_used": [
+        {
+          "name": "SeriesHero",
+          "file": "src/components/shotguns/SeriesHero.tsx"
+        },
+        {
+          "name": "AtAGlanceStrip",
+          "file": "src/components/shotguns/AtAGlanceStrip.tsx"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "route_id": "shotguns-sho",
+      "url_path": "/shotguns/sho",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/shotguns/sho/page.tsx",
+      "related_files": [
+        "src/lib/shotguns-data.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "series.content",
+          "kind": "cms",
+          "origin": "Sanity shotguns data merged in getShotgunsSectionData()",
+          "evidence": [
+            {
+              "file": "src/lib/shotguns-data.ts",
+              "line_start": 46,
+              "line_end": 55,
+              "symbol": "getShotgunsSectionData",
+              "snippet": "const [landing, platforms, disciplines, grades] = await Promise.all(["
+            }
+          ]
+        },
+        {
+          "field": "platformGuidance.body",
+          "kind": "hardcoded",
+          "origin": "Inline guidance copy",
+          "evidence": [
+            {
+              "file": "src/app/(site)/shotguns/sho/page.tsx",
+              "line_start": 33,
+              "line_end": 37,
+              "symbol": "SHOSeriesPage",
+              "snippet": "Questions about the SHO Platform? Ask Perazzi."
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [
+        "shotgunsLanding",
+        "platform",
+        "discipline",
+        "grade"
+      ],
+      "queries_referenced": [
+        "getShotgunsSectionData"
+      ],
+      "components_used": [
+        {
+          "name": "SeriesHero",
+          "file": "src/components/shotguns/SeriesHero.tsx"
+        },
+        {
+          "name": "AtAGlanceStrip",
+          "file": "src/components/shotguns/AtAGlanceStrip.tsx"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "route_id": "journal-champion-interviews",
+      "url_path": "/journal/champion-interviews",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/journal/champion-interviews/page.tsx",
+      "related_files": [
+        "src/content/journal/categories/interviews.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "category.header.title",
+          "kind": "config",
+          "origin": "Local category fixture",
+          "evidence": [
+            {
+              "file": "src/content/journal/categories/interviews.ts",
+              "line_start": 11,
+              "line_end": 15,
+              "symbol": "interviews",
+              "snippet": "title: \"Champion Interviews\""
+            }
+          ]
+        },
+        {
+          "field": "emptyState.message",
+          "kind": "hardcoded",
+          "origin": "Inline fallback copy",
+          "evidence": [
+            {
+              "file": "src/app/(site)/journal/champion-interviews/page.tsx",
+              "line_start": 15,
+              "line_end": 18,
+              "symbol": "ChampionInterviewsPage",
+              "snippet": "Interview features are coming soon."
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [],
+      "queries_referenced": [
+        "getJournalCategoryData"
+      ],
+      "components_used": [
+        {
+          "name": "CategoryPageLayout",
+          "file": "src/components/journal/CategoryPageLayout.tsx"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "route_id": "shotguns-discipline",
+      "url_path": "/shotguns/disciplines/[slug]",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/shotguns/disciplines/[slug]/page.tsx",
+      "related_files": [
+        "src/lib/shotguns-data.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "discipline.content",
+          "kind": "cms",
+          "origin": "Sanity disciplines merged in getShotgunsSectionData()",
+          "evidence": [
+            {
+              "file": "src/lib/shotguns-data.ts",
+              "line_start": 50,
+              "line_end": 55,
+              "symbol": "getShotgunsSectionData",
+              "snippet": "const [landing, platforms, disciplines, grades] = await Promise.all(["
+            }
+          ]
+        },
+        {
+          "field": "marquee.fallbackText",
+          "kind": "hardcoded",
+          "origin": "Inline fallback copy",
+          "evidence": [
+            {
+              "file": "src/app/(site)/shotguns/disciplines/[slug]/page.tsx",
+              "line_start": 46,
+              "line_end": 46,
+              "symbol": "DisciplinePage",
+              "snippet": "fallbackText=\"Perazzi champions stay loyal to their discipline."
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [
+        "discipline",
+        "platform",
+        "grade"
+      ],
+      "queries_referenced": [
+        "getDisciplines",
+        "getShotgunsSectionData"
+      ],
+      "components_used": [
+        {
+          "name": "DisciplineHero",
+          "file": "src/components/shotguns/DisciplineHero.tsx"
+        },
+        {
+          "name": "OverviewBlock",
+          "file": "src/components/shotguns/OverviewBlock.tsx"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "route_id": "pgpt-templates",
+      "url_path": "/admin/pgpt-insights/templates",
+      "router": "app_router",
+      "entry_file": "src/app/admin/pgpt-insights/templates/page.tsx",
+      "related_files": [
+        "src/lib/pgpt-insights/cached.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "template.usage",
+          "kind": "external_api",
+          "origin": "DB cached query for template usage",
+          "evidence": [
+            {
+              "file": "src/lib/pgpt-insights/cached.ts",
+              "line_start": 203,
+              "line_end": 203,
+              "symbol": "getTemplateUsageHeatmap",
+              "snippet": "export const getTemplateUsageHeatmap = cache(async (days: number) => fetchTemplateUsageHeatmap(days));"
+            }
+          ]
+        },
+        {
+          "field": "page.title",
+          "kind": "hardcoded",
+          "origin": "Inline AdminPageHeader props",
+          "evidence": [
+            {
+              "file": "src/app/admin/pgpt-insights/templates/page.tsx",
+              "line_start": 154,
+              "line_end": 158,
+              "symbol": "TemplateHeatmapPage",
+              "snippet": "title=\"Template Usage Heat-map\""
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [],
+      "queries_referenced": [
+        "getTemplateUsageHeatmap"
+      ],
+      "components_used": [
+        {
+          "name": "AdminPageHeader",
+          "file": "src/components/admin/AdminPageHeader.tsx"
+        },
+        {
+          "name": "HeatMapGrid",
+          "file": "src/components/pgpt-insights/charts/HeatMapGrid.tsx"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "route_id": "pgpt-qa",
+      "url_path": "/admin/pgpt-insights/qa",
+      "router": "app_router",
+      "entry_file": "src/app/admin/pgpt-insights/qa/page.tsx",
+      "related_files": [
+        "src/lib/db.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "qa.rows",
+          "kind": "external_api",
+          "origin": "Direct Postgres query in page",
+          "evidence": [
+            {
+              "file": "src/app/admin/pgpt-insights/qa/page.tsx",
+              "line_start": 58,
+              "line_end": 60,
+              "symbol": "fetchOpenCount",
+              "snippet": "const { rows } = await pool.query"
+            }
+          ]
+        },
+        {
+          "field": "page.title",
+          "kind": "hardcoded",
+          "origin": "Inline AdminPageHeader props",
+          "evidence": [
+            {
+              "file": "src/app/admin/pgpt-insights/qa/page.tsx",
+              "line_start": 146,
+              "line_end": 149,
+              "symbol": "PgptInsightsQaPage",
+              "snippet": "title={`QA Review${qaCountLabel}`}"
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [],
+      "queries_referenced": [
+        "fetchOpenCount",
+        "fetchQaFlags"
+      ],
+      "components_used": [
+        {
+          "name": "AdminPageHeader",
+          "file": "src/components/admin/AdminPageHeader.tsx"
+        },
+        {
+          "name": "QaTable",
+          "file": "src/app/admin/pgpt-insights/qa/components/QaTable.tsx"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "route_id": "pgpt-quality",
+      "url_path": "/admin/pgpt-insights/quality",
+      "router": "app_router",
+      "entry_file": "src/app/admin/pgpt-insights/quality/page.tsx",
+      "related_files": [
+        "src/lib/pgpt-insights/cached.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "lowMarginSessions",
+          "kind": "external_api",
+          "origin": "DB cached query",
+          "evidence": [
+            {
+              "file": "src/lib/pgpt-insights/cached.ts",
+              "line_start": 205,
+              "line_end": 207,
+              "symbol": "getLowMarginSessions",
+              "snippet": "export const getLowMarginSessions = cache("
+            }
+          ]
+        },
+        {
+          "field": "page.title",
+          "kind": "hardcoded",
+          "origin": "Inline AdminPageHeader props",
+          "evidence": [
+            {
+              "file": "src/app/admin/pgpt-insights/quality/page.tsx",
+              "line_start": 39,
+              "line_end": 42,
+              "symbol": "QualityPage",
+              "snippet": "title=\"Low-Margin Sessions\""
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [],
+      "queries_referenced": [
+        "getLowMarginSessions"
+      ],
+      "components_used": [
+        {
+          "name": "AdminPageHeader",
+          "file": "src/components/admin/AdminPageHeader.tsx"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "route_id": "journal-news",
+      "url_path": "/journal/news",
+      "router": "app_router",
+      "entry_file": "src/app/(site)/journal/news/page.tsx",
+      "related_files": [
+        "src/content/journal/categories/news.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "category.header.title",
+          "kind": "config",
+          "origin": "Local category fixture",
+          "evidence": [
+            {
+              "file": "src/content/journal/categories/news.ts",
+              "line_start": 11,
+              "line_end": 14,
+              "symbol": "news",
+              "snippet": "title: \"News\""
+            }
+          ]
+        },
+        {
+          "field": "emptyState.message",
+          "kind": "hardcoded",
+          "origin": "Inline fallback copy",
+          "evidence": [
+            {
+              "file": "src/app/(site)/journal/news/page.tsx",
+              "line_start": 13,
+              "line_end": 15,
+              "symbol": "JournalNewsPage",
+              "snippet": "News stories are coming soon."
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [],
+      "queries_referenced": [
+        "getJournalCategoryData"
+      ],
+      "components_used": [
+        {
+          "name": "CategoryPageLayout",
+          "file": "src/components/journal/CategoryPageLayout.tsx"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "route_id": "pgpt-triggers",
+      "url_path": "/admin/pgpt-insights/triggers",
+      "router": "app_router",
+      "entry_file": "src/app/admin/pgpt-insights/triggers/page.tsx",
+      "related_files": [
+        "src/lib/pgpt-insights/cached.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "triggerTerms",
+          "kind": "external_api",
+          "origin": "DB cached query",
+          "evidence": [
+            {
+              "file": "src/lib/pgpt-insights/cached.ts",
+              "line_start": 197,
+              "line_end": 200,
+              "symbol": "getTriggerTermWeeks",
+              "snippet": "export const getTriggerTermWeeks = cache(async (limit?: number) => fetchTriggerTermWeeks(limit ?? 12));"
+            }
+          ]
+        },
+        {
+          "field": "page.title",
+          "kind": "hardcoded",
+          "origin": "Inline AdminPageHeader props",
+          "evidence": [
+            {
+              "file": "src/app/admin/pgpt-insights/triggers/page.tsx",
+              "line_start": 112,
+              "line_end": 115,
+              "symbol": "TriggerTermsPage",
+              "snippet": "title=\"Trigger Terms\""
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [],
+      "queries_referenced": [
+        "getTriggerTermWeeks",
+        "getTriggerTermsForWeek"
+      ],
+      "components_used": [
+        {
+          "name": "AdminPageHeader",
+          "file": "src/components/admin/AdminPageHeader.tsx"
+        },
+        {
+          "name": "BarChart",
+          "file": "src/components/pgpt-insights/charts/BarChart.tsx"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "route_id": "pgpt-archetype",
+      "url_path": "/admin/pgpt-insights/archetype",
+      "router": "app_router",
+      "entry_file": "src/app/admin/pgpt-insights/archetype/page.tsx",
+      "related_files": [
+        "src/lib/pgpt-insights/cached.ts"
+      ],
+      "overall_classification": "hybrid",
+      "content_fields": [
+        {
+          "field": "archetype.series",
+          "kind": "external_api",
+          "origin": "DB cached query",
+          "evidence": [
+            {
+              "file": "src/lib/pgpt-insights/cached.ts",
+              "line_start": 191,
+              "line_end": 195,
+              "symbol": "getArchetypeDailySeries",
+              "snippet": "export const getArchetypeDailySeries = cache(async (days: number) => fetchArchetypeDailySeries(days));"
+            }
+          ]
+        },
+        {
+          "field": "page.title",
+          "kind": "hardcoded",
+          "origin": "Inline AdminPageHeader props",
+          "evidence": [
+            {
+              "file": "src/app/admin/pgpt-insights/archetype/page.tsx",
+              "line_start": 223,
+              "line_end": 226,
+              "symbol": "ArchetypePageView",
+              "snippet": "title=\"Archetype Trend\""
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [],
+      "queries_referenced": [
+        "getArchetypeDailySeries",
+        "getArchetypeMarginSummary",
+        "getArchetypeVariantSplit"
+      ],
+      "components_used": [
+        {
+          "name": "AdminPageHeader",
+          "file": "src/components/admin/AdminPageHeader.tsx"
+        },
+        {
+          "name": "StackedAreaChart",
+          "file": "src/components/pgpt-insights/charts/StackedAreaChart.tsx"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "route_id": "debug-studio",
+      "url_path": "/debug-studio/[[...tool]]",
+      "router": "app_router",
+      "entry_file": "src/app/debug-studio/[[...tool]]/page.tsx",
+      "related_files": [
+        "sanity.config.ts"
+      ],
+      "overall_classification": "cms",
+      "content_fields": [
+        {
+          "field": "studio.ui",
+          "kind": "cms",
+          "origin": "Sanity Studio rendered via NextStudio",
+          "evidence": [
+            {
+              "file": "src/app/debug-studio/[[...tool]]/page.tsx",
+              "line_start": 3,
+              "line_end": 7,
+              "symbol": "DebugStudioPage",
+              "snippet": "return <NextStudio config={config} />"
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [],
+      "queries_referenced": [],
+      "components_used": [
+        {
+          "name": "NextStudio",
+          "file": "node_modules/next-sanity/studio"
+        }
+      ],
+      "notes": [
+        "Developer-only Studio route."
+      ]
+    },
+    {
+      "route_id": "next-studio",
+      "url_path": "/next-studio/[[...tool]]",
+      "router": "app_router",
+      "entry_file": "src/app/next-studio/[[...tool]]/page.tsx",
+      "related_files": [
+        "sanity.config.ts"
+      ],
+      "overall_classification": "cms",
+      "content_fields": [
+        {
+          "field": "studio.ui",
+          "kind": "cms",
+          "origin": "Sanity Studio rendered via NextStudio",
+          "evidence": [
+            {
+              "file": "src/app/next-studio/[[...tool]]/page.tsx",
+              "line_start": 10,
+              "line_end": 13,
+              "symbol": "StudioPage",
+              "snippet": "import { NextStudio } from 'next-sanity/studio'"
+            }
+          ]
+        }
+      ],
+      "cms_models_referenced": [],
+      "queries_referenced": [],
+      "components_used": [
+        {
+          "name": "NextStudio",
+          "file": "node_modules/next-sanity/studio"
+        }
+      ],
+      "notes": [
+        "Studio route gated to non-production environments."
+      ]
+    }
+  ],
+  "components": [
+    {
+      "name": "SiteShell",
+      "file": "src/components/site-shell.tsx",
+      "classification": "hybrid",
+      "content_surface": [
+        {
+          "field": "primaryLinks[].label",
+          "kind": "hardcoded",
+          "origin": "Inline nav links array",
+          "evidence": [
+            {
+              "file": "src/components/site-shell.tsx",
+              "line_start": 27,
+              "line_end": 33,
+              "symbol": "primaryLinks",
+              "snippet": "const primaryLinks = [ { label: \"Shotguns\""
+            }
+          ]
+        },
+        {
+          "field": "footer.description",
+          "kind": "hardcoded",
+          "origin": "Inline footer copy",
+          "evidence": [
+            {
+              "file": "src/components/site-shell.tsx",
+              "line_start": 67,
+              "line_end": 69,
+              "symbol": "SiteShell",
+              "snippet": "Purpose-built competition shotguns, crafted in Botticino"
+            }
+          ]
+        },
+        {
+          "field": "brandLabel",
+          "kind": "config",
+          "origin": "next-intl message Header.brand",
+          "evidence": [
+            {
+              "file": "src/messages/en.json",
+              "line_start": 2,
+              "line_end": 6,
+              "symbol": "Header.brand",
+              "snippet": "\"brand\": \"Perazzi\""
+            }
+          ]
+        }
+      ],
+      "props_content_keys": [
+        "children"
+      ],
+      "notes": [
+        "Mixes translated labels with hardcoded nav/footer content."
+      ]
+    },
+    {
+      "name": "PrimaryNav",
+      "file": "src/components/primary-nav.tsx",
+      "classification": "hybrid",
+      "content_surface": [
+        {
+          "field": "NAV_LINKS[].text",
+          "kind": "hardcoded",
+          "origin": "Inline nav links",
+          "evidence": [
+            {
+              "file": "src/components/primary-nav.tsx",
+              "line_start": 415,
+              "line_end": 421,
+              "symbol": "NAV_LINKS",
+              "snippet": "{ text: \"Shotguns\", href: \"/shotguns\""
+            }
+          ]
+        },
+        {
+          "field": "SHOTGUN_GRID[].title",
+          "kind": "hardcoded",
+          "origin": "Inline flyout cards",
+          "evidence": [
+            {
+              "file": "src/components/primary-nav.tsx",
+              "line_start": 424,
+              "line_end": 433,
+              "symbol": "SHOTGUN_GRID",
+              "snippet": "title: \"HT Platform\""
+            }
+          ]
+        },
+        {
+          "field": "brandLabel",
+          "kind": "config",
+          "origin": "Prop from SiteShell translations",
+          "evidence": [
+            {
+              "file": "src/components/primary-nav.tsx",
+              "line_start": 26,
+              "line_end": 30,
+              "symbol": "PrimaryNavProps",
+              "snippet": "brandLabel: string;"
+            }
+          ]
+        }
+      ],
+      "props_content_keys": [
+        "brandLabel",
+        "ariaLabel"
+      ],
+      "notes": []
+    },
+    {
+      "name": "HeroBanner",
+      "file": "src/components/home/hero-banner.tsx",
+      "classification": "hybrid",
+      "content_surface": [
+        {
+          "field": "fallbackCtas.primaryLabel",
+          "kind": "hardcoded",
+          "origin": "Inline FALLBACK_CTAS",
+          "evidence": [
+            {
+              "file": "src/components/home/hero-banner.tsx",
+              "line_start": 24,
+              "line_end": 29,
+              "symbol": "FALLBACK_CTAS",
+              "snippet": "primaryLabel: \"Ask the concierge\""
+            }
+          ]
+        },
+        {
+          "field": "hero.tagline",
+          "kind": "cms",
+          "origin": "Hero props (Sanity or fixtures)",
+          "evidence": [
+            {
+              "file": "src/components/home/hero-banner.tsx",
+              "line_start": 77,
+              "line_end": 81,
+              "symbol": "HeroBanner",
+              "snippet": "export function HeroBanner({ hero, heroCtas, analyticsId"
+            }
+          ]
+        }
+      ],
+      "props_content_keys": [
+        "hero",
+        "heroCtas"
+      ],
+      "notes": []
+    },
+    {
+      "name": "CTASection",
+      "file": "src/components/shotguns/CTASection.tsx",
+      "classification": "hybrid",
+      "content_surface": [
+        {
+          "field": "heading",
+          "kind": "hardcoded",
+          "origin": "Inline section heading",
+          "evidence": [
+            {
+              "file": "src/components/shotguns/CTASection.tsx",
+              "line_start": 77,
+              "line_end": 80,
+              "symbol": "CTASection",
+              "snippet": "Begin your fitting"
+            }
+          ]
+        },
+        {
+          "field": "text",
+          "kind": "unknown",
+          "origin": "Prop passed from page",
+          "evidence": [
+            {
+              "file": "src/components/shotguns/CTASection.tsx",
+              "line_start": 20,
+              "line_end": 23,
+              "symbol": "CTASection",
+              "snippet": "export function CTASection({ text, primary, secondary"
+            }
+          ]
+        }
+      ],
+      "props_content_keys": [
+        "text",
+        "primary",
+        "secondary"
+      ],
+      "notes": []
+    },
+    {
+      "name": "SerialLookup",
+      "file": "src/components/heritage/SerialLookup.tsx",
+      "classification": "hybrid",
+      "content_surface": [
+        {
+          "field": "ui.heading",
+          "kind": "cms",
+          "origin": "SerialLookupUi prop with fallback",
+          "evidence": [
+            {
+              "file": "src/components/heritage/SerialLookup.tsx",
+              "line_start": 50,
+              "line_end": 55,
+              "symbol": "SerialLookup",
+              "snippet": "const heading = ui.heading ?? \"Heritage Record\";"
+            }
+          ]
+        },
+        {
+          "field": "submit.pendingLabel",
+          "kind": "hardcoded",
+          "origin": "Inline loading label",
+          "evidence": [
+            {
+              "file": "src/components/heritage/SerialLookup.tsx",
+              "line_start": 152,
+              "line_end": 153,
+              "symbol": "LookupSubmitButton",
+              "snippet": "{pending ? \"Tracing Lineage...\" : label}"
+            }
+          ]
+        }
+      ],
+      "props_content_keys": [
+        "ui",
+        "lookupAction"
+      ],
+      "notes": []
+    },
+    {
+      "name": "ChatWidget",
+      "file": "src/components/chat/ChatWidget.tsx",
+      "classification": "presentational",
+      "content_surface": [
+        {
+          "field": "openButton.ariaLabel",
+          "kind": "hardcoded",
+          "origin": "Inline aria-label",
+          "evidence": [
+            {
+              "file": "src/components/chat/ChatWidget.tsx",
+              "line_start": 188,
+              "line_end": 191,
+              "symbol": "ChatWidget",
+              "snippet": "aria-label=\"Open Perazzi Concierge\""
+            }
+          ]
+        }
+      ],
+      "props_content_keys": [],
+      "notes": []
+    },
+    {
+      "name": "AdminPageHeader",
+      "file": "src/components/admin/AdminPageHeader.tsx",
+      "classification": "hybrid",
+      "content_surface": [
+        {
+          "field": "admin.label",
+          "kind": "hardcoded",
+          "origin": "Inline label",
+          "evidence": [
+            {
+              "file": "src/components/admin/AdminPageHeader.tsx",
+              "line_start": 22,
+              "line_end": 24,
+              "symbol": "AdminPageHeader",
+              "snippet": "<span>Admin</span>"
+            }
+          ]
+        },
+        {
+          "field": "title",
+          "kind": "unknown",
+          "origin": "Props passed from routes",
+          "evidence": [
+            {
+              "file": "src/components/admin/AdminPageHeader.tsx",
+              "line_start": 3,
+              "line_end": 7,
+              "symbol": "AdminPageHeaderProps",
+              "snippet": "title: string;"
+            }
+          ]
+        }
+      ],
+      "props_content_keys": [
+        "breadcrumb",
+        "title",
+        "description",
+        "kicker"
+      ],
+      "notes": []
+    },
+    {
+      "name": "JournalHero",
+      "file": "src/components/journal/JournalHero.tsx",
+      "classification": "hybrid",
+      "content_surface": [
+        {
+          "field": "section.label",
+          "kind": "hardcoded",
+          "origin": "Inline section label",
+          "evidence": [
+            {
+              "file": "src/components/journal/JournalHero.tsx",
+              "line_start": 71,
+              "line_end": 72,
+              "symbol": "JournalHero",
+              "snippet": "Journal"
+            }
+          ]
+        },
+        {
+          "field": "hero.title",
+          "kind": "unknown",
+          "origin": "Hero props",
+          "evidence": [
+            {
+              "file": "src/components/journal/JournalHero.tsx",
+              "line_start": 74,
+              "line_end": 78,
+              "symbol": "JournalHero",
+              "snippet": "{hero.title}"
+            }
+          ]
+        }
+      ],
+      "props_content_keys": [
+        "hero",
+        "breadcrumbs"
+      ],
+      "notes": []
+    },
+    {
+      "name": "CategoryHeader",
+      "file": "src/components/journal/CategoryHeader.tsx",
+      "classification": "hybrid",
+      "content_surface": [
+        {
+          "field": "label",
+          "kind": "hardcoded",
+          "origin": "Inline label",
+          "evidence": [
+            {
+              "file": "src/components/journal/CategoryHeader.tsx",
+              "line_start": 13,
+              "line_end": 15,
+              "symbol": "CategoryHeader",
+              "snippet": "Journal"
+            }
+          ]
+        },
+        {
+          "field": "header.title",
+          "kind": "unknown",
+          "origin": "Header prop",
+          "evidence": [
+            {
+              "file": "src/components/journal/CategoryHeader.tsx",
+              "line_start": 16,
+              "line_end": 18,
+              "symbol": "CategoryHeader",
+              "snippet": "{header.title}"
+            }
+          ]
+        },
+        {
+          "field": "featured.label",
+          "kind": "hardcoded",
+          "origin": "Inline label",
+          "evidence": [
+            {
+              "file": "src/components/journal/CategoryHeader.tsx",
+              "line_start": 26,
+              "line_end": 31,
+              "symbol": "CategoryHeader",
+              "snippet": "Featured:"
+            }
+          ]
+        }
+      ],
+      "props_content_keys": [
+        "header"
+      ],
+      "notes": []
+    },
+    {
+      "name": "SanityDetailsDrawer",
+      "file": "src/components/concierge/SanityDetailsDrawer.tsx",
+      "classification": "hybrid",
+      "content_surface": [
+        {
+          "field": "panel.title",
+          "kind": "hardcoded",
+          "origin": "Inline drawer label",
+          "evidence": [
+            {
+              "file": "src/components/concierge/SanityDetailsDrawer.tsx",
+              "line_start": 164,
+              "line_end": 169,
+              "symbol": "SanityDetailsDrawer",
+              "snippet": "Sanity Data"
+            }
+          ]
+        },
+        {
+          "field": "loading.message",
+          "kind": "hardcoded",
+          "origin": "Inline loading copy",
+          "evidence": [
+            {
+              "file": "src/components/concierge/SanityDetailsDrawer.tsx",
+              "line_start": 64,
+              "line_end": 68,
+              "symbol": "SanityDetailsDrawer",
+              "snippet": "Loading details..."
+            }
+          ]
+        },
+        {
+          "field": "card.title",
+          "kind": "unknown",
+          "origin": "Card props",
+          "evidence": [
+            {
+              "file": "src/components/concierge/SanityDetailsDrawer.tsx",
+              "line_start": 103,
+              "line_end": 105,
+              "symbol": "SanityDetailsDrawer",
+              "snippet": "{card.title}"
+            }
+          ]
+        }
+      ],
+      "props_content_keys": [
+        "cards",
+        "selectedCard",
+        "error"
+      ],
+      "notes": []
+    }
+  ],
+  "hardcoded_hotspots": [
+    {
+      "priority": 1,
+      "file": "src/app/(site)/shotguns/page.tsx",
+      "line_start": 12,
+      "line_end": 18,
+      "excerpt": "heading: \"The geometry of rhythm\" ... fallback paragraphs in disciplineFit",
+      "why_hotspot": "High-visibility marketing copy on the shotguns landing page; should be editable by content team.",
+      "suggested_cms_model": "shotgunsLanding",
+      "suggested_fields": [
+        "disciplineFitAdvisory.eyebrow",
+        "disciplineFitAdvisory.heading",
+        "disciplineFitAdvisory.paragraphs",
+        "disciplineFitAdvisory.chatPrompt"
+      ]
+    },
+    {
+      "priority": 2,
+      "file": "src/app/(site)/experience/page.tsx",
+      "line_start": 78,
+      "line_end": 96,
+      "excerpt": "visitPlanningBlock fallback copy for heading/intro/bullets/closing",
+      "why_hotspot": "Long advisory copy appears on a core marketing page and is currently hardcoded.",
+      "suggested_cms_model": "experienceHome",
+      "suggested_fields": [
+        "visitPlanningBlock.heading",
+        "visitPlanningBlock.intro",
+        "visitPlanningBlock.bullets",
+        "visitPlanningBlock.closing",
+        "visitPlanningBlock.chatPrompt"
+      ]
+    },
+    {
+      "priority": 3,
+      "file": "src/app/(site)/heritage/page.tsx",
+      "line_start": 90,
+      "line_end": 98,
+      "excerpt": "heritageIntroHeading fallback and paragraphs array",
+      "why_hotspot": "Heritage narrative copy is prominent and should be CMS-managed.",
+      "suggested_cms_model": "heritageHome",
+      "suggested_fields": [
+        "heritageIntro.heading",
+        "heritageIntro.eyebrow",
+        "heritageIntro.paragraphs"
+      ]
+    },
+    {
+      "priority": 4,
+      "file": "src/app/(site)/service/page.tsx",
+      "line_start": 67,
+      "line_end": 76,
+      "excerpt": "serviceGuidanceBlock fallback body + chat prompt",
+      "why_hotspot": "Service guidance copy is hardcoded but should be editable with service updates.",
+      "suggested_cms_model": "serviceHome",
+      "suggested_fields": [
+        "serviceGuidanceBlock.eyebrow",
+        "serviceGuidanceBlock.body",
+        "serviceGuidanceBlock.chatPrompt"
+      ]
+    },
+    {
+      "priority": 5,
+      "file": "src/components/site-shell.tsx",
+      "line_start": 27,
+      "line_end": 38,
+      "excerpt": "primaryLinks and secondaryLinks arrays define main nav labels/URLs",
+      "why_hotspot": "Global navigation and footer copy are hardcoded; CMS control would reduce code deploys for changes.",
+      "suggested_cms_model": "siteSettings",
+      "suggested_fields": [
+        "primaryNav",
+        "secondaryNav",
+        "footerDescription",
+        "legalLinks"
+      ]
+    },
+    {
+      "priority": 6,
+      "file": "src/app/(site)/concierge/page.tsx",
+      "line_start": 4,
+      "line_end": 28,
+      "excerpt": "conciergeHero title/subheading/bullets hardcoded",
+      "why_hotspot": "Concierge hero copy is marketing-level content and likely to evolve.",
+      "suggested_cms_model": "conciergeHome",
+      "suggested_fields": [
+        "hero.eyebrow",
+        "hero.title",
+        "hero.subheading",
+        "hero.bullets"
+      ]
+    },
+    {
+      "priority": 7,
+      "file": "src/app/(site)/the-build/why-a-perazzi-has-a-soul/page.tsx",
+      "line_start": 75,
+      "line_end": 83,
+      "excerpt": "IntroSection label/title/paragraph copy",
+      "why_hotspot": "Build-journey intro is a narrative block that should be editable alongside CMS steps.",
+      "suggested_cms_model": "buildJourneyLanding",
+      "suggested_fields": [
+        "intro.label",
+        "intro.title",
+        "intro.body"
+      ]
+    },
+    {
+      "priority": 8,
+      "file": "src/app/(site)/bespoke-build/[stage]/page.tsx",
+      "line_start": 5,
+      "line_end": 20,
+      "excerpt": "stageCopy titles/descriptions/bodies are static placeholders",
+      "why_hotspot": "Stage pages are likely to become real editorial content; CMS would allow expansion without code edits.",
+      "suggested_cms_model": "bespokeBuildStage",
+      "suggested_fields": [
+        "title",
+        "description",
+        "body",
+        "media"
+      ]
+    }
+  ],
+  "summary": {
+    "route_counts": {
+      "total": 37,
+      "cms": 2,
+      "hardcoded": 4,
+      "hybrid": 31,
+      "config": 0,
+      "mdx": 0,
+      "external_api": 0,
+      "unknown": 0
+    },
+    "notes": [
+      "Most routes blend Sanity with local fixtures and hardcoded copy.",
+      "No MD/MDX content files were detected under src for routing surfaces.",
+      "External API content appears inside hybrid routes (concierge, fschat, build journey, admin dashboards)."
+    ]
+  }
+}
