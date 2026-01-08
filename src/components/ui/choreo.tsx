@@ -7,6 +7,8 @@ import {
   type CSSProperties,
   type HTMLAttributes,
   type ReactNode,
+  useEffect,
+  useState,
 } from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -90,6 +92,7 @@ export function ChoreoGroup({
   itemStyle,
   itemAsChild = false,
 }: ChoreoGroupProps) {
+  const [isAnimating, setIsAnimating] = useState(true);
   const groupVars = buildChoreoGroupVars({
     delayMs,
     durationMs,
@@ -98,6 +101,25 @@ export function ChoreoGroup({
   });
 
   const childArray = Children.toArray(children);
+  useEffect(() => {
+    let isActive = true;
+    Promise.resolve().then(() => {
+      if (isActive) {
+        setIsAnimating(true);
+      }
+    });
+    const childCount = childArray.length;
+    const totalDuration = delayMs + durationMs + Math.max(0, (childCount - 1) * staggerMs) + 120;
+    const timer = globalThis.setTimeout(() => {
+      if (isActive) {
+        setIsAnimating(false);
+      }
+    }, totalDuration);
+    return () => {
+      isActive = false;
+      globalThis.clearTimeout(timer);
+    };
+  }, [delayMs, durationMs, staggerMs, childArray.length]);
 
   return (
     <RevealGroup
@@ -107,6 +129,7 @@ export function ChoreoGroup({
       easing={easing}
       className={cn("choreo-group", disableMask && "choreo-mask-none", className)}
       style={groupVars}
+      data-choreo-animating={isAnimating ? "true" : "false"}
     >
       {childArray.map((child, index) => {
         const itemVars = buildChoreoItemVars(effect, {
