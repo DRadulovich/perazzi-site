@@ -1,4 +1,4 @@
-import {defineField, defineType} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
 import {DocumentsIcon} from '@sanity/icons'
 
 export const journalLanding = defineType({
@@ -22,6 +22,63 @@ export const journalLanding = defineType({
       title: 'Featured Article',
       type: 'reference',
       to: [{ type: 'article' }],
+    }),
+    defineField({
+      name: 'sections',
+      title: 'Landing Sections',
+      type: 'array',
+      of: [
+        defineArrayMember({
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'key',
+              title: 'Category Key',
+              type: 'string',
+              options: {
+                list: [
+                  { title: 'Stories of Craft', value: 'craft' },
+                  { title: 'Champion Interviews', value: 'interviews' },
+                  { title: 'News', value: 'news' },
+                ],
+                layout: 'radio',
+              },
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: 'title',
+              title: 'Section Title',
+              type: 'string',
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: 'subtitleHtml',
+              title: 'Subtitle (HTML)',
+              type: 'text',
+              rows: 3,
+            }),
+            defineField({
+              name: 'viewAllHref',
+              title: 'View all link',
+              type: 'url',
+              validation: (Rule) => Rule.required().uri({ allowRelative: true }),
+            }),
+            defineField({
+              name: 'items',
+              title: 'Articles',
+              type: 'array',
+              of: [
+                defineArrayMember({
+                  type: 'reference',
+                  to: [{ type: 'article' }],
+                }),
+              ],
+              validation: (Rule) => Rule.min(1).warning('Add at least one article'),
+            }),
+          ],
+        }),
+      ],
+      validation: (Rule) => Rule.min(1).warning('Add at least one section'),
     }),
     defineField({
       name: 'defaults',

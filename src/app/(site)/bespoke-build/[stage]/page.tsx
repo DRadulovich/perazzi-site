@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { PageHeading } from "@/components/page-heading";
 import { Text } from "@/components/ui/text";
+import { getBespokeBuildStage, getBespokeBuildStageSlugs } from "@/sanity/queries/bespoke-build";
 
 const stageCopy = {
   fitting: {
@@ -32,18 +33,24 @@ const stageCopy = {
 
 type StageSlug = keyof typeof stageCopy;
 
-export function generateStaticParams() {
-  return Object.keys(stageCopy).map((stage) => ({ stage }));
+export async function generateStaticParams() {
+  const cmsSlugs = await getBespokeBuildStageSlugs();
+  const slugs = cmsSlugs.length ? cmsSlugs : Object.keys(stageCopy);
+  return slugs.map((stage) => ({ stage }));
 }
 
-export default function BespokeBuildStagePage({
+export default async function BespokeBuildStagePage({
   params,
 }: {
-  params: { stage: StageSlug };
+  params: { stage: string };
 }) {
-  const copy = stageCopy[params.stage];
+  const cms = await getBespokeBuildStage(params.stage);
+  const fallback = stageCopy[params.stage as StageSlug];
+  const title = cms?.title ?? fallback?.title;
+  const description = cms?.description ?? fallback?.description;
+  const body = cms?.body ?? fallback?.body;
 
-  if (!copy) {
+  if (!title && !description && !body) {
     notFound();
   }
 
@@ -51,11 +58,11 @@ export default function BespokeBuildStagePage({
     <div className="space-y-6">
       <PageHeading
         kicker="Bespoke build"
-        title={copy.title}
-        description={copy.description}
+        title={title ?? "Bespoke build"}
+        description={description ?? ""}
       />
       <Text size="lg" className="max-w-3xl text-ink-muted">
-        {copy.body}
+        {body ?? ""}
       </Text>
     </div>
   );

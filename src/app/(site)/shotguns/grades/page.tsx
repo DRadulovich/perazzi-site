@@ -14,17 +14,58 @@ import { getGradeAnchorId } from "@/lib/grade-anchors";
 import { getShotgunsSectionData } from "@/lib/shotguns-data";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
+import { getShotgunsGradesPage } from "@/sanity/queries/shotguns";
 
 export default async function GradesPage() {
-  const { grades } = await getShotgunsSectionData();
+  const [sectionData, cms] = await Promise.all([
+    getShotgunsSectionData(),
+    getShotgunsGradesPage(),
+  ]);
+  const { grades } = sectionData;
+  const hero = cms?.hero?.background
+    ? {
+        title: cms.hero.title ?? gradesHero.title,
+        subheading: cms.hero.subheading ?? gradesHero.subheading,
+        background: cms.hero.background,
+      }
+    : gradesHero;
+  const provenanceHtml = cms?.provenanceHtml ?? engravingProvenanceHtml;
+  const processNote = cms?.processNote?.title || cms?.processNote?.html
+    ? {
+        title: cms?.processNote?.title ?? gradesProcessNote.title,
+        html: cms?.processNote?.html ?? gradesProcessNote.html,
+      }
+    : gradesProcessNote;
+  const fallbackCta = {
+    text: "Begin your fitting to commission engraving, wood selection, and finishing details that reflect your legacy.",
+    primary: { label: "Begin Your Fitting", href: "/experience/fitting" },
+    secondary: { label: "Request a Visit", href: "/experience/visit" },
+  };
+  const cmsCta = cms?.finalCta;
+  const useCmsCta = Boolean(cmsCta?.text && cmsCta.primary?.label && cmsCta.primary?.href);
+  const finalCta = useCmsCta
+    ? {
+        text: cmsCta?.text ?? fallbackCta.text,
+        primary: {
+          label: cmsCta?.primary?.label ?? fallbackCta.primary.label,
+          href: cmsCta?.primary?.href ?? fallbackCta.primary.href,
+        },
+        secondary: cmsCta?.secondary?.label && cmsCta?.secondary?.href
+          ? {
+              label: cmsCta.secondary.label,
+              href: cmsCta.secondary.href,
+            }
+          : fallbackCta.secondary,
+      }
+    : fallbackCta;
 
   return (
     <div className="space-y-16">
       <GradesHero
-        hero={gradesHero}
+        hero={hero}
       />
 
-      <ProvenanceNote html={engravingProvenanceHtml} />
+      <ProvenanceNote html={provenanceHtml} />
 
       {grades.map((grade) => (
         <section
@@ -48,14 +89,14 @@ export default async function GradesPage() {
 
       <WoodCarousel grades={grades} />
       <ProcessNote
-        title={gradesProcessNote.title}
-        html={gradesProcessNote.html}
+        title={processNote.title}
+        html={processNote.html}
         dataAnalyticsId="GradesProcessNote"
       />
       <CTASection
-        text="Begin your fitting to commission engraving, wood selection, and finishing details that reflect your legacy."
-        primary={{ label: "Begin Your Fitting", href: "/experience/fitting" }}
-        secondary={{ label: "Request a Visit", href: "/experience/visit" }}
+        text={finalCta.text}
+        primary={finalCta.primary}
+        secondary={finalCta.secondary}
         dataAnalyticsId="GradesFinalCTA"
         analyticsPrefix="GradesCTA"
       />

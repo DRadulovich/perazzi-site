@@ -46,7 +46,9 @@ type ShotgunsLandingResponse = {
     eyebrow?: string;
     heading?: string;
     paragraphs?: string[];
+    chatLabel?: string;
     chatPrompt?: string;
+    rightTitle?: string;
     bullets?: Array<{ code?: string; label?: string; description?: string }>;
   };
   disciplineRailUi?: {
@@ -61,6 +63,7 @@ type ShotgunsLandingResponse = {
     chatPrompt?: string;
     linkLabel?: string;
     linkHref?: string;
+    rightTitle?: string;
     bullets?: string[];
     closing?: string;
   };
@@ -71,6 +74,7 @@ type ShotgunsLandingResponse = {
     chatPrompt?: string;
     linkLabel?: string;
     linkHref?: string;
+    rightTitle?: string;
     bullets?: string[];
     closing?: string;
   };
@@ -152,6 +156,41 @@ type GradeResponse = {
   woodImages?: SanityImageResult[];
 };
 
+type ShotgunsGaugesPageResponse = {
+  hero?: {
+    title?: string;
+    subheading?: string;
+    background?: SanityImageResult;
+  };
+  editorialHtml?: string;
+  sidebarTitle?: string;
+  sidebarHtml?: string;
+  faq?: Array<{ q?: string; a?: string }>;
+  finalCta?: {
+    text?: string;
+    primary?: { label?: string; href?: string };
+    secondary?: { label?: string; href?: string };
+  };
+};
+
+type ShotgunsGradesPageResponse = {
+  hero?: {
+    title?: string;
+    subheading?: string;
+    background?: SanityImageResult;
+  };
+  provenanceHtml?: string;
+  processNote?: {
+    title?: string;
+    html?: string;
+  };
+  finalCta?: {
+    text?: string;
+    primary?: { label?: string; href?: string };
+    secondary?: { label?: string; href?: string };
+  };
+};
+
 export interface ShotgunsLandingPayload {
   hero?: {
     title?: string;
@@ -182,7 +221,9 @@ export interface ShotgunsLandingPayload {
     eyebrow?: string;
     heading?: string;
     paragraphs?: string[];
+    chatLabel?: string;
     chatPrompt?: string;
+    rightTitle?: string;
     bullets?: Array<{ code?: string; label?: string; description?: string }>;
   };
   disciplineRailUi?: {
@@ -197,6 +238,7 @@ export interface ShotgunsLandingPayload {
     chatPrompt?: string;
     linkLabel?: string;
     linkHref?: string;
+    rightTitle?: string;
     bullets?: string[];
     closing?: string;
   };
@@ -207,6 +249,7 @@ export interface ShotgunsLandingPayload {
     chatPrompt?: string;
     linkLabel?: string;
     linkHref?: string;
+    rightTitle?: string;
     bullets?: string[];
     closing?: string;
   };
@@ -281,6 +324,41 @@ export interface ShotgunsGradePayload {
   woodImages?: FactoryAsset[];
 }
 
+export interface ShotgunsGaugesPagePayload {
+  hero?: {
+    title?: string;
+    subheading?: string;
+    background?: FactoryAsset;
+  };
+  editorialHtml?: string;
+  sidebarTitle?: string;
+  sidebarHtml?: string;
+  faq?: Array<{ q?: string; a?: string }>;
+  finalCta?: {
+    text?: string;
+    primary?: { label?: string; href?: string };
+    secondary?: { label?: string; href?: string };
+  };
+}
+
+export interface ShotgunsGradesPagePayload {
+  hero?: {
+    title?: string;
+    subheading?: string;
+    background?: FactoryAsset;
+  };
+  provenanceHtml?: string;
+  processNote?: {
+    title?: string;
+    html?: string;
+  };
+  finalCta?: {
+    text?: string;
+    primary?: { label?: string; href?: string };
+    secondary?: { label?: string; href?: string };
+  };
+}
+
 const shotgunsLandingQuery = groq`
   *[_type == "shotgunsLanding"][0]{
     hero{
@@ -325,7 +403,9 @@ const shotgunsLandingQuery = groq`
       eyebrow,
       heading,
       paragraphs,
+      chatLabel,
       chatPrompt,
+      rightTitle,
       bullets[]{
         code,
         label,
@@ -347,6 +427,7 @@ const shotgunsLandingQuery = groq`
       chatPrompt,
       linkLabel,
       linkHref,
+      rightTitle,
       bullets,
       closing
     },
@@ -357,6 +438,7 @@ const shotgunsLandingQuery = groq`
       chatPrompt,
       linkLabel,
       linkHref,
+      rightTitle,
       bullets,
       closing
     },
@@ -376,6 +458,64 @@ const shotgunsLandingQuery = groq`
       summary,
       championImage{
         ${imageWithMetaFields}
+      }
+    }
+  }
+`;
+
+const shotgunsGaugesPageQuery = groq`
+  *[_type == "shotgunsGaugesPage"][0]{
+    hero{
+      title,
+      subheading,
+      background{
+        ${imageWithMetaFields}
+      }
+    },
+    editorialHtml,
+    sidebarTitle,
+    sidebarHtml,
+    faq[]{
+      q,
+      a
+    },
+    finalCta{
+      text,
+      primary{
+        label,
+        href
+      },
+      secondary{
+        label,
+        href
+      }
+    }
+  }
+`;
+
+const shotgunsGradesPageQuery = groq`
+  *[_type == "shotgunsGradesPage"][0]{
+    hero{
+      title,
+      subheading,
+      background{
+        ${imageWithMetaFields}
+      }
+    },
+    provenanceHtml,
+    processNote{
+      title,
+      html
+    },
+    finalCta{
+      text,
+      primary{
+        label,
+        href
+      },
+      secondary{
+        label,
+        href
       }
     }
   }
@@ -535,7 +675,9 @@ export async function getShotgunsLanding(): Promise<ShotgunsLandingPayload | nul
           eyebrow: data.disciplineFitAdvisory.eyebrow ?? undefined,
           heading: data.disciplineFitAdvisory.heading ?? undefined,
           paragraphs: data.disciplineFitAdvisory.paragraphs ?? undefined,
+          chatLabel: data.disciplineFitAdvisory.chatLabel ?? undefined,
           chatPrompt: data.disciplineFitAdvisory.chatPrompt ?? undefined,
+          rightTitle: data.disciplineFitAdvisory.rightTitle ?? undefined,
           bullets: data.disciplineFitAdvisory.bullets ?? undefined,
         }
       : undefined,
@@ -559,6 +701,7 @@ export async function getShotgunsLanding(): Promise<ShotgunsLandingPayload | nul
           chatPrompt: data.gaugeSelectionAdvisory.chatPrompt ?? undefined,
           linkLabel: data.gaugeSelectionAdvisory.linkLabel ?? undefined,
           linkHref: data.gaugeSelectionAdvisory.linkHref ?? undefined,
+          rightTitle: data.gaugeSelectionAdvisory.rightTitle ?? undefined,
           bullets: data.gaugeSelectionAdvisory.bullets ?? undefined,
           closing: data.gaugeSelectionAdvisory.closing ?? undefined,
         }
@@ -571,6 +714,7 @@ export async function getShotgunsLanding(): Promise<ShotgunsLandingPayload | nul
           chatPrompt: data.triggerChoiceAdvisory.chatPrompt ?? undefined,
           linkLabel: data.triggerChoiceAdvisory.linkLabel ?? undefined,
           linkHref: data.triggerChoiceAdvisory.linkHref ?? undefined,
+          rightTitle: data.triggerChoiceAdvisory.rightTitle ?? undefined,
           bullets: data.triggerChoiceAdvisory.bullets ?? undefined,
           closing: data.triggerChoiceAdvisory.closing ?? undefined,
         }
@@ -595,6 +739,92 @@ export async function getShotgunsLanding(): Promise<ShotgunsLandingPayload | nul
       summary: hub.summary ?? undefined,
       championImage: mapImageResult(hub.championImage ?? null),
     })),
+  };
+}
+
+export async function getShotgunsGaugesPage(): Promise<ShotgunsGaugesPagePayload | null> {
+  const result = await sanityFetch({
+    query: shotgunsGaugesPageQuery,
+    stega: true,
+  }).catch(() => ({ data: null }));
+  const data = (result?.data as ShotgunsGaugesPageResponse | null) ?? null;
+  if (!data) return null;
+
+  return {
+    hero: data.hero?.background
+      ? {
+          title: data.hero.title ?? undefined,
+          subheading: data.hero.subheading ?? undefined,
+          background: mapImageResult(data.hero.background),
+        }
+      : undefined,
+    editorialHtml: data.editorialHtml ?? undefined,
+    sidebarTitle: data.sidebarTitle ?? undefined,
+    sidebarHtml: data.sidebarHtml ?? undefined,
+    faq: data.faq?.map((item) => ({
+      q: item.q ?? "",
+      a: item.a ?? "",
+    })),
+    finalCta: data.finalCta
+      ? {
+          text: data.finalCta.text ?? undefined,
+          primary: data.finalCta.primary
+            ? {
+                label: data.finalCta.primary.label ?? undefined,
+                href: data.finalCta.primary.href ?? undefined,
+              }
+            : undefined,
+          secondary: data.finalCta.secondary
+            ? {
+                label: data.finalCta.secondary.label ?? undefined,
+                href: data.finalCta.secondary.href ?? undefined,
+              }
+            : undefined,
+        }
+      : undefined,
+  };
+}
+
+export async function getShotgunsGradesPage(): Promise<ShotgunsGradesPagePayload | null> {
+  const result = await sanityFetch({
+    query: shotgunsGradesPageQuery,
+    stega: true,
+  }).catch(() => ({ data: null }));
+  const data = (result?.data as ShotgunsGradesPageResponse | null) ?? null;
+  if (!data) return null;
+
+  return {
+    hero: data.hero?.background
+      ? {
+          title: data.hero.title ?? undefined,
+          subheading: data.hero.subheading ?? undefined,
+          background: mapImageResult(data.hero.background),
+        }
+      : undefined,
+    provenanceHtml: data.provenanceHtml ?? undefined,
+    processNote: data.processNote
+      ? {
+          title: data.processNote.title ?? undefined,
+          html: data.processNote.html ?? undefined,
+        }
+      : undefined,
+    finalCta: data.finalCta
+      ? {
+          text: data.finalCta.text ?? undefined,
+          primary: data.finalCta.primary
+            ? {
+                label: data.finalCta.primary.label ?? undefined,
+                href: data.finalCta.primary.href ?? undefined,
+              }
+            : undefined,
+          secondary: data.finalCta.secondary
+            ? {
+                label: data.finalCta.secondary.label ?? undefined,
+                href: data.finalCta.secondary.href ?? undefined,
+              }
+            : undefined,
+        }
+      : undefined,
   };
 }
 

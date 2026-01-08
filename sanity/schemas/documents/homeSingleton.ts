@@ -275,7 +275,7 @@ export const homeSingleton = defineType({
           type: 'object',
           fields: [
             defineField({name: 'label', type: 'string'}),
-            defineField({name: 'href', type: 'url'}),
+            defineField({name: 'href', type: 'url', validation: (Rule) => Rule.uri({allowRelative: true})}),
           ],
         }),
         defineField({
@@ -284,7 +284,7 @@ export const homeSingleton = defineType({
           type: 'object',
           fields: [
             defineField({name: 'label', type: 'string'}),
-            defineField({name: 'href', type: 'url'}),
+            defineField({name: 'href', type: 'url', validation: (Rule) => Rule.uri({allowRelative: true})}),
           ],
         }),
       ],

@@ -106,6 +106,15 @@ export default async function ShotgunsLandingPage() {
 
   const disciplineClosing =
     "The concierge can map how you mount, move, and see targets to the discipline that fits you now — and the one you’re preparing for next.";
+  const disciplineRightTitle =
+    disciplineFit.rightTitle ?? "Three rhythms most clay shooters learn:";
+  const disciplineChatLabel = disciplineFit.chatLabel ?? "Ask Perazzi";
+
+  const gaugeRightTitle =
+    gaugeAdvisory.rightTitle ?? "What to compare:";
+
+  const triggerRightTitle =
+    triggerChoice.rightTitle ?? "What to Weigh:";
 
   return (
     <div className="space-y-5">
@@ -118,14 +127,14 @@ export default async function ShotgunsLandingPage() {
         eyebrow={disciplineFit.eyebrow ?? "Discipline fit"}
         heading={disciplineFit.heading ?? "The geometry of rhythm"}
         introParagraphs={disciplineParagraphs}
-        chatLabel="Ask Perazzi"
+        chatLabel={disciplineChatLabel}
         chatPayload={{
           question:
             disciplineFit.chatPrompt ??
             "Translate my main clay discipline into Perazzi geometry—rib height, stock line, point of impact, and swing speed—for Trap, Skeet, or Sporting/FITASC. Suggest where I should start.",
           context: { pageUrl: "/shotguns" },
         }}
-        rightTitle="Three rhythms most clay shooters learn:"
+        rightTitle={disciplineRightTitle}
         bullets={disciplineBullets.map((item, index) => ({
           key: item.code ?? item.label ?? `discipline-bullet-${index}`,
           label: item.label ?? item.code?.toUpperCase() ?? "Discipline",
@@ -159,7 +168,7 @@ export default async function ShotgunsLandingPage() {
           href: gaugeAdvisory.linkHref ?? landing.gaugesTeaser.href,
           label: gaugeAdvisory.linkLabel ?? "Explore gauges",
         }}
-        rightTitle="What to compare:"
+        rightTitle={gaugeRightTitle}
         bullets={(gaugeAdvisory.bullets?.length ? gaugeAdvisory.bullets : landing.gaugesTeaser.bullets).map((text) => ({
           key: text,
           text,
@@ -188,7 +197,7 @@ export default async function ShotgunsLandingPage() {
           href: triggerChoice.linkHref ?? "#trigger-explainer-heading",
           label: triggerChoice.linkLabel ?? "See trigger details",
         }}
-        rightTitle="What to Weigh:"
+        rightTitle={triggerRightTitle}
         bullets={(triggerChoice.bullets?.length
           ? triggerChoice.bullets
           : [

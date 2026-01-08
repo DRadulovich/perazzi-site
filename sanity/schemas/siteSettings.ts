@@ -1,4 +1,8 @@
-import { defineArrayMember, defineField, defineType } from "sanity";
+import { defineArrayMember, defineField, defineType, type UrlRule } from "sanity";
+
+const relativeHrefRule = (rule: UrlRule) => rule.uri({ allowRelative: true });
+const requiredRelativeHrefRule = (rule: UrlRule) =>
+  rule.required().uri({ allowRelative: true });
 
 export const siteSettings = defineType({
   name: "siteSettings",
@@ -26,7 +30,7 @@ export const siteSettings = defineType({
             defineField({
               name: "href",
               type: "url",
-              validation: (rule) => rule.required(),
+              validation: requiredRelativeHrefRule,
             }),
           ],
         }),
@@ -45,7 +49,7 @@ export const siteSettings = defineType({
             defineField({ name: "heading", type: "string" }),
             defineField({ name: "description", type: "text", rows: 3 }),
             defineField({ name: "ctaLabel", type: "string" }),
-            defineField({ name: "ctaHref", type: "url" }),
+            defineField({ name: "ctaHref", type: "url", validation: relativeHrefRule }),
             defineField({
               name: "cards",
               title: "Cards",
@@ -56,7 +60,7 @@ export const siteSettings = defineType({
                   fields: [
                     defineField({ name: "title", type: "string" }),
                     defineField({ name: "description", type: "text", rows: 2 }),
-                    defineField({ name: "href", type: "url" }),
+                    defineField({ name: "href", type: "url", validation: relativeHrefRule }),
                   ],
                 }),
               ],
@@ -85,7 +89,7 @@ export const siteSettings = defineType({
                           type: "object",
                           fields: [
                             defineField({ name: "label", type: "string" }),
-                            defineField({ name: "href", type: "url" }),
+                            defineField({ name: "href", type: "url", validation: relativeHrefRule }),
                           ],
                         }),
                       ],
@@ -95,7 +99,7 @@ export const siteSettings = defineType({
               ],
             }),
             defineField({ name: "footerCtaLabel", type: "string" }),
-            defineField({ name: "footerCtaHref", type: "url" }),
+            defineField({ name: "footerCtaHref", type: "url", validation: relativeHrefRule }),
           ],
         }),
         defineField({
@@ -106,7 +110,7 @@ export const siteSettings = defineType({
             defineField({ name: "heading", type: "string" }),
             defineField({ name: "description", type: "text", rows: 3 }),
             defineField({ name: "ctaLabel", type: "string" }),
-            defineField({ name: "ctaHref", type: "url" }),
+            defineField({ name: "ctaHref", type: "url", validation: relativeHrefRule }),
             defineField({
               name: "columns",
               title: "Columns",
@@ -124,7 +128,7 @@ export const siteSettings = defineType({
                           type: "object",
                           fields: [
                             defineField({ name: "label", type: "string" }),
-                            defineField({ name: "href", type: "url" }),
+                            defineField({ name: "href", type: "url", validation: relativeHrefRule }),
                           ],
                         }),
                       ],
@@ -148,7 +152,7 @@ export const siteSettings = defineType({
           type: "object",
           fields: [
             defineField({ name: "label", type: "string" }),
-            defineField({ name: "href", type: "url" }),
+            defineField({ name: "href", type: "url", validation: relativeHrefRule }),
           ],
         }),
       ],
@@ -159,7 +163,7 @@ export const siteSettings = defineType({
       type: "object",
       fields: [
         defineField({ name: "label", type: "string" }),
-        defineField({ name: "href", type: "url" }),
+        defineField({ name: "href", type: "url", validation: relativeHrefRule }),
       ],
     }),
     defineField({
@@ -189,7 +193,7 @@ export const siteSettings = defineType({
               type: "object",
               fields: [
                 defineField({ name: "label", type: "string" }),
-                defineField({ name: "href", type: "url" }),
+                defineField({ name: "href", type: "url", validation: relativeHrefRule }),
               ],
             }),
           ],
@@ -219,6 +223,7 @@ export const siteSettings = defineType({
                         defineField({
                           name: "href",
                           type: "url",
+                          validation: relativeHrefRule,
                         }),
                       ],
                     }),

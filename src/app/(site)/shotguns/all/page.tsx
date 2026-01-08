@@ -7,6 +7,7 @@ import { ModelSearchTable } from "@/components/shotguns/ModelSearchTable";
 import { Heading, Text } from "@/components/ui";
 import { client } from "@/sanity/lib/client";
 import medalsHero from "@/../Photos/olympic-medals-1.jpg";
+import { getModelSearchPage } from "@/sanity/queries/search-pages";
 
 const modelsQuery = groq`*[_type == "allModels"] | order(name asc) {
   _id,
@@ -27,7 +28,7 @@ const modelsQuery = groq`*[_type == "allModels"] | order(name asc) {
   rib
 }`;
 
-const isNonEmptyString = (value?: string | null): value is string => Boolean(value && value.trim().length);
+const isNonEmptyString = (value?: string | null): value is string => Boolean(value?.trim().length);
 
 type ModelQueryResult = {
   _id: string;
@@ -46,14 +47,21 @@ type ModelQueryResult = {
   rib?: { type?: string; adjustableNotch?: number | null; heightMm?: number | null; styles?: string[] };
 };
 
-export const metadata: Metadata = {
-  title: "Model Search | Perazzi",
-  description:
-    "Explore every Perazzi model in one searchable database. Filter by gauge, barrel information, trigger setup, and more.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const cms = await getModelSearchPage();
+  return {
+    title: cms?.seo?.title ?? "Model Search | Perazzi",
+    description:
+      cms?.seo?.description ??
+      "Explore every Perazzi model in one searchable database. Filter by gauge, barrel information, trigger setup, and more.",
+  };
+}
 
 export default async function ModelSearchPage() {
-  const rawModels = await client.fetch<ModelQueryResult[]>(modelsQuery);
+  const [rawModels, cms] = await Promise.all([
+    client.fetch<ModelQueryResult[]>(modelsQuery),
+    getModelSearchPage(),
+  ]);
   const models = rawModels.map((model) => ({
     _id: model._id,
     name: model.name || "",
@@ -72,14 +80,22 @@ export default async function ModelSearchPage() {
     ribNotch: model.rib?.adjustableNotch ?? null,
     ribHeight: model.rib?.heightMm ?? null,
   }));
+  const heroLabel = cms?.hero?.label ?? "Model Search";
+  const heroTitle = cms?.hero?.title ?? "The Perazzi Shotguns Database";
+  const heroDescription =
+    cms?.hero?.description ??
+    "Browse every catalogued platform, grade, and gauge combination we maintain inside Sanity.\nFilter by competitive discipline or game application, then deep-dive into full-resolution\nphotography and setup specs.";
+  const heroImage = cms?.hero?.image;
+  const heroImageSrc = heroImage?.url ?? medalsHero;
+  const heroImageAlt = heroImage?.alt ?? "Perazzi Olympic medals and shotguns";
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
       <section className="relative mb-12 overflow-hidden rounded-3xl border border-white/10 bg-black/60">
         <div className="relative h-72 w-full sm:h-96 lg:h-112">
           <Image
-            src={medalsHero}
-            alt="Perazzi Olympic medals and shotguns"
+            src={heroImageSrc}
+            alt={heroImageAlt}
             fill
             priority
             className="object-cover object-top"
@@ -87,14 +103,12 @@ export default async function ModelSearchPage() {
           />
           <div className="absolute inset-0 bg-linear-to-r from-black/80 via-black/40 to-transparent" />
           <div className="absolute inset-0 flex flex-col justify-center gap-4 px-8 py-10 text-white sm:px-12 lg:px-16">
-            <Text size="label-tight" className="text-white/70">Model Search</Text>
+            <Text size="label-tight" className="text-white/70">{heroLabel}</Text>
             <Heading level={1} size="xl" className="text-white">
-              The Perazzi Shotguns Database
+              {heroTitle}
             </Heading>
             <Text className="type-section-subtitle max-w-2xl text-white/80">
-              Browse every catalogued platform, grade, and gauge combination we maintain inside Sanity.
-              Filter by competitive discipline or game application, then deep-dive into full-resolution
-              photography and setup specs.
+              {heroDescription}
             </Text>
           </div>
         </div>

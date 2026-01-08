@@ -95,6 +95,8 @@ export default async function ExperiencePage() {
     "Draft a plan for a Perazzi fitting or Botticino visit: outline the schedule, who I'll meet, what to bring, and travel or lodging options nearby.";
   const visitPlanningLinkLabel = visitPlanningBlock.linkLabel ?? "See visit options";
   const visitPlanningLinkHref = visitPlanningBlock.linkHref ?? "/experience/visit";
+  const visitPlanningRightTitle =
+    visitPlanningBlock.rightTitle ?? "What the concierge can line up:";
 
   const fittingGuidanceHeading = fittingGuidanceBlock.heading ?? "Fitting guidance";
   const fittingGuidanceIntro =
@@ -116,6 +118,8 @@ export default async function ExperiencePage() {
     "Help me pick the right Perazzi fitting option (virtual consult, range session, or Botticino visit) and list what I should prepare before scheduling.";
   const fittingGuidanceLinkLabel = fittingGuidanceBlock.linkLabel ?? "View fitting sessions";
   const fittingGuidanceLinkHref = fittingGuidanceBlock.linkHref ?? "/experience/fitting";
+  const fittingGuidanceRightTitle =
+    fittingGuidanceBlock.rightTitle ?? "What the concierge can clarify:";
 
   const travelHeading = travelGuideBlock.heading ?? "Meet us on the road";
   const travelIntro =
@@ -137,6 +141,8 @@ export default async function ExperiencePage() {
     "Find the best way to meet Perazzi near me: upcoming travel stops, nearby authorized dealers, and what I should bring to test guns or discuss a build.";
   const travelLinkLabel = travelGuideBlock.linkLabel ?? "View schedule and dealers";
   const travelLinkHref = travelGuideBlock.linkHref ?? "#travel-network-heading";
+  const travelRightTitle =
+    travelGuideBlock.rightTitle ?? "What the concierge can organize:";
 
   return (
     <main className="space-y-12 sm:space-y-16">
@@ -171,7 +177,7 @@ export default async function ExperiencePage() {
             context: { pageUrl: "/experience", mode: "prospect" },
           }}
           link={{ href: visitPlanningLinkHref, label: visitPlanningLinkLabel }}
-          rightTitle="What the concierge can line up:"
+          rightTitle={visitPlanningRightTitle}
           bullets={visitPlanningBullets}
           closing={visitPlanningClosing}
         />
@@ -188,7 +194,7 @@ export default async function ExperiencePage() {
           context: { pageUrl: "/experience", mode: "prospect" },
         }}
         link={{ href: fittingGuidanceLinkHref, label: fittingGuidanceLinkLabel }}
-        rightTitle="What the concierge can clarify:"
+        rightTitle={fittingGuidanceRightTitle}
         bullets={fittingGuidanceBullets}
         closing={fittingGuidanceClosing}
       />
@@ -204,7 +210,7 @@ export default async function ExperiencePage() {
           context: { pageUrl: "/experience", mode: "prospect" },
         }}
         link={{ href: travelLinkHref, label: travelLinkLabel }}
-        rightTitle="What the concierge can organize:"
+        rightTitle={travelRightTitle}
         bullets={travelBullets}
         closing={travelClosing}
       />

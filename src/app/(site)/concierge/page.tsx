@@ -1,5 +1,6 @@
 import { ConciergePageShell } from "@/components/concierge/ConciergePageShell";
 import { ConciergeHero } from "@/components/concierge/ConciergeHero";
+import { getConciergePage } from "@/sanity/queries/concierge";
 
 const conciergeHero: Parameters<typeof ConciergeHero>[0]["hero"] = {
   eyebrow: "Perazzi Concierge",
@@ -33,11 +34,28 @@ const conciergeHero: Parameters<typeof ConciergeHero>[0]["hero"] = {
   ],
 };
 
-export default function ConciergePage() {
+export default async function ConciergePage() {
+  const cms = await getConciergePage();
+  const fallbackBullets = conciergeHero.bullets;
+  const cmsBullets = cms?.hero?.bullets
+    ?.map((bullet, index) => ({
+      title: bullet.title ?? fallbackBullets[index]?.title ?? "",
+      body: bullet.body ?? fallbackBullets[index]?.body ?? "",
+    }))
+    .filter((bullet) => bullet.title || bullet.body);
+  const useCmsBullets = Boolean(cmsBullets?.length && cmsBullets.length >= fallbackBullets.length);
+  const hero = {
+    eyebrow: cms?.hero?.eyebrow ?? conciergeHero.eyebrow,
+    title: cms?.hero?.title ?? conciergeHero.title,
+    subheading: cms?.hero?.subheading ?? conciergeHero.subheading,
+    background: cms?.hero?.background ?? conciergeHero.background,
+    bullets: useCmsBullets ? cmsBullets! : fallbackBullets,
+  };
+
   return (
     <div className="space-y-12">
-      <ConciergeHero hero={conciergeHero} />
-      <ConciergePageShell />
+      <ConciergeHero hero={hero} />
+      <ConciergePageShell drawerUi={cms?.drawerUi ?? undefined} />
     </div>
   );
 }

@@ -35,6 +35,8 @@ type HeritageHomeResponse = {
     title?: string;
     quote?: string;
     attribution?: string;
+    audioSrc?: string;
+    transcriptHtml?: string;
     image?: SanityImageResult;
   }>;
   heritageIntro?: {
@@ -160,6 +162,8 @@ export interface HeritageHomePayload {
     title?: string;
     quote?: string;
     attribution?: string;
+    audioSrc?: string;
+    transcriptHtml?: string;
     image?: FactoryAsset;
   }>;
 }
@@ -293,6 +297,8 @@ const heritageHomeQuery = groq`
       title,
       quote,
       attribution,
+      audioSrc,
+      transcriptHtml,
       image{
         ${imageWithMetaFields}
       }
@@ -447,6 +453,8 @@ export async function getHeritageHome(): Promise<HeritageHomePayload | null> {
         title: entry.title ?? undefined,
         quote: entry.quote ?? undefined,
         attribution: entry.attribution ?? undefined,
+        audioSrc: entry.audioSrc ?? undefined,
+        transcriptHtml: entry.transcriptHtml ?? undefined,
         image: mapImageResult(entry.image ?? null),
       })),
   };

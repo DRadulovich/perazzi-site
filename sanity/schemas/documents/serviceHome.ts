@@ -150,7 +150,12 @@ export const serviceHome = defineType({
         defineField({ name: 'description', title: 'Description', type: 'text' }),
         defineField({ name: 'buttonLabel', title: 'Button Label', type: 'string' }),
         defineField({ name: 'embedUrl', title: 'Embed URL', type: 'url' }),
-        defineField({ name: 'fallbackUrl', title: 'Fallback URL', type: 'url' }),
+        defineField({
+          name: 'fallbackUrl',
+          title: 'Fallback URL',
+          type: 'url',
+          validation: (Rule) => Rule.uri({ allowRelative: true }),
+        }),
       ],
     }),
     defineField({
@@ -164,7 +169,12 @@ export const serviceHome = defineType({
         defineField({ name: 'primaryButtonLabel', title: 'Primary Button Label', type: 'string' }),
         defineField({ name: 'secondaryButtonLabel', title: 'Secondary Button Label', type: 'string' }),
         defineField({ name: 'embedUrl', title: 'Embed URL', type: 'url' }),
-        defineField({ name: 'fallbackUrl', title: 'Fallback URL', type: 'url' }),
+        defineField({
+          name: 'fallbackUrl',
+          title: 'Fallback URL',
+          type: 'url',
+          validation: (Rule) => Rule.uri({ allowRelative: true }),
+        }),
       ],
     }),
     defineField({

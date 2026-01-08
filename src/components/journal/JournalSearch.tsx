@@ -3,9 +3,16 @@
 import { useEffect, useState } from "react";
 import { logAnalytics } from "@/lib/analytics";
 import { Button, Input } from "@/components/ui";
+import { useSiteSettings } from "@/components/site-settings-context";
 
 export function JournalSearch() {
   const [term, setTerm] = useState("");
+  const { journalUi } = useSiteSettings();
+  const searchUi = journalUi?.search;
+  const label = searchUi?.label ?? "Search the journal";
+  const placeholder = searchUi?.placeholder ?? "Stories, interviews, news…";
+  const buttonLabel = searchUi?.buttonLabel ?? "Search";
+
   useEffect(() => {
     if (!term) return;
     const preview = setTimeout(() => {
@@ -24,17 +31,17 @@ export function JournalSearch() {
       }}
     >
       <label className="flex w-full flex-col type-label-tight text-ink">
-        <span>Search the journal</span>
+        <span>{label}</span>
         <Input
           type="search"
           value={term}
           onChange={(event) => { setTerm(event.target.value); }}
           className="mt-1"
-          placeholder="Stories, interviews, news…"
+          placeholder={placeholder}
         />
       </label>
       <Button type="submit" size="sm">
-        Search
+        {buttonLabel}
       </Button>
     </form>
   );

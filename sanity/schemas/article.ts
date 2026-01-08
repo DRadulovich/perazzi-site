@@ -22,6 +22,37 @@ export const article = defineType({
       rows: 3,
     }),
     defineField({
+      name: "dekHtml",
+      title: "Deck / subheading (HTML)",
+      type: "text",
+      rows: 3,
+      description: "Optional. Supports inline HTML for the article header.",
+    }),
+    defineField({
+      name: "author",
+      type: "reference",
+      to: [{ type: "author" }],
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "publishedAt",
+      title: "Publish Date",
+      type: "date",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "readingTimeMins",
+      title: "Reading Time (minutes)",
+      type: "number",
+      validation: (rule) => rule.required().min(1),
+    }),
+    defineField({
+      name: "category",
+      type: "reference",
+      to: [{ type: "journalCategory" }],
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
       name: "soulQuestion",
       title: "Soul Question",
       type: "text",

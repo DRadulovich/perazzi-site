@@ -1,17 +1,24 @@
+"use client";
+
 import Link from "next/link";
 import SafeHtml from "@/components/SafeHtml";
 import { Heading, Text } from "@/components/ui";
 import type { JournalCategoryData } from "@/types/journal";
+import { useSiteSettings } from "@/components/site-settings-context";
 
 type CategoryHeaderProps = Readonly<{
   header: JournalCategoryData["header"];
 }>;
 
 export function CategoryHeader({ header }: CategoryHeaderProps) {
+  const { journalUi } = useSiteSettings();
+  const categoryLabel = journalUi?.categoryLabel ?? "Journal";
+  const featuredLabel = journalUi?.featuredLabel ?? "Featured:";
+
   return (
     <header className="space-y-3">
       <Text size="label-tight" muted>
-        Journal
+        {categoryLabel}
       </Text>
       <Heading level={1} size="xl" className="text-ink">
         {header.title}
@@ -24,7 +31,7 @@ export function CategoryHeader({ header }: CategoryHeaderProps) {
       ) : null}
       {header.featured ? (
         <Text size="md" className="text-ink">
-          Featured:{" "}
+          {featuredLabel}{" "}
           <Link
             href={`/journal/${header.featured.slug}`}
             className="text-perazzi-red focus-ring"

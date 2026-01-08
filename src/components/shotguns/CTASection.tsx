@@ -6,8 +6,10 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { logAnalytics } from "@/lib/analytics";
 import { homeMotion } from "@/lib/motionConfig";
+import { useSiteSettings } from "@/components/site-settings-context";
 
 type CTASectionProps = {
+  readonly heading?: string;
   readonly text: string;
   readonly primary: { readonly label: string; readonly href: string };
   readonly secondary?: { readonly label: string; readonly href: string };
@@ -18,6 +20,7 @@ type CTASectionProps = {
 const MotionSection = motion.create(Section);
 
 export function CTASection({
+  heading,
   text,
   primary,
   secondary,
@@ -25,6 +28,7 @@ export function CTASection({
   analyticsPrefix,
 }: CTASectionProps) {
   const analyticsRef = useAnalyticsObserver(dataAnalyticsId);
+  const { ctaDefaults } = useSiteSettings();
   const prefersReducedMotion = useReducedMotion();
   const [reduceMotion, setReduceMotion] = useState(false);
 
@@ -76,7 +80,7 @@ export function CTASection({
       >
         <motion.div variants={item}>
           <Heading id="shotguns-cta-heading" level={2} size="xl" className="text-ink">
-            Begin your fitting
+            {heading ?? ctaDefaults?.heading ?? "Begin your fitting"}
           </Heading>
         </motion.div>
         <motion.div variants={item}>

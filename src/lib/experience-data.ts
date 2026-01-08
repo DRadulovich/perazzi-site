@@ -90,6 +90,7 @@ function mergeConciergeBlock(
 ): ConciergeBlock {
   return {
     heading: cmsBlock?.heading ?? fallbackBlock.heading,
+    rightTitle: cmsBlock?.rightTitle ?? fallbackBlock.rightTitle,
     intro: cmsBlock?.intro ?? fallbackBlock.intro,
     bullets: cmsBlock?.bullets?.length ? cmsBlock.bullets : fallbackBlock.bullets,
     closing: cmsBlock?.closing ?? fallbackBlock.closing,

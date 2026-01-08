@@ -9,6 +9,7 @@ import { imageFields, imageWithMetaFields, mapImageResult, type SanityImageResul
 
 type ConciergeBlockResponse = {
   heading?: string | null;
+  rightTitle?: string | null;
   intro?: string | null;
   bullets?: string[] | null;
   closing?: string | null;
@@ -245,6 +246,7 @@ const experienceHomeQuery = groq`
     },
     visitPlanningBlock{
       heading,
+      rightTitle,
       intro,
       bullets[],
       closing,
@@ -255,6 +257,7 @@ const experienceHomeQuery = groq`
     },
     fittingGuidanceBlock{
       heading,
+      rightTitle,
       intro,
       bullets[],
       closing,
@@ -265,6 +268,7 @@ const experienceHomeQuery = groq`
     },
     travelGuideBlock{
       heading,
+      rightTitle,
       intro,
       bullets[],
       closing,
@@ -366,6 +370,7 @@ function mapConciergeBlock(block?: ConciergeBlockResponse | null): ConciergeBloc
 
   return {
     heading: block.heading ?? undefined,
+    rightTitle: block.rightTitle ?? undefined,
     intro: block.intro ?? undefined,
     bullets: block.bullets ?? undefined,
     closing: block.closing ?? undefined,

@@ -1,5 +1,5 @@
-import Link from "next/link";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import type { Article } from "@/types/journal";
 import { ArticleHero } from "@/components/journal/ArticleHero";
 import { PortableBody } from "@/components/journal/PortableBody";
@@ -12,7 +12,9 @@ import {
   getJournalArticleData,
   getJournalArticleSlugs,
 } from "@/lib/journal-data";
-import { Heading, Text } from "@/components/ui";
+
+export const dynamicParams = true;
+export const revalidate = 60;
 
 type ArticlePageProps = {
   params: { slug: string };
@@ -52,20 +54,7 @@ export async function generateMetadata({ params }: ArticlePageProps): Promise<Me
 export default async function ArticlePage({ params }: ArticlePageProps) {
   const data = await getJournalArticleData(params.slug);
   if (!data) {
-    return (
-      <div className="space-y-6 rounded-3xl border border-border/70 bg-card/70 p-6 text-ink shadow-soft sm:p-8">
-        <Heading level={1} size="xl">
-          Article coming soon
-        </Heading>
-        <Text size="lg" muted>
-          We&apos;re shaping this story now. Check back shortly or explore other Journal features.
-        </Text>
-        <Link href="/journal" className="type-button inline-flex items-center gap-2 text-perazzi-red focus-ring">
-          Return to Journal{" "}
-          <span aria-hidden="true">→</span>
-        </Link>
-      </div>
-    );
+    notFound();
   }
 
   const { article, author, related } = data;

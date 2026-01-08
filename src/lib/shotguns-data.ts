@@ -154,8 +154,12 @@ function applyDisciplineFitAdvisory(target: ShotgunsSectionData, landing: Shotgu
       landing.disciplineFitAdvisory.paragraphs?.length
         ? landing.disciplineFitAdvisory.paragraphs
         : target.landing.disciplineFitAdvisory?.paragraphs,
+    chatLabel:
+      landing.disciplineFitAdvisory.chatLabel ?? target.landing.disciplineFitAdvisory?.chatLabel,
     chatPrompt:
       landing.disciplineFitAdvisory.chatPrompt ?? target.landing.disciplineFitAdvisory?.chatPrompt,
+    rightTitle:
+      landing.disciplineFitAdvisory.rightTitle ?? target.landing.disciplineFitAdvisory?.rightTitle,
     bullets:
       landing.disciplineFitAdvisory.bullets?.length
         ? landing.disciplineFitAdvisory.bullets
@@ -189,6 +193,7 @@ function applyGaugeSelectionAdvisory(
     chatPrompt: landing.gaugeSelectionAdvisory.chatPrompt ?? target.landing.gaugeSelectionAdvisory?.chatPrompt,
     linkLabel: landing.gaugeSelectionAdvisory.linkLabel ?? target.landing.gaugeSelectionAdvisory?.linkLabel,
     linkHref: landing.gaugeSelectionAdvisory.linkHref ?? target.landing.gaugeSelectionAdvisory?.linkHref,
+    rightTitle: landing.gaugeSelectionAdvisory.rightTitle ?? target.landing.gaugeSelectionAdvisory?.rightTitle,
     bullets: landing.gaugeSelectionAdvisory.bullets?.length
       ? landing.gaugeSelectionAdvisory.bullets
       : fallbackBullets,
@@ -206,6 +211,7 @@ function applyTriggerChoiceAdvisory(target: ShotgunsSectionData, landing: Shotgu
     chatPrompt: landing.triggerChoiceAdvisory.chatPrompt ?? target.landing.triggerChoiceAdvisory?.chatPrompt,
     linkLabel: landing.triggerChoiceAdvisory.linkLabel ?? target.landing.triggerChoiceAdvisory?.linkLabel,
     linkHref: landing.triggerChoiceAdvisory.linkHref ?? target.landing.triggerChoiceAdvisory?.linkHref,
+    rightTitle: landing.triggerChoiceAdvisory.rightTitle ?? target.landing.triggerChoiceAdvisory?.rightTitle,
     bullets:
       landing.triggerChoiceAdvisory.bullets?.length
         ? landing.triggerChoiceAdvisory.bullets

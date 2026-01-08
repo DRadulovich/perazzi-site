@@ -69,6 +69,15 @@ type BuildInfoRequestPayload = {
   model?: string;
 };
 
+type DrawerUi = {
+  panelLabel?: string;
+  panelTitle?: string;
+  loadingMessage?: string;
+  emptyMessage?: string;
+  viewMoreLabel?: string;
+  closeLabel?: string;
+};
+
 const FIELD_DESCRIPTIONS: Record<string, string> = {
   FRAME_SIZE: "Choose the frame size that defines core architecture and which gauges/platforms are possible.",
   PLATFORM: "Pick the platform family (MX, HT, TM, DC) that matches your shooting style and recoil/handling feel.",
@@ -180,7 +189,7 @@ const buildSafeEngravingsPayload = (query: string, byGrade = false): EngravingRe
   return byGrade ? { grade: cleaned } : { id: cleaned };
 };
 
-export function ConciergePageShell() {
+export function ConciergePageShell({ drawerUi }: Readonly<{ drawerUi?: DrawerUi }>) {
   const locale = useLocale();
   const prefersReducedMotion = useReducedMotion();
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -1172,6 +1181,7 @@ export function ConciergePageShell() {
           error={infoError}
           onSelect={(card) => setSelectedInfoCard(card)}
           onClose={() => setDetailsDrawerOpen(false)}
+          ui={drawerUi}
         />
       )}
       {buildSheetDrawerOpen && (

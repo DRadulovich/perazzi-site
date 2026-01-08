@@ -235,6 +235,8 @@ export const heritageHome = defineType({
             defineField({ name: 'title', type: 'string', validation: (Rule) => Rule.required() }),
             defineField({ name: 'quote', type: 'text' }),
             defineField({ name: 'attribution', type: 'string' }),
+            defineField({ name: 'audioSrc', title: 'Audio URL', type: 'string' }),
+            defineField({ name: 'transcriptHtml', title: 'Transcript (HTML)', type: 'text' }),
             defineField({ name: 'image', type: 'imageWithMeta' }),
           ],
         },

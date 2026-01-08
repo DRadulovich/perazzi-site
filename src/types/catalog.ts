@@ -126,7 +126,9 @@ export interface ShotgunsLandingData {
     eyebrow?: string;
     heading?: string;
     paragraphs?: string[];
+    chatLabel?: string;
     chatPrompt?: string;
+    rightTitle?: string;
     bullets?: Array<{ code?: string; label?: string; description?: string }>;
   };
   disciplines: Array<
@@ -155,6 +157,7 @@ export interface ShotgunsLandingData {
     chatPrompt?: string;
     linkLabel?: string;
     linkHref?: string;
+    rightTitle?: string;
     bullets?: string[];
     closing?: string;
   };
@@ -165,6 +168,7 @@ export interface ShotgunsLandingData {
     chatPrompt?: string;
     linkLabel?: string;
     linkHref?: string;
+    rightTitle?: string;
     bullets?: string[];
     closing?: string;
   };

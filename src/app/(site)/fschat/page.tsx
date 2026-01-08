@@ -3,40 +3,44 @@ import { SiteShell } from "@/components/site-shell";
 import { FullScreenChat } from "@/components/chat/FullScreenChat";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
+import { getFullScreenChatPage } from "@/sanity/queries/full-screen-chat";
 
 type FullScreenChatPageProps = Readonly<{
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }>;
 
-export const metadata: Metadata = {
-  title: "Perazzi Concierge – Full Screen",
-  description: "A focused, full-screen view of the Perazzi concierge chat experience.",
-  manifest: "/fschat/manifest.webmanifest",
-  appleWebApp: {
-    capable: true,
-    title: "pgpt_debug",
-    statusBarStyle: "black-translucent",
-  },
-  icons: {
-    apple: [
-      {
-        url: "/pwa-admin/apple-touch-icon-180.png",
-        sizes: "180x180",
-        type: "image/png",
-      },
-      {
-        url: "/pwa-admin/apple-touch-icon-167.png",
-        sizes: "167x167",
-        type: "image/png",
-      },
-      {
-        url: "/pwa-admin/apple-touch-icon-152.png",
-        sizes: "152x152",
-        type: "image/png",
-      },
-    ],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const cms = await getFullScreenChatPage();
+  return {
+    title: cms?.seo?.title ?? "Perazzi Concierge – Full Screen",
+    description: cms?.seo?.description ?? "A focused, full-screen view of the Perazzi concierge chat experience.",
+    manifest: "/fschat/manifest.webmanifest",
+    appleWebApp: {
+      capable: true,
+      title: "pgpt_debug",
+      statusBarStyle: "black-translucent",
+    },
+    icons: {
+      apple: [
+        {
+          url: "/pwa-admin/apple-touch-icon-180.png",
+          sizes: "180x180",
+          type: "image/png",
+        },
+        {
+          url: "/pwa-admin/apple-touch-icon-167.png",
+          sizes: "167x167",
+          type: "image/png",
+        },
+        {
+          url: "/pwa-admin/apple-touch-icon-152.png",
+          sizes: "152x152",
+          type: "image/png",
+        },
+      ],
+    },
+  };
+}
 
 export default async function FullScreenChatPage({ searchParams }: FullScreenChatPageProps) {
   const resolvedParams = (await searchParams) ?? {};
@@ -47,6 +51,12 @@ export default async function FullScreenChatPage({ searchParams }: FullScreenCha
     null;
 
   const initialPrompt = promptParam?.trim() ? { question: promptParam.trim() } : null;
+  const cms = await getFullScreenChatPage();
+  const headerLabel = cms?.header?.label ?? "Perazzi Concierge";
+  const headerTitle = cms?.header?.title ?? "Full-screen conversation";
+  const headerDescription =
+    cms?.header?.description ??
+    "A focused view of the concierge without the floating drawer. Use it to test the experience or\nshare a direct link with a prefilled question.";
 
   return (
     <SiteShell
@@ -56,14 +66,13 @@ export default async function FullScreenChatPage({ searchParams }: FullScreenCha
     >
       <div className="border-b border-subtle bg-card px-6 py-6 sm:px-8 sm:py-8 lg:px-12">
         <Text size="label-tight" className="text-ink-muted">
-          Perazzi Concierge
+          {headerLabel}
         </Text>
         <Heading level={1} size="display" className="text-ink">
-          Full-screen conversation
+          {headerTitle}
         </Heading>
         <Text className="mt-2 max-w-3xl text-ink-muted">
-          A focused view of the concierge without the floating drawer. Use it to test the experience or
-          share a direct link with a prefilled question.
+          {headerDescription}
         </Text>
       </div>
       <div className="flex flex-1 px-0 py-6 sm:px-6 lg:px-12">

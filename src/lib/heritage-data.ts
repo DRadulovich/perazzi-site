@@ -208,13 +208,21 @@ export const getHeritagePageData = cache(async (): Promise<HeritagePageData> => 
     }
 
     if (home?.oralHistories?.length) {
-      data.oralHistories = home.oralHistories.map((entry) => ({
-        id: entry.id,
-        title: entry.title ?? "",
-        quote: entry.quote ?? "",
-        attribution: entry.attribution ?? "",
-        image: entry.image,
-      }));
+      const fallbackMap = new Map(
+        (data.oralHistories ?? []).map((entry) => [entry.id, entry]),
+      );
+      data.oralHistories = home.oralHistories.map((entry) => {
+        const fallback = fallbackMap.get(entry.id);
+        return {
+          id: entry.id,
+          title: entry.title ?? fallback?.title ?? "",
+          quote: entry.quote ?? fallback?.quote ?? "",
+          attribution: entry.attribution ?? fallback?.attribution ?? "",
+          audioSrc: entry.audioSrc ?? fallback?.audioSrc,
+          transcriptHtml: entry.transcriptHtml ?? fallback?.transcriptHtml,
+          image: entry.image ?? fallback?.image,
+        };
+      });
     }
 
     data.oralHistoriesUi = {

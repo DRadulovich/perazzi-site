@@ -12,6 +12,28 @@ import {
   type SanityImageResult,
 } from "./utils";
 
+type JournalListArticleResponse = {
+  _id?: string;
+  title?: string;
+  slug?: { current?: string };
+  excerpt?: string;
+  dekHtml?: string;
+  heroImage?: SanityImageResult;
+  author?: { _id?: string; name?: string };
+  publishedAt?: string;
+  readingTimeMins?: number;
+  tags?: string[];
+  category?: { _id?: string; key?: string; title?: string };
+};
+
+type JournalSectionResponse = {
+  key?: string;
+  title?: string;
+  subtitleHtml?: string;
+  viewAllHref?: string;
+  items?: JournalListArticleResponse[];
+};
+
 type JournalLandingResponse = {
   hero?: {
     title?: string;
@@ -21,19 +43,25 @@ type JournalLandingResponse = {
   featuredArticle?: {
     _id?: string;
     title?: string;
-    slug?: string;
+    slug?: { current?: string };
     heroImage?: SanityImageResult;
   };
+  sections?: JournalSectionResponse[];
 };
 
 type JournalArticleResponse = {
   _id?: string;
   title?: string;
   slug?: { current?: string };
+  dekHtml?: string;
   excerpt?: string;
   body?: PortableTextBlock[];
   heroImage?: SanityImageResult;
   tags?: string[];
+  publishedAt?: string;
+  readingTimeMins?: number;
+  author?: AuthorResponse;
+  category?: { _id?: string; key?: string; title?: string };
   relations?: {
     champions?: Array<{ _ref?: string }>;
     platforms?: Array<{ _ref?: string }>;
@@ -49,6 +77,32 @@ type AuthorResponse = {
   headshot?: SanityImageResult;
 };
 
+type JournalCategoryResponse = {
+  key?: string;
+  title?: string;
+  subtitleHtml?: string;
+  featuredArticle?: {
+    _id?: string;
+    title?: string;
+    slug?: { current?: string };
+  };
+  items?: JournalListArticleResponse[];
+};
+
+export interface JournalListArticlePayload {
+  id: string;
+  title?: string;
+  slug?: string;
+  excerpt?: string;
+  dekHtml?: string;
+  hero?: FactoryAsset;
+  author?: { id?: string; name?: string };
+  publishedAt?: string;
+  readingTimeMins?: number;
+  tags?: string[];
+  categoryKey?: string;
+}
+
 export interface JournalLandingPayload {
   hero?: {
     title?: string;
@@ -61,16 +115,28 @@ export interface JournalLandingPayload {
     slug?: string;
     hero?: FactoryAsset;
   };
+  sections?: Array<{
+    key?: string;
+    title?: string;
+    subtitleHtml?: string;
+    viewAllHref?: string;
+    items?: JournalListArticlePayload[];
+  }>;
 }
 
 export interface JournalArticlePayload {
   id: string;
   title?: string;
   slug?: string;
+  dekHtml?: string;
   excerpt?: string;
   bodyPortableText?: PortableTextBlock[];
   hero?: FactoryAsset;
   tags?: string[];
+  author?: JournalAuthorPayload;
+  publishedAt?: string;
+  readingTimeMins?: number;
+  categoryKey?: string;
   relations?: {
     champions?: string[];
     platforms?: string[];
@@ -86,6 +152,18 @@ export interface JournalAuthorPayload {
   headshot?: FactoryAsset;
 }
 
+export interface JournalCategoryPayload {
+  key?: string;
+  title?: string;
+  subtitleHtml?: string;
+  featuredArticle?: {
+    id: string;
+    title?: string;
+    slug?: string;
+  };
+  items?: JournalListArticlePayload[];
+}
+
 const journalLandingQuery = groq`
   *[_type == "journalLanding"][0]{
     hero{
@@ -98,9 +176,30 @@ const journalLandingQuery = groq`
     featuredArticle->{
       _id,
       title,
-      "slug": slug.current,
+      slug,
       heroImage{
         ${imageFields}
+      }
+    },
+    sections[]{
+      key,
+      title,
+      subtitleHtml,
+      viewAllHref,
+      items[]->{
+        _id,
+        title,
+        slug,
+        dekHtml,
+        excerpt,
+        heroImage{
+          ${imageFields}
+        },
+        "author": author->{ _id, name },
+        publishedAt,
+        readingTimeMins,
+        tags,
+        "category": category->{ _id, key, title }
       }
     }
   }
@@ -111,12 +210,25 @@ const articlesQuery = groq`
     _id,
     title,
     slug,
+    dekHtml,
     excerpt,
     body,
     heroImage{
       ${imageFields}
     },
     tags,
+    publishedAt,
+    readingTimeMins,
+    author->{
+      _id,
+      name,
+      slug,
+      bioHtml,
+      headshot{
+        ${imageWithMetaFields}
+      }
+    },
+    category->{ _id, key, title },
     relations
   }
 `;
@@ -132,6 +244,71 @@ const authorBySlugQuery = groq`
     }
   }
 `;
+
+const categoriesQuery = groq`
+  *[_type == "journalCategory"]{
+    key,
+    title,
+    subtitleHtml,
+    featuredArticle->{
+      _id,
+      title,
+      slug
+    },
+    items[]->{
+      _id,
+      title,
+      slug,
+      dekHtml,
+      excerpt,
+      heroImage{
+        ${imageFields}
+      },
+      "author": author->{ _id, name },
+      publishedAt,
+      readingTimeMins,
+      tags,
+      "category": category->{ _id, key, title }
+    }
+  }
+`;
+
+const mapAuthorResponse = (author?: AuthorResponse | null): JournalAuthorPayload | undefined => {
+  if (!author?._id) return undefined;
+  return {
+    id: author._id,
+    name: author.name ?? undefined,
+    slug: author.slug?.current ?? undefined,
+    bioHtml: author.bioHtml ?? undefined,
+    headshot: mapImageResult(author.headshot ?? null),
+  };
+};
+
+const mapListArticle = (article?: JournalListArticleResponse | null): JournalListArticlePayload | undefined => {
+  if (!article?._id) return undefined;
+  return {
+    id: article._id,
+    title: article.title ?? undefined,
+    slug: article.slug?.current ?? undefined,
+    excerpt: article.excerpt ?? undefined,
+    dekHtml: article.dekHtml ?? undefined,
+    hero: mapImageResult(article.heroImage ?? null),
+    author: article.author?._id
+      ? {
+          id: article.author._id,
+          name: article.author.name ?? undefined,
+        }
+      : undefined,
+    publishedAt: article.publishedAt ?? undefined,
+    readingTimeMins: article.readingTimeMins ?? undefined,
+    tags: article.tags ?? undefined,
+    categoryKey: article.category?.key ?? undefined,
+  };
+};
+
+function isDefined<T>(value: T): value is NonNullable<T> {
+  return value !== null && value !== undefined;
+}
 
 export async function getJournalLanding(): Promise<JournalLandingPayload | null> {
   const result = await sanityFetch({
@@ -153,10 +330,19 @@ export async function getJournalLanding(): Promise<JournalLandingPayload | null>
       ? {
           id: data.featuredArticle._id,
           title: data.featuredArticle.title ?? undefined,
-          slug: data.featuredArticle.slug ?? undefined,
+          slug: data.featuredArticle.slug?.current ?? undefined,
           hero: mapImageResult(data.featuredArticle.heroImage ?? null),
         }
       : undefined,
+    sections: data.sections?.map((section) => ({
+      key: section.key ?? undefined,
+      title: section.title ?? undefined,
+      subtitleHtml: section.subtitleHtml ?? undefined,
+      viewAllHref: section.viewAllHref ?? undefined,
+      items: (section.items ?? [])
+        .map(mapListArticle)
+        .filter(isDefined),
+    })),
   };
 }
 
@@ -173,10 +359,15 @@ export async function getArticles(): Promise<JournalArticlePayload[]> {
       id: article._id,
       title: article.title ?? undefined,
       slug: article.slug?.current ?? undefined,
+      dekHtml: article.dekHtml ?? undefined,
       excerpt: article.excerpt ?? undefined,
       bodyPortableText: article.body,
       hero: mapImageResult(article.heroImage ?? null),
       tags: article.tags ?? undefined,
+      author: mapAuthorResponse(article.author ?? null),
+      publishedAt: article.publishedAt ?? undefined,
+      readingTimeMins: article.readingTimeMins ?? undefined,
+      categoryKey: article.category?.key ?? undefined,
       relations: article.relations
         ? {
             champions: article.relations.champions?.map((ref) => ref._ref).filter(Boolean) as string[] | undefined,
@@ -197,11 +388,31 @@ export async function getAuthor(slug: string): Promise<JournalAuthorPayload | nu
   const data = (result?.data as AuthorResponse | null) ?? null;
   if (!data?._id) return null;
 
-  return {
-    id: data._id,
-    name: data.name ?? undefined,
-    slug: data.slug?.current ?? undefined,
-    bioHtml: data.bioHtml ?? undefined,
-    headshot: mapImageResult(data.headshot ?? null),
-  };
+  return mapAuthorResponse(data) ?? null;
+}
+
+export async function getJournalCategories(): Promise<JournalCategoryPayload[]> {
+  const result = await sanityFetch({
+    query: categoriesQuery,
+    stega: true,
+  }).catch(() => ({ data: [] }));
+  const data = (result?.data as JournalCategoryResponse[] | null) ?? null;
+
+  return (data ?? [])
+    .filter((category): category is JournalCategoryResponse & { key: string } => Boolean(category.key))
+    .map((category) => ({
+      key: category.key ?? undefined,
+      title: category.title ?? undefined,
+      subtitleHtml: category.subtitleHtml ?? undefined,
+      featuredArticle: category.featuredArticle?._id
+        ? {
+            id: category.featuredArticle._id,
+            title: category.featuredArticle.title ?? undefined,
+            slug: category.featuredArticle.slug?.current ?? undefined,
+          }
+        : undefined,
+      items: (category.items ?? [])
+        .map(mapListArticle)
+        .filter(isDefined),
+    }));
 }

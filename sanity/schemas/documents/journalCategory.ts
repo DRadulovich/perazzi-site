@@ -1,4 +1,4 @@
-import {defineField, defineType} from 'sanity'
+import {defineArrayMember, defineField, defineType} from 'sanity'
 
 export const journalCategory = defineType({
   name: 'journalCategory',
@@ -26,6 +26,18 @@ export const journalCategory = defineType({
       title: 'Featured Article',
       type: 'reference',
       to: [{ type: 'article' }],
+    }),
+    defineField({
+      name: 'items',
+      title: 'Articles',
+      type: 'array',
+      of: [
+        defineArrayMember({
+          type: 'reference',
+          to: [{ type: 'article' }],
+        }),
+      ],
+      validation: (Rule) => Rule.min(1).warning('Add at least one article'),
     }),
   ],
 })

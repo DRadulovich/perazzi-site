@@ -20,6 +20,15 @@ type InfoCard = {
   optionValue?: string;
 };
 
+type DrawerUi = {
+  panelLabel?: string;
+  panelTitle?: string;
+  loadingMessage?: string;
+  emptyMessage?: string;
+  viewMoreLabel?: string;
+  closeLabel?: string;
+};
+
 type SanityDetailsDrawerProps = Readonly<{
   open: boolean;
   cards: readonly InfoCard[];
@@ -28,11 +37,27 @@ type SanityDetailsDrawerProps = Readonly<{
   error?: string | null;
   onSelect?: (card: InfoCard) => void;
   onClose?: () => void;
+  ui?: DrawerUi;
 }>;
 
-export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error, onSelect, onClose }: SanityDetailsDrawerProps) {
+export function SanityDetailsDrawer({
+  open,
+  cards,
+  selectedCard,
+  loading,
+  error,
+  onSelect,
+  onClose,
+  ui,
+}: SanityDetailsDrawerProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const backdropRef = useRef<HTMLButtonElement | null>(null);
+  const panelLabel = ui?.panelLabel ?? "Sanity Data";
+  const panelTitle = ui?.panelTitle ?? "Details for the current step";
+  const loadingMessage = ui?.loadingMessage ?? "Loading details…";
+  const emptyMessage = ui?.emptyMessage ?? "No details available.";
+  const viewMoreLabel = ui?.viewMoreLabel ?? "View more";
+  const closeLabel = ui?.closeLabel ?? "Close";
 
   useEffect(() => {
     if (open && containerRef.current) {
@@ -64,13 +89,13 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
   } else if (loading) {
     content = (
       <Text className="text-ink-muted" leading="relaxed">
-        Loading details…
+        {loadingMessage}
       </Text>
     );
   } else if (cards.length === 0) {
     content = (
       <Text className="text-ink-muted" leading="relaxed">
-        No details available.
+        {emptyMessage}
       </Text>
     );
   } else {
@@ -104,7 +129,7 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
                   {card.title}
                 </Heading>
                 <span className="type-label-tight text-perazzi-red">
-                  View more
+                  {viewMoreLabel}
                 </span>
               </div>
               {card.description ? (
@@ -162,10 +187,10 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
         <div className="flex items-center justify-between border-b border-border bg-card/80 px-4 py-3 backdrop-blur-md sm:px-6">
           <div>
             <Text size="label-tight" className="text-ink-muted" leading="normal">
-              Sanity Data
+              {panelLabel}
             </Text>
             <Text className="text-ink" leading="normal">
-              Details for the current step
+              {panelTitle}
             </Text>
           </div>
           {onClose ? (
@@ -174,7 +199,7 @@ export function SanityDetailsDrawer({ open, cards, selectedCard, loading, error,
               onClick={onClose}
               className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 type-button text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
             >
-              Close
+              {closeLabel}
             </button>
           ) : null}
         </div>

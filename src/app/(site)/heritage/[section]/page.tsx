@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { PageHeading } from "@/components/page-heading";
 import { Text } from "@/components/ui/text";
+import { getHeritageSection, getHeritageSectionSlugs } from "@/sanity/queries/heritage-sections";
 
 const heritageSections = {
   timeline: {
@@ -22,18 +23,24 @@ const heritageSections = {
 
 type HeritageSectionSlug = keyof typeof heritageSections;
 
-export function generateStaticParams() {
-  return Object.keys(heritageSections).map((section) => ({ section }));
+export async function generateStaticParams() {
+  const cmsSlugs = await getHeritageSectionSlugs();
+  const slugs = cmsSlugs.length ? cmsSlugs : Object.keys(heritageSections);
+  return slugs.map((section) => ({ section }));
 }
 
-export default function HeritageSectionPage({
+export default async function HeritageSectionPage({
   params,
 }: {
-  params: { section: HeritageSectionSlug };
+  params: { section: string };
 }) {
-  const copy = heritageSections[params.section];
+  const cms = await getHeritageSection(params.section);
+  const fallback = heritageSections[params.section as HeritageSectionSlug];
+  const title = cms?.title ?? fallback?.title;
+  const description = cms?.description ?? fallback?.description;
+  const body = cms?.body ?? fallback?.body;
 
-  if (!copy) {
+  if (!title && !description && !body) {
     notFound();
   }
 
@@ -41,11 +48,11 @@ export default function HeritageSectionPage({
     <div className="space-y-6">
       <PageHeading
         kicker="Heritage"
-        title={copy.title}
-        description={copy.description}
+        title={title ?? "Heritage"}
+        description={description ?? ""}
       />
       <Text className="max-w-3xl text-ink-muted">
-        {copy.body}
+        {body ?? ""}
       </Text>
     </div>
   );

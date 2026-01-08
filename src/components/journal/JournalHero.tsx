@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import type { JournalLandingData } from "@/types/journal";
+import { useSiteSettings } from "@/components/site-settings-context";
 
 type JournalHeroProps = Readonly<{
   hero: JournalLandingData["hero"];
@@ -14,6 +15,7 @@ type JournalHeroProps = Readonly<{
 
 export function JournalHero({ hero, breadcrumbs }: JournalHeroProps) {
   const analyticsRef = useAnalyticsObserver("HeroSeen:journal");
+  const { journalUi } = useSiteSettings();
   const containerRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
   const ratio = hero.background.aspectRatio ?? 16 / 9;
@@ -34,6 +36,7 @@ export function JournalHero({ hero, breadcrumbs }: JournalHeroProps) {
     },
     [analyticsRef],
   );
+  const heroLabel = journalUi?.heroLabel ?? "Journal";
 
   return (
     <motion.section
@@ -69,7 +72,7 @@ export function JournalHero({ hero, breadcrumbs }: JournalHeroProps) {
           ) : null}
           <div className="space-y-4">
             <p className="type-label text-white/70">
-              Journal
+              {heroLabel}
             </p>
             <h1 className="text-balance type-display">
               {hero.title}

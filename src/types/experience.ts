@@ -90,6 +90,7 @@ export interface FAQSection {
 
 export interface ConciergeBlock {
   heading?: string;
+  rightTitle?: string;
   intro?: string;
   bullets?: string[];
   closing?: string;
