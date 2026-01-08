@@ -37,8 +37,6 @@ export function HeritageEraSection({
   headerOffset,
 }: HeritageEraSectionProps) {
   const travelEndForEvents = 0.8;
-  const forwardThreshold = 0.6;
-  const backwardThreshold = 0.4;
   const sectionRef = React.useRef<HTMLElement | null>(null);
   const eraFocusRef = React.useRef<HTMLAnchorElement | null>(null);
   const [isShortViewport, setIsShortViewport] = React.useState(false);
@@ -83,6 +81,11 @@ export function HeritageEraSection({
     onActiveEventChange?.(era.id, 0);
   }, [totalEvents, era.id, onActiveEventChange]);
 
+  const rafRef = React.useRef<number | null>(null);
+  const pendingIndexRef = React.useRef<number | null>(null);
+  const lastRatioRef = React.useRef(0);
+  const PROGRESS_BUCKET = 0.15;
+
   useMotionValueEvent(scrollYProgress, "change", (value) => {
     const progress = Math.min(1, Math.max(0, value));
     const prevProgress = lastProgressRef.current;
@@ -98,24 +101,51 @@ export function HeritageEraSection({
     const capped = Math.min(progress, travelEndForEvents);
     const segmentedProgress =
       travelEndForEvents > 0 ? capped / travelEndForEvents : 0;
+    const quantizedProgress = Math.max(
+      0,
+      Math.min(
+        1,
+        Math.round(segmentedProgress / PROGRESS_BUCKET) * PROGRESS_BUCKET,
+      ),
+    );
+
+    if (quantizedProgress === lastRatioRef.current) {
+      return;
+    }
+    lastRatioRef.current = quantizedProgress;
 
     const eventSpan = totalEvents > 1 ? totalEvents - 1 : 1;
-    const eventPosition = segmentedProgress * eventSpan;
+    const targetIndex = Math.min(
+      totalEvents - 1,
+      Math.max(0, Math.round(quantizedProgress * eventSpan)),
+    );
 
-    const currentIndex = activeEventRef.current;
-    const nextIndex = Math.min(totalEvents - 1, currentIndex + 1);
-    const prevIndex = Math.max(0, currentIndex - 1);
+    if (pendingIndexRef.current === targetIndex || activeEventRef.current === targetIndex) {
+      return;
+    }
 
-    if (eventPosition > currentIndex + forwardThreshold && nextIndex !== currentIndex) {
+    pendingIndexRef.current = targetIndex;
+
+    if (rafRef.current !== null) return;
+
+    rafRef.current = globalThis.requestAnimationFrame(() => {
+      rafRef.current = null;
+      const nextIndex = pendingIndexRef.current;
+      if (nextIndex === null) return;
+      pendingIndexRef.current = null;
       activeEventRef.current = nextIndex;
       setActiveEventIndex(nextIndex);
       onActiveEventChange?.(era.id, nextIndex);
-    } else if (eventPosition < currentIndex - (1 - backwardThreshold) && prevIndex !== currentIndex) {
-      activeEventRef.current = prevIndex;
-      setActiveEventIndex(prevIndex);
-      onActiveEventChange?.(era.id, prevIndex);
-    }
+    });
   });
+
+  React.useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) {
+        globalThis.cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
 
   if (prefersReducedMotion) {
     return (
