@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
@@ -8,36 +8,63 @@ export const useParallaxBackground = (enabled: boolean) => {
   const currentRef = useRef(0);
   const targetRef = useRef(0);
   const frameRef = useRef(0);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const scrollHandlerRef = useRef<(() => void) | null>(null);
+  const isActiveRef = useRef(false);
 
-  useEffect(() => {
+  const updateTarget = useCallback(() => {
     const node = ref.current;
     if (!node) return;
 
-    if (!enabled) {
-      return;
+    const rect = node.getBoundingClientRect();
+    const viewportHeight = globalThis.innerHeight || 1;
+    const offset =
+      (rect.top + rect.height / 2 - viewportHeight / 2) / viewportHeight;
+    const clamped = clamp(offset, -1, 1);
+    const eased = Math.sign(clamped) * Math.sin(Math.abs(clamped) * Math.PI / 2);
+    targetRef.current = Math.round(eased * -72);
+  }, []);
+
+  const animate = useCallback(function animateLoop() {
+    frameRef.current = 0;
+    const current = currentRef.current;
+    const target = targetRef.current;
+    const next = current + (target - current) * 0.12;
+    currentRef.current = next;
+    const node = ref.current;
+    if (node) {
+      node.style.setProperty("--parallax-y", `${Math.round(next)}px`);
     }
 
-    const updateTarget = () => {
-      const rect = node.getBoundingClientRect();
-      const viewportHeight = globalThis.innerHeight || 1;
-      const offset =
-        (rect.top + rect.height / 2 - viewportHeight / 2) / viewportHeight;
-      const clamped = clamp(offset, -1, 1);
-      const eased = Math.sign(clamped) * Math.sin(Math.abs(clamped) * Math.PI / 2);
-      targetRef.current = Math.round(eased * -72);
+    if (isActiveRef.current && Math.abs(target - next) > 0.5) {
+      frameRef.current = globalThis.requestAnimationFrame(animateLoop);
+    }
+  }, []);
+
+  useEffect(() => {
+    const node = ref.current;
+
+    const stop = () => {
+      if (!isActiveRef.current) return;
+      isActiveRef.current = false;
+      const handler = scrollHandlerRef.current;
+      if (handler) {
+        globalThis.removeEventListener("scroll", handler);
+        globalThis.removeEventListener("resize", handler);
+      }
+      if (frameRef.current) {
+        globalThis.cancelAnimationFrame(frameRef.current);
+        frameRef.current = 0;
+      }
+      scrollHandlerRef.current = null;
     };
 
-    const animate = () => {
-      frameRef.current = 0;
-      const current = currentRef.current;
-      const target = targetRef.current;
-      const next = current + (target - current) * 0.12;
-      currentRef.current = next;
-      node.style.setProperty("--parallax-y", `${Math.round(next)}px`);
-      if (Math.abs(target - next) > 0.5) {
-        frameRef.current = globalThis.requestAnimationFrame(animate);
-      }
-    };
+    if (!node || !enabled) {
+      stop();
+      observerRef.current?.disconnect();
+      observerRef.current = null;
+      return () => stop();
+    }
 
     const onScroll = () => {
       updateTarget();
@@ -46,19 +73,39 @@ export const useParallaxBackground = (enabled: boolean) => {
       }
     };
 
-    onScroll();
-    globalThis.addEventListener("scroll", onScroll, { passive: true });
-    globalThis.addEventListener("resize", onScroll);
+    scrollHandlerRef.current = onScroll;
+
+    const start = () => {
+      if (isActiveRef.current) return;
+      isActiveRef.current = true;
+      updateTarget();
+      onScroll();
+      globalThis.addEventListener("scroll", onScroll, { passive: true });
+      globalThis.addEventListener("resize", onScroll);
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            start();
+          } else {
+            stop();
+          }
+        }
+      },
+      { rootMargin: "120% 0px 120% 0px" },
+    );
+
+    observer.observe(node);
+    observerRef.current = observer;
 
     return () => {
-      globalThis.removeEventListener("scroll", onScroll);
-      globalThis.removeEventListener("resize", onScroll);
-      if (frameRef.current) {
-        globalThis.cancelAnimationFrame(frameRef.current);
-        frameRef.current = 0;
-      }
+      stop();
+      observer.disconnect();
+      observerRef.current = null;
     };
-  }, [enabled]);
+  }, [enabled, animate, updateTarget]);
 
   return ref;
 };
