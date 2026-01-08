@@ -15,6 +15,8 @@ type SectionRevealSmokeProps = Readonly<{
 
 type SmokePointer = { x: number; y: number };
 
+const MIN_MOVE_THRESHOLD = 2;
+
 const canEnableSmoke = () => {
   const reduceMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)");
   if (reduceMotion?.matches) return false;
@@ -24,6 +26,11 @@ const canEnableSmoke = () => {
 
   const pointerQuery = globalThis.matchMedia?.("(pointer: fine)");
   if (!pointerQuery?.matches) return false;
+
+  const connection = (globalThis.navigator as Navigator & {
+    connection?: { saveData?: boolean };
+  })?.connection;
+  if (connection?.saveData) return false;
 
   return true;
 };
@@ -37,47 +44,77 @@ const observeResize = (target: HTMLElement, onResize: () => void) => {
 
 const usePortalTarget = (anchorRef: RefObject<HTMLButtonElement | null>) => {
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     const anchor = anchorRef.current;
     if (!anchor) return;
-    const container = anchor.closest("section");
-    if (container instanceof HTMLElement) {
-      setPortalTarget(container);
+    const section = anchor.closest("section");
+    if (section instanceof HTMLElement) {
+      setPortalTarget(section);
     }
   }, [anchorRef]);
 
-  return portalTarget;
+  useEffect(() => {
+    if (!portalTarget) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.some((entry) => entry.isIntersecting);
+        setIsVisible(visible);
+      },
+      { rootMargin: "120% 0px 120% 0px" },
+    );
+
+    observer.observe(portalTarget);
+    return () => {
+      observer.disconnect();
+      setIsVisible(false);
+    };
+  }, [portalTarget]);
+
+  return { portalTarget, isVisible };
 };
 
 const useSmokeSimulation = (
   canvasRef: RefObject<HTMLCanvasElement | null>,
   portalTarget: HTMLElement | null,
+  enabled: boolean,
 ) => {
   const pointerRef = useRef<SmokePointer>({ x: 0, y: 0 });
   const dprRef = useRef(1);
   const stopTimeoutRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
+  const smokeRef = useRef<ReturnType<typeof createFluidSmoke> | null>(null);
+  const hasMovedRef = useRef(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || !portalTarget) return;
-    if (!canEnableSmoke()) return;
+    if (!canvas || !portalTarget || !enabled) return;
 
-    const smoke = createFluidSmoke(canvas, {
-      baseColor: [0.15, 0.15, 0.15],
-      colorJitter: 0.2,
-    });
-
-    const resizeCanvas = () => {
+    const resizeCanvas = (smoke: ReturnType<typeof createFluidSmoke>) => {
       const rect = portalTarget.getBoundingClientRect();
       const dpr = Math.min(globalThis.devicePixelRatio || 1, 2);
       dprRef.current = dpr;
       smoke.resize(rect.width, rect.height, dpr);
     };
 
-    resizeCanvas();
+    const ensureSmoke = () => {
+      if (smokeRef.current) return smokeRef.current;
+      const smoke = createFluidSmoke(canvas, {
+        baseColor: [0.15, 0.15, 0.15],
+        colorJitter: 0.2,
+      });
+      smokeRef.current = smoke;
+      resizeCanvas(smoke);
+      return smoke;
+    };
 
-    const resizeObserver = observeResize(portalTarget, resizeCanvas);
+    const resizeObserver = observeResize(portalTarget, () => {
+      const smoke = smokeRef.current;
+      if (smoke) {
+        resizeCanvas(smoke);
+      }
+    });
 
     const clearStopTimer = () => {
       if (stopTimeoutRef.current !== null) {
@@ -90,30 +127,37 @@ const useSmokeSimulation = (
       const rect = portalTarget.getBoundingClientRect();
       const rawX = event.clientX - rect.left;
       const rawY = event.clientY - rect.top;
+      const dx = rawX - pointerRef.current.x;
+      const dy = rawY - pointerRef.current.y;
       const scale = dprRef.current;
-      const dx = (rawX - pointerRef.current.x) * scale * 4;
-      const dy = (rawY - pointerRef.current.y) * scale * 4;
+      const delta = Math.hypot(dx, dy);
 
       pointerRef.current.x = rawX;
       pointerRef.current.y = rawY;
 
+      if (!hasMovedRef.current && delta < MIN_MOVE_THRESHOLD) return;
+      hasMovedRef.current = true;
+
+      const smoke = ensureSmoke();
       smoke.start();
-      smoke.setPointer(rawX * scale, rawY * scale, dx, dy, true);
+      smoke.setPointer(rawX * scale, rawY * scale, dx * scale * 4, dy * scale * 4, true);
     };
 
     const handlePointerEnter = (event: PointerEvent) => {
       clearStopTimer();
-      smoke.start();
       const rect = portalTarget.getBoundingClientRect();
       const rawX = event.clientX - rect.left;
       const rawY = event.clientY - rect.top;
       pointerRef.current.x = rawX;
       pointerRef.current.y = rawY;
+      hasMovedRef.current = false;
+      const smoke = ensureSmoke();
       smoke.setPointer(rawX * dprRef.current, rawY * dprRef.current, 0, 0, true);
     };
 
     const handlePointerLeave = () => {
-      smoke.setPointer(
+      const smoke = smokeRef.current;
+      smoke?.setPointer(
         pointerRef.current.x * dprRef.current,
         pointerRef.current.y * dprRef.current,
         0,
@@ -121,8 +165,9 @@ const useSmokeSimulation = (
         false,
       );
       clearStopTimer();
+      hasMovedRef.current = false;
       stopTimeoutRef.current = globalThis.setTimeout(() => {
-        smoke.stop();
+        smoke?.stop();
       }, 5000);
     };
 
@@ -138,18 +183,20 @@ const useSmokeSimulation = (
       portalTarget.removeEventListener("pointercancel", handlePointerLeave);
       resizeObserver?.disconnect();
       clearStopTimer();
-      smoke.destroy();
+      smokeRef.current?.destroy();
+      smokeRef.current = null;
     };
-  }, [portalTarget, canvasRef]);
+  }, [portalTarget, canvasRef, enabled]);
 };
 
 export function SectionRevealSmoke({ anchorRef }: SectionRevealSmokeProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const portalTarget = usePortalTarget(anchorRef);
+  const { portalTarget, isVisible } = usePortalTarget(anchorRef);
+  const shouldRender = Boolean(portalTarget && isVisible && canEnableSmoke());
 
-  useSmokeSimulation(canvasRef, portalTarget);
+  useSmokeSimulation(canvasRef, portalTarget, shouldRender);
 
-  if (!portalTarget) return null;
+  if (!portalTarget || !shouldRender) return null;
 
   return createPortal(
     <div className="section-reveal-smoke" aria-hidden="true">
