@@ -363,25 +363,6 @@
     animation: section-reveal-cta-glint 1400ms ease-out 1;
   }
 
-  section[data-tease-active="true"] [data-reveal-collapsed] {
-    transform: translateY(-1px);
-  }
-
-  section[data-tease-active="true"] [data-reveal-collapsed] .section-reveal-cta {
-    border-color: rgba(255, 255, 255, 1);
-    background-color: rgba(255, 255, 255, 0.9);
-    color: #DB1022;
-  }
-
-  section[data-tease-active="true"] [data-reveal-collapsed] .section-reveal-collapsed-text:not(.section-reveal-cta) {
-    text-shadow:
-      0 3px 12px rgba(0, 0, 0, 0.75),
-      0 18px 46px rgba(0, 0, 0, 0.65);
-  }
-
-  section[data-tease-active="true"] .section-backdrop-overlay {
-    opacity: 0.45;
-  }
 
   @keyframes reveal-body {
     to {
@@ -433,10 +414,6 @@
     pointer-events: none;
   }
 
-  section[data-tease-active="true"] .section-backdrop-media {
-    transform: scale(1);
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .section-reveal-smoke {
       display: none;
@@ -444,6 +421,7 @@
     .section-backdrop-media {
       transition: none;
       transform: scale(1);
+      opacity: 1;
     }
     .section-backdrop-overlay {
       transition: none;
@@ -469,9 +447,6 @@
     section[data-reveal-invite="true"] [data-reveal-collapsed] .section-reveal-cta,
     section[data-reveal-invite="true"] [data-reveal-collapsed] .section-reveal-cta-glint {
       animation: none;
-    }
-    section[data-tease-active="true"] [data-reveal-collapsed] {
-      transform: none;
     }
     .choreo-group .choreo-item {
       animation: none;

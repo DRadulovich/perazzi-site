@@ -4,7 +4,6 @@ import {
   useEffect,
   useLayoutEffect,
   useRef,
-  type SyntheticEvent,
   type MouseEvent,
 } from "react";
 import { Heading } from "../heading";
@@ -69,30 +68,9 @@ export function RevealCollapsedHeader({
     };
   }, []);
 
-  const activateTease = (event: SyntheticEvent<HTMLButtonElement>) => {
-    const section = event.currentTarget.closest("section");
-    if (!section) return;
-
-    section.dataset.teaseActive = "true";
-    if (section.dataset.teaseBound === "true") return;
-
-    const clearTease = (leaveEvent?: Event) => {
-      if (leaveEvent?.type === "focusout") {
-        const nextTarget = (leaveEvent as FocusEvent).relatedTarget;
-        if (nextTarget && section.contains(nextTarget as Node)) return;
-      }
-      delete section.dataset.teaseActive;
-    };
-
-    section.addEventListener("mouseleave", clearTease);
-    section.addEventListener("focusout", clearTease);
-    section.dataset.teaseBound = "true";
-  };
-
   const handleExpand = (event: MouseEvent<HTMLButtonElement>) => {
     const section = event.currentTarget.closest("section");
     if (section) {
-      delete section.dataset.teaseActive;
       section.dataset.revealExpanding = "true";
     }
     onExpand();
@@ -103,14 +81,11 @@ export function RevealCollapsedHeader({
       <SectionRevealSmoke anchorRef={buttonRef} />
       <button
         type="button"
-        className="group relative z-10 flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl px-4 py-3 text-center transition-transform duration-300 focus-ring"
+        className="relative z-10 flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl px-4 py-3 text-center transition-transform duration-300 focus-ring"
         onClick={handleExpand}
-        onPointerEnter={activateTease}
-        onFocus={activateTease}
         aria-expanded={expanded}
         aria-controls={controlsId}
         aria-labelledby={headingId}
-        data-tease-trigger
         data-reveal-collapsed
         ref={buttonRef}
       >
@@ -138,7 +113,7 @@ export function RevealCollapsedHeader({
           <Text
             asChild
             size="button"
-            className="section-reveal-collapsed-text section-reveal-cta relative isolate inline-flex items-center justify-center overflow-hidden rounded-sm border border-white/40 bg-white/10 px-4 py-2 text-white/90 shadow-soft backdrop-blur-sm transition-colors duration-200 group-hover:border-white/60 group-hover:bg-white/15 group-hover:text-white group-focus-visible:border-white/60 group-focus-visible:bg-white/15 group-focus-visible:text-white"
+            className="section-reveal-collapsed-text section-reveal-cta relative isolate inline-flex items-center justify-center overflow-hidden rounded-sm border border-white/40 bg-white/10 px-4 py-2 text-white/90 shadow-soft backdrop-blur-sm transition-colors duration-200"
           >
             <span>
               <span className="section-reveal-cta-label">{readMoreLabel}</span>
