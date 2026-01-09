@@ -3,8 +3,9 @@
 import type React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale } from "next-intl";
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion, type Transition } from "framer-motion";
 import { ConversationView } from "@/components/chat/ConversationView";
+import type { ChatEntry } from "@/components/chat/useChatState";
 import { usePerazziAssistant } from "@/hooks/usePerazziAssistant";
 import { GuardrailNotice } from "@/components/concierge/GuardrailNotice";
 import type { GuardrailStatus } from "@/components/concierge/GuardrailNotice";
@@ -171,6 +172,27 @@ const ENGRAVINGS_ENDPOINT = "/api/engravings";
 const BUILD_INFO_ENDPOINT = "/api/build-info";
 const SAFE_ENGRAVING_QUERY = /^[\w\s\-./()']+$/;
 const MAX_ENGRAVING_QUERY_LENGTH = 100;
+const SAVES_KEY = "perazzi-build-saves";
+
+type DisplayOption = {
+  value: string;
+  label: string;
+};
+
+type HighlightedOption = {
+  fieldId: string;
+  value: string;
+};
+
+type GunField = (typeof gunOrderConfig.fields)[number];
+
+const isUnsafeQueryValue = (input?: string) => {
+  if (!input) return true;
+  return input.includes("://") || input.startsWith("//");
+};
+
+const isSafeFieldId = (fieldId: string) =>
+  /^[A-Z0-9_]+$/.test(fieldId) && !["__proto__", "prototype", "constructor"].includes(fieldId);
 
 const buildSafeEngravingsPayload = (query: string, byGrade = false): EngravingRequestPayload | null => {
   const cleaned = query.trim();
@@ -189,6 +211,874 @@ const buildSafeEngravingsPayload = (query: string, byGrade = false): EngravingRe
   return byGrade ? { grade: cleaned } : { id: cleaned };
 };
 
+type ConciergeHeaderProps = Readonly<{
+  motionEnabled: boolean;
+  revealTransition: Transition;
+}>;
+
+function ConciergeHeader({ motionEnabled, revealTransition }: ConciergeHeaderProps) {
+  return (
+    <motion.header
+      className="space-y-3"
+      initial={motionEnabled ? { opacity: 0, y: 28, filter: "blur(12px)" } : false}
+      whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+      viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
+      transition={motionEnabled ? revealTransition : undefined}
+    >
+      <Text size="label-tight" muted>
+        Perazzi Build Planner
+      </Text>
+      <div className="space-y-3">
+        <Heading level={2} size="xl" className="text-ink">
+          Designing a Perazzi, Together
+        </Heading>
+        <div className="space-y-3">
+          <Text muted>
+            This space is the closest you can come to sitting across from a Perazzi master, without leaving home. The Build Navigator
+            walks you step by step through every element of a bespoke shotgun—platform, fit, balance, aesthetics—while the Perazzi
+            Concierge listens, answers, and explains as if you were in the atelier itself.
+          </Text>
+          <Text muted>
+            A Perazzi is not a catalogue choice; it is a composition. There are more possibilities here than most guns will ever offer,
+            and that is the point. You are not expected to finish in a few minutes. You are invited to move slowly—explore each stage,
+            open the cards, press “explain these options,” ask questions, change your mind, return tomorrow and see it with fresh eyes.
+          </Text>
+          <Text muted>
+            As you progress, the system remembers where you are and responds to what you say, helping you translate your history, style,
+            and ambitions into real decisions. By the time you reach the end, you won’t just have selected options from a list—you’ll
+            have shaped an instrument with a clear purpose and a familiar soul: a Perazzi that already feels like it belongs to you.
+          </Text>
+          <Text muted>
+            If you feel unsure where to begin, that’s exactly the right place to start. Ask a simple question, open a single stage, or
+            let the Navigator suggest the next step—there is no “wrong” way to move through this process. You can speak to the assistant
+            as you would to a trusted fitter: share your habits, doubts, even the way you hope the gun will make you feel on the stand.
+            Take a few minutes or a few evenings; step away and return when you’re ready. When you’re curious, begin—and let the
+            conversation slowly reveal the Perazzi that feels like it was waiting for you.
+          </Text>
+          <Text muted>(NOTE: This immersive experience is best done on a computer, and not a mobile device.)</Text>
+        </div>
+      </div>
+    </motion.header>
+  );
+}
+
+type ConciergeConversationPanelProps = Readonly<{
+  motionEnabled: boolean;
+  revealFastTransition: Transition;
+  latestGuardrail?: GuardrailStatus;
+  pending: boolean;
+  isTyping: boolean;
+  error: string | null;
+  messages: ReadonlyArray<ChatEntry>;
+  draft: string;
+  onDraftChange: (value: string) => void;
+  onSend: () => void;
+  onClearChat: () => void;
+  onKeyDown: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+}>;
+
+function ConciergeConversationPanel({
+  motionEnabled,
+  revealFastTransition,
+  latestGuardrail,
+  pending,
+  isTyping,
+  error,
+  messages,
+  draft,
+  onDraftChange,
+  onSend,
+  onClearChat,
+  onKeyDown,
+}: ConciergeConversationPanelProps) {
+  const showSpinner = pending || isTyping;
+  const showGuardrail = latestGuardrail && latestGuardrail !== "ok";
+  return (
+    <motion.section
+      id="concierge-conversation"
+      className="flex min-h-[70vh] max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-6 lg:order-2 scroll-mt-24"
+      tabIndex={-1}
+      initial={motionEnabled ? { opacity: 0, y: 22, filter: "blur(10px)" } : false}
+      whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+      viewport={motionEnabled ? { once: true, amount: 0.25 } : undefined}
+      transition={motionEnabled ? revealFastTransition : undefined}
+    >
+      <div className="flex items-center justify-between gap-3 border-b border-border/70 pb-3">
+        <div>
+          <Text size="label-tight" muted>
+            Conversation
+          </Text>
+          <Text muted>Context carries across each message.</Text>
+        </div>
+        <div className="flex items-center gap-3">
+          {showSpinner ? (
+            <div className="flex items-center gap-2 type-label-tight text-ink-muted">
+              <span className="relative flex h-5 w-5 items-center justify-center">
+                <span className="absolute inline-flex h-full w-full animate-spin rounded-full border-2 border-border/70 border-t-transparent" />
+                <span className="inline-flex h-2 w-2 rounded-full bg-ink" />
+              </span>
+              <span>Collecting references…</span>
+            </div>
+          ) : null}
+          <button
+            type="button"
+            onClick={onClearChat}
+            className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 type-button text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
+          >
+            Clear chat
+          </button>
+        </div>
+      </div>
+      <div className="mt-4 flex-1 overflow-y-auto pr-1">
+        {showGuardrail ? (
+          <div className="mb-3">
+            <GuardrailNotice status={latestGuardrail} />
+          </div>
+        ) : null}
+        <ConversationView messages={messages} pending={pending} isTyping={isTyping} />
+      </div>
+      <div className="mt-4 space-y-2 border-t border-border/70 pt-4">
+        {error ? (
+          <Text className="text-red-600">
+            Something went wrong reaching the concierge. Please try again.
+          </Text>
+        ) : null}
+        <Text asChild size="label-tight" className="text-ink-muted">
+          <label htmlFor="concierge-question">
+            Ask the workshop
+          </label>
+        </Text>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <textarea
+            id="concierge-question"
+            value={draft}
+            onChange={(event) => onDraftChange(event.target.value)}
+            onKeyDown={onKeyDown}
+            placeholder="Ask about platforms, fitting, service, or heritage…"
+            className="min-h-24 flex-1 rounded-2xl border border-border bg-card/70 px-3 py-2 type-body-sm text-ink shadow-soft backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+            disabled={pending}
+          />
+          <button
+            type="button"
+            onClick={onSend}
+            className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-2xl bg-brand px-4 py-2 type-button text-card shadow-soft ring-1 ring-black/10 transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-70"
+            disabled={pending || !draft.trim()}
+          >
+            Send
+          </button>
+        </div>
+      </div>
+    </motion.section>
+  );
+}
+
+type StepOptionButtonProps = Readonly<{
+  label: string;
+  isHighlighted: boolean;
+  motionEnabled: boolean;
+  onClick: () => void;
+}>;
+
+function StepOptionButton({ label, isHighlighted, motionEnabled, onClick }: StepOptionButtonProps) {
+  let highlightOverlay: React.ReactNode = null;
+  if (isHighlighted) {
+    highlightOverlay = motionEnabled ? (
+      <motion.span
+        layoutId="concierge-step-highlight"
+        className="absolute inset-0 bg-card/85"
+        transition={homeMotion.springHighlight}
+        aria-hidden="true"
+      />
+    ) : (
+      <span className="absolute inset-0 bg-card/85" aria-hidden="true" />
+    );
+  }
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      className={clsx(
+        "relative w-full overflow-hidden rounded-xl border bg-card/60 px-3 py-2 text-left type-title-sm shadow-soft transition focus-ring",
+        isHighlighted
+          ? "border-ink/40 text-ink"
+          : "border-border/70 text-ink-muted hover:border-ink/30 hover:bg-card/80 hover:text-ink",
+      )}
+      initial={false}
+    >
+      {highlightOverlay}
+      <span className="relative z-10">{label}</span>
+    </motion.button>
+  );
+}
+
+type StepOptionsListProps = Readonly<{
+  options: DisplayOption[];
+  nextFieldId: string;
+  highlightedOption: HighlightedOption | null;
+  onHighlightOption: (fieldId: string, value: string) => void;
+  motionEnabled: boolean;
+}>;
+
+function StepOptionsList({
+  options,
+  nextFieldId,
+  highlightedOption,
+  onHighlightOption,
+  motionEnabled,
+}: StepOptionsListProps) {
+  return (
+    <LayoutGroup id="concierge-step-options">
+      <div className="grid gap-2">
+        {options.map((opt) => {
+          const isHighlighted =
+            highlightedOption?.fieldId === nextFieldId && highlightedOption.value === opt.value;
+          return (
+            <StepOptionButton
+              key={opt.value}
+              label={opt.label}
+              isHighlighted={isHighlighted}
+              motionEnabled={motionEnabled}
+              onClick={() => onHighlightOption(nextFieldId, opt.value)}
+            />
+          );
+        })}
+      </div>
+    </LayoutGroup>
+  );
+}
+
+type StepActionsProps = Readonly<{
+  selectDisabled: boolean;
+  onSelect: () => void;
+  onOpenDetails: () => void;
+  infoLoading: boolean;
+  onExplain: () => void;
+}>;
+
+function StepActions({ selectDisabled, onSelect, onOpenDetails, infoLoading, onExplain }: StepActionsProps) {
+  return (
+    <>
+      <button
+        type="button"
+        onClick={onSelect}
+        className="mt-2 inline-flex w-full min-h-10 items-center justify-center rounded-full bg-brand px-3 py-2 text-center type-button text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+        disabled={selectDisabled}
+      >
+        Select
+      </button>
+      <button
+        type="button"
+        onClick={onOpenDetails}
+        className="mt-2 inline-flex w-full min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-center type-button text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
+      >
+        {infoLoading ? "Loading details…" : "View More Details"}
+      </button>
+      <button
+        type="button"
+        onClick={onExplain}
+        className="mt-2 inline-flex w-full min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-center type-button text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
+      >
+        Explain these options
+      </button>
+    </>
+  );
+}
+
+type CurrentBuildCategoryCardProps = Readonly<{
+  nextField?: GunField;
+}>;
+
+function CurrentBuildCategoryCard({ nextField }: CurrentBuildCategoryCardProps) {
+  return (
+    <div className="space-y-2 rounded-2xl border border-border/70 bg-card/60 px-3 py-3 shadow-soft backdrop-blur-sm">
+      <Text size="label-tight" muted>
+        Current Build Category
+      </Text>
+      <Text className="text-ink" leading="normal">
+        {nextField ? nextField.section || "Unknown" : "Complete"}
+      </Text>
+    </div>
+  );
+}
+
+type EngravingStatusMessageProps = Readonly<{
+  nextFieldId?: string;
+  displayOptionsLength: number;
+  grade?: string;
+  loading: boolean;
+  error: string | null;
+}>;
+
+function EngravingStatusMessage({
+  nextFieldId,
+  displayOptionsLength,
+  grade,
+  loading,
+  error,
+}: EngravingStatusMessageProps) {
+  if (nextFieldId !== "ENGRAVING" || displayOptionsLength > 0) return null;
+  if (!grade) {
+    return (
+      <Text muted>
+        Choose a grade first and we’ll load engravings for that grade here.
+      </Text>
+    );
+  }
+  if (loading) {
+    return <Text muted>Loading engravings…</Text>;
+  }
+  if (error) {
+    return (
+      <Text size="sm" className="text-red-600" leading="normal">
+        {error}
+      </Text>
+    );
+  }
+  return (
+    <Text muted>
+      No engravings found for grade {grade}.
+    </Text>
+  );
+}
+
+type CurrentStepCardProps = Readonly<{
+  nextField?: GunField;
+  displayOptions: DisplayOption[];
+  highlightedOption: HighlightedOption | null;
+  onHighlightOption: (fieldId: string, value: string) => void;
+  onSelectHighlighted: () => void;
+  onOpenDetails: () => void;
+  infoLoading: boolean;
+  onExplainCurrent: () => void;
+  buildStateGrade?: string;
+  engravingLoading: boolean;
+  engravingError: string | null;
+  motionEnabled: boolean;
+}>;
+
+function CurrentStepCard({
+  nextField,
+  displayOptions,
+  highlightedOption,
+  onHighlightOption,
+  onSelectHighlighted,
+  onOpenDetails,
+  infoLoading,
+  onExplainCurrent,
+  buildStateGrade,
+  engravingLoading,
+  engravingError,
+  motionEnabled,
+}: CurrentStepCardProps) {
+  if (!nextField) {
+    return <Text muted>All steps completed.</Text>;
+  }
+
+  const description = FIELD_DESCRIPTIONS[nextField.id];
+  const hasOptions = displayOptions.length > 0;
+  const selectDisabled = !highlightedOption || highlightedOption.fieldId !== nextField.id;
+  const emptyState = nextField.id === "ENGRAVING" ? (
+    <EngravingStatusMessage
+      nextFieldId={nextField.id}
+      displayOptionsLength={displayOptions.length}
+      grade={buildStateGrade}
+      loading={engravingLoading}
+      error={engravingError}
+    />
+  ) : (
+    <Text muted>
+      No valid options available based on current selections.
+    </Text>
+  );
+
+  return (
+    <>
+      <Text className="type-title-sm text-ink">
+        {getFieldLabel(nextField.id)}
+      </Text>
+      {description ? (
+        <Text muted>{description}</Text>
+      ) : null}
+      {hasOptions ? (
+        <>
+          <StepOptionsList
+            options={displayOptions}
+            nextFieldId={nextField.id}
+            highlightedOption={highlightedOption}
+            onHighlightOption={onHighlightOption}
+            motionEnabled={motionEnabled}
+          />
+          <StepActions
+            selectDisabled={selectDisabled}
+            onSelect={onSelectHighlighted}
+            onOpenDetails={onOpenDetails}
+            infoLoading={infoLoading}
+            onExplain={onExplainCurrent}
+          />
+        </>
+      ) : (
+        <div className="space-y-2">
+          {emptyState}
+        </div>
+      )}
+    </>
+  );
+}
+
+type NextStepContentProps = Readonly<{
+  nextFieldAfterCurrent?: GunField;
+  nextField?: GunField;
+  buildState: BuildState;
+  onBuildReview: () => void;
+}>;
+
+function NextStepContent({ nextFieldAfterCurrent, nextField, buildState, onBuildReview }: NextStepContentProps) {
+  if (nextFieldAfterCurrent) {
+    return (
+      <>
+        <Text className="type-title-sm text-ink">
+          {getFieldLabel(nextFieldAfterCurrent.id)}
+        </Text>
+        {FIELD_DESCRIPTIONS[nextFieldAfterCurrent.id] ? (
+          <Text muted>{FIELD_DESCRIPTIONS[nextFieldAfterCurrent.id]}</Text>
+        ) : null}
+      </>
+    );
+  }
+  if (nextField) {
+    return <Text muted>Depends on your current selection.</Text>;
+  }
+  return (
+    <div className="space-y-2">
+      <Text muted>All steps satisfied.</Text>
+      <button
+        type="button"
+        onClick={onBuildReview}
+        className="w-full rounded-full bg-brand px-4 py-2 type-button text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
+        disabled={!Object.keys(buildState).length}
+      >
+        Send build for review
+      </button>
+    </div>
+  );
+}
+
+type BuildNavigatorPanelProps = Readonly<{
+  motionEnabled: boolean;
+  revealFastTransition: Transition;
+  buildError: string | null;
+  onReset: () => void;
+  nextField?: GunField;
+  displayOptions: DisplayOption[];
+  highlightedOption: HighlightedOption | null;
+  onHighlightOption: (fieldId: string, value: string) => void;
+  onSelectHighlighted: () => void;
+  onOpenDetails: () => void;
+  infoLoading: boolean;
+  onExplainCurrent: () => void;
+  buildStateGrade?: string;
+  engravingLoading: boolean;
+  engravingError: string | null;
+  nextFieldAfterCurrent?: GunField;
+  onBuildReview: () => void;
+  buildState: BuildState;
+  onOpenBuildSheet: () => void;
+}>;
+
+function BuildNavigatorPanel({
+  motionEnabled,
+  revealFastTransition,
+  buildError,
+  onReset,
+  nextField,
+  displayOptions,
+  highlightedOption,
+  onHighlightOption,
+  onSelectHighlighted,
+  onOpenDetails,
+  infoLoading,
+  onExplainCurrent,
+  buildStateGrade,
+  engravingLoading,
+  engravingError,
+  nextFieldAfterCurrent,
+  onBuildReview,
+  buildState,
+  onOpenBuildSheet,
+}: BuildNavigatorPanelProps) {
+  return (
+    <motion.aside
+      id="concierge-navigator"
+      className="space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-6 lg:order-1 scroll-mt-24"
+      tabIndex={-1}
+      initial={motionEnabled ? { opacity: 0, y: 22, filter: "blur(10px)" } : false}
+      whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+      viewport={motionEnabled ? { once: true, amount: 0.25 } : undefined}
+      transition={motionEnabled ? revealFastTransition : undefined}
+    >
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Text size="label-tight" muted>
+            Build navigator
+          </Text>
+          <button
+            type="button"
+            className="type-button text-ink-muted transition hover:text-ink focus-ring"
+            onClick={onReset}
+          >
+            Reset
+          </button>
+        </div>
+        {buildError ? (
+          <Text size="sm" className="text-red-600" leading="normal">
+            {buildError}
+          </Text>
+        ) : null}
+
+        <CurrentBuildCategoryCard nextField={nextField} />
+
+        <div className="space-y-2 rounded-2xl border border-border/70 bg-card/60 px-3 py-3 shadow-soft backdrop-blur-sm">
+          <Text size="label-tight" muted>
+            Current step
+          </Text>
+          <CurrentStepCard
+            nextField={nextField}
+            displayOptions={displayOptions}
+            highlightedOption={highlightedOption}
+            onHighlightOption={onHighlightOption}
+            onSelectHighlighted={onSelectHighlighted}
+            onOpenDetails={onOpenDetails}
+            infoLoading={infoLoading}
+            onExplainCurrent={onExplainCurrent}
+            buildStateGrade={buildStateGrade}
+            engravingLoading={engravingLoading}
+            engravingError={engravingError}
+            motionEnabled={motionEnabled}
+          />
+        </div>
+
+        <div className="space-y-3 rounded-2xl border border-border/70 bg-card/60 px-3 py-3 shadow-soft backdrop-blur-sm">
+          <button
+            type="button"
+            onClick={onOpenBuildSheet}
+            className="w-full rounded-full border border-perazzi-red bg-perazzi-red px-3 py-2 text-center type-button text-white transition hover:border-ink hover:text-card"
+          >
+            View Build Sheet
+          </button>
+          <div className="space-y-2 rounded-2xl border border-border/70 bg-card/70 px-3 py-3 shadow-soft backdrop-blur-sm">
+            <Text size="label-tight" muted>
+              Next step
+            </Text>
+            <NextStepContent
+              nextFieldAfterCurrent={nextFieldAfterCurrent}
+              nextField={nextField}
+              buildState={buildState}
+              onBuildReview={onBuildReview}
+            />
+          </div>
+        </div>
+      </div>
+    </motion.aside>
+  );
+}
+
+type InfoModalProps = Readonly<{
+  selectedInfoCard: InfoCard | null;
+  onClose: () => void;
+  motionEnabled: boolean;
+  revealTransition: Transition;
+  revealFastTransition: Transition;
+}>;
+
+type InfoCardDetail = {
+  id: string;
+  label: string;
+  value: string;
+};
+
+const getInfoCardDetails = (card: InfoCard): InfoCardDetail[] => {
+  const details: InfoCardDetail[] = [
+    { id: "platform", label: "Platform", value: card.platform ?? "" },
+    { id: "grade", label: "Grade", value: card.grade ?? "" },
+    { id: "gauges", label: "Gauges", value: card.gauges?.join(", ") ?? "" },
+    { id: "triggerTypes", label: "Trigger types", value: card.triggerTypes?.join(", ") ?? "" },
+    { id: "recommendedPlatforms", label: "Recommended platforms", value: card.recommendedPlatforms?.join(", ") ?? "" },
+    { id: "popularModels", label: "Popular models", value: card.popularModels?.join(", ") ?? "" },
+  ];
+  return details.filter((detail) => detail.value);
+};
+
+type InfoCardImageProps = Readonly<{
+  card: InfoCard;
+}>;
+
+function InfoCardImage({ card }: InfoCardImageProps) {
+  const imageUrl = card.fullImageUrl ?? card.imageUrl;
+  if (!imageUrl) return null;
+  return (
+    <Image
+      src={imageUrl}
+      alt={card.title}
+      width={1600}
+      height={1000}
+      className="w-full rounded-2xl object-cover"
+    />
+  );
+}
+
+type InfoCardDescriptionProps = Readonly<{
+  description?: string;
+}>;
+
+function InfoCardDescription({ description }: InfoCardDescriptionProps) {
+  if (!description) return null;
+  return (
+    <Text muted className="whitespace-pre-line">
+      {description}
+    </Text>
+  );
+}
+
+type InfoCardMetadataProps = Readonly<{
+  card: InfoCard;
+}>;
+
+function InfoCardMetadata({ card }: InfoCardMetadataProps) {
+  const details = getInfoCardDetails(card);
+  if (!details.length) return null;
+  return (
+    <div className="grid gap-2">
+      {details.map((detail) => (
+        <Text asChild key={detail.id} className="text-ink" leading="normal">
+          <p>{detail.label}: {detail.value}</p>
+        </Text>
+      ))}
+    </div>
+  );
+}
+
+type InfoModalContentProps = Readonly<{
+  card: InfoCard;
+  onClose: () => void;
+  motionEnabled: boolean;
+  revealTransition: Transition;
+  revealFastTransition: Transition;
+}>;
+
+function InfoModalContent({
+  card,
+  onClose,
+  motionEnabled,
+  revealTransition,
+  revealFastTransition,
+}: InfoModalContentProps) {
+  return (
+    <motion.div
+      key="concierge-info-modal-backdrop"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 py-8"
+      initial={motionEnabled ? { opacity: 0 } : false}
+      animate={motionEnabled ? { opacity: 1 } : undefined}
+      exit={motionEnabled ? { opacity: 0 } : undefined}
+      transition={motionEnabled ? revealFastTransition : undefined}
+      onClick={onClose}
+    >
+      <motion.div
+        key={`concierge-info-modal-${card.id}`}
+        className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-border bg-card/95 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Selection details"
+        initial={motionEnabled ? { opacity: 0, y: 18, filter: "blur(12px)" } : false}
+        animate={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
+        exit={motionEnabled ? { opacity: 0, y: 10, filter: "blur(12px)" } : undefined}
+        transition={motionEnabled ? revealTransition : undefined}
+        onClick={(event) => {
+          event.stopPropagation();
+        }}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-full border border-border/70 bg-card/70 px-3 py-1 type-button text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/85 hover:text-ink"
+        >
+          Close
+        </button>
+        <div className="flex-1 space-y-4 overflow-y-auto p-6 pr-5">
+          <InfoCardImage card={card} />
+          <div className="space-y-2">
+            <Heading level={3} size="lg" className="text-ink">
+              {card.title}
+            </Heading>
+            <InfoCardDescription description={card.description} />
+            <InfoCardMetadata card={card} />
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function InfoModal({
+  selectedInfoCard,
+  onClose,
+  motionEnabled,
+  revealTransition,
+  revealFastTransition,
+}: InfoModalProps) {
+  const card = selectedInfoCard;
+  return (
+    <AnimatePresence initial={false}>
+      {card ? (
+        <InfoModalContent
+          card={card}
+          onClose={onClose}
+          motionEnabled={motionEnabled}
+          revealTransition={revealTransition}
+          revealFastTransition={revealFastTransition}
+        />
+      ) : null}
+    </AnimatePresence>
+  );
+}
+
+type DetailsDrawerSectionProps = Readonly<{
+  open: boolean;
+  cards: InfoCard[];
+  selectedCard: InfoCard | null;
+  loading: boolean;
+  error: string | null;
+  onSelect: (card: InfoCard) => void;
+  onClose: () => void;
+  drawerUi?: DrawerUi;
+}>;
+
+function DetailsDrawerSection({
+  open,
+  cards,
+  selectedCard,
+  loading,
+  error,
+  onSelect,
+  onClose,
+  drawerUi,
+}: DetailsDrawerSectionProps) {
+  if (!open) return null;
+  return (
+    <SanityDetailsDrawer
+      open={open}
+      cards={cards}
+      selectedCard={selectedCard}
+      loading={loading}
+      error={error}
+      onSelect={onSelect}
+      onClose={onClose}
+      ui={drawerUi}
+    />
+  );
+}
+
+type BuildSheetDetails = {
+  description?: string;
+  platform?: string | null;
+  grade?: string | null;
+  gauges?: string[];
+  triggerTypes?: string[];
+  recommendedPlatforms?: string[];
+  popularModels?: string[];
+  imageUrl?: string | null;
+  fullImageUrl?: string | null;
+};
+
+type BuildSheetEntry = {
+  id: string;
+  label: string;
+  value: string;
+  details?: BuildSheetDetails;
+};
+
+type BuildSheetEntriesInput = Readonly<{
+  fieldOrder: string[];
+  buildState: BuildState;
+  selectedInfoByField: Partial<Record<string, InfoCard[]>>;
+  infoByOption: Partial<Record<string, InfoCard[]>>;
+}>;
+
+const buildBuildSheetEntries = ({
+  fieldOrder,
+  buildState,
+  selectedInfoByField,
+  infoByOption,
+}: BuildSheetEntriesInput): BuildSheetEntry[] =>
+  fieldOrder
+    .filter((fid) => isSafeFieldId(fid) && buildState[fid])
+    .map((fid) => {
+      const val = buildState[fid];
+      const info = selectedInfoByField[fid] ?? infoByOption[val] ?? [];
+      const first = info[0];
+      const details = first
+        ? {
+            description: first.description,
+            platform: first.platform ?? null,
+            grade: first.grade ?? null,
+            gauges: first.gauges ?? [],
+            triggerTypes: first.triggerTypes ?? [],
+            recommendedPlatforms: first.recommendedPlatforms ?? [],
+            popularModels: first.popularModels ?? [],
+            imageUrl: first.imageUrl ?? null,
+            fullImageUrl: first.fullImageUrl ?? null,
+          }
+        : undefined;
+      return {
+        id: fid,
+        label: getFieldLabel(fid),
+        value: val,
+        details,
+      };
+    });
+
+type BuildSheetDrawerSectionProps = Readonly<{
+  open: boolean;
+  fieldOrder: string[];
+  buildState: BuildState;
+  selectedInfoByField: Partial<Record<string, InfoCard[]>>;
+  infoByOption: Partial<Record<string, InfoCard[]>>;
+  onClose: () => void;
+  onRevisit: (fieldId: string) => void;
+  onSave: () => void;
+  savedBuilds: SavedBuild[];
+  onLoadSaved: (id: string) => void;
+  onDeleteSaved: (id: string) => void;
+}>;
+
+function BuildSheetDrawerSection({
+  open,
+  fieldOrder,
+  buildState,
+  selectedInfoByField,
+  infoByOption,
+  onClose,
+  onRevisit,
+  onSave,
+  savedBuilds,
+  onLoadSaved,
+  onDeleteSaved,
+}: BuildSheetDrawerSectionProps) {
+  if (!open) return null;
+  const entries = buildBuildSheetEntries({ fieldOrder, buildState, selectedInfoByField, infoByOption });
+  return (
+    <BuildSheetDrawer
+      open={open}
+      entries={entries}
+      onClose={onClose}
+      onRevisit={onRevisit}
+      onSave={onSave}
+      savedBuilds={savedBuilds}
+      onLoadSaved={onLoadSaved}
+      onDeleteSaved={onDeleteSaved}
+    />
+  );
+}
+
 export function ConciergePageShell({ drawerUi }: Readonly<{ drawerUi?: DrawerUi }>) {
   const locale = useLocale();
   const prefersReducedMotion = useReducedMotion();
@@ -200,7 +1090,7 @@ export function ConciergePageShell({ drawerUi }: Readonly<{ drawerUi?: DrawerUi 
   const [engravingResults, setEngravingResults] = useState<EngravingResult[]>([]);
   const [engravingLoading, setEngravingLoading] = useState(false);
   const [engravingError, setEngravingError] = useState<string | null>(null);
-  const [highlightedOption, setHighlightedOption] = useState<{ fieldId: string; value: string } | null>(null);
+  const [highlightedOption, setHighlightedOption] = useState<HighlightedOption | null>(null);
   const [infoLoading, setInfoLoading] = useState(false);
   const [infoCards, setInfoCards] = useState<InfoCard[]>([]);
   const [infoByOption, setInfoByOption] = useState<Partial<Record<string, InfoCard[]>>>({});
@@ -210,10 +1100,9 @@ export function ConciergePageShell({ drawerUi }: Readonly<{ drawerUi?: DrawerUi 
   const [buildSheetDrawerOpen, setBuildSheetDrawerOpen] = useState(false);
   const [selectedInfoByField, setSelectedInfoByField] = useState<Partial<Record<string, InfoCard[]>>>({});
   const [savedBuilds, setSavedBuilds] = useState<SavedBuild[]>([]);
-  const SAVES_KEY = "perazzi-build-saves";
   const motionEnabled = !reduceMotion;
-  const revealTransition = motionEnabled ? homeMotion.reveal : { duration: 0.01 };
-  const revealFastTransition = motionEnabled ? homeMotion.revealFast : { duration: 0.01 };
+  const revealTransition: Transition = motionEnabled ? homeMotion.reveal : { duration: 0.01 };
+  const revealFastTransition: Transition = motionEnabled ? homeMotion.revealFast : { duration: 0.01 };
 
   const {
     messages,
@@ -288,12 +1177,6 @@ export function ConciergePageShell({ drawerUi }: Readonly<{ drawerUi?: DrawerUi 
     [nextField, buildState],
   );
   const fieldOrder = useMemo(() => getFieldOrder(), []);
-  const isUnsafeQueryValue = (input?: string) => {
-    if (!input) return true;
-    return input.includes("://") || input.startsWith("//");
-  };
-  const isSafeFieldId = (fieldId: string) =>
-    /^[A-Z0-9_]+$/.test(fieldId) && !["__proto__", "prototype", "constructor"].includes(fieldId);
   const buildSafeBuildInfoPayload = useCallback(
     (fieldId: string, value: string, model?: string) => {
       if (!fieldOrder.includes(fieldId) || !isSafeFieldId(fieldId) || isUnsafeQueryValue(value)) {
@@ -347,7 +1230,7 @@ export function ConciergePageShell({ drawerUi }: Readonly<{ drawerUi?: DrawerUi 
     return undefined;
   }, [nextField, fieldOrder, buildState]);
 
-  const displayOptions = useMemo(() => {
+  const displayOptions = useMemo<DisplayOption[]>(() => {
     if (nextField?.id === "ENGRAVING") {
       return engravingResults.map((engraving) => ({
         value: `${engraving.engravingId} (${engraving.engravingSide})`,
@@ -745,481 +1628,85 @@ export function ConciergePageShell({ drawerUi }: Readonly<{ drawerUi?: DrawerUi 
     return () => controller.abort();
   }, [buildSheetDrawerOpen, fieldOrder, buildState, infoByOption, selectedInfoByField, fetchInfoForSelection]);
 
-  let engravingStatusMessage: React.ReactNode = null;
-  if (nextField?.id === "ENGRAVING" && !displayOptions.length) {
-    if (!buildState.GRADE) {
-      engravingStatusMessage = (
-        <Text muted>
-          Choose a grade first and we’ll load engravings for that grade here.
-        </Text>
-      );
-    } else if (engravingLoading) {
-      engravingStatusMessage = <Text muted>Loading engravings…</Text>;
-    } else if (engravingError) {
-      engravingStatusMessage = (
-        <Text size="sm" className="text-red-600" leading="normal">
-          {engravingError}
-        </Text>
-      );
-    } else {
-      engravingStatusMessage = (
-        <Text muted>
-          No engravings found for grade {buildState.GRADE}.
-        </Text>
-      );
-    }
-  }
-
-  let nextStepContent: React.ReactNode = null;
-  if (nextFieldAfterCurrent) {
-    nextStepContent = (
-      <>
-        <Text className="type-title-sm text-ink">
-          {getFieldLabel(nextFieldAfterCurrent.id)}
-        </Text>
-        {FIELD_DESCRIPTIONS[nextFieldAfterCurrent.id] ? (
-          <Text muted>{FIELD_DESCRIPTIONS[nextFieldAfterCurrent.id]}</Text>
-        ) : null}
-      </>
-    );
-  } else if (nextField) {
-    nextStepContent = <Text muted>Depends on your current selection.</Text>;
-  } else {
-    nextStepContent = (
-      <div className="space-y-2">
-        <Text muted>All steps satisfied.</Text>
-        <button
-          type="button"
-          onClick={handleBuildReview}
-          className="w-full rounded-full bg-brand px-4 py-2 type-button text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
-          disabled={!Object.keys(buildState).length}
-        >
-          Send build for review
-        </button>
-      </div>
-    );
-  }
+  const handleHighlightOption = (fieldId: string, value: string) => {
+    setHighlightedOption({ fieldId, value });
+  };
+  const openDetailsDrawer = () => setDetailsDrawerOpen(true);
+  const closeDetailsDrawer = () => setDetailsDrawerOpen(false);
+  const openBuildSheetDrawer = () => setBuildSheetDrawerOpen(true);
+  const closeBuildSheetDrawer = () => setBuildSheetDrawerOpen(false);
+  const closeInfoModal = () => setSelectedInfoCard(null);
 
   return (
     <div className="space-y-8" id="concierge-workshop" tabIndex={-1}>
-      <motion.header
-        className="space-y-3"
-        initial={motionEnabled ? { opacity: 0, y: 28, filter: "blur(12px)" } : false}
-        whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-        viewport={motionEnabled ? { once: true, amount: 0.35 } : undefined}
-        transition={motionEnabled ? revealTransition : undefined}
-      >
-        <Text
-          size="label-tight"
-          muted
-        >
-          Perazzi Build Planner
-        </Text>
-        <div className="space-y-3">
-          <Heading level={2} size="xl" className="text-ink">
-            Designing a Perazzi, Together
-          </Heading>
-          <div className="space-y-3">
-            <Text muted>
-              This space is the closest you can come to sitting across from a Perazzi master, without leaving home. The Build Navigator
-              walks you step by step through every element of a bespoke shotgun—platform, fit, balance, aesthetics—while the Perazzi
-              Concierge listens, answers, and explains as if you were in the atelier itself.
-            </Text>
-            <Text muted>
-              A Perazzi is not a catalogue choice; it is a composition. There are more possibilities here than most guns will ever offer,
-              and that is the point. You are not expected to finish in a few minutes. You are invited to move slowly—explore each stage,
-              open the cards, press “explain these options,” ask questions, change your mind, return tomorrow and see it with fresh eyes.
-            </Text>
-            <Text muted>
-              As you progress, the system remembers where you are and responds to what you say, helping you translate your history, style,
-              and ambitions into real decisions. By the time you reach the end, you won’t just have selected options from a list—you’ll
-              have shaped an instrument with a clear purpose and a familiar soul: a Perazzi that already feels like it belongs to you.
-            </Text>
-            <Text muted>
-              If you feel unsure where to begin, that’s exactly the right place to start. Ask a simple question, open a single stage, or
-              let the Navigator suggest the next step—there is no “wrong” way to move through this process. You can speak to the assistant
-              as you would to a trusted fitter: share your habits, doubts, even the way you hope the gun will make you feel on the stand.
-              Take a few minutes or a few evenings; step away and return when you’re ready. When you’re curious, begin—and let the
-              conversation slowly reveal the Perazzi that feels like it was waiting for you.
-            </Text>
-            <Text muted>(NOTE: This immersive experience is best done on a computer, and not a mobile device.)</Text>
-          </div>
-        </div>
-      </motion.header>
-
+      <ConciergeHeader motionEnabled={motionEnabled} revealTransition={revealTransition} />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-        {/* Conversation */}
-        <motion.section
-          id="concierge-conversation"
-          className="flex min-h-[70vh] max-h-[80vh] flex-col overflow-hidden rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-6 lg:order-2 scroll-mt-24"
-          tabIndex={-1}
-          initial={motionEnabled ? { opacity: 0, y: 22, filter: "blur(10px)" } : false}
-          whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-          viewport={motionEnabled ? { once: true, amount: 0.25 } : undefined}
-          transition={motionEnabled ? revealFastTransition : undefined}
-        >
-          <div className="flex items-center justify-between gap-3 border-b border-border/70 pb-3">
-            <div>
-              <Text size="label-tight" muted>
-                Conversation
-              </Text>
-              <Text muted>Context carries across each message.</Text>
-            </div>
-            <div className="flex items-center gap-3">
-              {pending || isTyping ? (
-                <div className="flex items-center gap-2 type-label-tight text-ink-muted">
-                  <span className="relative flex h-5 w-5 items-center justify-center">
-                    <span className="absolute inline-flex h-full w-full animate-spin rounded-full border-2 border-border/70 border-t-transparent" />
-                    <span className="inline-flex h-2 w-2 rounded-full bg-ink" />
-                  </span>
-                  <span>Collecting references…</span>
-                </div>
-              ) : null}
-              <button
-                type="button"
-                onClick={handleClearChat}
-                className="inline-flex min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 type-button text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink focus-ring"
-              >
-                Clear chat
-              </button>
-            </div>
-          </div>
-          <div className="mt-4 flex-1 overflow-y-auto pr-1">
-            {latestGuardrail && latestGuardrail !== "ok" ? (
-              <div className="mb-3">
-                <GuardrailNotice status={latestGuardrail} />
-              </div>
-            ) : null}
-            <ConversationView messages={messages} pending={pending} isTyping={isTyping} />
-          </div>
-          <div className="mt-4 space-y-2 border-t border-border/70 pt-4">
-            {error ? (
-              <Text className="text-red-600">
-                Something went wrong reaching the concierge. Please try again.
-              </Text>
-            ) : null}
-            <Text asChild size="label-tight" className="text-ink-muted">
-              <label htmlFor="concierge-question">
-                Ask the workshop
-              </label>
-            </Text>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <textarea
-                id="concierge-question"
-                value={draft}
-                onChange={(event) => setDraft(event.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Ask about platforms, fitting, service, or heritage…"
-                className="min-h-24 flex-1 rounded-2xl border border-border bg-card/70 px-3 py-2 type-body-sm text-ink shadow-soft backdrop-blur-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
-                disabled={pending}
-              />
-              <button
-                type="button"
-                onClick={handleSend}
-                className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-2xl bg-brand px-4 py-2 type-button text-card shadow-soft ring-1 ring-black/10 transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:cursor-not-allowed disabled:opacity-70"
-                disabled={pending || !draft.trim()}
-              >
-                Send
-              </button>
-            </div>
-          </div>
-        </motion.section>
-
-        {/* Build Navigator */}
-        <motion.aside
-          id="concierge-navigator"
-          className="space-y-4 rounded-2xl border border-border/70 bg-card/60 p-4 shadow-soft backdrop-blur-sm sm:rounded-3xl sm:bg-card/80 sm:p-6 lg:order-1 scroll-mt-24"
-          tabIndex={-1}
-          initial={motionEnabled ? { opacity: 0, y: 22, filter: "blur(10px)" } : false}
-          whileInView={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-          viewport={motionEnabled ? { once: true, amount: 0.25 } : undefined}
-          transition={motionEnabled ? revealFastTransition : undefined}
-        >
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Text size="label-tight" muted>
-                Build navigator
-              </Text>
-              <button
-                type="button"
-                className="type-button text-ink-muted transition hover:text-ink focus-ring"
-                onClick={resetBuild}
-              >
-                Reset
-              </button>
-            </div>
-            {buildError ? (
-              <Text size="sm" className="text-red-600" leading="normal">
-                {buildError}
-              </Text>
-            ) : null}
-
-            <div className="space-y-2 rounded-2xl border border-border/70 bg-card/60 px-3 py-3 shadow-soft backdrop-blur-sm">
-              <Text size="label-tight" muted>
-                Current Build Category
-              </Text>
-              <Text className="text-ink" leading="normal">
-                {nextField ? nextField.section || "Unknown" : "Complete"}
-              </Text>
-            </div>
-
-            <div className="space-y-2 rounded-2xl border border-border/70 bg-card/60 px-3 py-3 shadow-soft backdrop-blur-sm">
-              <Text size="label-tight" muted>
-                Current step
-              </Text>
-              {nextField ? (
-                <>
-                  <Text className="type-title-sm text-ink">
-                    {getFieldLabel(nextField.id)}
-                  </Text>
-                  {FIELD_DESCRIPTIONS[nextField.id] ? (
-                    <Text muted>{FIELD_DESCRIPTIONS[nextField.id]}</Text>
-                  ) : null}
-                  {displayOptions.length ? (
-                    <>
-                      <LayoutGroup id="concierge-step-options">
-                        <div className="grid gap-2">
-                          {displayOptions.map((opt) => {
-                            const isHighlighted =
-                              highlightedOption?.fieldId === nextField.id && highlightedOption.value === opt.value;
-                            let highlightOverlay: React.ReactNode = null;
-                            if (isHighlighted) {
-                              highlightOverlay = motionEnabled ? (
-                                <motion.span
-                                  layoutId="concierge-step-highlight"
-                                  className="absolute inset-0 bg-card/85"
-                                  transition={homeMotion.springHighlight}
-                                  aria-hidden="true"
-                                />
-                              ) : (
-                                <span className="absolute inset-0 bg-card/85" aria-hidden="true" />
-                              );
-                            }
-                            return (
-                              <motion.button
-                                key={opt.value}
-                                type="button"
-                                onClick={() => {
-                                  setHighlightedOption({ fieldId: nextField.id, value: opt.value });
-                                }}
-                                className={clsx(
-                                  "relative w-full overflow-hidden rounded-xl border bg-card/60 px-3 py-2 text-left type-title-sm shadow-soft transition focus-ring",
-                                  isHighlighted
-                                    ? "border-ink/40 text-ink"
-                                    : "border-border/70 text-ink-muted hover:border-ink/30 hover:bg-card/80 hover:text-ink",
-                                )}
-                                initial={false}
-                              >
-                                {highlightOverlay}
-                                <span className="relative z-10">{opt.label ?? opt.value}</span>
-                              </motion.button>
-                            );
-                          })}
-                        </div>
-                      </LayoutGroup>
-                      <button
-                        type="button"
-                        onClick={handleSelectHighlighted}
-                        className="mt-2 inline-flex w-full min-h-10 items-center justify-center rounded-full bg-brand px-3 py-2 text-center type-button text-card transition hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-60"
-                        disabled={!highlightedOption || highlightedOption.fieldId !== nextField.id}
-                      >
-                        Select
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDetailsDrawerOpen(true);
-                        }}
-                        className="mt-2 inline-flex w-full min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-center type-button text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
-                      >
-                        {infoLoading ? "Loading details…" : "View More Details"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleExplainCurrent}
-                        className="mt-2 inline-flex w-full min-h-10 items-center justify-center rounded-full border border-border/70 bg-card/60 px-3 py-2 text-center type-button text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/80 hover:text-ink"
-                      >
-                        Explain these options
-                      </button>
-                    </>
-                  ) : (
-                    <div className="space-y-2">
-                      {engravingStatusMessage ?? (
-                        <Text muted>
-                          No valid options available based on current selections.
-                        </Text>
-                      )}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <Text muted>All steps completed.</Text>
-              )}
-            </div>
-
-            <div className="space-y-3 rounded-2xl border border-border/70 bg-card/60 px-3 py-3 shadow-soft backdrop-blur-sm">
-              <button
-                type="button"
-                onClick={() => {
-                  setBuildSheetDrawerOpen(true);
-                }}
-                className="w-full rounded-full border border-perazzi-red bg-perazzi-red px-3 py-2 text-center type-button text-white transition hover:border-ink hover:text-card"
-              >
-                View Build Sheet
-              </button>
-              <div className="space-y-2 rounded-2xl border border-border/70 bg-card/70 px-3 py-3 shadow-soft backdrop-blur-sm">
-                <Text size="label-tight" muted>
-                  Next step
-                </Text>
-                {nextStepContent}
-              </div>
-            </div>
-          </div>
-        </motion.aside>
-
-
+        <ConciergeConversationPanel
+          motionEnabled={motionEnabled}
+          revealFastTransition={revealFastTransition}
+          latestGuardrail={latestGuardrail}
+          pending={pending}
+          isTyping={isTyping}
+          error={error}
+          messages={messages}
+          draft={draft}
+          onDraftChange={setDraft}
+          onSend={handleSend}
+          onClearChat={handleClearChat}
+          onKeyDown={handleKeyDown}
+        />
+        <BuildNavigatorPanel
+          motionEnabled={motionEnabled}
+          revealFastTransition={revealFastTransition}
+          buildError={buildError}
+          onReset={resetBuild}
+          nextField={nextField}
+          displayOptions={displayOptions}
+          highlightedOption={highlightedOption}
+          onHighlightOption={handleHighlightOption}
+          onSelectHighlighted={handleSelectHighlighted}
+          onOpenDetails={openDetailsDrawer}
+          infoLoading={infoLoading}
+          onExplainCurrent={handleExplainCurrent}
+          buildStateGrade={buildState.GRADE}
+          engravingLoading={engravingLoading}
+          engravingError={engravingError}
+          nextFieldAfterCurrent={nextFieldAfterCurrent}
+          onBuildReview={handleBuildReview}
+          buildState={buildState}
+          onOpenBuildSheet={openBuildSheetDrawer}
+        />
       </div>
-      <AnimatePresence initial={false}>
-        {selectedInfoCard ? (
-          <motion.div
-            key="concierge-info-modal-backdrop"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 py-8"
-            initial={motionEnabled ? { opacity: 0 } : false}
-            animate={motionEnabled ? { opacity: 1 } : undefined}
-            exit={motionEnabled ? { opacity: 0 } : undefined}
-            transition={motionEnabled ? revealFastTransition : undefined}
-            onClick={() => {
-              setSelectedInfoCard(null);
-            }}
-          >
-            <motion.div
-              key={`concierge-info-modal-${selectedInfoCard.id}`}
-              className="relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-border bg-card/95 shadow-elevated ring-1 ring-border/70 backdrop-blur-xl"
-              role="dialog"
-              aria-modal="true"
-              aria-label="Selection details"
-              initial={motionEnabled ? { opacity: 0, y: 18, filter: "blur(12px)" } : false}
-              animate={motionEnabled ? { opacity: 1, y: 0, filter: "blur(0px)" } : undefined}
-              exit={motionEnabled ? { opacity: 0, y: 10, filter: "blur(12px)" } : undefined}
-              transition={motionEnabled ? revealTransition : undefined}
-              onClick={(event) => {
-                event.stopPropagation();
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedInfoCard(null);
-                }}
-                className="absolute right-4 top-4 rounded-full border border-border/70 bg-card/70 px-3 py-1 type-button text-ink-muted shadow-soft transition hover:border-ink/30 hover:bg-card/85 hover:text-ink"
-              >
-                Close
-              </button>
-              <div className="flex-1 space-y-4 overflow-y-auto p-6 pr-5">
-                {selectedInfoCard.imageUrl ? (
-                  <Image
-                    src={selectedInfoCard.fullImageUrl ?? selectedInfoCard.imageUrl}
-                    alt={selectedInfoCard.title}
-                    width={1600}
-                    height={1000}
-                    className="w-full rounded-2xl object-cover"
-                  />
-                ) : null}
-                <div className="space-y-2">
-                  <Heading level={3} size="lg" className="text-ink">
-                    {selectedInfoCard.title}
-                  </Heading>
-                  {selectedInfoCard.description ? (
-                    <Text muted className="whitespace-pre-line">
-                      {selectedInfoCard.description}
-                    </Text>
-                  ) : null}
-                  <div className="grid gap-2">
-                    {selectedInfoCard.platform ? (
-                      <Text asChild className="text-ink" leading="normal">
-                        <p>Platform: {selectedInfoCard.platform}</p>
-                      </Text>
-                    ) : null}
-                    {selectedInfoCard.grade ? (
-                      <Text asChild className="text-ink" leading="normal">
-                        <p>Grade: {selectedInfoCard.grade}</p>
-                      </Text>
-                    ) : null}
-                    {selectedInfoCard.gauges?.length ? (
-                      <Text asChild className="text-ink" leading="normal">
-                        <p>Gauges: {selectedInfoCard.gauges.join(", ")}</p>
-                      </Text>
-                    ) : null}
-                    {selectedInfoCard.triggerTypes?.length ? (
-                      <Text asChild className="text-ink" leading="normal">
-                        <p>Trigger types: {selectedInfoCard.triggerTypes.join(", ")}</p>
-                      </Text>
-                    ) : null}
-                    {selectedInfoCard.recommendedPlatforms?.length ? (
-                      <Text asChild className="text-ink" leading="normal">
-                        <p>Recommended platforms: {selectedInfoCard.recommendedPlatforms.join(", ")}</p>
-                      </Text>
-                    ) : null}
-                    {selectedInfoCard.popularModels?.length ? (
-                      <Text asChild className="text-ink" leading="normal">
-                        <p>Popular models: {selectedInfoCard.popularModels.join(", ")}</p>
-                      </Text>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
-      {detailsDrawerOpen && (
-        <SanityDetailsDrawer
-          open={detailsDrawerOpen}
-          cards={infoCards}
-          selectedCard={selectedInfoCard}
-          loading={infoLoading}
-          error={infoError}
-          onSelect={(card) => setSelectedInfoCard(card)}
-          onClose={() => setDetailsDrawerOpen(false)}
-          ui={drawerUi}
-        />
-      )}
-      {buildSheetDrawerOpen && (
-        <BuildSheetDrawer
-          open={buildSheetDrawerOpen}
-          entries={fieldOrder
-            .filter((fid) => isSafeFieldId(fid) && buildState[fid])
-            .map((fid) => {
-              const val = buildState[fid];
-              const info = selectedInfoByField[fid] ?? infoByOption[val] ?? [];
-              const first = info[0];
-              return {
-                id: fid,
-                label: getFieldLabel(fid),
-                value: val,
-                details: first
-                  ? {
-                      description: first.description,
-                      platform: first.platform ?? null,
-                      grade: first.grade ?? null,
-                      gauges: first.gauges ?? [],
-                      triggerTypes: first.triggerTypes ?? [],
-                      recommendedPlatforms: first.recommendedPlatforms ?? [],
-                      popularModels: first.popularModels ?? [],
-                      imageUrl: first.imageUrl ?? null,
-                      fullImageUrl: first.fullImageUrl ?? null,
-                    }
-                  : undefined,
-              };
-            })}
-          onClose={() => setBuildSheetDrawerOpen(false)}
-          onRevisit={(fid) => handleRevisitField(fid)}
-          onSave={handleSaveBuild}
-          savedBuilds={savedBuilds}
-          onLoadSaved={handleLoadSaved}
-          onDeleteSaved={handleDeleteSaved}
-        />
-      )}
+      <InfoModal
+        selectedInfoCard={selectedInfoCard}
+        onClose={closeInfoModal}
+        motionEnabled={motionEnabled}
+        revealTransition={revealTransition}
+        revealFastTransition={revealFastTransition}
+      />
+      <DetailsDrawerSection
+        open={detailsDrawerOpen}
+        cards={infoCards}
+        selectedCard={selectedInfoCard}
+        loading={infoLoading}
+        error={infoError}
+        onSelect={setSelectedInfoCard}
+        onClose={closeDetailsDrawer}
+        drawerUi={drawerUi}
+      />
+      <BuildSheetDrawerSection
+        open={buildSheetDrawerOpen}
+        fieldOrder={fieldOrder}
+        buildState={buildState}
+        selectedInfoByField={selectedInfoByField}
+        infoByOption={infoByOption}
+        onClose={closeBuildSheetDrawer}
+        onRevisit={handleRevisitField}
+        onSave={handleSaveBuild}
+        savedBuilds={savedBuilds}
+        onLoadSaved={handleLoadSaved}
+        onDeleteSaved={handleDeleteSaved}
+      />
     </div>
   );
 }
