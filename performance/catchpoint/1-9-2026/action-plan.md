@@ -117,7 +117,7 @@ See `performance/catchpoint/1-9-2026/top-10-offenders.md`.
 
 ## Prioritized recommendations
 
-1) Right-size and reformat Sanity images (especially LCP heroes)
+[x] 1) Right-size and reformat Sanity images (especially LCP heroes)
 - Why this matters: images are 72% of total bytes and directly determine LCP and Speed Index.
 - Evidence: `performance/catchpoint/1-9-2026/experience/422511.har` shows a 4.6MB `cdn.sanity.io` image as the top transfer offender; LCP on experience is 4.04s in `performance/catchpoint/1-9-2026/experience/422511.json`.
 - Implementation guidance: use the Sanity image builder to request exact dimensions for the rendered slot, and set `auto=format` or `format=webp`/`avif` with a tuned `q` value (60 to 75). Ensure `sizes` is set on all `<Image>` components so the smallest valid size is served per breakpoint. For background images, switch to `<Image>` or use `image-set()` with width-specific URLs.
@@ -145,7 +145,7 @@ See `performance/catchpoint/1-9-2026/top-10-offenders.md`.
 - Effort: M
 - Validate: TBT should drop and the number of JS requests should shrink in HAR.
 
-5) Improve font loading strategy (Typekit)
+[x] 5) Improve font loading strategy (Typekit)
 - Why this matters: font loading can block text rendering and contributes to render-blocking CSS.
 - Evidence: Typekit CSS is a top third-party domain by bytes, and fonts in JSON show `display: auto` in `performance/catchpoint/1-9-2026/home/422505.json`.
 - Implementation guidance: migrate to `next/font` or self-hosted fonts with `font-display: swap` (or `optional`). If staying on Typekit, add `preconnect` to `https://use.typekit.net` and `https://p.typekit.net` and preload critical font files if allowed by your license.
@@ -166,7 +166,7 @@ See `performance/catchpoint/1-9-2026/top-10-offenders.md`.
 - Effort: S
 - Validate: `_next/image` responses should show non-zero `max-age` and repeat view bytes should drop.
 
-8) Preconnect to `cdn.sanity.io` for hero images
+[x] 8) Preconnect to `cdn.sanity.io` for hero images
 - Why this matters: LCP hero images are on a third-party domain and benefit from earlier DNS/TLS setup.
 - Evidence: LCP URLs on experience, service, and heritage are `cdn.sanity.io` images in `performance/catchpoint/1-9-2026/*/*.json`.
 - Implementation guidance: add `<link rel="preconnect" href="https://cdn.sanity.io" crossorigin>` in the document head.

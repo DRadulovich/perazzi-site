@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useParallaxBackground } from "@/hooks/use-parallax-background";
+import { isSanityImageUrl, sanityImageLoader } from "@/lib/sanityImage";
 import { cn } from "@/lib/utils";
 
 type OverlayVariant = "canvas" | "canvas-80" | "ink" | "ink-50" | "none";
@@ -40,6 +41,7 @@ export function SectionBackdrop({
   const overlayVisible = revealOverlay ?? reveal;
   const overlayActive = overlayVisible || preparing;
   const overlayClass = overlay === "none" ? null : overlayClasses[overlay];
+  const isSanityImage = isSanityImageUrl(image.url);
 
   return (
     <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -53,6 +55,8 @@ export function SectionBackdrop({
             className="object-cover"
             priority={priority}
             loading={loading}
+            loader={isSanityImage ? sanityImageLoader : undefined}
+            quality={isSanityImage ? 70 : undefined}
           />
         </div>
       </div>

@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { homeMotion } from "@/lib/motionConfig";
+import { sanityImageLoader } from "@/lib/sanityImage";
 import type { ExperienceHero } from "@/types/experience";
 
 type Breadcrumb = {
@@ -17,6 +18,9 @@ type ExperienceHeroProps = {
   readonly hero: ExperienceHero;
   readonly breadcrumbs?: readonly Breadcrumb[];
 };
+
+const HERO_BACKGROUND_SIZES = "(min-width: 1920px) 1920px, 100vw";
+const HERO_BACKGROUND_QUALITY = 70;
 
 export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
   const analyticsRef = useAnalyticsObserver("HeroSeen:experience");
@@ -68,11 +72,16 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
         style={mediaStyle}
         aria-hidden="true"
       >
-        <div
-          className="absolute inset-0 bg-center bg-cover"
-          style={{
-            backgroundImage: `url(${hero.background.url})`,
-          }}
+        <Image
+          src={hero.background.url}
+          alt=""
+          fill
+          priority
+          sizes={HERO_BACKGROUND_SIZES}
+          quality={HERO_BACKGROUND_QUALITY}
+          loader={sanityImageLoader}
+          className="object-cover"
+          aria-hidden="true"
         />
         <div className="absolute inset-0 bg-black/35" />
         <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
