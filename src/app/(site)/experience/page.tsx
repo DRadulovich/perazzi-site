@@ -2,11 +2,13 @@ import Script from "next/script";
 import { ExperiencePicker } from "@/components/experience/ExperiencePicker";
 import { VisitFactory } from "@/components/experience/VisitFactory";
 import { BookingOptions } from "@/components/experience/BookingOptions"; // Experience-specific variant
-import { TravelNetwork } from "@/components/experience/TravelNetwork";
-import { MosaicGallery } from "@/components/experience/MosaicGallery";
 import { ExperienceHero } from "@/components/experience/ExperienceHero";
 import { ExperienceAdvisorySection } from "@/components/experience/ExperienceAdvisorySection";
-import { CTASection } from "@/components/shotguns/CTASection";
+import {
+  ExperienceCTASectionDeferred,
+  ExperienceMosaicGalleryDeferred,
+  ExperienceTravelNetworkDeferred,
+} from "@/components/experience/experience-deferred-sections";
 import { getExperiencePageData } from "@/lib/experience-data";
 import { getExperienceNetworkData } from "@/sanity/queries/experience";
 import type { FAQItem } from "@/types/experience";
@@ -214,9 +216,9 @@ export default async function ExperiencePage() {
         bullets={travelBullets}
         closing={travelClosing}
       />
-      <TravelNetwork data={networkData} ui={travelNetworkUi} />
-      <MosaicGallery assets={mosaic} mosaicUi={mosaicUi} />
-      <CTASection
+      <ExperienceTravelNetworkDeferred data={networkData} ui={travelNetworkUi} />
+      <ExperienceMosaicGalleryDeferred assets={mosaic} mosaicUi={mosaicUi} />
+      <ExperienceCTASectionDeferred
         dataAnalyticsId="FinalCTASeen"
         analyticsPrefix="FinalCTAClicked"
         text={finalCta.text}

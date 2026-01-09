@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
-import { getLocale } from "next-intl/server";
 import type { ReactNode } from "react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
-import { resolveInitialTheme } from "@/lib/initial-theme";
+import { DEFAULT_LOCALE } from "@/i18n/locales";
 
 export const metadata: Metadata = {
   title: {
@@ -41,14 +39,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
-  const locale = await getLocale();
-  const headerList = await headers();
-  const initialTheme = resolveInitialTheme(headerList);
+  const locale = DEFAULT_LOCALE;
+  const initialTheme = "light";
 
   return (
     <html lang={locale} data-theme={initialTheme} suppressHydrationWarning>

@@ -5,6 +5,8 @@ import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
 import { getFullScreenChatPage } from "@/sanity/queries/full-screen-chat";
 
+export const dynamic = "force-dynamic";
+
 type FullScreenChatPageProps = Readonly<{
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }>;

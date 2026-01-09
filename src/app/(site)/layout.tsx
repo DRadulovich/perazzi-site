@@ -1,17 +1,15 @@
 import type { ReactNode } from "react";
-import { draftMode, headers } from "next/headers";
-import { getLocale, getMessages } from "next-intl/server";
-import { VisualEditing } from "next-sanity/visual-editing";
 import Providers from "@/app/providers";
-import { resolveInitialTheme } from "@/lib/initial-theme";
+import { DEFAULT_LOCALE } from "@/i18n/locales";
+import en from "@/messages/en.json";
 import { SanityLive } from "@/sanity/lib/live";
 
-export default async function SiteLayout({ children }: { children: ReactNode }) {
-  const locale = await getLocale();
-  const messages = await getMessages();
-  const headerList = await headers();
-  const { isEnabled: isDraftMode } = await draftMode();
-  const initialTheme = resolveInitialTheme(headerList);
+export const revalidate = 3600;
+
+export default function SiteLayout({ children }: { children: ReactNode }) {
+  const locale = DEFAULT_LOCALE;
+  const messages = en;
+  const initialTheme = "light";
 
   return (
     <Providers
@@ -21,7 +19,6 @@ export default async function SiteLayout({ children }: { children: ReactNode }) 
     >
       {children}
       <SanityLive />
-      {isDraftMode && <VisualEditing />}
     </Providers>
   );
 }
