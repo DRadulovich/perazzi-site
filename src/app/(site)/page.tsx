@@ -1,9 +1,11 @@
 import { SiteShell } from "@/components/site-shell";
-import { CTASection } from "@/components/home/cta-section";
 import { HeroBanner } from "@/components/home/hero-banner";
-import { HomeGuideSection } from "@/components/home/home-guide-section";
-import { MarqueeFeature } from "@/components/home/marquee-feature"; // Home-specific variant
 import { TimelineScroller } from "@/components/home/timeline-scroller";
+import {
+  HomeCTASectionDeferred,
+  HomeGuideSectionDeferred,
+  MarqueeFeatureDeferred,
+} from "@/components/home/home-deferred-sections";
 import { getHome } from "@/sanity/queries/home";
 import { Section, Text } from "@/components/ui";
 
@@ -16,10 +18,10 @@ export default async function HomePage() {
       <div className="space-y-0">
         <HeroBanner hero={homeData.hero} heroCtas={homeData.heroCtas} fullBleed />
         <TimelineScroller stages={homeData.stages} framing={homeData.timelineFraming} />
-        <HomeGuideSection guideSection={homeData.guideSection} guidePlatforms={guidePlatforms} />
-        <MarqueeFeature champion={homeData.champion} ui={homeData.marqueeUi} />
+        <HomeGuideSectionDeferred guideSection={homeData.guideSection} guidePlatforms={guidePlatforms} />
+        <MarqueeFeatureDeferred champion={homeData.champion} ui={homeData.marqueeUi} />
         {homeData.finale ? (
-          <CTASection finale={homeData.finale} />
+          <HomeCTASectionDeferred finale={homeData.finale} />
         ) : (
           <Section padding="md" className="text-center">
             <Text size="lg" className="text-ink" leading="normal">

@@ -80,6 +80,7 @@ export function ExperienceHero({ hero, breadcrumbs }: ExperienceHeroProps) {
           sizes={HERO_BACKGROUND_SIZES}
           quality={HERO_BACKGROUND_QUALITY}
           loader={sanityImageLoader}
+          fetchPriority="high"
           className="object-cover"
           aria-hidden="true"
         />

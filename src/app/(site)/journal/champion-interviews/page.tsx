@@ -2,6 +2,8 @@ import { CategoryPageLayout } from "@/components/journal/CategoryPageLayout";
 import { getJournalCategoryData } from "@/lib/journal-data";
 import { Text } from "@/components/ui/text";
 
+export const dynamic = "force-dynamic";
+
 type ChampionInterviewsPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };

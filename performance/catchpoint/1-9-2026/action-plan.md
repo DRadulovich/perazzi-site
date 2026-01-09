@@ -124,21 +124,21 @@ See `performance/catchpoint/1-9-2026/top-10-offenders.md`.
 - Effort: M
 - Validate: LCP and Speed Index should improve, total bytes and image bytes should drop in HAR/CSV.
 
-2) Stop loading full-size background hero images outside Next Image
+[x] 2) Stop loading full-size background hero images outside Next Image
 - Why this matters: LCP images on experience, service, and heritage are DIV backgrounds from `cdn.sanity.io`, which bypass Next.js optimization and preload priority.
 - Evidence: LCP element node is DIV for these routes in `performance/catchpoint/1-9-2026/experience/422511.json`, `performance/catchpoint/1-9-2026/service/422513.json`, and `performance/catchpoint/1-9-2026/heritage/422512.json`.
 - Implementation guidance: replace background-image heroes with `<Image>` (or `<picture>` with `srcset`) and set `priority` and `fetchPriority="high"`. If a background is required, add a `<link rel="preload" as="image">` with `imagesrcset` and `imagesizes` matching the layout.
 - Effort: M
 - Validate: LCP request start should shift earlier and LCP should drop, especially on experience and service.
 
-3) Reduce route prefetching of RSC requests
+[x] 3) Reduce route prefetching of RSC requests
 - Why this matters: 14 `_rsc` prefetch requests are issued on every page, inflating request count and bytes with no immediate user benefit.
 - Evidence: `_rsc` requests appear on every route in `performance/catchpoint/1-9-2026/home/422505.har` and peers (14 per page).
 - Implementation guidance: for navigation links that are offscreen or low-priority, set `<Link prefetch={false}>` or add prefetch on hover only. Consider deferring prefetch for below-the-fold sections.
 - Effort: S
-- Validate: total request count and bytes should drop in HAR and CSV; no regression in navigation latency for key routes.
+- Validate: total request count and bytes should drop in HAR and CSV; no regression in navigation latency for key routes.]
 
-4) Reduce client JS and chunk count on initial render
+[x] 4) Reduce client JS and chunk count on initial render
 - Why this matters: 29 to 31 JS chunks per page (430 to 447KB transfer) and render-blocking resources add to TBT and delay LCP.
 - Evidence: render-blocking requests list includes 4 JS chunks across all routes in `performance/catchpoint/1-9-2026/*/*.json`, and TBT peaks at 0.41s on experience.
 - Implementation guidance: audit `use client` usage, move non-interactive components to server components, and dynamically import non-critical features. Use `next/script` with `strategy="afterInteractive"` or `lazyOnload` for non-critical scripts.

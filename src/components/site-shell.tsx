@@ -160,6 +160,7 @@ export async function SiteShell({
                     <li key={link?.label ?? link?.href ?? "footer-link"}>
                       <Link
                         href={link?.href ?? "/"}
+                        prefetch={false}
                         className="type-nav text-ink transition-colors hover:text-perazzi-red"
                       >
                         {link?.label ?? ""}
@@ -180,6 +181,7 @@ export async function SiteShell({
                 <Link
                   key={link.label}
                   href={link.href}
+                  prefetch={false}
                   className="transition-colors hover:text-ink"
                 >
                   {link.label}

@@ -190,7 +190,7 @@ export function PrimaryNav({
 }
 
 const Logo = ({ label }: { label: string }) => (
-  <Link href="/" className="inline-flex items-center">
+  <Link href="/" prefetch={false} className="inline-flex items-center">
     <span className="sr-only">{label}</span>
     <Image
       src="/PLW.png"
@@ -234,6 +234,7 @@ const SimpleNavLink = ({
   <div className="relative">
     <Link
       href={item.href}
+      prefetch={false}
       className={`relative inline-flex h-8 items-center type-button tracking-normal transition-colors ${linkTextClass}`}
     >
       {item.text}
@@ -272,6 +273,7 @@ const FlyoutNavLink = ({
         */}
         <Link
           href={item.href}
+          prefetch={false}
           className={`relative inline-flex h-8 items-center type-button tracking-normal transition-colors ${linkTextClass}`}
           onClick={() => setOpen(false)}
         >
@@ -354,6 +356,7 @@ const CTAs = ({
   <div className="flex items-center gap-3">
     <Link
       href={buildPlanner.href}
+      prefetch={false}
       className={`flex items-center gap-2 rounded-xl px-4 py-2 type-button tracking-normal transition-colors ${
         tone === "light"
           ? "border border-white/50 text-white/70 hover:bg-white/10 hover:text-white"
@@ -398,6 +401,7 @@ const ShotgunsFlyout: FlyoutRenderer<ShotgunsFlyoutData> = ({ onNavigate, data }
         </div>
         <Link
           href={flyout.ctaHref}
+          prefetch={false}
           className="mt-6 inline-flex items-center gap-1 type-button text-perazzi-red"
           onClick={onNavigate}
         >
@@ -411,6 +415,7 @@ const ShotgunsFlyout: FlyoutRenderer<ShotgunsFlyoutData> = ({ onNavigate, data }
           <Link
             key={entry.title}
             href={entry.href}
+            prefetch={false}
             className={`${FLYOUT_GLASS_ITEM} p-4 text-left`}
             onClick={onNavigate}
           >
@@ -445,6 +450,7 @@ const ExperienceFlyout: FlyoutRenderer<ExperienceFlyoutData> = ({ onNavigate, da
                 <Link
                   key={link.label}
                   href={link.href}
+                  prefetch={false}
                   className="flex items-center justify-between rounded-xl border border-white/15 bg-white/5 px-3 py-2 type-nav text-ink not-italic font-semibold transition-colors hover:border-white/30 hover:bg-white/10"
                   onClick={onNavigate}
                 >
@@ -457,6 +463,7 @@ const ExperienceFlyout: FlyoutRenderer<ExperienceFlyoutData> = ({ onNavigate, da
       </div>
       <Link
         href={flyout.footerCtaHref}
+        prefetch={false}
         className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/5 px-4 py-2 type-button text-ink transition-colors hover:border-perazzi-red/60 hover:bg-perazzi-red"
         onClick={onNavigate}
       >
@@ -486,6 +493,7 @@ const HeritageFlyout: FlyoutRenderer<HeritageFlyoutData> = ({ onNavigate, data }
         </div>
         <Link
           href={flyout.ctaHref}
+          prefetch={false}
           className="mt-6 inline-flex items-center gap-1 type-button text-perazzi-red"
           onClick={onNavigate}
         >
@@ -504,6 +512,7 @@ const HeritageFlyout: FlyoutRenderer<HeritageFlyoutData> = ({ onNavigate, data }
               <Link
                 key={link.label}
                 href={link.href}
+                prefetch={false}
                 className="block rounded-xl border border-white/10 bg-white/5 px-3 py-2 type-nav text-white/90 not-italic font-semibold transition-colors hover:border-white/25 hover:bg-white/10"
                 onClick={onNavigate}
               >
@@ -879,6 +888,7 @@ const MobileMenuLink = ({
       <div className="flex items-center justify-between">
         <Link
           href={item.href}
+          prefetch={false}
           className={`type-card-title transition-colors ${
             isActive ? "text-perazzi-red" : "text-white hover:text-perazzi-red"
           }`}
