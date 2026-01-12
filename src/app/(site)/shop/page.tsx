@@ -175,7 +175,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
               </Text>
             ) : null}
           </div>
-          <ProductGrid products={searchResult.items} />
+          <ProductGrid products={searchResult.items} showQuickView />
           {nextHref ? (
             <div className="flex justify-center pt-2">
               <Button asChild variant="secondary" size="md">

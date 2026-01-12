@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import SafeHtml from "@/components/SafeHtml";
 import { Button, Heading, Input, Text } from "@/components/ui";
+import { ProductGallery } from "@/components/shop/ProductGallery";
 import { formatProductPrice } from "@/components/shop/utils";
 import { addToCartAction } from "@/app/(site)/shop/cart/actions";
 import { getProductById, getRouteEntity } from "@/lib/bigcommerce";
@@ -98,7 +98,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   const priceLabel = formatProductPrice(product);
   const primaryImage = product.defaultImage ?? product.images[0];
   const galleryImages = primaryImage
-    ? product.images.filter((image) => image.url !== primaryImage.url)
+    ? [primaryImage, ...product.images.filter((image) => image.url !== primaryImage.url)]
     : product.images;
   const descriptionHtml = product.description.trim();
   const descriptionText = product.descriptionText.trim();
@@ -144,44 +144,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
       </div>
 
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        <div className="space-y-4">
-          <div className="relative aspect-4/5 overflow-hidden rounded-3xl border border-border/70 bg-card/70">
-            {primaryImage ? (
-              <Image
-                src={primaryImage.url}
-                alt={primaryImage.altText || product.name}
-                fill
-                className="object-cover"
-                sizes="(min-width: 1024px) 560px, 100vw"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center bg-canvas/80">
-                <Text size="label-tight" muted>
-                  Image coming soon
-                </Text>
-              </div>
-            )}
-          </div>
-
-          {galleryImages.length ? (
-            <div className="grid grid-cols-3 gap-3">
-              {galleryImages.slice(0, 6).map((image) => (
-                <div
-                  key={image.url}
-                  className="relative aspect-4/5 overflow-hidden rounded-2xl border border-border/70 bg-card/70"
-                >
-                  <Image
-                    src={image.url}
-                    alt={image.altText || product.name}
-                    fill
-                    className="object-cover"
-                    sizes="(min-width: 1024px) 140px, 30vw"
-                  />
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </div>
+        <ProductGallery images={galleryImages} productName={product.name} />
 
         <div className="space-y-6">
           <div className="space-y-3">

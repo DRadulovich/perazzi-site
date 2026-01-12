@@ -4,9 +4,10 @@ import { ProductCard } from "./ProductCard";
 
 type ProductGridProps = Readonly<{
   products: readonly Product[];
+  showQuickView?: boolean;
 }>;
 
-export function ProductGrid({ products }: ProductGridProps) {
+export function ProductGrid({ products, showQuickView = false }: ProductGridProps) {
   if (!products.length) {
     return (
       <div className="rounded-3xl border border-border/70 bg-card/70 p-8 text-center">
@@ -21,7 +22,7 @@ export function ProductGrid({ products }: ProductGridProps) {
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+        <ProductCard key={product.id} product={product} showQuickView={showQuickView} />
       ))}
     </div>
   );
