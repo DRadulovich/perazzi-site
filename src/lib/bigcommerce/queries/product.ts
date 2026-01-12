@@ -51,10 +51,12 @@ const PRODUCT_DETAIL_FIELDS = `
       node {
         entityId
         displayName
-        values {
-          edges {
-            node {
-              label
+        ... on MultipleChoiceOption {
+          values {
+            edges {
+              node {
+                label
+              }
             }
           }
         }

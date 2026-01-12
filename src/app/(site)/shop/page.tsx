@@ -8,8 +8,10 @@ import { getCategoryTree, searchProducts } from "@/lib/bigcommerce";
 import { PRODUCT_SORT_KEYS } from "@/lib/bigcommerce/sort";
 import type { Category, ProductSearchFilters, ProductSortKey } from "@/lib/bigcommerce/types";
 
+type AsyncProp<T> = T | Promise<T>;
+
 type ShopPageProps = {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: AsyncProp<Record<string, string | string[] | undefined>>;
 };
 
 const SHOP_PAGE_SIZE = 24;
@@ -94,7 +96,7 @@ const flattenCategories = (
   });
 
 export default async function ShopPage({ searchParams }: ShopPageProps) {
-  const params = searchParams ?? {};
+  const params = (await searchParams) ?? {};
   const searchTerm = getParam(params.search)?.trim() ?? "";
   const minPriceValue = getParam(params.minPrice)?.trim() ?? "";
   const maxPriceValue = getParam(params.maxPrice)?.trim() ?? "";

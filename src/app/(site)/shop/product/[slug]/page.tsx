@@ -10,9 +10,11 @@ import { addToCartAction } from "@/app/(site)/shop/cart/actions";
 import { getProductById, getRouteEntity } from "@/lib/bigcommerce";
 import type { Product } from "@/lib/bigcommerce/types";
 
+type AsyncProp<T> = T | Promise<T>;
+
 type ProductPageProps = {
-  params: { slug: string };
-  searchParams?: Record<string, string | string[] | undefined>;
+  params: AsyncProp<{ slug: string }>;
+  searchParams?: AsyncProp<Record<string, string | string[] | undefined>>;
 };
 
 const getParam = (value?: string | string[]) =>
@@ -57,7 +59,9 @@ export async function generateMetadata({
   params,
   searchParams,
 }: ProductPageProps): Promise<Metadata> {
-  const product = await resolveProduct(params.slug, searchParams);
+  const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+  const product = await resolveProduct(resolvedParams.slug, resolvedSearchParams);
   if (!product) {
     return { title: "Shop | Perazzi" };
   }
@@ -83,7 +87,9 @@ export async function generateMetadata({
 }
 
 export default async function ProductPage({ params, searchParams }: ProductPageProps) {
-  const product = await resolveProduct(params.slug, searchParams);
+  const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+  const product = await resolveProduct(resolvedParams.slug, resolvedSearchParams);
 
   if (product === null) {
     notFound();

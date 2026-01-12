@@ -9,16 +9,19 @@ import { getCategoryTree, searchProducts } from "@/lib/bigcommerce";
 import { PRODUCT_SORT_KEYS } from "@/lib/bigcommerce/sort";
 import type { Category, ProductSearchFilters, ProductSortKey } from "@/lib/bigcommerce/types";
 
+type AsyncProp<T> = T | Promise<T>;
+
 type CategoryPageProps = {
-  params: { slug: string };
-  searchParams?: Record<string, string | string[] | undefined>;
+  params: AsyncProp<{ slug: string }>;
+  searchParams?: AsyncProp<Record<string, string | string[] | undefined>>;
 };
 
 const SHOP_PAGE_SIZE = 24;
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
+  const resolvedParams = await params;
   const categories = await getCategoryTree();
-  const category = findCategoryBySlug(categories, params.slug);
+  const category = findCategoryBySlug(categories, resolvedParams.slug);
 
   if (!category) {
     return { title: "Shop | Perazzi" };
@@ -117,14 +120,15 @@ const findCategoryBySlug = (
 };
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
+  const resolvedParams = await params;
+  const paramsValue = (await searchParams) ?? {};
   const categoryTree = await getCategoryTree();
-  const category = findCategoryBySlug(categoryTree, params.slug);
+  const category = findCategoryBySlug(categoryTree, resolvedParams.slug);
 
   if (!category) {
     notFound();
   }
 
-  const paramsValue = searchParams ?? {};
   const minPriceValue = getParam(paramsValue.minPrice)?.trim() ?? "";
   const maxPriceValue = getParam(paramsValue.maxPrice)?.trim() ?? "";
   const inStockValue = getParam(paramsValue.inStock);
