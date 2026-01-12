@@ -12,6 +12,8 @@ type ShopPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
+const SHOP_PAGE_SIZE = 24;
+
 export async function generateMetadata(): Promise<Metadata> {
   return {
     title: "Shop | Perazzi",
@@ -37,6 +39,38 @@ const parseSort = (value?: string): ProductSortKey | undefined => {
   return PRODUCT_SORT_KEYS.has(value as ProductSortKey)
     ? (value as ProductSortKey)
     : undefined;
+};
+
+const buildPageQuery = (filters: {
+  searchTerm?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  inStock?: boolean;
+  sort?: ProductSortKey;
+  after?: string;
+}) => {
+  const params = new URLSearchParams();
+  if (filters.searchTerm?.trim()) {
+    params.set("search", filters.searchTerm.trim());
+  }
+  if (filters.minPrice?.trim()) {
+    params.set("minPrice", filters.minPrice.trim());
+  }
+  if (filters.maxPrice?.trim()) {
+    params.set("maxPrice", filters.maxPrice.trim());
+  }
+  if (filters.inStock) {
+    params.set("inStock", "true");
+  }
+  if (filters.sort) {
+    params.set("sort", filters.sort);
+  }
+  if (filters.after) {
+    params.set("after", filters.after);
+  }
+
+  const query = params.toString();
+  return query ? `?${query}` : "";
 };
 
 const flattenCategories = (
@@ -67,6 +101,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   const inStockValue = getParam(params.inStock);
   const inStock = inStockValue === "true" || inStockValue === "1";
   const sort = parseSort(getParam(params.sort));
+  const after = getParam(params.after)?.trim() || undefined;
 
   const searchFilters: ProductSearchFilters = {
     searchTerm: searchTerm || undefined,
@@ -74,6 +109,8 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     maxPrice: parseNumber(maxPriceValue),
     inStock: inStock || undefined,
     sort,
+    after,
+    limit: SHOP_PAGE_SIZE,
   };
 
   const [categoryTree, searchResult] = await Promise.all([
@@ -83,6 +120,19 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
   const categories = flattenCategories(categoryTree);
   const totalLabel = new Intl.NumberFormat("en-US").format(searchResult.total);
+  const pageInfo = searchResult.pageInfo;
+  const nextCursor =
+    pageInfo?.hasNextPage && pageInfo.endCursor ? pageInfo.endCursor : undefined;
+  const nextHref = nextCursor
+    ? `/shop${buildPageQuery({
+        searchTerm,
+        minPrice: minPriceValue,
+        maxPrice: maxPriceValue,
+        inStock,
+        sort,
+        after: nextCursor,
+      })}`
+    : null;
 
   return (
     <div className="space-y-8">
@@ -124,6 +174,15 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             ) : null}
           </div>
           <ProductGrid products={searchResult.items} />
+          {nextHref ? (
+            <div className="flex justify-center pt-2">
+              <Button asChild variant="secondary" size="md">
+                <Link href={nextHref} prefetch={false}>
+                  Next results
+                </Link>
+              </Button>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

@@ -14,6 +14,8 @@ type CategoryPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
+const SHOP_PAGE_SIZE = 24;
+
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const categories = await getCategoryTree();
   const category = findCategoryBySlug(categories, params.slug);
@@ -46,6 +48,34 @@ const parseSort = (value?: string): ProductSortKey | undefined => {
   return PRODUCT_SORT_KEYS.has(value as ProductSortKey)
     ? (value as ProductSortKey)
     : undefined;
+};
+
+const buildPageQuery = (filters: {
+  minPrice?: string;
+  maxPrice?: string;
+  inStock?: boolean;
+  sort?: ProductSortKey;
+  after?: string;
+}) => {
+  const params = new URLSearchParams();
+  if (filters.minPrice?.trim()) {
+    params.set("minPrice", filters.minPrice.trim());
+  }
+  if (filters.maxPrice?.trim()) {
+    params.set("maxPrice", filters.maxPrice.trim());
+  }
+  if (filters.inStock) {
+    params.set("inStock", "true");
+  }
+  if (filters.sort) {
+    params.set("sort", filters.sort);
+  }
+  if (filters.after) {
+    params.set("after", filters.after);
+  }
+
+  const query = params.toString();
+  return query ? `?${query}` : "";
 };
 
 const flattenCategories = (
@@ -100,6 +130,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   const inStockValue = getParam(paramsValue.inStock);
   const inStock = inStockValue === "true" || inStockValue === "1";
   const sort = parseSort(getParam(paramsValue.sort));
+  const after = getParam(paramsValue.after)?.trim() || undefined;
 
   const searchFilters: ProductSearchFilters = {
     categoryEntityId: category.id,
@@ -107,11 +138,25 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     maxPrice: parseNumber(maxPriceValue),
     inStock: inStock || undefined,
     sort,
+    after,
+    limit: SHOP_PAGE_SIZE,
   };
 
   const searchResult = await searchProducts(searchFilters);
   const flattenedCategories = flattenCategories(categoryTree);
   const totalLabel = new Intl.NumberFormat("en-US").format(searchResult.total);
+  const pageInfo = searchResult.pageInfo;
+  const nextCursor =
+    pageInfo?.hasNextPage && pageInfo.endCursor ? pageInfo.endCursor : undefined;
+  const nextHref = nextCursor
+    ? `/shop/category/${category.slug}${buildPageQuery({
+        minPrice: minPriceValue,
+        maxPrice: maxPriceValue,
+        inStock,
+        sort,
+        after: nextCursor,
+      })}`
+    : null;
 
   return (
     <div className="space-y-8">
@@ -147,6 +192,15 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             {totalLabel} {searchResult.total === 1 ? "result" : "results"}
           </Text>
           <ProductGrid products={searchResult.items} />
+          {nextHref ? (
+            <div className="flex justify-center pt-2">
+              <Button asChild variant="secondary" size="md">
+                <Link href={nextHref} prefetch={false}>
+                  Next results
+                </Link>
+              </Button>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>
