@@ -3,12 +3,22 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
+const normalizeHostname = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const withoutProtocol = trimmed.replace(/^https?:\/\//i, "");
+  const hostname = withoutProtocol.split("/")[0]?.trim();
+  return hostname || null;
+};
+
+const isDefined = (value: string | null): value is string => value !== null;
+
 const bigCommerceHostnames = (
   process.env.BIGCOMMERCE_CDN_HOSTNAME ?? "*.bigcommerce.com"
 )
   .split(",")
-  .map((hostname) => hostname.trim())
-  .filter(Boolean);
+  .map((hostname) => normalizeHostname(hostname))
+  .filter(isDefined);
 
 const bigCommerceRemotePatterns = bigCommerceHostnames.map(
   (hostname): { protocol: "https"; hostname: string } => ({

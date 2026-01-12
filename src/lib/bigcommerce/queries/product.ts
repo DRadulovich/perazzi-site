@@ -1,5 +1,5 @@
 const PRODUCT_IMAGE_FIELDS = `
-  url
+  url(width: 1200)
   altText
 `;
 

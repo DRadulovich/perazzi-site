@@ -127,12 +127,21 @@ export const searchProducts = async (
     after,
   } = filters;
 
+  const normalizedSearchTerm = searchTerm?.trim();
+  const hasFilters =
+    Boolean(normalizedSearchTerm) ||
+    Boolean(categoryEntityId) ||
+    minPrice !== undefined ||
+    maxPrice !== undefined ||
+    inStock === true;
+  const fallbackSearchTerm = hasFilters ? undefined : "*";
+
   const searchFilters = {
-    searchTerm: searchTerm || undefined,
+    searchTerm: normalizedSearchTerm || fallbackSearchTerm,
     categoryEntityId: categoryEntityId ? parseEntityId(categoryEntityId) : undefined,
     hideOutOfStock: inStock ? true : undefined,
     price:
-      minPrice || maxPrice
+      minPrice !== undefined || maxPrice !== undefined
         ? {
             minPrice: minPrice ?? undefined,
             maxPrice: maxPrice ?? undefined,
