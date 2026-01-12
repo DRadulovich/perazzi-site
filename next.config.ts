@@ -3,6 +3,20 @@ import createNextIntlPlugin from "next-intl/plugin";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
+const bigCommerceHostnames = (
+  process.env.BIGCOMMERCE_CDN_HOSTNAME ?? "*.bigcommerce.com"
+)
+  .split(",")
+  .map((hostname) => hostname.trim())
+  .filter(Boolean);
+
+const bigCommerceRemotePatterns = bigCommerceHostnames.map(
+  (hostname): { protocol: "https"; hostname: string } => ({
+    protocol: "https",
+    hostname,
+  }),
+);
+
 const nextConfig: NextConfig = {
   images: {
     qualities: [100, 75],
@@ -20,6 +34,7 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "www.perazzi.it",
       },
+      ...bigCommerceRemotePatterns,
     ],
   },
 };
