@@ -195,7 +195,7 @@ export const getCart = async (cartId: string): Promise<Cart | null> => {
 
 export const createCart = async (lines: CartLineInput[]): Promise<Cart> => {
   if (!lines.length) {
-    throw new Error("Cannot create a cart without line items.");
+    throw new TypeError("Cannot create a cart without line items.");
   }
 
   const res = await bigCommerceFetch<GraphQLResponse<CartMutationData>>({

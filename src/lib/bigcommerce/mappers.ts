@@ -99,6 +99,8 @@ const toSlug = (path: string) => {
   return segments.at(-1) ?? "";
 };
 
+const isDefined = <T>(value: T | null | undefined): value is T => value != null;
+
 export const mapMoney = (money?: BigCommerceMoney | null): Money => ({
   value: money?.value ?? 0,
   currencyCode: money?.currencyCode ?? "",
@@ -202,9 +204,8 @@ const mapVariants = (
 
 export const mapProduct = (product: BigCommerceProduct): Product => {
   const images =
-    product.images?.edges?.map(({ node }) => mapImage(node)).filter(Boolean) ?? [];
-  const defaultImage =
-    mapImage(product.defaultImage) ?? (images.length ? images[0] : undefined);
+    product.images?.edges?.map(({ node }) => mapImage(node)).filter(isDefined) ?? [];
+  const defaultImage = mapImage(product.defaultImage) ?? images.at(0);
   const price = mapMoney(product.prices?.price ?? product.prices?.priceRange?.min ?? null);
   const priceRange = product.prices?.priceRange
     ? {
@@ -222,7 +223,7 @@ export const mapProduct = (product: BigCommerceProduct): Product => {
     descriptionText: product.plainTextDescription ?? "",
     price,
     priceRange,
-    images: images.filter((image): image is Image => image !== undefined),
+    images,
     defaultImage,
     variants: mapVariants(product.variants, productId),
     options: mapProductOptions(product.productOptions),
