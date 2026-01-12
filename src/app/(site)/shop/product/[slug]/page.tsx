@@ -4,8 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import SafeHtml from "@/components/SafeHtml";
-import { Heading, Text } from "@/components/ui";
+import { Button, Heading, Input, Text } from "@/components/ui";
 import { formatProductPrice } from "@/components/shop/utils";
+import { addToCartAction } from "@/app/(site)/shop/cart/actions";
 import { getProductById, getRouteEntity } from "@/lib/bigcommerce";
 import type { Product } from "@/lib/bigcommerce/types";
 
@@ -96,6 +97,12 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   const descriptionHtml = product.description.trim();
   const descriptionText = product.descriptionText.trim();
   const showOutOfStock = product.availableForSale === false;
+  const defaultVariant =
+    product.variants.find((variant) => variant.availableForSale) ?? product.variants[0];
+  const hasVariant = Boolean(defaultVariant);
+  const canAddToCart = hasVariant && product.availableForSale;
+  const addToCartDisabled = !canAddToCart;
+  const variantIdValue = defaultVariant?.id ?? "";
   let descriptionSection: ReactNode = null;
 
   if (descriptionHtml) {
@@ -115,13 +122,20 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
 
   return (
     <div className="space-y-10">
-      <Link
-        href="/shop"
-        prefetch={false}
-        className="text-sm text-ink-muted transition-colors hover:text-ink"
-      >
-        Back to shop
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link
+          href="/shop"
+          prefetch={false}
+          className="text-sm text-ink-muted transition-colors hover:text-ink"
+        >
+          Back to shop
+        </Link>
+        <Button asChild variant="ghost" size="sm">
+          <Link href="/shop/cart" prefetch={false}>
+            View cart
+          </Link>
+        </Button>
+      </div>
 
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         <div className="space-y-4">
@@ -184,6 +198,36 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
               </Text>
             ) : null}
           </div>
+
+          <form action={addToCartAction} className="flex flex-wrap items-end gap-3">
+            <input type="hidden" name="productId" value={product.id} />
+            <input type="hidden" name="variantId" value={variantIdValue} />
+            <label className="flex flex-col gap-1 text-ink type-label-tight">
+              <Text size="label-tight" muted>
+                Quantity
+              </Text>
+              <Input
+                name="quantity"
+                type="number"
+                min="1"
+                step="1"
+                inputMode="numeric"
+                defaultValue={1}
+                className="w-24"
+                disabled={addToCartDisabled}
+              />
+            </label>
+            <div className="flex flex-col gap-1">
+              <Button type="submit" size="md" disabled={addToCartDisabled}>
+                Add to cart
+              </Button>
+              {addToCartDisabled ? (
+                <Text size="caption" muted>
+                  This item is unavailable right now.
+                </Text>
+              ) : null}
+            </div>
+          </form>
 
           {product.sku ? (
             <Text size="label-tight" muted>

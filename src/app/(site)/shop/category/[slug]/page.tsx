@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeading } from "@/components/page-heading";
 import { FiltersPanel, type CategoryOption } from "@/components/shop/FiltersPanel";
 import { ProductGrid } from "@/components/shop/ProductGrid";
-import { Text } from "@/components/ui";
+import { Button, Text } from "@/components/ui";
 import { getCategoryTree, searchProducts } from "@/lib/bigcommerce";
 import { PRODUCT_SORT_KEYS } from "@/lib/bigcommerce/sort";
 import type { Category, ProductSearchFilters, ProductSortKey } from "@/lib/bigcommerce/types";
@@ -114,11 +115,18 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
   return (
     <div className="space-y-8">
-      <PageHeading
-        title={category.name}
-        kicker="Shop category"
-        description={`Browse ${category.name} and refine by price or availability.`}
-      />
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <PageHeading
+          title={category.name}
+          kicker="Shop category"
+          description={`Browse ${category.name} and refine by price or availability.`}
+        />
+        <Button asChild variant="ghost" size="sm">
+          <Link href="/shop/cart" prefetch={false}>
+            View cart
+          </Link>
+        </Button>
+      </div>
 
       <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
         <FiltersPanel
