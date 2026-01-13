@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import type { Variants } from "framer-motion";
 import { Button, Heading, Text } from "@/components/ui";
 import { ShopConciergePanel } from "@/components/shop/ShopConciergePanel";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
@@ -18,6 +19,55 @@ type ShopHeroProps = Readonly<{
   cartHref?: string;
   cartLabel?: string;
 }>;
+
+type CartButtonProps = Readonly<{
+  cartHref?: string;
+  cartLabel: string;
+}>;
+
+type ConciergePanelProps = Readonly<{
+  conciergePanel?: ShopHeroContent["conciergePanel"];
+  item: Variants;
+  motionEnabled: boolean;
+}>;
+
+function CartButton({ cartHref, cartLabel }: CartButtonProps) {
+  if (!cartHref) {
+    return null;
+  }
+
+  return (
+    <Button asChild size="sm" variant="ghost" className="text-white/80 hover:text-white">
+      <Link href={cartHref} prefetch={false}>
+        {cartLabel}
+      </Link>
+    </Button>
+  );
+}
+
+function ConciergePanel({ conciergePanel, item, motionEnabled }: ConciergePanelProps) {
+  if (!conciergePanel) {
+    return null;
+  }
+
+  return (
+    <motion.div
+      variants={item}
+      initial={motionEnabled ? "hidden" : false}
+      animate={motionEnabled ? "show" : undefined}
+      className="lg:self-center"
+    >
+      <ShopConciergePanel
+        eyebrow={conciergePanel.eyebrow}
+        heading={conciergePanel.heading}
+        body={conciergePanel.body}
+        steps={conciergePanel.steps}
+        primaryCta={conciergePanel.primaryCta}
+        secondaryCta={conciergePanel.secondaryCta}
+      />
+    </motion.div>
+  );
+}
 
 export function ShopHero({ hero, cartHref, cartLabel = "View cart" }: ShopHeroProps) {
   const analyticsRef = useAnalyticsObserver("HeroSeen:shop");
@@ -65,7 +115,7 @@ export function ShopHero({ hero, cartHref, cartLabel = "View cart" }: ShopHeroPr
     <section
       ref={setRefs}
       data-analytics-id="HeroSeen:shop"
-      className="relative isolate w-screen max-w-[100vw] overflow-hidden min-h-[70vh] pb-10 sm:pb-16 full-bleed full-bleed-offset-top-lg"
+      className="relative isolate w-screen max-w-[100vw] overflow-hidden min-h-[60vh] pb-8 sm:pb-12 full-bleed full-bleed-offset-top-lg"
       aria-labelledby="shop-hero-heading"
     >
       <motion.div
@@ -89,12 +139,12 @@ export function ShopHero({ hero, cartHref, cartLabel = "View cart" }: ShopHeroPr
       </motion.div>
 
       <motion.section
-        className="relative z-10 mx-auto min-h-[70vh] max-w-6xl overflow-hidden rounded-2xl border border-white/12 bg-black/45 text-white shadow-elevated ring-1 ring-white/10 backdrop-blur-xl sm:rounded-3xl"
+        className="relative z-10 mx-auto min-h-[60vh] max-w-6xl overflow-hidden rounded-2xl border border-white/12 bg-black/45 text-white shadow-elevated ring-1 ring-white/10 backdrop-blur-xl sm:rounded-3xl"
         initial={reduceMotion ? false : { opacity: 0, y: 28, filter: "blur(12px)" }}
         animate={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
         transition={reduceMotion ? undefined : homeMotion.reveal}
       >
-        <motion.div className="grid min-h-[70vh] items-start gap-8 px-6 py-12 sm:px-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-12 lg:px-16">
+        <motion.div className="grid min-h-[60vh] items-start gap-8 px-6 py-10 sm:px-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-12 lg:px-16">
           <motion.div
             className="flex flex-col gap-6"
             variants={content}
@@ -125,33 +175,15 @@ export function ShopHero({ hero, cartHref, cartLabel = "View cart" }: ShopHeroPr
                   {hero.secondaryCta.label}
                 </Link>
               </Button>
-              {cartHref ? (
-                <Button asChild size="sm" variant="ghost" className="text-white/80 hover:text-white">
-                  <Link href={cartHref} prefetch={false}>
-                    {cartLabel}
-                  </Link>
-                </Button>
-              ) : null}
+              <CartButton cartHref={cartHref} cartLabel={cartLabel} />
             </motion.div>
           </motion.div>
 
-          {hero.conciergePanel ? (
-            <motion.div
-              variants={item}
-              initial={motionEnabled ? "hidden" : false}
-              animate={motionEnabled ? "show" : undefined}
-              className="lg:self-center"
-            >
-              <ShopConciergePanel
-                eyebrow={hero.conciergePanel.eyebrow}
-                heading={hero.conciergePanel.heading}
-                body={hero.conciergePanel.body}
-                steps={hero.conciergePanel.steps}
-                primaryCta={hero.conciergePanel.primaryCta}
-                secondaryCta={hero.conciergePanel.secondaryCta}
-              />
-            </motion.div>
-          ) : null}
+          <ConciergePanel
+            conciergePanel={hero.conciergePanel}
+            item={item}
+            motionEnabled={motionEnabled}
+          />
         </motion.div>
       </motion.section>
     </section>

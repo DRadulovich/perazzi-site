@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FiltersPanel, type CategoryOption } from "@/components/shop/FiltersPanel";
+import { FiltersPanel } from "@/components/shop/FiltersPanel";
+import { ShopCatalogToolbar } from "@/components/shop/ShopCatalogToolbar";
 import { ShopCatalogField } from "@/components/shop/ShopCatalogField";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { ShopHero } from "@/components/shop/ShopHero";
-import { Button, Text } from "@/components/ui";
+import { Button } from "@/components/ui";
 import listPageStrip from "@/../docs/BIGCOMMERCE/Background-Images/list-page-cinestrip.jpg";
 import { shopHero } from "@/content/shop/hero";
 import { getCategoryTree, searchProducts } from "@/lib/bigcommerce";
 import { PRODUCT_SORT_KEYS } from "@/lib/bigcommerce/sort";
-import type { Category, ProductSearchFilters, ProductSortKey } from "@/lib/bigcommerce/types";
+import type { ProductSearchFilters, ProductSortKey } from "@/lib/bigcommerce/types";
+import { buildShopQueryString } from "@/components/shop/shopQuery";
 
 type AsyncProp<T> = T | Promise<T>;
 
@@ -46,58 +48,6 @@ const parseSort = (value?: string): ProductSortKey | undefined => {
     : undefined;
 };
 
-const buildPageQuery = (filters: {
-  searchTerm?: string;
-  minPrice?: string;
-  maxPrice?: string;
-  inStock?: boolean;
-  sort?: ProductSortKey;
-  after?: string;
-}) => {
-  const params = new URLSearchParams();
-  if (filters.searchTerm?.trim()) {
-    params.set("search", filters.searchTerm.trim());
-  }
-  if (filters.minPrice?.trim()) {
-    params.set("minPrice", filters.minPrice.trim());
-  }
-  if (filters.maxPrice?.trim()) {
-    params.set("maxPrice", filters.maxPrice.trim());
-  }
-  if (filters.inStock) {
-    params.set("inStock", "true");
-  }
-  if (filters.sort) {
-    params.set("sort", filters.sort);
-  }
-  if (filters.after) {
-    params.set("after", filters.after);
-  }
-
-  const query = params.toString();
-  return query ? `?${query}` : "";
-};
-
-const flattenCategories = (
-  categories: Category[],
-  depth = 0,
-): CategoryOption[] =>
-  categories.flatMap((category) => {
-    const entries: CategoryOption[] = [];
-    if (category.slug) {
-      entries.push({
-        id: category.id,
-        name: category.name,
-        slug: category.slug,
-        depth,
-      });
-    }
-    if (category.children?.length) {
-      entries.push(...flattenCategories(category.children, depth + 1));
-    }
-    return entries;
-  });
-
 export default async function ShopPage({ searchParams }: ShopPageProps) {
   const params = (await searchParams) ?? {};
   const searchTerm = getParam(params.search)?.trim() ?? "";
@@ -123,20 +73,21 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     searchProducts(searchFilters),
   ]);
 
-  const categories = flattenCategories(categoryTree);
-  const totalLabel = new Intl.NumberFormat("en-US").format(searchResult.total);
   const pageInfo = searchResult.pageInfo;
   const nextCursor =
     pageInfo?.hasNextPage && pageInfo.endCursor ? pageInfo.endCursor : undefined;
   const nextHref = nextCursor
-    ? `/shop${buildPageQuery({
-        searchTerm,
-        minPrice: minPriceValue,
-        maxPrice: maxPriceValue,
-        inStock,
-        sort,
-        after: nextCursor,
-      })}`
+    ? `/shop${buildShopQueryString(
+        {
+          searchTerm,
+          minPrice: minPriceValue,
+          maxPrice: maxPriceValue,
+          inStock,
+          sort,
+          after: nextCursor,
+        },
+        { includeAfter: true },
+      )}`
     : null;
 
   return (
@@ -149,36 +100,57 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         backgroundAlt="Cinematic detail of Perazzi craftsmanship in low light"
       >
         <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
-          <FiltersPanel
-            categories={categories}
-            basePath="/shop"
-            showSearch
-            filters={{
-              searchTerm,
-              minPrice: minPriceValue,
-              maxPrice: maxPriceValue,
-              inStock,
-              sort,
-            }}
-          />
+          <div className="hidden lg:block">
+            <FiltersPanel
+              categories={categoryTree}
+              basePath="/shop"
+              variant="sidebar"
+              filters={{
+                searchTerm,
+                minPrice: minPriceValue,
+                maxPrice: maxPriceValue,
+                inStock,
+                sort,
+              }}
+            />
+          </div>
 
           <div className="space-y-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <Text size="label-tight" muted>
-                {totalLabel} {searchResult.total === 1 ? "result" : "results"}
-              </Text>
-              {searchTerm ? (
-                <Text size="label-tight" muted>
-                  Search: {searchTerm}
-                </Text>
-              ) : null}
-            </div>
+            <ShopCatalogToolbar
+              basePath="/shop"
+              total={searchResult.total}
+              pageCount={searchResult.items.length}
+              isFirstPage={!after}
+              filters={{
+                searchTerm,
+                minPrice: minPriceValue,
+                maxPrice: maxPriceValue,
+                inStock,
+                sort,
+              }}
+              clearAllHref="/shop"
+              drawerTitle="Filters"
+              drawerContent={
+                <FiltersPanel
+                  categories={categoryTree}
+                  basePath="/shop"
+                  variant="drawer"
+                  filters={{
+                    searchTerm,
+                    minPrice: minPriceValue,
+                    maxPrice: maxPriceValue,
+                    inStock,
+                    sort,
+                  }}
+                />
+              }
+            />
             <ProductGrid products={searchResult.items} showQuickView />
             {nextHref ? (
               <div className="flex justify-center pt-2">
                 <Button asChild variant="secondary" size="md">
                   <Link href={nextHref} prefetch={false}>
-                    Next results
+                    Load more
                   </Link>
                 </Button>
               </div>

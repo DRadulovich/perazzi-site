@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { FiltersPanel, type CategoryOption } from "@/components/shop/FiltersPanel";
+import { FiltersPanel } from "@/components/shop/FiltersPanel";
+import { ShopCatalogToolbar } from "@/components/shop/ShopCatalogToolbar";
 import { ShopCatalogField } from "@/components/shop/ShopCatalogField";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { ShopHero } from "@/components/shop/ShopHero";
-import { Button, Text } from "@/components/ui";
+import { Button } from "@/components/ui";
 import listPageStrip from "@/../docs/BIGCOMMERCE/Background-Images/list-page-cinestrip.jpg";
 import { shopHero } from "@/content/shop/hero";
 import { getCategoryTree, searchProducts } from "@/lib/bigcommerce";
 import { PRODUCT_SORT_KEYS } from "@/lib/bigcommerce/sort";
 import type { Category, ProductSearchFilters, ProductSortKey } from "@/lib/bigcommerce/types";
+import { buildShopQueryString } from "@/components/shop/shopQuery";
 
 type AsyncProp<T> = T | Promise<T>;
 
@@ -56,54 +58,6 @@ const parseSort = (value?: string): ProductSortKey | undefined => {
     : undefined;
 };
 
-const buildPageQuery = (filters: {
-  minPrice?: string;
-  maxPrice?: string;
-  inStock?: boolean;
-  sort?: ProductSortKey;
-  after?: string;
-}) => {
-  const params = new URLSearchParams();
-  if (filters.minPrice?.trim()) {
-    params.set("minPrice", filters.minPrice.trim());
-  }
-  if (filters.maxPrice?.trim()) {
-    params.set("maxPrice", filters.maxPrice.trim());
-  }
-  if (filters.inStock) {
-    params.set("inStock", "true");
-  }
-  if (filters.sort) {
-    params.set("sort", filters.sort);
-  }
-  if (filters.after) {
-    params.set("after", filters.after);
-  }
-
-  const query = params.toString();
-  return query ? `?${query}` : "";
-};
-
-const flattenCategories = (
-  categories: Category[],
-  depth = 0,
-): CategoryOption[] =>
-  categories.flatMap((category) => {
-    const entries: CategoryOption[] = [];
-    if (category.slug) {
-      entries.push({
-        id: category.id,
-        name: category.name,
-        slug: category.slug,
-        depth,
-      });
-    }
-    if (category.children?.length) {
-      entries.push(...flattenCategories(category.children, depth + 1));
-    }
-    return entries;
-  });
-
 const findCategoryBySlug = (
   categories: Category[],
   slug: string,
@@ -132,6 +86,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     notFound();
   }
 
+  const searchTerm = getParam(paramsValue.search)?.trim() ?? "";
   const minPriceValue = getParam(paramsValue.minPrice)?.trim() ?? "";
   const maxPriceValue = getParam(paramsValue.maxPrice)?.trim() ?? "";
   const inStockValue = getParam(paramsValue.inStock);
@@ -141,6 +96,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
   const searchFilters: ProductSearchFilters = {
     categoryEntityId: category.id,
+    searchTerm: searchTerm || undefined,
     minPrice: parseNumber(minPriceValue),
     maxPrice: parseNumber(maxPriceValue),
     inStock: inStock || undefined,
@@ -150,19 +106,21 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   };
 
   const searchResult = await searchProducts(searchFilters);
-  const flattenedCategories = flattenCategories(categoryTree);
-  const totalLabel = new Intl.NumberFormat("en-US").format(searchResult.total);
   const pageInfo = searchResult.pageInfo;
   const nextCursor =
     pageInfo?.hasNextPage && pageInfo.endCursor ? pageInfo.endCursor : undefined;
   const nextHref = nextCursor
-    ? `/shop/category/${category.slug}${buildPageQuery({
-        minPrice: minPriceValue,
-        maxPrice: maxPriceValue,
-        inStock,
-        sort,
-        after: nextCursor,
-      })}`
+    ? `/shop/category/${category.slug}${buildShopQueryString(
+        {
+          searchTerm,
+          minPrice: minPriceValue,
+          maxPrice: maxPriceValue,
+          inStock,
+          sort,
+          after: nextCursor,
+        },
+        { includeAfter: true },
+      )}`
     : null;
 
   const categoryHero = {
@@ -183,29 +141,63 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
         backgroundAlt="Cinematic detail of Perazzi craftsmanship in low light"
       >
         <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
-          <FiltersPanel
-            categories={flattenedCategories}
-            selectedCategorySlug={category.slug}
-            basePath={`/shop/category/${category.slug}`}
-            showSearch={false}
-            filters={{
-              minPrice: minPriceValue,
-              maxPrice: maxPriceValue,
-              inStock,
-              sort,
-            }}
-          />
+          <div className="hidden lg:block">
+            <FiltersPanel
+              categories={categoryTree}
+              selectedCategorySlug={category.slug}
+              basePath={`/shop/category/${category.slug}`}
+              variant="sidebar"
+              filters={{
+                searchTerm,
+                minPrice: minPriceValue,
+                maxPrice: maxPriceValue,
+                inStock,
+                sort,
+              }}
+            />
+          </div>
 
           <div className="space-y-5">
-            <Text size="label-tight" muted>
-              {totalLabel} {searchResult.total === 1 ? "result" : "results"}
-            </Text>
-            <ProductGrid products={searchResult.items} />
+            <ShopCatalogToolbar
+              basePath={`/shop/category/${category.slug}`}
+              total={searchResult.total}
+              pageCount={searchResult.items.length}
+              isFirstPage={!after}
+              filters={{
+                searchTerm,
+                minPrice: minPriceValue,
+                maxPrice: maxPriceValue,
+                inStock,
+                sort,
+              }}
+              clearAllHref={`/shop/category/${category.slug}`}
+              drawerTitle="Filters"
+              drawerContent={
+                <FiltersPanel
+                  categories={categoryTree}
+                  selectedCategorySlug={category.slug}
+                  basePath={`/shop/category/${category.slug}`}
+                  variant="drawer"
+                  filters={{
+                    searchTerm,
+                    minPrice: minPriceValue,
+                    maxPrice: maxPriceValue,
+                    inStock,
+                    sort,
+                  }}
+                />
+              }
+            />
+            <ProductGrid
+              products={searchResult.items}
+              showQuickView
+              resetHref={`/shop/category/${category.slug}`}
+            />
             {nextHref ? (
               <div className="flex justify-center pt-2">
                 <Button asChild variant="secondary" size="md">
                   <Link href={nextHref} prefetch={false}>
-                    Next results
+                    Load more
                   </Link>
                 </Button>
               </div>

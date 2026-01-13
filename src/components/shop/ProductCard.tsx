@@ -22,7 +22,7 @@ export function ProductCard({ product, showQuickView = false }: ProductCardProps
     <article
       className={cn(
         "group flex h-full flex-col overflow-hidden rounded-3xl border border-border/70 bg-card/70 shadow-soft transition-shadow",
-        "hover:shadow-soft",
+        "hover:border-ink/15 hover:bg-card/85",
       )}
     >
       <div className="relative">
@@ -47,15 +47,26 @@ export function ProductCard({ product, showQuickView = false }: ProductCardProps
             </div>
           )}
         </Link>
-        {showQuickView ? (
-          <div className="pointer-events-none absolute inset-0 flex items-end justify-center p-4 opacity-0 transition duration-200 group-hover:pointer-events-auto group-hover:opacity-100">
-            <ProductQuickView product={product} href={href} />
-          </div>
-        ) : null}
+
+        <div className="pointer-events-none absolute inset-0 flex items-start justify-between gap-2 p-3">
+          {showOutOfStock ? (
+            <span className="pointer-events-auto inline-flex items-center rounded-full border border-border/70 bg-canvas/80 px-3 py-1 type-caption text-ink shadow-soft backdrop-blur-sm">
+              Out of stock
+            </span>
+          ) : (
+            <span aria-hidden="true" />
+          )}
+
+          {showQuickView ? (
+            <div className="pointer-events-auto">
+              <ProductQuickView product={product} href={href} />
+            </div>
+          ) : null}
+        </div>
       </div>
       <div className="flex flex-1 flex-col gap-2 p-4">
         {product.brand ? (
-          <Text size="label-tight" muted>
+          <Text size="label-tight" muted className="uppercase tracking-[0.25em]">
             {product.brand}
           </Text>
         ) : null}
@@ -67,11 +78,11 @@ export function ProductCard({ product, showQuickView = false }: ProductCardProps
             {priceLabel}
           </Text>
         ) : null}
-        {showOutOfStock ? (
+        {showOutOfStock ? null : (
           <Text size="caption" muted>
-            Out of stock
+            View details
           </Text>
-        ) : null}
+        )}
       </div>
     </article>
   );

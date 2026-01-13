@@ -3,13 +3,16 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import SafeHtml from "@/components/SafeHtml";
-import { Button, Heading, Input, Text } from "@/components/ui";
+import { ShopCatalogField } from "@/components/shop/ShopCatalogField";
+import { ProductPurchasePanel } from "@/components/shop/ProductPurchasePanel";
+import { Button, Heading, Text } from "@/components/ui";
 import { ProductGallery } from "@/components/shop/ProductGallery";
 import { ProductConciergePanel } from "@/components/shop/ProductConciergePanel";
 import { formatProductPrice } from "@/components/shop/utils";
 import { addToCartAction } from "@/app/(site)/shop/cart/actions";
 import { getProductById, getRouteEntity } from "@/lib/bigcommerce";
 import type { Product } from "@/lib/bigcommerce/types";
+import productPageBg from "@/../docs/BIGCOMMERCE/Background-Images/product-page-bg.jpg";
 
 type AsyncProp<T> = T | Promise<T>;
 
@@ -106,10 +109,6 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   const showOutOfStock = product.availableForSale === false;
   const defaultVariant =
     product.variants.find((variant) => variant.availableForSale) ?? product.variants[0];
-  const hasVariant = Boolean(defaultVariant);
-  const canAddToCart = hasVariant && product.availableForSale;
-  const addToCartDisabled = !canAddToCart;
-  const variantIdValue = defaultVariant?.id ?? "";
   let descriptionSection: ReactNode = null;
   const conciergeCopy = {
     eyebrow: "Concierge assurance",
@@ -136,121 +135,81 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   }
 
   return (
-    <div className="space-y-10">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link
-          href="/shop"
-          prefetch={false}
-          className="text-sm text-ink-muted transition-colors hover:text-ink"
-        >
-          Back to shop
-        </Link>
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/shop/cart" prefetch={false}>
-            View cart
+    <ShopCatalogField
+      id="shop-product"
+      backgroundSrc={productPageBg.src}
+      backgroundAlt="Perazzi workshop details in warm light"
+    >
+      <div className="space-y-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Link
+            href="/shop"
+            prefetch={false}
+            className="type-button text-ink-muted transition-colors hover:text-ink focus-ring rounded-xl px-3 py-2"
+          >
+            Back to shop
           </Link>
-        </Button>
-      </div>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/shop/cart" prefetch={false}>
+              View cart
+            </Link>
+          </Button>
+        </div>
 
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-        <ProductGallery images={galleryImages} productName={product.name} />
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+          <div className="space-y-6">
+            <ProductGallery images={galleryImages} productName={product.name} />
 
-        <div className="space-y-6">
-          <div className="space-y-3">
-            {product.brand ? (
+            <section className="rounded-3xl border border-border/70 bg-card/70 p-6 shadow-soft backdrop-blur-sm">
               <Text size="label-tight" muted>
-                {product.brand}
+                Details
               </Text>
-            ) : null}
-            <Heading level={1} size="xl">
-              {product.name}
-            </Heading>
-            {priceLabel ? (
-              <Text size="lg" className="text-ink">
-                {priceLabel}
-              </Text>
-            ) : null}
-            {showOutOfStock ? (
-              <Text size="caption" muted>
-                Out of stock
-              </Text>
-            ) : null}
+              <div className="mt-4">{descriptionSection}</div>
+            </section>
           </div>
 
-          <form action={addToCartAction} className="flex flex-wrap items-end gap-3">
-            <input type="hidden" name="productId" value={product.id} />
-            <input type="hidden" name="variantId" value={variantIdValue} />
-            <label className="flex flex-col gap-1 text-ink type-label-tight">
-              <Text size="label-tight" muted>
-                Quantity
-              </Text>
-              <Input
-                name="quantity"
-                type="number"
-                min="1"
-                step="1"
-                inputMode="numeric"
-                defaultValue={1}
-                className="w-24"
-                disabled={addToCartDisabled}
-              />
-            </label>
-            <div className="flex flex-col gap-1">
-              <Button type="submit" size="md" disabled={addToCartDisabled}>
-                Add to cart
-              </Button>
-              {addToCartDisabled ? (
-                <Text size="caption" muted>
-                  This item is unavailable right now.
-                </Text>
-              ) : null}
-            </div>
-          </form>
-
-          {product.sku ? (
-            <Text size="label-tight" muted>
-              SKU: {product.sku}
-            </Text>
-          ) : null}
-
-          {descriptionSection}
-
-          {product.options.length ? (
-            <div className="space-y-2">
-              <Text size="label-tight" muted>
-                Options
-              </Text>
+          <div className="space-y-6">
+            <section className="rounded-3xl border border-border/70 bg-card/70 p-6 shadow-soft backdrop-blur-sm lg:sticky lg:top-[calc(var(--site-header-offset-lg)+16px)] lg:self-start">
               <div className="space-y-3">
-                {product.options.map((option) => (
-                  <div key={option.id} className="space-y-1">
-                    <Text size="caption" className="text-ink">
-                      {option.name}
-                    </Text>
-                    <div className="flex flex-wrap gap-2">
-                      {option.values.map((value) => (
-                        <span
-                          key={value}
-                          className="rounded-full border border-border/70 bg-card/70 px-3 py-1 text-xs text-ink"
-                        >
-                          {value}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                {product.brand ? (
+                  <Text size="label-tight" muted className="uppercase tracking-[0.25em]">
+                    {product.brand}
+                  </Text>
+                ) : null}
+                <Heading level={1} size="xl">
+                  {product.name}
+                </Heading>
+                {showOutOfStock ? (
+                  <Text size="caption" muted>
+                    Out of stock
+                  </Text>
+                ) : null}
               </div>
-            </div>
-          ) : null}
 
-          <ProductConciergePanel
-            eyebrow={conciergeCopy.eyebrow}
-            heading={conciergeCopy.heading}
-            body={conciergeCopy.body}
-            primaryCta={conciergeCopy.primaryCta}
-            secondaryCta={conciergeCopy.secondaryCta}
-          />
+              <div className="mt-6">
+                <ProductPurchasePanel
+                  action={addToCartAction}
+                  productId={product.id}
+                  basePriceLabel={priceLabel}
+                  variants={product.variants}
+                  options={product.options}
+                  initialVariantId={defaultVariant?.id}
+                  productAvailableForSale={product.availableForSale}
+                  sku={product.sku}
+                />
+              </div>
+            </section>
+
+            <ProductConciergePanel
+              eyebrow={conciergeCopy.eyebrow}
+              heading={conciergeCopy.heading}
+              body={conciergeCopy.body}
+              primaryCta={conciergeCopy.primaryCta}
+              secondaryCta={conciergeCopy.secondaryCta}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </ShopCatalogField>
   );
 }
