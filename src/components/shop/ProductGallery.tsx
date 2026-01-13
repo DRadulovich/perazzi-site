@@ -2,6 +2,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import { useState } from "react";
 import { Text } from "@/components/ui";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,10 @@ export function ProductGallery({
   const [activeIndex, setActiveIndex] = useState(0);
   const [open, setOpen] = useState(false);
 
+  const safeIndex = Math.min(activeIndex, Math.max(images.length - 1, 0));
+  const activeImage = images[safeIndex] ?? images[0];
+  const canNavigate = images.length > 1;
+
   if (images.length === 0) {
     return (
       <div className="relative aspect-3/2 overflow-hidden rounded-3xl border border-border/70 bg-card/70">
@@ -32,10 +37,6 @@ export function ProductGallery({
       </div>
     );
   }
-
-  const safeIndex = Math.min(activeIndex, images.length - 1);
-  const activeImage = images[safeIndex] ?? images[0];
-  const canNavigate = images.length > 1;
 
   const openAt = (index: number) => {
     setActiveIndex(index);
@@ -59,16 +60,24 @@ export function ProductGallery({
       <button
         type="button"
         onClick={() => openAt(safeIndex)}
-        className="relative aspect-3/2 w-full overflow-hidden rounded-3xl border border-border/70 bg-card/70"
+        className="group relative aspect-3/2 w-full overflow-hidden rounded-3xl border border-border/70 bg-card/70"
         aria-label={`Open image ${safeIndex + 1} of ${images.length}`}
       >
-        <Image
-          src={activeImage.url}
-          alt={activeImage.altText || productName}
-          fill
-          className="object-cover"
-          sizes="(min-width: 1024px) 560px, 100vw"
-        />
+        <motion.div
+          key={activeImage.url}
+          className="absolute inset-0"
+          initial={{ opacity: 0, scale: 1.01 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <Image
+            src={activeImage.url}
+            alt={activeImage.altText || productName}
+            fill
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.01]"
+            sizes="(min-width: 1024px) 560px, 100vw"
+          />
+        </motion.div>
       </button>
 
       {canNavigate ? (
@@ -80,15 +89,17 @@ export function ProductGallery({
               onClick={() => openAt(index)}
               aria-label={`Open image ${index + 1} of ${images.length}`}
               className={cn(
-                "relative aspect-3/2 overflow-hidden rounded-2xl border border-border/70 bg-card/70",
-                index === safeIndex && "ring-2 ring-ink/40 ring-offset-2 ring-offset-canvas",
+                "group relative aspect-3/2 overflow-hidden rounded-2xl border border-border/70 bg-card/70 transition duration-300",
+                index === safeIndex
+                  ? "ring-2 ring-ink/40 ring-offset-2 ring-offset-canvas"
+                  : "opacity-70 hover:opacity-100",
               )}
             >
               <Image
                 src={image.url}
                 alt={image.altText || productName}
                 fill
-                className="object-cover"
+                className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
                 sizes="(min-width: 1024px) 140px, 30vw"
               />
             </button>

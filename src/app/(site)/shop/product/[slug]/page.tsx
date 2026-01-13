@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import SafeHtml from "@/components/SafeHtml";
 import { Button, Heading, Input, Text } from "@/components/ui";
 import { ProductGallery } from "@/components/shop/ProductGallery";
+import { ProductConciergePanel } from "@/components/shop/ProductConciergePanel";
 import { formatProductPrice } from "@/components/shop/utils";
 import { addToCartAction } from "@/app/(site)/shop/cart/actions";
 import { getProductById, getRouteEntity } from "@/lib/bigcommerce";
@@ -110,6 +111,14 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   const addToCartDisabled = !canAddToCart;
   const variantIdValue = defaultVariant?.id ?? "";
   let descriptionSection: ReactNode = null;
+  const conciergeCopy = {
+    eyebrow: "Concierge assurance",
+    heading: "Confirm fit before you order",
+    body:
+      "Share your measurements or prior build notes. We will confirm fitment, lead time, and any workshop prep before you check out.",
+    primaryCta: { label: "Ask the concierge", href: "/concierge" },
+    secondaryCta: { label: "Book a fitting", href: "/bespoke" },
+  };
 
   if (descriptionHtml) {
     descriptionSection = (
@@ -232,6 +241,14 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
               </div>
             </div>
           ) : null}
+
+          <ProductConciergePanel
+            eyebrow={conciergeCopy.eyebrow}
+            heading={conciergeCopy.heading}
+            body={conciergeCopy.body}
+            primaryCta={conciergeCopy.primaryCta}
+            secondaryCta={conciergeCopy.secondaryCta}
+          />
         </div>
       </div>
     </div>
