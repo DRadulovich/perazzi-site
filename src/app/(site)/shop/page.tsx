@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PageHeading } from "@/components/page-heading";
 import { FiltersPanel, type CategoryOption } from "@/components/shop/FiltersPanel";
 import { ProductGrid } from "@/components/shop/ProductGrid";
+import { ShopHero } from "@/components/shop/ShopHero";
 import { Button, Text } from "@/components/ui";
+import { shopHero } from "@/content/shop/hero";
 import { getCategoryTree, searchProducts } from "@/lib/bigcommerce";
 import { PRODUCT_SORT_KEYS } from "@/lib/bigcommerce/sort";
 import type { Category, ProductSearchFilters, ProductSortKey } from "@/lib/bigcommerce/types";
@@ -137,20 +138,13 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     : null;
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <PageHeading
-          title="Shop"
-          description="Browse the Perazzi collection and filter by category, price, and availability."
-        />
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/shop/cart" prefetch={false}>
-            View cart
-          </Link>
-        </Button>
-      </div>
+    <div className="space-y-12">
+      <ShopHero hero={shopHero} cartHref="/shop/cart" />
 
-      <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
+      <div
+        id="shop-catalog"
+        className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]"
+      >
         <FiltersPanel
           categories={categories}
           basePath="/shop"
