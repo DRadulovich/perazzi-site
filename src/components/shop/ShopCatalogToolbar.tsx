@@ -164,7 +164,7 @@ export function ShopCatalogToolbar({
 
   return (
     <div className="sticky top-[calc(var(--site-header-offset-md)+12px)] z-30 -mx-3 rounded-2xl border border-border/70 bg-canvas/85 px-3 py-3 shadow-soft backdrop-blur-md sm:top-[calc(var(--site-header-offset-lg)+12px)] sm:-mx-4 sm:px-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(420px,720px)] sm:items-center">
         <Text size="label-tight" muted>
           {resultsSummary}
         </Text>
@@ -175,13 +175,13 @@ export function ShopCatalogToolbar({
           method="get"
           action={basePath}
           onSubmit={handleSubmit}
-          className="flex flex-1 flex-wrap items-center justify-end gap-2"
+          className="grid w-full grid-cols-[minmax(0,1fr)_10.5rem] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_11rem_auto]"
         >
           {hiddenInputs.map((input) => (
             <input key={input.name} type="hidden" name={input.name} value={input.value} />
           ))}
 
-          <label className="relative flex-1 sm:max-w-sm">
+          <label className="relative w-full sm:max-w-none">
             <span className="sr-only">Search</span>
             <Input
               name="search"
@@ -198,7 +198,7 @@ export function ShopCatalogToolbar({
             </button>
           </label>
 
-          <label className="min-w-40">
+          <label className="w-full">
             <span className="sr-only">Sort</span>
             <select
               name="sort"
@@ -219,7 +219,7 @@ export function ShopCatalogToolbar({
               type="button"
               variant="secondary"
               size="sm"
-              className="lg:hidden"
+              className="col-span-2 lg:hidden sm:col-span-1"
               onClick={() => setDrawerOpenLocationKey(locationKey)}
             >
               <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
