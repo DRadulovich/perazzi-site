@@ -28,7 +28,7 @@ const heroBackground: FactoryAsset = {
 
 export const shopHero: ShopHeroContent = {
   eyebrow: "Perazzi Shop",
-  title: "Botticino atelier selections",
+  title: "Perazzi USA Online Store",
   subtitle:
     "Concierge-curated components and accessories, matched to your gun, fit profile, and delivery window.",
   primaryCta: {
