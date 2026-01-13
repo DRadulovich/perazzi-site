@@ -2,10 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FiltersPanel, type CategoryOption } from "@/components/shop/FiltersPanel";
-import { ShopConciergePanel } from "@/components/shop/ShopConciergePanel";
+import { ShopCatalogField } from "@/components/shop/ShopCatalogField";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { ShopHero } from "@/components/shop/ShopHero";
-import { CinematicImageStrip } from "@/components/shotguns/CinematicImageStrip";
 import { Button, Text } from "@/components/ui";
 import listPageStrip from "@/../docs/BIGCOMMERCE/Background-Images/list-page-cinestrip.jpg";
 import { shopHero } from "@/content/shop/hero";
@@ -175,47 +174,45 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   };
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-0">
       <ShopHero hero={categoryHero} cartHref="/shop/cart" />
-      <ShopConciergePanel />
 
-      <div
+      <ShopCatalogField
         id="shop-catalog"
-        className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]"
+        backgroundSrc={listPageStrip.src}
+        backgroundAlt="Cinematic detail of Perazzi craftsmanship in low light"
       >
-        <FiltersPanel
-          categories={flattenedCategories}
-          selectedCategorySlug={category.slug}
-          basePath={`/shop/category/${category.slug}`}
-          showSearch={false}
-          filters={{
-            minPrice: minPriceValue,
-            maxPrice: maxPriceValue,
-            inStock,
-            sort,
-          }}
-        />
-
-        <div className="space-y-5">
-          <Text size="label-tight" muted>
-            {totalLabel} {searchResult.total === 1 ? "result" : "results"}
-          </Text>
-          <CinematicImageStrip
-            src={listPageStrip.src}
-            alt="Cinematic detail of Perazzi craftsmanship in low light"
+        <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
+          <FiltersPanel
+            categories={flattenedCategories}
+            selectedCategorySlug={category.slug}
+            basePath={`/shop/category/${category.slug}`}
+            showSearch={false}
+            filters={{
+              minPrice: minPriceValue,
+              maxPrice: maxPriceValue,
+              inStock,
+              sort,
+            }}
           />
-          <ProductGrid products={searchResult.items} />
-          {nextHref ? (
-            <div className="flex justify-center pt-2">
-              <Button asChild variant="secondary" size="md">
-                <Link href={nextHref} prefetch={false}>
-                  Next results
-                </Link>
-              </Button>
-            </div>
-          ) : null}
+
+          <div className="space-y-5">
+            <Text size="label-tight" muted>
+              {totalLabel} {searchResult.total === 1 ? "result" : "results"}
+            </Text>
+            <ProductGrid products={searchResult.items} />
+            {nextHref ? (
+              <div className="flex justify-center pt-2">
+                <Button asChild variant="secondary" size="md">
+                  <Link href={nextHref} prefetch={false}>
+                    Next results
+                  </Link>
+                </Button>
+              </div>
+            ) : null}
+          </div>
         </div>
-      </div>
+      </ShopCatalogField>
     </div>
   );
 }

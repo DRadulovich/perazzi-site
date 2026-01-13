@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FiltersPanel, type CategoryOption } from "@/components/shop/FiltersPanel";
-import { ShopConciergePanel } from "@/components/shop/ShopConciergePanel";
+import { ShopCatalogField } from "@/components/shop/ShopCatalogField";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { ShopHero } from "@/components/shop/ShopHero";
-import { CinematicImageStrip } from "@/components/shotguns/CinematicImageStrip";
 import { Button, Text } from "@/components/ui";
 import listPageStrip from "@/../docs/BIGCOMMERCE/Background-Images/list-page-cinestrip.jpg";
 import { shopHero } from "@/content/shop/hero";
@@ -141,26 +140,27 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     : null;
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-0">
       <ShopHero hero={shopHero} cartHref="/shop/cart" />
-      <ShopConciergePanel />
 
-      <div
+      <ShopCatalogField
         id="shop-catalog"
-        className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]"
+        backgroundSrc={listPageStrip.src}
+        backgroundAlt="Cinematic detail of Perazzi craftsmanship in low light"
       >
-        <FiltersPanel
-          categories={categories}
-          basePath="/shop"
-          showSearch
-          filters={{
-            searchTerm,
-            minPrice: minPriceValue,
-            maxPrice: maxPriceValue,
-            inStock,
-            sort,
-          }}
-        />
+        <div className="grid gap-8 lg:grid-cols-[260px_minmax(0,1fr)]">
+          <FiltersPanel
+            categories={categories}
+            basePath="/shop"
+            showSearch
+            filters={{
+              searchTerm,
+              minPrice: minPriceValue,
+              maxPrice: maxPriceValue,
+              inStock,
+              sort,
+            }}
+          />
 
           <div className="space-y-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -173,22 +173,19 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
                 </Text>
               ) : null}
             </div>
-            <CinematicImageStrip
-              src={listPageStrip.src}
-              alt="Cinematic detail of Perazzi craftsmanship in low light"
-            />
             <ProductGrid products={searchResult.items} showQuickView />
-          {nextHref ? (
-            <div className="flex justify-center pt-2">
-              <Button asChild variant="secondary" size="md">
-                <Link href={nextHref} prefetch={false}>
-                  Next results
-                </Link>
-              </Button>
-            </div>
-          ) : null}
+            {nextHref ? (
+              <div className="flex justify-center pt-2">
+                <Button asChild variant="secondary" size="md">
+                  <Link href={nextHref} prefetch={false}>
+                    Next results
+                  </Link>
+                </Button>
+              </div>
+            ) : null}
+          </div>
         </div>
-      </div>
+      </ShopCatalogField>
     </div>
   );
 }

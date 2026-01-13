@@ -1,113 +1,95 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import conciergeImage from "@/../docs/BIGCOMMERCE/Background-Images/concierge-image.jpg";
-import {
-  Button,
-  Container,
-  Heading,
-  RevealAnimatedBody,
-  RevealGroup,
-  RevealItem,
-  SectionBackdrop,
-  SectionShell,
-  Text,
-} from "@/components/ui";
+import { Button, Heading, RevealAnimatedBody, RevealGroup, RevealItem, Text } from "@/components/ui";
 
-const steps = [
-  {
-    title: "Tell us your discipline",
-    body: "Share the events you shoot and your timing needs so we can narrow the right components.",
-  },
-  {
-    title: "Confirm your fit profile",
-    body: "Send your measurements or past build notes and we will align stock and balance options.",
-  },
-  {
-    title: "Book a workshop session",
-    body: "Secure a concierge slot and receive a dealer-ready brief with availability and pricing.",
-  },
-];
+type ShopConciergePanelProps = Readonly<{
+  eyebrow: string;
+  heading: string;
+  body: string;
+  steps: Array<{ title: string; body: string }>;
+  primaryCta: { label: string; href: string };
+  secondaryCta: { label: string; href: string };
+}>;
 
-const ctas = {
-  primary: { label: "Open the concierge", href: "/concierge" },
-  secondary: { label: "Explore bespoke fitting", href: "/bespoke" },
-};
-
-export function ShopConciergePanel() {
+export function ShopConciergePanel({
+  eyebrow,
+  heading,
+  body,
+  steps,
+  primaryCta,
+  secondaryCta,
+}: ShopConciergePanelProps) {
   return (
-    <section
-      className="relative isolate w-screen max-w-[100vw] full-bleed"
+    <div
+      className="relative overflow-hidden rounded-2xl border border-white/15 bg-black/55 p-5 shadow-elevated ring-1 ring-white/10 backdrop-blur-xl sm:rounded-3xl"
       aria-labelledby="shop-concierge-heading"
     >
-      <SectionBackdrop
-        image={{
-          url: conciergeImage.src,
-          alt: "Perazzi concierge preparing a fitting dossier",
-        }}
-        reveal
-        revealOverlay
-        enableParallax
-        overlay="ink-50"
-        loading="lazy"
-      />
+      <div className="absolute inset-0 -z-10" aria-hidden="true">
+        <Image
+          src={conciergeImage.src}
+          alt=""
+          fill
+          sizes="(min-width: 1024px) 420px, 100vw"
+          className="object-cover opacity-35"
+        />
+        <div className="absolute inset-0 bg-black/65" />
+        <div className="pointer-events-none absolute inset-0 overlay-gradient-ink-30" aria-hidden="true" />
+      </div>
 
-      <Container size="xl" className="relative z-10 py-12 sm:py-16">
-        <SectionShell reveal className="space-y-8">
-          <RevealAnimatedBody sequence className="space-y-8">
-            <RevealItem index={0}>
-              <Text size="label-tight" muted>
-                Concierge guidance
-              </Text>
-            </RevealItem>
+      <RevealAnimatedBody sequence className="space-y-6">
+        <RevealItem index={0}>
+          <Text size="label-tight" className="text-white/70">
+            {eyebrow}
+          </Text>
+        </RevealItem>
 
-            <RevealItem index={1}>
-              <div className="space-y-3">
-                <Heading id="shop-concierge-heading" level={2} size="lg">
-                  Build a shop brief with Botticino
+        <RevealItem index={1}>
+          <div className="space-y-3">
+            <Heading id="shop-concierge-heading" level={2} size="md" className="text-white">
+              {heading}
+            </Heading>
+            <Text size="sm" className="text-white/75" leading="relaxed">
+              {body}
+            </Text>
+          </div>
+        </RevealItem>
+
+        <RevealGroup delayMs={140} className="space-y-3">
+          {steps.map((step, index) => (
+            <RevealItem key={step.title} index={index}>
+              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-soft">
+                <Text size="label-tight" className="text-white/60">
+                  Step {index + 1}
+                </Text>
+                <Heading level={3} size="sm" className="mt-2 text-white">
+                  {step.title}
                 </Heading>
-                <Text size="md" className="max-w-3xl" leading="relaxed">
-                  Tell us what you shoot and how you like your gun to move. We will align
-                  availability with fit, balance, and scheduling before you place the order.
+                <Text size="sm" className="mt-1 text-white/70" leading="relaxed">
+                  {step.body}
                 </Text>
               </div>
             </RevealItem>
+          ))}
+        </RevealGroup>
 
-            <RevealGroup delayMs={140} className="grid gap-4 lg:grid-cols-3">
-              {steps.map((step, index) => (
-                <RevealItem key={step.title} index={index}>
-                  <div className="h-full rounded-2xl border border-border/70 bg-card/70 p-4 shadow-soft backdrop-blur-sm">
-                    <Text size="label-tight" muted>
-                      Step {index + 1}
-                    </Text>
-                    <Heading level={3} size="sm" className="mt-2">
-                      {step.title}
-                    </Heading>
-                    <Text size="sm" className="mt-2 text-ink-muted" leading="relaxed">
-                      {step.body}
-                    </Text>
-                  </div>
-                </RevealItem>
-              ))}
-            </RevealGroup>
-
-            <RevealItem index={2}>
-              <div className="flex flex-wrap gap-3">
-                <Button asChild size="md">
-                  <Link href={ctas.primary.href} prefetch={false}>
-                    {ctas.primary.label}
-                  </Link>
-                </Button>
-                <Button asChild size="md" variant="secondary">
-                  <Link href={ctas.secondary.href} prefetch={false}>
-                    {ctas.secondary.label}
-                  </Link>
-                </Button>
-              </div>
-            </RevealItem>
-          </RevealAnimatedBody>
-        </SectionShell>
-      </Container>
-    </section>
+        <RevealItem index={2}>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild size="sm">
+              <Link href={primaryCta.href} prefetch={false}>
+                {primaryCta.label}
+              </Link>
+            </Button>
+            <Button asChild size="sm" variant="secondary" className="bg-white/10 text-white hover:bg-white/20">
+              <Link href={secondaryCta.href} prefetch={false}>
+                {secondaryCta.label}
+              </Link>
+            </Button>
+          </div>
+        </RevealItem>
+      </RevealAnimatedBody>
+    </div>
   );
 }

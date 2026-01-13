@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { Button, Heading, Text } from "@/components/ui";
+import { ShopConciergePanel } from "@/components/shop/ShopConciergePanel";
 import { useAnalyticsObserver } from "@/hooks/use-analytics-observer";
 import { homeMotion } from "@/lib/motionConfig";
 import { isSanityImageUrl, sanityImageLoader } from "@/lib/sanityImage";
@@ -94,44 +95,64 @@ export function ShopHero({ hero, cartHref, cartLabel = "View cart" }: ShopHeroPr
         animate={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
         transition={reduceMotion ? undefined : homeMotion.reveal}
       >
-        <motion.div
-          className="flex min-h-[70vh] flex-col gap-8 px-6 py-12 sm:px-10 lg:px-16"
-          variants={content}
-          initial={motionEnabled ? "hidden" : false}
-          animate={motionEnabled ? "show" : undefined}
-        >
-          <motion.div variants={item}>
-            <Text size="label-tight" className="text-white/70">
-              {hero.eyebrow}
-            </Text>
-          </motion.div>
-          <motion.div variants={item} className="space-y-4">
-            <Heading id="shop-hero-heading" level={1} size="xl" className="text-white">
-              {hero.title}
-            </Heading>
-            <Text size="md" className="max-w-2xl text-white/80">
-              {hero.subtitle}
-            </Text>
-          </motion.div>
-          <motion.div variants={item} className="flex flex-wrap items-center gap-3">
-            <Button asChild size="md">
-              <Link href={hero.primaryCta.href} prefetch={false}>
-                {hero.primaryCta.label}
-              </Link>
-            </Button>
-            <Button asChild size="md" variant="secondary">
-              <Link href={hero.secondaryCta.href} prefetch={false}>
-                {hero.secondaryCta.label}
-              </Link>
-            </Button>
-            {cartHref ? (
-              <Button asChild size="sm" variant="ghost" className="text-white/80 hover:text-white">
-                <Link href={cartHref} prefetch={false}>
-                  {cartLabel}
+        <motion.div className="grid min-h-[70vh] items-start gap-8 px-6 py-12 sm:px-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-12 lg:px-16">
+          <motion.div
+            className="flex flex-col gap-6"
+            variants={content}
+            initial={motionEnabled ? "hidden" : false}
+            animate={motionEnabled ? "show" : undefined}
+          >
+            <motion.div variants={item}>
+              <Text size="label-tight" className="text-white/70">
+                {hero.eyebrow}
+              </Text>
+            </motion.div>
+            <motion.div variants={item} className="space-y-4">
+              <Heading id="shop-hero-heading" level={1} size="xl" className="text-white">
+                {hero.title}
+              </Heading>
+              <Text size="md" className="max-w-2xl text-white/80">
+                {hero.subtitle}
+              </Text>
+            </motion.div>
+            <motion.div variants={item} className="flex flex-wrap items-center gap-3">
+              <Button asChild size="md">
+                <Link href={hero.primaryCta.href} prefetch={false}>
+                  {hero.primaryCta.label}
                 </Link>
               </Button>
-            ) : null}
+              <Button asChild size="md" variant="secondary">
+                <Link href={hero.secondaryCta.href} prefetch={false}>
+                  {hero.secondaryCta.label}
+                </Link>
+              </Button>
+              {cartHref ? (
+                <Button asChild size="sm" variant="ghost" className="text-white/80 hover:text-white">
+                  <Link href={cartHref} prefetch={false}>
+                    {cartLabel}
+                  </Link>
+                </Button>
+              ) : null}
+            </motion.div>
           </motion.div>
+
+          {hero.conciergePanel ? (
+            <motion.div
+              variants={item}
+              initial={motionEnabled ? "hidden" : false}
+              animate={motionEnabled ? "show" : undefined}
+              className="lg:self-center"
+            >
+              <ShopConciergePanel
+                eyebrow={hero.conciergePanel.eyebrow}
+                heading={hero.conciergePanel.heading}
+                body={hero.conciergePanel.body}
+                steps={hero.conciergePanel.steps}
+                primaryCta={hero.conciergePanel.primaryCta}
+                secondaryCta={hero.conciergePanel.secondaryCta}
+              />
+            </motion.div>
+          ) : null}
         </motion.div>
       </motion.section>
     </section>
