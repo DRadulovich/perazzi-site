@@ -41,22 +41,22 @@ export const shopHero: ShopHeroContent = {
   },
   background: heroBackground,
   conciergePanel: {
-    eyebrow: "Concierge brief",
-    heading: "Build your shop dossier",
+    eyebrow: "Parts concierge",
+    heading: "Find the right part for your gun.",
     body:
-      "Share how you shoot and what you are tuning. We align availability with fit, balance, and timing before you order.",
+      "We help you identify the correct component for your exact Perazzi and confirm compatibility before you buy—so you don’t have to fight decision fatigue across hundreds of listings.",
     steps: [
       {
-        title: "Tell us your discipline",
-        body: "We map your event schedule and timing so parts arrive when you need them.",
+        title: "Tell us your model & serial",
+        body: "We narrow options to the correct generation, spec, and revisions for your gun.",
       },
       {
-        title: "Confirm your fit profile",
-        body: "Send measurements or prior build notes to align stock and balance options.",
+        title: "Confirm the exact component",
+        body: "We cross-check diagrams, photos, and compatibility so you order the right part the first time.",
       },
       {
-        title: "Reserve a workshop session",
-        body: "Receive a dealer-ready brief with pricing, availability, and next steps.",
+        title: "Choose the best next step",
+        body: "If it’s an easy swap, we’ll point you to the right SKU. If it needs a bench, we’ll route you to service.",
       },
     ],
     primaryCta: {
@@ -64,8 +64,8 @@ export const shopHero: ShopHeroContent = {
       href: "/concierge",
     },
     secondaryCta: {
-      label: "Book a fitting",
-      href: "/bespoke",
+      label: "Schedule Service Appointment",
+      href: "/service/request",
     },
   },
 };

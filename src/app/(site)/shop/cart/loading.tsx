@@ -1,6 +1,8 @@
 import { ShopCatalogField } from "@/components/shop/ShopCatalogField";
 import cartBg from "@/../docs/BIGCOMMERCE/Background-Images/cart-page-bg.jpg";
 
+const CART_LINE_SKELETON_KEYS = ["cart-line-1", "cart-line-2", "cart-line-3"] as const;
+
 const SkeletonLine = ({ className = "" }: { className?: string }) => (
   <div className={`animate-pulse rounded-xl bg-ink/10 ${className}`} aria-hidden="true" />
 );
@@ -22,15 +24,15 @@ export default function Loading() {
           <SkeletonLine className="h-10 w-44" />
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="space-y-4">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div
-                key={index}
-                className="rounded-3xl border border-border/70 bg-card/70 p-5 shadow-soft backdrop-blur-sm"
-              >
-                <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="flex min-w-0 items-start gap-4">
+	        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
+	          <div className="space-y-4">
+	            {CART_LINE_SKELETON_KEYS.map((key) => (
+	              <div
+	                key={key}
+	                className="rounded-3xl border border-border/70 bg-card/70 p-5 shadow-soft backdrop-blur-sm"
+	              >
+	                <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+	                  <div className="flex min-w-0 items-start gap-4">
                     <div className="h-20 w-20 shrink-0 rounded-2xl border border-border/70 bg-ink/10" />
                     <div className="min-w-0 space-y-2">
                       <SkeletonLine className="h-5 w-64" />
@@ -73,4 +75,3 @@ export default function Loading() {
     </ShopCatalogField>
   );
 }
-

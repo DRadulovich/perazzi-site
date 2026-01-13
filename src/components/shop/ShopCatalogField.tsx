@@ -9,6 +9,7 @@ type ShopCatalogFieldProps = Readonly<{
   backgroundAlt?: string;
   children: ReactNode;
   className?: string;
+  panelClassName?: string;
 }>;
 
 export function ShopCatalogField({
@@ -17,6 +18,7 @@ export function ShopCatalogField({
   backgroundAlt,
   children,
   className,
+  panelClassName,
 }: ShopCatalogFieldProps) {
   return (
     <section
@@ -40,7 +42,12 @@ export function ShopCatalogField({
       </div>
 
       <Container size="xl" className="relative z-10">
-        <div className="rounded-3xl border border-border/70 bg-card/75 p-6 shadow-elevated backdrop-blur-md sm:p-8">
+        <div
+          className={cn(
+            "rounded-3xl border border-border/70 bg-card/75 p-6 shadow-elevated backdrop-blur-md sm:p-8",
+            panelClassName,
+          )}
+        >
           {children}
         </div>
       </Container>

@@ -4,9 +4,11 @@ import { FiltersPanel } from "@/components/shop/FiltersPanel";
 import { ShopCatalogToolbar } from "@/components/shop/ShopCatalogToolbar";
 import { ShopCatalogField } from "@/components/shop/ShopCatalogField";
 import { ProductGrid } from "@/components/shop/ProductGrid";
+import { ShopConciergePanel } from "@/components/shop/ShopConciergePanel";
 import { ShopHero } from "@/components/shop/ShopHero";
 import { Button } from "@/components/ui";
 import listPageStrip from "@/../docs/BIGCOMMERCE/Background-Images/list-page-cinestrip.jpg";
+import conciergeStrip from "@/../docs/BIGCOMMERCE/Background-Images/concierge-image.jpg";
 import { shopHero } from "@/content/shop/hero";
 import { getCategoryTree, searchProducts } from "@/lib/bigcommerce";
 import { PRODUCT_SORT_KEYS } from "@/lib/bigcommerce/sort";
@@ -93,6 +95,24 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   return (
     <div className="space-y-0">
       <ShopHero hero={shopHero} cartHref="/shop/cart" />
+
+      <ShopCatalogField
+        id="parts-concierge"
+        backgroundSrc={conciergeStrip.src}
+        backgroundAlt="Concierge workshop bench in warm light"
+        className="py-8 sm:py-10"
+        panelClassName="p-6 sm:p-7"
+      >
+        <ShopConciergePanel
+          eyebrow={shopHero.conciergePanel.eyebrow}
+          heading={shopHero.conciergePanel.heading}
+          body={shopHero.conciergePanel.body}
+          steps={shopHero.conciergePanel.steps}
+          primaryCta={shopHero.conciergePanel.primaryCta}
+          secondaryCta={shopHero.conciergePanel.secondaryCta}
+          variant="strip"
+        />
+      </ShopCatalogField>
 
       <ShopCatalogField
         id="shop-catalog"
