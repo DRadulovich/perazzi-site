@@ -94,7 +94,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
   return (
     <div className="space-y-0">
-      <ShopHero hero={shopHero} cartHref="/shop/cart" />
+      <ShopHero hero={shopHero} cartHref="/shop/cart" conciergeHref="#parts-concierge" />
 
       <ShopCatalogField
         id="parts-concierge"
@@ -111,6 +111,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           primaryCta={shopHero.conciergePanel.primaryCta}
           secondaryCta={shopHero.conciergePanel.secondaryCta}
           variant="strip"
+          primaryCtaBehavior="chat"
         />
       </ShopCatalogField>
 

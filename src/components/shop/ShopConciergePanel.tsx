@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import conciergeImage from "@/../docs/BIGCOMMERCE/Background-Images/concierge-image.jpg";
 import { Button, Heading, RevealAnimatedBody, RevealGroup, RevealItem, Text } from "@/components/ui";
+import type { ChatTriggerPayload } from "@/lib/chat-trigger";
+import { triggerChat } from "@/lib/chat-trigger";
 import { cn } from "@/lib/utils";
 
 type ShopConciergePanelProps = Readonly<{
@@ -15,6 +17,8 @@ type ShopConciergePanelProps = Readonly<{
   secondaryCta: { label: string; href: string };
   variant?: "panel" | "embedded" | "strip";
   className?: string;
+  primaryCtaBehavior?: "link" | "chat";
+  primaryCtaPayload?: ChatTriggerPayload;
 }>;
 
 export function ShopConciergePanel({
@@ -26,7 +30,27 @@ export function ShopConciergePanel({
   secondaryCta,
   variant = "panel",
   className,
+  primaryCtaBehavior = "link",
+  primaryCtaPayload,
 }: ShopConciergePanelProps) {
+  const primaryCtaNode =
+    primaryCtaBehavior === "chat" ? (
+      <Button
+        size={variant === "strip" ? "md" : "sm"}
+        onClick={() => {
+          triggerChat(primaryCtaPayload);
+        }}
+      >
+        {primaryCta.label}
+      </Button>
+    ) : (
+      <Button asChild size={variant === "strip" ? "md" : "sm"}>
+        <Link href={primaryCta.href} prefetch={false}>
+          {primaryCta.label}
+        </Link>
+      </Button>
+    );
+
   if (variant === "strip") {
     return (
       <div
@@ -53,11 +77,7 @@ export function ShopConciergePanel({
 
           <RevealItem index={2}>
             <div className="flex flex-wrap gap-3">
-              <Button asChild size="md">
-                <Link href={primaryCta.href} prefetch={false}>
-                  {primaryCta.label}
-                </Link>
-              </Button>
+              {primaryCtaNode}
               <Button asChild size="md" variant="secondary">
                 <Link href={secondaryCta.href} prefetch={false}>
                   {secondaryCta.label}
@@ -151,11 +171,7 @@ export function ShopConciergePanel({
 
         <RevealItem index={2}>
           <div className="flex flex-wrap gap-3">
-            <Button asChild size="sm">
-              <Link href={primaryCta.href} prefetch={false}>
-                {primaryCta.label}
-              </Link>
-            </Button>
+            {primaryCtaNode}
             <Button asChild size="sm" variant="secondary">
               <Link href={secondaryCta.href} prefetch={false}>
                 {secondaryCta.label}

@@ -16,6 +16,8 @@ type ShopHeroProps = Readonly<{
   hero: ShopHeroContent;
   cartHref?: string;
   cartLabel?: string;
+  conciergeHref?: string;
+  conciergeLabel?: string;
 }>;
 
 type CartButtonProps = Readonly<{
@@ -37,7 +39,13 @@ function CartButton({ cartHref, cartLabel }: CartButtonProps) {
   );
 }
 
-export function ShopHero({ hero, cartHref, cartLabel = "View cart" }: ShopHeroProps) {
+export function ShopHero({
+  hero,
+  cartHref,
+  cartLabel = "View cart",
+  conciergeHref,
+  conciergeLabel,
+}: ShopHeroProps) {
   const analyticsRef = useAnalyticsObserver("HeroSeen:shop");
   const sectionRef = useRef<HTMLElement | null>(null);
   const prefersReducedMotion = useReducedMotion();
@@ -107,7 +115,7 @@ export function ShopHero({ hero, cartHref, cartLabel = "View cart" }: ShopHeroPr
       </motion.div>
 
       <motion.section
-        className="relative z-10 mx-auto min-h-[60vh] max-w-6xl px-6 pb-12 pt-10 sm:px-10 sm:pb-14 sm:pt-14 lg:px-16 lg:pb-16"
+        className="relative z-10 mx-auto flex min-h-[60vh] max-w-6xl items-center justify-center px-6 py-12 sm:px-10 sm:py-14 lg:px-16 lg:py-16"
         initial={reduceMotion ? false : { opacity: 0, y: 28, filter: "blur(12px)" }}
         animate={reduceMotion ? undefined : { opacity: 1, y: 0, filter: "blur(0px)" }}
         transition={reduceMotion ? undefined : homeMotion.reveal}
@@ -151,16 +159,18 @@ export function ShopHero({ hero, cartHref, cartLabel = "View cart" }: ShopHeroPr
             <CartButton cartHref={cartHref} cartLabel={cartLabel} />
           </motion.div>
 
-          <motion.div variants={item} className="mt-7 flex flex-wrap items-center gap-3 text-ink-muted">
-            <Text size="sm" className="text-ink-muted">
-              Feeling overwhelmed by the catalog?
-            </Text>
-            <Button asChild size="sm" variant="ghost" className="-mx-2 text-ink hover:bg-ink/5">
-              <Link href="#parts-concierge" prefetch={false}>
-                Meet the Parts Concierge
-              </Link>
-            </Button>
-          </motion.div>
+          {conciergeHref ? (
+            <motion.div variants={item} className="mt-7 flex flex-wrap items-center gap-3 text-ink-muted">
+              <Text size="sm" className="text-ink-muted">
+                Feeling overwhelmed by the catalog?
+              </Text>
+              <Button asChild size="sm" variant="ghost" className="-mx-2 text-ink hover:bg-ink/5">
+                <Link href={conciergeHref} prefetch={false}>
+                  {conciergeLabel ?? "Meet the Parts Concierge"}
+                </Link>
+              </Button>
+            </motion.div>
+          ) : null}
         </motion.div>
       </motion.section>
     </section>
