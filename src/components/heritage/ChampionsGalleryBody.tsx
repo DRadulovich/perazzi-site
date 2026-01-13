@@ -348,14 +348,14 @@ function ChampionNameItem({ index, champion, isActive, onSelect }: ChampionNameI
             />
           </ChoreoPresence>
         ) : null}
-        {champion.title ? (
+        {champion.name ? (
           <span
             className={cn(
               "relative z-10 block type-card-title text-xl text-ink",
               isActive && "text-white",
             )}
           >
-            {champion.title}
+            {champion.name}
           </span>
         ) : null}
       </button>
