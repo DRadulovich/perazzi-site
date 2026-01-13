@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FiltersPanel, type CategoryOption } from "@/components/shop/FiltersPanel";
+import { ShopConciergePanel } from "@/components/shop/ShopConciergePanel";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { ShopHero } from "@/components/shop/ShopHero";
+import { CinematicImageStrip } from "@/components/shotguns/CinematicImageStrip";
 import { Button, Text } from "@/components/ui";
+import listPageStrip from "@/../docs/BIGCOMMERCE/Background-Images/list-page-cinestrip.jpg";
 import { shopHero } from "@/content/shop/hero";
 import { getCategoryTree, searchProducts } from "@/lib/bigcommerce";
 import { PRODUCT_SORT_KEYS } from "@/lib/bigcommerce/sort";
@@ -140,6 +143,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   return (
     <div className="space-y-12">
       <ShopHero hero={shopHero} cartHref="/shop/cart" />
+      <ShopConciergePanel />
 
       <div
         id="shop-catalog"
@@ -158,18 +162,22 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           }}
         />
 
-        <div className="space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <Text size="label-tight" muted>
-              {totalLabel} {searchResult.total === 1 ? "result" : "results"}
-            </Text>
-            {searchTerm ? (
+          <div className="space-y-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <Text size="label-tight" muted>
-                Search: {searchTerm}
+                {totalLabel} {searchResult.total === 1 ? "result" : "results"}
               </Text>
-            ) : null}
-          </div>
-          <ProductGrid products={searchResult.items} showQuickView />
+              {searchTerm ? (
+                <Text size="label-tight" muted>
+                  Search: {searchTerm}
+                </Text>
+              ) : null}
+            </div>
+            <CinematicImageStrip
+              src={listPageStrip.src}
+              alt="Cinematic detail of Perazzi craftsmanship in low light"
+            />
+            <ProductGrid products={searchResult.items} showQuickView />
           {nextHref ? (
             <div className="flex justify-center pt-2">
               <Button asChild variant="secondary" size="md">

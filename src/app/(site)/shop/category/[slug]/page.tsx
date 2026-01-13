@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FiltersPanel, type CategoryOption } from "@/components/shop/FiltersPanel";
+import { ShopConciergePanel } from "@/components/shop/ShopConciergePanel";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { ShopHero } from "@/components/shop/ShopHero";
+import { CinematicImageStrip } from "@/components/shotguns/CinematicImageStrip";
 import { Button, Text } from "@/components/ui";
+import listPageStrip from "@/../docs/BIGCOMMERCE/Background-Images/list-page-cinestrip.jpg";
 import { shopHero } from "@/content/shop/hero";
 import { getCategoryTree, searchProducts } from "@/lib/bigcommerce";
 import { PRODUCT_SORT_KEYS } from "@/lib/bigcommerce/sort";
@@ -174,6 +177,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   return (
     <div className="space-y-12">
       <ShopHero hero={categoryHero} cartHref="/shop/cart" />
+      <ShopConciergePanel />
 
       <div
         id="shop-catalog"
@@ -196,6 +200,10 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
           <Text size="label-tight" muted>
             {totalLabel} {searchResult.total === 1 ? "result" : "results"}
           </Text>
+          <CinematicImageStrip
+            src={listPageStrip.src}
+            alt="Cinematic detail of Perazzi craftsmanship in low light"
+          />
           <ProductGrid products={searchResult.items} />
           {nextHref ? (
             <div className="flex justify-center pt-2">
