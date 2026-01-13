@@ -22,7 +22,7 @@ export function CartConciergePanel({
 }: CartConciergePanelProps) {
   return (
     <section
-      className="relative overflow-hidden rounded-2xl border border-white/12 bg-black/55 p-5 shadow-elevated ring-1 ring-white/10 backdrop-blur-xl sm:rounded-3xl"
+      className="relative overflow-hidden rounded-2xl border border-border/70 bg-card/70 p-5 shadow-soft backdrop-blur-sm sm:rounded-3xl"
       aria-labelledby="cart-concierge-heading"
     >
       <div className="absolute inset-0 -z-10" aria-hidden="true">
@@ -31,24 +31,24 @@ export function CartConciergePanel({
           alt=""
           fill
           sizes="(min-width: 1024px) 420px, 100vw"
-          className="object-cover opacity-35"
+          className="object-cover opacity-15"
         />
-        <div className="absolute inset-0 bg-black/70" />
-        <div className="pointer-events-none absolute inset-0 overlay-gradient-ink-30" aria-hidden="true" />
+        <div className="absolute inset-0 bg-canvas/80" />
+        <div className="pointer-events-none absolute inset-0 overlay-gradient-canvas-80" aria-hidden="true" />
       </div>
 
       <RevealAnimatedBody sequence className="space-y-5">
         <RevealItem index={0}>
-          <Text size="label-tight" className="text-white/70">
+          <Text size="label-tight" muted>
             {eyebrow}
           </Text>
         </RevealItem>
         <RevealItem index={1}>
           <div className="space-y-3">
-            <Heading id="cart-concierge-heading" level={2} size="md" className="text-white">
+            <Heading id="cart-concierge-heading" level={2} size="md" className="text-ink">
               {heading}
             </Heading>
-            <Text size="sm" className="text-white/75" leading="relaxed">
+            <Text size="sm" className="text-ink-muted" leading="relaxed">
               {body}
             </Text>
           </div>
@@ -61,7 +61,7 @@ export function CartConciergePanel({
               </Link>
             </Button>
             {secondaryCta ? (
-              <Button asChild size="sm" variant="secondary" className="bg-white/10 text-white hover:bg-white/20">
+              <Button asChild size="sm" variant="secondary">
                 <Link href={secondaryCta.href} prefetch={false}>
                   {secondaryCta.label}
                 </Link>

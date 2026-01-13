@@ -3,12 +3,14 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import { PageHeading } from "@/components/page-heading";
 import { CartConciergePanel } from "@/components/shop/CartConciergePanel";
+import { CartLineItemRow, type CartLineItemUi } from "@/components/shop/CartLineItemRow";
+import { CartSummaryPanel } from "@/components/shop/CartSummaryPanel";
 import { ShopCatalogField } from "@/components/shop/ShopCatalogField";
-import { Button, Heading, Input, Text } from "@/components/ui";
-import { formatMoney } from "@/components/shop/utils";
+import { Button, Text } from "@/components/ui";
+import { formatMoney, getProductSlug } from "@/components/shop/utils";
 import cartBg from "@/../docs/BIGCOMMERCE/Background-Images/cart-page-bg.jpg";
 import { getCartFromCookies } from "@/lib/bigcommerce/cart";
-import { removeCartItemAction, updateCartItemAction } from "./actions";
+import { getProductById } from "@/lib/bigcommerce";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -42,22 +44,31 @@ export default async function CartPage() {
               title="Your cart"
               description="There is nothing here yet."
             />
-            <Button asChild variant="ghost" size="sm" className="text-white/80 hover:text-white">
+            <Button asChild variant="ghost" size="sm">
               <Link href="/shop" prefetch={false}>
                 Continue shopping
               </Link>
             </Button>
           </div>
-          <div className="rounded-3xl border border-white/12 bg-black/45 p-8 text-center shadow-soft">
-            <Text size="lg">Your cart is empty.</Text>
+          <div className="rounded-3xl border border-border/70 bg-card/70 p-8 text-center shadow-soft backdrop-blur-sm">
+            <Text size="lg" className="text-ink">
+              Your cart is empty.
+            </Text>
             <Text muted className="mt-2">
               Add something from the shop to get started.
             </Text>
-            <Button asChild className="mt-4">
-              <Link href="/shop" prefetch={false}>
-                Continue shopping
-              </Link>
-            </Button>
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+              <Button asChild size="sm">
+                <Link href="/shop" prefetch={false}>
+                  Continue shopping
+                </Link>
+              </Button>
+              <Button asChild variant="secondary" size="sm">
+                <Link href="/shop#shop-catalog" prefetch={false}>
+                  Browse categories
+                </Link>
+              </Button>
+            </div>
           </div>
           <CartConciergePanel
             eyebrow={conciergeCopy.eyebrow}
@@ -73,6 +84,35 @@ export default async function CartPage() {
 
   const subtotalLabel = cart.subtotal ? formatMoney(cart.subtotal) : "";
 
+  const cartItemsUi: CartLineItemUi[] = await Promise.all(
+    cart.items.map(async (item) => {
+      const product = item.productId ? await getProductById(item.productId) : null;
+      const href = product
+        ? `/shop/product/${encodeURIComponent(getProductSlug(product.path, product.name))}?id=${product.id}`
+        : undefined;
+      const image = product?.defaultImage ?? product?.images[0];
+      const variant = product?.variants.find((variant) => variant.id === item.variantId);
+      const variantLabel = variant?.selectedOptions
+        ?.filter((entry) => entry.name && entry.value)
+        .map((entry) => `${entry.name}: ${entry.value}`)
+        .join(" · ");
+      const metaParts = [product?.sku ? `SKU: ${product.sku}` : "", variantLabel ?? ""].filter(Boolean);
+
+      return {
+        id: item.id,
+        name: item.name,
+        href,
+        image: image ? { url: image.url, altText: image.altText || item.name } : undefined,
+        meta: metaParts.length ? metaParts.join(" · ") : undefined,
+        productId: item.productId,
+        variantId: item.variantId,
+        quantity: item.quantity,
+        price: item.price,
+        totalPrice: item.totalPrice,
+      };
+    }),
+  );
+
   return (
     <ShopCatalogField
       id="shop-cart"
@@ -80,99 +120,78 @@ export default async function CartPage() {
       backgroundAlt="Perazzi workshop bench set for parts inspection"
       className="full-bleed-offset-top-lg"
     >
-      <div className="space-y-8">
+      <div className="space-y-8 pb-24 lg:pb-0">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <PageHeading
             title="Your cart"
             description="Review quantities and proceed to checkout when ready."
           />
-          <Button asChild variant="ghost" size="sm" className="text-white/80 hover:text-white">
+          <Button asChild variant="ghost" size="sm">
             <Link href="/shop" prefetch={false}>
               Continue shopping
             </Link>
           </Button>
         </div>
 
-        <div className="section-reveal-body" data-reveal-sequence="true">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-4">
-            {cart.items.map((item, index) => (
-              <article
-                key={item.id}
-                data-reveal-item
-                style={{ "--reveal-index": index } as CSSProperties}
-                className="flex flex-col gap-4 rounded-3xl border border-white/12 bg-white/5 p-5 shadow-soft backdrop-blur-sm"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="space-y-1">
-                    <Heading level={3} size="sm">
-                      {item.name}
-                    </Heading>
-                    <Text size="sm" muted>
-                      Unit price: {formatMoney(item.price)}
-                    </Text>
-                    <Text size="sm" muted>
-                      Line total: {formatMoney(item.totalPrice)}
-                    </Text>
+            <div className="section-reveal-body" data-reveal-sequence="true">
+              <div className="space-y-4">
+                {cartItemsUi.map((item, index) => (
+                  <div
+                    key={item.id}
+                    data-reveal-item
+                    style={{ "--reveal-index": index } as CSSProperties}
+                  >
+                    <CartLineItemRow item={item} />
                   </div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <form action={updateCartItemAction} className="flex items-center gap-2">
-                      <input type="hidden" name="lineItemId" value={item.id} />
-                      <input type="hidden" name="productId" value={item.productId} />
-                      <input
-                        type="hidden"
-                        name="variantId"
-                        value={item.variantId ?? ""}
-                      />
-                      <Input
-                        name="quantity"
-                        type="number"
-                        min="1"
-                        step="1"
-                        inputMode="numeric"
-                        defaultValue={item.quantity}
-                        className="w-20"
-                      />
-                      <Button type="submit" size="sm" variant="secondary">
-                        Update
-                      </Button>
-                    </form>
-                    <form action={removeCartItemAction}>
-                      <input type="hidden" name="lineItemId" value={item.id} />
-                      <Button type="submit" size="sm" variant="ghost">
-                        Remove
-                      </Button>
-                    </form>
-                  </div>
-                </div>
-              </article>
-            ))}
+                ))}
+              </div>
+            </div>
+
+            <div className="lg:hidden">
+              <CartConciergePanel
+                eyebrow={conciergeCopy.eyebrow}
+                heading={conciergeCopy.heading}
+                body={conciergeCopy.body}
+                primaryCta={conciergeCopy.primaryCta}
+                secondaryCta={conciergeCopy.secondaryCta}
+              />
+            </div>
+          </div>
+
+          <div className="hidden lg:block">
+            <CartSummaryPanel subtotalLabel={subtotalLabel} totalQuantity={cart.totalQuantity} />
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-6">
+        <div className="hidden lg:block">
+          <CartConciergePanel
+            eyebrow={conciergeCopy.eyebrow}
+            heading={conciergeCopy.heading}
+            body={conciergeCopy.body}
+            primaryCta={conciergeCopy.primaryCta}
+            secondaryCta={conciergeCopy.secondaryCta}
+          />
+        </div>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-canvas/90 backdrop-blur-md lg:hidden">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-sm py-4 sm:px-md lg:px-lg">
           <div className="space-y-1">
             <Text size="label-tight" muted>
               Subtotal
             </Text>
-            <Text size="lg">{subtotalLabel || "Calculated at checkout"}</Text>
+            <Text size="sm" className="text-ink">
+              {subtotalLabel || "Calculated at checkout"}
+            </Text>
           </div>
-          <Button asChild size="md">
+          <Button asChild size="sm">
             <Link href="/shop/checkout" prefetch={false}>
               Proceed to checkout
             </Link>
           </Button>
         </div>
-        <Text size="caption" muted>
-          Taxes and shipping are calculated at checkout.
-        </Text>
-
-        <CartConciergePanel
-          eyebrow={conciergeCopy.eyebrow}
-          heading={conciergeCopy.heading}
-          body={conciergeCopy.body}
-          primaryCta={conciergeCopy.primaryCta}
-          secondaryCta={conciergeCopy.secondaryCta}
-        />
       </div>
     </ShopCatalogField>
   );
