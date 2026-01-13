@@ -37,7 +37,6 @@ export function ShopCatalogField({
           priority={false}
         />
         <div className="absolute inset-0 bg-black/70" />
-        <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
         <div className="pointer-events-none absolute inset-0 overlay-gradient-ink" aria-hidden="true" />
       </div>
 

@@ -85,7 +85,6 @@ export function ShopHero({ hero, cartHref, cartLabel = "View cart" }: ShopHeroPr
           aria-hidden="true"
         />
         <div className="absolute inset-0 bg-black/40" />
-        <div className="pointer-events-none absolute inset-0 film-grain opacity-20" aria-hidden="true" />
         <div className="pointer-events-none absolute inset-0 overlay-gradient-hero" aria-hidden="true" />
       </motion.div>
 
