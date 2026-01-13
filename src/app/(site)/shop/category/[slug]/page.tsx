@@ -6,11 +6,13 @@ import { ShopCatalogToolbar } from "@/components/shop/ShopCatalogToolbar";
 import { ShopCatalogField } from "@/components/shop/ShopCatalogField";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { ShopConciergePanel } from "@/components/shop/ShopConciergePanel";
+import { ShopSchematicsStrip } from "@/components/shop/ShopSchematicsStrip";
 import { ShopHero } from "@/components/shop/ShopHero";
 import { Button } from "@/components/ui";
 import listPageStrip from "@/../docs/BIGCOMMERCE/Background-Images/list-page-cinestrip.jpg";
 import conciergeStrip from "@/../docs/BIGCOMMERCE/Background-Images/concierge-image.jpg";
 import { shopHero } from "@/content/shop/hero";
+import { getSchematicsForCategory } from "@/content/shop/schematics";
 import { getCategoryTree, searchProducts } from "@/lib/bigcommerce";
 import { PRODUCT_SORT_KEYS } from "@/lib/bigcommerce/sort";
 import type { Category, ProductSearchFilters, ProductSortKey } from "@/lib/bigcommerce/types";
@@ -103,6 +105,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   }
 
   const showConciergeStrip = CONCIERGE_STRIP_CATEGORY_SLUGS.has(category.slug);
+  const schematics = getSchematicsForCategory(category.slug);
 
   const searchTerm = getParam(paramsValue.search)?.trim() ?? "";
   const minPriceValue = getParam(paramsValue.minPrice)?.trim() ?? "";
@@ -175,6 +178,18 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             variant="strip"
             primaryCtaBehavior="chat"
           />
+        </ShopCatalogField>
+      ) : null}
+
+      {schematics ? (
+        <ShopCatalogField
+          id="shop-schematics"
+          backgroundSrc={listPageStrip.src}
+          backgroundAlt="Cinematic detail of Perazzi craftsmanship in low light"
+          className="py-8 sm:py-10"
+          panelClassName="p-6 sm:p-7"
+        >
+          <ShopSchematicsStrip schematics={schematics} />
         </ShopCatalogField>
       ) : null}
 
